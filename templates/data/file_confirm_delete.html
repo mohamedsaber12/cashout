@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+{% block title %} Confirm Delete {% endblock %}
+{% block body %}
+            <div class="row">
+                <div class="col-sm-8 col-md-6 col-md-offset-3">
+                    <div class="account-wall">
+                        <form method="post">{% csrf_token %}
+                            Are you sure you want to delete "{{ object.filename }}" ?
+                            <hr>
+                            <input type="submit" value="Submit" class="btn btn-danger" />
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+{% endblock %}

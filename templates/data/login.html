@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+{% block title %} Login {% endblock %}
+{% block body %}
+
+
+                {% get_current_language as LANGUAGE_CODE %}
+                {% if LANGUAGE_CODE == 'en' %}
+                        <div class="row">
+                            <div class="col-sm-6 col-md-4 col-md-offset-4">
+                                <div class="account-wall">
+                                    <form id="form-signin" method="POST" action="">
+                                        {% csrf_token %}
+                                        <input type="text" class="form-control" name="username" placeholder='Username' required>
+                                        <input type="password" class="form-control" name="password" placeholder='Password' required>
+                                        <div class="submit"></div><button class="submit btn btn-lg btn-primary btn-block" type="submit">
+                                        Login</button>
+                                        {% if error_invalid %}
+                                            {{ error_invalid }}
+                                        {% endif %}
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                {% else %}
+                        <div class="row">
+                            <div class="col-sm-6 col-md-4 col-md-offset-4">
+                                <div class="account-wall">
+                                    <form id="form-signin" method="POST" action="" autocomplete="off">
+                                        {% csrf_token %}
+                                        <input type="text" class="form-control arabic" name="username" placeholder="{% trans 'User name' %}" required autocomplete="off">
+                                        <input type="password" class="form-control arabic" name="password" placeholder="{% trans 'Pass word' %}"  required autocomplete="new-password">
+                                        <button class="submit btn btn-lg btn-primary btn-block" type="submit">
+                                        {% trans 'Login' %} </button>
+                                        {% if error_invalid %}
+                                            {{ error_invalid }}
+                                        {% endif %}
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                {% endif %}
+{% endblock %}

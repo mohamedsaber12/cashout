@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+{% block title %} Document details{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
+{% endblock %}
+{% block script %}
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.js"></script>
+    <script>
+        $(function () {
+            $("#disburse_button").on("click", function () {
+                $('#AgentModal').removeClass('hide');
+               $('#AgentModal').modal();
+            });
+
+            var container = document.getElementById('excel');
+            var hot = new Handsontable(container, {
+                minSpareRows: 1,
+                rowHeaders: true,
+                colHeaders: true
+            });
+        var data = [];
+        $.get({
+                url:location.origin + "/api/secure/doc/" + '{{doc_id}}' + "/",
+                contentType: "application/json;charset=utf-8",
+                dataType: 'json',
+                success: function (result, xhr, message) {
+                    var excel_data = result[0];
+                    var position = parseInt(result[1]);
+                    var amount= 0.0;
+                    for (var i =0; i < excel_data.length; i++){
+                        data[i] = excel_data[i];
+                        if (i>0){
+                            amount += parseFloat(data[i][position]);
+                        }
+                    }
+                    $('#count').append(excel_data.length - 1);
+                    $('#amount').append(amount);
+                    hot.loadData(data);
+                },
+                error: function (xhr, error, reason) {
+                  $('#modal-header').append('Error Occurred!!');
+                    $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                    $('#myModal').removeClass('hide');
+                    $('#myModal').modal();
+                }
+            });
+        if ('{{redirect}}'=='true'){
+            if ('{{disburse}}'==1){
+                $('#modal-header').append('Disbursed, Thanks!!');
+                $('#modal-message').append('<p>Disbursement process is running, you can check reports later</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            }else if ('{{disburse}}'==0){
+                $('#modal-header').append('Error occurred, We are sorry!!');
+                $('#modal-message').append('<p>Disbursement process stopped during an internal error, can you try again or contact you support team</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            }else if ('{{disburse}}'==-1){
+                $('#modal-header').append('Error occurred from your side');
+                if('{{utm_validate}}'=='false'){
+                    $('#modal-message').append('<p>This document is disbursed before, if there\'s any error, please return back to the support team</p><br>');
+                }
+                {% if utm_owner %}
+                if('{{utm_owner}}'=='false'){
+                    $('#modal-message').append('You can\'t disburse this document');
+                }
+                {% endif %}
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            }else{
+
+            }}
+
+        });
+    </script>
+{% endblock %}
+{% block body %}
+{% if doc_id %}
+    <div class="row">
+        <h2 class="text-center">{{doc_name}}</h2>
+    </div>
+        <div class="row">
+            <div class="col-sm-12 col-md-6" style="padding-top: 5%">
+                    <div id="excel"></div>
+            </div>
+            <div class="col-sm-12 col-md-6" style="padding-top: 5%">
+                <div class="col-sm-8 col-md-4">
+                    <table>
+                        <thead>
+                            <tr>
+                                <td>Count</td>
+                                <td>Amount</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td id="count"></td>
+                                <td id="amount"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                {% if perms.data.can_disburse and request.user.can_disburse %}
+                <div class="col-sm-4 col-md-2">
+                    {% if is_processed %}
+                    <a id="disburse_button" class="btn btn-default" >Disburse</a>
+                    {% else %}
+                    <p>{{reason}}, fix it and upload again! Thanks</p>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+<div id="myModal" class="modal fade" role="dialog" tabindex="-1">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title" id="modal-header"></h4>
+          </div>
+          <div class="modal-body">
+            <p id="modal-message"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <div id="AgentModal" class="modal fade hide" role="dialog" tabindex="-1">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title" id="agent-modal-header">Enter Agent Pin</h4>
+          </div>
+        <div class="form-group">
+          <form method="post" id="pinform" action="{% url 'disbursement:disburse' doc_id %}">
+              {% csrf_token %}
+              <div class="modal-body">
+                <label for="agent-pin">Pin</label>
+                <input type="password" id="agent-pin" name="pin" class="form-control" placeholder="pin" required autocomplete="new-password">
+              </div>
+              <div class="modal-footer">
+                <input type="submit" class="btn btn-default" value="Submit">
+              </div>
+          </form>
+
+        </div>
+
+      </div>
+    </div>
+
+
+{% endif %}
+{% endblock %}

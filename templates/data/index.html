@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% block title %} Bills Panel {% endblock %}
+{% block script %}<script>
+$(function() {
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+
+    $(".datepicker").datepicker({
+        changeMonth: true,
+        changeYear: true,
+        dateFormat: "yy-mm-dd"
+    });
+
+    $(".myTable").DataTable();
+})
+
+</script>
+{% endblock %}
+{% block body %}
+    <div class="well upload-nav col-xs-12">
+        {% if form_toggle %}
+            <h3 style="margin-left:140px;" class="navbar-left">Upload Form</h3>
+            {% if perms.data.upload_file %}
+            <div id="upload-div">
+                <form  id="upload-form" class="navbar-form navbar-right" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data" > {% csrf_token %}
+                     <div class="col-xs-12 upload-form pd-lf-rt form-group" id="upload-submit">
+                     <button class="upload-button" type="submit" value="Upload"/> {% trans "Upload" %}</button>
+                     <div class="col-xs-4 "> {{ form_doc.file }}</div>
+                     <div class="col-xs-4 "> {{ form_doc.file_category }}</div>
+                     <div class="col-xs-12 "> {{ form_doc.non_field_errors }}</div>
+                     <div class="col-xs-12 "> {{ form_doc.file.errors }}</div></div>
+                </form>
+
+            </div>
+            {% endif %}
+        {% else %}
+            <strong class="col-xs-offset-8 col-xs-4" style="margin-top: 15px;">Please Add file category first</strong>
+        {% endif %}
+    </div>
+
+    <div class="form-row">
+        <div style="margin-top: 10px; margin-right: 2px" class="col-md-offset-3 col-md-9 text-right">
+            <form class="form-inline" action="../" method="get">
+                <div class="form-group">
+                    {%  for field in form_cat %}
+                        <label class="sr-only">{{ field.label }}</label>
+                        {{ field }}
+                    {% endfor %}
+                </div>
+                <button class="btn btn-default" type="submit">Go</button>
+            </form>
+        </div>
+        <table style="margin-top:5%;" class="myTable text-Center table-striped table-bordered table-hover">
+            <thead>
+            <tr>
+            {% if not is_master %}
+                <th>{% trans 'Action' %}</th>
+                <th>{% trans 'Type' %}</th>
+                <th>{% trans 'File' %}</th>
+                <th>{% trans 'File upload time' %}</th>
+            {% else %}
+                <th>Count</th>
+                <th>Amount</th>
+            {% endif %}
+            </tr>
+            </thead>
+            <tbody>
+            {% if not is_master %}
+                {% for doc in docs %}
+                    <tr>
+                        <td>
+                            {% if not bucket_integration %}
+                                {% if perms.data.access_file %}
+                                    <a href="{% url 'data:doc_viewer' doc.id %}">{% trans 'View' %}</a> &nbsp;-&nbsp;
+                                {% endif %}
+                            {% endif %}
+                            {% if perms.data.delete_file%}
+                                <a href="{% url 'data:file_delete' doc.id %}">{% trans 'Delete' %}</a>
+                            {% endif %}
+                        </td>
+                        <td>{{ doc.file_category.file_type }}</td>
+                        {% if doc.file %}
+                            {% if perms.data.download_file_xlsx %}
+                                <td><a href="{% url 'data:download_doc' doc.id %}">{{ doc.filename }}</a></td>
+                            {% elif perms.data.download_file_txt %}
+                                <td><a id="txt" target="_blank" href="{% url 'data:download_txt' doc.id %}">{{ doc.filename }}</a></td>
+                            {% else %}
+                                <td><p>{{ doc.filename }}</p></td>
+                            {% endif %}
+                        {% endif %}
+                        <td>{{ doc.created_at }}</td>
+                    </tr>
+                {% empty %}
+                    <tr class="lead">
+                        <td colspan="5">No files found</td>
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td>
+                        {{docs.1}}
+                    </td>
+                    <td>
+                        {{docs.0}}
+                    </td>
+                </tr>
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

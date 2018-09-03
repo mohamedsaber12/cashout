@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% load staticfiles %}
+{% block title %} Transactions {% endblock %}
+{% block extra_head %}
+<link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+<div id="content">Please wait. <span id="loading"></span></div>
+<script>
+    $(function(){
+        $.ajaxSetup({ cache: false, timeout: 360000 });
+        var url = "/disburse/export_failed_download/";
+        var i = 0;
+        (function worker() {
+
+            $.getJSON(url+"?task_id=".concat('{{task_id}}'), function(data){
+                if(data.filename) {
+                    var file_url = '{{media_url}}' + 'disbursement/' + data.filename;
+                    $("#content").html("If your download doesn't start automatically, please click <a href='" + file_url + "'>here</a>.");
+                    window.location.href = file_url;
+                } else {
+                    setTimeout(worker, 5000);
+                }
+            });
+        })();
+        setInterval(function() {
+            i = ++i % 4;
+            $("#loading").html("loading"+Array(i+1).join("."));
+        }, 1000);
+    });
+</script>
+{% endblock %}

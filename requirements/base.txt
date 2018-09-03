@@ -1,0 +1,17 @@
+Django==2.1
+django-environ==0.4.5
+djangorestframework==3.4.6
+djangorestframework-expiring-authtoken==0.1.4
+django-otp==0.4.3
+django-two-factor-auth==1.8.0
+django-extensions==2.1.0
+psycopg2==2.7.5
+pytz==2018.5
+requests==2.19.1
+celery==4.2.1
+request-id==0.3.1
+xlrd==1.1.0
+django-daterange-filter==1.3.0
+psycopg2-binary==2.7.5
+python-dateutil
+django-import-export==1.0.1

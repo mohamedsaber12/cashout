@@ -10,7 +10,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     username = fake.user_name()
     email = fake.email()
     mobile_no = '0'
-    is_root = True
+    is_parent = True
     password = fake.password()
     is_staff = True
 

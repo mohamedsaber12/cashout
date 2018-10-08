@@ -231,9 +231,9 @@ class UserForm(UserCreationForm):
                     user.hierarchy_id = maximum + 1
                 except TypeError:
                     user.hierarchy_id = 1
-                user.is_root = True
+                user.is_parent = True
 
-        if self.request.user.is_root:
+        if self.request.user.is_parent:
             user.hierarchy_id = self.request.user.hierarchy_id
 
         if commit:

@@ -48,7 +48,6 @@ class User(AbstractUser):
     is_parent = models.BooleanField(default=False)
     is_otp_verified = models.BooleanField(default=False)
     verification_time = models.DateTimeField(null=True)
-    is_setup_complete = models.BooleanField(default=False)
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     objects = UserManager()
 
@@ -100,3 +99,7 @@ class User(AbstractUser):
         self.verification_time = datetime.datetime.now()
         self.is_otp_verified = True
         self.save()
+
+    def is_setup_complete(self):
+        return self.setup.can_pass()
+

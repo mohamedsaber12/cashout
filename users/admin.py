@@ -171,7 +171,7 @@ class UserAccountAdmin(UserAdmin):
         if request.user.is_superuser:
             return qs
         elif request.user.is_parent:
-            qs = qs.filter(hierarchy_id=request.user.hierarchy_id)
+            qs = qs.filter(hierarchy=request.user.hierarchy)
             return qs
         else:
             return request.user.brothers()

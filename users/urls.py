@@ -22,5 +22,6 @@ urlpatterns = [
          PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('password/done/', PasswordResetCompleteView.as_view(),
          {'extra_context': {'login_url': '/user/login'}},
-         name='password_reset_complete')
+         name='password_reset_complete'),
+    path('levels/add/', views.LevelCreationView.as_view(), name='levels_creation')
 ]

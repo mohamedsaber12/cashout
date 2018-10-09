@@ -52,7 +52,7 @@ class DocAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(DocAdmin, self).get_queryset(request)
-        return qs.filter(owner__hierarchy_id=request.user.hierarchy_id)
+        return qs.filter(owner__hierarchy=request.user.hierarchy)
 
     def get_form(self, request, obj=None, **kwargs):
         DocumentForm = super(DocAdmin, self).get_form(request, obj=obj, **kwargs)

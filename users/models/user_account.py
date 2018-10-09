@@ -67,10 +67,10 @@ class User(AbstractUser):
     def parent(self):
         if self.is_parent or self.is_superuser:
             return self
-        return User.objects.get(hierarchy_id=self.hierarchy, is_parent=True)
+        return User.objects.get(hierarchy=self.hierarchy, is_parent=True)
 
     def child(self):
-        return User.objects.filter(Q(hierarchy_id=self.hierarchy) & Q(is_parent=False))
+        return User.objects.filter(Q(hierarchy=self.hierarchy) & Q(is_parent=False))
 
     def clean_otp(self):
         self.otp = None

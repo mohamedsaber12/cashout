@@ -33,7 +33,7 @@ def disburse(request, doc_id):
     if request.method == 'POST':
         doc_obj = Doc.objects.get(id=doc_id)
         # request.user.is_verified = False  #TODO
-        if doc_obj.owner.hierarchy_id == request.user.hierarchy and request.user.has_perm(
+        if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
                 'data.can_disburse') and not doc_obj.is_disbursed:
             response = requests.post(
                 request.scheme + "://" + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
@@ -47,7 +47,7 @@ def disburse(request, doc_id):
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 0,
                                                                                          'utm_redirect': 'success'})
 
-        owner = 'true' if doc_obj.owner.hierarchy_id == request.user.hierarchy else 'false'
+        owner = 'true' if doc_obj.owner.hierarchy == request.user.hierarchy else 'false'
         perm = 'true' if request.user.has_perm('data.can_disburse') else 'false'
         doc_validated = 'false' if doc_obj.is_disbursed else 'true'
         return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': -1,
@@ -64,7 +64,7 @@ def disburse(request, doc_id):
 @login_required
 def disbursement_list(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    if doc_obj.owner.hierarchy_id == request.user.hierarchy and request.user.has_perm(
+    if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
             'data.can_disburse') and doc_obj.is_disbursed:
         context = {'Ddata': doc_obj.disbursement_data.all()}
     else:
@@ -76,7 +76,7 @@ def disbursement_list(request, doc_id):
 @login_required
 def generate_failed_disbursement_data(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    if doc_obj.owner.hierarchy_id == request.user.hierarchy and request.user.has_perm(
+    if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
             'data.can_disburse') and doc_obj.is_disbursed:
         generate_file_task = generate_file.delay(doc_id)
         return render_to_response("disbursement/disbursement_file_download.html", {"task_id": str(generate_file_task.task_id),

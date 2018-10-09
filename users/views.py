@@ -6,15 +6,20 @@ import logging
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser
 from django.urls import reverse
+from django.views.generic import CreateView
 
 from users.forms import (
     SetPasswordForm,
-    PasswordChangeForm
+    PasswordChangeForm,
+    LevelForm,
+    LevelFormSet
 )
 from data.utils import get_client_ip
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
+
+from users.models import Levels
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -99,3 +104,23 @@ def change_password(request, user):
         return HttpResponseRedirect(reverse('users:user_login_view'))
 
     return render(request, 'data/change_password.html', context)
+
+
+class LevelCreationView(CreateView):
+    model = Levels
+    template_name = 'users/add_levels.html'
+    form_class = LevelForm
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        form_class = self.get_form_class()
+        form = self.get_form(form_class)
+        levelformset = LevelFormSet()
+        return self.render_to_response(
+            self.get_context_data(form=form,
+                                  levelformset=levelformset,
+                                  )
+        )
+
+    def post(self, request, *args, **kwargs):
+        import ipdb; ipdb.set_trace()

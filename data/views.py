@@ -57,7 +57,7 @@ def upload_group_to_file(request):
     download_form_filter = DownloadFilterForm()
 
     docs = Doc.objects.select_related('owner').filter(
-        Q(owner__hierarchy_id=request.user.hierarchy_id)
+        Q(owner__hierarchy=request.user.hierarchy)
     )
     if request.method == 'POST' and request.user.has_perm('data.upload_file'):
         form_doc = FileDocumentForm(request.POST, request.FILES)
@@ -104,7 +104,7 @@ def upload_group_to_file(request):
                'form_cat': form_cat,
                'form_doc': form_doc,
                'form_toggle': FileCategory.objects.filter(
-                   user_created__hierarchy_id=request.user.hierarchy).first() is not None,
+                   user_created__hierarchy=request.user.hierarchy).first() is not None,
                'download_form_filter': download_form_filter,
                'bills': False if request.user.can_disburse else True
                }
@@ -239,7 +239,7 @@ def document_view(request, doc_id):
     flag_to_edit = 0
     try:
         doc = Doc.objects.get(id=doc_id)
-        if doc.owner.hierarchy_id == request.user.hierarchy:
+        if doc.owner.hierarchy == request.user.hierarchy:
             if doc.is_disbursed:
                 return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
             if request.user.has_perm('data.edit_file_online'):
@@ -272,7 +272,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
         get_client_ip(request) + ' downloaded ' + path + 'at' + str(datetime.datetime.now()) + ' ' + str(request.user))
     try:
         doc = Doc.objects.get(file=path)
-        if doc.owner.hierarchy_id == request.user.hierarchy:
+        if doc.owner.hierarchy == request.user.hierarchy:
             return serve(request, path, document_root, show_indexes)
         else:
             return redirect('data:main_view')
@@ -291,7 +291,7 @@ def doc_download(request, doc_id):
     :return: Downloadable excel or 404.
     """
     doc = Doc.objects.get(id=doc_id)
-    if doc.owner.hierarchy_id == request.user.hierarchy:
+    if doc.owner.hierarchy == request.user.hierarchy:
         try:
             response = HttpResponse(doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()

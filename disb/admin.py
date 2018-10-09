@@ -27,7 +27,7 @@ class AgentAdmin(admin.ModelAdmin):
         try:
             hierarchy = request.user.hierarchy
             qs = super(AgentAdmin, self).get_queryset(request)
-            return qs.filter(wallet_provider__hierarchy_id=hierarchy)
+            return qs.filter(wallet_provider__hierarchy=hierarchy)
         except FieldError:
             return super(AgentAdmin, self).get_queryset(request)
 
@@ -61,7 +61,7 @@ class VMTDataAdmin(admin.ModelAdmin):
         try:
             hierarchy = request.user.hierarchy
             qs = super(VMTDataAdmin, self).get_queryset(request)
-            return qs.filter(vmt__hierarchy_id=hierarchy)
+            return qs.filter(vmt__hierarchy=hierarchy)
         except FieldError:
             return super(VMTDataAdmin, self).get_queryset(request)
 

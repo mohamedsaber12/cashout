@@ -57,7 +57,7 @@ class FileDocumentForm(forms.ModelForm):
 
         elif self.request.user.has_perm('data.upload_file'):
             hierarchy = self.request.user.hierarchy
-            self.fields["file_category"].queryset = FileCategory.objects.filter(Q(user_created__hierarchy_id=hierarchy))
+            self.fields["file_category"].queryset = FileCategory.objects.filter(Q(user_created__hierarchy=hierarchy))
 
     def clean_file(self):
         """
@@ -150,7 +150,7 @@ class FileCategoryForm(forms.ModelForm):
     def clean_file_type(self):
         try:
             file_category = FileCategory.objects.get(Q(file_type=self.cleaned_data["file_type"]) &
-                                                     Q(user_created__hierarchy_id=self.request.user.hierarchy))
+                                                     Q(user_created__hierarchy=self.request.user.hierarchy))
         except:
             file_category = None
 
@@ -189,7 +189,7 @@ class FileCategoryViewForm(forms.ModelForm):
     def __init__(self):
         super(FileCategoryViewForm, self).__init__()
         self.fields["file_type"].queryset = FileCategory.objects.filter(
-            Q(user_created__hierarchy_id=self.request.user.hierarchy))
+            Q(user_created__hierarchy=self.request.user.hierarchy))
 
 
 class OtpForm(forms.Form):

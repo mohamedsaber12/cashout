@@ -10,3 +10,8 @@ class Setup(models.Model):
         if all([self.levels_setup, self.users_setup]):
             return True
         return False
+
+    def can_add_users(self):
+        if self.levels_setup:
+            return True
+        return False

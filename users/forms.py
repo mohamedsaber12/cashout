@@ -5,10 +5,12 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserChangeForm as AbstractUserChangeForm
 from django.contrib.auth.models import Group
 from django.utils.translation import ugettext_lazy as _
-
-from users.models import User
+from django.forms import BaseFormSet, modelformset_factory, inlineformset_factory
+from django.forms import formset_factory
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
+
+from users.models import Levels, User
 
 
 class SetPasswordForm(forms.Form):
@@ -166,7 +168,7 @@ class GroupAdminForm(forms.ModelForm):
     def save(self, commit=True):
         group = super(GroupAdminForm, self).save(commit=False)
         # TODO: Check users save from group form or not
-        group.hierarchy_id = self.request.user.hierarchy_id
+        group.hierarchy = self.request.user.hierarchy
         group.save()
         if group.pk:
             user_choices = self.cleaned_data['users']
@@ -207,34 +209,22 @@ class UserForm(UserCreationForm):
             name = "%s_" % self.request.user.username + name
             return name
 
-    def clean_arabic_name(self):
-        ar_name = self.cleaned_data['arabic_name']
-        if ar_name == '':
-            return ar_name
-        if langdetect.detect(ar_name) in ['ar', 'fa']:
-            return ar_name
-        else:
-            raise forms.ValidationError(
-                message=self.add_error(error='Name must be in arabic',
-                                       field='arabic_name'
-                                       ), code='invalid')
-
     def save(self, commit=True):
         user = super(UserForm, self).save(commit=False)
         if self.request.user.is_superuser:
             if user.is_superuser:
-                user.hierarchy_id = 0
+                user.hierarchy = 0
 
             else:
-                maximum = max(User.objects.values_list('hierarchy_id', flat=True))
+                maximum = max(User.objects.values_list('hierarchy', flat=True))
                 try:
-                    user.hierarchy_id = maximum + 1
+                    user.hierarchy = maximum + 1
                 except TypeError:
-                    user.hierarchy_id = 1
+                    user.hierarchy = 1
                 user.is_parent = True
 
         if self.request.user.is_parent:
-            user.hierarchy_id = self.request.user.hierarchy_id
+            user.hierarchy = self.request.user.hierarchy
 
         if commit:
             user.save()
@@ -246,23 +236,33 @@ class UserChangeForm(AbstractUserChangeForm):
         model = User
         fields = '__all__'
 
-    def clean_arabic_name(self):
-        ar_name = self.cleaned_data['arabic_name']
-        if ar_name == '':
-            return ar_name
-        if langdetect.detect(ar_name) in ['ar', 'fa']:
-            return ar_name
-        else:
-            raise forms.ValidationError(
-                message=self.add_error(error='Name must be in arabic',
-                                       field='arabic_name'
-                                       ), code='invalid')
-
     def clean_groups(self):
         form_groups = self.cleaned_data['groups']
         try:
-            parent_joined_groups = self.instance.groups_joined().exclude(hierarchy_id=self.instance.hierarchy_id)
+            parent_joined_groups = self.instance.groups_joined().exclude(hierarchy=self.instance.hierarchy)
         except AttributeError:
-            parent_joined_groups = BillsGroup.objects.none()
+            parent_joined_groups = Group.objects.none()
         groups = (form_groups | parent_joined_groups).distinct()
         return groups
+
+
+class LevelForm(forms.ModelForm):
+    class Meta:
+        model = Levels
+        exclude = ('user',)
+
+
+class BaseLevelFormSet(BaseFormSet):
+    def clean(self):
+        """Checks that no two levels are not same."""
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        level_of_authorities = []
+        for form in self.forms:
+            level_of_authority = form.cleaned_data['level_of_authority']
+            if level_of_authority in level_of_authorities:
+                raise forms.ValidationError("Articles in a set must have distinct titles.")
+            level_of_authorities.append(level_of_authority)
+
+LevelFormSet = modelformset_factory(model=Levels, form=LevelForm, formset=BaseLevelFormSet)

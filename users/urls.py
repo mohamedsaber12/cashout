@@ -1,7 +1,6 @@
 from django.urls import path
 
 from users import views
-from django.conf.urls.i18n import i18n_patterns
 from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetCompleteView, \
     PasswordResetConfirmView
 
@@ -23,5 +22,6 @@ urlpatterns = [
     path('password/done/', PasswordResetCompleteView.as_view(),
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
-    path('levels/add/', views.LevelCreationView.as_view(), name='levels_creation')
+    path('levels/add/', views.LevelCreationView.as_view(), name='levels_creation'),
+    path('test/test/', views.test, name='test')
 ]

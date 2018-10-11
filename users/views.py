@@ -124,3 +124,7 @@ class LevelCreationView(CreateView):
 
     def post(self, request, *args, **kwargs):
         import ipdb; ipdb.set_trace()
+
+
+def test(request):
+    return render(request, 'new_base.html', context={})

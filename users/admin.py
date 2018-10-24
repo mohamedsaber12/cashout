@@ -9,8 +9,8 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 from data.utils import get_client_ip
-from users.forms import UserForm, UserChangeForm
-from users.models import User
+from users.forms import UserChangeForm, MakerCreationForm, CheckerCreationForm, RootCreationForm
+from users.models import User, RootUser, MakerUser, CheckerUser
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
@@ -99,7 +99,6 @@ activate_selected.short_description = ugettext_lazy("Activate selected %(verbose
 class UserAccountAdmin(UserAdmin):
     actions = (delete_selected, deactivate_selected, activate_selected)
     list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
-    add_form = UserForm
     filter_horizontal = ('groups',)
 
     def get_list_display(self, request):
@@ -122,44 +121,30 @@ class UserAccountAdmin(UserAdmin):
         defaults.update(kwargs)
         return super(UserAccountAdmin, self).get_form(request, obj, **defaults)
 
-    def save_model(self, request, obj, form, change):
-        if obj.pk is not None:
-            CREATED_USERS_LOGGER.debug(
-                'User with id %d has modified at %s from IP Address %s' % (
-                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
-
-        else:
-            now = datetime.datetime.now()
-            CREATED_USERS_LOGGER.debug(
-                'user created at %s %s' % (now, obj.username))
-
-        obj.save()
-
     def get_fieldsets(self, request, obj=None):
-        perm_fields = ('is_active', 'is_staff', 'bills_groups')
+        perm_fields = ('is_active', 'is_staff')
         if not obj:
             if request.user.is_superuser:
-                perm_fields = ('is_active', 'is_staff', 'is_superuser',
-                               'bills_groups', 'user_type')
+                perm_fields = ('is_active', 'is_staff', 'is_superuser', 'parent')
 
             self.add_fieldsets = (
                 (None, {
                     'classes': ('wide',),
                     'fields': ('username', 'password1', 'password2',)}
                  ),
-                (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'mobile_no', 'arabic_name')}),
+                (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}),
                 (_('Permissions'), {'fields': perm_fields}),
                 (_('Important dates'), {'fields': ('last_login', 'date_joined')})
             )
 
         elif obj:
-            perm_fields = ('is_active', 'is_staff', 'bills_groups', 'user_type')
+            perm_fields = ('is_active', 'is_staff', 'user_type')
             self.add_fieldsets = (
                 (None, {
                     'classes': ('wide',),
                     'fields': ('username', 'email', 'password')}
                  ),
-                (_('Personal info'), {'fields': ('first_name', 'last_name', 'mobile_no', 'arabic_name')}),
+                (_('Personal info'), {'fields': ('first_name', 'last_name', 'mobile_no')}),
                 (_('Permissions'), {'fields': perm_fields}),
                 (_('Important dates'), {'fields': ('last_login', 'date_joined')})
             )
@@ -176,11 +161,72 @@ class UserAccountAdmin(UserAdmin):
         else:
             return request.user.brothers()
 
-    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-        if db_field.name == 'bills_groups':
-            qs = self._filter_groups(request)
-            kwargs['queryset'] = qs
-        return super(UserAccountAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+
+class MakerAdmin(UserAccountAdmin):
+    add_form = MakerCreationForm
+
+    def save_model(self, request, obj, form, change):
+        #TODO : FIX Parent hierarchy
+        if request.user.is_superuser:
+            obj.hierarchy = form.cleaned_data['parent'].hierarchy
+        else:
+            obj.hierarchy = request.user.hierarchy
+
+        if obj.pk is not None:
+            CREATED_USERS_LOGGER.debug(
+                'User with id %d has modified at %s from IP Address %s' % (
+                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+
+        else:
+            now = datetime.datetime.now()
+            CREATED_USERS_LOGGER.debug(
+                'user created at %s %s' % (now, obj.username))
+        obj.save()
 
 
-admin.site.register(User, UserAccountAdmin)
+class CheckerAdmin(UserAccountAdmin):
+    add_form = CheckerCreationForm
+
+    def save_model(self, request, obj, form, change):
+        #TODO : FIX Parent hierarchy
+        if request.user.is_superuser:
+            obj.hierarchy = form.cleaned_data['parent'].hierarchy
+        else:
+            obj.hierarchy = request.user.hierarchy
+
+        if obj.pk is not None:
+            CREATED_USERS_LOGGER.debug(
+                'User with id %d has modified at %s from IP Address %s' % (
+                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+
+        else:
+            now = datetime.datetime.now()
+            CREATED_USERS_LOGGER.debug(
+                'user created at %s %s' % (now, obj.username))
+        obj.save()
+
+
+class RootAdmin(UserAccountAdmin):
+    add_form = RootCreationForm
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
+        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')  # pop parent field from fieldsets
+        self.fieldsets = fieldsets
+        return self.fieldsets
+
+    def save_model(self, request, obj, form, change):
+        if obj.pk is not None:
+            CREATED_USERS_LOGGER.debug(
+                'User with id %d has modified at %s from IP Address %s' % (
+                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+
+        else:
+            now = datetime.datetime.now()
+            CREATED_USERS_LOGGER.debug(
+                'user created at %s %s' % (now, obj.username))
+        super(RootAdmin, self).save_model(request, obj, form, change)
+
+admin.site.register(RootUser, RootAdmin)
+admin.site.register(MakerUser, MakerAdmin)
+admin.site.register(CheckerUser, CheckerAdmin)

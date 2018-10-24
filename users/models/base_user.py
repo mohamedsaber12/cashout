@@ -10,6 +10,7 @@ from django.db.models import Q
 TYPES = (
     (1, 'Maker'),
     (2, 'Checker'),
+    (3, 'Root'),
 )
 
 
@@ -23,33 +24,18 @@ class UserManager(AbstractUserManager):
     def get_all_checkers(self, hierarchy):
         return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level_of_authority')
 
-    def create_maker(self, username, email=None, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('user_type', 1)
-        extra_fields.setdefault('is_superuser', False)
-        if 'hierarchy' not in extra_fields:
-            raise ValueError('The given hierarchy must be set')
-        return self._create_user(username, email, password, **extra_fields)
-
-    def create_checker(self, username, email=None, password=None, **extra_fields):
-        extra_fields.setdefault('is_staff', True)
-        extra_fields.setdefault('user_type', 1)
-        extra_fields.setdefault('is_superuser', False)
-        if 'hierarchy' not in extra_fields:
-            raise ValueError('The given hierarchy must be set')
-        return self._create_user(username, email, password, **extra_fields)
-
 
 class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
     otp = models.CharField(max_length=6, null=True, blank=True)
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=1)
-    hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True)
-    is_parent = models.BooleanField(default=False)
+    hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     is_otp_verified = models.BooleanField(default=False)
     verification_time = models.DateTimeField(null=True)
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
-    objects = UserManager()
+    email = models.EmailField('email address', blank=False)
+    is_email_sent = models.BooleanField(null=True, default=False)
+    is_setup_password = models.BooleanField(null=True, default=False)
 
     class Meta:
         verbose_name = 'user'
@@ -65,12 +51,16 @@ class User(AbstractUser):
 
     @property
     def parent(self):
-        if self.is_parent or self.is_superuser:
+        if self.user_type==3 or self.is_superuser:
             return self
-        return User.objects.get(hierarchy=self.hierarchy, is_parent=True)
+        return User.objects.get(hierarchy=self.hierarchy, user_type=3)
 
     def child(self):
-        return User.objects.filter(Q(hierarchy=self.hierarchy) & Q(is_parent=False))
+        return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
+
+    @property
+    def is_parent(self):
+        return self.user_type == 3
 
     def clean_otp(self):
         self.otp = None
@@ -102,4 +92,5 @@ class User(AbstractUser):
 
     def is_setup_complete(self):
         return self.setup.can_pass()
+
 

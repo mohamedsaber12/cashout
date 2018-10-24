@@ -23,5 +23,5 @@ urlpatterns = [
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
     path('levels/add/', views.LevelCreationView.as_view(), name='levels_creation'),
-    path('test/test/', views.test, name='test')
+    path('test/test/', views.UserInline.as_view(), name='test')
 ]

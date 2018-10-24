@@ -148,10 +148,10 @@ LOCALE_PATHS = (
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 
-OTP_LOGIN_URL = reverse_lazy('two_factor:login')
+OTP_LOGIN_URL = reverse_lazy('users:user_login_view')
 # LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = 'two_factor:login'
-LOGIN_REDIRECT_URL = 'two_factor:profile'
+LOGIN_URL = 'users:user_login_view'
+LOGIN_REDIRECT_URL = 'two_factor:setup'
 # RestFramework
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,

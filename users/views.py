@@ -4,9 +4,11 @@ import datetime
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
 from django.views.generic import CreateView
+from extra_views import CreateWithInlinesView
+from extra_views.formsets import ModelFormSetView
 
 from users.forms import (
     SetPasswordForm,
@@ -128,3 +130,9 @@ class LevelCreationView(CreateView):
 
 def test(request):
     return render(request, 'new_base.html', context={})
+
+
+class UserInline(CreateWithInlinesView):
+    model = User
+    fields = '__all__'
+    template_name = 'test.html'

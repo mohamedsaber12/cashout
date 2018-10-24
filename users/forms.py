@@ -10,7 +10,7 @@ from django.forms import formset_factory
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
 
-from users.models import Levels, User
+from users.models import Levels, RootUser, MakerUser, CheckerUser, User
 
 
 class SetPasswordForm(forms.Form):
@@ -184,20 +184,17 @@ class GroupAdminForm(forms.ModelForm):
 class UserForm(UserCreationForm):
     class Meta:
         model = User
-        fields = '__all__'
-        exclude = ('otp', )
+        exclude = ('otp', 'hierarchy')
 
     def __init__(self, *args, **kwargs):
         super(UserForm, self).__init__(*args, **kwargs)
         if not self.request.user.is_superuser:
             self.fields["username"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
                                                 self.request.user.username
-
-    def clean_email(self):
-        email = self.cleaned_data['email']
-        if email == '':
-            self.add_error("email", "Email can't be blank")
-        return email
+            try:
+                self.fields.pop("parent")
+            except KeyError:
+                pass
 
     def clean_username(self):
         name = self.cleaned_data['username']
@@ -209,6 +206,31 @@ class UserForm(UserCreationForm):
             name = "%s_" % self.request.user.username + name
             return name
 
+
+class AbstractChildrenCreationForm(UserForm):
+    parent = forms.ModelChoiceField(queryset=RootUser.objects.all())
+
+
+class MakerCreationForm(AbstractChildrenCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = MakerUser
+
+
+class CheckerCreationForm(AbstractChildrenCreationForm):
+    class Meta(UserCreationForm.Meta):
+        model = CheckerUser
+
+
+class RootCreationForm(UserForm):
+    class Meta(UserCreationForm.Meta):
+        model = RootUser
+
+    def __init__(self, *args, **kwargs):
+        super(RootCreationForm, self).__init__(*args, **kwargs)
+        if not self.request.user.is_superuser:
+            self.fields["username"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
+                                                self.request.user.username
+
     def save(self, commit=True):
         user = super(UserForm, self).save(commit=False)
         if self.request.user.is_superuser:
@@ -216,18 +238,20 @@ class UserForm(UserCreationForm):
                 user.hierarchy = 0
 
             else:
-                maximum = max(User.objects.values_list('hierarchy', flat=True))
+                import ipdb; ipdb.set_trace()
+                maximum = max(RootUser.objects.values_list('hierarchy', flat=True))
+                if not maximum:
+                    maximum = 0
                 try:
                     user.hierarchy = maximum + 1
                 except TypeError:
                     user.hierarchy = 1
-                user.is_parent = True
+                user.user_type = 3
 
         if self.request.user.is_parent:
             user.hierarchy = self.request.user.hierarchy
 
-        if commit:
-            user.save()
+        user.save()
         return user
 
 

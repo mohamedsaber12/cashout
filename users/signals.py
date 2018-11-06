@@ -7,7 +7,7 @@ from django.utils.crypto import get_random_string
 from users.models import RootUser, MakerUser, CheckerUser, Setup
 
 
-ALLOWED_CHARACTERS = '!#$%&()*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
+ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
 MESSAGE = 'Dear {0}\n' \
           'This account is created on the panel with random password {1}\n' \
           'Please reset this password as soon as possible, \n' \

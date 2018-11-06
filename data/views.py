@@ -23,9 +23,6 @@ from django.views.static import serve
 
 from data.forms import (
     FileDocumentForm,
-    FileDocForm,
-    FileCategoryViewForm,
-    OtpForm,
     DownloadFilterForm
 )
 from data.models import (
@@ -34,6 +31,7 @@ from data.models import (
 )
 from data.tasks import handle_disbursement_file
 from data.utils import get_client_ip, paginator
+from users.decorators import setup_required
 from users.models import User
 
 
@@ -46,16 +44,14 @@ DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 
 
 @login_required
-def upload_group_to_file(request):
+@setup_required
+def file_upload(request):
     """
     Function that allows the logged in user from the can_upload group to upload
     a file. The file is later processed by the function 'handle_uploaded_file'.
     It handles the ajax calls for the OTP check too
     """
-    FileCategoryViewForm.request = request
     FileDocumentForm.request = request
-    download_form_filter = DownloadFilterForm()
-
     docs = Doc.objects.select_related('owner').filter(
         Q(owner__hierarchy=request.user.hierarchy)
     )
@@ -83,10 +79,8 @@ def upload_group_to_file(request):
                     form_doc.errors, request.user,
                     datetime.datetime.now(), get_client_ip(request)))
 
-        form_cat = FileCategoryViewForm()
     else:
         form_doc = FileDocumentForm()
-        form_cat = FileCategoryViewForm()
         if request.GET.get('file_type', None):
             try:
                 cat = FileCategory.objects.get(Q(id=request.GET.get('file_type', '')))
@@ -101,18 +95,14 @@ def upload_group_to_file(request):
             except FileCategory.DoesNotExist:
                 pass
     context = {'docs': docs,
-               'form_cat': form_cat,
                'form_doc': form_doc,
-               'form_toggle': FileCategory.objects.filter(
-                   user_created__hierarchy=request.user.hierarchy).first() is not None,
-               'download_form_filter': download_form_filter,
-               'bills': False if request.user.can_disburse else True
                }
 
     return render(request, 'data/index.html', context=context)
 
 
 # TODO: Customize permissions based on file types permissions
+@setup_required
 @login_required
 def files_based_on_group_of_logged_in_user(request, category, docs):
     """
@@ -132,7 +122,7 @@ def files_based_on_group_of_logged_in_user(request, category, docs):
 
             return docs
 
-
+@setup_required
 @login_required
 def check_download_xlsx(request):
     if request.is_ajax():
@@ -149,7 +139,7 @@ def check_download_xlsx(request):
     else:
         return HttpResponse("Wrong request")
 
-
+@setup_required
 @login_required
 def download_excel_with_trx_temp_view(request):
     """
@@ -181,6 +171,7 @@ def download_excel_with_trx_temp_view(request):
         raise Http404
 
 
+@setup_required
 @login_required
 @permission_required('data.delete_file')
 def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
@@ -207,6 +198,7 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
     return render(request, template_name, {'object': file_obj})
 
 
+@setup_required
 @login_required
 def file_update(request, pk, template_name='data/file_form.html'):
     file_obj = get_object_or_404(Doc, pk=pk)
@@ -233,6 +225,7 @@ def bad_request_view(request):
     return render(request, 'data/400.html', status=400)
 
 
+@setup_required
 @login_required
 def document_view(request, doc_id):
     template_name = 'data/document_viewer.html'
@@ -266,6 +259,7 @@ def document_view(request, doc_id):
     return render(request, template_name=template_name, context=context)
 
 
+@setup_required
 @login_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
     DOWNLOAD_LOGGER.debug(
@@ -282,6 +276,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
         return redirect('data:main_view')
 
 
+@setup_required
 @login_required
 def doc_download(request, doc_id):
     """

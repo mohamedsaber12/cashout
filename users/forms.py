@@ -5,7 +5,7 @@ from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserChangeForm as AbstractUserChangeForm
 from django.contrib.auth.models import Group
 from django.utils.translation import ugettext_lazy as _
-from django.forms import BaseFormSet, modelformset_factory, inlineformset_factory
+from django.forms import BaseFormSet, modelformset_factory, inlineformset_factory, BaseModelFormSet
 from django.forms import formset_factory
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
@@ -135,7 +135,7 @@ class GroupAdminForm(forms.ModelForm):
         if self.request.user.is_superuser:
             self.fields["users"].queryset = User.objects.all().exclude(username=self.request.user.username)
 
-        elif self.request.user.is_parent:
+        elif self.request.user.is_root:
             self.fields["users"].queryset = self.request.user.child()
             self.fields["name"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
                                             self.request.user.username
@@ -161,7 +161,7 @@ class GroupAdminForm(forms.ModelForm):
             return name
         elif self.request.user.is_superuser:
             return name
-        elif self.request.user.is_parent:
+        elif self.request.user.is_root:
             name = "%s_" % self.request.user.username + name
             return name
 
@@ -202,7 +202,7 @@ class UserForm(UserCreationForm):
             return name
         elif self.request.user.is_superuser:
             return name
-        elif self.request.user.is_parent:
+        elif self.request.user.is_root:
             name = "%s_" % self.request.user.username + name
             return name
 
@@ -211,12 +211,18 @@ class AbstractChildrenCreationForm(UserForm):
     parent = forms.ModelChoiceField(queryset=RootUser.objects.all())
 
 
-class MakerCreationForm(AbstractChildrenCreationForm):
+class MakerCreationAdminForm(AbstractChildrenCreationForm):
+    """
+    Maker creation form for admin usage only
+    """
     class Meta(UserCreationForm.Meta):
         model = MakerUser
 
 
-class CheckerCreationForm(AbstractChildrenCreationForm):
+class CheckerCreationAdminForm(AbstractChildrenCreationForm):
+    """
+    Root Creation form for admin usage only
+    """
     class Meta(UserCreationForm.Meta):
         model = CheckerUser
 
@@ -238,7 +244,6 @@ class RootCreationForm(UserForm):
                 user.hierarchy = 0
 
             else:
-                import ipdb; ipdb.set_trace()
                 maximum = max(RootUser.objects.values_list('hierarchy', flat=True))
                 if not maximum:
                     maximum = 0
@@ -248,7 +253,7 @@ class RootCreationForm(UserForm):
                     user.hierarchy = 1
                 user.user_type = 3
 
-        if self.request.user.is_parent:
+        if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy
 
         user.save()
@@ -275,8 +280,12 @@ class LevelForm(forms.ModelForm):
         model = Levels
         exclude = ('user',)
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.fields['level_of_authority'].choices = [(1, 'Level 1'), (2, 'Level 2'), (3, 'Level 4'), (4, 'Level 4')]
 
-class BaseLevelFormSet(BaseFormSet):
+
+class BaseLevelFormSet(BaseModelFormSet):
     def clean(self):
         """Checks that no two levels are not same."""
         if any(self.errors):
@@ -289,4 +298,65 @@ class BaseLevelFormSet(BaseFormSet):
                 raise forms.ValidationError("Articles in a set must have distinct titles.")
             level_of_authorities.append(level_of_authority)
 
-LevelFormSet = modelformset_factory(model=Levels, form=LevelForm, formset=BaseLevelFormSet)
+
+class MakerCreationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in iter(self.fields):
+            # get current classes from Meta
+            classes = self.fields[field].widget.attrs.get("class")
+            if field == 'is_staff':
+                if classes is not None:
+                    classes += " icheckbox_flat-green checked"
+                else:
+                    classes = "icheckbox_flat-green"
+                self.fields[field].widget.attrs.update({
+                    'class': classes
+                })
+            else:
+                if classes is not None:
+                    classes += " form-control"
+                else:
+                    classes = "form-control"
+                self.fields[field].widget.attrs.update({
+                    'class': classes
+                })
+
+    class Meta:
+        model = MakerUser
+        fields = ('username', 'first_name', 'last_name', 'mobile_no', 'email', 'is_staff')
+
+
+class CheckerCreationForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in iter(self.fields):
+            # get current classes from Meta
+            classes = self.fields[field].widget.attrs.get("class")
+            if field == 'is_staff':
+                if classes is not None:
+                    classes += " icheckbox_flat-green checked"
+                else:
+                    classes = "icheckbox_flat-green"
+                self.fields[field].widget.attrs.update({
+                    'class': classes
+                })
+            else:
+                if classes is not None:
+                    classes += " form-control"
+                else:
+                    classes = "form-control"
+                self.fields[field].widget.attrs.update({
+                    'class': classes
+                })
+
+    class Meta:
+        model = CheckerUser
+        fields = ['username', 'first_name', 'last_name', 'email', 'mobile_no', 'level', 'is_staff']
+
+
+LevelFormSet = modelformset_factory(model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4, extra=2, can_delete=True, validate_max=True)
+
+MakerMemberFormSet = modelformset_factory(model=MakerUser, form=MakerCreationForm, can_delete=True)
+
+CheckerMemberFormSet = modelformset_factory(model=CheckerUser, form=CheckerCreationForm, can_delete=True)

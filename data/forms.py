@@ -46,18 +46,6 @@ class FileDocumentForm(forms.ModelForm):
         help_text='max. 42 megabytes',
         validators=(FileExtensionValidator(allowed_extensions=['xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
     )
-    file_category = forms.ModelChoiceField(
-        queryset=FileCategory.objects.filter(num_of_identifiers__gt=1),
-        empty_label=_('File Type'))
-
-    def __init__(self, *args, **kwargs):
-        super(FileDocumentForm, self).__init__(*args, **kwargs)
-        if self.request.user.is_superuser:
-            self.fields["file_category"].queryset = FileCategory.objects.all().filter(num_of_identifiers__gte=1)
-
-        elif self.request.user.has_perm('data.upload_file'):
-            hierarchy = self.request.user.hierarchy
-            self.fields["file_category"].queryset = FileCategory.objects.filter(Q(user_created__hierarchy=hierarchy))
 
     def clean_file(self):
         """
@@ -130,14 +118,7 @@ class FileDocumentForm(forms.ModelForm):
         model = Doc
         fields = [
             'file',
-            'file_category',
         ]
-
-
-class FileDocForm(forms.ModelForm):
-    class Meta:
-        model = Doc
-        fields = ['file', 'file_category']
 
 
 class FileCategoryForm(forms.ModelForm):
@@ -145,7 +126,15 @@ class FileCategoryForm(forms.ModelForm):
         model = FileCategory
         fields = '__all__'
         exclude = ('user_created',
-                   'num_of_identifiers')
+                   'num_of_identifiers', 'is_processed')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name=='has_header':
+                field.widget.attrs['class'] = 'js-switch'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
     def clean_file_type(self):
         try:

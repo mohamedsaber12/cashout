@@ -1,16 +1,16 @@
 
 class ParentPermissionMixin(object):
     def has_add_permission(self, request):
-        if request.user.is_parent or request.user.is_superuser or request.user.has_perm('auth.add_group'):
+        if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.add_group'):
             super(ParentPermissionMixin, self).has_add_permission(request)
             return True
 
     def has_change_permission(self, request, obj=None):
-        if request.user.is_parent or request.user.is_superuser or request.user.has_perm('auth.change_group'):
+        if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.change_group'):
             super(ParentPermissionMixin, self).has_change_permission(request, obj)
             return True
 
     def has_delete_permission(self, request, obj=None):
-        if request.user.is_parent or request.user.is_superuser or request.user.has_perm('auth.delete_group'):
+        if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.delete_group'):
             super(ParentPermissionMixin, self).has_delete_permission(request, obj)
             return True

@@ -35,8 +35,8 @@ class DisburseAPIView(APIView):
         serializer = DisbursementSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = User.objects.get(username=serializer.validated_data['user'])
-        vmt = VMTData.objects.get(vmt=user.parent)
-        provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.parent.id
+        vmt = VMTData.objects.get(vmt=user.root)
+        provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.root.id
         pin = serializer.validated_data['pin']
         agents = Agent.objects.select_related().filter(wallet_provider_id=provider_id)
         pin_is_true = check_password(pin, agents.first().pin)

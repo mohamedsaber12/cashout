@@ -1,27 +1,34 @@
 from __future__ import print_function, unicode_literals
 
 import datetime
+import json
 import logging
 
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import AnonymousUser
+from django.db import IntegrityError
+from django.db import transaction
 from django.urls import reverse
 from django.views.generic import CreateView
-from extra_views import CreateWithInlinesView
-from extra_views.formsets import ModelFormSetView
 
+from data.forms import FileCategoryForm
 from users.forms import (
     SetPasswordForm,
     PasswordChangeForm,
-    LevelForm,
-    LevelFormSet
+    LevelFormSet,
+    MakerMemberFormSet,
+    CheckerMemberFormSet
 )
 from data.utils import get_client_ip
 from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render, redirect
 
+from users.models import CheckerUser
 from users.models import Levels
+from users.models import MakerUser
+from users.models import Setup
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -53,6 +60,8 @@ def login_view(request):
     Function that allows users to login
     """
     if request.user.is_authenticated:
+        if request.user.is_checker:
+            return HttpResponseRedirect(reverse('two_factor:profile'))
         return redirect('data:main_view')
     now = datetime.datetime.now()
     if request.method == 'POST':
@@ -66,6 +75,9 @@ def login_view(request):
                 LOGIN_LOGGER.debug(
                     'Logged in ' + str(now) + ' %s with IP Address: %s' % (
                         request.user, IP))
+                if user.is_checker:
+                    return HttpResponseRedirect(reverse('two_factor:profile'))
+
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
                 return HttpResponse("Your account has been disabled")
@@ -108,31 +120,136 @@ def change_password(request, user):
     return render(request, 'data/change_password.html', context)
 
 
-class LevelCreationView(CreateView):
-    model = Levels
-    template_name = 'users/add_levels.html'
-    form_class = LevelForm
+class SettingsUpView(LoginRequiredMixin, CreateView):
+    model = MakerUser
+    template_name = 'users/settings-up.html'
+    form_class = MakerMemberFormSet
+    success_url = "/"
 
-    def get(self, request, *args, **kwargs):
-        self.object = None
-        form_class = self.get_form_class()
-        form = self.get_form(form_class)
-        levelformset = LevelFormSet()
-        return self.render_to_response(
-            self.get_context_data(form=form,
-                                  levelformset=levelformset,
-                                  )
-        )
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not request.user.is_superuser:
+            if request.user.is_root:
+                return super().dispatch(request, *args, **kwargs)
+        return self.handle_no_permission()
 
     def post(self, request, *args, **kwargs):
-        import ipdb; ipdb.set_trace()
+        if request.is_ajax():
+            form = None
+            data = request.POST.copy()
+            if data['step'] == '1':
+                initial_query = Levels.objects.filter(
+                        user__hierarchy=self.request.user.hierarchy
+                    )
+                form = LevelFormSet(
+                    data,
+                    prefix='level',
+                    queryset=initial_query
+                )
+            elif data['step'] == '3':
+                form = CheckerMemberFormSet(
+                    data,
+                    prefix='checker'
+                )
+            elif data['step'] == '2':
+                form = MakerMemberFormSet(
+                    data,
+                    prefix='maker'
+                )
+            elif data['step'] == '4':
+                form = FileCategoryForm(data=request.POST)
+            if form and form.is_valid():
+                objs = form.save(commit=False)
+                try:
+                    for obj in form.deleted_objects:
+                        obj.delete()
+                except AttributeError:
+                    pass
+                try:
+                    for obj in objs:
+                        obj.hierarchy = request.user.hierarchy
+                        obj.user_id = request.user.root.id
+                        try:
+                            obj.save()
+                        except IntegrityError:
+                            return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
+                except TypeError:
+                    objs.user_created = request.user.root
+                    objs.save()
+                updated_levels = Levels.objects.filter(user__hierarchy=request.user.hierarchy)
+                payload_updated_levels = updated_levels.\
+                    extra(select={'amount': 'max_amount_can_be_disbursed', 'level': 'level_of_authority', 'value': 'users_levels.id'}).\
+                    values('amount', 'level', 'value')
+                payload = {"valid": True, "data": "levels", "objs": list(payload_updated_levels)} if data["step"] == "1" else {"valid": True}
+                if data['step'] == '1':
+                    setup = Setup.objects.get(user__hierarchy=request.user.hierarchy)
+                    setup.levels_setup = True
+                    setup.save()
+                elif data['step'] == '3':
+                    setup = Setup.objects.get(user__hierarchy=request.user.hierarchy)
+                    setup.users_setup = True
+                    setup.save()
+                return HttpResponse(content=json.dumps(payload), content_type="application/json")
+            print(form.errors)
+            return HttpResponse(content=json.dumps({"valid": False, "reason": "validation", "errors": form.errors}),
+                                content_type="application/json")
 
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
 
-def test(request):
-    return render(request, 'new_base.html', context={})
+        data['makerform'] = self.form_class(
+            queryset=self.model.objects.filter(
+                hierarchy=self.request.user.hierarchy
+            ),
+            prefix='maker'
+        )
+        data['checkerform'] = CheckerMemberFormSet(
+            queryset=CheckerUser.objects.filter(
+                hierarchy=self.request.user.hierarchy
+            ),
+            prefix='checker'
+        )
+        data['levelform'] = LevelFormSet(
+            queryset=Levels.objects.filter(
+                user__hierarchy=self.request.user.hierarchy
+            ),
+            prefix='level'
+        )
+        data['filecategoryform'] = FileCategoryForm(instance=self.request.user.file_category)
+        return data
 
+    def form_invalid(self, **forms):
+        return self.render_to_response(self.get_context_data(**forms))
 
-class UserInline(CreateWithInlinesView):
-    model = User
-    fields = '__all__'
-    template_name = 'test.html'
+    def form_valid(self, form):
+        context = self.get_context_data()
+        makerform = context['makerform']
+        checkerform = context['checkerform']
+        levelform = context['levelform']
+        makerform_valid = False
+        checkerform_valid = False
+        levelform_valid = False
+        with transaction.atomic():
+            if makerform.is_valid():
+                makerform_valid = True
+                makerform.save()
+
+            if checkerform.is_valid():
+                checkerform_valid = True
+                makerform.save()
+
+            if levelform.is_valid():
+                levelform_valid = True
+                makerform.save()
+        if all((levelform_valid, checkerform_valid, makerform_valid)):
+            return super().form_valid(form)
+        else:
+            return self.form_invalid(makerform=makerform, checkerform=checkerform, levelform=levelform)
+
+    def get_form(self, form_class=None):
+
+        """Return an instance of the form to be used in this view."""
+        if form_class is None:
+            form_class = self.get_form_class()
+        kwargs = self.get_form_kwargs()
+        kwargs.pop('instance')
+        return form_class(**kwargs)

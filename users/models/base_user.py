@@ -6,6 +6,8 @@ import pytz
 from django.contrib.auth.models import AbstractUser, UserManager as AbstractUserManager
 from django.db import models
 from django.db.models import Q
+from django.utils.functional import cached_property
+
 
 TYPES = (
     (1, 'Maker'),
@@ -49,18 +51,8 @@ class User(AbstractUser):
     def __str__(self):  # __unicode__ for Python 2
         return str(self.username)
 
-    @property
-    def parent(self):
-        if self.user_type==3 or self.is_superuser:
-            return self
-        return User.objects.get(hierarchy=self.hierarchy, user_type=3)
-
     def child(self):
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
-
-    @property
-    def is_parent(self):
-        return self.user_type == 3
 
     def clean_otp(self):
         self.otp = None
@@ -90,7 +82,26 @@ class User(AbstractUser):
         self.is_otp_verified = True
         self.save()
 
-    def is_setup_complete(self):
-        return self.setup.can_pass()
+    @property
+    def root(self):
+        if self.is_root:
+            return self
+        else:
+            from users.models import RootUser
+            return RootUser.objects.get(hierarchy=self.hierarchy)
 
+    @property
+    def can_pass(self):
+        return self.root.setup.can_pass()
 
+    @cached_property
+    def is_root(self):
+        return self.user_type == 3
+
+    @cached_property
+    def is_maker(self):
+        return self.user_type == 1
+
+    @cached_property
+    def is_checker(self):
+        return self.user_type == 2

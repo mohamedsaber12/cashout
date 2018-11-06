@@ -18,10 +18,12 @@ from data.models import Doc
 from data.tasks import generate_file
 from data.utils import redirect_params
 from disb.resources import DisbursementDataResource
+from users.decorators import setup_required
 
 DATA_LOGGER = logging.getLogger("disburse")
 
 
+@setup_required
 @otp_required
 def disburse(request, doc_id):
     """
@@ -61,6 +63,7 @@ def disburse(request, doc_id):
         return redirect(response)
 
 
+@setup_required
 @login_required
 def disbursement_list(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
@@ -73,6 +76,7 @@ def disbursement_list(request, doc_id):
     return render(request, template_name='disbursement/list.html', context=context)
 
 
+@setup_required
 @login_required
 def generate_failed_disbursement_data(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
@@ -83,6 +87,7 @@ def generate_failed_disbursement_data(request, doc_id):
                                                                                    "media_url": settings.MEDIA_URL})
 
 
+@setup_required
 @login_required
 def failed_disbursed_for_download(request):
     task_id = request.GET.get("task_id")

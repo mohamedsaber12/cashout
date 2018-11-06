@@ -22,6 +22,6 @@ urlpatterns = [
     path('password/done/', PasswordResetCompleteView.as_view(),
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
-    path('levels/add/', views.LevelCreationView.as_view(), name='levels_creation'),
-    path('test/test/', views.UserInline.as_view(), name='test')
+    path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
+    path('settings/edit/', views.SettingsUpView.as_view(), name='settings_edit')
 ]

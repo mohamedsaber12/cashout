@@ -9,7 +9,7 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _, ugettext_lazy
 
 from data.utils import get_client_ip
-from users.forms import UserChangeForm, MakerCreationForm, CheckerCreationForm, RootCreationForm
+from users.forms import UserChangeForm, MakerCreationAdminForm, CheckerCreationAdminForm, RootCreationForm
 from users.models import User, RootUser, MakerUser, CheckerUser
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -155,7 +155,7 @@ class UserAccountAdmin(UserAdmin):
         qs = super(UserAccountAdmin, self).get_queryset(request)
         if request.user.is_superuser:
             return qs
-        elif request.user.is_parent:
+        elif request.user.is_root:
             qs = qs.filter(hierarchy=request.user.hierarchy)
             return qs
         else:
@@ -163,7 +163,7 @@ class UserAccountAdmin(UserAdmin):
 
 
 class MakerAdmin(UserAccountAdmin):
-    add_form = MakerCreationForm
+    add_form = MakerCreationAdminForm
 
     def save_model(self, request, obj, form, change):
         #TODO : FIX Parent hierarchy
@@ -185,7 +185,7 @@ class MakerAdmin(UserAccountAdmin):
 
 
 class CheckerAdmin(UserAccountAdmin):
-    add_form = CheckerCreationForm
+    add_form = CheckerCreationAdminForm
 
     def save_model(self, request, obj, form, change):
         #TODO : FIX Parent hierarchy

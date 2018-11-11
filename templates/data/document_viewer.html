@@ -76,6 +76,27 @@
 
         });
     </script>
+    <script>
+         $(function () {
+             $("#notify_button").on("click", function () {
+                  $.post({
+                     url:  $(this).attr("data-url"),
+                     contentType: "application/json;charset=utf-8",
+                     dataType: 'json',
+                     success: function (result, xhr, message) {
+                      $(this).hide()
+                     },
+                     error: function (xhr, error, reason) {
+                         $('#modal-header').append('Error Occurred!!');
+                         $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                         $('#myModal').removeClass('hide');
+                         $('#myModal').modal();
+                     }
+                 });
+                
+             });
+         });
+    </script>
 {% endblock %}
 {% block body %}
 {% if doc_id %}
@@ -103,14 +124,26 @@
                         </tbody>
                     </table>
                 </div>
-                {% if perms.data.can_disburse and request.user.can_disburse %}
-                <div class="col-sm-4 col-md-2">
-                    {% if is_processed %}
-                    <a id="disburse_button" class="btn btn-default" >Disburse</a>
-                    {% else %}
-                    <p>{{reason}}, fix it and upload again! Thanks</p>
-                    {% endif %}
-                </div>
+                {% if request.user.is_checker %}
+                    <div class="col-sm-4 col-md-2">
+                        {% if can_be_disbursed %}
+                            <a id="disburse_button" class="btn btn-default" >Disburse</a>
+                        {% else %}
+                            <p>Pending</p>
+                        {% endif %}
+                    </div>
+                {% elif request.user.is_maker %}
+                    <div class="col-sm-4 col-md-2">
+                        {% if is_processed and not can_be_disbursed %}
+                            <a id="notify_button" class="btn btn-default" data-url="{% url disbursement_api:allow_doc_disburse' doc_id %}">Notify Chekers</a>
+                        {% elif can_be_disbursed %}
+                            <p>Checkers Notified</p>
+                        {% elif reason %}
+                            <p>{{reason}}, fix it and upload again! Thanks</p>
+                        {% else %}
+                            <p>Pending</p>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
         </div>

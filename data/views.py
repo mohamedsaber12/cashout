@@ -12,28 +12,20 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.http import Http404
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404, redirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import force_text, force_bytes
+from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.static import serve
 
-from data.forms import (
-    FileDocumentForm,
-    DownloadFilterForm
-)
-from data.models import (
-    Doc,
-    FileCategory,
-)
+from data.forms import DownloadFilterForm, FileDocumentForm
+from data.models import Doc, FileCategory
 from data.tasks import handle_disbursement_file
 from data.utils import get_client_ip, paginator
 from users.decorators import setup_required
 from users.models import User
-
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -55,7 +47,8 @@ def file_upload(request):
     docs = Doc.objects.select_related('owner').filter(
         Q(owner__hierarchy=request.user.hierarchy)
     )
-    if request.method == 'POST' and request.user.has_perm('data.upload_file'):
+
+    if request.method == 'POST' and request.user.is_maker:
         form_doc = FileDocumentForm(request.POST, request.FILES)
 
         if form_doc.is_valid():
@@ -83,8 +76,10 @@ def file_upload(request):
         form_doc = FileDocumentForm()
         if request.GET.get('file_type', None):
             try:
-                cat = FileCategory.objects.get(Q(id=request.GET.get('file_type', '')))
-                files = files_based_on_group_of_logged_in_user(request, cat, docs)
+                cat = FileCategory.objects.get(
+                    Q(id=request.GET.get('file_type', '')))
+                files = files_based_on_group_of_logged_in_user(
+                    request, cat, docs)
                 if isinstance(files, QuerySet):
                     try:
                         docs = paginator(request, files)
@@ -122,6 +117,7 @@ def files_based_on_group_of_logged_in_user(request, category, docs):
 
             return docs
 
+
 @setup_required
 @login_required
 def check_download_xlsx(request):
@@ -139,6 +135,7 @@ def check_download_xlsx(request):
     else:
         return HttpResponse("Wrong request")
 
+
 @setup_required
 @login_required
 def download_excel_with_trx_temp_view(request):
@@ -153,7 +150,8 @@ def download_excel_with_trx_temp_view(request):
         if form.is_valid():
             start_date = request.POST.get('start_date', None)
             end_date = request.POST.get('end_date', None)
-            file_category = get_object_or_404(FileCategory, user_created=request.user)
+            file_category = get_object_or_404(
+                FileCategory, user_created=request.user)
             url = reverse('download_xls', kwargs={
                 "start_date": start_date,
                 "end_date": end_date,
@@ -235,6 +233,8 @@ def document_view(request, doc_id):
         if doc.owner.hierarchy == request.user.hierarchy:
             if doc.is_disbursed:
                 return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
+            if request.user.is_checker and not doc.can_be_disbursed:
+                raise Http404
             if request.user.has_perm('data.edit_file_online'):
                 flag_to_edit = 1
             context = {
@@ -242,6 +242,7 @@ def document_view(request, doc_id):
                 'doc_id': doc_id,
                 'doc_name': doc.filename(),
                 'is_processed': doc.is_processed,
+                'can_be_disbursed': doc.can_be_disbursed,
                 'reason': doc.processing_failure_reason,
             }
         else:
@@ -288,7 +289,8 @@ def doc_download(request, doc_id):
     doc = Doc.objects.get(id=doc_id)
     if doc.owner.hierarchy == request.user.hierarchy:
         try:
-            response = HttpResponse(doc.file, content_type='application/vnd.ms-excel')
+            response = HttpResponse(
+                doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
         except Exception:

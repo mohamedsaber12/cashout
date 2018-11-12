@@ -39,6 +39,8 @@ class User(AbstractUser):
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
 
+    objects = UserManager()
+
     class Meta:
         verbose_name = 'user'
         verbose_name_plural = 'users'

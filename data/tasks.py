@@ -117,7 +117,8 @@ def generate_file(doc_id):
 
 
 @app.task()
-def notifiy_checkers(doc_obj):
+def notifiy_checkers(doc_id):
+    doc_obj = Doc.objects.get(id=doc_id)
     checkers = User.objects.get_all_checkers(doc_obj.owner.hierarchy)
     if not checkers.exists():
         return

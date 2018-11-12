@@ -166,7 +166,7 @@ class AllowDocDisburse(APIView):
         if request.user.is_maker and doc_obj.is_processed:
             doc_obj.can_be_disbursed = True
             doc_obj.save()
-            notifiy_checkers.delay(doc_obj)
+            notifiy_checkers.delay(doc_obj.id)
             return Response(status=200)
         
         return Response(status=403)

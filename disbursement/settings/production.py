@@ -51,7 +51,7 @@ ADMINS = [('Amir Raouf', 'amirraouf@paymobsolutions.com'),
           ]
 # celery
 
-BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
+CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
 
 # ssl
 

@@ -6,7 +6,7 @@
 <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
 {% endblock %}
 {% block script %}
-
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.js"></script>
     <script>
         $(function () {
@@ -79,19 +79,22 @@
     <script>
          $(function () {
              $("#notify_button").on("click", function () {
-                  $.post({
-                     url:  $(this).attr("data-url"),
-                     contentType: "application/json;charset=utf-8",
-                     dataType: 'json',
+                 let url = $(this).attr("data-url");
+                 console.log('adasdsa',url)
+                 $.ajax({
+                     type: "POST",
+                     url: url,
                      success: function (result, xhr, message) {
-                      $(this).hide()
+                        console.log('succ');
+                        $(this).hide();
                      },
-                     error: function (xhr, error, reason) {
-                         $('#modal-header').append('Error Occurred!!');
-                         $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
-                         $('#myModal').removeClass('hide');
-                         $('#myModal').modal();
-                     }
+                    error: function (xhr, error, reason) {
+                          console.log('err')
+                          $('#modal-header').append('Error Occurred!!');
+                          $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                          $('#myModal').removeClass('hide');
+                          $('#myModal').modal();
+                      }
                  });
                 
              });
@@ -135,7 +138,7 @@
                 {% elif request.user.is_maker %}
                     <div class="col-sm-4 col-md-2">
                         {% if is_processed and not can_be_disbursed %}
-                            <a id="notify_button" class="btn btn-default" data-url="{% url disbursement_api:allow_doc_disburse' doc_id %}">Notify Chekers</a>
+                            <a id="notify_button" class="btn btn-default" data-url="{% url 'disbursement_api:allow_doc_disburse' doc_id %}">Notify Chekers</a>
                         {% elif can_be_disbursed %}
                             <p>Checkers Notified</p>
                         {% elif reason %}
@@ -195,3 +198,5 @@
 
 {% endif %}
 {% endblock %}
+
+

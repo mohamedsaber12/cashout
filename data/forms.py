@@ -1,15 +1,15 @@
+import datetime
+import logging
 import os
 import tempfile
 
-import logging
 import xlrd
-import datetime
-from django.core.validators import FileExtensionValidator
-from data.models import FileCategory, Doc
 from django import forms
+from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
+from data.models import Doc, FileCategory
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 
@@ -44,7 +44,8 @@ class FileDocumentForm(forms.ModelForm):
     file = forms.FileField(
         label=_('Select a file'),
         help_text='max. 42 megabytes',
-        validators=(FileExtensionValidator(allowed_extensions=['xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
+        validators=(FileExtensionValidator(allowed_extensions=[
+                    'xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
     )
 
     def clean_file(self):
@@ -52,7 +53,7 @@ class FileDocumentForm(forms.ModelForm):
         Function that validates the file type, file name and size
         """
         file = self.cleaned_data['file']
-        file_category = FileCategory.objects.get(id=self.data.get('file_category'))
+        file_category = self.category
         if file:
 
             file_type = file.content_type.split('/')[1]
@@ -100,10 +101,13 @@ class FileDocumentForm(forms.ModelForm):
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
-                        raise forms.ValidationError(_('File uploaded in not in proper form'))
+                        raise forms.ValidationError(
+                            _('File uploaded in not in proper form'))
                     xl_sheet = xl_workbook.sheet_by_index(0)
+
                     if len(file_category.identifiers()) != xl_sheet.ncols:
-                        raise forms.ValidationError(_('File uploaded in not in proper form'))
+                        raise forms.ValidationError(
+                            _('File uploaded in not in proper form'))
             finally:
                 os.unlink(tmp)  # delete the temp file no matter what
 
@@ -131,7 +135,7 @@ class FileCategoryForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            if field_name=='has_header':
+            if field_name == 'has_header':
                 field.widget.attrs['class'] = 'js-switch'
             else:
                 field.widget.attrs['class'] = 'form-control'
@@ -145,7 +149,8 @@ class FileCategoryForm(forms.ModelForm):
 
         try:
             if not file_category == self.obj and self.cleaned_data["file_type"] == file_category.file_type:
-                raise forms.ValidationError(self.add_error('file_type', 'Name already Exist'))
+                raise forms.ValidationError(self.add_error(
+                    'file_type', 'Name already Exist'))
             else:
                 return self.cleaned_data["file_type"]
         except AttributeError:

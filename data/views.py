@@ -12,7 +12,8 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import (Http404, HttpResponse, HttpResponseRedirect,
+                         JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
@@ -47,22 +48,22 @@ def file_upload(request):
     docs = Doc.objects.select_related('owner').filter(
         Q(owner__hierarchy=request.user.hierarchy)
     )
+    category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
+    has_file_category = bool(category)
 
-    if request.method == 'POST' and request.user.is_maker:
+    if request.method == 'POST' and request.user.is_maker and has_file_category:
+        FileDocumentForm.category = category
         form_doc = FileDocumentForm(request.POST, request.FILES)
 
         if form_doc.is_valid():
-            file_type = form_doc.cleaned_data['file_category']
             file_doc = Doc(owner=request.user,
                            file=request.FILES['file'],
-                           file_category=file_type)
+                           file_category=category)
             file_doc.save()
             now = datetime.datetime.now()
             UPLOAD_LOGGER.debug(
                 '%s uploaded file at ' % request.user + str(now))
-            if request.user.has_perm('data.process_file'):
-                # handle_disbursement_file.delay(file_doc.id)
-                handle_disbursement_file(file_doc.id)
+            handle_disbursement_file.delay(file_doc.id)
 
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
@@ -72,50 +73,44 @@ def file_upload(request):
                     form_doc.errors, request.user,
                     datetime.datetime.now(), get_client_ip(request)))
 
+            return JsonResponse(form_doc.errors, status=400)
+
     else:
-        form_doc = FileDocumentForm()
-        if request.GET.get('file_type', None):
+        form_doc = None
+        files = files_based_on_group_of_logged_in_user(request, docs)
+        if isinstance(files, QuerySet):
             try:
-                cat = FileCategory.objects.get(
-                    Q(id=request.GET.get('file_type', '')))
-                files = files_based_on_group_of_logged_in_user(
-                    request, cat, docs)
-                if isinstance(files, QuerySet):
-                    try:
-                        docs = paginator(request, files)
-                    except:
-                        docs = paginator(request, '')
-                else:
-                    docs = files
-            except FileCategory.DoesNotExist:
-                pass
+                docs = paginator(request, files)
+            except:
+                docs = paginator(request, '')
+        else:
+            docs = files
+
     context = {'docs': docs,
                'form_doc': form_doc,
+               'has_file_category': has_file_category
                }
 
     return render(request, 'data/index.html', context=context)
 
 
 # TODO: Customize permissions based on file types permissions
-@setup_required
-@login_required
-def files_based_on_group_of_logged_in_user(request, category, docs):
+def files_based_on_group_of_logged_in_user(request, docs):
     """
-    Function to return the document files based of group, category,
-    date and the user
+    Function to return the document files based of date
     :param request:
-    :param category:
+    :param docs:
     :return:
     """
-    if request.user.has_perm('data.access_file'):
-        if request.GET.get('from_date') == '' or request.GET.get('to_date') == '':
-            return docs.filter(file_category=category)
-        else:
-            docs = docs.filter(
-                Q(created_at__range=(request.GET.get('from_date', ''), request.GET.get('to_date', ''))) &
-                Q(file_category=category))
+    if not (request.GET.get('from_date') and request.GET.get('to_date')):
+        return docs
+    else:
+        docs = docs.filter(
+            created_at__range=(request.GET.get('from_date', ''),
+                               request.GET.get('to_date', ''))
+        )
 
-            return docs
+    return docs
 
 
 @setup_required

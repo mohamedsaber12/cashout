@@ -7,23 +7,22 @@
 {% endblock %}
 
 {% block body %}
+    
     <div class="well upload-nav col-xs-12">
-        {% if not form_toggle %}
+        {% if has_file_category and request.user.is_maker %}
             <h3 style="margin-left:140px;" class="navbar-left">Upload Form</h3>
-            {% if request.user.is_maker %}
-                <div class="x_content">
-                    <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
-                        <div class="col-xs-12 "> {{ form_doc.non_field_errors }}</div>
-                        <div class="col-xs-12 "> {{ form_doc.file.errors }}</div>
-                    </form>
             
-                </div>     
-            {% endif %}
-        {% else %}
+            <div class="x_content">
+                <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+                </form>
+        
+            </div>     
+            
+        {% elif not has_file_category %}
             <strong class="col-xs-offset-8 col-xs-4" style="margin-top: 15px;">Please Add file category first</strong>
         {% endif %}
     </div>
-
+    
     <div class="form-row">
         <div style="margin-top: 10px; margin-right: 2px" class="col-md-offset-3 col-md-9 text-right">
             <form class="form-inline" action="../" method="get">
@@ -95,47 +94,10 @@
         </table>
     </div>
 
-<!-- modal -->
-<div id="success-modal" class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
+<!-- modals -->
 
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
-                </button>
-                <h4 class="modal-title" id="myModalLabel2">Thank you</h4>
-            </div>
-            <div class="modal-body">
-                <h4>File uploaded successfully</h4>
-                <p>An Email will be sent shortly with file status.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
+{% include 'data/upload-response-modals.html' %}
 
-        </div>
-    </div>
-</div>
-
-<div id="fail-modal" class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
-                </button>
-                <h4 class="modal-title" id="myModalLabel2">Upload Failed</h4>
-            </div>
-            <div class="modal-body">
-                <p>Error</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            </div>
-
-        </div>
-    </div>
-</div>
 {% endblock %}
 
 
@@ -170,10 +132,20 @@
         Dropzone.options.fileUpload = {
             maxFiles: 1,
             init: function () {
-                this.on("success", function (file) { $('#success-modal').modal('show'); });
+                this.on("success", function (file,a,b) {
+                     $('#success-modal').modal('show');
+                });
                 this.on("error", function (file,message,obj) { 
+                    console.log(message)
                     this.removeAllFiles() ;
-                    $('#fail-modal').modal('show');
+                    let fail_modal = $('#fail-modal');
+                    if (message['file'])
+                        fail_modal.find('.modal-body #p1').text(message.file[0]);
+                    if (message['non_field_errors'])
+                        fail_modal.find('.modal-body #p2').text(message.non_field_errors[0]);
+
+                    fail_modal.modal('show');
+
                 });
             }
         }

@@ -164,6 +164,8 @@ class AllowDocDisburse(APIView):
     def post(self, request, *args, **kwargs):
         doc_obj = get_object_or_404(Doc, id=self.kwargs['doc_id'])
         if request.user.is_maker and doc_obj.is_processed:
+            if doc_obj.can_be_disbursed:
+                return JsonResponse({"message": "Checkers already notified"}, status=400)
             doc_obj.can_be_disbursed = True
             doc_obj.save()
             notifiy_checkers.delay(doc_obj.id)

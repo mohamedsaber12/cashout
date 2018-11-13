@@ -1,110 +1,11 @@
-{% extends 'base.html' %}
+{% extends 'new_base.html' %}
 {% load i18n %}
-{% load staticfiles %}
+{% load static %}
 {% block title %} Document details{% endblock %}
-{% block extra_head %}
-<link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
+{% block customcss %}
+    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
 {% endblock %}
-{% block script %}
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.js"></script>
-    <script>
-        $(function () {
-            $("#disburse_button").on("click", function () {
-                $('#AgentModal').removeClass('hide');
-               $('#AgentModal').modal();
-            });
 
-            var container = document.getElementById('excel');
-            var hot = new Handsontable(container, {
-                minSpareRows: 1,
-                rowHeaders: true,
-                colHeaders: true
-            });
-            var data = [];
-            let url = $('#excel').attr("data-url");
-            $.ajax({
-                type: "GET",
-                url: url,
-             success: function (result, xhr, message) {
-                    var excel_data = result[0];
-                    var position = parseInt(result[1]);
-                    var amount = 0.0;
-                    for (var i = 0; i < excel_data.length; i++) {
-                        data[i] = excel_data[i];
-                        if (i > 0) {
-                            amount += parseFloat(data[i][position]);
-                        }
-                    }
-                    $('#count').append(excel_data.length - 1);
-                    $('#amount').append(amount);
-                    hot.loadData(data);
-                },
-                error: function (xhr, error, reason) {
-                    $('#modal-header').append('Error Occurred!!');
-                    $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
-                    $('#myModal').removeClass('hide');
-                    $('#myModal').modal();
-                },
-                contentType: "application/json;charset=utf-8",
-                dataType: 'json',
-            });
-        
-      
-        if ('{{redirect}}'=='true'){
-            if ('{{disburse}}'==1){
-                $('#modal-header').append('Disbursed, Thanks!!');
-                $('#modal-message').append('<p>Disbursement process is running, you can check reports later</p><br>');
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            }else if ('{{disburse}}'==0){
-                $('#modal-header').append('Error occurred, We are sorry!!');
-                $('#modal-message').append('<p>Disbursement process stopped during an internal error, can you try again or contact you support team</p><br>');
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            }else if ('{{disburse}}'==-1){
-                $('#modal-header').append('Error occurred from your side');
-                if('{{utm_validate}}'=='false'){
-                    $('#modal-message').append('<p>This document is disbursed before, if there\'s any error, please return back to the support team</p><br>');
-                }
-                {% if utm_owner %}
-                if('{{utm_owner}}'=='false'){
-                    $('#modal-message').append('You can\'t disburse this document');
-                }
-                {% endif %}
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            }else{
-
-            }}
-
-        });
-    </script>
-    <script>
-         $(function () {
-             $("#notify_button").on("click", function () {
-                 let url = $(this).attr("data-url");
-                 
-                 $.ajax({
-                     type: "POST",
-                     url: url,
-                     success: function (result, xhr, message) {
-                        console.log('succ');
-                        $(this).hide();
-                     },
-                    error: function (xhr, error, reason) {
-                          console.log('err')
-                          $('#modal-header').append('Error Occurred!!');
-                          $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
-                          $('#myModal').removeClass('hide');
-                          $('#myModal').modal();
-                      }
-                 });
-                
-             });
-         });
-    </script>
-{% endblock %}
 {% block body %}
 {% if doc_id %}
     <div class="row">
@@ -203,4 +104,104 @@
 {% endif %}
 {% endblock %}
 
+{% block script %}
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.js"></script>
+<script>
+    $(function () {
+        $("#disburse_button").on("click", function () {
+            $('#AgentModal').removeClass('hide');
+            $('#AgentModal').modal();
+        });
+
+        var container = document.getElementById('excel');
+        var hot = new Handsontable(container, {
+            minSpareRows: 1,
+            rowHeaders: true,
+            colHeaders: true
+        });
+        var data = [];
+        let url = $('#excel').attr("data-url");
+        $.ajax({
+            type: "GET",
+            url: url,
+            success: function (result, xhr, message) {
+                var excel_data = result[0];
+                var position = parseInt(result[1]);
+                var amount = 0.0;
+                for (var i = 0; i < excel_data.length; i++) {
+                    data[i] = excel_data[i];
+                    if (i > 0) {
+                        amount += parseFloat(data[i][position]);
+                    }
+                }
+                $('#count').append(excel_data.length - 1);
+                $('#amount').append(amount);
+                hot.loadData(data);
+            },
+            error: function (xhr, error, reason) {
+                $('#modal-header').append('Error Occurred!!');
+                $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            },
+            contentType: "application/json;charset=utf-8",
+            dataType: 'json',
+        });
+
+
+        if ('{{redirect}}' == 'true') {
+            if ('{{disburse}}' == 1) {
+                $('#modal-header').append('Disbursed, Thanks!!');
+                $('#modal-message').append('<p>Disbursement process is running, you can check reports later</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            } else if ('{{disburse}}' == 0) {
+                $('#modal-header').append('Error occurred, We are sorry!!');
+                $('#modal-message').append('<p>Disbursement process stopped during an internal error, can you try again or contact you support team</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            } else if ('{{disburse}}' == -1) {
+                $('#modal-header').append('Error occurred from your side');
+                if ('{{utm_validate}}' == 'false') {
+                    $('#modal-message').append('<p>This document is disbursed before, if there\'s any error, please return back to the support team</p><br>');
+                }
+                {% if utm_owner %}
+                if ('{{utm_owner}}' == 'false') {
+                    $('#modal-message').append('You can\'t disburse this document');
+                }
+                {% endif %}
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            } else {
+
+            }
+        }
+
+    });
+</script>
+<script>
+    $(function () {
+        $("#notify_button").on("click", function () {
+            let btn = $(this)
+            let url = btn.attr("data-url");
+            $.ajax({
+                type: "POST",
+                url: url,
+                success: function (result, xhr, message) {
+                    console.log('succ');
+                    btn.replaceWith('<p>Checkers Notified</p>')
+                },
+                error: function (xhr, error, reason) {
+                    console.log('err')
+                    $('#modal-header').append('Error Occurred!!');
+                    $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                    $('#myModal').removeClass('hide');
+                    $('#myModal').modal();
+                }
+            });
+
+        });
+    });
+</script>
+{% endblock %}

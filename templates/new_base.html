@@ -7,25 +7,11 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-	<link rel="icon" href="images/favicon.ico" type="image/ico" />
 
-    <title>Gentelella Alela! | </title>
-
-    <!-- Bootstrap -->
-    <link href="{% static 'gentella/bootstrap.min.css' %}" rel="stylesheet">
-    <!-- Font Awesome -->
-  <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- NProgress -->
-    <link href="{% static 'gentella/nprogress.css' %}" rel="stylesheet">
-    <!-- bootstrap-progressbar -->
-    <link href="{% static 'gentella/bootstrap-progressbar-3.3.4.min.css' %}" rel="stylesheet">
-    <!-- JQVMap -->
-    <link href="{% static 'gentella/jqvmap.min.css' %}" rel="stylesheet"/>
-    <!-- bootstrap-daterangepicker -->
-    <link href="{% static 'gentella/daterangepicker.css' %}" rel="stylesheet">
+  
+    <title>PAYMOB | {% block title %}{% endblock %}</title>
+    {% include 'base_css.html' %}
     {% block gentellacss %}{% endblock %}
-    <!-- Custom Theme Style -->
-    <link href="{% static 'gentella/css/index/custom.min.css' %}" rel="stylesheet">
     {% block customcss %}{% endblock %}
   </head>
 
@@ -206,46 +192,7 @@
       </div>
     </div>
 
-    <!-- jQuery -->
-    <script src="{% static 'gentella/jquery.min.js' %}"></script>
-    <!-- Bootstrap -->
-    <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
-    <!-- FastClick -->
-    <script src="{% static 'gentella/fastclick.js' %}"></script>
-    <!-- NProgress -->
-    <script src="{% static 'gentella/nprogress.js' %}"></script>
-    <!-- Chart.js -->
-    <script src="{% static 'gentella/Chart.min.js' %}"></script>
-    <!-- gauge.js -->
-    <script src="{% static 'gentella/gauge.min.js' %}"></script>
-    <!-- bootstrap-progressbar -->
-    <script src="{% static 'gentella/bootstrap-progressbar.min.js' %}"></script>
-    <!-- iCheck -->
-    <script src="{% static 'gentella/icheck.min.js' %}"></script>
-    <!-- Skycons -->
-    <script src="{% static 'gentella/skycons.js' %}"></script>
-    <!-- Flot -->
-    <script src="{% static 'gentella/jquery.flot.js' %}"></script>
-    <script src="{% static 'gentella/jquery.flot.pie.js' %}"></script>
-    <script src="{% static 'gentella/jquery.flot.time.js' %}"></script>
-    <script src="{% static 'gentella/jquery.flot.stack.js' %}"></script>
-    <script src="{% static 'gentella/jquery.flot.resize.js' %}"></script>
-    <!-- Flot plugins -->
-    <script src="{% static 'gentella/jquery.flot.orderBars.js' %}"></script>
-    <script src="{% static 'gentella/jquery.flot.spline.min.js' %}"></script>
-    <script src="{% static 'gentella/curvedLines.js' %}"></script>
-    <!-- DateJS -->
-    <script src="{% static 'gentella/date.js' %}"></script>
-    <!-- JQVMap -->
-    <script src="{% static 'gentella/jquery.vmap.js' %}"></script>
-    <script src="{% static 'gentella/jquery.vmap.world.js' %}"></script>
-    <script src="{% static 'gentella/jquery.vmap.sampledata.js' %}"></script>
-    <!-- bootstrap-daterangepicker -->
-    <script src="{% static 'gentella/moment.min.js' %}"></script>
-    <script src="{% static 'gentella/daterangepicker.js' %}"></script>
-
-    <!-- Custom Theme Scripts -->
-    <script src="{% static 'gentella/js/index/custom.min.js' %}"></script>
+    {% include 'base_js.html' %}
     {% block script %} {% endblock %}
   </body>
 </html>

@@ -223,29 +223,27 @@ def bad_request_view(request):
 def document_view(request, doc_id):
     template_name = 'data/document_viewer.html'
     flag_to_edit = 0
-    try:
-        doc = Doc.objects.get(id=doc_id)
-        if doc.owner.hierarchy == request.user.hierarchy:
-            if doc.is_disbursed:
-                return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
-            if request.user.is_checker and not doc.can_be_disbursed:
-                raise Http404
-            if request.user.has_perm('data.edit_file_online'):
-                flag_to_edit = 1
-            context = {
-                'flag_to_edit': flag_to_edit,
-                'doc_id': doc_id,
-                'doc_name': doc.filename(),
-                'is_processed': doc.is_processed,
-                'can_be_disbursed': doc.can_be_disbursed,
-                'reason': doc.processing_failure_reason,
-            }
-        else:
-            messages.warning(request, 'This document doesn\'t exist')
-            return render(request, template_name=template_name, context={})
-    except Doc.DoesNotExist:
-        raise Http404
-
+    doc = get_object_or_404(Doc, id=doc_id)
+    if doc.owner.hierarchy == request.user.hierarchy:
+        if doc.is_disbursed:
+            return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
+        if request.user.is_checker and not doc.can_be_disbursed:
+            raise Http404
+        if request.user.has_perm('data.edit_file_online'):
+            flag_to_edit = 1
+        
+    else:
+        messages.warning(request, "This document doesn't exist")
+        return redirect(reverse("data:main_view"))
+  
+    context = {
+        'flag_to_edit': flag_to_edit,
+        'doc_id': doc_id,
+        'doc_name': doc.filename(),
+        'is_processed': doc.is_processed,
+        'can_be_disbursed': doc.can_be_disbursed,
+        'reason': doc.processing_failure_reason,
+    }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'
         context.update(request.GET.dict())

@@ -72,13 +72,16 @@ def handle_disbursement_file(doc_obj_id):
                     return False
                 msisdn.append(str_value)
 
-    if len(amount) == len(msisdn):
+    amount_length = len(amount)
+    if amount_length == len(msisdn):
         data = zip(amount, msisdn)
         try:
             DisbursementData.objects.bulk_create(
                 [DisbursementData(doc=doc_obj, amount=float(
                     i[0]), msisdn=i[1]) for i in data]
-            )
+            )            
+            doc_obj.total_amount = sum(amount)
+            doc_obj.total_count = amount_length
             doc_obj.is_processed = True
             doc_obj.save()
             notify_maker(doc_obj)

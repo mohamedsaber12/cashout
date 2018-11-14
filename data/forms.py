@@ -9,7 +9,7 @@ from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
-from data.models import Doc, FileCategory
+from data.models import Doc, DocReview, FileCategory
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 
@@ -34,6 +34,29 @@ MIME_UPLOAD_FILE_TYPES = [
 
 TASK_UPLOAD_FILE_MAX_SIZE = 5242880
 UNICODE = set(';:></*%$.\\')
+
+
+class DocReviewForm(forms.ModelForm):
+    comment = forms.CharField(required=False)
+    is_ok = forms.CharField()
+
+    class Meta:
+        model = DocReview
+        fields = ['is_ok', 'comment']
+
+    def clean_is_ok(self):
+        if self.cleaned_data.get('is_ok') == '0':
+            self.cleaned_data['is_ok'] = False
+        else:
+            self.cleaned_data['is_ok'] = True
+        return self.cleaned_data['is_ok']
+
+    def clean_comment(self):
+        print('clean_comment', self.cleaned_data.get(
+            'is_ok'), self.cleaned_data.get('comment'))
+        if not self.cleaned_data.get('is_ok') and not self.cleaned_data.get('comment'):
+            raise forms.ValidationError('comment field is required')
+        return self.cleaned_data.get('comment')
 
 
 class FileDocumentForm(forms.ModelForm):

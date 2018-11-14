@@ -4,7 +4,16 @@
 {% block title %} Document details{% endblock %}
 {% block customcss %}
     <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
-{% endblock %}
+    <style>
+        .user_name{
+    font-size:14px;
+    font-weight: bold;
+}
+.comments-list .media{
+    border-bottom: 1px dotted #ccc;
+}
+    </style>
+    {% endblock %}
 
 {% block body %}
 {% if doc_id %}
@@ -39,6 +48,7 @@
                         {% else %}
                             <p>Pending</p>
                         {% endif %}
+                    
                     </div>
                 {% elif request.user.is_maker %}
                     <div class="col-sm-4 col-md-2">
@@ -55,6 +65,62 @@
                 {% endif %}
             </div>
         </div>
+        {% if not user_review_exist%}
+            <div class="row">
+                <div class="col-md-4">
+                    <h3>Review</h3>
+                    <form method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc_id %}">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="exampleFormControlSelect1">Accept or Reject</label>
+                            <select  name="is_ok" class="form-control" id="reviewSelect">
+                                <option value="1">Accept</option>
+                                <option value="0">Reject</option>
+                            </select>
+                        </div>
+            
+                        <div hidden class="form-group" id="reviewComment">
+                            <label >Rejection reason (required)</label>
+                            <textarea name="comment" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+
+                    </form>
+                    {% if review_form_errors %}
+                        <p>{{review_form_errors}}</p>
+                    {%endif%}
+                </div>
+    
+            </div>
+        {%endif%}
+        
+        {% if reviews and reviews.exists %}
+        
+            <div class="row">
+                <div class="col-md-6">
+                    <h3>Reviews</h3>
+                    
+                    <div class="comments-list">  
+                        {% for review in reviews%}
+                            
+                            <div class="media">
+                                <p class="pull-right"><small>{{review.timestamp|date}}</small></p>
+                                <div class="media-body">
+                                    <h4 class="media-heading user_name">{{review.user_created.username}} | 
+                                        {% if review.is_ok %}Accepted{%else%}Rejected{%endif%}</h4>
+                                    {% if review.comment %}
+                                        {{ review.comment }}
+                                    {%endif%}
+                                </div>
+                            </div>
+                        
+                        {% endfor %}
+            
+                    </div>
+                
+                </div>
+            </div>
+        {%endif%}
 <div id="myModal" class="modal fade" role="dialog" tabindex="-1">
       <div class="modal-dialog">
 
@@ -99,6 +165,9 @@
 
       </div>
     </div>
+    </div>
+
+
 
 
 {% endif %}
@@ -177,6 +246,15 @@
 
             }
         }
+        
+        $('#reviewSelect').on('change', function () {
+        
+            if (this.value == 1)
+                $('#reviewComment').hide();
+            else
+                $('#reviewComment').show();
+        });
+
 
     });
 </script>

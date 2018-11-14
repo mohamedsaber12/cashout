@@ -24,6 +24,8 @@ class Doc(models.Model):
     is_processed = models.BooleanField(default=False)
     txn_id = models.CharField(max_length=16, null=True, blank=True)
     processing_failure_reason = models.CharField(max_length=256, null=True)
+    total_amount = models.FloatField(default=0)
+    total_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         permissions = (("upload_file", "upload file"),

@@ -21,8 +21,8 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.static import serve
 
-from data.forms import DownloadFilterForm, FileDocumentForm
-from data.models import Doc, FileCategory
+from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
+from data.models import Doc, DocReview, FileCategory
 from data.tasks import handle_disbursement_file
 from data.utils import get_client_ip, paginator
 from users.decorators import setup_required
@@ -224,18 +224,39 @@ def document_view(request, doc_id):
     template_name = 'data/document_viewer.html'
     flag_to_edit = 0
     doc = get_object_or_404(Doc, id=doc_id)
+    review_form_errors = None
+    reviews = None
+    user_review_exist = None
     if doc.owner.hierarchy == request.user.hierarchy:
         if doc.is_disbursed:
             return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
-        if request.user.is_checker and not doc.can_be_disbursed:
-            raise Http404
+        if request.user.is_checker:
+            if not doc.can_be_disbursed:
+                raise Http404
+
+            reviews = DocReview.objects.filter(doc=doc)
+            user_review_exist = DocReview.objects.filter(
+                doc=doc, user_created=request.user).exists()
+
+            if request.method == "POST" and doc.can_be_disbursed and not user_review_exist:
+
+                doc_review_form = DocReviewForm(request.POST)
+                if doc_review_form.is_valid():
+                    doc_review_obj = doc_review_form.save(commit=False)
+                    doc_review_obj.user_created = request.user
+                    doc_review_obj.doc = doc
+                    doc_review_obj.save()
+                    user_review_exist = True
+                else:
+                    review_form_errors = doc_review_form.errors
+
         if request.user.has_perm('data.edit_file_online'):
             flag_to_edit = 1
-        
+
     else:
         messages.warning(request, "This document doesn't exist")
         return redirect(reverse("data:main_view"))
-  
+
     context = {
         'flag_to_edit': flag_to_edit,
         'doc_id': doc_id,
@@ -243,6 +264,9 @@ def document_view(request, doc_id):
         'is_processed': doc.is_processed,
         'can_be_disbursed': doc.can_be_disbursed,
         'reason': doc.processing_failure_reason,
+        'review_form_errors': review_form_errors,
+        'reviews': reviews,
+        'user_review_exist': user_review_exist
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'

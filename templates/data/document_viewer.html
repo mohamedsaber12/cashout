@@ -3,124 +3,181 @@
 {% load static %}
 {% block title %} Document details{% endblock %}
 {% block customcss %}
-    <link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
+<!-- Datatables -->
+    <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+    
     <style>
         .user_name{
-    font-size:14px;
-    font-weight: bold;
-}
-.comments-list .media{
-    border-bottom: 1px dotted #ccc;
-}
+            font-size:14px;
+            font-weight: bold;
+        }
+        .comments-list .media{
+            border-bottom: 1px dotted #ccc;
+        }
     </style>
     {% endblock %}
 
 {% block body %}
-{% if doc.id %}
+
+    <!-- button -->
     <div class="row">
-        <h2 class="text-center">{{doc.filename}}</h2>
-    </div>
-        <div class="row">
-            <div class="col-sm-12 col-md-6" style="padding-top: 5%">
-                    <div id="excel" data-url="{% url 'disbursement_api:docrows' doc.id %}"></div>
-            </div>
-            <div class="col-sm-12 col-md-6" style="padding-top: 5%">
-                <div class="col-sm-8 col-md-4">
-                    <table>
-                        <thead>
-                            <tr>
-                                <td>Count</td>
-                                <td>Amount</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td id="count"></td>
-                                <td id="amount"></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                {% if request.user.is_checker %}
-                    <div class="col-sm-4 col-md-2">
-                        {% if can_user_disburse.can_disburse %}
-                            <a id="disburse_button" class="btn btn-default" >Disburse</a>
-                        {% else %}
-                            <p>{{can_user_disburse.reason}}</p>
-                        {% endif %}
-                    
+        <!-- checker buttons -->
+        {% if request.user.is_checker %}
+            <div class="col-md-12 pull-right">
+                {% if can_user_disburse.can_disburse %}
+                    <button id="disburse_button" class="btn btn-success pull-right">Disburse</button>
+                {% else %}
+                    <button disabled class="btn btn-success pull-right">Disburse</button>   
+                    <div class="alert alert-info pull-left" role="alert">
+                        {{can_user_disburse.reason}}
                     </div>
-                {% elif request.user.is_maker %}
-                    <div class="col-sm-4 col-md-2">
-                        {% if doc.is_processed and not doc.can_be_disbursed %}
-                            <a id="notify_button" class="btn btn-default" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">Notify Chekers</a>
-                        {% elif doc.can_be_disbursed %}
-                            <p>Checkers Notified</p>
-                        {% elif doc.processing_failure_reason %}
-                            <p>{{doc.processing_failure_reason}}, fix it and upload again! Thanks</p>
-                        {% else %}
-                            <p>Pending</p>
-                        {% endif %}
+                {% endif %}
+            
+            </div>
+        <!-- maker buttons -->
+        {% elif request.user.is_maker %}
+            <div class="col-md-12 pull-right">
+                {% if doc.is_processed and not doc.can_be_disbursed %}
+                    <button id="notify_button" class="btn btn-success pull-right" 
+                        data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
+                        Notify Chekers
+                    </button>
+                {% elif doc.can_be_disbursed %}
+                    <div class="alert alert-info pull-left" role="alert">
+                        Checkers Notified
+                    </div>
+                {% elif doc.processing_failure_reason %}
+                    <div class="alert alert-info pull-left" role="alert">
+                        {{doc.processing_failure_reason}}, fix it and upload again! Thanks
+                    </div>
+                {% else %}
+                    <div class="alert alert-info pull-left" role="alert">
+                        Pending
                     </div>
                 {% endif %}
             </div>
-        </div>
-        {% if not user_review_exist%}
-            <div class="row">
-                <div class="col-md-4">
-                    <h3>Review</h3>
-                    <form method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc.id %}">
-                        {% csrf_token %}
-                        <div class="form-group">
-                            <label for="exampleFormControlSelect1">Accept or Reject</label>
-                            <select  name="is_ok" class="form-control" id="reviewSelect">
-                                <option value="1">Accept</option>
-                                <option value="0">Reject</option>
-                            </select>
-                        </div>
-            
-                        <div hidden class="form-group" id="reviewComment">
-                            <label >Rejection reason (required)</label>
-                            <textarea name="comment" class="form-control" id="exampleFormControlTextarea1" rows="3"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Submit</button>
+        {% endif %}
 
-                    </form>
-                    {% if review_form_errors %}
-                        <p>{{review_form_errors}}</p>
-                    {%endif%}
+    </div>
+
+    <!-- data table -->
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Document data <small>Document name: {{doc.filename}}</small></h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                        <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                        </li>
+                    </ul>
+                    <div class="clearfix"></div>
                 </div>
-    
+                <div class="x_content">
+                    <p class="text-muted font-13 m-b-30">
+                        Count: {{doc.total_count}} | Total Amount: {{doc.total_amount}}
+                    </p>
+                    <table id="doc-datatable" class="table table-striped table-bordered">
+                       
+                    </table>
+                </div>
             </div>
-        {%endif%}
-        
-        {% if reviews and reviews.exists %}
-        
-            <div class="row">
-                <div class="col-md-6">
-                    <h3>Reviews</h3>
-                    
-                    <div class="comments-list">  
-                        {% for review in reviews%}
-                            
-                            <div class="media">
-                                <p class="pull-right"><small>{{review.timestamp|date}}</small></p>
-                                <div class="media-body">
-                                    <h4 class="media-heading user_name">{{review.user_created.username}} | 
-                                        {% if review.is_ok %}Accepted{%else%}Rejected{%endif%}</h4>
-                                    {% if review.comment %}
-                                        {{ review.comment }}
-                                    {%endif%}
+        </div>
+    </div>
+
+    {% if request.user.is_checker and not user_review_exist%}
+       
+        <div class="row">
+            <div class="col-md-8 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Review</h2>
+                        <ul class="nav navbar-right panel_toolbox">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                            </li>            
+                        </ul>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <br />
+                        <form class="form-horizontal form-label-left" method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc.id %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="control-label col-md-3 col-sm-3 col-xs-12">Accept or Reject</label>
+                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                    <select name="is_ok" class="form-control" id="reviewSelect">
+                                        <option value="1">Accept</option>
+                                        <option value="0">Reject</option>
+                                    </select>
                                 </div>
                             </div>
-                        
-                        {% endfor %}
+
+                            <div hidden class="form-group" id="reviewComment">
+                                <label class="control-label col-md-3 col-sm-3 col-xs-12">Rejection reason <span class="required">*</span>
+                                </label>
+                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                    <textarea name="comment" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="ln_solid"></div>
+                            <div class="form-group">
+                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                    <button type="submit" class="btn btn-success">Submit</button>
+                                </div>
+                            </div>
             
+                        </form>
                     </div>
-                
                 </div>
             </div>
-        {%endif%}
+        </div>
+        
+    {%endif%}
+        
+    {% if reviews and reviews.exists %}
+    
+        <div class="row">
+            <div class="col-md-8">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Reviews</h2>
+                        <ul class="nav navbar-right panel_toolbox">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                            </li>
+                        </ul>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                      
+                        <div class="comments-list">
+                            {% for review in reviews%}
+                        
+                                <div class="media">
+                                    <p class="pull-right"><small>{{review.timestamp|date}}</small></p>
+                                    <div class="media-body">
+                                        <h4 class="media-heading user_name">{{review.user_created.username}} |
+                                            {% if review.is_ok %}Accepted{%else%}Rejected{%endif%}</h4>
+                                        {% if review.comment %}
+                                        {{ review.comment }}
+                                        {%endif%}
+                                    </div>
+                                </div>
+                        
+                            {% endfor %}
+                        
+                        </div>
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {%endif%}
 <div id="myModal" class="modal fade" role="dialog" tabindex="-1">
       <div class="modal-dialog">
 
@@ -170,43 +227,53 @@
 
 
 
-{% endif %}
+
 {% endblock %}
 
 {% block script %}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.js"></script>
+<!-- Datatables -->
+<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 <script>
     $(function () {
+
+        
+
         $("#disburse_button").on("click", function () {
             $('#AgentModal').removeClass('hide');
             $('#AgentModal').modal();
         });
 
-        var container = document.getElementById('excel');
-        var hot = new Handsontable(container, {
-            minSpareRows: 1,
-            rowHeaders: true,
-            colHeaders: true
-        });
         var data = [];
-        let url = $('#excel').attr("data-url");
+        let url = "{% url 'disbursement_api:docrows' doc.id %}"
         $.ajax({
             type: "GET",
             url: url,
             success: function (result, xhr, message) {
-                var excel_data = result[0];
-                var position = parseInt(result[1]);
-                var amount = 0.0;
-                for (var i = 0; i < excel_data.length; i++) {
-                    data[i] = excel_data[i];
-                    if (i > 0) {
-                        amount += parseFloat(data[i][position]);
-                    }
+                let excel_data = result[0];
+                let columns_arr = excel_data[0].concat([]);
+                let columns_title=[];
+                for(const head of columns_arr){
+                    columns_title.push({title: head})
                 }
-                $('#count').append(excel_data.length - 1);
-                $('#amount').append(amount);
-                hot.loadData(data);
+                excel_data.splice(0, 1);
+
+                $('#doc-datatable').DataTable({
+                    data: excel_data,
+                    columns: columns_title
+                });
+                
             },
             error: function (xhr, error, reason) {
                 $('#modal-header').append('Error Occurred!!');
@@ -267,8 +334,10 @@
                 type: "POST",
                 url: url,
                 success: function (result, xhr, message) {
-                    console.log('succ');
-                    btn.replaceWith('<p>Checkers Notified</p>')
+                    elem = `<div class="alert alert-info pull-left" role="alert">
+                        Checkers Notified
+                    </div>`
+                    btn.replaceWith(elem)
                 },
                 error: function (xhr, error, reason) {
                     console.log('err')

@@ -218,7 +218,6 @@ def bad_request_view(request):
     return render(request, 'data/400.html', status=400)
 
 
-@setup_required
 @login_required
 def document_view(request, doc_id):
     template_name = 'data/document_viewer.html'

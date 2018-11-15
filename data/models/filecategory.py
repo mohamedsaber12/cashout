@@ -49,6 +49,10 @@ class FileCategory(models.Model):
     amount_field = models.CharField(max_length=128, null=True, blank=True,
                                     verbose_name='what is amount field?',
                                     help_text='for ex: loan_field')
+    no_of_reviews_required = models.PositiveSmallIntegerField(default=3,
+                                                              verbose_name='Number of reviews',
+                                                              help_text='Number of reviews required to be disbursed'
+                                                              )
 
     objects = FileCategoryManager()
 

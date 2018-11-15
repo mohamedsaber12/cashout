@@ -126,7 +126,7 @@ def notifiy_checkers(doc_id):
     if not checkers.exists():
         return
 
-    doc_view_url = doc_obj.get_doc_view_url()
+    doc_view_url = doc_obj.get_absolute_url()
     message = f"""Dear Checker 
         The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
         Thanks, BR"""
@@ -140,7 +140,7 @@ def notifiy_checkers(doc_id):
 
 def notify_maker(doc):
     maker = doc.owner
-    doc_view_url = doc.get_doc_view_url()
+    doc_view_url = doc.get_absolute_url()
 
     MESSAGE_SUCC = f"""Dear {maker.first_name} 
         The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 

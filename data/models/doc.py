@@ -4,7 +4,6 @@ import os
 
 from django.conf import settings
 from django.db import models
-from django.urls import reverse
 
 from data.utils import pkgen, update_filename
 
@@ -24,8 +23,8 @@ class Doc(models.Model):
     is_processed = models.BooleanField(default=False)
     txn_id = models.CharField(max_length=16, null=True, blank=True)
     processing_failure_reason = models.CharField(max_length=256, null=True)
-    total_amount = models.FloatField(default=0)
-    total_count = models.PositiveIntegerField(default=0)
+    total_amount = models.FloatField(default=False)
+    total_count = models.PositiveIntegerField(default=False)
 
     class Meta:
         permissions = (("upload_file", "upload file"),
@@ -57,5 +56,24 @@ class Doc(models.Model):
     def count_doc_related(self):
         return self.file_category.doc.count()
 
-    def get_doc_view_url(self):
+    def get_absolute_url(self):
+        from django.urls import reverse
         return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+
+    def can_user_disburse(self, checker):
+        reviews = self.docreview_set.all()
+        reason = ''
+        if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
+            if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
+                if checker.level.max_amount_can_be_disbursed >= self.total_amount:
+                    return True, reason, 0
+                else:
+                    reason = "Not Permitted to disburse"
+                    code = 3
+            else:
+                reason = "Document is still suspend due to shortage of checking"
+                code = 2
+        else:
+            reason = "Issues are submitted by some users, please resolve any conflict first"
+            code = 1
+        return False, reason, code

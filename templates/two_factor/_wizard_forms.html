@@ -1,0 +1,10 @@
+{% load custom_tags %}
+<table>
+  {{ wizard.management_form }}
+    {% for field in wizard.form %}
+        <div class="form-group">
+            <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label_tag }}</label>
+            <div class="col-md-6 col-sm-6 col-xs-12">{{ field | addcss:'form-control'}}</div>
+        </div>
+    {% endfor %}
+</table>

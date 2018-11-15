@@ -4,31 +4,23 @@ import datetime
 import json
 import logging
 
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
-from django.db import IntegrityError
-from django.db import transaction
+from django.db import IntegrityError, transaction
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView
 
 from data.forms import FileCategoryForm
-from users.forms import (
-    SetPasswordForm,
-    PasswordChangeForm,
-    LevelFormSet,
-    MakerMemberFormSet,
-    CheckerMemberFormSet
-)
+from data.models import FileCategory
 from data.utils import get_client_ip
-from django.contrib.auth import authenticate, login, logout
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, redirect
-
-from users.models import CheckerUser
-from users.models import Levels
-from users.models import MakerUser
-from users.models import Setup
+from users.forms import (CheckerMemberFormSet, LevelFormSet,
+                         MakerMemberFormSet, PasswordChangeForm,
+                         SetPasswordForm)
+from users.models import CheckerUser, Levels, MakerUser, Setup
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -138,8 +130,8 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
             data = request.POST.copy()
             if data['step'] == '1':
                 initial_query = Levels.objects.filter(
-                        user__hierarchy=self.request.user.hierarchy
-                    )
+                    created__hierarchy=self.request.user.hierarchy
+                )
                 form = LevelFormSet(
                     data,
                     prefix='level',
@@ -167,7 +159,7 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
                 try:
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
-                        obj.user_id = request.user.root.id
+                        obj.created_id = request.user.root.id
                         try:
                             obj.save()
                         except IntegrityError:
@@ -175,17 +167,21 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
                 except TypeError:
                     objs.user_created = request.user.root
                     objs.save()
-                updated_levels = Levels.objects.filter(user__hierarchy=request.user.hierarchy)
+                updated_levels = Levels.objects.filter(
+                    created__hierarchy=request.user.hierarchy)
                 payload_updated_levels = updated_levels.\
                     extra(select={'amount': 'max_amount_can_be_disbursed', 'level': 'level_of_authority', 'value': 'users_levels.id'}).\
                     values('amount', 'level', 'value')
-                payload = {"valid": True, "data": "levels", "objs": list(payload_updated_levels)} if data["step"] == "1" else {"valid": True}
+                payload = {"valid": True, "data": "levels", "objs": list(
+                    payload_updated_levels)} if data["step"] == "1" else {"valid": True}
                 if data['step'] == '1':
-                    setup = Setup.objects.get(user__hierarchy=request.user.hierarchy)
+                    setup = Setup.objects.get(
+                        user__hierarchy=request.user.hierarchy)
                     setup.levels_setup = True
                     setup.save()
                 elif data['step'] == '3':
-                    setup = Setup.objects.get(user__hierarchy=request.user.hierarchy)
+                    setup = Setup.objects.get(
+                        user__hierarchy=request.user.hierarchy)
                     setup.users_setup = True
                     setup.save()
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
@@ -210,11 +206,16 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
         )
         data['levelform'] = LevelFormSet(
             queryset=Levels.objects.filter(
-                user__hierarchy=self.request.user.hierarchy
+                created__hierarchy=self.request.user.hierarchy
             ),
             prefix='level'
         )
-        data['filecategoryform'] = FileCategoryForm(instance=self.request.user.file_category)
+        try:
+            data['filecategoryform'] = FileCategoryForm(
+                instance=self.request.user.file_category)
+        except FileCategory.DoesNotExist:
+            data['filecategoryform'] = FileCategoryForm()
+
         return data
 
     def form_invalid(self, **forms):
@@ -246,7 +247,6 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
             return self.form_invalid(makerform=makerform, checkerform=checkerform, levelform=levelform)
 
     def get_form(self, form_class=None):
-
         """Return an instance of the form to be used in this view."""
         if form_class is None:
             form_class = self.get_form_class()

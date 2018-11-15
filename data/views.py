@@ -225,7 +225,9 @@ def document_view(request, doc_id):
     doc = get_object_or_404(Doc, id=doc_id)
     review_form_errors = None
     reviews = None
+    # True if user already reviewed this doc
     user_review_exist = None
+    can_user_disburse = {}
     if doc.owner.hierarchy == request.user.hierarchy:
         if doc.is_disbursed:
             return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
@@ -236,8 +238,13 @@ def document_view(request, doc_id):
             reviews = DocReview.objects.filter(doc=doc)
             user_review_exist = DocReview.objects.filter(
                 doc=doc, user_created=request.user).exists()
-
-            if request.method == "POST" and doc.can_be_disbursed and not user_review_exist:
+            can_user_disburse = doc.can_user_disburse(request.user)
+            can_user_disburse = {
+                'can_disburse': can_user_disburse[0],
+                'reason': can_user_disburse[1],
+                'code': can_user_disburse[2]
+            }
+            if request.method == "POST" and not user_review_exist:
 
                 doc_review_form = DocReviewForm(request.POST)
                 if doc_review_form.is_valid():
@@ -258,14 +265,11 @@ def document_view(request, doc_id):
 
     context = {
         'flag_to_edit': flag_to_edit,
-        'doc_id': doc_id,
-        'doc_name': doc.filename(),
-        'is_processed': doc.is_processed,
-        'can_be_disbursed': doc.can_be_disbursed,
-        'reason': doc.processing_failure_reason,
+        'doc': doc,
         'review_form_errors': review_form_errors,
         'reviews': reviews,
-        'user_review_exist': user_review_exist
+        'user_review_exist': user_review_exist,
+        'can_user_disburse': can_user_disburse
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'

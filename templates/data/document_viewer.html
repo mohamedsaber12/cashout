@@ -16,13 +16,13 @@
     {% endblock %}
 
 {% block body %}
-{% if doc_id %}
+{% if doc.id %}
     <div class="row">
-        <h2 class="text-center">{{doc_name}}</h2>
+        <h2 class="text-center">{{doc.filename}}</h2>
     </div>
         <div class="row">
             <div class="col-sm-12 col-md-6" style="padding-top: 5%">
-                    <div id="excel" data-url="{% url 'disbursement_api:docrows' doc_id %}"></div>
+                    <div id="excel" data-url="{% url 'disbursement_api:docrows' doc.id %}"></div>
             </div>
             <div class="col-sm-12 col-md-6" style="padding-top: 5%">
                 <div class="col-sm-8 col-md-4">
@@ -43,21 +43,21 @@
                 </div>
                 {% if request.user.is_checker %}
                     <div class="col-sm-4 col-md-2">
-                        {% if can_be_disbursed %}
+                        {% if can_user_disburse.can_disburse %}
                             <a id="disburse_button" class="btn btn-default" >Disburse</a>
                         {% else %}
-                            <p>Pending</p>
+                            <p>{{can_user_disburse.reason}}</p>
                         {% endif %}
                     
                     </div>
                 {% elif request.user.is_maker %}
                     <div class="col-sm-4 col-md-2">
-                        {% if is_processed and not can_be_disbursed %}
-                            <a id="notify_button" class="btn btn-default" data-url="{% url 'disbursement_api:allow_doc_disburse' doc_id %}">Notify Chekers</a>
-                        {% elif can_be_disbursed %}
+                        {% if doc.is_processed and not doc.can_be_disbursed %}
+                            <a id="notify_button" class="btn btn-default" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">Notify Chekers</a>
+                        {% elif doc.can_be_disbursed %}
                             <p>Checkers Notified</p>
-                        {% elif reason %}
-                            <p>{{reason}}, fix it and upload again! Thanks</p>
+                        {% elif doc.processing_failure_reason %}
+                            <p>{{doc.processing_failure_reason}}, fix it and upload again! Thanks</p>
                         {% else %}
                             <p>Pending</p>
                         {% endif %}
@@ -69,7 +69,7 @@
             <div class="row">
                 <div class="col-md-4">
                     <h3>Review</h3>
-                    <form method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc_id %}">
+                    <form method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc.id %}">
                         {% csrf_token %}
                         <div class="form-group">
                             <label for="exampleFormControlSelect1">Accept or Reject</label>
@@ -150,7 +150,7 @@
             <h4 class="modal-title" id="agent-modal-header">Enter Agent Pin</h4>
           </div>
         <div class="form-group">
-          <form method="post" id="pinform" action="{% url 'disbursement:disburse' doc_id %}">
+          <form method="post" id="pinform" action="{% url 'disbursement:disburse' doc.id %}">
               {% csrf_token %}
               <div class="modal-body">
                 <label for="agent-pin">Pin</label>

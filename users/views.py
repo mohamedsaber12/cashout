@@ -140,7 +140,8 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
             elif data['step'] == '3':
                 form = CheckerMemberFormSet(
                     data,
-                    prefix='checker'
+                    prefix='checker',
+                    form_kwargs={'request': self.request}
                 )
             elif data['step'] == '2':
                 form = MakerMemberFormSet(
@@ -148,7 +149,11 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
                     prefix='maker'
                 )
             elif data['step'] == '4':
-                form = FileCategoryForm(data=request.POST)
+                try:
+                    form = FileCategoryForm(
+                        instance=self.request.user.file_category, data=request.POST)
+                except FileCategory.DoesNotExist:
+                    form = FileCategoryForm(data=request.POST)
             if form and form.is_valid():
                 objs = form.save(commit=False)
                 try:
@@ -184,6 +189,8 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
                         user__hierarchy=request.user.hierarchy)
                     setup.users_setup = True
                     setup.save()
+                if data['step'] == '4' and payload['valid']:
+                    return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
             print(form.errors)
             return HttpResponse(content=json.dumps({"valid": False, "reason": "validation", "errors": form.errors}),
@@ -202,7 +209,8 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
             queryset=CheckerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy
             ),
-            prefix='checker'
+            prefix='checker',
+            form_kwargs={'request': self.request}
         )
         data['levelform'] = LevelFormSet(
             queryset=Levels.objects.filter(

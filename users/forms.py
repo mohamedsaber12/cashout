@@ -288,7 +288,7 @@ class LevelForm(forms.ModelForm):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.fields['level_of_authority'].choices = [
-            (1, 'Level 1'), (2, 'Level 2'), (3, 'Level 4'), (4, 'Level 4')]
+            (1, 'Level 1'), (2, 'Level 2'), (3, 'Level 3'), (4, 'Level 4')]
 
 
 class BaseLevelFormSet(BaseModelFormSet):
@@ -336,8 +336,13 @@ class MakerCreationForm(forms.ModelForm):
 
 
 class CheckerCreationForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["level"].choices = [('', '------')] + [
+            (r.id, str(r)) for r in Levels.objects.filter(created__hierarchy=request.user.hierarchy)
+            ]
+
         for field in iter(self.fields):
             # get current classes from Meta
             classes = self.fields[field].widget.attrs.get("class")
@@ -365,7 +370,7 @@ class CheckerCreationForm(forms.ModelForm):
 
 
 LevelFormSet = modelformset_factory(
-    model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4, extra=2, can_delete=True, validate_max=True)
+    model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4, min_num=1, can_delete=True, validate_max=True, extra=0)
 
 MakerMemberFormSet = modelformset_factory(
     model=MakerUser, form=MakerCreationForm, can_delete=True)

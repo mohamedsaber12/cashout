@@ -73,6 +73,7 @@ class DisburseAPIView(APIView):
                 doc_obj = Doc.objects.get(
                     id=serializer.validated_data['doc_id'])
                 doc_obj.is_disbursed = True
+                doc_obj.disbursed_by = request.user
                 try:
                     txn_status = response.json()["TXNSTATUS"]
                     try:
@@ -170,5 +171,5 @@ class AllowDocDisburse(APIView):
             doc_obj.save()
             notifiy_checkers.delay(doc_obj.id)
             return Response(status=200)
-        
+
         return Response(status=403)

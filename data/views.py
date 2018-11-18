@@ -17,8 +17,10 @@ from django.http import (Http404, HttpResponse, HttpResponseRedirect,
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.views.generic import ListView
 from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
@@ -324,3 +326,13 @@ def doc_download(request, doc_id):
         return response
     else:
         raise Http404
+
+
+@method_decorator(login_required, name='dispatch')
+class DocumentDetailsListView(ListView):
+    model = Doc
+    template_name = 'data/document_details_list.html'
+
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            owner__hierarchy=self.request.user.hierarchy)

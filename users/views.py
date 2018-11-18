@@ -9,10 +9,12 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError, transaction
+from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.generic import CreateView
+from django.views.generic import ListView
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
@@ -20,7 +22,7 @@ from data.utils import get_client_ip
 from users.forms import (CheckerMemberFormSet, LevelFormSet,
                          MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm)
-from users.models import CheckerUser, Levels, MakerUser, Setup
+from users.models import CheckerUser, Levels, MakerUser, Setup, User
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -261,3 +263,32 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
         kwargs = self.get_form_kwargs()
         kwargs.pop('instance')
         return form_class(**kwargs)
+
+
+class Members(LoginRequiredMixin, ListView):
+    model = User
+    paginate_by = 20
+    context_object_name = 'users'
+    template_name = 'users/members.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(hierarchy=self.request.user.hierarchy)
+        if self.request.GET.get("search"):
+            search = self.request.GET.get("search")
+            return qs.filter(Q(username__icontains=search) |
+                             Q(first_name__icontains=search) |
+                             Q(last_name__icontains=search)
+                             )
+        if self.request.GET.get("q"):
+            type_of = self.request.GET.get("q")
+            if type_of == 'maker':
+                value = 1
+            elif type_of == 'checker':
+                value = 2
+            else:
+                return qs
+            return qs.filter(user_type=value)
+        return qs
+
+

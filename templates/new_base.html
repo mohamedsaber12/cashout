@@ -52,7 +52,12 @@
                       <li><a href="index3.html">Reports</a></li>
                     </ul>
                   </li>
-                    <li><a><i class="fa fa-home"></i> Members</a></li>
+                    <li><a><i class="fa fa-home"></i> Members <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                          <li><a href="index.html">Add member</a></li>
+                          <li><a href="{% url 'users:members' %}">All members</a></li>
+                        </ul>
+                    </li>
                     <li><a><i class="fa fa-home"></i> Settings</a></li>
                 </ul>
               </div>

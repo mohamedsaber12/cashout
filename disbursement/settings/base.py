@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework_expiring_authtoken',
     'bootstrap4',
     'django_celery_beat',
+    'imagekit',
 
 
     # security

@@ -23,5 +23,7 @@ urlpatterns = [
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
     path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
-    path('settings/edit/', views.SettingsUpView.as_view(), name='settings_edit')
+    path('settings/edit/', views.SettingsUpView.as_view(), name='settings_edit'),
+    path('members/', views.Members.as_view(), name='members')
+
 ]

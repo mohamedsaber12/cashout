@@ -7,7 +7,8 @@ from django.contrib.auth.models import AbstractUser, UserManager as AbstractUser
 from django.db import models
 from django.db.models import Q
 from django.utils.functional import cached_property
-
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
 
 TYPES = (
     (1, 'Maker'),
@@ -38,6 +39,10 @@ class User(AbstractUser):
     email = models.EmailField('email address', blank=False)
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
+    avatar_thumbnail = ProcessedImageField(upload_to='avatars',
+                                           processors=[ResizeToFill(100, 100)],
+                                           format='JPEG',
+                                           options={'quality': 60}, null=True, default='pp.jpeg')
 
     objects = UserManager()
 

@@ -19,6 +19,8 @@ class Doc(models.Model):
                             null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_disbursed = models.BooleanField(default=False)
+    disbursed_by = models.ForeignKey(
+        "users.CheckerUser", on_delete=models.CASCADE, null=True, related_name='document')
     can_be_disbursed = models.BooleanField(default=False)
     is_processed = models.BooleanField(default=False)
     txn_id = models.CharField(max_length=16, null=True, blank=True)
@@ -61,7 +63,7 @@ class Doc(models.Model):
         return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
 
     def can_user_disburse(self, checker):
-        reviews = self.docreview_set.all()
+        reviews = self.reviews.all()
         reason = ''
         if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
             if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
@@ -77,3 +79,19 @@ class Doc(models.Model):
             reason = "Issues are submitted by some users, please resolve any conflict first"
             code = 1
         return False, reason, code
+
+    def disbursement_ratio(self):
+        """return disbursement success percentage"""
+        if not self.is_processed or not self.can_be_disbursed:
+            return 0
+        disbursement_data_count = self.disbursement_data.count()
+        if disbursement_data_count == 0:
+            return 0
+
+        failed_disbursement_count = self.disbursement_data.filter(
+            is_disbursed=False).count()
+        success_percentage = (
+            (disbursement_data_count-failed_disbursement_count) * 100) / disbursement_data_count
+        success_percentage = round(
+            success_percentage, 2) if success_percentage != 0 else 0
+        return success_percentage

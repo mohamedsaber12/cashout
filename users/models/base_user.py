@@ -12,6 +12,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 TYPES = (
+    (0, 'Super')
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
@@ -32,7 +33,7 @@ class UserManager(AbstractUserManager):
 class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
     otp = models.CharField(max_length=6, null=True, blank=True)
-    user_type = models.PositiveSmallIntegerField(choices=TYPES, default=1)
+    user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(
         null=True, db_index=True, default=0)
     is_otp_verified = models.BooleanField(default=False)

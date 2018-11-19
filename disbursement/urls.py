@@ -13,12 +13,13 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import include
-from django.urls import path
-from two_factor.urls import urlpatterns as tf_urls
 from django.conf import settings
+from django.conf.urls.static import static
+from django.contrib import admin
+from django.urls import include, path
+from two_factor.urls import urlpatterns as tf_urls
 
+from data.views import protected_serve
 
 if settings.DEBUG:
     import debug_toolbar
@@ -38,3 +39,6 @@ urlpatterns += [
     path('', include(tf_urls, namespace='two_factor')),
     path('api/secure/', include('disb.api.urls', namespace='disbursement_api'))
 ]
+
+urlpatterns += static(settings.MEDIA_URL,
+                      document_root=settings.MEDIA_ROOT, view=protected_serve)

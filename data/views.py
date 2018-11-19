@@ -223,7 +223,6 @@ def bad_request_view(request):
 @login_required
 def document_view(request, doc_id):
     template_name = 'data/document_viewer.html'
-    flag_to_edit = 0
     doc = get_object_or_404(Doc, id=doc_id)
     review_form_errors = None
     reviews = None
@@ -240,12 +239,7 @@ def document_view(request, doc_id):
             reviews = DocReview.objects.filter(doc=doc)
             user_review_exist = DocReview.objects.filter(
                 doc=doc, user_created=request.user).exists()
-            can_user_disburse = doc.can_user_disburse(request.user)
-            can_user_disburse = {
-                'can_disburse': can_user_disburse[0],
-                'reason': can_user_disburse[1],
-                'code': can_user_disburse[2]
-            }
+
             if request.method == "POST" and not user_review_exist:
 
                 doc_review_form = DocReviewForm(request.POST)
@@ -258,15 +252,18 @@ def document_view(request, doc_id):
                 else:
                     review_form_errors = doc_review_form.errors
 
-        if request.user.has_perm('data.edit_file_online'):
-            flag_to_edit = 1
+            can_user_disburse = doc.can_user_disburse(request.user)
+            can_user_disburse = {
+                'can_disburse': can_user_disburse[0],
+                'reason': can_user_disburse[1],
+                'code': can_user_disburse[2]
+            }
 
     else:
         messages.warning(request, "This document doesn't exist")
         return redirect(reverse("data:main_view"))
 
     context = {
-        'flag_to_edit': flag_to_edit,
         'doc': doc,
         'review_form_errors': review_form_errors,
         'reviews': reviews,

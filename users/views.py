@@ -10,6 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -273,7 +274,7 @@ class Members(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(hierarchy=self.request.user.hierarchy)
+        qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1,2])
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
@@ -292,3 +293,14 @@ class Members(LoginRequiredMixin, ListView):
         return qs
 
 
+def delete(request):
+    if request.is_ajax() and request.method=='POST':
+        try:
+            data = request.POST.copy()
+            user = User.objects.get(id=int(data['user_id']))
+            user.delete()
+            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
+        except User.DoesNotExist:
+            return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
+    else:
+        raise Http404()

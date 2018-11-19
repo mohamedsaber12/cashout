@@ -58,7 +58,7 @@
                           <li><a href="{% url 'users:members' %}">All members</a></li>
                         </ul>
                     </li>
-                    <li><a><i class="fa fa-home"></i> Settings</a></li>
+                    <li><a href="{% url 'users:settings' %}"><i class="fa fa-home"></i> Settings</a></li>
                 </ul>
               </div>
 
@@ -95,7 +95,7 @@
               <ul class="nav navbar-nav navbar-right">
                 <li class="">
                   <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                    <img src="{% static 'images/img.jpg' %}" alt="">John Doe
+                    <img src="{% static 'images/img.jpg' %}" alt="">{{ request.user.get_full_name }}
                     <span class=" fa fa-angle-down"></span>
                   </a>
                   <ul class="dropdown-menu dropdown-usermenu pull-right">

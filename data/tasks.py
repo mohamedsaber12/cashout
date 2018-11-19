@@ -79,7 +79,7 @@ def handle_disbursement_file(doc_obj_id):
             DisbursementData.objects.bulk_create(
                 [DisbursementData(doc=doc_obj, amount=float(
                     i[0]), msisdn=i[1]) for i in data]
-            )            
+            )
             doc_obj.total_amount = sum(amount)
             doc_obj.total_count = amount_length
             doc_obj.is_processed = True
@@ -126,7 +126,7 @@ def notifiy_checkers(doc_id):
     if not checkers.exists():
         return
 
-    doc_view_url = doc_obj.get_absolute_url()
+    doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
     message = f"""Dear Checker 
         The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
         Thanks, BR"""
@@ -140,7 +140,7 @@ def notifiy_checkers(doc_id):
 
 def notify_maker(doc):
     maker = doc.owner
-    doc_view_url = doc.get_absolute_url()
+    doc_view_url = settings.BASE_URL + doc.get_absolute_url()
 
     MESSAGE_SUCC = f"""Dear {maker.first_name} 
         The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 

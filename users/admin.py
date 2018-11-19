@@ -244,3 +244,4 @@ class RootAdmin(UserAccountAdmin):
 admin.site.register(RootUser, RootAdmin)
 admin.site.register(MakerUser, MakerAdmin)
 admin.site.register(CheckerUser, CheckerAdmin)
+admin.site.register(User)

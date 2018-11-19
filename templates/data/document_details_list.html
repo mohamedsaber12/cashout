@@ -59,7 +59,7 @@
 
                                                             <img style="background-color:{%if review.is_ok%}green{%else%}red{%endif%}" 
                                                             data-toggle="tooltip" data-placement="top" title="{{review.user_created.username}}"
-                                                             src="{% static 'img/user.png' %}" class="avatar" alt="Avatar">
+                                                             src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
                                                         </li>
                                                     {%endfor%}    
                                                 </ul>

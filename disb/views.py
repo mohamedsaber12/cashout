@@ -37,7 +37,9 @@ def disburse(request, doc_id):
         if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
                 'data.can_disburse') and not doc_obj.is_disbursed:
             response = requests.post(
-                request.scheme + "://" + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
+                request.scheme + "://" + request.get_host() +
+                                                          str(reverse_lazy(
+                                                              "disbursement_api:disburse")),
                 request.scheme + "://" + request.get_host() +
                 str(reverse_lazy("disbursement_api:disburse")),
             DATA_LOGGER.debug(
@@ -49,9 +51,9 @@ def disburse(request, doc_id):
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 0,
                                                                                          'utm_redirect': 'success'})
 
-        owner = 'true' if doc_obj.owner.hierarchy == request.user.hierarchy else 'false'
-        perm = 'true' if request.user.has_perm('data.can_disburse') else 'false'
-        perm = 'true' if request.user.has_perm(
+        owner='true' if doc_obj.owner.hierarchy == request.user.hierarchy else 'false'
+        perm='true' if request.user.has_perm('data.can_disburse') else 'false'
+        perm='true' if request.user.has_perm(
             'data.can_disburse') else 'false'
         return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': -1,
                                                                             'utm_redirect': 'success',
@@ -60,19 +62,19 @@ def disburse(request, doc_id):
                                                                                  'utm_perm': perm,
                                                                                  'utm_validate': doc_validated})
     else:
-        response = reverse_lazy('data:doc_viewer', kwargs={'doc_id': doc_id})
+        response=reverse_lazy('data:doc_viewer', kwargs={'doc_id': doc_id})
         return redirect(response)
 
 
 @setup_required
 @login_required
 def disbursement_list(request, doc_id):
-    doc_obj = Doc.objects.get(id=doc_id)
+    doc_obj=Doc.objects.get(id=doc_id)
     if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
             'data.can_disburse') and doc_obj.is_disbursed:
-        context = {'Ddata': doc_obj.disbursement_data.all()}
+        context={'Ddata': doc_obj.disbursement_data.all()}
     else:
-        context = {'Ddata': None}
+        context={'Ddata': None}
     context.update({'doc_id': doc_id})
     return render(request, template_name='disbursement/list.html', context=context)
 
@@ -80,10 +82,10 @@ def disbursement_list(request, doc_id):
 @setup_required
 @login_required
 def generate_failed_disbursement_data(request, doc_id):
-    doc_obj = Doc.objects.get(id=doc_id)
+    doc_obj=Doc.objects.get(id=doc_id)
     if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
             'data.can_disburse') and doc_obj.is_disbursed:
-        generate_file_task = generate_file.delay(doc_id)
+        generate_file_task=generate_file.delay(doc_id)
         return render_to_response("disbursement/disbursement_file_download.html", {"task_id": str(generate_file_task.task_id),
                                                                                    "media_url": settings.MEDIA_URL})
 
@@ -91,18 +93,19 @@ def generate_failed_disbursement_data(request, doc_id):
 @setup_required
 @login_required
 def failed_disbursed_for_download(request):
-    task_id = request.GET.get("task_id")
-    filename = request.GET.get("filename")
+    task_id=request.GET.get("task_id")
+    filename=request.GET.get("filename")
 
     if request.is_ajax():
-        result = generate_file.AsyncResult(task_id)
+        result=generate_file.AsyncResult(task_id)
         if result.ready():
             return HttpResponse(json.dumps({"filename": result.get()}))
         return HttpResponse(json.dumps({"filename": None}))
 
     else:
-        response = HttpResponse(content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s' % str(filename)
-        response['Content-Disposition'] = 'attachment; filename=%s' % str(
+        response=HttpResponse(content_type='application/vnd.ms-excel')
+        response['Content-Disposition']='attachment; filename=%s' % str(
+            filename)
+        response['Content-Disposition']='attachment; filename=%s' % str(
             filename)
     return response

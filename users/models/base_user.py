@@ -46,7 +46,8 @@ class User(AbstractUser):
     avatar_thumbnail = ProcessedImageField(upload_to='avatars',
                                            processors=[ResizeToFill(100, 100)],
                                            format='JPEG',
-                                           options={'quality': 60}, null=True, default='pp.jpeg')
+                                           options={'quality': 60}, null=True, default='user.png')
+    title = models.CharField(max_length=128, default='', null=True, blank=True)
 
     objects = UserManager()
 
@@ -117,3 +118,8 @@ class User(AbstractUser):
     @cached_property
     def is_checker(self):
         return self.user_type == 2
+
+    @cached_property
+    def get_full_name(self):
+        full_name = '%s %s' % (self.first_name, self.last_name)
+        return full_name.strip()

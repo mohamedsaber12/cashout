@@ -10,9 +10,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError, transaction
 from django.db.models import Q
+from django.http import Http404
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.urls import reverse_lazy
 from django.views.generic import CreateView
 from django.views.generic import ListView
 
@@ -21,7 +23,8 @@ from data.models import FileCategory
 from data.utils import get_client_ip
 from users.forms import (CheckerMemberFormSet, LevelFormSet,
                          MakerMemberFormSet, PasswordChangeForm,
-                         SetPasswordForm)
+                         SetPasswordForm, CheckerCreationForm, MakerCreationForm)
+from users.mixins import RootRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User
 
 LOGIN_LOGGER = logging.getLogger("login")
@@ -114,7 +117,7 @@ def change_password(request, user):
     return render(request, 'data/change_password.html', context)
 
 
-class SettingsUpView(LoginRequiredMixin, CreateView):
+class SettingsUpView(RootRequiredMixin, CreateView):
     model = MakerUser
     template_name = 'users/settings-up.html'
     form_class = MakerMemberFormSet
@@ -192,6 +195,10 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
                     setup.users_setup = True
                     setup.save()
                 if data['step'] == '4' and payload['valid']:
+                    setup = Setup.objects.get(
+                        user__hierarchy=request.user.hierarchy)
+                    setup.category_setup = True
+                    setup.save()
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
             print(form.errors)
@@ -265,7 +272,7 @@ class SettingsUpView(LoginRequiredMixin, CreateView):
         return form_class(**kwargs)
 
 
-class Members(LoginRequiredMixin, ListView):
+class Members(RootRequiredMixin, ListView):
     model = User
     paginate_by = 20
     context_object_name = 'users'
@@ -273,7 +280,7 @@ class Members(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(hierarchy=self.request.user.hierarchy)
+        qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1,2])
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
@@ -292,3 +299,14 @@ class Members(LoginRequiredMixin, ListView):
         return qs
 
 
+def delete(request):
+    if request.is_ajax() and request.method=='POST':
+        try:
+            data = request.POST.copy()
+            user = User.objects.get(id=int(data['user_id']))
+            user.delete()
+            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
+        except User.DoesNotExist:
+            return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
+    else:
+        raise Http404()

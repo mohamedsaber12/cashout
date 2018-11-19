@@ -1,3 +1,5 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
+
 
 class ParentPermissionMixin(object):
     def has_add_permission(self, request):
@@ -14,3 +16,10 @@ class ParentPermissionMixin(object):
         if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.delete_group'):
             super(ParentPermissionMixin, self).has_delete_permission(request, obj)
             return True
+
+
+class RootRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated and request.user.is_root:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)

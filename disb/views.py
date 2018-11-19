@@ -2,15 +2,14 @@
 from __future__ import unicode_literals
 
 import json
-
 import logging
-import requests
 from datetime import datetime
 
+import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.shortcuts import render, redirect, render_to_response
+from django.shortcuts import redirect, render, render_to_response
 from django.urls import reverse_lazy
 
 from data.decorators import otp_required
@@ -39,7 +38,8 @@ def disburse(request, doc_id):
                 'data.can_disburse') and not doc_obj.is_disbursed:
             response = requests.post(
                 request.scheme + "://" + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
-                json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username})
+                request.scheme + "://" + request.get_host() +
+                str(reverse_lazy("disbursement_api:disburse")),
             DATA_LOGGER.debug(
                 datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE VIEW RESPONSE <-- \n' + str(response.text))
             if response.ok:
@@ -51,13 +51,14 @@ def disburse(request, doc_id):
 
         owner = 'true' if doc_obj.owner.hierarchy == request.user.hierarchy else 'false'
         perm = 'true' if request.user.has_perm('data.can_disburse') else 'false'
-        doc_validated = 'false' if doc_obj.is_disbursed else 'true'
+        perm = 'true' if request.user.has_perm(
+            'data.can_disburse') else 'false'
         return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': -1,
                                                                             'utm_redirect': 'success',
-                                                                            'utm_owner': owner,
-                                                                            'utm_perm': perm,
-                                                                            'utm_validate': doc_validated})
-
+                                                                                 'utm_redirect': 'success',
+                                                                                 'utm_owner': owner,
+                                                                                 'utm_perm': perm,
+                                                                                 'utm_validate': doc_validated})
     else:
         response = reverse_lazy('data:doc_viewer', kwargs={'doc_id': doc_id})
         return redirect(response)
@@ -102,4 +103,6 @@ def failed_disbursed_for_download(request):
     else:
         response = HttpResponse(content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename=%s' % str(filename)
+        response['Content-Disposition'] = 'attachment; filename=%s' % str(
+            filename)
     return response

@@ -248,7 +248,7 @@ class RootCreationForm(UserForm):
 
             else:
                 maximum = max(RootUser.objects.values_list(
-                    'hierarchy', flat=True))
+                    'hierarchy', flat=True), default=False)
                 if not maximum:
                     maximum = 0
                 try:
@@ -341,7 +341,7 @@ class CheckerCreationForm(forms.ModelForm):
 
         self.fields["level"].choices = [('', '------')] + [
             (r.id, str(r)) for r in Levels.objects.filter(created__hierarchy=request.user.hierarchy)
-            ]
+        ]
 
         for field in iter(self.fields):
             # get current classes from Meta

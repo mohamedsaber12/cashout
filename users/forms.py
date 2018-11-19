@@ -307,6 +307,11 @@ class BaseLevelFormSet(BaseModelFormSet):
 
 
 class MakerCreationForm(forms.ModelForm):
+    class Meta:
+        model = MakerUser
+        fields = ('username', 'first_name', 'last_name',
+                  'mobile_no', 'email', 'is_staff')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
@@ -329,10 +334,12 @@ class MakerCreationForm(forms.ModelForm):
                     'class': classes
                 })
 
-    class Meta:
-        model = MakerUser
-        fields = ('username', 'first_name', 'last_name',
-                  'mobile_no', 'email', 'is_staff')
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 1
+        if commit:
+            user.save()
+        return user
 
 
 class CheckerCreationForm(forms.ModelForm):
@@ -362,6 +369,13 @@ class CheckerCreationForm(forms.ModelForm):
                 self.fields[field].widget.attrs.update({
                     'class': classes
                 })
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 2
+        if commit:
+            user.save()
+        return user
 
     class Meta:
         model = CheckerUser

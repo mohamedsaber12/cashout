@@ -54,7 +54,8 @@
                   </li>
                     <li><a><i class="fa fa-home"></i> Members <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                          <li><a href="index.html">Add member</a></li>
+                          <li><a>Add member <span class="fa fa-chevron-down"></span></a>
+                          </li>
                           <li><a href="{% url 'users:members' %}">All members</a></li>
                         </ul>
                     </li>
@@ -102,7 +103,7 @@
                       {% if request.user.is_root %}
                         <li>
                           <a href="javascript:;">
-                            <span class="badge bg-red pull-right">50%</span>
+                            <span class="badge bg-red pull-right">{{ request.user.setup.percentage }}</span>
                             <span>Settings</span>
                           </a>
                         </li>

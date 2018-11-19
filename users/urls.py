@@ -28,5 +28,4 @@ urlpatterns = [
     path('settings/edit/', views.SettingsUpView.as_view(), name='settings_edit'),
     path('members/', views.Members.as_view(), name='members'),
     path('user/delete', views.delete, name='delete')
-
 ]

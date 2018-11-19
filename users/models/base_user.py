@@ -3,7 +3,8 @@ from __future__ import unicode_literals
 import datetime
 
 import pytz
-from django.contrib.auth.models import AbstractUser, UserManager as AbstractUserManager
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.db import models
 from django.db.models import Q
 from django.utils.functional import cached_property
@@ -31,10 +32,12 @@ class UserManager(AbstractUserManager):
 class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
     otp = models.CharField(max_length=6, null=True, blank=True)
-    user_type = models.PositiveSmallIntegerField(choices=TYPES, default=1)
+    hierarchy = models.PositiveSmallIntegerField(
+        null=True, db_index=True, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     is_otp_verified = models.BooleanField(default=False)
-    verification_time = models.DateTimeField(null=True)
+    level = models.ForeignKey(
+        'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     email = models.EmailField('email address', blank=False)
     is_email_sent = models.BooleanField(null=True, default=False)
@@ -76,7 +79,8 @@ class User(AbstractUser):
     def check_verification(self, otp_method):
         if otp_method == '3':
             return True
-        try:
+            diff = datetime.datetime.utcnow().replace(
+                tzinfo=pytz.UTC) - self.verification_time
             diff = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - self.verification_time
             if diff.total_seconds() < 1800 and self.is_otp_verified:
                 return True

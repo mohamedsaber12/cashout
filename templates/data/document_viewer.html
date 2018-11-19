@@ -152,24 +152,42 @@
                         <div class="clearfix"></div>
                     </div>
                     <div class="x_content">
-                      
-                        <div class="comments-list">
+
+                        <ul class="messages">
                             {% for review in reviews%}
-                        
-                                <div class="media">
-                                    <p class="pull-right"><small>{{review.timestamp|date}}</small></p>
-                                    <div class="media-body">
-                                        <h4 class="media-heading user_name">{{review.user_created.username}} |
-                                            {% if review.is_ok %}Accepted{%else%}Rejected{%endif%}</h4>
+                                <li>    
+                                    
+                                    <img src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
+                                    <div class="message_wrapper">
+                                        <h4 class="heading">{{review.user_created.username}} 
+                                            {% if review.user_created.first_name %}
+                                                <small >
+                                                    ({{review.user_created.first_name}})
+                                                </small>
+                                            {%endif%}
+
+                                            {% if review.is_ok %}
+                                                <span style="color:green" class="alignright glyphicon glyphicon-ok" aria-hidden="true"></span>
+                                            {%else%}
+                                                <span style="color:red" class="alignright glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                            {%endif%}
+                                        </h4>
+                                        
+                                        
+
                                         {% if review.comment %}
-                                        {{ review.comment }}
+                                            <blockquote class="message">
+                                                {{ review.comment }}
+                                            </blockquote>
+                                            <br />
                                         {%endif%}
+                                        <p class="url">
+                                            {{review.timestamp|date}}
+                                        </p>
                                     </div>
-                                </div>
-                        
+                                </li>
                             {% endfor %}
-                        
-                        </div>
+                        </ul>
 
                         
                     </div>

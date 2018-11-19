@@ -36,11 +36,11 @@
                             <thead>
                                 <tr>
                                     <th style="width: 20%">Document Name</th>
-                                    <th>Reviews</th>
+                                    <th style="width: 20%">Reviews</th>
                                     <th>Disbursed By</th>
                                     <th>Disbursement Progress</th>
                                     <th>Status</th>
-                                    <th style="width: 20%">View</th>
+                                    <th>View</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -48,6 +48,8 @@
                                     <tr>
                                         <td>
                                             <a>{{doc.filename}}</a>
+                                            <br />
+                                            <small>Created {{doc.created_at}}</small>
                                         </td>
                                         <td>
                                             {% if doc.reviews.exists %}

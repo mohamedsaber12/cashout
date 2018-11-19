@@ -28,67 +28,7 @@
             <strong class="col-xs-offset-8 col-xs-4" style="margin-top: 15px;">Please Add file category first</strong>
         {% endif %}
     </div>
-    
-    <div class="row">
-     
-        <table id="fileTable" style="margin-top:5%;" class="table table-striped table-bordered">
-            <thead>
-            <tr>
-            {% if not is_master %}
-                <th>{% trans 'Action' %}</th>
-                <th>{% trans 'Type' %}</th>
-                <th>{% trans 'File' %}</th>
-                <th>{% trans 'File upload time' %}</th>
-            {% else %}
-                <th>Count</th>
-                <th>Amount</th>
-            {% endif %}
-            </tr>
-            </thead>
-            <tbody>
-            {% if not is_master %}
-                {% for doc in docs %}
-                    <tr>
-                        <td>
-                            {% if not bucket_integration %}
-                                {% if perms.data.access_file %}
-                                    <a href="{% url 'data:doc_viewer' doc.id %}">{% trans 'View' %}</a> &nbsp;-&nbsp;
-                                {% endif %}
-                            {% endif %}
-                            {% if perms.data.delete_file%}
-                                <a href="{% url 'data:file_delete' doc.id %}">{% trans 'Delete' %}</a>
-                            {% endif %}
-                        </td>
-                        <td>{{ doc.file_category.file_type }}</td>
-                        {% if doc.file %}
-                            {% if perms.data.download_file_xlsx %}
-                                <td><a href="{% url 'data:download_doc' doc.id %}">{{ doc.filename }}</a></td>
-                            {% elif perms.data.download_file_txt %}
-                                <td><a id="txt" target="_blank" href="{% url 'data:download_txt' doc.id %}">{{ doc.filename }}</a></td>
-                            {% else %}
-                                <td><p>{{ doc.filename }}</p></td>
-                            {% endif %}
-                        {% endif %}
-                        <td>{{ doc.created_at }}</td>
-                    </tr>
-                {% empty %}
-                    <tr class="lead">
-                        <td colspan="5">No files found</td>
-                    </tr>
-                {% endfor %}
-            {% else %}
-                <tr>
-                    <td>
-                        {{docs.1}}
-                    </td>
-                    <td>
-                        {{docs.0}}
-                    </td>
-                </tr>
-            {% endif %}
-            </tbody>
-        </table>
-    </div>
+
 
 <!-- modals -->
 

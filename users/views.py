@@ -310,3 +310,28 @@ def delete(request):
             return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
     else:
         raise Http404()
+
+
+def levels(request):
+    initial_query = Levels.objects.filter(
+                created__hierarchy=request.user.hierarchy
+            )
+    context = {}
+    if request.method == 'POST':
+
+        form = LevelFormSet(
+            request.POST,
+            prefix='level',
+            queryset=initial_query
+        )
+        if form.is_valid():
+            form.save()
+        context['levelform'] = form
+        import ipdb; ipdb.set_trace()
+    else:
+        context['levelform'] = LevelFormSet(
+            queryset=initial_query,
+            prefix='level',
+            max_num=4
+        )
+    return render(request, 'users/add_levels.html', context)

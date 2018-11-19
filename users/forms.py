@@ -302,7 +302,7 @@ class BaseLevelFormSet(BaseModelFormSet):
             level_of_authority = form.cleaned_data['level_of_authority']
             if level_of_authority in level_of_authorities:
                 raise forms.ValidationError(
-                    "Articles in a set must have distinct titles.")
+                    "Levels must be unique.")
             level_of_authorities.append(level_of_authority)
 
 
@@ -384,7 +384,10 @@ class CheckerCreationForm(forms.ModelForm):
 
 
 LevelFormSet = modelformset_factory(
-    model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4, min_num=1, can_delete=True, validate_max=True, extra=0)
+    model=Levels, form=LevelForm, formset=BaseLevelFormSet,
+    max_num=4, min_num=1, can_delete=True,
+    validate_max=True, extra=0, validate_min=True
+)
 
 MakerMemberFormSet = modelformset_factory(
     model=MakerUser, form=MakerCreationForm, can_delete=True)

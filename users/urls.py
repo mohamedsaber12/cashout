@@ -1,7 +1,9 @@
 from django.contrib.auth.views import (PasswordResetCompleteView,
                                        PasswordResetConfirmView,
                                        PasswordResetDoneView,
-                                       PasswordResetView)
+                                       PasswordResetView,
+                                       PasswordChangeView,
+                                       PasswordChangeDoneView)
 from django.urls import path
 
 from users import views
@@ -25,7 +27,8 @@ urlpatterns = [
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
     path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
-    path('settings/edit/', views.SettingsUpView.as_view(), name='settings_edit'),
+    path('levels/', views.levels, name='levels'),
+    path('profile/', views.SettingsUpView.as_view(), name='profile'),
     path('members/', views.Members.as_view(), name='members'),
     path('user/delete', views.delete, name='delete')
 ]

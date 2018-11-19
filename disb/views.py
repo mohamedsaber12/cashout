@@ -33,9 +33,9 @@ def disburse(request, doc_id):
     """
     if request.method == 'POST':
         doc_obj = Doc.objects.get(id=doc_id)
+        can_disburse = doc_obj.can_user_disburse(request.user)[0]
         # request.user.is_verified = False  #TODO
-        if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
-                'data.can_disburse') and not doc_obj.is_disbursed:
+        if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and not doc_obj.is_disbursed:
             response = requests.post(
                 request.scheme + "://" + request.get_host() +
                 str(reverse_lazy("disbursement_api:disburse")),

@@ -12,7 +12,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 TYPES = (
-    (0, 'Super')
+    (0, 'Super'),
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),

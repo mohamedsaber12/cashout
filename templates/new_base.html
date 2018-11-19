@@ -59,7 +59,13 @@
                           <li><a href="{% url 'users:members' %}">All members</a></li>
                         </ul>
                     </li>
-                    <li><a href="{% url 'users:settings' %}"><i class="fa fa-home"></i> Settings</a></li>
+                    <li><a><i class="fa fa-home"></i> Settings <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li><a href="{% url 'users:settings' %}"><i class="fa fa-home"></i> Setup</a></li>
+                            <li><a href="{% url 'users:levels' %}"><i class="fa fa-home"></i> levels</a></li>
+                            <li><a href="{% url 'users:profile' %}"><i class="fa fa-home"></i> Profile</a></li>
+                        </ul>
+                        </li>
                 </ul>
               </div>
 

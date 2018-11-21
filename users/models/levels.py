@@ -9,9 +9,15 @@ LEVELS = (
 
 
 class Levels(models.Model):
+    """
+    Model reference for levels of authority
+    of users in the hierarchy tree
+    Added by the root of the tree only
+    """
     max_amount_can_be_disbursed = models.FloatField(default=0)
     level_of_authority = models.PositiveSmallIntegerField(choices=LEVELS)
-    user = models.ForeignKey('users.User', related_name='levels', on_delete=models.CASCADE)
+    created = models.ForeignKey(
+        'users.User', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return f'amount is {self.max_amount_can_be_disbursed} of level {self.level_of_authority}'

@@ -1,0 +1,366 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% block gentellacss %}
+    <link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
+    <link rel="stylesheet" href="{% static 'gentella/switchery.min.css'%}">
+
+{% endblock %}
+{% block body %}
+        <form action="" method="post">
+    </form>
+
+    <p>Please follow the steps to setup your payroll settings.</p>
+    <div id="disb_widget" class="form_wizard wizard_horizontal">
+      <ul class="wizard_steps">
+        <li>
+          <a href="#step-1">
+            <span class="step_no">1</span>
+            <span class="step_descr">
+                              Levels<br />
+                              <small>Add levels for checkers</small>
+                          </span>
+          </a>
+        </li>
+        <li>
+          <a href="#step-2">
+            <span class="step_no">2</span>
+            <span class="step_descr">
+                              Makers<br />
+                              <small>Add Maker users</small>
+                          </span>
+          </a>
+        </li>
+        <li>
+          <a href="#step-3">
+            <span class="step_no">3</span>
+            <span class="step_descr">
+              Checkers<br />
+              <small>Add Checker users</small>
+          </span>
+          </a>
+        </li>
+        <li>
+          <a href="#step-4">
+            <span class="step_no">4</span>
+            <span class="step_descr">
+              Category<br />
+              <small>Add File Specs</small>
+          </span>
+          </a>
+        </li>
+      </ul>
+      <div id="step-1">
+        <form action="." method="post" id="step_1_form" >
+
+          {% csrf_token %}
+
+        <table class="table" id="levelform">
+            {{ levelform.management_form }}
+            {% for form in levelform.forms %}
+                {% if forloop.first %}
+                <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                {% endif %}
+            {% endfor %}
+            <tbody>
+
+            {% for form in levelform.forms %}
+
+                <tr class="level_formset_row">
+                    {% for field in form.visible_fields %}
+                        <td>
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        </form>
+
+      </div>
+      <div id="step-2">
+        <form action="." method="post" id="step_2_form">
+
+          {% csrf_token %}
+
+        <table class="table" id="makerform">
+            {{ makerform.management_form }}
+            {% for form in makerform.forms %}
+                {% if forloop.first %}
+                <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                {% endif %}
+            {% endfor %}
+            <tbody>
+
+            {% for form in makerform.forms %}
+
+                <tr class="maker_formset_row">
+                    {% for field in form.visible_fields %}
+                        <td>
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+                </tbody>
+        </table>
+
+        </form>
+
+
+      </div>
+      <div id="step-3">
+        <form action="." method="post" id="step_3_form">
+
+          {% csrf_token %}
+
+        <table class="table" id="checkerform">
+            {{ checkerform.management_form }}
+            {% for form in checkerform.forms %}
+                {% if forloop.first %}
+                <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                {% endif %}
+            {% endfor %}
+            <tbody>
+
+            {% for form in checkerform.forms %}
+
+                <tr class="checker_formset_row">
+                    {% for field in form.visible_fields %}
+                        <td>
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+                </tbody>
+        </table>
+
+        </form>
+
+
+      </div>
+              <div id="step-4">
+                  <form action="." method="post" id="step_4_form" class="form-horizontal form-label-left">
+
+                      {% csrf_token %}
+
+                                    {% for field in filecategoryform.visible_fields %}
+                                        {% if forloop.first %}
+                                            {% for hidden in form.hidden_fields %}
+                                                {{ hidden }}
+                                            {% endfor %}
+                                        {% endif %}
+                                        <div class="form-group">
+                                            <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                                            <div class="col-md-6 col-sm-9 col-xs-12">
+                                                {% ifequal field.name "has_header" %}
+                                                    <div class="">
+                                                    <label>
+                                                        {{ field }}
+                                                    </label>
+                                                    </div>
+                                                {% else %}
+                                                    {{ field.errors.as_ul }}
+                                                    {{ field }}
+                                                {% endifequal %}
+                                            </div>
+                                        </div>
+
+
+                                {% endfor %}
+                    </form>
+              </div>
+
+    </div>
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/jquery.formset.min.js' %}"></script>
+<script src="{% static 'gentella/jquery.smartWizard.js' %}"></script>
+<script src="{% static 'gentella/switchery.min.js' %}"></script>
+    <!-- Custom Theme Scripts -->
+<script src="{% static 'gentella/custom.min.js' %}"></script>
+
+<script type="text/javascript">
+        var levelform = $('#levelform tbody tr');
+        // var i;
+        // for (i=0; i<3; i++) {levelform.children()[1].children[0].children.item(1).remove()};
+        levelform.formset({
+            addText: 'add another level',
+            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
+            prefix: '{{ levelform.prefix }}',
+            addCssClass: 'add_level',
+            added: function (row) {
+                var oldheight = $('.stepContainer').css('height');
+                oldheight = parseInt(oldheight.replace("px", ""));
+                var newheight = oldheight+60;
+                $('.stepContainer').height(newheight+"px");
+{#                var total = parseInt($("#id_level-TOTAL_FORMS").val());#}
+{##}
+{#                var max_num_of_form = parseInt($("#id_level-MAX_NUM_FORMS").val());#}
+{#                console.log("add",total, max_num_of_form);#}
+{#                if (max_num_of_form <= total) {#}
+{#                    $(".add_level").hide();#}
+{#                }#}
+            },
+{#            removed: function (row) {#}
+{#                var total = parseInt($("#id_level-TOTAL_FORMS").val());#}
+{#                var max_num_of_form = parseInt($("#id_level-MAX_NUM_FORMS").val());#}
+{#                total = total-1;#}
+{#                $("#id_level-TOTAL_FORMS").val(total.toString());#}
+{#                console.log("remove",total, max_num_of_form);#}
+{#                if (max_num_of_form > total) {#}
+{#                    $(".add_level").show();#}
+{#                }#}
+{#            },#}
+            formCssClass: 'level'
+        });
+        $('#makerform tbody tr').formset({
+            addText: 'add family member',
+            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
+            prefix: '{{ makerform.prefix }}',
+            added: function (row) {
+                var oldheight = $('.stepContainer').css('height');
+                oldheight = parseInt(oldheight.replace("px", ""));
+                var newheight = oldheight+50;
+                $('.stepContainer').height(newheight+"px");
+            }
+        });
+        $('#checkerform tbody tr').formset({
+            addText: 'add family member',
+            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
+            prefix: '{{ checkerform.prefix }}',
+            added: function (row) {
+                var oldheight = $('.stepContainer').css('height');
+                oldheight = parseInt(oldheight.replace("px", ""));
+                var newheight = oldheight+50;
+                $('.stepContainer').height(newheight+"px");
+            }
+        });
+        function stepSubmit(step_no){
+            var bool_return = false;
+            var that = this;
+            //that.goForward ------- working here
+            var form_data = $("#step_"+step_no+"_form").serialize();
+            $.ajax({
+                type:'post',
+                url:"{% url 'users:settings' %}",
+                async: false,
+                data:form_data+"&step="+step_no,
+                success : function(data, text, xhr){
+                    console.log(data);
+                    if (step_no=="4") {
+                        if (xhr.status == 278) {
+                            window.location.href = xhr.getResponseHeader("Location");
+                        }
+                    }
+{#                    if (step_no=="1") {#}
+{#                        var levels = data.objs;#}
+{#                        $.each($(".checker_formset_row"), function ( index, value ) {#}
+{#                            var select = value.children[5].childNodes[1];#}
+{#                            var selected_level = null;#}
+{#                            var indices = [];#}
+{#                            $.each(select.options, function(i, x) {#}
+{#                                if (x.selected) {#}
+{#                                    selected_level = x.value;#}
+{#                                }#}
+{#                                if (x.selected!==true || x.value !== "") {#}
+{#                                    indices.push(i);#}
+{#                                }#}
+{#                            });#}
+{#                            console.log(indices);#}
+{#                            select.options.remove(indices);#}
+{#                            $.each(levels, function (index1, value1) {#}
+{#                                if (value1.value !== selected_level){#}
+{#                                    select.append($('<option></option>').attr("value", value1.value).text("level " + value1.level + "of amt " + value1.amount));#}
+{#                                }#}
+{##}
+{#                            })#}
+{#                        });#}
+{#                    }#}
+                    bool_return = data.valid;
+                    return true;
+                }
+
+            });
+            console.log("here");
+            return bool_return;
+        }
+        $(document).ready(function () {
+            var total = parseInt($("#id_level-TOTAL_FORMS").val());
+            var max_num_of_form = parseInt($("#id_level-MAX_NUM_FORMS").val());
+            if (max_num_of_form == total) {
+                $(".add_level").hide();
+            }
+            var wizard = $('#disb_widget').smartWizard({
+                onLeaveStep:leaveAStepCallback,
+                onFinish: onFinishCallback
+
+            });
+            $('#loading-image').bind('ajaxStart', function(){
+                $(this).show();
+            }).bind('ajaxStop', function(){
+                $(this).hide();
+            });
+            var oldheight = $('.stepContainer').css('height');
+            oldheight = parseInt(oldheight.replace("px", ""));
+            var newheight = oldheight+20;
+            $('.stepContainer').height(newheight+"px");
+
+            function onFinishCallback(objs, context){
+                return stepSubmit('4');
+            }
+
+            function leaveAStepCallback(obj, context){
+                return stepSubmit(context.fromStep);
+                  // return false to stay on step and true to continue navigation
+            }
+
+        });
+
+</script>
+{% endblock %}

@@ -12,13 +12,14 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 
+import environ
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 from django.urls import reverse_lazy
-import environ
 
 env = environ.Env()
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+BASE_DIR = os.path.dirname(os.path.dirname(
+    os.path.dirname(os.path.abspath(__file__))))
 
 
 # Quick-start development settings - unsuitable for production
@@ -47,6 +48,10 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'rest_framework_expiring_authtoken',
+    'bootstrap4',
+    'django_celery_beat',
+    'imagekit',
+
 
     # security
     'request_id',
@@ -94,6 +99,21 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'disbursement.wsgi.application'
 
+# Celery
+
+CELERY_TIMEZONE = 'Africa/Cairo'
+
+#Send results back as AMQP messages
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_RESULT_PERSISTENT = False
+
+CELERY_ACCEPT_CONTENT = ['json']
+
+CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
+
+CELERY_TASK_SERIALIZER = 'json'
+
+MAX_TASK_RETRIES = 10
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -147,10 +167,10 @@ LOCALE_PATHS = (
 FILE_UPLOAD_PERMISSIONS = 0o644
 
 
-OTP_LOGIN_URL = reverse_lazy('two_factor:login')
+OTP_LOGIN_URL = reverse_lazy('users:user_login_view')
 # LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = 'two_factor:login'
-LOGIN_REDIRECT_URL = 'two_factor:profile'
+LOGIN_URL = 'users:user_login_view'
+LOGIN_REDIRECT_URL = 'two_factor:setup'
 # RestFramework
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,

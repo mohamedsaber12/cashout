@@ -6,11 +6,13 @@ from django.contrib.admin.actions import delete_selected as delete_selected_
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from data.utils import get_client_ip
-from users.forms import UserForm, UserChangeForm
-from users.models import User
+from users.forms import (CheckerCreationAdminForm, MakerCreationAdminForm,
+                         RootCreationForm, UserChangeForm)
+from users.models import CheckerUser, MakerUser, RootUser, User
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
@@ -41,7 +43,8 @@ def delete_selected(modeladmin, request, queryset):
         return delete_selected_(modeladmin, request, queryset)
 
 
-delete_selected.short_description = ugettext_lazy("Delete selected %(verbose_name_plural)s")
+delete_selected.short_description = ugettext_lazy(
+    "Delete selected %(verbose_name_plural)s")
 
 
 def deactivate_selected(modeladmin, request, queryset):
@@ -67,7 +70,8 @@ def deactivate_selected(modeladmin, request, queryset):
         return deactivate_selected(modeladmin, request, queryset)
 
 
-deactivate_selected.short_description = ugettext_lazy("Deactivate selected %(verbose_name_plural)s")
+deactivate_selected.short_description = ugettext_lazy(
+    "Deactivate selected %(verbose_name_plural)s")
 
 
 def activate_selected(modeladmin, request, queryset):
@@ -93,13 +97,14 @@ def activate_selected(modeladmin, request, queryset):
         return None
 
 
-activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
+activate_selected.short_description = ugettext_lazy(
+    "Activate selected %(verbose_name_plural)s")
 
 
 class UserAccountAdmin(UserAdmin):
     actions = (delete_selected, deactivate_selected, activate_selected)
-    list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
-    add_form = UserForm
+    list_display = ('username', 'first_name',
+                    'last_name', 'email', 'is_active')
     filter_horizontal = ('groups',)
 
     def get_list_display(self, request):
@@ -111,7 +116,8 @@ class UserAccountAdmin(UserAdmin):
         return list_display
 
     def get_form(self, request, obj=None, **kwargs):
-        userform = super(UserAccountAdmin, self).get_form(request, obj=obj, **kwargs)
+        userform = super(UserAccountAdmin, self).get_form(
+            request, obj=obj, **kwargs)
         userform.request = request
         userform.request.obj = obj
         defaults = {}
@@ -121,6 +127,106 @@ class UserAccountAdmin(UserAdmin):
             defaults['form'] = userform
         defaults.update(kwargs)
         return super(UserAccountAdmin, self).get_form(request, obj, **defaults)
+
+    def get_fieldsets(self, request, obj=None):
+        perm_fields = ('is_active', 'is_staff')
+        if not obj:
+            if request.user.is_superuser:
+                perm_fields = ('is_active', 'is_staff',
+                               'is_superuser', 'parent')
+
+            self.add_fieldsets = (
+                (None, {
+                    'classes': ('wide',),
+                    'fields': ('username', 'password1', 'password2',)}
+                 ),
+                (_('Personal info'), {
+                 'fields': ('first_name', 'last_name', 'email', 'mobile_no')}),
+                (_('Permissions'), {'fields': perm_fields}),
+                (_('Important dates'), {
+                 'fields': ('last_login', 'date_joined')})
+            )
+
+        elif obj:
+            perm_fields = ('is_active', 'is_staff', 'user_type')
+            self.add_fieldsets = (
+                (None, {
+                    'classes': ('wide',),
+                    'fields': ('username', 'email', 'password')}
+                 ),
+                (_('Personal info'), {
+                 'fields': ('first_name', 'last_name', 'mobile_no')}),
+                (_('Permissions'), {'fields': perm_fields}),
+                (_('Important dates'), {
+                 'fields': ('last_login', 'date_joined')})
+            )
+
+        return self.add_fieldsets
+
+    def get_queryset(self, request):
+        qs = super(UserAccountAdmin, self).get_queryset(request)
+        if request.user.is_superuser:
+            return qs
+        elif request.user.is_root:
+            qs = qs.filter(hierarchy=request.user.hierarchy)
+            return qs
+        else:
+            return request.user.brothers()
+
+
+class MakerAdmin(UserAccountAdmin):
+    add_form = MakerCreationAdminForm
+
+    def save_model(self, request, obj, form, change):
+        # TODO : FIX Parent hierarchy
+        if request.user.is_superuser:
+            obj.hierarchy = form.cleaned_data['parent'].hierarchy
+        else:
+            obj.hierarchy = request.user.hierarchy
+
+        if obj.pk is not None:
+            CREATED_USERS_LOGGER.debug(
+                'User with id %d has modified at %s from IP Address %s' % (
+                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+
+        else:
+            now = datetime.datetime.now()
+            CREATED_USERS_LOGGER.debug(
+                'user created at %s %s' % (now, obj.username))
+        obj.save()
+
+
+class CheckerAdmin(UserAccountAdmin):
+    add_form = CheckerCreationAdminForm
+
+    def save_model(self, request, obj, form, change):
+        # TODO : FIX Parent hierarchy
+        if request.user.is_superuser:
+            obj.hierarchy = form.cleaned_data['parent'].hierarchy
+        else:
+            obj.hierarchy = request.user.hierarchy
+
+        if obj.pk is not None:
+            CREATED_USERS_LOGGER.debug(
+                'User with id %d has modified at %s from IP Address %s' % (
+                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+
+        else:
+            now = datetime.datetime.now()
+            CREATED_USERS_LOGGER.debug(
+                'user created at %s %s' % (now, obj.username))
+        obj.save()
+
+
+class RootAdmin(UserAccountAdmin):
+    add_form = RootCreationForm
+
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
+        # pop parent field from fieldsets
+        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')
+        self.fieldsets = fieldsets
+        return self.fieldsets
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
@@ -132,55 +238,10 @@ class UserAccountAdmin(UserAdmin):
             now = datetime.datetime.now()
             CREATED_USERS_LOGGER.debug(
                 'user created at %s %s' % (now, obj.username))
-
-        obj.save()
-
-    def get_fieldsets(self, request, obj=None):
-        perm_fields = ('is_active', 'is_staff', 'bills_groups')
-        if not obj:
-            if request.user.is_superuser:
-                perm_fields = ('is_active', 'is_staff', 'is_superuser',
-                               'bills_groups', 'user_type')
-
-            self.add_fieldsets = (
-                (None, {
-                    'classes': ('wide',),
-                    'fields': ('username', 'password1', 'password2',)}
-                 ),
-                (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'mobile_no', 'arabic_name')}),
-                (_('Permissions'), {'fields': perm_fields}),
-                (_('Important dates'), {'fields': ('last_login', 'date_joined')})
-            )
-
-        elif obj:
-            perm_fields = ('is_active', 'is_staff', 'bills_groups', 'user_type')
-            self.add_fieldsets = (
-                (None, {
-                    'classes': ('wide',),
-                    'fields': ('username', 'email', 'password')}
-                 ),
-                (_('Personal info'), {'fields': ('first_name', 'last_name', 'mobile_no', 'arabic_name')}),
-                (_('Permissions'), {'fields': perm_fields}),
-                (_('Important dates'), {'fields': ('last_login', 'date_joined')})
-            )
-
-        return self.add_fieldsets
-
-    def get_queryset(self, request):
-        qs = super(UserAccountAdmin, self).get_queryset(request)
-        if request.user.is_superuser:
-            return qs
-        elif request.user.is_parent:
-            qs = qs.filter(hierarchy_id=request.user.hierarchy_id)
-            return qs
-        else:
-            return request.user.brothers()
-
-    def formfield_for_manytomany(self, db_field, request=None, **kwargs):
-        if db_field.name == 'bills_groups':
-            qs = self._filter_groups(request)
-            kwargs['queryset'] = qs
-        return super(UserAccountAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
+        super(RootAdmin, self).save_model(request, obj, form, change)
 
 
-admin.site.register(User, UserAccountAdmin)
+admin.site.register(RootUser, RootAdmin)
+admin.site.register(MakerUser, MakerAdmin)
+admin.site.register(CheckerUser, CheckerAdmin)
+admin.site.register(User)

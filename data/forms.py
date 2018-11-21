@@ -1,15 +1,15 @@
+import datetime
+import logging
 import os
 import tempfile
 
-import logging
 import xlrd
-import datetime
-from django.core.validators import FileExtensionValidator
-from data.models import FileCategory, Doc
 from django import forms
+from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
+from data.models import Doc, DocReview, FileCategory
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 
@@ -36,6 +36,29 @@ TASK_UPLOAD_FILE_MAX_SIZE = 5242880
 UNICODE = set(';:></*%$.\\')
 
 
+class DocReviewForm(forms.ModelForm):
+    comment = forms.CharField(required=False)
+    is_ok = forms.CharField()
+
+    class Meta:
+        model = DocReview
+        fields = ['is_ok', 'comment']
+
+    def clean_is_ok(self):
+        if self.cleaned_data.get('is_ok') == '0':
+            self.cleaned_data['is_ok'] = False
+        else:
+            self.cleaned_data['is_ok'] = True
+        return self.cleaned_data['is_ok']
+
+    def clean_comment(self):
+        print('clean_comment', self.cleaned_data.get(
+            'is_ok'), self.cleaned_data.get('comment'))
+        if not self.cleaned_data.get('is_ok') and not self.cleaned_data.get('comment'):
+            raise forms.ValidationError('comment field is required')
+        return self.cleaned_data.get('comment')
+
+
 class FileDocumentForm(forms.ModelForm):
     """
     A form for uploading files
@@ -44,27 +67,16 @@ class FileDocumentForm(forms.ModelForm):
     file = forms.FileField(
         label=_('Select a file'),
         help_text='max. 42 megabytes',
-        validators=(FileExtensionValidator(allowed_extensions=['xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
+        validators=(FileExtensionValidator(allowed_extensions=[
+                    'xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
     )
-    file_category = forms.ModelChoiceField(
-        queryset=FileCategory.objects.filter(num_of_identifiers__gt=1),
-        empty_label=_('File Type'))
-
-    def __init__(self, *args, **kwargs):
-        super(FileDocumentForm, self).__init__(*args, **kwargs)
-        if self.request.user.is_superuser:
-            self.fields["file_category"].queryset = FileCategory.objects.all().filter(num_of_identifiers__gte=1)
-
-        elif self.request.user.has_perm('data.upload_file'):
-            hierarchy = self.request.user.hierarchy
-            self.fields["file_category"].queryset = FileCategory.objects.filter(Q(user_created__hierarchy_id=hierarchy))
 
     def clean_file(self):
         """
         Function that validates the file type, file name and size
         """
         file = self.cleaned_data['file']
-        file_category = FileCategory.objects.get(id=self.data.get('file_category'))
+        file_category = self.category
         if file:
 
             file_type = file.content_type.split('/')[1]
@@ -112,10 +124,13 @@ class FileDocumentForm(forms.ModelForm):
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
-                        raise forms.ValidationError(_('File uploaded in not in proper form'))
+                        raise forms.ValidationError(
+                            _('File uploaded in not in proper form'))
                     xl_sheet = xl_workbook.sheet_by_index(0)
+
                     if len(file_category.identifiers()) != xl_sheet.ncols:
-                        raise forms.ValidationError(_('File uploaded in not in proper form'))
+                        raise forms.ValidationError(
+                            _('File uploaded in not in proper form'))
             finally:
                 os.unlink(tmp)  # delete the temp file no matter what
 
@@ -130,14 +145,7 @@ class FileDocumentForm(forms.ModelForm):
         model = Doc
         fields = [
             'file',
-            'file_category',
         ]
-
-
-class FileDocForm(forms.ModelForm):
-    class Meta:
-        model = Doc
-        fields = ['file', 'file_category']
 
 
 class FileCategoryForm(forms.ModelForm):
@@ -145,18 +153,27 @@ class FileCategoryForm(forms.ModelForm):
         model = FileCategory
         fields = '__all__'
         exclude = ('user_created',
-                   'num_of_identifiers')
+                   'num_of_identifiers', 'is_processed')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'has_header':
+                field.widget.attrs['class'] = 'js-switch'
+            else:
+                field.widget.attrs['class'] = 'form-control'
 
     def clean_file_type(self):
         try:
             file_category = FileCategory.objects.get(Q(file_type=self.cleaned_data["file_type"]) &
-                                                     Q(user_created__hierarchy_id=self.request.user.hierarchy))
+                                                     Q(user_created__hierarchy=self.request.user.hierarchy))
         except:
             file_category = None
 
         try:
             if not file_category == self.obj and self.cleaned_data["file_type"] == file_category.file_type:
-                raise forms.ValidationError(self.add_error('file_type', 'Name already Exist'))
+                raise forms.ValidationError(self.add_error(
+                    'file_type', 'Name already Exist'))
             else:
                 return self.cleaned_data["file_type"]
         except AttributeError:
@@ -189,7 +206,7 @@ class FileCategoryViewForm(forms.ModelForm):
     def __init__(self):
         super(FileCategoryViewForm, self).__init__()
         self.fields["file_type"].queryset = FileCategory.objects.filter(
-            Q(user_created__hierarchy_id=self.request.user.hierarchy))
+            Q(user_created__hierarchy=self.request.user.hierarchy))
 
 
 class OtpForm(forms.Form):

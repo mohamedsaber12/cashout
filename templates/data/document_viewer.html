@@ -1,119 +1,201 @@
-{% extends 'base.html' %}
+{% extends 'new_base.html' %}
 {% load i18n %}
-{% load staticfiles %}
+{% load static %}
 {% block title %} Document details{% endblock %}
-{% block extra_head %}
-<link rel="stylesheet" media="screen" href="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.css">
-{% endblock %}
-{% block script %}
+{% block customcss %}
+<!-- Datatables -->
+    <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+    
+    <style>
+        .user_name{
+            font-size:14px;
+            font-weight: bold;
+        }
+        .comments-list .media{
+            border-bottom: 1px dotted #ccc;
+        }
+    </style>
+    {% endblock %}
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/handsontable/0.34.5/handsontable.min.js"></script>
-    <script>
-        $(function () {
-            $("#disburse_button").on("click", function () {
-                $('#AgentModal').removeClass('hide');
-               $('#AgentModal').modal();
-            });
-
-            var container = document.getElementById('excel');
-            var hot = new Handsontable(container, {
-                minSpareRows: 1,
-                rowHeaders: true,
-                colHeaders: true
-            });
-        var data = [];
-        $.get({
-                url:location.origin + "/api/secure/doc/" + '{{doc_id}}' + "/",
-                contentType: "application/json;charset=utf-8",
-                dataType: 'json',
-                success: function (result, xhr, message) {
-                    var excel_data = result[0];
-                    var position = parseInt(result[1]);
-                    var amount= 0.0;
-                    for (var i =0; i < excel_data.length; i++){
-                        data[i] = excel_data[i];
-                        if (i>0){
-                            amount += parseFloat(data[i][position]);
-                        }
-                    }
-                    $('#count').append(excel_data.length - 1);
-                    $('#amount').append(amount);
-                    hot.loadData(data);
-                },
-                error: function (xhr, error, reason) {
-                  $('#modal-header').append('Error Occurred!!');
-                    $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
-                    $('#myModal').removeClass('hide');
-                    $('#myModal').modal();
-                }
-            });
-        if ('{{redirect}}'=='true'){
-            if ('{{disburse}}'==1){
-                $('#modal-header').append('Disbursed, Thanks!!');
-                $('#modal-message').append('<p>Disbursement process is running, you can check reports later</p><br>');
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            }else if ('{{disburse}}'==0){
-                $('#modal-header').append('Error occurred, We are sorry!!');
-                $('#modal-message').append('<p>Disbursement process stopped during an internal error, can you try again or contact you support team</p><br>');
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            }else if ('{{disburse}}'==-1){
-                $('#modal-header').append('Error occurred from your side');
-                if('{{utm_validate}}'=='false'){
-                    $('#modal-message').append('<p>This document is disbursed before, if there\'s any error, please return back to the support team</p><br>');
-                }
-                {% if utm_owner %}
-                if('{{utm_owner}}'=='false'){
-                    $('#modal-message').append('You can\'t disburse this document');
-                }
-                {% endif %}
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            }else{
-
-            }}
-
-        });
-    </script>
-{% endblock %}
 {% block body %}
-{% if doc_id %}
+
+    <!-- button -->
     <div class="row">
-        <h2 class="text-center">{{doc_name}}</h2>
-    </div>
-        <div class="row">
-            <div class="col-sm-12 col-md-6" style="padding-top: 5%">
-                    <div id="excel"></div>
+        <!-- checker buttons -->
+        {% if request.user.is_checker %}
+            <div class="col-md-12 pull-right">
+                {% if can_user_disburse.can_disburse %}
+                    <button id="disburse_button" class="btn btn-success pull-right">Disburse</button>
+                {% else %}
+                    <button disabled class="btn btn-success pull-right">Disburse</button>   
+                    <div class="alert alert-info pull-left" role="alert">
+                        {{can_user_disburse.reason}}
+                    </div>
+                {% endif %}
+            
             </div>
-            <div class="col-sm-12 col-md-6" style="padding-top: 5%">
-                <div class="col-sm-8 col-md-4">
-                    <table>
-                        <thead>
-                            <tr>
-                                <td>Count</td>
-                                <td>Amount</td>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td id="count"></td>
-                                <td id="amount"></td>
-                            </tr>
-                        </tbody>
+        <!-- maker buttons -->
+        {% elif request.user.is_maker %}
+            <div class="col-md-12 pull-right">
+                {% if doc.is_processed and not doc.can_be_disbursed %}
+                    <button id="notify_button" class="btn btn-success pull-right" 
+                        data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
+                        Notify Chekers
+                    </button>
+                {% elif doc.can_be_disbursed %}
+                    <div class="alert alert-info pull-left" role="alert">
+                        Checkers Notified
+                    </div>
+                {% elif doc.processing_failure_reason %}
+                    <div class="alert alert-info pull-left" role="alert">
+                        {{doc.processing_failure_reason}}, fix it and upload again! Thanks
+                    </div>
+                {% else %}
+                    <div class="alert alert-info pull-left" role="alert">
+                        Pending
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+    </div>
+
+    <!-- data table -->
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>Document data <small>Document name: {{doc.filename}}</small></h2>
+                    <ul class="nav navbar-right panel_toolbox">
+                        <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                        </li>
+                    </ul>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <p class="text-muted font-13 m-b-30">
+                        Count: {{doc.total_count}} | Total Amount: {{doc.total_amount}}
+                    </p>
+                    <table id="doc-datatable" class="table table-striped table-bordered">
+                       
                     </table>
                 </div>
-                {% if perms.data.can_disburse and request.user.can_disburse %}
-                <div class="col-sm-4 col-md-2">
-                    {% if is_processed %}
-                    <a id="disburse_button" class="btn btn-default" >Disburse</a>
-                    {% else %}
-                    <p>{{reason}}, fix it and upload again! Thanks</p>
-                    {% endif %}
-                </div>
-                {% endif %}
             </div>
         </div>
+    </div>
+
+    {% if request.user.is_checker and not user_review_exist%}
+       
+        <div class="row">
+            <div class="col-md-8 col-xs-12">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Review</h2>
+                        <ul class="nav navbar-right panel_toolbox">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                            </li>            
+                        </ul>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+                        <br />
+                        <form class="form-horizontal form-label-left" method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc.id %}">
+                            {% csrf_token %}
+                            <div class="form-group">
+                                <label class="control-label col-md-3 col-sm-3 col-xs-12">Accept or Reject</label>
+                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                    <select name="is_ok" class="form-control" id="reviewSelect">
+                                        <option value="1">Accept</option>
+                                        <option value="0">Reject</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div hidden class="form-group" id="reviewComment">
+                                <label class="control-label col-md-3 col-sm-3 col-xs-12">Rejection reason <span class="required">*</span>
+                                </label>
+                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                    <textarea name="comment" class="form-control" rows="3"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="ln_solid"></div>
+                            <div class="form-group">
+                                <div class="col-md-9 col-sm-9 col-xs-12">
+                                    <button type="submit" class="btn btn-success">Submit</button>
+                                </div>
+                            </div>
+            
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {%endif%}
+        
+    {% if reviews and reviews.exists %}
+    
+        <div class="row">
+            <div class="col-md-8">
+                <div class="x_panel">
+                    <div class="x_title">
+                        <h2>Reviews</h2>
+                        <ul class="nav navbar-right panel_toolbox">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                            </li>
+                        </ul>
+                        <div class="clearfix"></div>
+                    </div>
+                    <div class="x_content">
+
+                        <ul class="messages">
+                            {% for review in reviews%}
+                                <li>    
+                                    
+                                    <img src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
+                                    <div class="message_wrapper">
+                                        <h4 class="heading">{{review.user_created.username}} 
+                                            {% if review.user_created.first_name %}
+                                                <small >
+                                                    ({{review.user_created.first_name}})
+                                                </small>
+                                            {%endif%}
+
+                                            {% if review.is_ok %}
+                                                <span style="color:green" class="alignright glyphicon glyphicon-ok" aria-hidden="true"></span>
+                                            {%else%}
+                                                <span style="color:red" class="alignright glyphicon glyphicon-remove" aria-hidden="true"></span>
+                                            {%endif%}
+                                        </h4>
+                                        
+                                        
+
+                                        {% if review.comment %}
+                                            <blockquote class="message">
+                                                {{ review.comment }}
+                                            </blockquote>
+                                            <br />
+                                        {%endif%}
+                                        <p class="url">
+                                            {{review.timestamp|date}}
+                                        </p>
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    {%endif%}
 <div id="myModal" class="modal fade" role="dialog" tabindex="-1">
       <div class="modal-dialog">
 
@@ -143,7 +225,7 @@
             <h4 class="modal-title" id="agent-modal-header">Enter Agent Pin</h4>
           </div>
         <div class="form-group">
-          <form method="post" id="pinform" action="{% url 'disbursement:disburse' doc_id %}">
+          <form method="post" id="pinform" action="{% url 'disbursement:disburse' doc.id %}">
               {% csrf_token %}
               <div class="modal-body">
                 <label for="agent-pin">Pin</label>
@@ -158,7 +240,133 @@
 
       </div>
     </div>
+    </div>
 
 
-{% endif %}
+
+
+
+{% endblock %}
+
+{% block script %}
+
+<!-- Datatables -->
+<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+<script>
+    $(function () {
+
+        
+
+        $("#disburse_button").on("click", function () {
+            $('#AgentModal').removeClass('hide');
+            $('#AgentModal').modal();
+        });
+
+        var data = [];
+        let url = "{% url 'disbursement_api:docrows' doc.id %}"
+        $.ajax({
+            type: "GET",
+            url: url,
+            success: function (result, xhr, message) {
+                let excel_data = result[0];
+                let columns_arr = excel_data[0].concat([]);
+                let columns_title=[];
+                for(const head of columns_arr){
+                    columns_title.push({title: head})
+                }
+                excel_data.splice(0, 1);
+
+                $('#doc-datatable').DataTable({
+                    data: excel_data,
+                    columns: columns_title
+                });
+                
+            },
+            error: function (xhr, error, reason) {
+                $('#modal-header').append('Error Occurred!!');
+                $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            },
+            contentType: "application/json;charset=utf-8",
+            dataType: 'json',
+        });
+
+
+        if ('{{redirect}}' == 'true') {
+            if ('{{disburse}}' == 1) {
+                $('#modal-header').append('Disbursed, Thanks!!');
+                $('#modal-message').append('<p>Disbursement process is running, you can check reports later</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            } else if ('{{disburse}}' == 0) {
+                $('#modal-header').append('Error occurred, We are sorry!!');
+                $('#modal-message').append('<p>Disbursement process stopped during an internal error, can you try again or contact you support team</p><br>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            } else if ('{{disburse}}' == -1) {
+                $('#modal-header').append('Error occurred from your side');
+                if ('{{utm_validate}}' == 'false') {
+                    $('#modal-message').append('<p>This document is disbursed before, if there\'s any error, please return back to the support team</p><br>');
+                }
+                {% if utm_owner %}
+                if ('{{utm_owner}}' == 'false') {
+                    $('#modal-message').append('You can\'t disburse this document');
+                }
+                {% endif %}
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
+            } else {
+
+            }
+        }
+        
+        $('#reviewSelect').on('change', function () {
+        
+            if (this.value == 1)
+                $('#reviewComment').hide();
+            else
+                $('#reviewComment').show();
+        });
+
+
+    });
+</script>
+<script>
+    $(function () {
+        $("#notify_button").on("click", function () {
+            let btn = $(this)
+            let url = btn.attr("data-url");
+            $.ajax({
+                type: "POST",
+                url: url,
+                success: function (result, xhr, message) {
+                    elem = `<div class="alert alert-info pull-left" role="alert">
+                        Checkers Notified
+                    </div>`
+                    btn.replaceWith(elem)
+                },
+                error: function (xhr, error, reason) {
+                    console.log('err')
+                    $('#modal-header').append('Error Occurred!!');
+                    $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
+                    $('#myModal').removeClass('hide');
+                    $('#myModal').modal();
+                }
+            });
+
+        });
+    });
+</script>
 {% endblock %}

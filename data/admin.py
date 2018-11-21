@@ -1,20 +1,19 @@
-from data.forms import FileCategoryForm, FileDocumentForm
-from data.models import (
-    FileCategory,
-    Doc,
-)
 from daterange_filter.filter import DateRangeFilter
 from django.contrib import admin
 
+from data.forms import FileCategoryForm, FileDocumentForm
+from data.models import Doc, DocReview, FileCategory
 
 # TODO: Add logs for deleting and adding any instance
+admin.site.register(DocReview)
 
 
 class FileCategoryAdmin(admin.ModelAdmin):
     form = FileCategoryForm
 
     def get_form(self, request, obj=None, **kwargs):
-        FileCategoryForm = super(FileCategoryAdmin, self).get_form(request, obj=obj, **kwargs)
+        FileCategoryForm = super(FileCategoryAdmin, self).get_form(
+            request, obj=obj, **kwargs)
         FileCategoryForm.request = request
         if obj:
             FileCategoryForm.obj = obj
@@ -52,10 +51,11 @@ class DocAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         qs = super(DocAdmin, self).get_queryset(request)
-        return qs.filter(owner__hierarchy_id=request.user.hierarchy_id)
+        return qs.filter(owner__hierarchy=request.user.hierarchy)
 
     def get_form(self, request, obj=None, **kwargs):
-        DocumentForm = super(DocAdmin, self).get_form(request, obj=obj, **kwargs)
+        DocumentForm = super(DocAdmin, self).get_form(
+            request, obj=obj, **kwargs)
         DocumentForm.request = request
         return DocumentForm
 

@@ -7,6 +7,7 @@ db.sqlite3
 */local.py
 local.py
 static/debug_toolbar/
+static_root
 todo.txt
 *.csv
 *.orig
@@ -34,6 +35,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*bower.json
 
 # Installer logs
 pip-log.txt
@@ -53,6 +55,7 @@ coverage.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.vscode
 
 # Rope
 .ropeproject

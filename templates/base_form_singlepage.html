@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Payroll | {% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap -->
+    <link href="{% static 'gentella//bootstrap.min.css' %}" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
+    <!-- NProgress -->
+    <link href="{% static 'gentella//nprogress.css' %}" rel="stylesheet">
+    <!-- Animate.css -->
+    <link href="{% static 'gentella/animate.min.css' %}" rel="stylesheet">
+
+    <!-- Custom Theme Style -->
+    <link href="{% static 'gentella/css/index/custom.min.css' %}" rel="stylesheet">
+  </head>
+
+  <body class="login">
+  {% block back %}
+  {% endblock %}
+    <div>
+      <a class="hiddenanchor" id="signin"></a>
+
+      <div class="login_wrapper">
+        <div class="form login_form">
+          <section class="login_content">
+            {% block form %}
+            {% endblock %}
+          </section>
+        </div>
+      </div>
+    </div>
+  {% block script %} {% endblock %}
+  </body>
+</html>

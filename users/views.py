@@ -16,14 +16,16 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
+from django.views.generic import DetailView
 from django.views.generic import ListView
+from django.views.generic import UpdateView
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
 from data.utils import get_client_ip
 from users.forms import (CheckerMemberFormSet, LevelFormSet,
                          MakerMemberFormSet, PasswordChangeForm,
-                         SetPasswordForm, CheckerCreationForm, MakerCreationForm)
+                         SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm)
 from users.mixins import RootRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User
 
@@ -331,7 +333,52 @@ def levels(request):
     else:
         context['levelform'] = LevelFormSet(
             queryset=initial_query,
-            prefix='level',
-            max_num=4
+            prefix='level'
         )
     return render(request, 'users/add_levels.html', context)
+
+
+class BaseAddMemberView(RootRequiredMixin, CreateView):
+    template_name = 'users/add_member.html'
+
+
+class AddCheckerView(BaseAddMemberView):
+    model = CheckerUser
+    form_class = CheckerCreationForm
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'request': self.request})
+        return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'who': 'checker'})
+        return context
+
+
+class AddMakerView(BaseAddMemberView):
+    model = MakerUser
+    form_class = MakerCreationForm
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({'who': 'maker'})
+        return context
+
+
+class ProfileView(DetailView):
+    model = User
+    template_name = 'users/profile.html'
+
+    def get_object(self, queryset=None):
+        return self.request.user
+
+
+class ProfileUpdateView(UpdateView):
+    model = User
+    template_name = 'users/profile_update.html'
+    form_class = ProfileEditForm
+
+    def get_object(self, queryset=None):
+        return self.request.user

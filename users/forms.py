@@ -280,6 +280,12 @@ class UserChangeForm(AbstractUserChangeForm):
         return groups
 
 
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "mobile_no", "email", "title", "avatar_thumbnail")
+
+
 class LevelForm(forms.ModelForm):
     class Meta:
         model = Levels

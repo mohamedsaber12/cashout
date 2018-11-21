@@ -8,6 +8,7 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
@@ -193,16 +194,6 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
     return render(request, template_name, {'object': file_obj})
 
 
-@setup_required
-@login_required
-def file_update(request, pk, template_name='data/file_form.html'):
-    file_obj = get_object_or_404(Doc, pk=pk)
-    form = FileDocForm(request.POST or None, instance=file_obj)
-    if form.is_valid():
-        form.save()
-        return redirect('upload')
-    return render(request, template_name, {'form': form})
-
 
 def page_not_found_view(request):
     return render(request, 'data/404.html', status=404)
@@ -325,8 +316,7 @@ def doc_download(request, doc_id):
         raise Http404
 
 
-@method_decorator(login_required, name='dispatch')
-class DocumentDetailsListView(ListView):
+class DocumentDetailsListView(LoginRequiredMixin, ListView):
     model = Doc
     template_name = 'data/document_details_list.html'
 

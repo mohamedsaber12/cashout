@@ -70,7 +70,7 @@
                 this.on("error", function (file,message,obj) { 
                     console.log(message)
                     this.removeAllFiles() ;
-                    let fail_modal = $('#fail-modal');
+                    var fail_modal = $('#fail-modal');
                     if (message['file'])
                         fail_modal.find('.modal-body #p1').text(message.file[0]);
                     if (message['non_field_errors'])

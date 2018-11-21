@@ -21,7 +21,7 @@
         <div class="col-md-3 left_col">
           <div class="left_col scroll-view">
             <div class="navbar nav_title" style="border: 0;">
-              <a href="index.html" class="site_title"><i class="fa fa-paw"></i> <span>Paymob Payroll</span></a>
+              <a href="{% url 'data:doc_details_list' %}" class="site_title"><i class="fa fa-paw"></i> <span>Paymob Payroll</span></a>
             </div>
 
             <div class="clearfix"></div>
@@ -29,11 +29,11 @@
             <!-- menu profile quick info -->
             <div class="profile clearfix">
               <div class="profile_pic">
-                <img src="{% static 'images/img.jpg' %}" alt="..." class="img-circle profile_img">
+                <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
               </div>
               <div class="profile_info">
                 <span>Welcome,</span>
-                <h2>John Doe</h2>
+                <h2>{{ request.user.get_full_name }}</h2>
               </div>
             </div>
             <!-- /menu profile quick info -->
@@ -47,23 +47,26 @@
                 <ul class="nav side-menu">
                   <li><a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
-                      <li><a href="#">Dashboard</a></li>
+                      <li><a href="#" class="disabled">Dashboard</a></li>
                       <li><a href="{% url 'data:doc_details_list' %}">Files</a></li>
-                      <li><a href="#">Reports</a></li>
                     </ul>
                   </li>
-                    <li><a><i class="fa fa-home"></i> Members <span class="fa fa-chevron-down"></span></a>
+                    <li><a><i class="fa fa-user"></i> Members <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
                           <li><a>Add member <span class="fa fa-chevron-down"></span></a>
+                              <ul class="nav child_menu">
+                            <li><a href="{% url 'users:add_checker' %}">Checker</a></li>
+                            <li><a href="{% url 'users:add_maker' %}">Maker</a></li>
+                        </ul>
                           </li>
                           <li><a href="{% url 'users:members' %}">All members</a></li>
                         </ul>
                     </li>
-                    <li><a><i class="fa fa-home"></i> Settings <span class="fa fa-chevron-down"></span></a>
+                    <li><a><i class="fa fa-life-ring"></i> Settings <span class="fa fa-chevron-down"></span></a>
                         <ul class="nav child_menu">
-                            <li><a href="{% url 'users:settings' %}"><i class="fa fa-home"></i> Setup</a></li>
-                            <li><a href="{% url 'users:levels' %}"><i class="fa fa-home"></i> levels</a></li>
-                            <li><a href="{% url 'users:profile' %}"><i class="fa fa-home"></i> Profile</a></li>
+                            <li><a href="{% url 'users:settings' %}">Setup</a></li>
+                            <li><a href="{% url 'users:levels' %}">levels</a></li>
+                            <li><a href="{% url 'users:profile' %}">Profile</a></li>
                         </ul>
                         </li>
                 </ul>
@@ -74,7 +77,7 @@
 
             <!-- /menu footer buttons -->
             <div class="sidebar-footer hidden-small">
-              <a data-toggle="tooltip" data-placement="top" title="Settings">
+              <a data-toggle="tooltip" data-placement="top" title="Settings" href="{% url 'users:settings' %}">
                 <span class="glyphicon glyphicon-cog" aria-hidden="true"></span>
               </a>
               <a data-toggle="tooltip" data-placement="top" title="FullScreen">
@@ -83,7 +86,7 @@
               <a data-toggle="tooltip" data-placement="top" title="Lock">
                 <span class="glyphicon glyphicon-eye-close" aria-hidden="true"></span>
               </a>
-              <a data-toggle="tooltip" data-placement="top" title="Logout" href="login.html">
+                <a data-toggle="tooltip" data-placement="top" title="Logout" href="{% url 'users:logout' %}">
                 <span class="glyphicon glyphicon-off" aria-hidden="true"></span>
               </a>
             </div>
@@ -102,7 +105,7 @@
               <ul class="nav navbar-nav navbar-right">
                 <li class="">
                   <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
-                    <img src="{% static 'images/img.jpg' %}" alt="">{{ request.user.get_full_name }}
+                    <img src="{{ request.user.avatar_thumbnail.url }}" alt="">{{ request.user.username | capfirst }}
                     <span class=" fa fa-angle-down"></span>
                   </a>
                   <ul class="dropdown-menu dropdown-usermenu pull-right">
@@ -127,19 +130,21 @@
         <!-- page content -->
               <div class="right_col" role="main">
 
-        {% block body %} {% endblock %}
+                {% block body %} {% endblock %}
+              <div class="clearfix"></div>
+                <footer>
+                  <div class="pull-right">
+                      <a href="https://www.paymobsolutions.com">Paymob</a> - Payroll Solution
+                  </div>
+                  <div class="clearfix"></div>
+                </footer>
+                <!-- /footer content -->
+              </div>
               </div>
         <!-- /page content -->
 
         <!-- footer content -->
-        <footer>
-          <div class="pull-right">
-              <a href="https://www.paymobsolutions.com">Paymob</a> - Payroll Solution
-          </div>
-          <div class="clearfix"></div>
-        </footer>
-        <!-- /footer content -->
-      </div>
+
     </div>
 
     {% include 'base_js.html' %}

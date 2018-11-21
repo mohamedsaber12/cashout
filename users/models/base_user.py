@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.functional import cached_property
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
@@ -121,5 +122,8 @@ class User(AbstractUser):
 
     @cached_property
     def get_full_name(self):
-        full_name = '%s %s' % (self.first_name, self.last_name)
+        full_name = '%s %s' % (self.first_name.capitalize(), self.last_name)
         return full_name.strip()
+
+    def get_absolute_url(self):
+        return reverse("users:profile")

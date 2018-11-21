@@ -28,7 +28,10 @@ urlpatterns = [
          name='password_reset_complete'),
     path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
     path('levels/', views.levels, name='levels'),
-    path('profile/', views.SettingsUpView.as_view(), name='profile'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/edit/', views.ProfileUpdateView.as_view(), name='edit_profile'),
     path('members/', views.Members.as_view(), name='members'),
+    path('members/checker/add', views.AddCheckerView.as_view(), name='add_checker'),
+    path('members/maker/add', views.AddMakerView.as_view(), name='add_maker'),
     path('user/delete', views.delete, name='delete')
 ]

@@ -1,17 +1,17 @@
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
-import tablib, xlrd
 
-from django.db import IntegrityError
+import tablib
+import xlrd
 from django.conf import settings
+from django.core.mail import send_mail
+from django.db import IntegrityError
 
-from data.models import (
-    Doc,
-)
+from data.models import Doc
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
-
+from users.models import User
 
 
 @app.task(ignore_result=False)
@@ -49,6 +49,7 @@ def handle_disbursement_file(doc_obj_id):
                     doc_obj.is_processed = False
                     doc_obj.processing_failure_reason = "This file may be has invalid amounts"
                     doc_obj.save()
+                    notify_maker(doc_obj)
                     return False
             elif pos == msisdn_position:
                 if item.ctype == 2:
@@ -67,27 +68,35 @@ def handle_disbursement_file(doc_obj_id):
                     doc_obj.is_processed = False
                     doc_obj.processing_failure_reason = "This file may be has invalid msisdns"
                     doc_obj.save()
+                    notify_maker(doc_obj)
                     return False
                 msisdn.append(str_value)
 
-    if len(amount) == len(msisdn):
+    amount_length = len(amount)
+    if amount_length == len(msisdn):
         data = zip(amount, msisdn)
         try:
             DisbursementData.objects.bulk_create(
-                [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1]) for i in data]
+                [DisbursementData(doc=doc_obj, amount=float(
+                    i[0]), msisdn=i[1]) for i in data]
             )
+            doc_obj.total_amount = sum(amount)
+            doc_obj.total_count = amount_length
             doc_obj.is_processed = True
             doc_obj.save()
+            notify_maker(doc_obj)
             return True
         except IntegrityError:
             doc_obj.is_processed = False
             doc_obj.processing_failure_reason = "This file contains duplicates"
             doc_obj.save()
+            notify_maker(doc_obj)
             return False
     else:
         doc_obj.is_processed = False
         doc_obj.processing_failure_reason = "This file may be has msisdn which has no amount"
         doc_obj.save()
+        notify_maker(doc_obj)
         return False
 
 
@@ -108,3 +117,45 @@ def generate_file(doc_id):
 #
 # @app.task()
 # def send_disbursement_notification():
+
+
+@app.task()
+def notifiy_checkers(doc_id):
+    doc_obj = Doc.objects.get(id=doc_id)
+    checkers = User.objects.get_all_checkers(doc_obj.owner.hierarchy)
+    if not checkers.exists():
+        return
+
+    doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
+    message = f"""Dear Checker 
+        The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
+        Thanks, BR"""
+    send_mail(
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[checker.email for checker in checkers],
+        subject='[Payroll] Disbursement Notification',
+        message=message
+    )
+
+
+def notify_maker(doc):
+    maker = doc.owner
+    doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+
+    MESSAGE_SUCC = f"""Dear {maker.first_name} 
+        The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
+        You can now notify checkers, 
+        Thanks, BR"""
+    MESSAGE_FAIL = f"""Dear {maker.first_name}
+        The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
+        The reason is: {doc.processing_failure_reason}
+        Thanks, BR"""
+
+    message = MESSAGE_SUCC if doc.is_processed else MESSAGE_FAIL
+
+    send_mail(
+        from_email=settings.EMAIL_HOST_USER,
+        recipient_list=[maker.email],
+        subject='[Payroll] File Upload Notification',
+        message=message
+    )

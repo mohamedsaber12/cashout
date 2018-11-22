@@ -26,7 +26,7 @@ DATABASES = {
 }
 
 
-#Email
+# Email
 SERVER_EMAIL = 'confirmrequest@paymobsolutions.com'
 EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
 EMAIL_HOST = 'email-smtp.eu-west-1.amazonaws.com'
@@ -37,8 +37,9 @@ EMAIL_HOST_PASSWORD = 'AmwPtRx02knXLgv+ERiFIE4vAJlA7Gy1oxUbAosUDBLr'
 # Email Reporting
 
 ADMINS = [('Amir Raouf', 'amirraouf@paymobsolutions.com'),
+          ('karim abdelhakim', 'karimabdelhakim@paymobsolutions.com'),
           ]
+
 # celery
 
-BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
-
+CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'

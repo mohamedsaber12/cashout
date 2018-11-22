@@ -35,6 +35,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+*bower.json
 
 # Installer logs
 pip-log.txt
@@ -54,6 +55,7 @@ coverage.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.vscode
 
 # Rope
 .ropeproject

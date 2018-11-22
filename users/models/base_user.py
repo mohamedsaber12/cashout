@@ -3,13 +3,17 @@ from __future__ import unicode_literals
 import datetime
 
 import pytz
-from django.contrib.auth.models import AbstractUser, UserManager as AbstractUserManager
+from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.functional import cached_property
-
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
 
 TYPES = (
+    (0, 'Super'),
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
@@ -24,20 +28,29 @@ class UserManager(AbstractUserManager):
         return self.get_all_hierarchy_tree(hierarchy).filter(user_type=1).order_by('max_amount_can_be_disbursed')
 
     def get_all_checkers(self, hierarchy):
-        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level_of_authority')
+        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level__level_of_authority')
 
 
 class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
     otp = models.CharField(max_length=6, null=True, blank=True)
-    user_type = models.PositiveSmallIntegerField(choices=TYPES, default=1)
-    hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
+    user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
+    hierarchy = models.PositiveSmallIntegerField(
+        null=True, db_index=True, default=0)
     is_otp_verified = models.BooleanField(default=False)
     verification_time = models.DateTimeField(null=True)
-    level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
+    level = models.ForeignKey(
+        'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     email = models.EmailField('email address', blank=False)
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
+    avatar_thumbnail = ProcessedImageField(upload_to='avatars',
+                                           processors=[ResizeToFill(100, 100)],
+                                           format='JPEG',
+                                           options={'quality': 60}, null=True, default='user.png')
+    title = models.CharField(max_length=128, default='', null=True, blank=True)
+
+    objects = UserManager()
 
     class Meta:
         verbose_name = 'user'
@@ -70,7 +83,8 @@ class User(AbstractUser):
         if otp_method == '3':
             return True
         try:
-            diff = datetime.datetime.utcnow().replace(tzinfo=pytz.UTC) - self.verification_time
+            diff = datetime.datetime.utcnow().replace(
+                tzinfo=pytz.UTC) - self.verification_time
             if diff.total_seconds() < 1800 and self.is_otp_verified:
                 return True
         except TypeError:
@@ -105,3 +119,11 @@ class User(AbstractUser):
     @cached_property
     def is_checker(self):
         return self.user_type == 2
+
+    @cached_property
+    def get_full_name(self):
+        full_name = '%s %s' % (self.first_name.capitalize(), self.last_name)
+        return full_name.strip()
+
+    def get_absolute_url(self):
+        return reverse("users:profile")

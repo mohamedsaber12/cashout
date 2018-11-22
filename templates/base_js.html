@@ -1,0 +1,73 @@
+{% load static %}
+
+<!-- jQuery -->
+<script src="{% static 'gentella/jquery.min.js' %}"></script>
+<!-- Bootstrap -->
+<script src="{% static 'gentella/bootstrap.min.js' %}"></script>
+<!-- FastClick -->
+<script src="{% static 'gentella/fastclick.js' %}"></script>
+<!-- NProgress -->
+<script src="{% static 'gentella/nprogress.js' %}"></script>
+<!-- Chart.js -->
+<script src="{% static 'gentella/Chart.min.js' %}"></script>
+<!-- gauge.js -->
+<script src="{% static 'gentella/gauge.min.js' %}"></script>
+<!-- bootstrap-progressbar -->
+<script src="{% static 'gentella/bootstrap-progressbar.min.js' %}"></script>
+<!-- iCheck -->
+<script src="{% static 'gentella/icheck.min.js' %}"></script>
+<!-- Skycons -->
+<script src="{% static 'gentella/skycons.js' %}"></script>
+<!-- Flot -->
+<script src="{% static 'gentella/jquery.flot.js' %}"></script>
+<script src="{% static 'gentella/jquery.flot.pie.js' %}"></script>
+<script src="{% static 'gentella/jquery.flot.time.js' %}"></script>
+<script src="{% static 'gentella/jquery.flot.stack.js' %}"></script>
+<script src="{% static 'gentella/jquery.flot.resize.js' %}"></script>
+<!-- Flot plugins -->
+<script src="{% static 'gentella/jquery.flot.orderBars.js' %}"></script>
+<script src="{% static 'gentella/jquery.flot.spline.min.js' %}"></script>
+<script src="{% static 'gentella/curvedLines.js' %}"></script>
+<!-- DateJS -->
+<script src="{% static 'gentella/date.js' %}"></script>
+<!-- JQVMap -->
+<script src="{% static 'gentella/jquery.vmap.js' %}"></script>
+<script src="{% static 'gentella/jquery.vmap.world.js' %}"></script>
+<script src="{% static 'gentella/jquery.vmap.sampledata.js' %}"></script>
+<!-- bootstrap-daterangepicker -->
+<script src="{% static 'gentella/moment.min.js' %}"></script>
+<script src="{% static 'gentella/daterangepicker.js' %}"></script>
+
+<!-- Custom Theme Scripts -->
+<script src="{% static 'gentella/js/index/custom.min.js' %}"></script>
+<!-- csrf token -->
+<script>
+    function getCookie(name) {
+        var cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = jQuery.trim(cookies[i]);
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    function csrfSafeMethod(method) {
+        // these HTTP methods do not require CSRF protection
+        return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+    }
+    var csrftoken = getCookie('csrftoken');
+
+    $.ajaxSetup({
+        beforeSend: function (xhr, settings) {
+            if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                xhr.setRequestHeader("X-CSRFToken", csrftoken);
+            }
+        }
+    });
+</script>

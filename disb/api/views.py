@@ -6,8 +6,8 @@ import environ
 import requests
 import xlrd
 from django.contrib.auth.hashers import check_password
-from django.http import HttpResponse
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import UpdateAPIView
@@ -17,12 +17,15 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from data.models import Doc
+from data.tasks import notifiy_checkers
 from disb.api.permission_classes import BlacklistPermission
-from disb.api.serializers import DisbursementSerializer, DisbursementCallBackSerializer
-from disb.models import DisbursementData, Agent, DisbursementDocData, VMTData
+from disb.api.serializers import (DisbursementCallBackSerializer,
+                                  DisbursementSerializer)
+from disb.models import Agent, DisbursementData, DisbursementDocData, VMTData
 from users.models import User
 
 DATA_LOGGER = logging.getLogger("disburse")
+
 
 class DisburseAPIView(APIView):
     permission_classes = (BlacklistPermission,)
@@ -36,17 +39,20 @@ class DisburseAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         user = User.objects.get(username=serializer.validated_data['user'])
         vmt = VMTData.objects.get(vmt=user.root)
-        provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.root.id
+        provider_id = Doc.objects.get(
+            id=serializer.validated_data['doc_id']).owner.root.id
         pin = serializer.validated_data['pin']
         agents = Agent.objects.select_related().filter(wallet_provider_id=provider_id)
         pin_is_true = check_password(pin, agents.first().pin)
         if pin_is_true:
-            senders = agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
+            senders = agents.extra(
+                select={'MSISDN': 'msisdn'}).values('MSISDN')
             senders = list(senders)
             for d in senders:
                 d.update({'PIN': pin})
             recepients = DisbursementData.objects.select_related('doc').filter(doc_id=serializer.validated_data['doc_id']).\
-                extra(select={'MSISDN': 'msisdn', 'AMOUNT':'amount', 'TXNID':'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
+                extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values(
+                    'MSISDN', 'AMOUNT', 'TXNID')
             data = vmt.return_vmt_data()
 
             data.update({
@@ -54,16 +60,20 @@ class DisburseAPIView(APIView):
                 "RECIPIENTS": list(recepients),
             })
 
-            response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(
+                env.str(vmt.vmt_environment), json=data, verify=False)
             try:
-                DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE <-- \n' + str(response.json()))
+                DATA_LOGGER.debug(datetime.now().strftime(
+                    '%d/%m/%Y %H:%M') + '----> DISBURSE <-- \n' + str(response.json()))
             except ValueError:
-                DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' + \
+                DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
                                   str(response.status_code) + ' -- ' + str(response.reason))
 
-            if response.ok and response.json()["TXNSTATUS"]=='200':
-                doc_obj = Doc.objects.get(id=serializer.validated_data['doc_id'])
+            if response.ok and response.json()["TXNSTATUS"] == '200':
+                doc_obj = Doc.objects.get(
+                    id=serializer.validated_data['doc_id'])
                 doc_obj.is_disbursed = True
+                doc_obj.disbursed_by = request.user
                 try:
                     txn_status = response.json()["TXNSTATUS"]
                     try:
@@ -78,17 +88,18 @@ class DisburseAPIView(APIView):
 
                 print(txn_status)
 
-                disb_data, create = DisbursementDocData.objects.get_or_create(doc=doc_obj)
+                disb_data, create = DisbursementDocData.objects.get_or_create(
+                    doc=doc_obj)
                 disb_data.txn_id = txn_id
                 disb_data.txn_status = txn_status
                 disb_data.save()
                 doc_obj.save()
                 return HttpResponse(json.dumps({'message': 'Disbursement process is running, you can check reports later',
-                                     'header': 'Disbursed, Thanks!!'}), status=200)
+                                                'header': 'Disbursed, Thanks!!'}), status=200)
             else:
                 return HttpResponse(json.dumps({'message': 'Disbursement process stopped during an internal error, can you try again '
                                                 'or contact you support team',
-                                     'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                                                'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
         else:
             return HttpResponse(
                 json.dumps({'message': 'Pin you entered is not correct',
@@ -102,7 +113,8 @@ class DisburseCallBack(UpdateAPIView):
     renderer_classes = (JSONRenderer,)
 
     def update(self, request, *args, **kwargs):
-        DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE CALLBACK <-- \n' + str(request.data))
+        DATA_LOGGER.debug(datetime.now().strftime(
+            '%d/%m/%Y %H:%M') + '----> DISBURSE CALLBACK <-- \n' + str(request.data))
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -144,3 +156,20 @@ class RetrieveDocData(APIView):
             return Response([excl_data, position], status=200)
         else:
             return Response([], status=404)
+
+
+class AllowDocDisburse(APIView):
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        doc_obj = get_object_or_404(Doc, id=self.kwargs['doc_id'])
+        if request.user.is_maker and doc_obj.is_processed:
+            if doc_obj.can_be_disbursed:
+                return JsonResponse({"message": "Checkers already notified"}, status=400)
+            doc_obj.can_be_disbursed = True
+            doc_obj.save()
+            notifiy_checkers.delay(doc_obj.id)
+            return Response(status=200)
+
+        return Response(status=403)

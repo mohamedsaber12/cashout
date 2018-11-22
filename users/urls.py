@@ -1,8 +1,12 @@
+from django.contrib.auth.views import (PasswordResetCompleteView,
+                                       PasswordResetConfirmView,
+                                       PasswordResetDoneView,
+                                       PasswordResetView,
+                                       PasswordChangeView,
+                                       PasswordChangeDoneView)
 from django.urls import path
 
 from users import views
-from django.contrib.auth.views import PasswordResetView, PasswordResetDoneView, PasswordResetCompleteView, \
-    PasswordResetConfirmView
 
 app_name = 'users'
 
@@ -18,10 +22,16 @@ urlpatterns = [
           'html_email_template_name': 'registration/password_reset_email.html'},
          name='password_reset_done'),
     path('password/reset/<uidb64>/<token>/',
-         PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+         PasswordResetConfirmView.as_view(success_url='/'), name='password_reset_confirm'),
     path('password/done/', PasswordResetCompleteView.as_view(),
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
     path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
-    path('settings/edit/', views.SettingsUpView.as_view(), name='settings_edit')
+    path('levels/', views.levels, name='levels'),
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+    path('profile/edit/', views.ProfileUpdateView.as_view(), name='edit_profile'),
+    path('members/', views.Members.as_view(), name='members'),
+    path('members/checker/add', views.AddCheckerView.as_view(), name='add_checker'),
+    path('members/maker/add', views.AddMakerView.as_view(), name='add_maker'),
+    path('user/delete', views.delete, name='delete')
 ]

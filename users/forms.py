@@ -1,16 +1,16 @@
 # from users.validators import ComplexPasswordValidator
 
+from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserChangeForm as AbstractUserChangeForm
-from django.contrib.auth.models import Group
-from django.utils.translation import ugettext_lazy as _
-from django.forms import BaseFormSet, modelformset_factory, inlineformset_factory, BaseModelFormSet
-from django.forms import formset_factory
-from django import forms
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.models import Group
+from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
+                          inlineformset_factory, modelformset_factory)
+from django.utils.translation import ugettext_lazy as _
 
-from users.models import Levels, RootUser, MakerUser, CheckerUser, User
+from users.models import CheckerUser, Levels, MakerUser, RootUser, User
 
 
 class SetPasswordForm(forms.Form):
@@ -133,19 +133,22 @@ class GroupAdminForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super(GroupAdminForm, self).__init__(*args, **kwargs)
         if self.request.user.is_superuser:
-            self.fields["users"].queryset = User.objects.all().exclude(username=self.request.user.username)
+            self.fields["users"].queryset = User.objects.all().exclude(
+                username=self.request.user.username)
 
         elif self.request.user.is_root:
             self.fields["users"].queryset = self.request.user.child()
             self.fields["name"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
                                             self.request.user.username
             try:
-                self.fields["permissions"].queryset = self.request.user.groups.first().permissions.all()
+                self.fields["permissions"].queryset = self.request.user.groups.first(
+                ).permissions.all()
             except:
                 pass
 
         if self.request.obj:
-            self.fields["users"].initial = list(self.request.obj.user_set.all())
+            self.fields["users"].initial = list(
+                self.request.obj.user_set.all())
 
     class Meta:
         model = Group
@@ -244,7 +247,8 @@ class RootCreationForm(UserForm):
                 user.hierarchy = 0
 
             else:
-                maximum = max(RootUser.objects.values_list('hierarchy', flat=True))
+                maximum = max(RootUser.objects.values_list(
+                    'hierarchy', flat=True), default=False)
                 if not maximum:
                     maximum = 0
                 try:
@@ -268,21 +272,29 @@ class UserChangeForm(AbstractUserChangeForm):
     def clean_groups(self):
         form_groups = self.cleaned_data['groups']
         try:
-            parent_joined_groups = self.instance.groups_joined().exclude(hierarchy=self.instance.hierarchy)
+            parent_joined_groups = self.instance.groups_joined().exclude(
+                hierarchy=self.instance.hierarchy)
         except AttributeError:
             parent_joined_groups = Group.objects.none()
         groups = (form_groups | parent_joined_groups).distinct()
         return groups
 
 
+class ProfileEditForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ("first_name", "last_name", "mobile_no", "email", "title", "avatar_thumbnail")
+
+
 class LevelForm(forms.ModelForm):
     class Meta:
         model = Levels
-        exclude = ('user',)
+        exclude = ('created',)
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.fields['level_of_authority'].choices = [(1, 'Level 1'), (2, 'Level 2'), (3, 'Level 4'), (4, 'Level 4')]
+        self.fields['level_of_authority'].choices = [
+            (1, 'Level 1'), (2, 'Level 2'), (3, 'Level 3'), (4, 'Level 4')]
 
 
 class BaseLevelFormSet(BaseModelFormSet):
@@ -295,11 +307,17 @@ class BaseLevelFormSet(BaseModelFormSet):
         for form in self.forms:
             level_of_authority = form.cleaned_data['level_of_authority']
             if level_of_authority in level_of_authorities:
-                raise forms.ValidationError("Articles in a set must have distinct titles.")
+                raise forms.ValidationError(
+                    "Levels must be unique.")
             level_of_authorities.append(level_of_authority)
 
 
 class MakerCreationForm(forms.ModelForm):
+    class Meta:
+        model = MakerUser
+        fields = ('username', 'first_name', 'last_name',
+                  'mobile_no', 'email', 'is_staff')
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
@@ -322,14 +340,22 @@ class MakerCreationForm(forms.ModelForm):
                     'class': classes
                 })
 
-    class Meta:
-        model = MakerUser
-        fields = ('username', 'first_name', 'last_name', 'mobile_no', 'email', 'is_staff')
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 1
+        if commit:
+            user.save()
+        return user
 
 
 class CheckerCreationForm(forms.ModelForm):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["level"].choices = [('', '------')] + [
+            (r.id, str(r)) for r in Levels.objects.filter(created__hierarchy=request.user.hierarchy)
+        ]
+
         for field in iter(self.fields):
             # get current classes from Meta
             classes = self.fields[field].widget.attrs.get("class")
@@ -350,13 +376,27 @@ class CheckerCreationForm(forms.ModelForm):
                     'class': classes
                 })
 
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 2
+        if commit:
+            user.save()
+        return user
+
     class Meta:
         model = CheckerUser
-        fields = ['username', 'first_name', 'last_name', 'email', 'mobile_no', 'level', 'is_staff']
+        fields = ['username', 'first_name', 'last_name',
+                  'email', 'mobile_no', 'level', 'is_staff']
 
 
-LevelFormSet = modelformset_factory(model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4, extra=2, can_delete=True, validate_max=True)
+LevelFormSet = modelformset_factory(
+    model=Levels, form=LevelForm, formset=BaseLevelFormSet,
+    max_num=4, min_num=1, can_delete=True,
+    validate_max=True, extra=0, validate_min=True
+)
 
-MakerMemberFormSet = modelformset_factory(model=MakerUser, form=MakerCreationForm, can_delete=True)
+MakerMemberFormSet = modelformset_factory(
+    model=MakerUser, form=MakerCreationForm, can_delete=True)
 
-CheckerMemberFormSet = modelformset_factory(model=CheckerUser, form=CheckerCreationForm, can_delete=True)
+CheckerMemberFormSet = modelformset_factory(
+    model=CheckerUser, form=CheckerCreationForm, can_delete=True)

@@ -8,32 +8,28 @@ import logging
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.http import Http404
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import render, get_object_or_404, redirect
+from django.http import (Http404, HttpResponse, HttpResponseRedirect,
+                         JsonResponse)
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
-from django.utils.encoding import force_text, force_bytes
+from django.utils.decorators import method_decorator
+from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
+from django.views.generic import ListView
 from django.views.static import serve
 
-from data.forms import (
-    FileDocumentForm,
-    DownloadFilterForm
-)
-from data.models import (
-    Doc,
-    FileCategory,
-)
+from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
+from data.models import Doc, DocReview, FileCategory
 from data.tasks import handle_disbursement_file
 from data.utils import get_client_ip, paginator
 from users.decorators import setup_required
 from users.models import User
-
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -55,21 +51,22 @@ def file_upload(request):
     docs = Doc.objects.select_related('owner').filter(
         Q(owner__hierarchy=request.user.hierarchy)
     )
-    if request.method == 'POST' and request.user.has_perm('data.upload_file'):
+    category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
+    has_file_category = bool(category)
+
+    if request.method == 'POST' and request.user.is_maker and has_file_category:
+        FileDocumentForm.category = category
         form_doc = FileDocumentForm(request.POST, request.FILES)
 
         if form_doc.is_valid():
-            file_type = form_doc.cleaned_data['file_category']
             file_doc = Doc(owner=request.user,
                            file=request.FILES['file'],
-                           file_category=file_type)
+                           file_category=category)
             file_doc.save()
             now = datetime.datetime.now()
             UPLOAD_LOGGER.debug(
                 '%s uploaded file at ' % request.user + str(now))
-            if request.user.has_perm('data.process_file'):
-                # handle_disbursement_file.delay(file_doc.id)
-                handle_disbursement_file(file_doc.id)
+            handle_disbursement_file.delay(file_doc.id)
 
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
@@ -79,48 +76,49 @@ def file_upload(request):
                     form_doc.errors, request.user,
                     datetime.datetime.now(), get_client_ip(request)))
 
+            return JsonResponse(form_doc.errors, status=400)
+
     else:
-        form_doc = FileDocumentForm()
-        if request.GET.get('file_type', None):
+        form_doc = None
+        files = files_based_on_group_of_logged_in_user(request, docs)
+        if isinstance(files, QuerySet):
             try:
-                cat = FileCategory.objects.get(Q(id=request.GET.get('file_type', '')))
-                files = files_based_on_group_of_logged_in_user(request, cat, docs)
-                if isinstance(files, QuerySet):
-                    try:
-                        docs = paginator(request, files)
-                    except:
-                        docs = paginator(request, '')
-                else:
-                    docs = files
-            except FileCategory.DoesNotExist:
-                pass
+                docs = paginator(request, files)
+            except:
+                docs = paginator(request, '')
+        else:
+            docs = files
+
+    doc_list = Doc.objects.filter(
+        owner__hierarchy=request.user.hierarchy)
+
     context = {'docs': docs,
                'form_doc': form_doc,
+               'has_file_category': has_file_category,
+               'doc_list': doc_list
                }
 
     return render(request, 'data/index.html', context=context)
 
 
 # TODO: Customize permissions based on file types permissions
-@setup_required
-@login_required
-def files_based_on_group_of_logged_in_user(request, category, docs):
+def files_based_on_group_of_logged_in_user(request, docs):
     """
-    Function to return the document files based of group, category,
-    date and the user
+    Function to return the document files based of date
     :param request:
-    :param category:
+    :param docs:
     :return:
     """
-    if request.user.has_perm('data.access_file'):
-        if request.GET.get('from_date') == '' or request.GET.get('to_date') == '':
-            return docs.filter(file_category=category)
-        else:
-            docs = docs.filter(
-                Q(created_at__range=(request.GET.get('from_date', ''), request.GET.get('to_date', ''))) &
-                Q(file_category=category))
+    if not (request.GET.get('from_date') and request.GET.get('to_date')):
+        return docs
+    else:
+        docs = docs.filter(
+            created_at__range=(request.GET.get('from_date', ''),
+                               request.GET.get('to_date', ''))
+        )
 
-            return docs
+    return docs
+
 
 @setup_required
 @login_required
@@ -139,6 +137,7 @@ def check_download_xlsx(request):
     else:
         return HttpResponse("Wrong request")
 
+
 @setup_required
 @login_required
 def download_excel_with_trx_temp_view(request):
@@ -153,7 +152,8 @@ def download_excel_with_trx_temp_view(request):
         if form.is_valid():
             start_date = request.POST.get('start_date', None)
             end_date = request.POST.get('end_date', None)
-            file_category = get_object_or_404(FileCategory, user_created=request.user)
+            file_category = get_object_or_404(
+                FileCategory, user_created=request.user)
             url = reverse('download_xls', kwargs={
                 "start_date": start_date,
                 "end_date": end_date,
@@ -198,17 +198,6 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
     return render(request, template_name, {'object': file_obj})
 
 
-@setup_required
-@login_required
-def file_update(request, pk, template_name='data/file_form.html'):
-    file_obj = get_object_or_404(Doc, pk=pk)
-    form = FileDocForm(request.POST or None, instance=file_obj)
-    if form.is_valid():
-        form.save()
-        return redirect('upload')
-    return render(request, template_name, {'form': form})
-
-
 def page_not_found_view(request):
     return render(request, 'data/404.html', status=404)
 
@@ -225,31 +214,56 @@ def bad_request_view(request):
     return render(request, 'data/400.html', status=400)
 
 
-@setup_required
 @login_required
 def document_view(request, doc_id):
     template_name = 'data/document_viewer.html'
-    flag_to_edit = 0
-    try:
-        doc = Doc.objects.get(id=doc_id)
-        if doc.owner.hierarchy == request.user.hierarchy:
-            if doc.is_disbursed:
-                return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
-            if request.user.has_perm('data.edit_file_online'):
-                flag_to_edit = 1
-            context = {
-                'flag_to_edit': flag_to_edit,
-                'doc_id': doc_id,
-                'doc_name': doc.filename(),
-                'is_processed': doc.is_processed,
-                'reason': doc.processing_failure_reason,
-            }
-        else:
-            messages.warning(request, 'This document doesn\'t exist')
-            return render(request, template_name=template_name, context={})
-    except Doc.DoesNotExist:
-        raise Http404
+    doc = get_object_or_404(Doc, id=doc_id)
+    review_form_errors = None
+    reviews = None
+    # True if user already reviewed this doc
+    user_review_exist = None
+    can_user_disburse = {}
+    if doc.owner.hierarchy == request.user.hierarchy:
+        if doc.is_disbursed:
+            return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
+        if request.user.is_checker:
+            if not doc.can_be_disbursed:
+                raise Http404
 
+            reviews = DocReview.objects.filter(doc=doc)
+            user_review_exist = DocReview.objects.filter(
+                doc=doc, user_created=request.user).exists()
+
+            if request.method == "POST" and not user_review_exist:
+
+                doc_review_form = DocReviewForm(request.POST)
+                if doc_review_form.is_valid():
+                    doc_review_obj = doc_review_form.save(commit=False)
+                    doc_review_obj.user_created = request.user
+                    doc_review_obj.doc = doc
+                    doc_review_obj.save()
+                    user_review_exist = True
+                else:
+                    review_form_errors = doc_review_form.errors
+
+            can_user_disburse = doc.can_user_disburse(request.user)
+            can_user_disburse = {
+                'can_disburse': can_user_disburse[0],
+                'reason': can_user_disburse[1],
+                'code': can_user_disburse[2]
+            }
+
+    else:
+        messages.warning(request, "This document doesn't exist")
+        return redirect(reverse("data:main_view"))
+
+    context = {
+        'doc': doc,
+        'review_form_errors': review_form_errors,
+        'reviews': reviews,
+        'user_review_exist': user_review_exist,
+        'can_user_disburse': can_user_disburse
+    }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'
         context.update(request.GET.dict())
@@ -288,7 +302,8 @@ def doc_download(request, doc_id):
     doc = Doc.objects.get(id=doc_id)
     if doc.owner.hierarchy == request.user.hierarchy:
         try:
-            response = HttpResponse(doc.file, content_type='application/vnd.ms-excel')
+            response = HttpResponse(
+                doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
         except Exception:
@@ -302,3 +317,4 @@ def doc_download(request, doc_id):
         return response
     else:
         raise Http404
+

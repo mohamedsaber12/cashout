@@ -6,11 +6,13 @@ from django.contrib.admin.actions import delete_selected as delete_selected_
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
-from django.utils.translation import ugettext as _, ugettext_lazy
+from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy
 
 from data.utils import get_client_ip
-from users.forms import UserChangeForm, MakerCreationAdminForm, CheckerCreationAdminForm, RootCreationForm
-from users.models import User, RootUser, MakerUser, CheckerUser
+from users.forms import (CheckerCreationAdminForm, MakerCreationAdminForm,
+                         RootCreationForm, UserChangeForm)
+from users.models import CheckerUser, MakerUser, RootUser, User
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
@@ -41,7 +43,8 @@ def delete_selected(modeladmin, request, queryset):
         return delete_selected_(modeladmin, request, queryset)
 
 
-delete_selected.short_description = ugettext_lazy("Delete selected %(verbose_name_plural)s")
+delete_selected.short_description = ugettext_lazy(
+    "Delete selected %(verbose_name_plural)s")
 
 
 def deactivate_selected(modeladmin, request, queryset):
@@ -67,7 +70,8 @@ def deactivate_selected(modeladmin, request, queryset):
         return deactivate_selected(modeladmin, request, queryset)
 
 
-deactivate_selected.short_description = ugettext_lazy("Deactivate selected %(verbose_name_plural)s")
+deactivate_selected.short_description = ugettext_lazy(
+    "Deactivate selected %(verbose_name_plural)s")
 
 
 def activate_selected(modeladmin, request, queryset):
@@ -93,12 +97,14 @@ def activate_selected(modeladmin, request, queryset):
         return None
 
 
-activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
+activate_selected.short_description = ugettext_lazy(
+    "Activate selected %(verbose_name_plural)s")
 
 
 class UserAccountAdmin(UserAdmin):
     actions = (delete_selected, deactivate_selected, activate_selected)
-    list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
+    list_display = ('username', 'first_name',
+                    'last_name', 'email', 'is_active')
     filter_horizontal = ('groups',)
 
     def get_list_display(self, request):
@@ -110,7 +116,8 @@ class UserAccountAdmin(UserAdmin):
         return list_display
 
     def get_form(self, request, obj=None, **kwargs):
-        userform = super(UserAccountAdmin, self).get_form(request, obj=obj, **kwargs)
+        userform = super(UserAccountAdmin, self).get_form(
+            request, obj=obj, **kwargs)
         userform.request = request
         userform.request.obj = obj
         defaults = {}
@@ -125,16 +132,19 @@ class UserAccountAdmin(UserAdmin):
         perm_fields = ('is_active', 'is_staff')
         if not obj:
             if request.user.is_superuser:
-                perm_fields = ('is_active', 'is_staff', 'is_superuser', 'parent')
+                perm_fields = ('is_active', 'is_staff',
+                               'is_superuser', 'parent')
 
             self.add_fieldsets = (
                 (None, {
                     'classes': ('wide',),
                     'fields': ('username', 'password1', 'password2',)}
                  ),
-                (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}),
+                (_('Personal info'), {
+                 'fields': ('first_name', 'last_name', 'email', 'mobile_no')}),
                 (_('Permissions'), {'fields': perm_fields}),
-                (_('Important dates'), {'fields': ('last_login', 'date_joined')})
+                (_('Important dates'), {
+                 'fields': ('last_login', 'date_joined')})
             )
 
         elif obj:
@@ -144,9 +154,11 @@ class UserAccountAdmin(UserAdmin):
                     'classes': ('wide',),
                     'fields': ('username', 'email', 'password')}
                  ),
-                (_('Personal info'), {'fields': ('first_name', 'last_name', 'mobile_no')}),
+                (_('Personal info'), {
+                 'fields': ('first_name', 'last_name', 'mobile_no')}),
                 (_('Permissions'), {'fields': perm_fields}),
-                (_('Important dates'), {'fields': ('last_login', 'date_joined')})
+                (_('Important dates'), {
+                 'fields': ('last_login', 'date_joined')})
             )
 
         return self.add_fieldsets
@@ -166,7 +178,7 @@ class MakerAdmin(UserAccountAdmin):
     add_form = MakerCreationAdminForm
 
     def save_model(self, request, obj, form, change):
-        #TODO : FIX Parent hierarchy
+        # TODO : FIX Parent hierarchy
         if request.user.is_superuser:
             obj.hierarchy = form.cleaned_data['parent'].hierarchy
         else:
@@ -188,7 +200,7 @@ class CheckerAdmin(UserAccountAdmin):
     add_form = CheckerCreationAdminForm
 
     def save_model(self, request, obj, form, change):
-        #TODO : FIX Parent hierarchy
+        # TODO : FIX Parent hierarchy
         if request.user.is_superuser:
             obj.hierarchy = form.cleaned_data['parent'].hierarchy
         else:
@@ -211,7 +223,8 @@ class RootAdmin(UserAccountAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
-        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')  # pop parent field from fieldsets
+        # pop parent field from fieldsets
+        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')
         self.fieldsets = fieldsets
         return self.fieldsets
 
@@ -227,6 +240,8 @@ class RootAdmin(UserAccountAdmin):
                 'user created at %s %s' % (now, obj.username))
         super(RootAdmin, self).save_model(request, obj, form, change)
 
+
 admin.site.register(RootUser, RootAdmin)
 admin.site.register(MakerUser, MakerAdmin)
 admin.site.register(CheckerUser, CheckerAdmin)
+admin.site.register(User)

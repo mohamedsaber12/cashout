@@ -89,9 +89,13 @@ def file_upload(request):
         else:
             docs = files
 
+    doc_list = Doc.objects.filter(
+        owner__hierarchy=request.user.hierarchy)
+
     context = {'docs': docs,
                'form_doc': form_doc,
-               'has_file_category': has_file_category
+               'has_file_category': has_file_category,
+               'doc_list': doc_list
                }
 
     return render(request, 'data/index.html', context=context)
@@ -192,7 +196,6 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
                                  "You are not authorized to delete a file")
             return redirect('data:main_view')
     return render(request, template_name, {'object': file_obj})
-
 
 
 def page_not_found_view(request):
@@ -314,12 +317,3 @@ def doc_download(request, doc_id):
         return response
     else:
         raise Http404
-
-
-class DocumentDetailsListView(LoginRequiredMixin, ListView):
-    model = Doc
-    template_name = 'data/document_details_list.html'
-
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            owner__hierarchy=self.request.user.hierarchy)

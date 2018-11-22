@@ -13,22 +13,29 @@
 {% endblock %}
 
 {% block body %}
-    
-    <div class="well upload-nav col-xs-12">
-        {% if has_file_category and request.user.is_maker %}
-            <h3 class="navbar-left">Upload Form</h3>
-            
-            <div class="x_content">
-                <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
-                </form>
-        
-            </div>     
-            
-        {% elif not has_file_category %}
-            <strong class="col-xs-offset-8 col-xs-4" style="margin-top: 15px;">Please Add file category first</strong>
-        {% endif %}
-    </div>
 
+    {% if has_file_category and request.user.is_maker %}
+        <div class="well upload-nav col-xs-12">
+                <h3 class="navbar-left">Upload Form</h3>
+                
+                <div class="x_content">
+                    <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
+                    </form>
+            
+                </div>     
+                            
+        </div>
+    
+    {% elif not has_file_category %}
+
+        <div class="well upload-nav col-xs-12">
+
+            <strong  style="margin-top: 15px;">Please Add file category first</strong>
+            
+        </div>
+    {% endif %}
+
+    {% include 'data/document_details_list.html' with object_list=doc_list %}
 
 <!-- modals -->
 
@@ -85,4 +92,11 @@
     });
 
 </script>
+
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
 {% endblock %}

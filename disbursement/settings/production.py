@@ -47,8 +47,7 @@ EMAIL_HOST_PASSWORD = 'AmwPtRx02knXLgv+ERiFIE4vAJlA7Gy1oxUbAosUDBLr'
 # Email Reporting
 
 ADMINS = [('Amir Raouf', 'amirraouf@paymobsolutions.com'),
-          ('kareem', 'menessy@paymobsolutions.com'),
-
+          ('karim abdelhakim', 'karimabdelhakim@paymobsolutions.com'),
           ]
 # celery
 

@@ -13,7 +13,7 @@ from .base import *
 DEBUG = False
 
 ALLOWED_HOSTS += (
-    'disbursement.paymobsolutions.com',
+    'payroll.paymobsolutions.com',
 )
 
 INSTALLED_APPS += (

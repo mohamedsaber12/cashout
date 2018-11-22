@@ -40,8 +40,6 @@ class FileCategory(models.Model):
                                              verbose_name='Number of identifiers filled')
     user_created = models.OneToOneField(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
-    is_processed = models.BooleanField(
-        default=True, verbose_name='will the excel file uploaded be processed?')
     has_header = models.BooleanField(
         default=True, verbose_name='Will the excel file uploaded has header?')
     unique_field = models.CharField(max_length=128, null=True, blank=True,
@@ -65,10 +63,6 @@ class FileCategory(models.Model):
 
     def __str__(self):
         return self.user_created.username + ' ' + self.file_type
-
-    @property
-    def processed(self):
-        return self.is_processed
 
     def identifiers(self):
         fields = []

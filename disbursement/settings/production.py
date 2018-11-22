@@ -47,7 +47,8 @@ EMAIL_HOST_PASSWORD = 'AmwPtRx02knXLgv+ERiFIE4vAJlA7Gy1oxUbAosUDBLr'
 # Email Reporting
 
 ADMINS = [('Amir Raouf', 'amirraouf@paymobsolutions.com'),
-          ('Mostafa Menessy', 'menessy@paymobsolutions.com')
+          ('kareem', 'menessy@paymobsolutions.com'),
+
           ]
 # celery
 
@@ -62,4 +63,4 @@ CSRF_COOKIE_SECURE = True
 
 
 # base url
-BASE_URL = ''
+BASE_URL = 'http://payroll.paymobsolutions.com'

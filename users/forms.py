@@ -283,18 +283,14 @@ class UserChangeForm(AbstractUserChangeForm):
 class ProfileEditForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "mobile_no", "email", "title", "avatar_thumbnail")
+        fields = ("first_name", "last_name", "mobile_no",
+                  "email", "title", "avatar_thumbnail")
 
 
 class LevelForm(forms.ModelForm):
     class Meta:
         model = Levels
-        exclude = ('created',)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fields['level_of_authority'].choices = [
-            (1, 'Level 1'), (2, 'Level 2'), (3, 'Level 3'), (4, 'Level 4')]
+        exclude = ('created', 'level_of_authority')
 
 
 class BaseLevelFormSet(BaseModelFormSet):
@@ -303,13 +299,15 @@ class BaseLevelFormSet(BaseModelFormSet):
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
-        level_of_authorities = []
-        for form in self.forms:
-            level_of_authority = form.cleaned_data['level_of_authority']
-            if level_of_authority in level_of_authorities:
-                raise forms.ValidationError(
-                    "Levels must be unique.")
-            level_of_authorities.append(level_of_authority)
+
+        # max_amounts = []
+        # for form in self.forms:
+        #     max_amount = form.cleaned_data['max_amount_can_be_disbursed']
+        #     max_amount = float(max_amount)
+        #     if max_amount in max_amounts:
+        #         raise forms.ValidationError(
+        #             "Levels can not have same Max amount can be disbursed.")
+        #     max_amounts.append(max_amount)
 
 
 class MakerCreationForm(forms.ModelForm):
@@ -353,7 +351,7 @@ class CheckerCreationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["level"].choices = [('', '------')] + [
-            (r.id, str(r)) for r in Levels.objects.filter(created__hierarchy=request.user.hierarchy)
+            (r.id, f'{r} {i+1}') for i, r in enumerate(Levels.objects.filter(created__hierarchy=request.user.hierarchy))
         ]
 
         for field in iter(self.fields):
@@ -391,7 +389,7 @@ class CheckerCreationForm(forms.ModelForm):
 
 LevelFormSet = modelformset_factory(
     model=Levels, form=LevelForm, formset=BaseLevelFormSet,
-    max_num=4, min_num=1, can_delete=True,
+    max_num=8, min_num=1, can_delete=True,
     validate_max=True, extra=0, validate_min=True
 )
 

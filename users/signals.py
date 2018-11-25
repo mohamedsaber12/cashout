@@ -33,8 +33,8 @@ def notify_user(sender, instance, created, **kwargs):
         # one time token
         token = default_token_generator.make_token(instance)
         uid = urlsafe_base64_encode(force_bytes(instance.pk)).decode("utf-8")
-        url = settings.BASE_URL + reverse_lazy('users:password_reset_confirm', kwargs={
-            'uidb64': uid, 'token': token})
+        url = settings.BASE_URL + str(reverse_lazy('users:password_reset_confirm', kwargs={
+            'uidb64': uid, 'token': token}))
 
         send_mail(
             from_email=settings.EMAIL_HOST_USER,

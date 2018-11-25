@@ -38,7 +38,7 @@ DATABASES = {
 
 # Email
 SERVER_EMAIL = 'confirmrequest@paymobsolutions.com'
-EMAIL_BACKEND = 'django_smtp_ssl.SSLEmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'email-smtp.eu-west-1.amazonaws.com'
 EMAIL_PORT = 465
 EMAIL_HOST_USER = 'AKIAIBBG4EPQMH72VCEA'
@@ -62,4 +62,4 @@ CSRF_COOKIE_SECURE = True
 
 
 # base url
-BASE_URL = 'http://payroll.paymobsolutions.com'
+BASE_URL = 'https://payroll.paymobsolutions.com'

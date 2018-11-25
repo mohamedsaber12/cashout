@@ -5,6 +5,7 @@
     <link rel="stylesheet" href="{% static 'gentella/switchery.min.css'%}">
 
 {% endblock %}
+{% block title %}Settings{% endblock %}
 {% block body %}
         <form action="" method="post">
     </form>
@@ -188,30 +189,30 @@
 
                       {% csrf_token %}
 
-                                    {% for field in filecategoryform.visible_fields %}
-                                        {% if forloop.first %}
-                                            {% for hidden in form.hidden_fields %}
-                                                {{ hidden }}
-                                            {% endfor %}
-                                        {% endif %}
-                                        <div class="form-group">
-                                            <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
-                                            <div class="col-md-6 col-sm-9 col-xs-12">
-                                                {% ifequal field.name "has_header" %}
-                                                    <div class="">
-                                                    <label>
-                                                        {{ field }}
-                                                    </label>
-                                                    </div>
-                                                {% else %}
-                                                    {{ field.errors.as_ul }}
-                                                    {{ field }}
-                                                {% endifequal %}
+                            {% for field in filecategoryform.visible_fields %}
+                                {% if forloop.first %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                                    <div class="col-md-6 col-sm-9 col-xs-12">
+                                        {% ifequal field.name "has_header" %}
+                                            <div class="">
+                                            <label>
+                                                {{ field }}
+                                            </label>
                                             </div>
-                                        </div>
+                                        {% else %}
+                                            {{ field.errors.as_ul }}
+                                            {{ field }}
+                                        {% endifequal %}
+                                    </div>
+                                </div>
 
 
-                                {% endfor %}
+                            {% endfor %}
                     </form>
               </div>
 

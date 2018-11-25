@@ -12,7 +12,9 @@
             </div>
 
 
-        <div class="clearfix"></div>
+        <div class="clearfix">
+
+        </div>
 
     <div class="row">
         <div class="col-lg-12">
@@ -20,43 +22,43 @@
                 <div class="panel-body">
                     <form action="." method="post" class="form-horizontal" enctype="multipart/form-data">
 
-                          {% csrf_token %}
-                        {% for field in form.visible_fields %}
-                                {% if forloop.first %}
-                                    {% for hidden in form.hidden_fields %}
-                                        {{ hidden }}
-                                    {% endfor %}
-                                {% endif %}
-                                <div class="form-group">
-                                    <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
-                                    <div class="col-md-6 col-sm-9 col-xs-12">
-                                        {% ifequal field.name "has_header" %}
-                                            <div class="">
-                                            <label>
+                              {% csrf_token %}
+                            {% for field in form.visible_fields %}
+                                    {% if forloop.first %}
+                                        {% for hidden in form.hidden_fields %}
+                                            {{ hidden }}
+                                        {% endfor %}
+                                    {% endif %}
+                                    <div class="form-group">
+                                        <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                                        <div class="col-md-6 col-sm-9 col-xs-12">
+                                            {% ifequal field.name "has_header" %}
+                                                <div class="">
+                                                <label>
+                                                    {{ field }}
+                                                </label>
+                                                </div>
+                                            {% else %}
+                                                {{ field.errors.as_ul }}
                                                 {{ field }}
-                                            </label>
-                                            </div>
-                                        {% else %}
-                                            {{ field.errors.as_ul }}
-                                            {{ field }}
-                                        {% endifequal %}
+                                            {% endifequal %}
+                                        </div>
                                     </div>
-                                </div>
 
 
-                        {% endfor %}
-                        <input type="submit" value="submit" class="btn btn-upload btn-success pull-right">
-                    </form>
+                            {% endfor %}
+                            <input type="submit" value="submit" class="btn btn-upload btn-success pull-right">
+                        </form>
 
 
-                    <!-- /.table-responsive -->
+                        <!-- /.table-responsive -->
+                    </div>
+                    <!-- /.panel-body -->
                 </div>
-                <!-- /.panel-body -->
+                <!-- /.panel -->
             </div>
-            <!-- /.panel -->
+            <!-- /.col-lg-12 -->
         </div>
-        <!-- /.col-lg-12 -->
-    </div>
     <!-- /.row -->
     </div>
     <!-- /#page-wrapper -->

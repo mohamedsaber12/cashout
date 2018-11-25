@@ -62,4 +62,4 @@ CSRF_COOKIE_SECURE = True
 
 
 # base url
-BASE_URL = 'http://payroll.paymobsolutions.com'
+BASE_URL = 'https://payroll.paymobsolutions.com'

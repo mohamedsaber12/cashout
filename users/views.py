@@ -341,6 +341,12 @@ def levels(request):
 class BaseAddMemberView(RootRequiredMixin, CreateView):
     template_name = 'users/add_member.html'
 
+    def form_valid(self, form):
+        self.object = form.save()
+        self.object.hierarchy = self.request.user.hierarchy
+        self.object.save()
+        return super().form_valid(form)
+
 
 class AddCheckerView(BaseAddMemberView):
     model = CheckerUser
@@ -353,7 +359,7 @@ class AddCheckerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'who': 'checker'})
+        context.update({'who': 'checker', 'success_url': reverse_lazy("users:add_checker")})
         return context
 
 
@@ -363,7 +369,7 @@ class AddMakerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'who': 'maker'})
+        context.update({'who': 'maker', 'success_url': reverse_lazy("users:add_maker")})
         return context
 
 

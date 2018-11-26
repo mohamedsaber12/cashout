@@ -50,49 +50,72 @@
         </li>
       </ul>
       <div id="step-1">
-        <form action="." method="post" id="step_1_form" >
-
-          {% csrf_token %}
-
-        <table class="table" id="levelform">
-            {{ levelform.management_form }}
-            {% for form in levelform.forms %}
-                {% if forloop.first %}
-                <thead>
-                    <tr>
-                        <th>Level</th>
-                        {% for field in form.visible_fields %}
+      
+            <form action="." method="post" id="step_1_form">
+            
+                {% csrf_token %}
+            
+                <table class="table" id="levelform">
+                    {{ levelform.management_form }}
+                    {% for form in levelform.forms %}
+                    {% if forloop.first %}
+                    <thead>
+                        <tr>
+                            {% for field in form.visible_fields %}
                             <th>{{ field.label|capfirst }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-
-                {% endif %}
-            {% endfor %}
-            <tbody>
-
-            {% for form in levelform.forms %}
-
-                <tr class="level_formset_row">
-                    <td>{{ forloop.counter }}</td>
-                    {% for field in form.visible_fields %}
-                        <td>
-                            {# Include the hidden fields in the form #}
-                            {% if forloop.first %}
-                                {% for hidden in form.hidden_fields %}
-                                    {{ hidden }}
-                                {% endfor %}
-                            {% endif %}
-                            {{ field.errors.as_ul }}
-                            {{ field }}
-                        </td>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+            
+                    {% endif %}
                     {% endfor %}
-                </tr>
-            {% endfor %}
-            </tbody>
-        </table>
+                    <tbody>
+            
+                        {% for form in levelform.forms %}
+            
+                        <tr class="level_formset_row">
+                            {% for field in form.visible_fields %}
+                            <td>
+                                {# Include the hidden fields in the form #}
+                                {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                {% endif %}
+                                {{ field.errors.as_ul }}
+                                {{ field }}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
 
-        </form>
+                        
+                    </tbody>
+                </table>
+            
+            </form>
+            
+<!-- empty form -->
+
+<table id="level_empty_form" style="display: none">
+<tr class="level_formset_row"  >
+    {% for field in levelform.empty_form.visible_fields %}
+    <td>
+        {# Include the hidden fields in the form #}
+        {% if forloop.first %}
+        {% for hidden in levelform.empty_form.hidden_fields %}
+        {{ hidden }}
+        {% endfor %}
+        {% endif %}
+        {{ field.errors.as_ul }}
+        {{ field }}
+    </td>
+    {% endfor %}
+</tr>
+</table>
+    
+
+            <button id="add_level_btn">Add another level</button>
 
       </div>
       <div id="step-2">
@@ -138,7 +161,25 @@
 
         </form>
 
+<!-- empty form -->
 
+<table id="maker_empty_form" style="display: none">
+    <tr class="maker_formset_row">
+        {% for field in makerform.empty_form.visible_fields %}
+        <td>
+            {# Include the hidden fields in the form #}
+            {% if forloop.first %}
+            {% for hidden in makerform.empty_form.hidden_fields %}
+            {{ hidden }}
+            {% endfor %}
+            {% endif %}
+            {{ field.errors.as_ul }}
+            {{ field }}
+        </td>
+        {% endfor %}
+    </tr>
+</table>
+<button id="add_maker_btn">Add family member</button>
       </div>
       <div id="step-3">
         <form action="." method="post" id="step_3_form">
@@ -183,160 +224,143 @@
 
         </form>
 
+<!-- empty form -->
 
+<table id="checker_empty_form" style="display: none">
+    <tr class="checker_formset_row">
+        {% for field in checkerform.empty_form.visible_fields %}
+        <td>
+            {# Include the hidden fields in the form #}
+            {% if forloop.first %}
+            {% for hidden in checkerform.empty_form.hidden_fields %}
+            {{ hidden }}
+            {% endfor %}
+            {% endif %}
+            {{ field.errors.as_ul }}
+            {{ field }}
+        </td>
+        {% endfor %}
+    </tr>
+</table>
+<button id="add_checker_btn">Add family member</button>
       </div>
-              <div id="step-4">
-                  <form action="." method="post" id="step_4_form" class="form-horizontal form-label-left">
+        <div id="step-4">
+            <form action="." method="post" id="step_4_form" class="form-horizontal form-label-left">
 
-                      {% csrf_token %}
+                {% csrf_token %}
 
-                                    {% for field in filecategoryform.visible_fields %}
-                                        {% if forloop.first %}
-                                            {% for hidden in form.hidden_fields %}
-                                                {{ hidden }}
-                                            {% endfor %}
-                                        {% endif %}
-                                        <div class="form-group">
-                                            <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
-                                            <div class="col-md-6 col-sm-9 col-xs-12">
-                                                {% ifequal field.name "has_header" %}
-                                                    <div class="">
-                                                    <label>
-                                                        {{ field }}
-                                                    </label>
-                                                    </div>
-                                                {% else %}
-                                                    {{ field.errors.as_ul }}
-                                                    {{ field }}
-                                                {% endifequal %}
+                            {% for field in filecategoryform.visible_fields %}
+                                {% if forloop.first %}
+                                    {% for hidden in form.hidden_fields %}
+                                        {{ hidden }}
+                                    {% endfor %}
+                                {% endif %}
+                                <div class="form-group">
+                                    <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                                    <div class="col-md-6 col-sm-9 col-xs-12">
+                                        {% ifequal field.name "has_header" %}
+                                            <div class="">
+                                            <label>
+                                                {{ field }}
+                                            </label>
                                             </div>
-                                        </div>
+                                        {% else %}
+                                            {{ field.errors.as_ul }}
+                                            {{ field }}
+                                        {% endifequal %}
+                                    </div>
+                                </div>
 
 
-                                {% endfor %}
-                    </form>
-              </div>
-
+                        {% endfor %}
+            </form>
+        </div>
     </div>
+
 {% endblock %}
 
 {% block script %}
-<script src="{% static 'js/jquery.formset.min.js' %}"></script>
 <script src="{% static 'gentella/jquery.smartWizard.js' %}"></script>
 <script src="{% static 'gentella/switchery.min.js' %}"></script>
     <!-- Custom Theme Scripts -->
 <script src="{% static 'gentella/custom.min.js' %}"></script>
 
 <script type="text/javascript">
-        var levelform = $('#levelform tbody tr');
-        levelform.formset({
-            addText: 'add another level',
-            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
-            prefix: '{{ levelform.prefix }}',
-            addCssClass: 'add_level',
-            added: function (row) {
-                
-                //add level number to each row 
-                let level_form = $('#levelform tbody tr')
-                .filter(function () { return $(this).css("display") != "none" });
-                let i = 1
-                for(let elem of level_form){
-                    elem.children[0].innerHTML = i;
-                    i++
-                }
-                //hide add level btn when levels reach max
-                if(level_form.length >= 4){
-                    $(".add_level").hide();
-                }   
-                //clear value of new input
-                $('#levelform tbody tr input').last()[0].defaultValue = '0'
-                
-                $('#levelform tbody tr input').last()[0].value= '0'
 
-                
-                var oldheight = $('.stepContainer').css('height');
-                oldheight = parseInt(oldheight.replace("px", ""));
-                var newheight = oldheight+60;
-                $('.stepContainer').height(newheight+"px");
-            },
-            removed: function(row){
-                
-                let level_form = $('#levelform tbody tr')
-                    .filter(function () { return $(this).css("display") != "none" });
-                let i = 1
-                for (let elem of level_form) {
-                    elem.children[0].innerHTML = i;
-                    i++
-                }
-                $(".add_level").show();
-            },
-        });
-        $('#makerform tbody tr').formset({
-            addText: 'add family member',
-            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
-            prefix: '{{ makerform.prefix }}',
-            added: function (row) {
-                var oldheight = $('.stepContainer').css('height');
-                oldheight = parseInt(oldheight.replace("px", ""));
-                var newheight = oldheight+50;
-                $('.stepContainer').height(newheight+"px");
-            },
-            removed: function (row) {
-                
-                
-                
-            },
-        });
-        $('#checkerform tbody tr').formset({
-            addText: 'add family member',
-            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
-            prefix: '{{ checkerform.prefix }}',
-            added: function (row) {
-                var oldheight = $('.stepContainer').css('height');
-                oldheight = parseInt(oldheight.replace("px", ""));
-                var newheight = oldheight+50;
-                $('.stepContainer').height(newheight+"px");
-            }
-        });
-        function stepSubmit(step_no){
-            var bool_return = false;            
-            
-            var form_data = $("#step_"+step_no+"_form").serialize();
-
-            console.log('form data', form_data)
-            $.ajax({
-                type:'post',
-                url:"{% url 'users:settings' %}",
-                async: false,
-                data:form_data+"&step="+step_no,
-                success : function(data, text, xhr){
-
-                    if (step_no=="4") {
-                        if (xhr.status == 278) {
-                            window.location.href = xhr.getResponseHeader("Location");
-                        }
-                    }
-                    bool_return = data.valid;
-                    console.log('success', bool_return)
-                    return true;
-                }
-
-            });
-            console.log("here");
-            return bool_return;
+    $('#add_level_btn').click(function () {
+        let form_idx = $('#id_level-TOTAL_FORMS').val();
+        if(form_idx === '3'){
+            $(this).hide()
         }
-        $(document).ready(function () {
-            var total = parseInt($("#id_level-TOTAL_FORMS").val());
-            var max_num_of_form = parseInt($("#id_level-MAX_NUM_FORMS").val());
-         
-            if (max_num_of_form == total) {
-                $(".add_level").hide();
+        
+        $('#step-1 #levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+        $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+    });
+
+    $('#add_maker_btn').click(function () {
+        let form_idx = $('#id_maker-TOTAL_FORMS').val();
+        
+        $('#step-2 #makerform tbody').append($('#maker_empty_form tbody').html());
+        $('#id_maker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+    });
+
+    $('#add_checker_btn').click(function () {
+        
+        let form_idx = $('#id_checker-TOTAL_FORMS').val();
+
+        $('#step-3 #checkerform tbody').append($('#checker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+        $('#id_checker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+    });
+
+    function stepSubmit(step_no){
+        var bool_return = false;      
+        let step_no_string = String(step_no)
+        
+        var form_data = $("#step_"+ step_no_string +"_form").serialize();
+
+        
+        $.ajax({
+            type:'post',
+            url:"{% url 'users:settings' %}",
+            async: false,
+            data:form_data+"&step=" + step_no_string,
+            success : function(data, text, xhr){
+
+                if (step_no==4) {
+                    if (xhr.status == 278) {
+                        window.location.href = xhr.getResponseHeader("Location");
+                    }
+                }
+                
+                bool_return = data.valid;
+                console.log('success', bool_return)
+                return true;
             }
+
+        });
+        console.log("here");
+        return bool_return;
+    }
+        $(document).ready(function () {
+            let form_idx = $('#id_level-TOTAL_FORMS').val();
+            if (form_idx === '4') {
+                $('#add_level_btn').hide()
+            }
+ 
+            let step = parseInt('{{step}}');
             var wizard = $('#disb_widget').smartWizard({
+                selected: step,
                 onLeaveStep:leaveAStepCallback,
                 onFinish: onFinishCallback
 
             });
+            if(step>0){
+                let step_real = step+1
+                $('#disb_widget').smartWizard('enableStep', step_real-1);
+                if(step_real-1 !== 0)
+                    $('#disb_widget').smartWizard('enableStep', step_real - 2);
+            }   
             $('#loading-image').bind('ajaxStart', function(){
                 $(this).show();
             }).bind('ajaxStop', function(){
@@ -348,15 +372,19 @@
             $('.stepContainer').height(newheight+"px");
 
             function onFinishCallback(objs, context){
-                console.log('finsish')
-                return stepSubmit('4');
+                
+                return stepSubmit(4);
             }
 
             function leaveAStepCallback(obj, context){
                 console.log('context', context)
-                if(context.fromStep > context.toStep)
-                    return true;
-                return stepSubmit(context.fromStep);
+                if(context.fromStep > context.toStep){
+                    console.log(context)
+                    window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(context.toStep-1)
+                
+                }
+                else    
+                    return stepSubmit(context.fromStep);
                   // return false to stay on step and true to continue navigation
             }
 

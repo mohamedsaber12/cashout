@@ -206,8 +206,9 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     setup.save()
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
-            print(form._non_form_errors)
-            return HttpResponse(content=json.dumps({"valid": False, "reason": "validation", "errors": form.errors, "non_form_errors": form._non_form_errors}),
+
+            return HttpResponse(content=json.dumps({"valid": False,
+                                                    "reason": "validation", "errors": form.errors, "non_form_errors": form._non_form_errors}),
                                 content_type="application/json")
 
     def get_context_data(self, **kwargs):
@@ -232,6 +233,9 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             ),
             prefix='level'
         )
+        data['step'] = self.request.GET.get('step', '0')
+        if int(data['step']) < 0 or int(data['step']) > 2:
+            data['step'] = '0'
         try:
             data['filecategoryform'] = FileCategoryForm(
                 instance=self.request.user.file_category)

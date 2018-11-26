@@ -295,19 +295,26 @@ class LevelForm(forms.ModelForm):
 
 class BaseLevelFormSet(BaseModelFormSet):
     def clean(self):
+        if any(self.errors):
+            return
+
+
+class BaseMakerFormSet(BaseModelFormSet):
+    def clean(self):
         """Checks that no two levels are not same."""
+        print('self.errors', self.errors)
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
 
-        # max_amounts = []
-        # for form in self.forms:
-        #     max_amount = form.cleaned_data['max_amount_can_be_disbursed']
-        #     max_amount = float(max_amount)
-        #     if max_amount in max_amounts:
-        #         raise forms.ValidationError(
-        #             "Levels can not have same Max amount can be disbursed.")
-        #     max_amounts.append(max_amount)
+
+class BaseCheckerFormSet(BaseModelFormSet):
+    def clean(self):
+        """Checks that no two levels are not same."""
+        print('self.errors', self.errors)
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
 
 
 class MakerCreationForm(forms.ModelForm):
@@ -388,13 +395,14 @@ class CheckerCreationForm(forms.ModelForm):
 
 
 LevelFormSet = modelformset_factory(
-    model=Levels, form=LevelForm, formset=BaseLevelFormSet,
-    max_num=8, min_num=1, can_delete=True,
-    validate_max=True, extra=0, validate_min=True
+    model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4,
+    min_num=1, can_delete=True, extra=1, validate_min=True, validate_max=True
 )
 
 MakerMemberFormSet = modelformset_factory(
-    model=MakerUser, form=MakerCreationForm, can_delete=True)
+    model=MakerUser, form=MakerCreationForm, formset=BaseMakerFormSet,
+    min_num=1, validate_min=True, can_delete=True, extra=1)
 
 CheckerMemberFormSet = modelformset_factory(
-    model=CheckerUser, form=CheckerCreationForm, can_delete=True)
+    model=CheckerUser, form=CheckerCreationForm, formset=BaseCheckerFormSet,
+    min_num=1, validate_min=True, can_delete=True, extra=1)

@@ -3,7 +3,7 @@ from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from django.urls import reverse_lazy
+from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
@@ -33,7 +33,7 @@ def notify_user(sender, instance, created, **kwargs):
         # one time token
         token = default_token_generator.make_token(instance)
         uid = urlsafe_base64_encode(force_bytes(instance.pk)).decode("utf-8")
-        url = settings.BASE_URL + reverse_lazy('users:password_reset_confirm', kwargs={
+        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
         send_mail(

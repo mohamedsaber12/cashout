@@ -207,8 +207,11 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
 
+            non_form_errors = getattr(form, 'non_form_errors', None)
+            if non_form_errors is not None:
+                non_form_errors = non_form_errors()
             return HttpResponse(content=json.dumps({"valid": False,
-                                                    "reason": "validation", "errors": form.errors, "non_form_errors": form._non_form_errors}),
+                                                    "reason": "validation", "errors": form.errors, "non_form_errors": non_form_errors}),
                                 content_type="application/json")
 
     def get_context_data(self, **kwargs):

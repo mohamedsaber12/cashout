@@ -130,7 +130,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         if request.is_ajax():
             form = None
             data = request.POST.copy()
-            print('data', data)
+            FileCategoryForm.request = request
             if data['step'] == '1':
                 initial_query = Levels.objects.filter(
                     created__hierarchy=self.request.user.hierarchy
@@ -160,7 +160,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 except FileCategory.DoesNotExist:
                     form = FileCategoryForm(data=request.POST)
             if form and form.is_valid():
-                print('form', form)
+
                 objs = form.save(commit=False)
                 try:
                     for obj in form.deleted_objects:
@@ -168,7 +168,6 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 except AttributeError:
                     pass
                 try:
-                    print('objs', objs)
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id

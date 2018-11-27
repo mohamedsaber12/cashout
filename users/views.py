@@ -181,13 +181,8 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     objs.user_created = request.user.root
                     objs.save()
 
-                updated_levels = Levels.objects.filter(
-                    created__hierarchy=request.user.hierarchy)
-                payload_updated_levels = updated_levels.\
-                    extra(select={'amount': 'max_amount_can_be_disbursed', 'level': 'level_of_authority', 'value': 'users_levels.id'}).\
-                    values('amount', 'level', 'value')
-                payload = {"valid": True, "data": "levels", "objs": list(
-                    payload_updated_levels)} if data["step"] == "1" else {"valid": True}
+                payload = {"valid": True, "data": "levels"} if data["step"] == "1" else {
+                    "valid": True}
                 if data['step'] == '1':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
@@ -328,7 +323,7 @@ def levels(request):
     initial_query = Levels.objects.filter(
         created__hierarchy=request.user.hierarchy
     )
-    context = {}
+
     if request.method == 'POST':
 
         form = LevelFormSet(
@@ -336,17 +331,40 @@ def levels(request):
             prefix='level',
             queryset=initial_query
         )
-        if form.is_valid():
-            form.save()
-        context['levelform'] = form
-        import ipdb
-        ipdb.set_trace()
+        if form and form.is_valid():
+
+            objs = form.save(commit=False)
+            try:
+                for obj in form.deleted_objects:
+                    obj.delete()
+            except AttributeError:
+                pass
+
+            for obj in objs:
+                obj.hierarchy = request.user.hierarchy
+                obj.created_id = request.user.root.id
+                try:
+                    obj.save()
+                except IntegrityError as e:
+                    print('IntegrityError', e)
+                    return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
+
+            payload = {"valid": True}
+
+            return HttpResponse(content=json.dumps(payload), content_type="application/json")
+
+        return HttpResponse(content=json.dumps({
+            "valid": False,
+            "reason": "validation",
+            "errors": form.errors,
+            "non_form_errors": form.non_form_errors()
+        }), content_type="application/json")
+
     else:
-        context['levelform'] = LevelFormSet(
-            queryset=initial_query,
-            prefix='level'
-        )
-    return render(request, 'users/add_levels.html', context)
+        context = {
+            'levelform': LevelFormSet(queryset=initial_query, prefix='level')
+        }
+        return render(request, 'users/add_levels.html', context)
 
 
 class BaseAddMemberView(RootRequiredMixin, CreateView):

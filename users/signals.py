@@ -37,7 +37,7 @@ def notify_user(sender, instance, created, **kwargs):
             'uidb64': uid, 'token': token})
 
         send_mail(
-            from_email=settings.EMAIL_HOST_USER,
+            from_email=settings.SERVER_EMAIL,
             recipient_list=[instance.email],
             subject='[Payroll] Password Notification',
             message=MESSAGE.format(instance.first_name, url, instance.email)

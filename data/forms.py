@@ -12,6 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 from data.models import Doc, DocReview, FileCategory
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
+from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 
@@ -179,6 +180,14 @@ class FileCategoryForm(forms.ModelForm):
                 return self.cleaned_data["file_type"]
         except AttributeError:
             return self.cleaned_data["file_type"]
+
+    def clean_no_of_reviews_required(self):
+        checkers_no = User.objects.get_all_checkers(
+            self.request.user.hierarchy).count()
+        if self.cleaned_data['no_of_reviews_required'] > checkers_no:
+            raise forms.ValidationError(
+                'number of reviews must be less than or equal the number of checkers')
+        return self.cleaned_data['no_of_reviews_required']
 
 
 class FileCategoryViewForm(forms.ModelForm):

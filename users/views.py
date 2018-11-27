@@ -371,7 +371,8 @@ class AddCheckerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'who': 'checker', 'success_url': reverse_lazy("users:add_checker")})
+        context.update(
+            {'who': 'checker', 'success_url': reverse_lazy("users:add_checker")})
         return context
 
 
@@ -381,7 +382,8 @@ class AddMakerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'who': 'maker', 'success_url': reverse_lazy("users:add_maker")})
+        context.update(
+            {'who': 'maker', 'success_url': reverse_lazy("users:add_maker")})
         return context
 
 

@@ -1,7 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import send_mail
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.crypto import get_random_string
@@ -52,3 +52,37 @@ def send_random_pass_to_maker(sender, instance, created, **kwargs):
 @receiver(post_save, sender=CheckerUser)
 def send_random_pass_to_checker(sender, instance, created, **kwargs):
     notify_user(sender, instance, created, **kwargs)
+
+
+@receiver(pre_save, sender=CheckerUser)
+def generate_checker_username(sender, instance, *args, **kwargs):
+    instance.username = generate_username(instance, sender)
+
+
+@receiver(pre_save, sender=MakerUser)
+def generate_maker_username(sender, instance, *args, **kwargs):
+    instance.username = generate_username(instance, sender)
+
+
+def generate_username(user, user_model):
+    """
+    Generate username for maker and checker in this format: 
+    {first_name}-{last_name}-{hierarchy}-{user_type}'
+    if new user has same first and last name then format is
+    {first_name}-{last_name}-{hierarchy}-{user_type}-
+    {no of users with same first and last name + 1}'
+    """
+    # user already exist
+    if user.id:
+        existing_user = user_model.objects.get(id=user.id)
+        # first and last name are not changed
+        if existing_user.first_name == user.first_name and existing_user.last_name == user.last_name:
+            return user.username
+
+    # new user or existing user updating first name or/and last name
+    username = f'{user.first_name}-{user.last_name}-{user.hierarchy}-{user.user_type}'
+    user_qs = user_model.objects.filter(username__contains=username)
+    if not user_qs.exists():
+        return username
+    username = f'{username}-{ user_qs.count() + 1 }'
+    return username

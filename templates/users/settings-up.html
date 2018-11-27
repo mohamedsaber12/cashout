@@ -3,7 +3,11 @@
 {% block gentellacss %}
     <link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
     <link rel="stylesheet" href="{% static 'gentella/switchery.min.css'%}">
-
+    <style>
+        .error_span{
+            color: red;
+        }
+    </style>
 {% endblock %}
 {% block body %}
         <form action="" method="post">
@@ -49,8 +53,12 @@
           </a>
         </li>
       </ul>
+
+    <span id='non_form_errors' class="error_span"></span>
       <div id="step-1">
-      
+        
+        
+
             <form action="." method="post" id="step_1_form">
             
                 {% csrf_token %}
@@ -75,18 +83,20 @@
             
                         <tr class="level_formset_row">
                             {% for field in form.visible_fields %}
-                            <td>
-                                {# Include the hidden fields in the form #}
-                                {% if forloop.first %}
-                                {% for hidden in form.hidden_fields %}
-                                {{ hidden }}
-                                {% endfor %}
-                                {% endif %}
-                                {{ field.errors.as_ul }}
-                                {{ field }}
-                            </td>
-                            {% endfor %}
+                                <td id="level_{{field.name}}">
+                                    {# Include the hidden fields in the form #}
+                                    {% if forloop.first %}
+                                    {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                    {% endfor %}
+                                    {% endif %}
+                                    {{ field.errors.as_ul }}
+                                    {{ field }}
+                                    <span class="error_span"></span>
+                                </td>
+                                    {% endfor %}                        
                         </tr>
+                             
                         {% endfor %}
 
                         
@@ -100,7 +110,7 @@
 <table id="level_empty_form" style="display: none">
 <tr class="level_formset_row"  >
     {% for field in levelform.empty_form.visible_fields %}
-    <td>
+    <td id="level_{{field.name}}">
         {# Include the hidden fields in the form #}
         {% if forloop.first %}
         {% for hidden in levelform.empty_form.hidden_fields %}
@@ -109,16 +119,18 @@
         {% endif %}
         {{ field.errors.as_ul }}
         {{ field }}
+        <span class="error_span"></span>
     </td>
     {% endfor %}
 </tr>
 </table>
     
 
-            <button id="add_level_btn">Add another level</button>
+            <button id="add_level_btn" class="btn btn-success">Add another level</button>
 
       </div>
       <div id="step-2">
+        
         <form action="." method="post" id="step_2_form">
 
           {% csrf_token %}
@@ -141,9 +153,9 @@
 
             {% for form in makerform.forms %}
 
-                <tr class="maker_formset_row">
+                <tr class="maker_formset_row" >
                     {% for field in form.visible_fields %}
-                        <td>
+                        <td id="maker_{{field.name}}">
                             {# Include the hidden fields in the form #}
                             {% if forloop.first %}
                                 {% for hidden in form.hidden_fields %}
@@ -152,6 +164,7 @@
                             {% endif %}
                             {{ field.errors.as_ul }}
                             {{ field }}
+                            <span class="error_span"></span>
                         </td>
                     {% endfor %}
                 </tr>
@@ -166,7 +179,7 @@
 <table id="maker_empty_form" style="display: none">
     <tr class="maker_formset_row">
         {% for field in makerform.empty_form.visible_fields %}
-        <td>
+        <td id="maker_{{field.name}}"> 
             {# Include the hidden fields in the form #}
             {% if forloop.first %}
             {% for hidden in makerform.empty_form.hidden_fields %}
@@ -175,13 +188,15 @@
             {% endif %}
             {{ field.errors.as_ul }}
             {{ field }}
+            <span class="error_span"></span>
         </td>
         {% endfor %}
     </tr>
 </table>
-<button id="add_maker_btn">Add family member</button>
+<button id="add_maker_btn" class="btn btn-success">Add family member</button>
       </div>
       <div id="step-3">
+        
         <form action="." method="post" id="step_3_form">
 
           {% csrf_token %}
@@ -206,7 +221,7 @@
 
                 <tr class="checker_formset_row">
                     {% for field in form.visible_fields %}
-                        <td>
+                        <td id="checker_{{field.name}}">
                             {# Include the hidden fields in the form #}
                             {% if forloop.first %}
                                 {% for hidden in form.hidden_fields %}
@@ -215,6 +230,7 @@
                             {% endif %}
                             {{ field.errors.as_ul }}
                             {{ field }}
+                            <span class="error_span"></span>
                         </td>
                     {% endfor %}
                 </tr>
@@ -229,7 +245,7 @@
 <table id="checker_empty_form" style="display: none">
     <tr class="checker_formset_row">
         {% for field in checkerform.empty_form.visible_fields %}
-        <td>
+        <td id="checker_{{field.name}}">
             {# Include the hidden fields in the form #}
             {% if forloop.first %}
             {% for hidden in checkerform.empty_form.hidden_fields %}
@@ -238,13 +254,16 @@
             {% endif %}
             {{ field.errors.as_ul }}
             {{ field }}
+            <span class="error_span"></span>
         </td>
         {% endfor %}
     </tr>
 </table>
-<button id="add_checker_btn">Add family member</button>
+<button id="add_checker_btn" class="btn btn-success">Add family member</button>
       </div>
-        <div id="step-4">
+       
+      
+      <div id="step-4">
             <form action="." method="post" id="step_4_form" class="form-horizontal form-label-left">
 
                 {% csrf_token %}
@@ -268,6 +287,7 @@
                                             {{ field.errors.as_ul }}
                                             {{ field }}
                                         {% endifequal %}
+                                        <span id="category_error_{{field.name}}" class="error_span"></span>
                                     </div>
                                 </div>
 
@@ -287,6 +307,13 @@
 
 <script type="text/javascript">
 
+    function increase_height() {
+        let oldheight = $('.stepContainer').css('height');
+        oldheight = parseInt(oldheight.replace("px", ""));
+        let newheight = oldheight + 50;
+        $('.stepContainer').height(newheight + "px");
+    }
+
     $('#add_level_btn').click(function () {
         let form_idx = $('#id_level-TOTAL_FORMS').val();
         if(form_idx === '3'){
@@ -295,13 +322,20 @@
         
         $('#step-1 #levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
         $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+        increase_height()
+         
+
     });
 
     $('#add_maker_btn').click(function () {
         let form_idx = $('#id_maker-TOTAL_FORMS').val();
         
-        $('#step-2 #makerform tbody').append($('#maker_empty_form tbody').html());
+        $('#step-2 #makerform tbody').append($('#maker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
         $('#id_maker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+        increase_height()
+
     });
 
     $('#add_checker_btn').click(function () {
@@ -310,7 +344,8 @@
 
         $('#step-3 #checkerform tbody').append($('#checker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
         $('#id_checker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-
+        
+        increase_height()
     });
 
     function stepSubmit(step_no){
@@ -326,11 +361,47 @@
             async: false,
             data:form_data+"&step=" + step_no_string,
             success : function(data, text, xhr){
+                
+                $('.error_span').html('');
 
                 if (step_no==4) {
                     if (xhr.status == 278) {
                         window.location.href = xhr.getResponseHeader("Location");
                     }
+                    if(!data.valid){
+                        for (let field_name in data.errors) {
+                            let err_value = data.errors[field_name][0]
+                            $('#category_error_'+field_name).html(err_value)
+                            
+                        }
+                    }
+                }
+                if(!data.valid && step_no != 4){
+
+                    
+                    
+                    if(data.non_form_errors && data.non_form_errors[0]){
+                        $('#non_form_errors').html(data.non_form_errors[0])
+                    }
+
+                    let prefix;
+                    if (step_no == 1)
+                        prefix = 'level';
+                    else if(step_no==2)
+                        prefix = 'maker';
+                    else if (step_no == 3)
+                        prefix = 'checker';
+                    else
+                        return;
+                      
+                    let rows = $('#' + prefix + 'form' + ' .' +  prefix + '_formset_row');
+                    for(let i in data.errors){
+                        for(let field_name in data.errors[i]){
+                            let err_value = data.errors[i][field_name][0]
+                            $(rows[i]).find('#' + prefix + '_'+ field_name + ' span').html(err_value)
+                        }
+                    }
+                    
                 }
                 
                 bool_return = data.valid;

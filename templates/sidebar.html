@@ -1,6 +1,7 @@
 <div class="left_col scroll-view">
     <div class="navbar nav_title" style="border: 0;">
-        <a href="{% url 'data:main_view' %}" class="site_title"><i class="fa fa-spinner"></i> <span>Paymob Payroll</span></a>
+        <img width="52px" src="{{ request.user.root.setup.entity_logo.url }}" alt="...">
+        <a href="{% url 'data:main_view' %}" class="site_title"> <span>Paymob Payroll</span></a>
     </div>
 
     <div class="clearfix"></div>
@@ -59,6 +60,9 @@
                         <li><a href="{% url 'users:settings' %}">Setup</a></li>
                         <li><a href="{% url 'users:levels' %}">levels</a></li>
                         <li><a href="{% url 'users:profile' %}">Profile</a></li>
+                        {% if request.user.is_root %}
+                            <li><a href="{% url 'users:entity_branding' %}">Branding</a></li>
+                        {%endif%}
                     </ul>
                 </li>
              

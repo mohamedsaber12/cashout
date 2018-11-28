@@ -10,7 +10,7 @@ from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
                           inlineformset_factory, modelformset_factory)
 from django.utils.translation import ugettext_lazy as _
 
-from users.models import CheckerUser, Levels, MakerUser, RootUser, User
+from users.models import CheckerUser, Levels, MakerUser, RootUser, Setup, User
 
 
 class SetPasswordForm(forms.Form):
@@ -399,6 +399,12 @@ class CheckerCreationForm(forms.ModelForm):
         model = CheckerUser
         fields = ['first_name', 'last_name',
                   'email', 'mobile_no', 'level', 'is_staff']
+
+
+class EntityBrandingForm(forms.ModelForm):
+    class Meta:
+        model = Setup
+        fields = ("entity_color", "entity_logo")
 
 
 LevelFormSet = modelformset_factory(

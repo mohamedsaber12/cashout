@@ -233,12 +233,17 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
 class RootCreationForm(UserForm):
     class Meta(UserCreationForm.Meta):
         model = RootUser
+        field_classes = {}
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super(RootCreationForm, self).__init__(*args, **kwargs)
-        if not self.request.user.is_superuser:
-            self.fields["username"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
-                                                self.request.user.username
+        for field in self.fields:
+            field.widget.attrs.setdefault('placeholder', field.label)
+
+    def clean_username(self):
+        name = self.cleaned_data['username']
+        return name
 
     def save(self, commit=True):
         user = super(UserForm, self).save(commit=False)

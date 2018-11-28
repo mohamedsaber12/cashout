@@ -12,7 +12,8 @@ from django.utils.translation import ugettext_lazy
 from data.utils import get_client_ip
 from users.forms import (CheckerCreationAdminForm, MakerCreationAdminForm,
                          RootCreationForm, UserChangeForm)
-from users.models import CheckerUser, MakerUser, RootUser, User
+from users.models import CheckerUser, MakerUser, RootUser, User, SuperAdminUser
+
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
@@ -241,7 +242,30 @@ class RootAdmin(UserAccountAdmin):
         super(RootAdmin, self).save_model(request, obj, form, change)
 
 
+
+class SuperAdmin(UserAccountAdmin):
+    def get_fieldsets(self, request, obj=None):
+        fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
+        # pop parent field from fieldsets
+        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')
+        self.fieldsets = fieldsets
+        return self.fieldsets
+
+    def save_model(self, request, obj, form, change):
+        if obj.pk is not None:
+            CREATED_USERS_LOGGER.debug(
+                'User with id %d has modified at %s from IP Address %s' % (
+                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+
+        else:
+            now = datetime.datetime.now()
+            CREATED_USERS_LOGGER.debug(
+                'user created at %s %s' % (now, obj.username))
+        super(SuperAdmin, self).save_model(request, obj, form, change)
+
+
 admin.site.register(RootUser, RootAdmin)
 admin.site.register(MakerUser, MakerAdmin)
 admin.site.register(CheckerUser, CheckerAdmin)
+admin.site.register(SuperAdminUser, SuperAdmin)
 admin.site.register(User)

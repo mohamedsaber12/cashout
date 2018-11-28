@@ -1,0 +1,90 @@
+{% extends 'base_form_singlepage.html' %}
+{% load custom_tags %}
+{% load static %}
+{% block title %} Agents {% endblock %}
+{% block form %}
+    <form action="." method="post" id="step_1_form" >
+      <h1>Add Agents</h1>
+
+          {% csrf_token %}
+
+        <table class="table" id="agentform">
+            {{ agentform.management_form }}
+            {% for form in agentform.forms %}
+                {% if forloop.first %}
+                <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                {% endif %}
+            {% endfor %}
+            <tbody>
+
+            {% for form in agentform.forms %}
+
+                <tr class="agent_form">
+                    {% for field in form.visible_fields %}
+                        <td>
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field | add_class:'form-control' }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+        <div>
+                {% for field in pinform.visible_fields %}
+                        <div class="form-group">
+                            <div class="col-xs-12">
+
+                                <div class="">
+                                    {{ field | add_class:'form-control'}}
+                                    {{ field.errors.as_ul }}
+
+                                </div>
+
+                            </div>
+                        </div>
+
+                {% endfor %}
+            </div>
+      <div>
+        <input class="btn btn-default submit" type="submit" value="Create">
+      </div>
+
+      <div class="clearfix"></div>
+
+      <div class="separator">
+
+        <div class="clearfix"></div>
+        <br />
+
+      </div>
+    </form>
+
+{% endblock %}
+{% block script %}
+    <script src="{% static 'js/jquery.formset.min.js' %}"></script>
+    <script type="text/javascript">
+        var levelform = $('.agent_form');
+        levelform.formset({
+            addText: 'add another agent',
+            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
+            prefix: '{{ agentform.prefix }}',
+            formCssClass: 'level'
+        });
+    </script>
+{% endblock %}

@@ -51,11 +51,12 @@ class VMTData(models.Model):
 class Agent(models.Model):
     wallet_provider = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='agents',on_delete=models.CASCADE)
     msisdn = models.CharField(max_length=16)
-    pin = models.CharField(max_length=128)
+    pin = models.CharField(max_length=128, null=True)
 
-    def set_pin(self, raw_pin):
+    def set_pin(self, raw_pin, commit=True):
         self.pin = make_password(raw_pin)
-        self.save()
+        if commit:
+            self.save()
 
     def __str__(self):
         return self.msisdn

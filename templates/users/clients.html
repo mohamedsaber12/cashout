@@ -1,0 +1,156 @@
+{% extends 'new_base.html' %}
+{% block title %} Clients {% endblock %}
+
+{% block body %}
+    <!-- page content -->
+        <div class="col" role="main">
+          <div class="">
+            <div class="page-title">
+              <div class="title_left">
+                <h3>Users</h3>
+              </div>
+
+              <div class="title_right">
+                   <form action="." method="get">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+                          <div class="input-group">
+
+                            <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for...">
+                            <span class="input-group-btn">
+                              <button class="btn btn-default" type="submit" value="search">Go!</button>
+                            </span>
+                          </div>
+                      </div>
+                   </form>
+              </div>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="x_panel">
+                  <div class="x_content">
+                    <div class="row">
+                      <div class="col-md-12 col-sm-12 col-xs-12 text-center">
+                        <ul class="pagination pagination-split">
+                          <li><a href="?q=active">Active</a></li>
+                          <li><a href="?q=inactive">InActive</a></li>
+                        </ul>
+                      </div>
+
+                      <div class="clearfix"></div>
+                        {% for user in users %}
+                          <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
+                            <div class="well profile_view">
+                              <div class="col-sm-12">
+                                <h4 class="brief"><i>{% ifequal user.user_type 1 %}Maker{% else %}Checker{% endifequal %}</i></h4>
+                                <div class="left col-xs-7">
+                                  <h2>{{ user.get_full_name }}</h2>
+                                  <p><strong>About: </strong> {{ user.title }} </p>
+                                  <ul class="list-unstyled">
+                                    <li><i class="fa fa-mail-forward"></i> Email: {{ user.email }}</li>
+                                    <li><i class="fa fa-phone"></i> Phone #: {{ user.mobile_no }}</li>
+                                  </ul>
+                                </div>
+                                <div class="right col-xs-5 text-center">
+                                  <img src="{{ user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                                </div>
+                              </div>
+                              <div class="col-xs-12 bottom text-center">
+                                <div class="col-xs-12 col-sm-6 emphasis">
+                                  <p class="ratings">
+                                    <a>Active</a>
+                                  </p>
+                                </div>
+                                <div class="col-xs-12 col-sm-6 emphasis">
+                                  <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target=".delete-modal-sm" onclick="update_modal({{ user.id }})">
+                                      <i class="fa fa-user"></i> <i class="fa fa-trash-o"></i>
+                                  </button>
+                                  <button type="button" class="btn btn-primary btn-xs">
+                                    <i class="fa fa-user"> </i> View Profile
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        {% empty %}
+                            <h4 class="text-center">No clients are set here...
+                                <a class="btn btn-default btn-sm" href="{% url 'users:add_client' %}">Add</a>
+                            </h4>
+                        {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /page content -->
+
+          <div class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                  </button>
+                  <h4 class="modal-title" id="myModalLabel2">Confirmation</h4>
+                </div>
+                <div class="modal-body">
+                  <h4>Are you sure to delete?</h4>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-danger" id="modal-delete" data-id="" onclick="user_delete()">Delete</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <div class="modal fade delete-success" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                  </button>
+                  <h4 class="modal-title" id="myModalLabel2">Successful</h4>
+                </div>
+                <div class="modal-body">
+                  <h4>Deleted Successfully</h4>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    function update_modal(obj_id) {
+        $("#modal-delete").data('id', obj_id)
+    }
+    function user_delete()
+    {
+        var id = $("#modal-delete").data('id');
+        $.ajax({
+            url: "{% url 'users:delete' %}",
+            type: "POST",
+            data: {user_id: id, action: 'delete'},
+            success: function(data, text, xhr) {
+                console.log(data);
+                if (data["valid"]=="true"){
+                    $(".delete-modal-sm").modal('hide');
+                    $(".delete-success").modal();
+                    $("#user-"+id).remove();
+                }
+            }
+        });
+
+}
+
+</script>
+{% endblock %}

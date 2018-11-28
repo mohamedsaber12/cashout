@@ -303,164 +303,163 @@
 {% block script %}
 <script src="{% static 'gentella/jquery.smartWizard.js' %}"></script>
 <script src="{% static 'gentella/switchery.min.js' %}"></script>
-    <!-- Custom Theme Scripts -->
-<script src="{% static 'gentella/custom.min.js' %}"></script>
-
 <script type="text/javascript">
 
-    function increase_height() {
-        let oldheight = $('.stepContainer').css('height');
-        oldheight = parseInt(oldheight.replace("px", ""));
-        let newheight = oldheight + 50;
-        $('.stepContainer').height(newheight + "px");
-    }
-
-    $('#add_level_btn').click(function () {
+    $(document).ready(function () {
         let form_idx = $('#id_level-TOTAL_FORMS').val();
-        if(form_idx === '3'){
-            $(this).hide()
+        if (form_idx === '4') {
+            $('#add_level_btn').hide()
         }
-        
-        $('#step-1 #levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
-        $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
-        increase_height()
-         
-
-    });
-
-    $('#add_maker_btn').click(function () {
-        let form_idx = $('#id_maker-TOTAL_FORMS').val();
-        
-        $('#step-2 #makerform tbody').append($('#maker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
-        $('#id_maker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-
-        increase_height()
-
-    });
-
-    $('#add_checker_btn').click(function () {
-        
-        let form_idx = $('#id_checker-TOTAL_FORMS').val();
-
-        $('#step-3 #checkerform tbody').append($('#checker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
-        $('#id_checker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-        
-        increase_height()
-    });
-
-    function stepSubmit(step_no){
-        var bool_return = false;      
-        let step_no_string = String(step_no)
-        
-        var form_data = $("#step_"+ step_no_string +"_form").serialize();
-
-        
-        $.ajax({
-            type:'post',
-            url:"{% url 'users:settings' %}",
-            async: false,
-            data:form_data+"&step=" + step_no_string,
-            success : function(data, text, xhr){
-                
-                $('.error_span').html('');
-
-                if (step_no==4) {
-                    if (xhr.status == 278) {
-                        window.location.href = xhr.getResponseHeader("Location");
-                    }
-                    if(!data.valid){
-                        for (let field_name in data.errors) {
-                            let err_value = data.errors[field_name][0]
-                            $('#category_error_'+field_name).html(err_value)
-                            
-                        }
-                    }
-                }
-                if(!data.valid && step_no != 4){
-
-                    
-                    
-                    if(data.non_form_errors && data.non_form_errors[0]){
-                        $('#non_form_errors').html(data.non_form_errors[0])
-                    }
-
-                    let prefix;
-                    if (step_no == 1)
-                        prefix = 'level';
-                    else if(step_no==2)
-                        prefix = 'maker';
-                    else if (step_no == 3)
-                        prefix = 'checker';
-                    else
-                        return;
-                      
-                    let rows = $('#' + prefix + 'form' + ' .' +  prefix + '_formset_row');
-                    for(let i in data.errors){
-                        for(let field_name in data.errors[i]){
-                            let err_value = data.errors[i][field_name][0]
-                            $(rows[i]).find('#' + prefix + '_'+ field_name + ' span').html(err_value)
-                        }
-                    }
-                    
-                }
-                
-                bool_return = data.valid;
-                console.log('success', bool_return)
-                return true;
-            }
+        let step = parseInt('{{step}}');
+        var wizard = $('#disb_widget').smartWizard({
+            selected: step,
+            onLeaveStep:leaveAStepCallback,
+            onFinish: onFinishCallback
 
         });
-        console.log("here");
-        return bool_return;
-    }
-        $(document).ready(function () {
-            let form_idx = $('#id_level-TOTAL_FORMS').val();
-            if (form_idx === '4') {
-                $('#add_level_btn').hide()
-            }
- 
-            let step = parseInt('{{step}}');
-            var wizard = $('#disb_widget').smartWizard({
-                selected: step,
-                onLeaveStep:leaveAStepCallback,
-                onFinish: onFinishCallback
+        if(step>0){
+            let step_real = step+1
+            $('#disb_widget').smartWizard('enableStep', step_real-1);
+            if(step_real-1 !== 0)
+                $('#disb_widget').smartWizard('enableStep', step_real - 2);
+        }   
+        $('#loading-image').bind('ajaxStart', function(){
+            $(this).show();
+        }).bind('ajaxStop', function(){
+            $(this).hide();
+        });
+        var oldheight = $('.stepContainer').css('height');
+        oldheight = parseInt(oldheight.replace("px", ""));
+        var newheight = oldheight+20;
+        $('.stepContainer').height(newheight+"px");
 
-            });
-            if(step>0){
-                let step_real = step+1
-                $('#disb_widget').smartWizard('enableStep', step_real-1);
-                if(step_real-1 !== 0)
-                    $('#disb_widget').smartWizard('enableStep', step_real - 2);
-            }   
-            $('#loading-image').bind('ajaxStart', function(){
-                $(this).show();
-            }).bind('ajaxStop', function(){
-                $(this).hide();
-            });
-            var oldheight = $('.stepContainer').css('height');
+        function onFinishCallback(objs, context){
+            
+            return stepSubmit(4);
+        }
+
+        function leaveAStepCallback(obj, context){
+            console.log('context', context)
+            if(context.fromStep > context.toStep){
+                console.log(context)
+                window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(context.toStep-1)
+            
+            }
+            else    
+                return stepSubmit(context.fromStep);
+                // return false to stay on step and true to continue navigation
+        }
+
+
+        function increase_height() {
+            let oldheight = $('.stepContainer').css('height');
             oldheight = parseInt(oldheight.replace("px", ""));
-            var newheight = oldheight+20;
-            $('.stepContainer').height(newheight+"px");
+            let newheight = oldheight + 50;
+            $('.stepContainer').height(newheight + "px");
+        }
 
-            function onFinishCallback(objs, context){
-                
-                return stepSubmit(4);
+        $('#add_level_btn').click(function () {
+            let form_idx = $('#id_level-TOTAL_FORMS').val();
+            if (form_idx === '3') {
+                $(this).hide()
             }
 
-            function leaveAStepCallback(obj, context){
-                console.log('context', context)
-                if(context.fromStep > context.toStep){
-                    console.log(context)
-                    window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(context.toStep-1)
-                
-                }
-                else    
-                    return stepSubmit(context.fromStep);
-                  // return false to stay on step and true to continue navigation
-            }
+            $('#step-1 #levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
 
         });
+
+        $('#add_maker_btn').click(function () {
+            let form_idx = $('#id_maker-TOTAL_FORMS').val();
+
+            $('#step-2 #makerform tbody').append($('#maker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_maker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+        });
+
+        $('#add_checker_btn').click(function () {
+
+            let form_idx = $('#id_checker-TOTAL_FORMS').val();
+
+            $('#step-3 #checkerform tbody').append($('#checker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_checker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+        });
+
+        function stepSubmit(step_no) {
+            var bool_return = false;
+            let step_no_string = String(step_no)
+
+            var form_data = $("#step_" + step_no_string + "_form").serialize();
+
+
+            $.ajax({
+                type: 'post',
+                url: "{% url 'users:settings' %}",
+                async: false,
+                data: form_data + "&step=" + step_no_string,
+                success: function (data, text, xhr) {
+
+                    $('.error_span').html('');
+
+                    if (step_no == 4) {
+                        if (xhr.status == 278) {
+                            window.location.href = xhr.getResponseHeader("Location");
+                        }
+                        if (!data.valid) {
+                            for (let field_name in data.errors) {
+                                let err_value = data.errors[field_name][0]
+                                $('#category_error_' + field_name).html(err_value)
+
+                            }
+                        }
+                    }
+                    if (!data.valid && step_no != 4) {
+
+
+
+                        if (data.non_form_errors && data.non_form_errors[0]) {
+                            $('#non_form_errors').html(data.non_form_errors[0])
+                        }
+
+                        let prefix;
+                        if (step_no == 1)
+                            prefix = 'level';
+                        else if (step_no == 2)
+                            prefix = 'maker';
+                        else if (step_no == 3)
+                            prefix = 'checker';
+                        else
+                            return;
+
+                        let rows = $('#' + prefix + 'form' + ' .' + prefix + '_formset_row');
+                        for (let i in data.errors) {
+                            for (let field_name in data.errors[i]) {
+                                let err_value = data.errors[i][field_name][0]
+                                $(rows[i]).find('#' + prefix + '_' + field_name + ' span').html(err_value)
+                            }
+                        }
+
+                    }
+
+                    bool_return = data.valid;
+                    console.log('success', bool_return)
+                    return true;
+                }
+
+            });
+            console.log("here");
+            return bool_return;
+        }
+
+    });
 
 </script>
 {% endblock %}

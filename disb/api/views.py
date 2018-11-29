@@ -38,7 +38,7 @@ class DisburseAPIView(APIView):
         serializer = DisbursementSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = User.objects.get(username=serializer.validated_data['user'])
-        vmt = VMTData.objects.get(vmt=user.root)
+        vmt = VMTData.objects.get(vmt=user.root.client)
         provider_id = Doc.objects.get(
             id=serializer.validated_data['doc_id']).owner.root.id
         pin = serializer.validated_data['pin']

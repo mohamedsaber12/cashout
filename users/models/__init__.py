@@ -7,3 +7,4 @@ from .base_user import User
 from .entity_setup import EntitySetup
 from .client import Client
 from .admin import SuperAdminUser
+from .brand import Brand

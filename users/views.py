@@ -12,19 +12,10 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
-<<<<<<< users/views.py
-from django.urls import reverse
-from django.urls import reverse_lazy
-from django.views.generic import CreateView
-from django.views.generic import DetailView
-from django.views.generic import ListView
-from django.views.generic import UpdateView
 from rest_framework.authtoken.models import Token
-=======
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
->>>>>>> users/views.py
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory

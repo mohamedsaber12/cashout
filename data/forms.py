@@ -160,6 +160,7 @@ class FileCategoryForm(forms.ModelForm):
         for field_name, field in self.fields.items():
             if field_name == 'has_header':
                 field.widget.attrs['class'] = 'js-switch'
+                pass
             else:
                 field.widget.attrs['class'] = 'form-control'
 

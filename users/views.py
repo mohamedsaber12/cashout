@@ -10,22 +10,17 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError, transaction
 from django.db.models import Q
-from django.http import Http404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
-from django.urls import reverse
-from django.urls import reverse_lazy
-from django.views.generic import CreateView
-from django.views.generic import DetailView
-from django.views.generic import ListView
-from django.views.generic import UpdateView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
 from data.utils import get_client_ip
-from users.forms import (CheckerMemberFormSet, LevelFormSet,
-                         MakerMemberFormSet, PasswordChangeForm,
-                         SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm)
+from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
+                         LevelFormSet, MakerCreationForm, MakerMemberFormSet,
+                         PasswordChangeForm, ProfileEditForm, SetPasswordForm)
 from users.mixins import RootRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User
 
@@ -139,11 +134,13 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 initial_query = Levels.objects.filter(
                     created__hierarchy=self.request.user.hierarchy
                 )
+
                 form = LevelFormSet(
                     data,
                     prefix='level',
                     queryset=initial_query
                 )
+
             elif data['step'] == '3':
                 form = CheckerMemberFormSet(
                     data,
@@ -161,24 +158,25 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         instance=self.request.user.file_category, data=request.POST)
                 except FileCategory.DoesNotExist:
                     form = FileCategoryForm(data=request.POST)
-            if form and form.is_valid():
+            if form and form.is_valid():              
                 objs = form.save(commit=False)
                 try:
                     for obj in form.deleted_objects:
                         obj.delete()
                 except AttributeError:
                     pass
-                try:
+                try:                  
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
                         try:
                             obj.save()
-                        except IntegrityError:
+                        except IntegrityError as e:
                             return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
-                except TypeError:
+                except TypeError as e:
                     objs.user_created = request.user.root
                     objs.save()
+
                 updated_levels = Levels.objects.filter(
                     created__hierarchy=request.user.hierarchy)
                 payload_updated_levels = updated_levels.\
@@ -203,8 +201,12 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     setup.save()
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
-            print(form.errors)
-            return HttpResponse(content=json.dumps({"valid": False, "reason": "validation", "errors": form.errors}),
+
+            non_form_errors = getattr(form, 'non_form_errors', None)
+            if non_form_errors is not None:
+                non_form_errors = non_form_errors()
+            return HttpResponse(content=json.dumps({"valid": False,
+                                                    "reason": "validation", "errors": form.errors, "non_form_errors": non_form_errors}),
                                 content_type="application/json")
 
     def get_context_data(self, **kwargs):
@@ -229,6 +231,9 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             ),
             prefix='level'
         )
+        data['step'] = self.request.GET.get('step', '0')
+        if int(data['step']) < 0 or int(data['step']) > 2:
+            data['step'] = '0'
         try:
             data['filecategoryform'] = FileCategoryForm(
                 instance=self.request.user.file_category)
@@ -282,7 +287,8 @@ class Members(RootRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1,2])
+        qs = qs.filter(hierarchy=self.request.user.hierarchy,
+                       user_type__in=[1, 2])
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
@@ -302,7 +308,7 @@ class Members(RootRequiredMixin, ListView):
 
 
 def delete(request):
-    if request.is_ajax() and request.method=='POST':
+    if request.is_ajax() and request.method == 'POST':
         try:
             data = request.POST.copy()
             user = User.objects.get(id=int(data['user_id']))
@@ -316,8 +322,8 @@ def delete(request):
 
 def levels(request):
     initial_query = Levels.objects.filter(
-                created__hierarchy=request.user.hierarchy
-            )
+        created__hierarchy=request.user.hierarchy
+    )
     context = {}
     if request.method == 'POST':
 
@@ -329,7 +335,6 @@ def levels(request):
         if form.is_valid():
             form.save()
         context['levelform'] = form
-        import ipdb; ipdb.set_trace()
     else:
         context['levelform'] = LevelFormSet(
             queryset=initial_query,

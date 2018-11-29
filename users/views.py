@@ -21,11 +21,11 @@ from data.forms import FileCategoryForm
 from data.models import FileCategory
 from data.utils import get_client_ip
 from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
-                         EntityBrandingForm, LevelFormSet, MakerCreationForm,
+                         BrandForm, LevelFormSet, MakerCreationForm,
                          MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm, RootCreationForm)
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
-from users.models import CheckerUser, Levels, MakerUser, Setup, User
+from users.models import CheckerUser, Levels, MakerUser, Setup, User, Brand
 from users.models import Client
 from users.models import EntitySetup
 from users.models import RootUser
@@ -476,24 +476,33 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
 class EntityBranding(RootRequiredMixin, View):
     template_name = 'users/entity_branding.html'
-    form_class = EntityBrandingForm
-    model = Setup
+    form_class = BrandForm
+    model = Brand
 
     def get_instance(self):
-        return self.model.objects.get(user=self.request.user)
+        return self.model.objects.filter(hierarchy=self.request.user.hierarchy).first()
 
     def get(self, request, *args, **kwargs):
         instance = self.get_instance()
-        form = self.form_class(instance=instance)
+        if instance:
+            form = self.form_class(instance=instance)
+        else:
+            form = self.form_class()
         return render(request, self.template_name, {'form': form})
 
     def post(self, request, *args, **kwargs):
         form = self.form_class(request.POST)
         if form.is_valid():
             instance = self.get_instance()
-            instance.entity_color = form.cleaned_data.get('entity_color')
-            instance.entity_logo = form.cleaned_data.get('entity_logo')
-            instance.save()
+            if instance:
+                instance.color = form.cleaned_data.get('color')
+                instance.logo = form.cleaned_data.get('logo')
+                instance.save()
+            else:
+                brand = form.save(commit=False)
+                brand.hierarchy = self.request.user.hierarchy
+                brand.save()
+            
             return HttpResponseRedirect(reverse('data:main_view'))
 
         return render(request, self.template_name, {'form': form})

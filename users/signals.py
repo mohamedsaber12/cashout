@@ -12,7 +12,7 @@ from users.models import CheckerUser, MakerUser, RootUser, Setup
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
 MESSAGE = 'Dear {0}\n' \
-          'Your account is created on the panel with email: {2} \n' \
+          'Your account is created on the panel with email: {2} and username: {3} \n' \
           'Please follow <a href="{1}">this link</a> to reset password as soon as possible, \n' \
           'Thanks, BR'
 
@@ -40,7 +40,7 @@ def notify_user(sender, instance, created, **kwargs):
             from_email=settings.SERVER_EMAIL,
             recipient_list=[instance.email],
             subject='[Payroll] Password Notification',
-            message=MESSAGE.format(instance.first_name, url, instance.email)
+            message=MESSAGE.format(instance.first_name, url, instance.email,instance.username)
         )
 
 

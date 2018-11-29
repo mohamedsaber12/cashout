@@ -64,7 +64,7 @@
 
 <script>
     $(document).ready(function () {
-        $('input[name=entity_color]').colorpicker().on('changeColor', function (e) {
+        $('input[name=color]').colorpicker().on('changeColor', function (e) {
             let color = e.color.toString('rgba')
             $('.left_col .scroll-view').css('background-color', color);
             $('html').css('background-color', color);

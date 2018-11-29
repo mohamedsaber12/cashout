@@ -326,6 +326,15 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
+def toggle_client(request):
+    if request.is_ajax() and request.method=='POST':
+        data = request.POST.copy()
+        is_toggled = Client.objects.toggle(id=int(data['user_id']))
+        return HttpResponse(content=json.dumps({"valid": is_toggled}), content_type="application/json")
+    else:
+        raise Http404()
+
+
 def delete(request):
     if request.is_ajax() and request.method=='POST':
         try:

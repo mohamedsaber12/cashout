@@ -34,6 +34,7 @@ urlpatterns = [
     path('members/checker/add/', views.AddCheckerView.as_view(), name='add_checker'),
     path('members/maker/add/', views.AddMakerView.as_view(), name='add_maker'),
     path('user/delete/', views.delete, name='delete'),
+    path('client/toggle/', views.toggle_client, name='toggle'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
     path('clients/', views.Clients.as_view(), name='clients')
 ]

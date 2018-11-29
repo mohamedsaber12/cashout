@@ -54,7 +54,7 @@ def file_upload(request):
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
     has_file_category = bool(category)
 
-    if request.method == 'POST' and request.user.is_maker and has_file_category:
+    if request.method == 'POST' and request.user.is_maker and has_file_category and request.user.root.client.is_active:
         FileDocumentForm.category = category
         form_doc = FileDocumentForm(request.POST, request.FILES)
 

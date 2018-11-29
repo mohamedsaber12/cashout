@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils.functional import cached_property
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
 
 
 class Setup(models.Model):
@@ -7,6 +9,11 @@ class Setup(models.Model):
     levels_setup = models.BooleanField(default=False)
     users_setup = models.BooleanField(default=False)
     category_setup = models.BooleanField(default=False)
+    entity_color = models.CharField(max_length=20, null=True, blank=True)
+    entity_logo = ProcessedImageField(upload_to='entities-logo',
+                                      processors=[ResizeToFill(100, 100)],
+                                      format='JPEG',
+                                      options={'quality': 60}, null=True, default='user.png')
 
     def __str__(self):
         return '{0}_setup'.format(str(self.user))

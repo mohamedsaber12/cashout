@@ -13,14 +13,16 @@ from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
+from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
 from data.utils import get_client_ip
 from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
-                         LevelFormSet, MakerCreationForm, MakerMemberFormSet,
-                         PasswordChangeForm, ProfileEditForm, SetPasswordForm)
+                         EntityBrandingForm, LevelFormSet, MakerCreationForm,
+                         MakerMemberFormSet, PasswordChangeForm,
+                         ProfileEditForm, SetPasswordForm)
 from users.mixins import RootRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User
 
@@ -416,3 +418,28 @@ class ProfileUpdateView(UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user
+
+
+class EntityBranding(RootRequiredMixin, View):
+    template_name = 'users/entity_branding.html'
+    form_class = EntityBrandingForm
+    model = Setup
+
+    def get_instance(self):
+        return self.model.objects.get(user=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_instance()
+        form = self.form_class(instance=instance)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            instance = self.get_instance()
+            instance.entity_color = form.cleaned_data.get('entity_color')
+            instance.entity_logo = form.cleaned_data.get('entity_logo')
+            instance.save()
+            return HttpResponseRedirect(reverse('data:main_view'))
+
+        return render(request, self.template_name, {'form': form})

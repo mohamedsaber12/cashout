@@ -70,4 +70,14 @@
             }
         }
     });
+
+    
+    let color = '{{request.user.root.setup.entity_color}}';
+    console.log('color',color)
+    $('.left_col .scroll-view').css('background-color', color);
+    $('html').css('background-color', color);
+    $('.site_title').css('background-color', color);
+    $('.nav_title').css('background', color);
+    $('.container').css('background', color);    
+    $('.main_container').css('background', color);
 </script>

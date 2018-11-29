@@ -1,9 +1,9 @@
-from django.contrib.auth.views import (PasswordResetCompleteView,
+from django.contrib.auth.views import (PasswordChangeDoneView,
+                                       PasswordChangeView,
+                                       PasswordResetCompleteView,
                                        PasswordResetConfirmView,
                                        PasswordResetDoneView,
-                                       PasswordResetView,
-                                       PasswordChangeView,
-                                       PasswordChangeDoneView)
+                                       PasswordResetView)
 from django.urls import path
 
 from users import views
@@ -33,5 +33,6 @@ urlpatterns = [
     path('members/', views.Members.as_view(), name='members'),
     path('members/checker/add', views.AddCheckerView.as_view(), name='add_checker'),
     path('members/maker/add', views.AddMakerView.as_view(), name='add_maker'),
-    path('user/delete', views.delete, name='delete')
+    path('user/delete', views.delete, name='delete'),
+    path('settings/branding', views.EntityBranding.as_view(), name='entity_branding')
 ]

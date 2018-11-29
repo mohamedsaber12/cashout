@@ -41,7 +41,7 @@ class User(AbstractUser):
     verification_time = models.DateTimeField(null=True)
     level = models.ForeignKey(
         'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
-    email = models.EmailField('email address', blank=False)
+    email = models.EmailField('email address', blank=False, unique=True)
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
     avatar_thumbnail = ProcessedImageField(upload_to='avatars',

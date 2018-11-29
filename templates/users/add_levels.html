@@ -1,92 +1,169 @@
 {% extends 'new_base.html' %}
-{% load i18n %}
 {% load static %}
-{% block title %} Levels {% endblock %}
-
+{% block gentellacss %}
+<link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
+<style>
+    .error_span{
+            color: red;
+        }
+    </style>
+{% endblock %}
+{% block title %}Settings{% endblock %}
 {% block body %}
 
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="panel panel-default">
-                <div class="panel-body">
-                    <form action="." method="post" id="step_1_form" >
+<div class="row">
+    <span id='non_form_errors' class="error_span"></span>
 
-                          {% csrf_token %}
+    <div>
 
-                        <table class="table" id="levelform">
-                            {{ levelform.management_form }}
-                            {% for form in levelform.forms %}
-                                {% if forloop.first %}
-                                <thead>
-                                    <tr>
-                                        {% for field in form.visible_fields %}
-                                            <th>{{ field.label|capfirst }}</th>
-                                        {% endfor %}
-                                    </tr>
-                                </thead>
 
-                                {% endif %}
+
+        <form action="." method="post" id="step_1_form">
+
+            {% csrf_token %}
+
+            <table class="table" id="levelform">
+                {{ levelform.management_form }}
+                {% for form in levelform.forms %}
+                {% if forloop.first %}
+                <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                        <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                {% endif %}
+                {% endfor %}
+                <tbody>
+
+                    {% for form in levelform.forms %}
+
+                    <tr class="level_formset_row">
+                        {% for field in form.visible_fields %}
+                        <td id="level_{{field.name}}">
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                            {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
                             {% endfor %}
-                            <tbody>
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field }}
+                            <span class="error_span"></span>
+                        </td>
+                        {% endfor %}
+                    </tr>
 
-                            {% for form in levelform.forms %}
-
-                                <tr class="level_formset_row">
-                                    {% for field in form.visible_fields %}
-                                        <td>
-                                            {# Include the hidden fields in the form #}
-                                            {% if forloop.first %}
-                                                {% for hidden in form.hidden_fields %}
-                                                    {{ hidden }}
-                                                {% endfor %}
-                                            {% endif %}
-                                            {{ field.errors.as_ul }}
-                                            {{ field }}
-                                        </td>
-                                    {% endfor %}
-                                </tr>
-                            {% endfor %}
-                            </tbody>
-                        </table>
-                        <input type="submit" value="submit" class="btn btn-upload btn-success pull-right">
-                    </form>
+                    {% endfor %}
 
 
-                    <!-- /.table-responsive -->
-                </div>
-                <!-- /.panel-body -->
-            </div>
-            <!-- /.panel -->
-        </div>
-        <!-- /.col-lg-12 -->
+                </tbody>
+            </table>
+        </form>
+
+        <!-- empty form -->
+
+        <table id="level_empty_form" style="display: none">
+            <tr class="level_formset_row">
+                {% for field in levelform.empty_form.visible_fields %}
+                <td id="level_{{field.name}}">
+                    {# Include the hidden fields in the form #}
+                    {% if forloop.first %}
+                    {% for hidden in levelform.empty_form.hidden_fields %}
+                    {{ hidden }}
+                    {% endfor %}
+                    {% endif %}
+                    {{ field.errors.as_ul }}
+                    {{ field }}
+                    <span class="error_span"></span>
+                </td>
+                {% endfor %}
+            </tr>
+        </table>
+
+
+        <button id="add_level_btn" class="btn btn-success">Add another level</button>
+        <button id="submit" class="btn btn-success pull-right">Submit</button>
+
+
     </div>
-    <!-- /.row -->
-    </div>
-    <!-- /#page-wrapper -->
+  
+      
+</div>
 
-    </div>
+
+    
+
 {% endblock %}
+
 {% block script %}
-    <script src="{% static 'js/jquery.formset.min.js' %}"></script>
-<script src="{% static 'gentella/jquery.smartWizard.js' %}"></script>
-<script src="{% static 'gentella/switchery.min.js' %}"></script>
-    <!-- Custom Theme Scripts -->
-<script src="{% static 'gentella/custom.min.js' %}"></script>
+
 
 <script type="text/javascript">
-        var levelform = $('#levelform tbody tr');
-        levelform.formset({
-            addText: 'add another level',
-            deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
-            prefix: '{{ levelform.prefix }}',
-            addCssClass: 'add_level',
-            added: function (row) {
-                var oldheight = $('.stepContainer').css('height');
-                oldheight = parseInt(oldheight.replace("px", ""));
-                var newheight = oldheight+60;
-                $('.stepContainer').height(newheight+"px");
-            },
-            formCssClass: 'level'
+
+    $(document).ready(function () {
+        let form_idx = $('#id_level-TOTAL_FORMS').val();
+        if (form_idx === '4') {
+            $('#add_level_btn').hide()
+        }
+
+        $('#add_level_btn').click(function () {
+            let form_idx = $('#id_level-TOTAL_FORMS').val();
+            if (form_idx === '3') {
+                $(this).hide()
+            }
+
+            $('#levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
         });
+
+        
+        $('#submit').click(function(){
+            let form_data = $("#step_1_form").serialize();
+            $.ajax({
+                type: 'post',
+                url: "{% url 'users:levels' %}",
+                async: false,
+                data: form_data,
+                success: function (data, text, xhr) {
+
+                    $('.error_span').html('');
+                    
+                    if (!data.valid) {
+
+                        if (data.non_form_errors && data.non_form_errors[0]) {
+                            $('#non_form_errors').html(data.non_form_errors[0])
+                        }
+
+                        let prefix = 'level';
+
+                        let rows = $('#' + prefix + 'form' + ' .' + prefix + '_formset_row');
+                        for (let i in data.errors) {
+                            for (let field_name in data.errors[i]) {
+                                let err_value = data.errors[i][field_name][0]
+                                $(rows[i]).find('#' + prefix + '_' + field_name + ' span').html(err_value)
+                            }
+                        }
+
+                    }
+                    else{
+                        window.location.reload()
+                    }
+
+                    console.log('success', data.valid)
+                    
+                }
+
+            });
+            
+        });
+
+
+
+    });
+
 </script>
 {% endblock %}

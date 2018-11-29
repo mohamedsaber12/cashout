@@ -10,7 +10,7 @@ from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
                           inlineformset_factory, modelformset_factory)
 from django.utils.translation import ugettext_lazy as _
 
-from users.models import CheckerUser, Levels, MakerUser, RootUser, User
+from users.models import CheckerUser, Levels, MakerUser, RootUser, Setup, User
 
 
 class SetPasswordForm(forms.Form):
@@ -288,39 +288,47 @@ class UserChangeForm(AbstractUserChangeForm):
 class ProfileEditForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "mobile_no", "email", "title", "avatar_thumbnail")
+        fields = ("first_name", "last_name", "mobile_no",
+                  "email", "title", "avatar_thumbnail")
 
 
 class LevelForm(forms.ModelForm):
     class Meta:
         model = Levels
-        exclude = ('created',)
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fields['level_of_authority'].choices = [
-            (1, 'Level 1'), (2, 'Level 2'), (3, 'Level 3'), (4, 'Level 4')]
+        exclude = ('created', 'level_of_authority')
 
 
 class BaseLevelFormSet(BaseModelFormSet):
     def clean(self):
+        if any(self.errors):
+            return
+
+
+class BaseMakerFormSet(BaseModelFormSet):
+    def clean(self):
         """Checks that no two levels are not same."""
+        print('self.errors', self.errors)
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
-        level_of_authorities = []
-        for form in self.forms:
-            level_of_authority = form.cleaned_data['level_of_authority']
-            if level_of_authority in level_of_authorities:
-                raise forms.ValidationError(
-                    "Levels must be unique.")
-            level_of_authorities.append(level_of_authority)
+
+
+class BaseCheckerFormSet(BaseModelFormSet):
+    def clean(self):
+        """Checks that no two levels are not same."""
+        print('self.errors', self.errors)
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
 
 
 class MakerCreationForm(forms.ModelForm):
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+
     class Meta:
         model = MakerUser
-        fields = ('username', 'first_name', 'last_name',
+        fields = ('first_name', 'last_name',
                   'mobile_no', 'email', 'is_staff')
 
     def __init__(self, *args, **kwargs):
@@ -346,6 +354,7 @@ class MakerCreationForm(forms.ModelForm):
                 })
 
     def save(self, commit=True):
+
         user = super().save(commit=False)
         user.user_type = 1
         if commit:
@@ -354,11 +363,14 @@ class MakerCreationForm(forms.ModelForm):
 
 
 class CheckerCreationForm(forms.ModelForm):
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["level"].choices = [('', '------')] + [
-            (r.id, str(r)) for r in Levels.objects.filter(created__hierarchy=request.user.hierarchy)
+            (r.id, f'{r} {i+1}') for i, r in enumerate(Levels.objects.filter(created__hierarchy=request.user.hierarchy))
         ]
 
         for field in iter(self.fields):
@@ -390,18 +402,25 @@ class CheckerCreationForm(forms.ModelForm):
 
     class Meta:
         model = CheckerUser
-        fields = ['username', 'first_name', 'last_name',
+        fields = ['first_name', 'last_name',
                   'email', 'mobile_no', 'level', 'is_staff']
 
 
+class EntityBrandingForm(forms.ModelForm):
+    class Meta:
+        model = Setup
+        fields = ("entity_color", "entity_logo")
+
+
 LevelFormSet = modelformset_factory(
-    model=Levels, form=LevelForm, formset=BaseLevelFormSet,
-    max_num=4, min_num=1, can_delete=True,
-    validate_max=True, extra=0, validate_min=True
+    model=Levels, form=LevelForm, formset=BaseLevelFormSet, max_num=4,
+    min_num=1, can_delete=True, extra=1, validate_min=True, validate_max=True
 )
 
 MakerMemberFormSet = modelformset_factory(
-    model=MakerUser, form=MakerCreationForm, can_delete=True)
+    model=MakerUser, form=MakerCreationForm, formset=BaseMakerFormSet,
+    min_num=1, validate_min=True, can_delete=True, extra=1)
 
 CheckerMemberFormSet = modelformset_factory(
-    model=CheckerUser, form=CheckerCreationForm, can_delete=True)
+    model=CheckerUser, form=CheckerCreationForm, formset=BaseCheckerFormSet,
+    min_num=1, validate_min=True, can_delete=True, extra=1)

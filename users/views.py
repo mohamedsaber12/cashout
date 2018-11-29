@@ -10,9 +10,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.db import IntegrityError, transaction
 from django.db.models import Q
-from django.http import Http404
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
+<<<<<<< users/views.py
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
@@ -20,11 +20,17 @@ from django.views.generic import DetailView
 from django.views.generic import ListView
 from django.views.generic import UpdateView
 from rest_framework.authtoken.models import Token
+=======
+from django.urls import reverse, reverse_lazy
+from django.views import View
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
+>>>>>>> users/views.py
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
 from data.utils import get_client_ip
-from users.forms import (CheckerMemberFormSet, LevelFormSet,
+from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
+                         EntityBrandingForm, LevelFormSet, MakerCreationForm,
                          MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm, RootCreationForm)
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
@@ -133,15 +139,18 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         if request.is_ajax():
             form = None
             data = request.POST.copy()
+            FileCategoryForm.request = request
             if data['step'] == '1':
                 initial_query = Levels.objects.filter(
                     created__hierarchy=self.request.user.hierarchy
                 )
+
                 form = LevelFormSet(
                     data,
                     prefix='level',
                     queryset=initial_query
                 )
+
             elif data['step'] == '3':
                 form = CheckerMemberFormSet(
                     data,
@@ -159,31 +168,27 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         instance=self.request.user.file_category, data=request.POST)
                 except FileCategory.DoesNotExist:
                     form = FileCategoryForm(data=request.POST)
-            if form and form.is_valid():
+            if form and form.is_valid():              
                 objs = form.save(commit=False)
                 try:
                     for obj in form.deleted_objects:
                         obj.delete()
                 except AttributeError:
                     pass
-                try:
+                try:                  
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
                         try:
                             obj.save()
-                        except IntegrityError:
+                        except IntegrityError as e:
                             return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
-                except TypeError:
+                except TypeError as e:
                     objs.user_created = request.user.root
                     objs.save()
-                updated_levels = Levels.objects.filter(
-                    created__hierarchy=request.user.hierarchy)
-                payload_updated_levels = updated_levels.\
-                    extra(select={'amount': 'max_amount_can_be_disbursed', 'level': 'level_of_authority', 'value': 'users_levels.id'}).\
-                    values('amount', 'level', 'value')
-                payload = {"valid": True, "data": "levels", "objs": list(
-                    payload_updated_levels)} if data["step"] == "1" else {"valid": True}
+
+                payload = {"valid": True, "data": "levels"} if data["step"] == "1" else {
+                    "valid": True}
                 if data['step'] == '1':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
@@ -201,8 +206,12 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     setup.save()
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
-            print(form.errors)
-            return HttpResponse(content=json.dumps({"valid": False, "reason": "validation", "errors": form.errors}),
+
+            non_form_errors = getattr(form, 'non_form_errors', None)
+            if non_form_errors is not None:
+                non_form_errors = non_form_errors()
+            return HttpResponse(content=json.dumps({"valid": False,
+                                                    "reason": "validation", "errors": form.errors, "non_form_errors": non_form_errors}),
                                 content_type="application/json")
 
     def get_context_data(self, **kwargs):
@@ -227,6 +236,9 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             ),
             prefix='level'
         )
+        data['step'] = self.request.GET.get('step', '0')
+        if int(data['step']) < 0 or int(data['step']) > 2:
+            data['step'] = '0'
         try:
             data['filecategoryform'] = FileCategoryForm(
                 instance=self.request.user.file_category)
@@ -280,7 +292,8 @@ class Members(RootRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1,2])
+        qs = qs.filter(hierarchy=self.request.user.hierarchy,
+                       user_type__in=[1, 2])
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
@@ -336,7 +349,7 @@ def toggle_client(request):
 
 
 def delete(request):
-    if request.is_ajax() and request.method=='POST':
+    if request.is_ajax() and request.method == 'POST':
         try:
             data = request.POST.copy()
             user = User.objects.get(id=int(data['user_id']))
@@ -350,9 +363,9 @@ def delete(request):
 
 def levels(request):
     initial_query = Levels.objects.filter(
-                created__hierarchy=request.user.hierarchy
-            )
-    context = {}
+        created__hierarchy=request.user.hierarchy
+    )
+
     if request.method == 'POST':
 
         form = LevelFormSet(
@@ -360,16 +373,40 @@ def levels(request):
             prefix='level',
             queryset=initial_query
         )
-        if form.is_valid():
-            form.save()
-        context['levelform'] = form
-        import ipdb; ipdb.set_trace()
+        if form and form.is_valid():
+
+            objs = form.save(commit=False)
+            try:
+                for obj in form.deleted_objects:
+                    obj.delete()
+            except AttributeError:
+                pass
+
+            for obj in objs:
+                obj.hierarchy = request.user.hierarchy
+                obj.created_id = request.user.root.id
+                try:
+                    obj.save()
+                except IntegrityError as e:
+                    print('IntegrityError', e)
+                    return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
+
+            payload = {"valid": True}
+
+            return HttpResponse(content=json.dumps(payload), content_type="application/json")
+
+        return HttpResponse(content=json.dumps({
+            "valid": False,
+            "reason": "validation",
+            "errors": form.errors,
+            "non_form_errors": form.non_form_errors()
+        }), content_type="application/json")
+
     else:
-        context['levelform'] = LevelFormSet(
-            queryset=initial_query,
-            prefix='level'
-        )
-    return render(request, 'users/add_levels.html', context)
+        context = {
+            'levelform': LevelFormSet(queryset=initial_query, prefix='level')
+        }
+        return render(request, 'users/add_levels.html', context)
 
 
 class BaseAddMemberView(RootRequiredMixin, CreateView):
@@ -393,7 +430,8 @@ class AddCheckerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'who': 'checker', 'success_url': reverse_lazy("users:add_checker")})
+        context.update(
+            {'who': 'checker', 'success_url': reverse_lazy("users:add_checker")})
         return context
 
 
@@ -403,7 +441,8 @@ class AddMakerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update({'who': 'maker', 'success_url': reverse_lazy("users:add_maker")})
+        context.update(
+            {'who': 'maker', 'success_url': reverse_lazy("users:add_maker")})
         return context
 
 
@@ -442,3 +481,28 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         EntitySetup.objects.create(user=self.request.user, entity=self.object)
         Client.objects.create(creator=self.request.user, client=self.object)
         return HttpResponseRedirect(self.get_success_url())
+
+
+class EntityBranding(RootRequiredMixin, View):
+    template_name = 'users/entity_branding.html'
+    form_class = EntityBrandingForm
+    model = Setup
+
+    def get_instance(self):
+        return self.model.objects.get(user=self.request.user)
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_instance()
+        form = self.form_class(instance=instance)
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            instance = self.get_instance()
+            instance.entity_color = form.cleaned_data.get('entity_color')
+            instance.entity_logo = form.cleaned_data.get('entity_logo')
+            instance.save()
+            return HttpResponseRedirect(reverse('data:main_view'))
+
+        return render(request, self.template_name, {'form': form})

@@ -1,9 +1,9 @@
-from django.contrib.auth.views import (PasswordResetCompleteView,
+from django.contrib.auth.views import (PasswordChangeDoneView,
+                                       PasswordChangeView,
+                                       PasswordResetCompleteView,
                                        PasswordResetConfirmView,
                                        PasswordResetDoneView,
-                                       PasswordResetView,
-                                       PasswordChangeView,
-                                       PasswordChangeDoneView)
+                                       PasswordResetView)
 from django.urls import path
 
 from users import views
@@ -37,4 +37,5 @@ urlpatterns = [
     path('client/toggle/', views.toggle_client, name='toggle'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
     path('clients/', views.Clients.as_view(), name='clients')
+    path('settings/branding', views.EntityBranding.as_view(), name='entity_branding')
 ]

@@ -13,7 +13,7 @@ from data.utils import get_client_ip
 from users.forms import (CheckerCreationAdminForm, MakerCreationAdminForm,
                          RootCreationForm, UserChangeForm)
 from users.models import CheckerUser, MakerUser, RootUser, User, SuperAdminUser
-
+from users.models import Client
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
@@ -242,7 +242,6 @@ class RootAdmin(UserAccountAdmin):
         super(RootAdmin, self).save_model(request, obj, form, change)
 
 
-
 class SuperAdmin(UserAccountAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
@@ -269,3 +268,4 @@ admin.site.register(MakerUser, MakerAdmin)
 admin.site.register(CheckerUser, CheckerAdmin)
 admin.site.register(SuperAdminUser, SuperAdmin)
 admin.site.register(User)
+admin.site.register(Client)

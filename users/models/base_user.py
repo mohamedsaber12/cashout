@@ -133,7 +133,7 @@ class User(AbstractUser):
         return reverse("users:profile")
 
     def has_uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False) | Q(vmt_setup=False)).count() > 0
+        return self.entity_setups.filter(Q(agents_setup=False)).count() > 0
 
     def uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False) | Q(vmt_setup=False)).first()
+        return self.entity_setups.filter(Q(agents_setup=False)).first()

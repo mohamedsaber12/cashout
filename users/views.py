@@ -130,7 +130,6 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         if request.is_ajax():
             form = None
             data = request.POST.copy()
-            print('data', data)
             if data['step'] == '1':
                 initial_query = Levels.objects.filter(
                     created__hierarchy=self.request.user.hierarchy
@@ -159,26 +158,22 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         instance=self.request.user.file_category, data=request.POST)
                 except FileCategory.DoesNotExist:
                     form = FileCategoryForm(data=request.POST)
-            if form and form.is_valid():
-                print('form', form)
+            if form and form.is_valid():              
                 objs = form.save(commit=False)
                 try:
                     for obj in form.deleted_objects:
                         obj.delete()
                 except AttributeError:
                     pass
-                try:
-                    print('objs', objs)
+                try:                  
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
                         try:
                             obj.save()
                         except IntegrityError as e:
-                            print('IntegrityError', e)
                             return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
                 except TypeError as e:
-                    print('TypeError', e)
                     objs.user_created = request.user.root
                     objs.save()
 
@@ -340,8 +335,6 @@ def levels(request):
         if form.is_valid():
             form.save()
         context['levelform'] = form
-        import ipdb
-        ipdb.set_trace()
     else:
         context['levelform'] = LevelFormSet(
             queryset=initial_query,

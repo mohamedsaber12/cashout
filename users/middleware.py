@@ -27,8 +27,7 @@ class EntitySetupCompletionMiddleWare:
         assert hasattr(request, 'user')
         path = request.path_info.lstrip('/')
         url_is_exempt = any(url.match(path) for url in EXEMPT_URLS)
-        url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)
-        import ipdb; ipdb.set_trace()
+        url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)       
         if path == reverse('users:logout').lstrip('/'):
             logout(request)
         if request.user.is_authenticated:

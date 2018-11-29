@@ -12,6 +12,8 @@ if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
 ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
 )
+
+
 class EntitySetupCompletionMiddleWare:
 
     def __init__(self, get_response):
@@ -26,6 +28,7 @@ class EntitySetupCompletionMiddleWare:
         path = request.path_info.lstrip('/')
         url_is_exempt = any(url.match(path) for url in EXEMPT_URLS)
         url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)
+
         if path == reverse('users:logout').lstrip('/'):
             logout(request)
         if request.user.is_authenticated:
@@ -40,4 +43,6 @@ class EntitySetupCompletionMiddleWare:
                     return None
                 return redirect(reverse("users:clients"))
         else:
+            if url_is_exempt:
+                return None
             return redirect(settings.LOGIN_URL)

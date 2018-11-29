@@ -115,32 +115,6 @@ def failed_disbursed_for_download(request):
     return response
 
 
-class SuperAdminVMTSetup(SuperRequiredMixin, CreateView):
-    model = VMTData
-    form_class = VMTDataForm
-    template_name = 'entity/add_vmt.html'
-
-    def get_success_url(self):
-        import ipdb; ipdb.set_trace()
-        return reverse('disbursement:add_agents', kwargs={'token': self.kwargs['token']})
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs.update({'root': Token.objects.get(key=self.kwargs['token']).user})
-        try:
-            kwargs.update({'instance': Token.objects.get(key=self.kwargs['token']).user.vmt})
-        except VMTData.DoesNotExist:
-            pass
-        return kwargs
-
-    def form_valid(self, form):
-        self.object = form.save()
-        entity_setup = EntitySetup.objects.get(user=self.request.user, entity=Token.objects.get(key=self.kwargs['token']).user)
-        entity_setup.vmt_setup = True
-        entity_setup.save()
-        return HttpResponseRedirect(self.get_success_url())
-
-
 class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
     model = Agent
     form_class = AgentFormSet

@@ -71,6 +71,25 @@
         }
     });
 
+    function ColorLuminance(hex, lum) {
+
+            // validate hex string
+            hex = String(hex).replace(/[^0-9a-f]/gi, '');
+            if (hex.length < 6) {
+                hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
+            }
+            lum = lum || 0;
+
+            // convert to decimal and change luminosity
+            var rgb = "#", c, i;
+            for (i = 0; i < 3; i++) {
+                c = parseInt(hex.substr(i * 2, 2), 16);
+                c = Math.round(Math.min(Math.max(0, c + (c * lum)), 255)).toString(16);
+                rgb += ("00" + c).substr(c.length);
+            }
+
+            return rgb;
+        }
     
     let color = '{{brand_color}}';
     console.log('color',color)
@@ -80,4 +99,35 @@
     $('.nav_title').css('background', color);
     $('.container').css('background', color);    
     $('.main_container').css('background', color);
+    
+    $(document).ready(function () {
+        if (color == 'None')
+            return;
+        
+        let frm = ColorLuminance(color, -0.1);
+        let to = ColorLuminance(frm, -0.1);
+        let color_gradient = '-webkit-gradient(linear, left top, left bottom, from(' + to + '), to(' + frm + '))'
+        let $SIDEBAR_MENU = $('#sidebar-menu');
+        let atag = $SIDEBAR_MENU.find('a');
+        if ($(atag).parent().is('.active')) {
+            $(atag).css('background', color);
+        }
+        $SIDEBAR_MENU.find('.current-page').find('a').removeAttr('style');
+        $SIDEBAR_MENU.find('a').on('click', function (ev) {
+            
+            let $li = $(this).parent();
+            console.log('aaaaa', $li)
+            if ($li.is('.active')) {
+                
+                $(this).css('background', color);
+            }
+        });
+        
+        $('body').css('color', ColorLuminance(color, -0.5));
+        $(".nav.child_menu li a").on('mouseover', function (ev) {
+            $(this).removeAttr('style');
+        });
+        $('.fa-bars').css('color', color)
+        $('head').append('<style>.nav-md ul.nav.child_menu li:before{background:' + to + ' !important;}</style>');
+    });
 </script>

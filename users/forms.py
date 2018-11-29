@@ -318,9 +318,12 @@ class BaseCheckerFormSet(BaseModelFormSet):
 
 
 class MakerCreationForm(forms.ModelForm):
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+
     class Meta:
         model = MakerUser
-        fields = ('username', 'first_name', 'last_name',
+        fields = ('first_name', 'last_name',
                   'mobile_no', 'email', 'is_staff')
 
     def __init__(self, *args, **kwargs):
@@ -346,6 +349,7 @@ class MakerCreationForm(forms.ModelForm):
                 })
 
     def save(self, commit=True):
+
         user = super().save(commit=False)
         user.user_type = 1
         if commit:
@@ -354,6 +358,9 @@ class MakerCreationForm(forms.ModelForm):
 
 
 class CheckerCreationForm(forms.ModelForm):
+    first_name = forms.CharField()
+    last_name = forms.CharField()
+
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -390,7 +397,7 @@ class CheckerCreationForm(forms.ModelForm):
 
     class Meta:
         model = CheckerUser
-        fields = ['username', 'first_name', 'last_name',
+        fields = ['first_name', 'last_name',
                   'email', 'mobile_no', 'level', 'is_staff']
 
 

@@ -36,6 +36,6 @@ urlpatterns = [
     path('user/delete/', views.delete, name='delete'),
     path('client/toggle/', views.toggle_client, name='toggle'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
-    path('clients/', views.Clients.as_view(), name='clients')
+    path('clients/', views.Clients.as_view(), name='clients'),
     path('settings/branding', views.EntityBranding.as_view(), name='entity_branding')
 ]

@@ -9,15 +9,23 @@ import requests
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render, render_to_response
+from django.urls import reverse
 from django.urls import reverse_lazy
+from django.views.generic import CreateView
+from rest_framework.authtoken.models import Token
 
 from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import generate_file
 from data.utils import redirect_params
+from disb.forms import VMTDataForm, AgentFormSet, AgentForm, PinForm
+from disb.models import Agent, VMTData
 from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
+from users.mixins import SuperRequiredMixin
+from users.models import EntitySetup
 
 DATA_LOGGER = logging.getLogger("disburse")
 
@@ -105,3 +113,91 @@ def failed_disbursed_for_download(request):
         response['Content-Disposition'] = 'attachment; filename=%s' % str(
             filename)
     return response
+
+
+class SuperAdminVMTSetup(SuperRequiredMixin, CreateView):
+    model = VMTData
+    form_class = VMTDataForm
+    template_name = 'entity/add_vmt.html'
+
+    def get_success_url(self):
+        import ipdb; ipdb.set_trace()
+        return reverse('disbursement:add_agents', kwargs={'token': self.kwargs['token']})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'root': Token.objects.get(key=self.kwargs['token']).user})
+        try:
+            kwargs.update({'instance': Token.objects.get(key=self.kwargs['token']).user.vmt})
+        except VMTData.DoesNotExist:
+            pass
+        return kwargs
+
+    def form_valid(self, form):
+        self.object = form.save()
+        entity_setup = EntitySetup.objects.get(user=self.request.user, entity=Token.objects.get(key=self.kwargs['token']).user)
+        entity_setup.vmt_setup = True
+        entity_setup.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
+    model = Agent
+    form_class = AgentFormSet
+    template_name = 'entity/add_agent.html'
+
+    def get_success_url(self):
+        return reverse('users:clients')
+
+    def get_context_data(self, **kwargs):
+        root = Token.objects.get(key=self.kwargs['token']).user
+        data = super().get_context_data(**kwargs)
+        if not 'agentform' in data:
+            data['agentform'] = self.form_class(
+                queryset=Agent.objects.filter(
+                    wallet_provider=root
+                ),
+                prefix='agents',
+                form_kwargs={'root': root}
+            )
+        if not 'pinform' in data:
+            data['pinform'] = PinForm()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        root = Token.objects.get(key=self.kwargs['token']).user
+        agentform = self.form_class(
+            request.POST,
+            queryset=Agent.objects.filter(
+                wallet_provider=root
+            ),
+            prefix='agents',
+            form_kwargs={'root': root}
+        )
+        pinform = PinForm(request.POST)
+        if pinform.is_valid() and agentform.is_valid():
+            objs = agentform.save(commit=False)
+            try:
+                for obj in agentform.deleted_objects:
+                    obj.delete()
+            except AttributeError:
+                pass
+            for obj in objs:
+                obj.set_pin(pinform.cleaned_data['pin'], False)
+                obj.wallet_provider = root
+            agentform.save()
+            entity_setup = EntitySetup.objects.get(user=self.request.user,
+                                                   entity=root)
+            entity_setup.agents_setup = True
+            entity_setup.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(agentform=agentform, pinform=pinform))
+
+    def get_form(self, form_class=None):
+        """Return an instance of the form to be used in this view."""
+        if form_class is None:
+            form_class = self.get_form_class()
+        kwargs = self.get_form_kwargs()
+        kwargs.pop('instance')
+        return form_class(**kwargs)

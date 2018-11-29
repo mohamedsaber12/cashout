@@ -31,8 +31,11 @@ urlpatterns = [
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='edit_profile'),
     path('members/', views.Members.as_view(), name='members'),
-    path('members/checker/add', views.AddCheckerView.as_view(), name='add_checker'),
-    path('members/maker/add', views.AddMakerView.as_view(), name='add_maker'),
-    path('user/delete', views.delete, name='delete'),
+    path('members/checker/add/', views.AddCheckerView.as_view(), name='add_checker'),
+    path('members/maker/add/', views.AddMakerView.as_view(), name='add_maker'),
+    path('user/delete/', views.delete, name='delete'),
+    path('client/toggle/', views.toggle_client, name='toggle'),
+    path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
+    path('clients/', views.Clients.as_view(), name='clients')
     path('settings/branding', views.EntityBranding.as_view(), name='entity_branding')
 ]

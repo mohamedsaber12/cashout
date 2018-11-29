@@ -4,12 +4,12 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.core.exceptions import FieldError
 
-from disb.forms import AgentForm
+from disb.forms import AgentAdminForm
 from disb.models import Agent, VMTData
 
 
 class AgentAdmin(admin.ModelAdmin):
-    form = AgentForm
+    form = AgentAdminForm
 
     def get_readonly_fields(self, request, obj=None):
         if obj:

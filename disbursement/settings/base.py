@@ -75,6 +75,7 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django_otp.middleware.OTPMiddleware',
+    'users.middleware.EntitySetupCompletionMiddleWare',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -188,3 +189,12 @@ REST_FRAMEWORK = {
 }
 
 ADMIN_SITE_HEADER = "PayMob Administration"
+
+LOGIN_EXEMPT_URLS = (
+    r'^user/logout/$',
+    r'^password/reset/$',
+    r'^change_password/(?P<user>[0-9A-Za-z]+)/$',
+    r'^password/reset/done/$',
+    r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)/(?P<token>.+)/$',
+    r'^password/done/$',
+)

@@ -65,19 +65,23 @@ class Doc(models.Model):
     def can_user_disburse(self, checker):
         reviews = self.reviews.all()
         reason = ''
-        if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
-            if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
-                if checker.level.max_amount_can_be_disbursed >= self.total_amount:
-                    return True, reason, 0
+        if checker.root.client.is_active:
+            if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
+                if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
+                    if checker.level.max_amount_can_be_disbursed >= self.total_amount:
+                        return True, reason, 0
+                    else:
+                        reason = "Not Permitted to disburse"
+                        code = 3
                 else:
-                    reason = "Not Permitted to disburse"
-                    code = 3
+                    reason = "Document is still suspend due to shortage of checking"
+                    code = 2
             else:
-                reason = "Document is still suspend due to shortage of checking"
-                code = 2
+                reason = "Issues are submitted by some users, please resolve any conflict first"
+                code = 1
         else:
-            reason = "Issues are submitted by some users, please resolve any conflict first"
-            code = 1
+            reason = "Your Entity is deactivated"
+            code = 4
         return False, reason, code
 
     def disbursement_ratio(self):

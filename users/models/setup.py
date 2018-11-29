@@ -5,6 +5,9 @@ from imagekit.processors import ResizeToFill
 
 
 class Setup(models.Model):
+    """
+    Setup model to save the state of the entity root setup
+    """
     user = models.OneToOneField('users.User', on_delete=models.CASCADE)
     levels_setup = models.BooleanField(default=False)
     users_setup = models.BooleanField(default=False)

@@ -121,9 +121,19 @@ class User(AbstractUser):
         return self.user_type == 2
 
     @cached_property
+    def is_superadmin(self):
+        return self.user_type == 0
+
+    @cached_property
     def get_full_name(self):
         full_name = '%s %s' % (self.first_name.capitalize(), self.last_name)
         return full_name.strip()
 
     def get_absolute_url(self):
         return reverse("users:profile")
+
+    def has_uncomplete_entity_creation(self):
+        return self.entity_setups.filter(Q(agents_setup=False) | Q(vmt_setup=False)).count() > 0
+
+    def uncomplete_entity_creation(self):
+        return self.entity_setups.filter(Q(agents_setup=False) | Q(vmt_setup=False)).first()

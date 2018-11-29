@@ -12,9 +12,19 @@ from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render
+<<<<<<< users/views.py
+from django.urls import reverse
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+from django.views.generic import DetailView
+from django.views.generic import ListView
+from django.views.generic import UpdateView
+from rest_framework.authtoken.models import Token
+=======
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+>>>>>>> users/views.py
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
@@ -22,9 +32,12 @@ from data.utils import get_client_ip
 from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
                          EntityBrandingForm, LevelFormSet, MakerCreationForm,
                          MakerMemberFormSet, PasswordChangeForm,
-                         ProfileEditForm, SetPasswordForm)
-from users.mixins import RootRequiredMixin
+                         SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm, RootCreationForm)
+from users.mixins import RootRequiredMixin, SuperRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User
+from users.models import Client
+from users.models import EntitySetup
+from users.models import RootUser
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -121,12 +134,6 @@ class SettingsUpView(RootRequiredMixin, CreateView):
     template_name = 'users/settings-up.html'
     form_class = MakerMemberFormSet
     success_url = "/"
-
-    def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and not request.user.is_superuser:
-            if request.user.is_root:
-                return super().dispatch(request, *args, **kwargs)
-        return self.handle_no_permission()
 
     def post(self, request, *args, **kwargs):
         if request.is_ajax():
@@ -305,6 +312,42 @@ class Members(RootRequiredMixin, ListView):
         return qs
 
 
+class Clients(SuperRequiredMixin, ListView):
+    model = Client
+    paginate_by = 20
+    context_object_name = 'users'
+    template_name = 'users/clients.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(creator=self.request.user)
+        if self.request.GET.get("search"):
+            search = self.request.GET.get("search")
+            return qs.filter(Q(client__username__icontains=search) |
+                             Q(client__first_name__icontains=search) |
+                             Q(client__last_name__icontains=search)
+                             )
+        if self.request.GET.get("q"):
+            type_of = self.request.GET.get("q")
+            if type_of == 'active':
+                value = True
+            elif type_of == 'inactive':
+                value = False
+            else:
+                return qs
+            return qs.filter(is_active=value)
+        return qs
+
+
+def toggle_client(request):
+    if request.is_ajax() and request.method=='POST':
+        data = request.POST.copy()
+        is_toggled = Client.objects.toggle(id=int(data['user_id']))
+        return HttpResponse(content=json.dumps({"valid": is_toggled}), content_type="application/json")
+    else:
+        raise Http404()
+
+
 def delete(request):
     if request.is_ajax() and request.method == 'POST':
         try:
@@ -418,6 +461,26 @@ class ProfileUpdateView(UpdateView):
 
     def get_object(self, queryset=None):
         return self.request.user
+
+
+class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
+    model = RootUser
+    form_class = RootCreationForm
+    template_name = 'entity/add_root.html'
+
+    def get_success_url(self):
+        return reverse('disbursement:add_vmt', kwargs={'token': Token.objects.get_or_create(user=self.object)[0].key})
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'request': self.request})
+        return kwargs
+
+    def form_valid(self, form):
+        self.object = form.save()
+        EntitySetup.objects.create(user=self.request.user, entity=self.object)
+        Client.objects.create(creator=self.request.user, client=self.object)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class EntityBranding(RootRequiredMixin, View):

@@ -1,0 +1,132 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+    <title>PAYMOB | {% block title %}{% endblock %}</title>
+    {% include 'base_css.html' %}
+    {% block gentellacss %}{% endblock %}
+    {% block customcss %}{% endblock %}
+  </head>
+
+  <body class="nav-md">
+    <div class="container body">
+      <div class="main_container">
+        <div class="col-md-3 left_col">
+          <div class="left_col scroll-view">
+            <div class="navbar nav_title" style="border: 0;">
+              <a href="{% url 'data:main_view' %}" class="site_title"><i class="fa fa-paw"></i> <span>Paymob Payroll</span></a>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <!-- menu profile quick info -->
+            <div class="profile clearfix">
+              <div class="profile_pic">
+                <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
+              </div>
+              <div class="profile_info">
+                <span>Welcome,</span>
+                <h2>{{ request.user.get_full_name }}</h2>
+              </div>
+            </div>
+            <!-- /menu profile quick info -->
+
+            <br />
+
+            <!-- sidebar menu -->
+            <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+              <div class="menu_section">
+                <h3>General</h3>
+                <ul class="nav side-menu">
+                  <li><a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu">
+                      <li><a href="#" class="disabled">Dashboard</a></li>
+                      <li><a href="{% url 'data:main_view' %}">Files</a></li>
+                    </ul>
+                  </li>
+                    <li><a><i class="fa fa-user"></i> Members <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li><a href="{% url 'users:add_checker' %}">All</a></li>
+                            <li><a href="{% url 'users:add_maker' %}">Add</a></li>
+                        </ul>
+                    </li>
+                    <li><a><i class="fa fa-life-ring"></i> Settings <span class="fa fa-chevron-down"></span></a>
+                        <ul class="nav child_menu">
+                            <li><a href="{% url 'users:settings' %}">Setup</a></li>
+                            <li><a href="{% url 'users:levels' %}">levels</a></li>
+                            <li><a href="{% url 'users:profile' %}">Profile</a></li>
+                        </ul>
+                        </li>
+                </ul>
+              </div>
+
+            </div>
+            <!-- /sidebar menu -->
+
+          </div>
+        </div>
+
+        <!-- top navigation -->
+        <div class="top_nav">
+          <div class="nav_menu">
+            <nav>
+              <div class="nav toggle">
+                <a id="menu_toggle"><i class="fa fa-bars"></i></a>
+              </div>
+
+              <ul class="nav navbar-nav navbar-right">
+                <li class="">
+                  <a href="javascript:;" class="user-profile dropdown-toggle" data-toggle="dropdown" aria-expanded="false">
+                    <img src="{{ request.user.avatar_thumbnail.url }}" alt="">{{ request.user.username | capfirst }}
+                    <span class=" fa fa-angle-down"></span>
+                  </a>
+                  <ul class="dropdown-menu dropdown-usermenu pull-right">
+                      {% if request.user.is_root %}
+                        <li>
+                          <a href="javascript:;">
+                            <span class="badge bg-red pull-right">{{ request.user.setup.percentage }}</span>
+                            <span>Settings</span>
+                          </a>
+                        </li>
+                      {% endif %}
+                    <li><a href="javascript:;">Help</a></li>
+                    <li><a href="{% url 'users:logout' %}"><i class="fa fa-sign-out pull-right"></i> Log Out</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+        <!-- /top navigation -->
+
+        <!-- page content -->
+              <div class="right_col" role="main" style="min-height: 1716px;">
+
+                {% block body %} {% endblock %}
+              <div class="clearfix"></div>
+                <footer>
+                  <div class="pull-right">
+                      <a href="https://www.paymobsolutions.com">Paymob</a> - Payroll Solution
+                  </div>
+                  <div class="clearfix"></div>
+                </footer>
+                <!-- /footer content -->
+              </div>
+              </div>
+        <!-- /page content -->
+
+        <!-- footer content -->
+
+    </div>
+
+    {% include 'base_js.html' %}
+    {% block script %} {% endblock %}
+  </body>
+</html>

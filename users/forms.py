@@ -239,7 +239,7 @@ class RootCreationForm(UserForm):
         self.request = kwargs.pop('request', None)
         super(RootCreationForm, self).__init__(*args, **kwargs)
         for field in self.fields:
-            field.widget.attrs.setdefault('placeholder', field.label)
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
 
     def clean_username(self):
         name = self.cleaned_data['username']

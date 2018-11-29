@@ -11,6 +11,7 @@ if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
 
 ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
+    re.compile(r'^profile*')
 )
 
 

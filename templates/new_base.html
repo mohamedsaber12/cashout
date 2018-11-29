@@ -21,7 +21,11 @@
       <div class="main_container">
   
         <div class="col-md-3 left_col">
-          {% include "sidebar.html" %}
+            {% if request.user.is_superadmin %}
+                {% include "superadmin_sidebar.html" %}
+            {% else %}
+                {% include "sidebar.html" %}
+            {% endif %}
         </div>
   
         <div class="top_nav">

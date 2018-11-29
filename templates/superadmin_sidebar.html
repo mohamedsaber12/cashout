@@ -1,0 +1,58 @@
+<div class="left_col scroll-view">
+    <div class="navbar nav_title" style="border: 0;">
+        <img width="52px" src="{{ request.user.root.setup.entity_logo.url }}" alt="...">
+        <a href="{% url 'data:main_view' %}" class="site_title"> <span>Paymob Payroll</span></a>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <!-- menu profile quick info -->
+    <div class="profile clearfix">
+        <div class="profile_pic">
+            <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
+        </div>
+        <div class="profile_info">
+            <span>Welcome,</span>
+            <h2>
+                {% if request.user.get_full_name %}
+                    {{ request.user.get_full_name }}
+                {%else%}
+                    {{ request.user.username }}
+                {%endif%}    
+            </h2>
+        </div>
+    </div>
+    <!-- /menu profile quick info -->
+
+    <br />
+
+    <!-- sidebar menu -->
+    <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+        <div class="menu_section">
+            
+            <ul class="nav side-menu">
+                
+                <li><a href="#"><i class="fa fa-home"></i> Dashboard</a>
+                </li>
+                
+                <li><a><i class="fa fa-user"></i> Clients <span class="fa fa-chevron-down"></span></a>
+                    <ul class="nav child_menu">
+
+                        <li><a href="{% url 'users:add_client' %}">Add</a>
+                        <li><a href="{% url 'users:clients' %}">All Clients</a>
+                        </li>
+                    </ul>
+                </li>
+                
+                <li><a href="{% url 'users:profile' %}"><i class="fa fa-user"></i>Profile</a>
+                </li>
+             
+ 
+            </ul>
+        </div>
+     
+    </div>
+    <!-- /sidebar menu -->
+
+    
+</div>

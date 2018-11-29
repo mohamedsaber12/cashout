@@ -12,4 +12,3 @@ urlpatterns = [
     path('disburse/export_failed_download/', failed_disbursed_for_download, name='download_failed'),
     path('client/creation/agents/<token>/', SuperAdminAgentsSetup.as_view(), name='add_agents'),
 ]
-

@@ -403,9 +403,11 @@ class CheckerCreationForm(forms.ModelForm):
 
 
 class BrandForm(forms.ModelForm):
+    color = forms.CharField(widget=forms.HiddenInput())
     class Meta:
         model = Brand
         fields = ("color", "logo")
+
 
 
 LevelFormSet = modelformset_factory(

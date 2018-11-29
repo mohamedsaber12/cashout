@@ -193,6 +193,7 @@ ADMIN_SITE_HEADER = "PayMob Administration"
 
 LOGIN_EXEMPT_URLS = (
     r'^user/logout/$',
+    r'^user/login/$',
     r'^password/reset/$',
     r'^change_password/(?P<user>[0-9A-Za-z]+)/$',
     r'^password/reset/done/$',

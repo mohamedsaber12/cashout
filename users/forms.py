@@ -247,20 +247,16 @@ class RootCreationForm(UserForm):
 
     def save(self, commit=True):
         user = super(UserForm, self).save(commit=False)
-        if self.request.user.is_superuser:
-            if user.is_superuser:
-                user.hierarchy = 0
-
-            else:
-                maximum = max(RootUser.objects.values_list(
-                    'hierarchy', flat=True), default=False)
-                if not maximum:
-                    maximum = 0
-                try:
-                    user.hierarchy = maximum + 1
-                except TypeError:
-                    user.hierarchy = 1
-                user.user_type = 3
+        if self.request.user.is_superadmin:
+            maximum = max(RootUser.objects.values_list(
+                'hierarchy', flat=True), default=False)
+            if not maximum:
+                maximum = 0
+            try:
+                user.hierarchy = maximum + 1
+            except TypeError:
+                user.hierarchy = 1
+            user.user_type = 1
 
         if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy

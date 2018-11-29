@@ -460,7 +460,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     template_name = 'entity/add_root.html'
 
     def get_success_url(self):
-        return reverse('disbursement:add_vmt', kwargs={'token': Token.objects.get_or_create(user=self.object)[0].key})
+        return reverse('disbursement:add_agents', kwargs={'token': Token.objects.get_or_create(user=self.object)[0].key})
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

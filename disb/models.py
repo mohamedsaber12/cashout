@@ -16,7 +16,7 @@ class VMTData(models.Model):
     request_gateway_type = models.CharField(max_length=32)
     wallet_issuer = models.CharField(max_length=64)
     vmt = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
+        'users.SuperAdminUser',
         related_name='vmt',
         on_delete=models.CASCADE
     )
@@ -28,7 +28,7 @@ class VMTData(models.Model):
         ], max_length=16)
 
     def __str__(self):
-        return "{} {}".format(self.vmt.username, self.login_password)
+        return "VMT for {} entities".format(self.vmt.username)
 
     def return_vmt_data(self):
         """

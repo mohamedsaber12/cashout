@@ -1,6 +1,8 @@
 <div class="left_col scroll-view">
     <div class="navbar nav_title" style="border: 0;">
-        <img width="52px" src="{{ request.user.root.setup.entity_logo.url }}" alt="...">
+        {% if brand_logo %}
+            <img width="52px" src="{{ brand_logo }}" alt="...">
+        {%endif%}    
         <a href="{% url 'data:main_view' %}" class="site_title"> <span>Paymob Payroll</span></a>
     </div>
 

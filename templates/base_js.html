@@ -92,7 +92,6 @@
         }
     
     let color = '{{brand_color}}';
-    console.log('color',color)
     $('.left_col .scroll-view').css('background-color', color);
     $('html').css('background-color', color);
     $('.site_title').css('background-color', color);
@@ -101,7 +100,7 @@
     $('.main_container').css('background', color);
     
     $(document).ready(function () {
-        if (color == 'None')
+        if (color == 'None' || color == '')
             return;
         
         let frm = ColorLuminance(color, -0.1);

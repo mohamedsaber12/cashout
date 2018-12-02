@@ -8,7 +8,7 @@ class EntitySetup(models.Model):
     Entity Setup model to save the state of the entity creation setup by super admin
     """
     user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='entity_setups')
-    entity = models.OneToOneField('users.User', on_delete=models.DO_NOTHING)
+    entity = models.OneToOneField('users.User', on_delete=models.CASCADE)
     agents_setup = models.BooleanField(default=False)
 
     def __str__(self):

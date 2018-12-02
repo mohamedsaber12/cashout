@@ -233,6 +233,7 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
 class RootCreationForm(UserForm):
     class Meta(UserCreationForm.Meta):
         model = RootUser
+        fields = ("username", "email")
         field_classes = {}
 
     def __init__(self, *args, **kwargs):
@@ -256,7 +257,7 @@ class RootCreationForm(UserForm):
                 user.hierarchy = maximum + 1
             except TypeError:
                 user.hierarchy = 1
-            user.user_type = 1
+            user.user_type = 3
 
         if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy

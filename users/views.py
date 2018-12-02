@@ -33,7 +33,10 @@ from users.models import RootUser
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
 FAILED_LOGIN_LOGGER = logging.getLogger("login_failed")
-
+SETUP_VIEW_LOGGER = logging.getLogger("setup_view")
+DELETE_USER_VIEW_LOGGER = logging.getLogger("delete_user_view")
+LEVELS_VIEW_LOGGER = logging.getLogger("levels_view")
+ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 
 def ourlogout(request):
     """
@@ -79,6 +82,8 @@ def login_view(request):
 
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
+                FAILED_LOGIN_LOGGER.debug(
+                    f"Failed Login Attempt from non active user with username {username} and IP Address {get_client_ip(request)}")
                 return HttpResponse("Your account has been disabled")
         else:
             # Bad login details were provided. So we can't log the user in.
@@ -165,15 +170,19 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         obj.delete()
                 except AttributeError:
                     pass
-                try:                  
+                try:
+                    #if form is a formset then it is iterable else TypeError
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
                         try:
                             obj.save()
                         except IntegrityError as e:
+                            SETUP_VIEW_LOGGER.debug(
+                                f'IntegrityError for user {request.user.username} with error message {e}')
                             return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
-                except TypeError as e:
+                #if form is filecategory form which is not formset
+                except TypeError:
                     objs.user_created = request.user.root
                     objs.save()
 
@@ -194,15 +203,22 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         user__hierarchy=request.user.hierarchy)
                     setup.category_setup = True
                     setup.save()
+                    SETUP_VIEW_LOGGER.debug(
+                        f'Root user: {request.user.username} Finished Setup successfully')
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
                 return HttpResponse(content=json.dumps(payload), content_type="application/json")
 
+            #form could be filecategory or formset 
+            #only formsets have non_form_errors but normal form doesn't
             non_form_errors = getattr(form, 'non_form_errors', None)
             if non_form_errors is not None:
                 non_form_errors = non_form_errors()
             return HttpResponse(content=json.dumps({"valid": False,
                                                     "reason": "validation", "errors": form.errors, "non_form_errors": non_form_errors}),
                                 content_type="application/json")
+        SETUP_VIEW_LOGGER.debug(
+            f'404 Response because The POST Request is not ajax from user {request.user.username}')
+        raise Http404()
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
@@ -344,8 +360,11 @@ def delete(request):
             data = request.POST.copy()
             user = User.objects.get(id=int(data['user_id']))
             user.delete()
+            DELETE_USER_VIEW_LOGGER.debug(f'user deleted with username {user.username}')
             return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
         except User.DoesNotExist:
+            DELETE_USER_VIEW_LOGGER.debug(
+                f"user with id {data['user_id']} doesn't exist to be deleted")
             return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
     else:
         raise Http404()
@@ -378,7 +397,8 @@ def levels(request):
                 try:
                     obj.save()
                 except IntegrityError as e:
-                    print('IntegrityError', e)
+                    LEVELS_VIEW_LOGGER.debug(
+                         f'IntegrityError for user {request.user.username} with error message {e}')
                     return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
 
             payload = {"valid": True}
@@ -470,6 +490,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         self.object = form.save()
         EntitySetup.objects.create(user=self.request.user, entity=self.object)
         Client.objects.create(creator=self.request.user, client=self.object)
+        ROOT_CREATE_LOGGER.debug(
+            f'Root created with username {self.object.username} from IP Address {get_client_ip(self.request)}')
         return HttpResponseRedirect(self.get_success_url())
 
 

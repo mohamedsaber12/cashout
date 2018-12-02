@@ -292,6 +292,26 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/failed_login.log',
         },
+        'setup_view': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/setup_view.log',
+        },
+        'delete_user_view':{
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/delete_user_view.log',
+        },
+        'levels_view': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/levels_view.log',
+        },
+        'root_create': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/roots_created.log',
+        },
     },
 
     'loggers': {
@@ -364,5 +384,25 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'setup_view': {
+            'handlers': ['setup_view'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'delete_user_view':{
+            'handlers': ['delete_user_view'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'levels_view':{
+            'handlers': ['levels_view'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'root_create':{
+            'handlers': ['root_create'],
+            'level': 'DEBUG',
+            'propagate': True,
+        }
     },
 }

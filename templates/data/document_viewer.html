@@ -357,8 +357,7 @@
                     </div>`
                     btn.replaceWith(elem)
                 },
-                error: function (xhr, error, reason) {
-                    console.log('err')
+                error: function (xhr, error, reason) {                    
                     $('#modal-header').append('Error Occurred!!');
                     $('#modal-message').append('<p>It seems that you don\'t have access or request a wrong document</p><br>');
                     $('#myModal').removeClass('hide');

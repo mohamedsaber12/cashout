@@ -92,7 +92,6 @@
         }
     
     let color = '{{brand_color}}';
-    console.log('color',color)
     $('.left_col .scroll-view').css('background-color', color);
     $('html').css('background-color', color);
     $('.site_title').css('background-color', color);
@@ -116,7 +115,6 @@
         $SIDEBAR_MENU.find('a').on('click', function (ev) {
             
             let $li = $(this).parent();
-            console.log('aaaaa', $li)
             if ($li.is('.active')) {
                 
                 $(this).css('background', color);

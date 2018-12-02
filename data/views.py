@@ -33,7 +33,6 @@ from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
-UNAUTHORIZED_UPLOAD_LOGGER = logging.getLogger("unauthorized_upload")
 UNAUTHORIZED_FILE_DELETE_LOGGER = logging.getLogger("unauthorized_file_delete")
 UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")

@@ -75,7 +75,6 @@
                      this.removeAllFiles();
                 });
                 this.on("error", function (file,message,obj) { 
-                    console.log(message)
                     this.removeAllFiles() ;
                     var fail_modal = $('#fail-modal');
                     if (message['file'])

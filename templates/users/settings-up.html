@@ -340,9 +340,7 @@
         }
 
         function leaveAStepCallback(obj, context){
-            console.log('context', context)
             if(context.fromStep > context.toStep){
-                console.log(context)
                 window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(context.toStep-1)
             
             }
@@ -450,12 +448,10 @@
                     }
 
                     bool_return = data.valid;
-                    console.log('success', bool_return)
                     return true;
                 }
 
             });
-            console.log("here");
             return bool_return;
         }
 

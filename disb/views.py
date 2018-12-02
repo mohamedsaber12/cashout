@@ -19,7 +19,7 @@ from rest_framework.authtoken.models import Token
 from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import generate_file
-from data.utils import redirect_params
+from data.utils import redirect_params,get_client_ip
 from disb.forms import VMTDataForm, AgentFormSet, AgentForm, PinForm
 from disb.models import Agent, VMTData
 from disb.resources import DisbursementDataResource

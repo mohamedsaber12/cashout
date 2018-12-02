@@ -200,3 +200,169 @@ LOGIN_EXEMPT_URLS = (
     r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)/(?P<token>.+)/$',
     r'^password/done/$',
 )
+
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    "filters": {
+        "request_id": {
+            "()": "request_id.logging.RequestIdFilter"
+        }
+    },
+    'formatters': {
+        'console': {
+            'format': u'%(asctime)s - %(levelname)-5s [%(name)s] request_id=%(request_id)s %(message)s',
+            'datefmt': '%d/%m/%Y %H:%M:%S'
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'INFO',
+            'filters': ['request_id'],
+            'class': 'logging.StreamHandler',
+            'formatter': 'console'
+        },
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/debug.log',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'django.utils.log.AdminEmailHandler',
+        },
+        'file_upload': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/upload.log',
+        },
+        'download_serve': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/download_serve.log',
+        },
+        'delete_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/deleted_files.log',
+        },
+        'unauthorized_file_delete': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/unauthorized_file_delete.log',
+        },
+        'upload_error': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/upload_error.log',
+        },
+        'disburse': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/disburse_logger.log',
+        },
+        'create_user': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/create_user.log',
+        },
+        'delete_user': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/deleted_users.log',
+        },
+        'delete_group':{
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/deleted_groups.log',
+        },
+        'login': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/login.log',
+        },
+        'logout': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/logout.log',
+        },
+        'failed_login': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/failed_login.log',
+        },
+    },
+
+    'loggers': {
+        "": {
+            "level": "DEBUG",
+            "handlers": ["console"]
+        },
+        'django': {
+            'handlers': ['file', 'mail_admins'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'upload': {
+            'handlers': ['file_upload'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'download_serve': {
+            'handlers': ['download_serve'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'deleted_files': {
+            'handlers': ['delete_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'unauthorized_file_delete': {
+            'handlers': ['unauthorized_file_delete'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'upload_error': {
+            'handlers': ['upload_error'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'disburse': {
+            'handlers': ['disburse'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'created_users': {
+            'handlers': ['create_user'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'delete_users': {
+            'handlers': ['delete_user'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'delete_groups':{
+            'handlers': ['delete_group'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'login': {
+            'handlers': ['login'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'logout': {
+            'handlers': ['logout'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'login_failed': {
+            'handlers': ['failed_login'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}

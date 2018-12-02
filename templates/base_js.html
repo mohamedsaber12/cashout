@@ -100,7 +100,7 @@
     $('.main_container').css('background', color);
     
     $(document).ready(function () {
-        if (color == 'None')
+        if (color == 'None' || color == '')
             return;
         
         let frm = ColorLuminance(color, -0.1);

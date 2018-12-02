@@ -32,7 +32,6 @@ from users.models import RootUser
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
-UPLOAD_LOGGER = logging.getLogger("upload")
 FAILED_LOGIN_LOGGER = logging.getLogger("login_failed")
 
 

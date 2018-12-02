@@ -17,7 +17,6 @@ from users.models import Client
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
-GROUP_CREATION_LOGGER = logging.getLogger("create_groups")
 DELETED_GROUPS_LOGGER = logging.getLogger("delete_groups")
 admin.site.unregister(Group)
 

@@ -36,6 +36,7 @@ DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
 UNAUTHORIZED_FILE_DELETE_LOGGER = logging.getLogger("unauthorized_file_delete")
 UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
+VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 
 
 @login_required
@@ -100,7 +101,6 @@ def file_upload(request):
     return render(request, 'data/index.html', context=context)
 
 
-# TODO: Customize permissions based on file types permissions
 def files_based_on_group_of_logged_in_user(request, docs):
     """
     Function to return the document files based of date
@@ -197,21 +197,6 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
     return render(request, template_name, {'object': file_obj})
 
 
-def page_not_found_view(request):
-    return render(request, 'data/404.html', status=404)
-
-
-def error_view(request):
-    return render(request, 'data/500.html', status=500)
-
-
-def permission_denied_view(request):
-    return render(request, 'data/403.html', status=403)
-
-
-def bad_request_view(request):
-    return render(request, 'data/400.html', status=400)
-
 
 @login_required
 def document_view(request, doc_id):
@@ -227,6 +212,8 @@ def document_view(request, doc_id):
             return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
         if request.user.is_checker:
             if not doc.can_be_disbursed:
+                VIEW_DOCUMENT_LOGGER.debug(
+                    f'Document doc_id {doc_id} can not be disbursed, checker {request.user.username}')
                 raise Http404
 
             reviews = DocReview.objects.filter(doc=doc)
@@ -253,7 +240,11 @@ def document_view(request, doc_id):
             }
 
     else:
-        messages.warning(request, "This document doesn't exist")
+        VIEW_DOCUMENT_LOGGER.debug(
+            f"""user viewing document from other hierarchy, 
+            user: {request.user.username},user hierarchy: {request.user.hierarchy}, 
+            doc hierarchy: {doc.owner.hierarchy} """)
+
         return redirect(reverse("data:main_view"))
 
     context = {
@@ -269,6 +260,8 @@ def document_view(request, doc_id):
     else:
         context['redirect'] = 'false'
 
+    VIEW_DOCUMENT_LOGGER.debug(
+        f'user: {request.user.username} viewed doc_id:{doc_id} ')
     return render(request, template_name=template_name, context=context)
 
 
@@ -305,6 +298,8 @@ def doc_download(request, doc_id):
                 doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
+            DOWNLOAD_LOGGER.debug(
+                f'user {request.user.username} downloaded doc_id: {doc_id} at {str(datetime.datetime.now())}')
         except Exception:
             DOWNLOAD_LOGGER.debug(
                 'user: {0} tried to download doc_id: {1} but 404 was raised.'.format(

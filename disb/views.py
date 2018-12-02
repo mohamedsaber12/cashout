@@ -19,7 +19,7 @@ from rest_framework.authtoken.models import Token
 from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import generate_file
-from data.utils import redirect_params
+from data.utils import redirect_params,get_client_ip
 from disb.forms import VMTDataForm, AgentFormSet, AgentForm, PinForm
 from disb.models import Agent, VMTData
 from disb.resources import DisbursementDataResource
@@ -28,6 +28,7 @@ from users.mixins import SuperRequiredMixin
 from users.models import EntitySetup
 
 DATA_LOGGER = logging.getLogger("disburse")
+AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
 
 
 @setup_required
@@ -150,6 +151,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
         )
         pinform = PinForm(request.POST)
         if pinform.is_valid() and agentform.is_valid():
+            agents_msisdn = []
             objs = agentform.save(commit=False)
             try:
                 for obj in agentform.deleted_objects:
@@ -159,11 +161,14 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
             for obj in objs:
                 obj.set_pin(pinform.cleaned_data['pin'], False)
                 obj.wallet_provider = root
+                agents_msisdn.append(obj.msisdn)
+
             agentform.save()
             entity_setup = EntitySetup.objects.get(user=self.request.user,
                                                    entity=root)
             entity_setup.agents_setup = True
             entity_setup.save()
+            AGENT_CREATE_LOGGER.debug( f'Agents created from IP Address {get_client_ip(self.request)} with msisdns {" - ".join(agents_msisdn)}')
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(agentform=agentform, pinform=pinform))

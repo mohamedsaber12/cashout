@@ -312,6 +312,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/roots_created.log',
         },
+        'agent_create': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/agents_created.log',
+        },
     },
 
     'loggers': {
@@ -401,6 +406,11 @@ LOGGING = {
         },
         'root_create':{
             'handlers': ['root_create'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'agent_create':{
+            'handlers': ['agent_create'],
             'level': 'DEBUG',
             'propagate': True,
         }

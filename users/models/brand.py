@@ -12,5 +12,5 @@ class Brand(models.Model):
     logo = ProcessedImageField(upload_to='entities-logo',
                                       processors=[ResizeToFill(100, 100)],
                                       format='JPEG',
-                                      options={'quality': 60}, null=True, default='user.png')
+                               options={'quality': 60}, null=True, default='pm_name.png')
 

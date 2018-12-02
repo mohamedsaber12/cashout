@@ -1,7 +1,7 @@
 .idea
 *.pyc
 */migrations/
-media/
+media/*
 *.log
 db.sqlite3
 */local.py
@@ -66,3 +66,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+#keep default imgs in media
+!media/user.png
+!media/pm_name.png

@@ -1,10 +1,14 @@
 {% load static %}
 <div class="left_col scroll-view">
-    <div class="navbar nav_title" style="border: 0;">
+    <div class="navbar nav_title" style="text-align:center">
         {% if brand_logo %}
-            <img height="38px" src="{{ brand_logo }}" alt="...">
+            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"
+                        height="38px" id="paymob_logo"></span></a>
+        {%else%}
+            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
+                            height="38px" id="paymob_logo"></span></a>
         {%endif%}    
-        <a href="{% url 'data:main_view' %}" class="site_title" > <span><img class="center" src="{% static 'img/pm_name.png' %}" height="38px" id="paymob_logo"></span></a>
+        
     </div>
 
     <div class="clearfix"></div>

@@ -392,6 +392,7 @@
         });
 
         function stepSubmit(step_no) {
+
             var bool_return = false;
             let step_no_string = String(step_no)
 
@@ -448,6 +449,10 @@
                     }
 
                     bool_return = data.valid;
+                    console.log(step_no)
+                    if (step_no==2 && bool_return){
+                        window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(step_no)
+                    }
                     return true;
                 }
 

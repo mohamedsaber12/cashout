@@ -117,6 +117,9 @@ def failed_disbursed_for_download(request):
 
 
 class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
+    """
+    View for super user to create Agents for the entity. 
+    """
     model = Agent
     form_class = AgentFormSet
     template_name = 'entity/add_agent.html'

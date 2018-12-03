@@ -16,6 +16,7 @@ from rest_framework.authtoken.models import Token
 from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic.edit import FormView
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
@@ -40,7 +41,8 @@ ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 
 def ourlogout(request):
     """
-    Function that allows users to logout
+    Function that allows users to logout.
+    Remove otp verification from user. 
     """
     if isinstance(request.user, AnonymousUser):
         return HttpResponseRedirect(reverse('users:user_login_view'))
@@ -59,7 +61,9 @@ def ourlogout(request):
 
 def login_view(request):
     """
-    Function that allows users to login
+    Function that allows users to login.
+    Checkers must do two factor authentication every login but makers don't.
+    Non active users can't login.
     """
     if request.user.is_authenticated:
         if request.user.is_checker:
@@ -97,6 +101,11 @@ def login_view(request):
 
 @login_required
 def change_password(request, user):
+    """
+    View for changing or creating password.
+    If user already has password then he must enter old one.
+    Else enter new password.
+    """
     context = {}
     if request.method == 'GET':
         if request.user.has_usable_password():
@@ -116,15 +125,15 @@ def change_password(request, user):
         return render(request, 'data/change_password.html', context=context)
 
     form.save()
-    context['form'] = form
-    context['MESSAGE'] = "Password changed successfully"
-    if context['MESSAGE'] is "Password changed successfully":
-        return HttpResponseRedirect(reverse('users:user_login_view'))
+    return HttpResponseRedirect(reverse('users:user_login_view'))
 
-    return render(request, 'data/change_password.html', context)
 
 
 class SettingsUpView(RootRequiredMixin, CreateView):
+    """
+    View for the root user to setup levels, makers, checkers and file category.
+
+    """
     model = MakerUser
     template_name = 'users/settings-up.html'
     form_class = MakerMemberFormSet
@@ -135,21 +144,17 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             form = None
             data = request.POST.copy()
             FileCategoryForm.request = request
+            # populate forms with data
             if data['step'] == '1':
-                initial_query = Levels.objects.filter(
-                    created__hierarchy=self.request.user.hierarchy
-                )
-
                 form = LevelFormSet(
                     data,
-                    prefix='level',
-                    queryset=initial_query
+                    prefix='level'
                 )
-
             elif data['step'] == '3':
                 form = CheckerMemberFormSet(
                     data,
                     prefix='checker',
+                    # pass request to get hierarchy levels and include them in checker form
                     form_kwargs={'request': self.request}
                 )
             elif data['step'] == '2':
@@ -158,36 +163,34 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     prefix='maker'
                 )
             elif data['step'] == '4':
-                try:
+                file_category = getattr(self.request.user, 'file_category', None)
+                # user already has a file_category then update
+                if file_category is not None:
                     form = FileCategoryForm(
-                        instance=self.request.user.file_category, data=request.POST)
-                except FileCategory.DoesNotExist:
+                        instance=file_category, data=request.POST)
+                # create new file_category
+                else:    
                     form = FileCategoryForm(data=request.POST)
+            
             if form and form.is_valid():              
                 objs = form.save(commit=False)
-                try:
+                
+                # if form is a formset
+                if not isinstance(form, FileCategoryForm):
+                    # delete formsets marked to be deleted
                     for obj in form.deleted_objects:
                         obj.delete()
-                except AttributeError:
-                    pass
-                try:
-                    #if form is a formset then it is iterable else TypeError
+              
                     for obj in objs:
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
-                        try:
-                            obj.save()
-                        except IntegrityError as e:
-                            SETUP_VIEW_LOGGER.debug(
-                                f'IntegrityError for user {request.user.username} with error message {e}')
-                            return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
-                #if form is filecategory form which is not formset
-                except TypeError:
+                        obj.save()
+                     
+                #if form is filecategory form
+                else:
                     objs.user_created = request.user.root
                     objs.save()
-
-                payload = {"valid": True, "data": "levels"} if data["step"] == "1" else {
-                    "valid": True}
+                # update setup model flags
                 if data['step'] == '1':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
@@ -198,7 +201,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         user__hierarchy=request.user.hierarchy)
                     setup.users_setup = True
                     setup.save()
-                if data['step'] == '4' and payload['valid']:
+                if data['step'] == '4':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
                     setup.category_setup = True
@@ -206,21 +209,32 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                     SETUP_VIEW_LOGGER.debug(
                         f'Root user: {request.user.username} Finished Setup successfully')
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
-                return HttpResponse(content=json.dumps(payload), content_type="application/json")
+                return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
             #form could be filecategory or formset 
             #only formsets have non_form_errors but normal form doesn't
             non_form_errors = getattr(form, 'non_form_errors', None)
             if non_form_errors is not None:
                 non_form_errors = non_form_errors()
-            return HttpResponse(content=json.dumps({"valid": False,
-                                                    "reason": "validation", "errors": form.errors, "non_form_errors": non_form_errors}),
-                                content_type="application/json")
+            return HttpResponse(
+                content=json.dumps({
+                    "valid": False,                                                    
+                    "reason": "validation", 
+                    "errors": form.errors, 
+                    "non_form_errors": non_form_errors
+                }),
+                content_type="application/json")
+
         SETUP_VIEW_LOGGER.debug(
             f'404 Response because The POST Request is not ajax from user {request.user.username}')
         raise Http404()
 
     def get_context_data(self, **kwargs):
+        """
+        Add the needed forms to the context.
+        Add step number to context because pressing previous refresh the view but
+        with the step as query paramter to know wich step to initiate when loading the template.
+        """
         data = super().get_context_data(**kwargs)
 
         data['makerform'] = self.form_class(
@@ -245,42 +259,15 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         data['step'] = self.request.GET.get('step', '0')
         if int(data['step']) < 0 or int(data['step']) > 2:
             data['step'] = '0'
-        try:
-            data['filecategoryform'] = FileCategoryForm(
-                instance=self.request.user.file_category)
-        except FileCategory.DoesNotExist:
+        file_category = getattr(self.request.user, 'file_category', None)
+        if file_category is not None:
+            data['filecategoryform'] = FileCategoryForm(instance=file_category)
+        else:
             data['filecategoryform'] = FileCategoryForm()
 
         return data
 
-    def form_invalid(self, **forms):
-        return self.render_to_response(self.get_context_data(**forms))
-
-    def form_valid(self, form):
-        context = self.get_context_data()
-        makerform = context['makerform']
-        checkerform = context['checkerform']
-        levelform = context['levelform']
-        makerform_valid = False
-        checkerform_valid = False
-        levelform_valid = False
-        with transaction.atomic():
-            if makerform.is_valid():
-                makerform_valid = True
-                makerform.save()
-
-            if checkerform.is_valid():
-                checkerform_valid = True
-                makerform.save()
-
-            if levelform.is_valid():
-                levelform_valid = True
-                makerform.save()
-        if all((levelform_valid, checkerform_valid, makerform_valid)):
-            return super().form_valid(form)
-        else:
-            return self.form_invalid(makerform=makerform, checkerform=checkerform, levelform=levelform)
-
+  
     def get_form(self, form_class=None):
         """Return an instance of the form to be used in this view."""
         if form_class is None:
@@ -291,6 +278,11 @@ class SettingsUpView(RootRequiredMixin, CreateView):
 
 
 class Members(RootRequiredMixin, ListView):
+    """
+    List checkers and makers related to same root user hierarchy.
+    Search members by username, firstname or lastname by "search" query parameter.
+    Filter members by type 'maker' or 'checker' by "q" query parameter.
+    """
     model = User
     paginate_by = 20
     context_object_name = 'users'
@@ -319,6 +311,11 @@ class Members(RootRequiredMixin, ListView):
 
 
 class Clients(SuperRequiredMixin, ListView):
+    """
+    List clients related to same super user.
+    Search clients by username, firstname or lastname by "search" query parameter.
+    Filter clients by type 'active' or 'inactive' by "q" query parameter.
+    """
     model = Client
     paginate_by = 20
     context_object_name = 'users'
@@ -346,6 +343,9 @@ class Clients(SuperRequiredMixin, ListView):
 
 
 def toggle_client(request):
+    """
+    Activate or deactivate client
+    """
     if request.is_ajax() and request.method=='POST':
         data = request.POST.copy()
         is_toggled = Client.objects.toggle(id=int(data['user_id']))
@@ -353,8 +353,11 @@ def toggle_client(request):
     else:
         raise Http404()
 
-
+@login_required
 def delete(request):
+    """
+    Delete any user by user_id
+    """
     if request.is_ajax() and request.method == 'POST':
         try:
             data = request.POST.copy()
@@ -370,40 +373,30 @@ def delete(request):
         raise Http404()
 
 
-def levels(request):
-    initial_query = Levels.objects.filter(
-        created__hierarchy=request.user.hierarchy
-    )
+class LevelsView(RootRequiredMixin, View):
+    """
+    View for adding Levels
+    """
 
-    if request.method == 'POST':
+    def post(self, request, *args, **kwargs):
 
         form = LevelFormSet(
             request.POST,
-            prefix='level',
-            queryset=initial_query
+            prefix='level'
         )
         if form and form.is_valid():
 
             objs = form.save(commit=False)
-            try:
-                for obj in form.deleted_objects:
-                    obj.delete()
-            except AttributeError:
-                pass
-
+            
+            for obj in form.deleted_objects:
+                obj.delete()
+            
             for obj in objs:
                 obj.hierarchy = request.user.hierarchy
                 obj.created_id = request.user.root.id
-                try:
-                    obj.save()
-                except IntegrityError as e:
-                    LEVELS_VIEW_LOGGER.debug(
-                         f'IntegrityError for user {request.user.username} with error message {e}')
-                    return HttpResponse(content=json.dumps({"valid": False, "reason": "integrity"}), content_type="application/json")
-
-            payload = {"valid": True}
-
-            return HttpResponse(content=json.dumps(payload), content_type="application/json")
+                obj.save()
+                
+            return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
         return HttpResponse(content=json.dumps({
             "valid": False,
@@ -412,7 +405,10 @@ def levels(request):
             "non_form_errors": form.non_form_errors()
         }), content_type="application/json")
 
-    else:
+    def get(self, request, *args, **kwargs):
+        initial_query = Levels.objects.filter(
+            created__hierarchy=request.user.hierarchy
+        )
         context = {
             'levelform': LevelFormSet(queryset=initial_query, prefix='level')
         }
@@ -420,20 +416,29 @@ def levels(request):
 
 
 class BaseAddMemberView(RootRequiredMixin, CreateView):
+    """
+    Base View for creating maker and checker
+    """
     template_name = 'users/add_member.html'
 
     def form_valid(self, form):
-        self.object = form.save()
+        self.object = form.save(commit=False)
         self.object.hierarchy = self.request.user.hierarchy
         self.object.save()
         return super().form_valid(form)
 
 
 class AddCheckerView(BaseAddMemberView):
+    """
+    View for creating checker
+    """
     model = CheckerUser
     form_class = CheckerCreationForm
 
     def get_form_kwargs(self):
+        """
+        pass request to form kwargs
+        """
         kwargs = super().get_form_kwargs()
         kwargs.update({'request': self.request})
         return kwargs
@@ -446,6 +451,9 @@ class AddCheckerView(BaseAddMemberView):
 
 
 class AddMakerView(BaseAddMemberView):
+    """
+    View for creating maker
+    """
     model = MakerUser
     form_class = MakerCreationForm
 
@@ -457,6 +465,9 @@ class AddMakerView(BaseAddMemberView):
 
 
 class ProfileView(DetailView):
+    """
+    User profile details view.
+    """
     model = User
     template_name = 'users/profile.html'
 
@@ -465,6 +476,9 @@ class ProfileView(DetailView):
 
 
 class ProfileUpdateView(UpdateView):
+    """
+    User profile update view.
+    """
     model = User
     template_name = 'users/profile_update.html'
     form_class = ProfileEditForm
@@ -474,6 +488,9 @@ class ProfileUpdateView(UpdateView):
 
 
 class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
+    """
+    View for super admin for creating root user.
+    """
     model = RootUser
     form_class = RootCreationForm
     template_name = 'entity/add_root.html'
@@ -495,35 +512,16 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class EntityBranding(RootRequiredMixin, View):
+class EntityBranding(RootRequiredMixin, UpdateView):
     template_name = 'users/entity_branding.html'
     form_class = BrandForm
     model = Brand
+    success_url = reverse_lazy('data:main_view')
 
-    def get_instance(self):
+    def get_object(self, queryset=None):
         return self.model.objects.filter(hierarchy=self.request.user.hierarchy).first()
 
-    def get(self, request, *args, **kwargs):
-        instance = self.get_instance()
-        if instance:
-            form = self.form_class(instance=instance)
-        else:
-            form = self.form_class()
-        return render(request, self.template_name, {'form': form})
-
-    def post(self, request, *args, **kwargs):
-        form = self.form_class(request.POST,request.FILES)
-        if form.is_valid():
-            instance = self.get_instance()
-            if instance:
-                instance.color = form.cleaned_data.get('color')
-                instance.logo = form.cleaned_data.get('logo')
-                instance.save()
-            else:
-                brand = form.save(commit=False)
-                brand.hierarchy = self.request.user.hierarchy
-                brand.save()
-            
-            return HttpResponseRedirect(reverse('data:main_view'))
-
-        return render(request, self.template_name, {'form': form})
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'request': self.request})
+        return kwargs

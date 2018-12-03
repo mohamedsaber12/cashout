@@ -27,7 +27,7 @@ urlpatterns = [
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
     path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
-    path('levels/', views.levels, name='levels'),
+    path('levels/', views.LevelsView.as_view(), name='levels'),
     path('profile/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='edit_profile'),
     path('members/', views.Members.as_view(), name='members'),

@@ -63,6 +63,13 @@ class Doc(models.Model):
         return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
 
     def can_user_disburse(self, checker):
+        """"
+        Check if checker can disburse current documemt(self) or not.
+        return tuple:
+        can disburse:boolean
+        reason: reason why checker can not disburse 
+        code: error code
+        """
         reviews = self.reviews.all()
         reason = ''
         if checker.root.client.is_active:

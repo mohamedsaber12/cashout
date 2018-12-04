@@ -10,17 +10,9 @@
 
     <title>Payroll | {% block title %}{% endblock %}</title>
 
-    <!-- Bootstrap -->
-    <link href="{% static 'gentella//bootstrap.min.css' %}" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link href="//maxcdn.bootstrapcdn.com/font-awesome/4.1.0/css/font-awesome.min.css" rel="stylesheet">
-    <!-- NProgress -->
-    <link href="{% static 'gentella//nprogress.css' %}" rel="stylesheet">
-    <!-- Animate.css -->
-    <link href="{% static 'gentella/animate.min.css' %}" rel="stylesheet">
-
-    <!-- Custom Theme Style -->
-    <link href="{% static 'gentella/css/index/custom.min.css' %}" rel="stylesheet">
+  {% include 'base_css.html' %}
+  {% block gentellacss %}{% endblock %}
+  {% block customcss %}{% endblock %}
   </head>
 
   <body class="login">
@@ -39,6 +31,5 @@
       </div>
     </div>
   </body>
-  {% include 'base_js.html' %}
   {% block script %} {% endblock %}
 </html>

@@ -99,7 +99,7 @@ class FileDocumentForm(forms.ModelForm):
                         raise forms.ValidationError(
                             _('Filename must be less than 255 characters'))
 
-                    if 'openxml' not in file_type and file_category.is_processed:
+                    if 'openxml' not in file_type:
                         UPLOAD_LOGGER.debug('UPLOAD ERROR: file_type not supported %s by %s at %s from IP Address %s' % (
                             str(file_type),
                             str(self.request.user.username),
@@ -121,7 +121,7 @@ class FileDocumentForm(forms.ModelForm):
                 with os.fdopen(fd, 'wb') as out:
                     out.write(file.read())
 
-                if file_category.num_of_identifiers != 0 and file_category.processed:
+                if file_category.num_of_identifiers != 0:
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
@@ -154,7 +154,7 @@ class FileCategoryForm(forms.ModelForm):
         model = FileCategory
         fields = '__all__'
         exclude = ('user_created',
-                   'num_of_identifiers', 'is_processed')
+                   'num_of_identifiers')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -33,11 +33,9 @@ class UserManager(AbstractUserManager):
 
 class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
-    otp = models.CharField(max_length=6, null=True, blank=True)
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(
         null=True, db_index=True, default=0)
-    is_otp_verified = models.BooleanField(default=False)
     verification_time = models.DateTimeField(null=True)
     level = models.ForeignKey(
         'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
@@ -67,10 +65,6 @@ class User(AbstractUser):
     def child(self):
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
 
-    def clean_otp(self):
-        self.otp = None
-        self.save()
-        return 'cleaned'
 
     @property
     def can_disburse(self):
@@ -79,22 +73,6 @@ class User(AbstractUser):
         else:
             return False
 
-    def check_verification(self, otp_method):
-        if otp_method == '3':
-            return True
-        try:
-            diff = datetime.datetime.utcnow().replace(
-                tzinfo=pytz.UTC) - self.verification_time
-            if diff.total_seconds() < 1800 and self.is_otp_verified:
-                return True
-        except TypeError:
-            return False
-        return False
-
-    def otp_verify(self):
-        self.verification_time = datetime.datetime.now()
-        self.is_otp_verified = True
-        self.save()
 
     @property
     def root(self):

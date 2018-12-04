@@ -8,7 +8,7 @@ from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 
-from users.models import CheckerUser, MakerUser, RootUser, Setup
+from users.models import CheckerUser, MakerUser, RootUser, Setup, Brand, SuperAdminUser
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
 MESSAGE = 'Dear {0}\n' \
@@ -23,27 +23,6 @@ def create_setup(sender, instance, created, **kwargs):
         Setup.objects.create(user=instance)
 
 
-def notify_user(sender, instance, created, **kwargs):
-    if created:
-        random_pass = get_random_string(
-            allowed_chars=ALLOWED_CHARACTERS, length=12)
-        instance.set_password(random_pass)
-        instance.save()
-
-        # one time token
-        token = default_token_generator.make_token(instance)
-        uid = urlsafe_base64_encode(force_bytes(instance.pk)).decode("utf-8")
-        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
-            'uidb64': uid, 'token': token})
-
-        send_mail(
-            from_email=settings.SERVER_EMAIL,
-            recipient_list=[instance.email],
-            subject='[Payroll] Password Notification',
-            message=MESSAGE.format(instance.first_name, url, instance.email,instance.username)
-        )
-
-
 @receiver(post_save, sender=MakerUser)
 def send_random_pass_to_maker(sender, instance, created, **kwargs):
     notify_user(sender, instance, created, **kwargs)
@@ -54,14 +33,30 @@ def send_random_pass_to_checker(sender, instance, created, **kwargs):
     notify_user(sender, instance, created, **kwargs)
 
 
-@receiver(pre_save, sender=CheckerUser)
-def generate_checker_username(sender, instance, *args, **kwargs):
-    instance.username = generate_username(instance, sender)
+@receiver(pre_save, sender=RootUser)
+def root_pre_save(sender, instance, *args, **kwargs):
+    set_brand(instance)
 
+
+@receiver(pre_save, sender=CheckerUser)
+def checker_pre_save(sender, instance, *args, **kwargs):
+    instance.username = generate_username(instance, sender)
+    set_brand(instance)
 
 @receiver(pre_save, sender=MakerUser)
-def generate_maker_username(sender, instance, *args, **kwargs):
+def maker_pre_save(sender, instance, *args, **kwargs):
     instance.username = generate_username(instance, sender)
+    set_brand(instance)
+
+@receiver(pre_save, sender=SuperAdminUser)
+def super_admin_pre_save(sender, instance, *args, **kwargs):
+    if not instance.brand:
+        instance.brand = Brand.objects.create()
+
+
+def set_brand(instance):
+    if not instance.brand:
+        instance.brand = instance.super_admin.brand
 
 
 def generate_username(user, user_model):
@@ -86,3 +81,25 @@ def generate_username(user, user_model):
         return username
     username = f'{username}-{ user_qs.count() + 1 }'
     return username
+
+
+def notify_user(sender, instance, created, **kwargs):
+    if created:
+        random_pass = get_random_string(
+            allowed_chars=ALLOWED_CHARACTERS, length=12)
+        instance.set_password(random_pass)
+        instance.save()
+
+        # one time token
+        token = default_token_generator.make_token(instance)
+        uid = urlsafe_base64_encode(force_bytes(instance.pk)).decode("utf-8")
+        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
+            'uidb64': uid, 'token': token})
+
+        send_mail(
+            from_email=settings.SERVER_EMAIL,
+            recipient_list=[instance.email],
+            subject='[Payroll] Password Notification',
+            message=MESSAGE.format(instance.first_name,
+                                   url, instance.email, instance.username)
+        )

@@ -5,9 +5,8 @@ from imagekit.processors import ResizeToFill
 
 class Brand(models.Model):
     """
-    Get Entity Brand by user hierarchy
+    Entity Brand
     """
-    hierarchy = models.PositiveSmallIntegerField(db_index=True, unique=True)
     color = models.CharField(max_length=20, null=True, blank=True)
     logo = ProcessedImageField(upload_to='entities-logo',
                                       processors=[ResizeToFill(100, 100)],

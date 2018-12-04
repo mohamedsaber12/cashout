@@ -29,7 +29,8 @@ from users.models import EntitySetup
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
-
+FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger(
+    "failed_disbursement_download")
 
 @setup_required
 @otp_required
@@ -106,7 +107,10 @@ def failed_disbursed_for_download(request):
     if request.is_ajax():
         result = generate_file.AsyncResult(task_id)
         if result.ready():
+            FAILED_DISBURSEMENT_DOWNLOAD.debug(f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
             return HttpResponse(json.dumps({"filename": result.get()}))
+        FAILED_DISBURSEMENT_DOWNLOAD.debug(
+            f'file not ready yet to be downloaded user: {request.user.username}')
         return HttpResponse(json.dumps({"filename": None}))
 
     else:
@@ -117,6 +121,9 @@ def failed_disbursed_for_download(request):
 
 
 class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
+    """
+    View for super user to create Agents for the entity. 
+    """
     model = Agent
     form_class = AgentFormSet
     template_name = 'entity/add_agent.html'

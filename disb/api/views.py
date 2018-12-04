@@ -28,6 +28,25 @@ DATA_LOGGER = logging.getLogger("disburse")
 
 
 class DisburseAPIView(APIView):
+    """
+    Api for disbursing the data.
+    The JSON sent to the external api:
+    {
+        "LOGIN": "",
+        "PASSWORD": "",
+        "REQUEST_GATEWAY_CODE": "",
+        "REQUEST_GATEWAY_TYPE": "",
+        "SERVICETYPE": "P2P",
+        "TYPE": "BPREQ",
+        "WALLETISSUER": "",
+        "SENDERS": [
+            {'MSISDN': "",'PIN': ""},
+        ],
+        "RECIPIENTS": [
+            {'MSISDN':"", 'AMOUNT':"", 'TXNID':""},
+        ]
+    }
+    """
     permission_classes = (BlacklistPermission,)
 
     def post(self, request, *args, **kwargs):
@@ -107,6 +126,9 @@ class DisburseAPIView(APIView):
 
 
 class DisburseCallBack(UpdateAPIView):
+    """
+    API to receive disbursment transactions status from external api
+    """
     serializer_class = DisbursementCallBackSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -159,6 +181,9 @@ class RetrieveDocData(APIView):
 
 
 class AllowDocDisburse(APIView):
+    """
+    View for makers to Notify and allow the checkers that there is document ready for dibursment. 
+    """
     permission_classes = (IsAuthenticated,)
     http_method_names = ['post']
 
@@ -169,6 +194,7 @@ class AllowDocDisburse(APIView):
                 return JsonResponse({"message": "Checkers already notified"}, status=400)
             doc_obj.can_be_disbursed = True
             doc_obj.save()
+            # task for notifying checkers
             notifiy_checkers.delay(doc_obj.id)
             return Response(status=200)
 

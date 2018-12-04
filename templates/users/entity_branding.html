@@ -122,7 +122,8 @@
                 $(this).removeAttr('style');
             });
             
-            $('.fa-bars').css('color', color_hex)
+            $('.fa-bars').css('color', color_hex);
+            $('#sidebar-div').css('background', color_hex);
             $('head').append('<style>.nav-md ul.nav.child_menu li:before{background:'+ to+' !important;}</style>');
             
         });

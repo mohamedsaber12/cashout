@@ -76,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django_otp.middleware.OTPMiddleware',
     'users.middleware.EntitySetupCompletionMiddleWare',
+    'users.middleware.CheckerTwoFactorAuthMiddleWare',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -317,6 +318,17 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/agents_created.log',
         },
+        'view_document': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/view_document.log',
+        },
+        'failed_disbursement_download': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/failed_disbursement_download.log',
+        },
+        
     },
 
     'loggers': {
@@ -413,6 +425,17 @@ LOGGING = {
             'handlers': ['agent_create'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'view_document': {
+            'handlers': ['view_document'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'failed_disbursement_download':{
+            'handlers': ['failed_disbursement_download'],
+            'level': 'DEBUG',
+            'propagate': True,
         }
+        
     },
 }

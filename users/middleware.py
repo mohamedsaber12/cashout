@@ -4,6 +4,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.contrib.auth import logout
+from two_factor.utils import default_device
 
 EXEMPT_URLS = [re.compile(settings.LOGIN_URL.lstrip('/'))]
 if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
@@ -46,3 +47,27 @@ class EntitySetupCompletionMiddleWare:
             if url_is_exempt:
                 return None
             return redirect(settings.LOGIN_URL)
+
+
+class CheckerTwoFactorAuthMiddleWare:
+    """
+    Force checkers to do two factor authentication once per device.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        path = request.path_info
+        two_factor_base_url = 'account/two_factor/'        
+        if request.user.is_authenticated and request.user.is_checker:
+            user_verified = request.user.is_verified() or default_device(request.user)
+            if two_factor_base_url in path and user_verified:
+                return redirect(reverse("data:main_view"))
+            if not user_verified and not two_factor_base_url in path:
+                return redirect(reverse("two_factor:profile"))
+
+        

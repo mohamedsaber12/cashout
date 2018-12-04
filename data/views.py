@@ -36,6 +36,7 @@ DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
 UNAUTHORIZED_FILE_DELETE_LOGGER = logging.getLogger("unauthorized_file_delete")
 UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
+VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 
 
 @login_required
@@ -215,6 +216,8 @@ def document_view(request, doc_id):
             # makers must notify checkers and allow the document to be dibursed
             # checker should not have access to doc url or id before that
             if not doc.can_be_disbursed:
+                VIEW_DOCUMENT_LOGGER.debug(
+                    f'Document doc_id {doc_id} can not be disbursed, checker {request.user.username}')
                 raise Http404
 
             reviews = DocReview.objects.filter(doc=doc)
@@ -242,6 +245,10 @@ def document_view(request, doc_id):
             }
 
     else:
+        VIEW_DOCUMENT_LOGGER.debug(
+            f"""user viewing document from other hierarchy, 
+            user: {request.user.username},user hierarchy: {request.user.hierarchy}, 
+            doc hierarchy: {doc.owner.hierarchy} """)
         return redirect(reverse("data:main_view"))
 
     context = {
@@ -257,6 +264,8 @@ def document_view(request, doc_id):
     else:
         context['redirect'] = 'false'
 
+    VIEW_DOCUMENT_LOGGER.debug(
+        f'user: {request.user.username} viewed doc_id:{doc_id} ')
     return render(request, template_name=template_name, context=context)
 
 
@@ -293,6 +302,8 @@ def doc_download(request, doc_id):
                 doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
+            DOWNLOAD_LOGGER.debug(
+                f'user {request.user.username} downloaded doc_id: {doc_id} at {str(datetime.datetime.now())}')
         except Exception:
             DOWNLOAD_LOGGER.debug(
                 'user: {0} tried to download doc_id: {1} but 404 was raised.'.format(

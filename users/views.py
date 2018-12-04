@@ -48,12 +48,9 @@ def ourlogout(request):
     LOGOUT_LOGGER.debug(
         '%s logged out at %s from IP Address %s' % (
             request.user.username, now, get_client_ip(request)))
-    request.user.is_otp_verified = False
-    request.user.save()
 
     logout(request)
     response = HttpResponseRedirect(reverse('users:user_login_view'))
-    response.delete_cookie('otp_checked')
     return response
 
 

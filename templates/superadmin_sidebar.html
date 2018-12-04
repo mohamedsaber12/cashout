@@ -1,7 +1,14 @@
+{% load static%}
 <div class="left_col scroll-view">
-    <div class="navbar nav_title" style="border: 0;">
-        <img width="52px" src="{{ request.user.root.setup.entity_logo.url }}" alt="...">
-        <a href="{% url 'data:main_view' %}" class="site_title"> <span>Paymob Payroll</span></a>
+    <div class="navbar nav_title" style="text-align:center">
+        {% if brand_logo %}
+        <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}" height="38px"
+                    id="paymob_logo"></span></a>
+        {%else%}
+        <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
+                    height="38px" id="paymob_logo"></span></a>
+        {%endif%}
+    
     </div>
 
     <div class="clearfix"></div>
@@ -46,6 +53,9 @@
                 
                 <li><a href="{% url 'users:profile' %}"><i class="fa fa-user"></i>Profile</a>
                 </li>
+
+                <li><a href="{% url 'users:entity_branding' %}"><i class="fa fa-cog"></i>Branding</a></li>
+                
              
  
             </ul>

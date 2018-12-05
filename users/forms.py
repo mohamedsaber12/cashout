@@ -390,13 +390,13 @@ class BrandForm(forms.ModelForm):
         model = Brand
         fields = ("color", "logo")
 
-    def save(self,commit=True):
-        brand =  super().save(commit=False)
-        brand.hierarchy = self.request.user.hierarchy
+    def save(self, commit=True):
+        brand = super().save(commit=False)
         if commit:
             brand.save()
+            self.request.user.brand = brand
+            self.request.user.save()
         return brand
-
 
 LevelFormSet = modelformset_factory(
     model=Levels, form=LevelForm,  max_num=4,

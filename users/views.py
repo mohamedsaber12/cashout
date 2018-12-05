@@ -509,14 +509,14 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class EntityBranding(RootRequiredMixin, UpdateView):
+class EntityBranding(SuperRequiredMixin, UpdateView):
     template_name = 'users/entity_branding.html'
     form_class = BrandForm
     model = Brand
     success_url = reverse_lazy('data:main_view')
 
     def get_object(self, queryset=None):
-        return self.model.objects.filter(hierarchy=self.request.user.hierarchy).first()
+        return self.request.user.brand
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

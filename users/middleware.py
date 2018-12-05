@@ -12,7 +12,9 @@ if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
 
 ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
-    re.compile(r'^profile*')
+    re.compile(r'^profile*'),
+    re.compile(r'^media*'),
+    re.compile(reverse('users:entity_branding').lstrip('/'))
 )
 
 

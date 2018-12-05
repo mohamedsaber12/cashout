@@ -47,7 +47,9 @@ class User(AbstractUser):
                                            format='JPEG',
                                            options={'quality': 60}, null=True, default='user.png')
     title = models.CharField(max_length=128, default='', null=True, blank=True)
-
+    brand = models.ForeignKey(
+        'users.Brand', on_delete=models.SET_NULL, null=True)
+    
     objects = UserManager()
 
     class Meta:
@@ -81,6 +83,17 @@ class User(AbstractUser):
         else:
             from users.models import RootUser
             return RootUser.objects.get(hierarchy=self.hierarchy)
+
+    @property
+    def super_admin(self):
+        if self.is_superadmin:
+            return self
+        else:
+            from users.models import SuperAdminUser
+            from users.models import Client
+            client = Client.objects.get(client=self.root)
+            super_admin = client.creator
+            return SuperAdminUser.objects.get(id=super_admin.id)
 
     @property
     def can_pass(self):

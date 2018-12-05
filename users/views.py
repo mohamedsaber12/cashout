@@ -125,7 +125,6 @@ def change_password(request, user):
     return HttpResponseRedirect(reverse('users:user_login_view'))
 
 
-
 class SettingsUpView(RootRequiredMixin, CreateView):
     """
     View for the root user to setup levels, makers, checkers and file category.

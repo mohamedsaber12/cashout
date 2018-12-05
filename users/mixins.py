@@ -20,13 +20,13 @@ class ParentPermissionMixin(object):
 
 class RootRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated and request.user.is_root:
+        if not (request.user.is_authenticated and request.user.is_root):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
 
 class SuperRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated and request.user.is_superadmin:
+        if not (request.user.is_authenticated and request.user.is_superadmin):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)

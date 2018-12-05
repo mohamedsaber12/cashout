@@ -38,8 +38,13 @@
 <script src="{% static 'gentella/moment.min.js' %}"></script>
 <script src="{% static 'gentella/daterangepicker.js' %}"></script>
 
+{% if LANGUAGE_CODE == 'en' %}
 <!-- Custom Theme Scripts -->
 <script src="{% static 'gentella/js/index/custom.min.js' %}"></script>
+{%else%}
+<script src="{% static 'gentella/rtl/build/js/custom.min.js' %}"></script>
+{%endif%}
+
 <!-- csrf token -->
 <script>
     function getCookie(name) {
@@ -128,5 +133,27 @@
         $('.fa-bars').css('color', color);
         $('#sidebar-div').css('background',color);
         $('head').append('<style>.nav-md ul.nav.child_menu li:before{background:' + to + ' !important;}</style>');
+    });
+</script>
+
+<!-- for top_navigation.html -->
+<script>
+    $(document).ready(function () {
+        $('a#lang').on('click', function () {            
+            let data = {
+                'language': $(this).attr('data'),
+            }
+            $.ajax({
+                type: 'post',
+                url: "{% url 'set_language' %}",
+                'data': data,
+                success: function (data, text, xhr) {
+                    location.reload()       
+                },
+                
+            });
+
+        });
+
     });
 </script>

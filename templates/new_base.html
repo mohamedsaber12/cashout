@@ -1,6 +1,9 @@
 {% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{LANGUAGE_CODE}}" dir="{% if LANGUAGE_CODE == 'en' %}ltr{%else%}rtl{%endif%}">
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <!-- Meta, title, CSS, favicons, etc. -->

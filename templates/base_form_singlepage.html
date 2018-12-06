@@ -1,19 +1,6 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-    <!-- Meta, title, CSS, favicons, etc. -->
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+{% extends 'head_base.html' %}
 
-    <title>Payroll | {% block title %}{% endblock %}</title>
-
-  {% include 'base_css.html' %}
-  {% block gentellacss %}{% endblock %}
-  {% block customcss %}{% endblock %}
-  </head>
+{%block content%}
 
   <body class="login">
   {% block back %}
@@ -31,5 +18,5 @@
       </div>
     </div>
   </body>
-  {% block script %} {% endblock %}
-</html>
+  
+{%endblock%}

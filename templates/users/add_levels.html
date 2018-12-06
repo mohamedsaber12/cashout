@@ -1,5 +1,6 @@
 {% extends 'new_base.html' %}
 {% load static %}
+{% load i18n %}
 {% block gentellacss %}
 <link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
 <style>
@@ -8,7 +9,7 @@
         }
     </style>
 {% endblock %}
-{% block title %}Settings{% endblock %}
+{% block title %}{% trans 'Settings' %}{% endblock %}
 {% block body %}
 
 <div class="row">
@@ -84,8 +85,8 @@
         </table>
 
 
-        <button id="add_level_btn" class="btn btn-success">Add another level</button>
-        <button id="submit" class="btn btn-success pull-right">Submit</button>
+        <button id="add_level_btn" class="btn btn-success">{% trans 'Add another level'%}</button>
+        <button id="submit" class="btn btn-success pull-right">{% trans 'Submit' %}</button>
 
 
     </div>

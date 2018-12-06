@@ -1,7 +1,7 @@
-
+{% load i18n %}
         <div class="page-title">
             <div class="title_left">
-                <h3>Documents details</h3>
+                <h3>{% trans 'Documents details' %}</h3>
             </div>
 
         </div>
@@ -12,7 +12,7 @@
             <div class="col-md-12">
                 <div class="x_panel">
                     <div class="x_title">
-                        <h2>Documents details</h2>
+                        <h2>{% trans 'Documents details' %}</h2>
                         <ul class="nav navbar-right panel_toolbox">
                             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                             </li>
@@ -26,12 +26,12 @@
                         <table class="table table-striped projects">
                             <thead>
                                 <tr>
-                                    <th style="width: 20%">Document Name</th>
-                                    <th style="width: 20%">Reviews</th>
-                                    <th>Disbursed By</th>
-                                    <th>Disbursement Progress</th>
-                                    <th>Status</th>
-                                    <th>View</th>
+                                    <th style="width: 20%">{% trans 'Document Name' %}</th>
+                                    <th style="width: 20%">{% trans 'Reviews' %}</th>
+                                    <th>{% trans 'Disbursed By' %}</th>
+                                    <th>{% trans 'Disbursement Progress' %}</th>
+                                    <th>{% trans 'Status' %}</th>
+                                    <th>{% trans 'View' %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -40,7 +40,7 @@
                                         <td>
                                             <a>{{doc.filename}}</a>
                                             <br />
-                                            <small>Created {{doc.created_at}}</small>
+                                            <small>{% trans 'Created' %} {{doc.created_at}}</small>
                                         </td>
                                         <td>
                                             {% if doc.reviews.exists %}
@@ -55,7 +55,7 @@
                                                     {%endfor%}    
                                                 </ul>
                                             {%else%}
-                                                <p>No reviews yet</p>
+                                                <p>{% trans 'No reviews yet' %}</p>
                                             {%endif%}
 
                                         </td>
@@ -66,30 +66,30 @@
                                             <div class="progress progress_sm">
                                                 <div class="progress-bar bg-green" role="progressbar" data-transitiongoal="{{doc.disbursement_ratio}}"></div>
                                             </div>
-                                            <small>{{doc.disbursement_ratio}}% Complete</small>
+                                            <small>{{doc.disbursement_ratio}}% {% trans 'Complete' %}</small>
                                         </td>
                                         <td>
                                             
                                             {% if not doc.is_processed%}
-                                                <h4><span class="label label-danger">Failed</span></h4>
+                                                <h4><span class="label label-danger">{% trans 'Failed' %}</span></h4>
                                                 {%if doc.processing_failure_reason%}
                                                     {{ doc.processing_failure_reason}}
                                                 {%endif%}    
                                             {%elif doc.is_disbursed%}
-                                                <h4><span class="label label-success">Disbursed</span></h4>
+                                                <h4><span class="label label-success">{% trans 'Disbursed' %}</span></h4>
                                             {%elif doc.can_be_disbursed %}
-                                                <h4><span class="label label-info">Waiting disbursement</span></h4>
+                                                <h4><span class="label label-info">{% trans 'Waiting disbursement' %}</span></h4>
                                             {%else%}
-                                                <h4><span class="label label-info">Proccessed</span></h4>
+                                                <h4><span class="label label-info">{% trans 'Proccessed' %}</span></h4>
                                             {%endif%}
                                         </td>
                                         <td>
-                                            <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md"> View
+                                            <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md"> {% trans 'View' %}
                                             </a>
                                         </td>
                                     </tr>
                                 {% empty %}
-                                    <tr><td>There's no files uploaded yet..</td></tr>
+                                    <tr><td>{% trans "There's no files uploaded yet.." %}</td></tr>
                                 {%endfor%}    
                               
                         

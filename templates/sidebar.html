@@ -1,4 +1,5 @@
 {% load static %}
+{% load i18n %}
 <div class="left_col scroll-view">
     <div class="navbar nav_title" style="text-align:center">
         {% if brand_logo %}
@@ -19,7 +20,7 @@
             <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
         </div>
         <div class="profile_info">
-            <span>Welcome,</span>
+            <span>{% trans 'Welcome,' %}</span>
             <h2>
                 {% if request.user.get_full_name %}
                     {{ request.user.get_full_name }}
@@ -39,37 +40,37 @@
             
             <ul class="nav side-menu">
                 
-                <li><a><i class="fa fa-home"></i> Home <span class="fa fa-chevron-down"></span></a>
+                <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
-                        <li><a href="#">Dashboard</a></li>
-                        <li><a href="{% url 'data:main_view' %}">Files</a></li>
+                        <li><a href="#">{% trans 'Dashboard' %}</a></li>
+                        <li><a href="{% url 'data:main_view' %}">{% trans 'Files' %}</a></li>
                     </ul>
                 </li>
                 {% if request.user.is_root %}
-                <li><a><i class="fa fa-user"></i> Members <span class="fa fa-chevron-down"></span></a>
+                <li><a><i class="fa fa-user"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
                         
-                        <li><a>Add member<span class="fa fa-chevron-down"></span></a>
+                        <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
                             <ul class="nav child_menu">
-                                <li><a href="{% url 'users:add_checker' %}">Checker</a>
+                                <li><a href="{% url 'users:add_checker' %}">{% trans 'Checker' %}</a>
                                 </li>
-                                <li><a href="{% url 'users:add_maker' %}">Maker</a>
+                                <li><a href="{% url 'users:add_maker' %}">{% trans 'Maker' %}</a>
                                 </li>
                             </ul>
                         </li>
-                        <li><a href="{% url 'users:members' %}">All members</a>
+                        <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a>
                         </li>
                     </ul>
                 </li>
                 {% endif %}
 
-                <li><a><i class="fa fa-life-ring"></i> Settings <span class="fa fa-chevron-down"></span></a>
+                <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
                         {% if request.user.is_root %}
-                            <li><a href="{% url 'users:settings' %}">Setup</a></li>
-                            <li><a href="{% url 'users:levels' %}">levels</a></li>
+                            <li><a href="{% url 'users:settings' %}">{% trans 'Setup' %}</a></li>
+                            <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
                         {% endif %}
-                        <li><a href="{% url 'users:profile' %}">Profile</a></li>                        
+                        <li><a href="{% url 'users:profile' %}">{% trans 'Profile' %}</a></li>                        
                     </ul>
                 </li>
 

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-05 18:09+0200\n"
+"POT-Creation-Date: 2018-12-06 15:41+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -59,7 +59,9 @@ msgstr ""
 msgid "Arabic"
 msgstr ""
 
-#: templates/base.html:89
+#: templates/base.html:89 templates/sidebar.html:67
+#: templates/top_navigation.html:27 templates/users/add_levels.html:12
+#: templates/users/settings-up.html:14
 msgid "Settings"
 msgstr ""
 
@@ -67,13 +69,311 @@ msgstr ""
 msgid "Logout"
 msgstr ""
 
+#: templates/data/change_password.html:3
+msgid "Change"
+msgstr ""
+
+#: templates/data/change_password.html:6
+#: templates/two_factor/_wizard_actions.html:10
+#: templates/two_factor/_wizard_actions.html:13
+msgid "Back"
+msgstr ""
+
+#: templates/data/change_password.html:12
+msgid "Change Password"
+msgstr ""
+
+#: templates/data/change_password.html:16
+msgid "Old Password"
+msgstr ""
+
+#: templates/data/change_password.html:21
+#: templates/users/password_reset_confirm.html:14
+msgid "New Passowrd"
+msgstr ""
+
+#: templates/data/change_password.html:25
+#: templates/users/password_reset_confirm.html:18
+msgid "New Passowrd Confirmation"
+msgstr ""
+
+#: templates/data/change_password.html:29
+#: templates/data/document_viewer.html:129
+#: templates/data/document_viewer.html:235
+#: templates/data/file_confirm_delete.html:12
+#: templates/users/add_levels.html:89
+#: templates/users/password_reset_confirm.html:23
+msgid "Submit"
+msgstr ""
+
+#: templates/data/change_password.html:38 templates/data/login.html:32
+#: templates/users/password_reset_confirm.html:32
+#: templates/users/password_reset_confirm.html:48
+msgid "Payroll Dashboard"
+msgstr ""
+
+#: templates/data/change_password.html:39 templates/data/login.html:33
+#: templates/users/password_reset_confirm.html:33
+#: templates/users/password_reset_confirm.html:49
+msgid ""
+"©2019 All Rights Reserved. Payroll Dashoard! is a Paymob solution. Privacy "
+"and Terms"
+msgstr ""
+
+#: templates/data/document_details_list.html:4
+#: templates/data/document_details_list.html:15
+msgid "Documents details"
+msgstr ""
+
+#: templates/data/document_details_list.html:29
+msgid "Document Name"
+msgstr ""
+
+#: templates/data/document_details_list.html:30
+#: templates/data/document_viewer.html:147
+msgid "Reviews"
+msgstr ""
+
+#: templates/data/document_details_list.html:31
+msgid "Disbursed By"
+msgstr ""
+
+#: templates/data/document_details_list.html:32
+msgid "Disbursement Progress"
+msgstr ""
+
+#: templates/data/document_details_list.html:33
+msgid "Status"
+msgstr ""
+
+#: templates/data/document_details_list.html:34
+#: templates/data/document_details_list.html:87
+msgid "View"
+msgstr ""
+
+#: templates/data/document_details_list.html:43
+msgid "Created"
+msgstr ""
+
+#: templates/data/document_details_list.html:58
+msgid "No reviews yet"
+msgstr ""
+
+#: templates/data/document_details_list.html:69
+msgid "Complete"
+msgstr ""
+
+#: templates/data/document_details_list.html:74
+msgid "Failed"
+msgstr ""
+
+#: templates/data/document_details_list.html:79
+#: templates/disbursement/list.html:31
+msgid "Disbursed"
+msgstr ""
+
+#: templates/data/document_details_list.html:81
+msgid "Waiting disbursement"
+msgstr ""
+
+#: templates/data/document_details_list.html:83
+msgid "Proccessed"
+msgstr ""
+
+#: templates/data/document_details_list.html:92
+msgid "There's no files uploaded yet.."
+msgstr ""
+
+#: templates/data/document_viewer.html:4
+msgid "Document details"
+msgstr ""
+
+#: templates/data/document_viewer.html:32
+#: templates/data/document_viewer.html:34
+msgid "Disburse"
+msgstr ""
+
+#: templates/data/document_viewer.html:47
+msgid "Notify Chekers"
+msgstr ""
+
+#: templates/data/document_viewer.html:51
+#: templates/data/document_viewer.html:356
+msgid "Checkers Notified"
+msgstr ""
+
+#: templates/data/document_viewer.html:55
+msgid ", fix it and upload again! Thanks"
+msgstr ""
+
+#: templates/data/document_viewer.html:59
+msgid "Pending"
+msgstr ""
+
+#: templates/data/document_viewer.html:72
+msgid "Document data"
+msgstr ""
+
+#: templates/data/document_viewer.html:72
+msgid "Document name:"
+msgstr ""
+
+#: templates/data/document_viewer.html:81
+msgid "Count:"
+msgstr ""
+
+#: templates/data/document_viewer.html:81
+msgid "Total Amount:"
+msgstr ""
+
+#: templates/data/document_viewer.html:97
+msgid "Review"
+msgstr ""
+
+#: templates/data/document_viewer.html:109
+msgid "Accept or Reject"
+msgstr ""
+
+#: templates/data/document_viewer.html:112
+msgid "Accept"
+msgstr ""
+
+#: templates/data/document_viewer.html:113
+msgid "Reject"
+msgstr ""
+
+#: templates/data/document_viewer.html:119
+msgid "Rejection reason"
+msgstr ""
+
+#: templates/data/document_viewer.html:212
+#: templates/data/upload-response-modals.html:17
+#: templates/data/upload-response-modals.html:39
+#: templates/users/clients.html:99 templates/users/clients.html:119
+#: templates/users/members.html:104 templates/users/members.html:124
+msgid "Close"
+msgstr ""
+
+#: templates/data/document_viewer.html:225
+msgid "Enter Agent Pin"
+msgstr ""
+
+#: templates/data/document_viewer.html:231
+msgid "Pin"
+msgstr ""
+
+#: templates/data/document_viewer.html:232
+msgid "pin"
+msgstr ""
+
+#: templates/data/document_viewer.html:298
+msgid "It seems that you don"
+msgstr ""
+
+#: templates/data/document_viewer.html:309
+msgid "Disbursed, Thanks!"
+msgstr ""
+
+#: templates/data/document_viewer.html:310
+msgid "Disbursement process is running, you can check reports later"
+msgstr ""
+
+#: templates/data/document_viewer.html:314
+msgid "Error occurred, We are sorry!"
+msgstr ""
+
+#: templates/data/document_viewer.html:315
+msgid ""
+"Disbursement process stopped during an internal error, can you try again or "
+"contact you support team"
+msgstr ""
+
+#: templates/data/document_viewer.html:319
+msgid "Error occurred from your side"
+msgstr ""
+
+#: templates/data/document_viewer.html:321
+msgid ""
+"This document is disbursed before, if there is any error, please return back "
+"to the support team"
+msgstr ""
+
+#: templates/data/document_viewer.html:325
+msgid "You can not disburse this document"
+msgstr ""
+
+#: templates/data/document_viewer.html:361
+msgid "Error Occurred!"
+msgstr ""
+
+#: templates/data/document_viewer.html:362
+msgid "It seems that you do not have access or request a wrong document"
+msgstr ""
+
+#: templates/data/file_confirm_delete.html:4
+msgid "Confirm Delete"
+msgstr ""
+
+#: templates/data/file_confirm_delete.html:10
+msgid "Are you sure you want to delete"
+msgstr ""
+
+#: templates/data/index.html:19
+msgid "Upload Form"
+msgstr ""
+
 #: templates/data/index.html:33
 msgid "Please Add file category first"
+msgstr ""
+
+#: templates/data/login.html:3 templates/data/login.html:7
+#: templates/data/login.html:20
+msgid "Login"
+msgstr ""
+
+#: templates/data/login.html:9
+msgid "Username"
+msgstr ""
+
+#: templates/data/login.html:12
+msgid "Password"
+msgstr ""
+
+#: templates/data/login.html:21
+msgid "Lost your password?"
 msgstr ""
 
 #: templates/data/registration/account_creation.html:5
 #: templates/data/registration/password_reset_email.html:5
 msgid "Please go to the following page and choose a new password:"
+msgstr ""
+
+#: templates/data/upload-response-modals.html:10
+msgid "Thank you"
+msgstr ""
+
+#: templates/data/upload-response-modals.html:13
+msgid "File uploaded successfully"
+msgstr ""
+
+#: templates/data/upload-response-modals.html:14
+msgid "An Email will be sent shortly with file status."
+msgstr ""
+
+#: templates/data/upload-response-modals.html:32
+msgid "Upload Failed"
+msgstr ""
+
+#: templates/disbursement/disbursement_file_download.html:9
+msgid "Please wait."
+msgstr ""
+
+#: templates/disbursement/disbursement_file_download.html:22
+msgid "If your download doesn"
+msgstr ""
+
+#: templates/disbursement/disbursement_file_download.html:22
+msgid "here"
 msgstr ""
 
 #: templates/disbursement/list.html:29
@@ -84,21 +384,161 @@ msgstr ""
 msgid "Amount"
 msgstr ""
 
-#: templates/disbursement/list.html:31
-msgid "Disbursed"
-msgstr ""
-
 #: templates/disbursement/list.html:32
 msgid "Reason"
 msgstr ""
 
-#: templates/two_factor/_wizard_actions.html:5
-msgid "Cancel"
+#: templates/entity/add_agent.html:5
+msgid "Agents"
 msgstr ""
 
-#: templates/two_factor/_wizard_actions.html:10
-#: templates/two_factor/_wizard_actions.html:13
-msgid "Back"
+#: templates/entity/add_agent.html:8
+msgid "Add Agents"
+msgstr ""
+
+#: templates/entity/add_agent.html:66 templates/entity/add_root.html:28
+#: templates/entity/add_vmt.html:29
+msgid "Create"
+msgstr ""
+
+#: templates/entity/add_root.html:4
+msgid "Root"
+msgstr ""
+
+#: templates/entity/add_root.html:7
+msgid "Add Entity User"
+msgstr ""
+
+#: templates/entity/add_vmt.html:4
+msgid "VMT"
+msgstr ""
+
+#: templates/entity/add_vmt.html:7
+msgid "VMT Credentials"
+msgstr ""
+
+#: templates/error-pages/400.html:4 templates/error-pages/403.html:4
+#: templates/error-pages/404.html:4 templates/error-pages/500.html:4
+msgid "Page"
+msgstr ""
+
+#: templates/error-pages/400.html:12
+msgid "Bad Request"
+msgstr ""
+
+#: templates/error-pages/400.html:13
+msgid ""
+"The server cannot process the request due to something that is perceived to "
+"be a client error."
+msgstr ""
+
+#: templates/error-pages/400.html:15 templates/error-pages/403.html:15
+#: templates/error-pages/404.html:15 templates/error-pages/500.html:16
+msgid "Back to home"
+msgstr ""
+
+#: templates/error-pages/403.html:12
+msgid "Access Denied"
+msgstr ""
+
+#: templates/error-pages/403.html:13
+msgid "Full authentication is required to access this resource."
+msgstr ""
+
+#: templates/error-pages/404.html:12
+msgid "Sorry but we couldn"
+msgstr ""
+
+#: templates/error-pages/404.html:13
+msgid "This page you are looking for does not exist."
+msgstr ""
+
+#: templates/error-pages/500.html:12
+msgid "Internal Server Error"
+msgstr ""
+
+#: templates/footer.html:3
+msgid "Paymob"
+msgstr ""
+
+#: templates/footer.html:3
+msgid "Payroll Solution"
+msgstr ""
+
+#: templates/sidebar.html:23 templates/superadmin_sidebar.html:23
+msgid "Welcome,"
+msgstr ""
+
+#: templates/sidebar.html:43 templates/users/password_reset_confirm.html:41
+msgid "Home"
+msgstr ""
+
+#: templates/sidebar.html:45 templates/superadmin_sidebar.html:43
+msgid "Dashboard"
+msgstr ""
+
+#: templates/sidebar.html:46
+msgid "Files"
+msgstr ""
+
+#: templates/sidebar.html:50
+msgid "Members"
+msgstr ""
+
+#: templates/sidebar.html:53
+msgid "Add member"
+msgstr ""
+
+#: templates/sidebar.html:55 templates/users/members.html:49
+#: templates/users/profile.html:47
+msgid "Checker"
+msgstr ""
+
+#: templates/sidebar.html:57 templates/users/members.html:49
+#: templates/users/profile.html:47
+msgid "Maker"
+msgstr ""
+
+#: templates/sidebar.html:61
+msgid "All members"
+msgstr ""
+
+#: templates/sidebar.html:70
+msgid "Setup"
+msgstr ""
+
+#: templates/sidebar.html:71
+msgid "levels"
+msgstr ""
+
+#: templates/sidebar.html:73 templates/superadmin_sidebar.html:55
+#: templates/top_navigation.html:22
+msgid "Profile"
+msgstr ""
+
+#: templates/superadmin_sidebar.html:46 templates/users/clients.html:5
+msgid "Clients"
+msgstr ""
+
+#: templates/superadmin_sidebar.html:49 templates/users/add_member.html:11
+#: templates/users/clients.html:74 templates/users/profile_update.html:11
+msgid "Add"
+msgstr ""
+
+#: templates/superadmin_sidebar.html:50
+msgid "All Clients"
+msgstr ""
+
+#: templates/superadmin_sidebar.html:58 templates/users/entity_branding.html:4
+msgid "Branding"
+msgstr ""
+
+#: templates/top_navigation.html:44
+msgid "Log Out"
+msgstr ""
+
+#: templates/two_factor/_wizard_actions.html:5
+msgid "Cancel"
 msgstr ""
 
 #: templates/two_factor/_wizard_actions.html:15
@@ -259,6 +699,208 @@ msgid ""
 "              security."
 msgstr ""
 
+#: templates/users/add_levels.html:88 templates/users/settings-up.html:132
+msgid "Add another level"
+msgstr ""
+
+#: templates/users/add_member.html:4
+msgid "Add new family member"
+msgstr ""
+
+#: templates/users/clients.html:13 templates/users/members.html:12
+#: users/forms.py:128
+msgid "Users"
+msgstr ""
+
+#: templates/users/clients.html:23 templates/users/members.html:22
+msgid "Go!"
+msgstr ""
+
+#: templates/users/clients.html:40 templates/users/clients.html:50
+#: templates/users/clients.html:153 templates/users/clients.html:156
+#: templates/users/members.html:65
+msgid "Active"
+msgstr ""
+
+#: templates/users/clients.html:41 templates/users/clients.html:50
+#: templates/users/clients.html:154
+msgid "InActive"
+msgstr ""
+
+#: templates/users/clients.html:53 templates/users/members.html:52
+msgid "About:"
+msgstr ""
+
+#: templates/users/clients.html:55 templates/users/members.html:54
+msgid "Email:"
+msgstr ""
+
+#: templates/users/clients.html:56 templates/users/members.html:55
+msgid "Phone #:"
+msgstr ""
+
+#: templates/users/clients.html:73
+msgid "No clients are set here..."
+msgstr ""
+
+#: templates/users/clients.html:93 templates/users/members.html:98
+msgid "Confirmation"
+msgstr ""
+
+#: templates/users/clients.html:96 templates/users/members.html:101
+msgid "Are you sure to delete?"
+msgstr ""
+
+#: templates/users/clients.html:100
+msgid "Deactivate"
+msgstr ""
+
+#: templates/users/clients.html:113 templates/users/members.html:118
+msgid "Successful"
+msgstr ""
+
+#: templates/users/clients.html:116
+msgid "Done Successfully"
+msgstr ""
+
+#: templates/users/clients.html:131
+msgid "Do you want to deactivate?"
+msgstr ""
+
+#: templates/users/clients.html:132
+msgid "Deactivate?"
+msgstr ""
+
+#: templates/users/clients.html:135
+msgid "Do you want to activate?"
+msgstr ""
+
+#: templates/users/clients.html:136
+msgid "Activate?"
+msgstr ""
+
+#: templates/users/entity_branding.html:16
+msgid "Entity Branding"
+msgstr ""
+
+#: templates/users/entity_branding.html:32
+msgid "Color"
+msgstr ""
+
+#: templates/users/entity_branding.html:57
+#: templates/users/profile_update.html:50
+msgid "submit"
+msgstr ""
+
+#: templates/users/members.html:4
+msgid "Family members"
+msgstr ""
+
+#: templates/users/members.html:20
+msgid "Search for..."
+msgstr ""
+
+#: templates/users/members.html:39 templates/users/settings-up.html:35
+msgid "Makers"
+msgstr ""
+
+#: templates/users/members.html:40 templates/users/settings-up.html:44
+msgid "Checkers"
+msgstr ""
+
+#: templates/users/members.html:73
+msgid "View Profile"
+msgstr ""
+
+#: templates/users/members.html:80
+msgid "No users are set here..."
+msgstr ""
+
+#: templates/users/members.html:105
+msgid "Delete"
+msgstr ""
+
+#: templates/users/members.html:121
+msgid "Deleted Successfully"
+msgstr ""
+
+#: templates/users/password_reset_confirm.html:3
+#: templates/users/password_reset_confirm.html:9
+msgid "Create Password"
+msgstr ""
+
+#: templates/users/password_reset_confirm.html:39
+msgid "This url is not Valid or used before."
+msgstr ""
+
+#: templates/users/profile.html:4
+msgid "profile"
+msgstr ""
+
+#: templates/users/profile.html:30
+msgid "Title:"
+msgstr ""
+
+#: templates/users/profile.html:34
+msgid "first Name:"
+msgstr ""
+
+#: templates/users/profile.html:38
+msgid "Last Name:"
+msgstr ""
+
+#: templates/users/profile.html:42
+msgid "Join date:"
+msgstr ""
+
+#: templates/users/profile.html:46
+msgid "Account Type:"
+msgstr ""
+
+#: templates/users/profile.html:47
+msgid "Admin"
+msgstr ""
+
+#: templates/users/profile.html:50
+msgid "Email"
+msgstr ""
+
+#: templates/users/profile.html:53
+msgid "Phone Number"
+msgstr ""
+
+#: templates/users/profile_update.html:4 templates/users/settings-up.html:26
+msgid "Levels"
+msgstr ""
+
+#: templates/users/settings-up.html:19
+msgid "Please follow the steps to setup your payroll settings."
+msgstr ""
+
+#: templates/users/settings-up.html:27
+msgid "Add levels for checkers"
+msgstr ""
+
+#: templates/users/settings-up.html:36
+msgid "Add Maker users"
+msgstr ""
+
+#: templates/users/settings-up.html:45
+msgid "Add Checker users"
+msgstr ""
+
+#: templates/users/settings-up.html:53
+msgid "Category"
+msgstr ""
+
+#: templates/users/settings-up.html:54
+msgid "Add File Specs"
+msgstr ""
+
+#: templates/users/settings-up.html:199 templates/users/settings-up.html:265
+msgid "Add family member"
+msgstr ""
+
 #: users/admin.py:47
 #, python-format
 msgid "Delete selected %(verbose_name_plural)s"
@@ -284,8 +926,4 @@ msgstr ""
 
 #: users/admin.py:146 users/admin.py:160
 msgid "Important dates"
-msgstr ""
-
-#: users/forms.py:128
-msgid "Users"
 msgstr ""

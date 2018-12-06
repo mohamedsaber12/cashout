@@ -1,5 +1,7 @@
 {% extends 'new_base.html' %}
-{% block title %} Family members {% endblock %}
+{% load i18n %}
+
+{% block title %} {% trans 'Family members' %} {% endblock %}
 
 {% block body %}
     <!-- page content -->
@@ -7,7 +9,7 @@
           <div class="">
             <div class="page-title">
               <div class="title_left">
-                <h3>Users</h3>
+                <h3>{% trans 'Users' %}</h3>
               </div>
 
               <div class="title_right">
@@ -15,9 +17,9 @@
                         <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
                           <div class="input-group">
 
-                            <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for...">
+                            <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="{% trans 'Search for...' %}">
                             <span class="input-group-btn">
-                              <button class="btn btn-default" type="submit" value="search">Go!</button>
+                              <button class="btn btn-default" type="submit" value="search">{% trans 'Go!'%}</button>
                             </span>
                           </div>
                       </div>
@@ -34,8 +36,8 @@
                     <div class="row">
                       <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                         <ul class="pagination pagination-split">
-                          <li><a href="?q=maker">Makers</a></li>
-                          <li><a href="?q=checker">Checkers</a></li>
+                          <li><a href="?q=maker">{% trans 'Makers' %}</a></li>
+                          <li><a href="?q=checker">{% trans 'Checkers' %}</a></li>
                         </ul>
                       </div>
 
@@ -44,13 +46,13 @@
                           <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
                             <div class="well profile_view">
                               <div class="col-sm-12">
-                                <h4 class="brief"><i>{% ifequal user.user_type 1 %}Maker{% else %}Checker{% endifequal %}</i></h4>
+                                <h4 class="brief"><i>{% ifequal user.user_type 1 %}{% trans 'Maker' %}{% else %}{% trans 'Checker' %}{% endifequal %}</i></h4>
                                 <div class="left col-xs-7">
                                   <h2>{{ user.get_full_name }}</h2>
-                                  <p><strong>About: </strong> {{ user.title }} </p>
+                                  <p><strong>{% trans 'About:' %} </strong> {{ user.title }} </p>
                                   <ul class="list-unstyled">
-                                    <li><i class="fa fa-mail-forward"></i> Email: {{ user.email }}</li>
-                                    <li><i class="fa fa-phone"></i> Phone #: {{ user.mobile_no }}</li>
+                                    <li><i class="fa fa-mail-forward"></i> {% trans 'Email:' %} {{ user.email }}</li>
+                                    <li><i class="fa fa-phone"></i> {% trans 'Phone #:' %} {{ user.mobile_no }}</li>
                                   </ul>
                                 </div>
                                 <div class="right col-xs-5 text-center">
@@ -60,7 +62,7 @@
                               <div class="col-xs-12 bottom text-center">
                                 <div class="col-xs-12 col-sm-6 emphasis">
                                   <p class="ratings">
-                                    <a>Active</a>
+                                    <a>{% trans 'Active' %}</a>
                                   </p>
                                 </div>
                                 <div class="col-xs-12 col-sm-6 emphasis">
@@ -68,14 +70,14 @@
                                       <i class="fa fa-user"></i> <i class="fa fa-trash-o"></i>
                                   </button>
                                   <button type="button" class="btn btn-primary btn-xs">
-                                    <i class="fa fa-user"> </i> View Profile
+                                    <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                                   </button>
                                 </div>
                               </div>
                             </div>
                           </div>
                         {% empty %}
-                            <h4 class="text-center">No users are set here...</h4>
+                            <h4 class="text-center">{% trans 'No users are set here...' %}</h4>
                         {% endfor %}
                     </div>
                   </div>
@@ -93,14 +95,14 @@
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
                   </button>
-                  <h4 class="modal-title" id="myModalLabel2">Confirmation</h4>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
                 </div>
                 <div class="modal-body">
-                  <h4>Are you sure to delete?</h4>
+                  <h4>{% trans 'Are you sure to delete?' %}</h4>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-danger" id="modal-delete" data-id="" onclick="user_delete()">Delete</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+                  <button type="button" class="btn btn-danger" id="modal-delete" data-id="" onclick="user_delete()">{% trans 'Delete' %}</button>
                 </div>
 
               </div>
@@ -113,13 +115,13 @@
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
                   </button>
-                  <h4 class="modal-title" id="myModalLabel2">Successful</h4>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Successful' %}</h4>
                 </div>
                 <div class="modal-body">
-                  <h4>Deleted Successfully</h4>
+                  <h4>{% trans 'Deleted Successfully' %}</h4>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
                 </div>
 
               </div>

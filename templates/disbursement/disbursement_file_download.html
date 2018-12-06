@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block body %}
-<div id="content">Please wait. <span id="loading"></span></div>
+<div id="content">{% trans 'Please wait.' %} <span id="loading"></span></div>
 {% endblock %}
 {% block script %}
 <script>
@@ -19,7 +19,7 @@
             $.getJSON(url+"?task_id=".concat('{{task_id}}'), function(data){
                 if(data.filename) {
                     var file_url = '{{media_url}}' + 'disbursement/' + data.filename;
-                    $("#content").html("If your download doesn't start automatically, please click <a href='" + file_url + "'>here</a>.");
+                    $("#content").html("{% trans 'If your download doesn't start automatically, please click' %} <a href='" + file_url + "'>{% trans 'here' %}</a>.");
                     window.location.href = file_url;
                 } else {
                     setTimeout(worker, 5000);

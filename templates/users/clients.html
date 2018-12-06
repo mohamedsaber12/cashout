@@ -1,5 +1,8 @@
+
 {% extends 'new_base.html' %}
-{% block title %} Clients {% endblock %}
+{% load i18n %}
+
+{% block title %} {% trans 'Clients' %} {% endblock %}
 
 {% block body %}
     <!-- page content -->
@@ -7,7 +10,7 @@
           <div class="">
             <div class="page-title">
               <div class="title_left">
-                <h3>Users</h3>
+                <h3>{% trans 'Users' %}</h3>
               </div>
 
               <div class="title_right">
@@ -17,7 +20,7 @@
 
                             <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for...">
                             <span class="input-group-btn">
-                              <button class="btn btn-default" type="submit" value="search">Go!</button>
+                              <button class="btn btn-default" type="submit" value="search">{% trans 'Go!'%}</button>
                             </span>
                           </div>
                       </div>
@@ -34,8 +37,8 @@
                     <div class="row">
                       <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                         <ul class="pagination pagination-split">
-                          <li><a href="?q=active">Active</a></li>
-                          <li><a href="?q=inactive">InActive</a></li>
+                          <li><a href="?q=active">{% trans 'Active'%}</a></li>
+                          <li><a href="?q=inactive">{% trans 'InActive'%}</a></li>
                         </ul>
                       </div>
 
@@ -44,13 +47,13 @@
                           <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
                             <div class="well profile_view" style="width: 100%;">
                               <div class="col-sm-12">
-                                <h4 class="brief"><i>{% ifequal user.is_active True %}Active{% else %}Inactive{% endifequal %}</i></h4>
+                                <h4 class="brief"><i>{% ifequal user.is_active True %}{% trans 'Active'%}{% else %}{% trans 'InActive'%}{% endifequal %}</i></h4>
                                 <div class="left col-xs-7">
                                   <h2>{{ user.client.username }}</h2>
-                                  <p><strong>About: </strong> {{ user.client.title }} </p>
+                                  <p><strong>{% trans 'About:' %} </strong> {{ user.client.title }} </p>
                                   <ul class="list-unstyled">
-                                    <li><i class="fa fa-mail-forward"></i> Email: {{ user.client.email }}</li>
-                                    <li><i class="fa fa-phone"></i> Phone #: {{ user.client.mobile_no }}</li>
+                                    <li><i class="fa fa-mail-forward"></i> {% trans 'Email:' %} {{ user.client.email }}</li>
+                                    <li><i class="fa fa-phone"></i> {% trans 'Phone #:' %} {{ user.client.mobile_no }}</li>
                                   </ul>
                                 </div>
                                 <div class="right col-xs-5 text-center">
@@ -67,8 +70,8 @@
                             </div>
                           </div>
                         {% empty %}
-                            <h4 class="text-center">No clients are set here...
-                                <a class="btn btn-default btn-sm" href="{% url 'users:add_client' %}">Add</a>
+                            <h4 class="text-center">{% trans 'No clients are set here...' %}
+                                <a class="btn btn-default btn-sm" href="{% url 'users:add_client' %}">{% trans 'Add' %}</a>
                             </h4>
                         {% endfor %}
                     </div>
@@ -87,14 +90,14 @@
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
                   </button>
-                  <h4 class="modal-title" id="myModalLabel2">Confirmation</h4>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
                 </div>
                 <div class="modal-body">
-                  <h4 id="modal-body-header">Are you sure to delete?</h4>
+                  <h4 id="modal-body-header">{% trans 'Are you sure to delete?' %}</h4>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                  <button type="button" class="btn btn-danger" id="modal-delete" data-id="" onclick="toggle()">Deactivate</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+                  <button type="button" class="btn btn-danger" id="modal-delete" data-id="" onclick="toggle()">{% trans 'Deactivate' %}</button>
                 </div>
 
               </div>
@@ -107,13 +110,13 @@
                 <div class="modal-header">
                   <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
                   </button>
-                  <h4 class="modal-title" id="myModalLabel2">Successful</h4>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Successful' %}</h4>
                 </div>
                 <div class="modal-body">
-                  <h4>Done Successfully</h4>
+                  <h4>{% trans 'Done Successfully' %}</h4>
                 </div>
                 <div class="modal-footer">
-                  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
                 </div>
 
               </div>
@@ -125,12 +128,12 @@
     function update_modal(obj_id, activation) {
         $("#modal-delete").data('id', obj_id);
         if(activation){
-            $("#modal-body-header").text("Do you want to deactivate?");
-            $("#modal-delete").text("Deactivate?");
+            $("#modal-body-header").text("{% trans 'Do you want to deactivate?' %}");
+            $("#modal-delete").text("{% trans 'Deactivate?' %}");
 
         }else{
-            $("#modal-body-header").text("Do you want to activate?");
-            $("#modal-delete").text("Activate?");
+            $("#modal-body-header").text("{% trans 'Do you want to activate?' %}");
+            $("#modal-delete").text("{% trans 'Activate?' %}");
 
         }
     }
@@ -147,10 +150,10 @@
 
                     $(".delete-success").modal();
                     var text = $("#user-"+id+" .brief").text();
-                    if(text=="Active"){
-                        $("#user-"+id+" .brief").text("Inactive");
+                    if(text=="{% trans 'Active'%}"){
+                        $("#user-"+id+" .brief").text("{% trans 'InActive'%}");
                     }else{
-                        $("#user-"+id+" .brief").text("Active");
+                        $("#user-"+id+" .brief").text("{% trans 'Active'%}");
 
                     }
                 }

@@ -1,14 +1,14 @@
 {% extends 'new_base.html' %}
 {% load i18n %}
 {% load static %}
-{% block title %} Add new family member {% endblock %}
+{% block title %} {% trans 'Add new family member'%} {% endblock %}
 
 {% block body %}
 
 
         <div class="page-title">
             <div class="title_left">
-                <h3>Add {{ who }}</h3>
+                <h3>{% trans 'Add' %} {{ who }}</h3>
             </div>
 
 

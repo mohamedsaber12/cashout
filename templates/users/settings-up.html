@@ -316,6 +316,9 @@
         let step = parseInt('{{step}}');
         var wizard = $('#disb_widget').smartWizard({
             selected: step,
+            labelNext:' {% trans "Next" %} ',
+            labelPrevious: ' {% trans "Previous" %} ',
+            labelFinish: ' {% trans "Finish" %} ',
             onLeaveStep:leaveAStepCallback,
             onFinish: onFinishCallback
 

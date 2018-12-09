@@ -1,5 +1,7 @@
 {% extends 'new_base.html' %}
 {% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
 
 {% block title %}{{ request.user.username }} {% trans 'profile' %}{% endblock %}
 {% block body %}
@@ -31,7 +33,7 @@
                             <td>{{ object.title }}</td>
                           </tr>
                           <tr>
-                            <td>{% trans 'first Name:' %}</td>
+                            <td>{% trans 'First Name:' %}</td>
                             <td>{{ object.first_name }}</td>
                           </tr>
                           <tr>
@@ -69,7 +71,7 @@
 
             <div class="panel-footer">
                   <a data-original-title="Broadcast Message" data-toggle="tooltip" type="button" class="btn btn-sm btn-primary disabled" href="#"><i class="glyphicon glyphicon-envelope"></i></a>
-                  <span class="pull-right">
+                  <span class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">              
                       <a href="{% url 'users:edit_profile' %}" data-original-title="Edit Data" data-toggle="tooltip" type="button" class="btn btn-sm btn-warning"><i class="glyphicon glyphicon-edit"></i></a>
                       <a href="{% url 'users:change_password' request.user.username %}" data-original-title="Change Password" data-toggle="tooltip" type="button" class="btn btn-sm btn-danger"><i class="fa fa-key"></i></a>
                   </span>

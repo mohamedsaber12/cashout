@@ -1,6 +1,9 @@
 {% extends 'new_base.html' %}
 {% load i18n %}
 {% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
 {% block title %} {% trans 'Levels' %} {% endblock %}
 
 {% block body %}
@@ -47,7 +50,7 @@
 
 
                             {% endfor %}
-                            <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-right">
+                            <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                         </form>
 
 

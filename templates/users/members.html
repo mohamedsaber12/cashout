@@ -1,5 +1,7 @@
 {% extends 'new_base.html' %}
 {% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
 
 {% block title %} {% trans 'Family members' %} {% endblock %}
 
@@ -14,7 +16,7 @@
 
               <div class="title_right">
                    <form action="." method="get">
-                        <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-right top_search">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
                           <div class="input-group">
 
                             <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="{% trans 'Search for...' %}">

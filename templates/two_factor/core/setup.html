@@ -1,5 +1,7 @@
 {% extends "two_factor/_base_focus.html" %}
 {% load i18n %}
+{% load custom_tags %}
+{% get_current_language as LANGUAGE_CODE %}
 
 {% block content %}
     <div class="col-md-12 col-sm-12 col-xs-12">
@@ -57,7 +59,7 @@
             {% include "two_factor/_wizard_forms.html" %}
 
             {# hidden submit button to enable [enter] key #}
-            <div style="margin-left: -9999px"><input class="btn btn-success" type="submit" value=""/></div>
+            <div style="margin-{{'left'|invert_dir:LANGUAGE_CODE}} : -9999px"><input class="btn btn-success" type="submit" value=""/></div>
 
             {% include "two_factor/_wizard_actions.html" %}
           </form>

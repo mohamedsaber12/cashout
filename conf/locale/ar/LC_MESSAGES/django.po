@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2018-12-06 15:41+0000\n"
+"POT-Creation-Date: 2018-12-09 12:44+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,37 +18,214 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: data/forms.py:69
+#: data/forms.py:57
+msgid "comment field is required"
+msgstr ""
+
+#: data/forms.py:67
 msgid "Select a file"
 msgstr ""
 
-#: data/forms.py:87 data/forms.py:108 data/forms.py:115
+#: data/forms.py:68
+msgid "max. 42 megabytes"
+msgstr ""
+
+#: data/forms.py:85 data/forms.py:106 data/forms.py:113
 msgid "File type is not supported"
 msgstr ""
 
-#: data/forms.py:92
+#: data/forms.py:90
 msgid "File name is not proper"
 msgstr ""
 
-#: data/forms.py:97
+#: data/forms.py:95
 msgid "Please keep file size under 5242880"
 msgstr ""
 
-#: data/forms.py:100
+#: data/forms.py:98
 msgid "Filename must be less than 255 characters"
 msgstr ""
 
-#: data/forms.py:118
+#: data/forms.py:116
 msgid ""
 "Filename should not include any unicode characters ex: :, >, <, \\, /, $, * "
 msgstr ""
 
-#: data/forms.py:129 data/forms.py:134
+#: data/forms.py:127 data/forms.py:132
 msgid "File uploaded in not in proper form"
 msgstr ""
 
-#: data/forms.py:240
+#: data/forms.py:176
+msgid "Name already Exist"
+msgstr ""
+
+#: data/forms.py:187
+msgid "number of reviews must be less than or equal the number of checkers"
+msgstr ""
+
+#: data/forms.py:225
+msgid "You will recieve a message on your phone within 30 seconds"
+msgstr ""
+
+#: data/forms.py:238
 msgid "Code is not valid"
+msgstr ""
+
+#: data/forms.py:271 data/forms.py:273
+msgid "Can't be blank"
+msgstr ""
+
+#: data/models/doc.py:81
+msgid "Not Permitted to disburse"
+msgstr ""
+
+#: data/models/doc.py:84
+msgid "Document is still suspend due to shortage of checking"
+msgstr ""
+
+#: data/models/doc.py:87
+msgid "Issues are submitted by some users, please resolve any conflict first"
+msgstr ""
+
+#: data/models/doc.py:90
+msgid "Your Entity is deactivated"
+msgstr ""
+
+#: data/models/filecategory.py:19
+msgid "File Category Name"
+msgstr ""
+
+#: data/models/filecategory.py:21
+msgid "Header 1"
+msgstr ""
+
+#: data/models/filecategory.py:23
+msgid "Header 2"
+msgstr ""
+
+#: data/models/filecategory.py:25
+msgid "Header 3"
+msgstr ""
+
+#: data/models/filecategory.py:27
+msgid "Header 4"
+msgstr ""
+
+#: data/models/filecategory.py:29
+msgid "Header 5"
+msgstr ""
+
+#: data/models/filecategory.py:31
+msgid "Header 6"
+msgstr ""
+
+#: data/models/filecategory.py:33
+msgid "Header 7"
+msgstr ""
+
+#: data/models/filecategory.py:35
+msgid "Header 8"
+msgstr ""
+
+#: data/models/filecategory.py:37
+msgid "Header 9"
+msgstr ""
+
+#: data/models/filecategory.py:39
+msgid "Header 10"
+msgstr ""
+
+#: data/models/filecategory.py:41
+msgid "Number of identifiers filled"
+msgstr ""
+
+#: data/models/filecategory.py:45
+msgid "Will the excel file uploaded has header?"
+msgstr ""
+
+#: data/models/filecategory.py:47
+msgid "What is the unique field?"
+msgstr ""
+
+#: data/models/filecategory.py:49
+msgid "what is amount field?"
+msgstr ""
+
+#: data/models/filecategory.py:50
+msgid "for ex: loan_field"
+msgstr ""
+
+#: data/models/filecategory.py:52
+msgid "Number of reviews"
+msgstr ""
+
+#: data/models/filecategory.py:53
+msgid "Number of reviews required to be disbursed"
+msgstr ""
+
+#: data/tasks.py:51
+msgid "This file may be has invalid amounts"
+msgstr ""
+
+#: data/tasks.py:70
+msgid "This file may be has invalid msisdns"
+msgstr ""
+
+#: data/tasks.py:92
+msgid "This file contains duplicates"
+msgstr ""
+
+#: data/tasks.py:98
+msgid "This file may be has msisdn which has no amount"
+msgstr ""
+
+#: data/tasks.py:107
+#, python-format
+msgid "failed_disbursed_%s.xlsx"
+msgstr ""
+
+#: data/tasks.py:160
+msgid "[Payroll] File Upload Notification"
+msgstr ""
+
+#: disb/api/views.py:106
+msgid ""
+"Disbursement process stopped during an internal "
+"error,                         can you try again or contact your support team"
+msgstr ""
+
+#: disb/api/views.py:108 disb/api/views.py:123 disb/api/views.py:127
+msgid "Error occurred, We are sorry"
+msgstr ""
+
+#: disb/api/views.py:118 templates/data/document_viewer.html:313
+msgid "Disbursement process is running, you can check reports later"
+msgstr ""
+
+#: disb/api/views.py:119
+msgid "Disbursed, Thanks"
+msgstr ""
+
+#: disb/api/views.py:121
+msgid ""
+"Disbursement process stopped during an internal error,                 can "
+"you try again or contact you support team"
+msgstr ""
+
+#: disb/api/views.py:126
+msgid "Pin you entered is not correct"
+msgstr ""
+
+#: disb/api/views.py:165
+msgid "Document is not found"
+msgstr ""
+
+#: disb/api/views.py:196
+msgid "Checkers already notified"
+msgstr ""
+
+#: disb/forms.py:44 templates/data/document_viewer.html:234
+msgid "Pin"
 msgstr ""
 
 #: disbursement/settings/base.py:146 disbursement/settings/test.py:109
@@ -60,7 +237,7 @@ msgid "Arabic"
 msgstr ""
 
 #: templates/base.html:89 templates/sidebar.html:67
-#: templates/top_navigation.html:27 templates/users/add_levels.html:12
+#: templates/top_navigation.html:29 templates/users/add_levels.html:15
 #: templates/users/settings-up.html:14
 msgid "Settings"
 msgstr ""
@@ -74,8 +251,8 @@ msgid "Change"
 msgstr ""
 
 #: templates/data/change_password.html:6
-#: templates/two_factor/_wizard_actions.html:10
-#: templates/two_factor/_wizard_actions.html:13
+#: templates/two_factor/_wizard_actions.html:12
+#: templates/two_factor/_wizard_actions.html:15
 msgid "Back"
 msgstr ""
 
@@ -98,10 +275,10 @@ msgid "New Passowrd Confirmation"
 msgstr ""
 
 #: templates/data/change_password.html:29
-#: templates/data/document_viewer.html:129
-#: templates/data/document_viewer.html:235
+#: templates/data/document_viewer.html:132
+#: templates/data/document_viewer.html:238
 #: templates/data/file_confirm_delete.html:12
-#: templates/users/add_levels.html:89
+#: templates/users/add_levels.html:92
 #: templates/users/password_reset_confirm.html:23
 msgid "Submit"
 msgstr ""
@@ -130,7 +307,7 @@ msgid "Document Name"
 msgstr ""
 
 #: templates/data/document_details_list.html:30
-#: templates/data/document_viewer.html:147
+#: templates/data/document_viewer.html:150
 msgid "Reviews"
 msgstr ""
 
@@ -184,129 +361,121 @@ msgstr ""
 msgid "There's no files uploaded yet.."
 msgstr ""
 
-#: templates/data/document_viewer.html:4
+#: templates/data/document_viewer.html:7
 msgid "Document details"
 msgstr ""
 
-#: templates/data/document_viewer.html:32
-#: templates/data/document_viewer.html:34
+#: templates/data/document_viewer.html:35
+#: templates/data/document_viewer.html:37
 msgid "Disburse"
 msgstr ""
 
-#: templates/data/document_viewer.html:47
+#: templates/data/document_viewer.html:50
 msgid "Notify Chekers"
 msgstr ""
 
-#: templates/data/document_viewer.html:51
-#: templates/data/document_viewer.html:356
+#: templates/data/document_viewer.html:54
+#: templates/data/document_viewer.html:359
 msgid "Checkers Notified"
 msgstr ""
 
-#: templates/data/document_viewer.html:55
+#: templates/data/document_viewer.html:58
 msgid ", fix it and upload again! Thanks"
 msgstr ""
 
-#: templates/data/document_viewer.html:59
+#: templates/data/document_viewer.html:62
 msgid "Pending"
 msgstr ""
 
-#: templates/data/document_viewer.html:72
+#: templates/data/document_viewer.html:75
 msgid "Document data"
 msgstr ""
 
-#: templates/data/document_viewer.html:72
+#: templates/data/document_viewer.html:75
 msgid "Document name:"
 msgstr ""
 
-#: templates/data/document_viewer.html:81
+#: templates/data/document_viewer.html:84
 msgid "Count:"
 msgstr ""
 
-#: templates/data/document_viewer.html:81
+#: templates/data/document_viewer.html:84
 msgid "Total Amount:"
 msgstr ""
 
-#: templates/data/document_viewer.html:97
+#: templates/data/document_viewer.html:100
 msgid "Review"
 msgstr ""
 
-#: templates/data/document_viewer.html:109
+#: templates/data/document_viewer.html:112
 msgid "Accept or Reject"
 msgstr ""
 
-#: templates/data/document_viewer.html:112
+#: templates/data/document_viewer.html:115
 msgid "Accept"
 msgstr ""
 
-#: templates/data/document_viewer.html:113
+#: templates/data/document_viewer.html:116
 msgid "Reject"
 msgstr ""
 
-#: templates/data/document_viewer.html:119
+#: templates/data/document_viewer.html:122
 msgid "Rejection reason"
 msgstr ""
 
-#: templates/data/document_viewer.html:212
+#: templates/data/document_viewer.html:215
 #: templates/data/upload-response-modals.html:17
 #: templates/data/upload-response-modals.html:39
-#: templates/users/clients.html:99 templates/users/clients.html:119
-#: templates/users/members.html:104 templates/users/members.html:124
+#: templates/users/clients.html:101 templates/users/clients.html:121
+#: templates/users/members.html:106 templates/users/members.html:126
 msgid "Close"
 msgstr ""
 
-#: templates/data/document_viewer.html:225
+#: templates/data/document_viewer.html:228
 msgid "Enter Agent Pin"
 msgstr ""
 
-#: templates/data/document_viewer.html:231
-msgid "Pin"
-msgstr ""
-
-#: templates/data/document_viewer.html:232
+#: templates/data/document_viewer.html:235
 msgid "pin"
 msgstr ""
 
-#: templates/data/document_viewer.html:298
-msgid "It seems that you don"
+#: templates/data/document_viewer.html:301
+msgid "It seems that you don\\"
 msgstr ""
 
-#: templates/data/document_viewer.html:309
+#: templates/data/document_viewer.html:312
 msgid "Disbursed, Thanks!"
 msgstr ""
 
-#: templates/data/document_viewer.html:310
-msgid "Disbursement process is running, you can check reports later"
-msgstr ""
-
-#: templates/data/document_viewer.html:314
+#: templates/data/document_viewer.html:317
 msgid "Error occurred, We are sorry!"
 msgstr ""
 
-#: templates/data/document_viewer.html:315
+#: templates/data/document_viewer.html:318
 msgid ""
 "Disbursement process stopped during an internal error, can you try again or "
 "contact you support team"
 msgstr ""
 
-#: templates/data/document_viewer.html:319
+#: templates/data/document_viewer.html:322
 msgid "Error occurred from your side"
 msgstr ""
 
-#: templates/data/document_viewer.html:321
+#: templates/data/document_viewer.html:324
 msgid ""
 "This document is disbursed before, if there is any error, please return back "
 "to the support team"
 msgstr ""
 
-#: templates/data/document_viewer.html:325
+#: templates/data/document_viewer.html:328
 msgid "You can not disburse this document"
 msgstr ""
 
-#: templates/data/document_viewer.html:361
+#: templates/data/document_viewer.html:364
 msgid "Error Occurred!"
 msgstr ""
 
-#: templates/data/document_viewer.html:362
+#: templates/data/document_viewer.html:365
 msgid "It seems that you do not have access or request a wrong document"
 msgstr ""
 
@@ -457,11 +626,11 @@ msgstr ""
 msgid "Internal Server Error"
 msgstr ""
 
-#: templates/footer.html:3
+#: templates/footer.html:6
 msgid "Paymob"
 msgstr ""
 
-#: templates/footer.html:3
+#: templates/footer.html:6
 msgid "Payroll Solution"
 msgstr ""
 
@@ -489,13 +658,13 @@ msgstr ""
 msgid "Add member"
 msgstr ""
 
-#: templates/sidebar.html:55 templates/users/members.html:49
-#: templates/users/profile.html:47
+#: templates/sidebar.html:55 templates/users/members.html:51
+#: templates/users/profile.html:49
 msgid "Checker"
 msgstr ""
 
-#: templates/sidebar.html:57 templates/users/members.html:49
-#: templates/users/profile.html:47
+#: templates/sidebar.html:57 templates/users/members.html:51
+#: templates/users/profile.html:49
 msgid "Maker"
 msgstr ""
 
@@ -512,16 +681,16 @@ msgid "levels"
 msgstr ""
 
 #: templates/sidebar.html:73 templates/superadmin_sidebar.html:55
-#: templates/top_navigation.html:22
+#: templates/top_navigation.html:24
 msgid "Profile"
 msgstr ""
 
-#: templates/superadmin_sidebar.html:46 templates/users/clients.html:5
+#: templates/superadmin_sidebar.html:46 templates/users/clients.html:7
 msgid "Clients"
 msgstr ""
 
-#: templates/superadmin_sidebar.html:49 templates/users/add_member.html:11
-#: templates/users/clients.html:74 templates/users/profile_update.html:11
+#: templates/superadmin_sidebar.html:49 templates/users/add_member.html:14
+#: templates/users/clients.html:76 templates/users/profile_update.html:14
 msgid "Add"
 msgstr ""
 
@@ -529,28 +698,29 @@ msgstr ""
 msgid "All Clients"
 msgstr ""
 
-#: templates/superadmin_sidebar.html:58 templates/users/entity_branding.html:4
+#: templates/superadmin_sidebar.html:58 templates/users/entity_branding.html:7
 msgid "Branding"
 msgstr ""
 
-#: templates/top_navigation.html:44
+#: templates/top_navigation.html:46
 msgid "Log Out"
 msgstr ""
 
-#: templates/two_factor/_wizard_actions.html:5
+#: templates/two_factor/_wizard_actions.html:7
 msgid "Cancel"
 msgstr ""
 
-#: templates/two_factor/_wizard_actions.html:15
+#: templates/two_factor/_wizard_actions.html:17
+#: templates/users/settings-up.html:319
 msgid "Next"
 msgstr ""
 
-#: templates/two_factor/core/setup.html:8
+#: templates/two_factor/core/setup.html:10
 #: templates/two_factor/profile/profile.html:67
 msgid "Enable Two-Factor Authentication"
 msgstr ""
 
-#: templates/two_factor/core/setup.html:15
+#: templates/two_factor/core/setup.html:17
 msgid ""
 "You are about to take your account security to the\n"
 "                next level. Follow the steps in this wizard to enable two-"
@@ -558,13 +728,13 @@ msgid ""
 "                authentication."
 msgstr ""
 
-#: templates/two_factor/core/setup.html:19
+#: templates/two_factor/core/setup.html:21
 msgid ""
 "Please select which authentication method you would\n"
 "                like to use."
 msgstr ""
 
-#: templates/two_factor/core/setup.html:22
+#: templates/two_factor/core/setup.html:24
 msgid ""
 "To start using a token generator, please use your\n"
 "                smartphone to scan the QR code below. For example, use "
@@ -573,7 +743,7 @@ msgid ""
 "                "
 msgstr ""
 
-#: templates/two_factor/core/setup.html:28
+#: templates/two_factor/core/setup.html:30
 msgid ""
 "Please enter the phone number you wish to receive the\n"
 "              text messages on. This number will be validated in the next "
@@ -581,25 +751,25 @@ msgid ""
 "              "
 msgstr ""
 
-#: templates/two_factor/core/setup.html:32
+#: templates/two_factor/core/setup.html:34
 msgid ""
 "Please enter the phone number you wish to be called on.\n"
 "              This number will be validated in the next step. "
 msgstr ""
 
-#: templates/two_factor/core/setup.html:37
+#: templates/two_factor/core/setup.html:39
 msgid ""
 "We are calling your phone right now, please enter the\n"
 "                  digits you hear."
 msgstr ""
 
-#: templates/two_factor/core/setup.html:40
+#: templates/two_factor/core/setup.html:42
 msgid ""
 "We sent you a text message, please enter the tokens we\n"
 "                  sent."
 msgstr ""
 
-#: templates/two_factor/core/setup.html:44
+#: templates/two_factor/core/setup.html:46
 msgid ""
 "We've\n"
 "                encountered an issue with the selected authentication "
@@ -611,7 +781,7 @@ msgid ""
 "                persists, contact the site administrator."
 msgstr ""
 
-#: templates/two_factor/core/setup.html:51
+#: templates/two_factor/core/setup.html:53
 msgid ""
 "To identify and verify your YubiKey, please insert a\n"
 "              token in the field below. Your YubiKey will be linked to your\n"
@@ -699,128 +869,128 @@ msgid ""
 "              security."
 msgstr ""
 
-#: templates/users/add_levels.html:88 templates/users/settings-up.html:132
+#: templates/users/add_levels.html:91 templates/users/settings-up.html:132
 msgid "Add another level"
 msgstr ""
 
-#: templates/users/add_member.html:4
+#: templates/users/add_member.html:7
 msgid "Add new family member"
 msgstr ""
 
-#: templates/users/clients.html:13 templates/users/members.html:12
+#: templates/users/clients.html:15 templates/users/members.html:14
 #: users/forms.py:128
 msgid "Users"
 msgstr ""
 
-#: templates/users/clients.html:23 templates/users/members.html:22
+#: templates/users/clients.html:25 templates/users/members.html:24
 msgid "Go!"
 msgstr ""
 
-#: templates/users/clients.html:40 templates/users/clients.html:50
-#: templates/users/clients.html:153 templates/users/clients.html:156
-#: templates/users/members.html:65
+#: templates/users/clients.html:42 templates/users/clients.html:52
+#: templates/users/clients.html:155 templates/users/clients.html:158
+#: templates/users/members.html:67
 msgid "Active"
 msgstr ""
 
-#: templates/users/clients.html:41 templates/users/clients.html:50
-#: templates/users/clients.html:154
+#: templates/users/clients.html:43 templates/users/clients.html:52
+#: templates/users/clients.html:156
 msgid "InActive"
 msgstr ""
 
-#: templates/users/clients.html:53 templates/users/members.html:52
+#: templates/users/clients.html:55 templates/users/members.html:54
 msgid "About:"
 msgstr ""
 
-#: templates/users/clients.html:55 templates/users/members.html:54
+#: templates/users/clients.html:57 templates/users/members.html:56
 msgid "Email:"
 msgstr ""
 
-#: templates/users/clients.html:56 templates/users/members.html:55
+#: templates/users/clients.html:58 templates/users/members.html:57
 msgid "Phone #:"
 msgstr ""
 
-#: templates/users/clients.html:73
+#: templates/users/clients.html:75
 msgid "No clients are set here..."
 msgstr ""
 
-#: templates/users/clients.html:93 templates/users/members.html:98
+#: templates/users/clients.html:95 templates/users/members.html:100
 msgid "Confirmation"
 msgstr ""
 
-#: templates/users/clients.html:96 templates/users/members.html:101
+#: templates/users/clients.html:98 templates/users/members.html:103
 msgid "Are you sure to delete?"
 msgstr ""
 
-#: templates/users/clients.html:100
+#: templates/users/clients.html:102
 msgid "Deactivate"
 msgstr ""
 
-#: templates/users/clients.html:113 templates/users/members.html:118
+#: templates/users/clients.html:115 templates/users/members.html:120
 msgid "Successful"
 msgstr ""
 
-#: templates/users/clients.html:116
+#: templates/users/clients.html:118
 msgid "Done Successfully"
 msgstr ""
 
-#: templates/users/clients.html:131
+#: templates/users/clients.html:133
 msgid "Do you want to deactivate?"
 msgstr ""
 
-#: templates/users/clients.html:132
+#: templates/users/clients.html:134
 msgid "Deactivate?"
 msgstr ""
 
-#: templates/users/clients.html:135
+#: templates/users/clients.html:137
 msgid "Do you want to activate?"
 msgstr ""
 
-#: templates/users/clients.html:136
+#: templates/users/clients.html:138
 msgid "Activate?"
 msgstr ""
 
-#: templates/users/entity_branding.html:16
+#: templates/users/entity_branding.html:19
 msgid "Entity Branding"
 msgstr ""
 
-#: templates/users/entity_branding.html:32
+#: templates/users/entity_branding.html:35
 msgid "Color"
 msgstr ""
 
-#: templates/users/entity_branding.html:57
-#: templates/users/profile_update.html:50
+#: templates/users/entity_branding.html:60
+#: templates/users/profile_update.html:53
 msgid "submit"
 msgstr ""
 
-#: templates/users/members.html:4
+#: templates/users/members.html:6
 msgid "Family members"
 msgstr ""
 
-#: templates/users/members.html:20
+#: templates/users/members.html:22
 msgid "Search for..."
 msgstr ""
 
-#: templates/users/members.html:39 templates/users/settings-up.html:35
+#: templates/users/members.html:41 templates/users/settings-up.html:35
 msgid "Makers"
 msgstr ""
 
-#: templates/users/members.html:40 templates/users/settings-up.html:44
+#: templates/users/members.html:42 templates/users/settings-up.html:44
 msgid "Checkers"
 msgstr ""
 
-#: templates/users/members.html:73
+#: templates/users/members.html:75
 msgid "View Profile"
 msgstr ""
 
-#: templates/users/members.html:80
+#: templates/users/members.html:82
 msgid "No users are set here..."
 msgstr ""
 
-#: templates/users/members.html:105
+#: templates/users/members.html:107
 msgid "Delete"
 msgstr ""
 
-#: templates/users/members.html:121
+#: templates/users/members.html:123
 msgid "Deleted Successfully"
 msgstr ""
 
@@ -833,43 +1003,43 @@ msgstr ""
 msgid "This url is not Valid or used before."
 msgstr ""
 
-#: templates/users/profile.html:4
+#: templates/users/profile.html:6
 msgid "profile"
 msgstr ""
 
-#: templates/users/profile.html:30
+#: templates/users/profile.html:32
 msgid "Title:"
 msgstr ""
 
-#: templates/users/profile.html:34
+#: templates/users/profile.html:36
 msgid "first Name:"
 msgstr ""
 
-#: templates/users/profile.html:38
+#: templates/users/profile.html:40
 msgid "Last Name:"
 msgstr ""
 
-#: templates/users/profile.html:42
+#: templates/users/profile.html:44
 msgid "Join date:"
 msgstr ""
 
-#: templates/users/profile.html:46
+#: templates/users/profile.html:48
 msgid "Account Type:"
 msgstr ""
 
-#: templates/users/profile.html:47
+#: templates/users/profile.html:49
 msgid "Admin"
 msgstr ""
 
-#: templates/users/profile.html:50
+#: templates/users/profile.html:52
 msgid "Email"
 msgstr ""
 
-#: templates/users/profile.html:53
+#: templates/users/profile.html:55
 msgid "Phone Number"
 msgstr ""
 
-#: templates/users/profile_update.html:4 templates/users/settings-up.html:26
+#: templates/users/profile_update.html:7 templates/users/settings-up.html:26
 msgid "Levels"
 msgstr ""
 
@@ -901,6 +1071,14 @@ msgstr ""
 msgid "Add family member"
 msgstr ""
 
+#: templates/users/settings-up.html:320
+msgid "Previous"
+msgstr ""
+
+#: templates/users/settings-up.html:321
+msgid "Finish"
+msgstr ""
+
 #: users/admin.py:47
 #, python-format
 msgid "Delete selected %(verbose_name_plural)s"
@@ -926,4 +1104,90 @@ msgstr ""
 
 #: users/admin.py:146 users/admin.py:160
 msgid "Important dates"
+msgstr ""
+
+#: users/forms.py:24
+msgid "The two passwords fields didn't match."
+msgstr ""
+
+#: users/forms.py:25
+msgid "Password must contain at least 8 characters"
+msgstr ""
+
+#: users/forms.py:28
+msgid "New password"
+msgstr ""
+
+#: users/forms.py:35
+msgid "New password confirmation"
+msgstr ""
+
+#: users/forms.py:77
+msgid "Your old password was entered incorrectly. Please enter it again."
+msgstr ""
+
+#: users/forms.py:78
+msgid "Your old password is similar to the new password. "
+msgstr ""
+
+#: users/forms.py:81
+msgid "Old password"
+msgstr ""
+
+#: users/forms.py:300 users/forms.py:340
+msgid "First name"
+msgstr ""
+
+#: users/forms.py:301 users/forms.py:341
+msgid "Last name"
+msgstr ""
+
+#: users/forms.py:350
+msgid "Level"
+msgstr ""
+
+#: users/models/base_user.py:36
+msgid "Mobile Number"
+msgstr ""
+
+#: users/models/base_user.py:43
+msgid "Email address"
+msgstr ""
+
+#: users/models/levels.py:19
+msgid "Max amount can be disbursed"
+msgstr ""
+
+#: users/signals.py:103
+msgid "[Payroll] Password Notification"
+msgstr ""
+
+#: users/validators.py:10
+msgid "This password must contain a special character."
+msgstr ""
+
+#: users/validators.py:15
+msgid "This password must contain an upper case letter."
+msgstr ""
+
+#: users/validators.py:20
+msgid "This password must contain a lower case letter."
+msgstr ""
+
+#: users/validators.py:25
+msgid "This password must contain a digit."
+msgstr ""
+
+#: users/validators.py:31
+msgid ""
+"Your password must contain an upper case letter, a lower case letter, a "
+"special character, and a digit."
+msgstr ""
+
+#: users/views.py:446
+msgid "checker"
+msgstr ""
+
+#: users/views.py:460
+msgid "maker"
 msgstr ""

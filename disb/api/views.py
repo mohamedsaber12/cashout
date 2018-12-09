@@ -8,6 +8,8 @@ import xlrd
 from django.contrib.auth.hashers import check_password
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
+
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import UpdateAPIView
@@ -101,9 +103,9 @@ class DisburseAPIView(APIView):
                         txn_id = response.json()["TXNID"]
                 except KeyError:
                     return HttpResponse(
-                        json.dumps({'message': 'Disbursement process stopped during an internal error, can you try again '
-                                               'or contact you support team',
-                                    'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                        json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                         can you try again or contact your support team'),
+                                    'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
                 print(txn_status)
 
@@ -113,16 +115,16 @@ class DisburseAPIView(APIView):
                 disb_data.txn_status = txn_status
                 disb_data.save()
                 doc_obj.save()
-                return HttpResponse(json.dumps({'message': 'Disbursement process is running, you can check reports later',
-                                                'header': 'Disbursed, Thanks!!'}), status=200)
+                return HttpResponse(json.dumps({'message': _('Disbursement process is running, you can check reports later'),
+                                                'header': _('Disbursed, Thanks')}), status=200)
             else:
-                return HttpResponse(json.dumps({'message': 'Disbursement process stopped during an internal error, can you try again '
-                                                'or contact you support team',
-                                                'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                 can you try again or contact you support team'),
+                                                'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
         else:
             return HttpResponse(
-                json.dumps({'message': 'Pin you entered is not correct',
-                            'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                json.dumps({'message': _('Pin you entered is not correct'),
+                            'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 
 class DisburseCallBack(UpdateAPIView):
@@ -160,7 +162,7 @@ class RetrieveDocData(APIView):
         try:
             doc_obj = Doc.objects.get(id=self.kwargs['doc_id'])
         except Doc.DoesNotExist:
-            return JsonResponse({"message": "Document is not found"}, status=404)
+            return JsonResponse({"message": _("Document is not found")}, status=404)
         xl_workbook = xlrd.open_workbook(doc_obj.file.path)
 
         xl_sheet = xl_workbook.sheet_by_index(0)
@@ -191,7 +193,7 @@ class AllowDocDisburse(APIView):
         doc_obj = get_object_or_404(Doc, id=self.kwargs['doc_id'])
         if request.user.is_maker and doc_obj.is_processed:
             if doc_obj.can_be_disbursed:
-                return JsonResponse({"message": "Checkers already notified"}, status=400)
+                return JsonResponse({"message": _("Checkers already notified")}, status=400)
             doc_obj.can_be_disbursed = True
             doc_obj.save()
             # task for notifying checkers

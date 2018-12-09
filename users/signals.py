@@ -7,6 +7,7 @@ from django.urls import reverse
 from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
+from django.utils.translation import gettext as _
 
 from users.models import CheckerUser, MakerUser, RootUser, Setup, Brand, SuperAdminUser
 
@@ -99,7 +100,7 @@ def notify_user(sender, instance, created, **kwargs):
         send_mail(
             from_email=settings.SERVER_EMAIL,
             recipient_list=[instance.email],
-            subject='[Payroll] Password Notification',
+            subject=_('[Payroll] Password Notification'),
             message=MESSAGE.format(instance.first_name,
                                    url, instance.email, instance.username)
         )

@@ -4,9 +4,9 @@ import os
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from data.utils import pkgen, update_filename
-
 
 class Doc(models.Model):
     id = models.CharField(primary_key=True, editable=False,
@@ -78,16 +78,16 @@ class Doc(models.Model):
                     if checker.level.max_amount_can_be_disbursed >= self.total_amount:
                         return True, reason, 0
                     else:
-                        reason = "Not Permitted to disburse"
+                        reason = _("Not Permitted to disburse")
                         code = 3
                 else:
-                    reason = "Document is still suspend due to shortage of checking"
+                    reason = _("Document is still suspend due to shortage of checking")
                     code = 2
             else:
-                reason = "Issues are submitted by some users, please resolve any conflict first"
+                reason = _("Issues are submitted by some users, please resolve any conflict first")
                 code = 1
         else:
-            reason = "Your Entity is deactivated"
+            reason = _("Your Entity is deactivated")
             code = 4
         return False, reason, code
 

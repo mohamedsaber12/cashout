@@ -70,7 +70,7 @@
                                         </td>
                                         <td>
                                             
-                                            {% if not doc.is_processed%}
+                                            {% if not doc.is_processed %}
                                                 <h4><span class="label label-danger">Failed</span></h4>
                                                 {%if doc.processing_failure_reason%}
                                                     {{ doc.processing_failure_reason}}

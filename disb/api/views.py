@@ -17,7 +17,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from data.models import Doc
-from data.tasks import notifiy_checkers
+from data.tasks import notify_checkers
 from disb.api.permission_classes import BlacklistPermission
 from disb.api.serializers import (DisbursementCallBackSerializer,
                                   DisbursementSerializer)
@@ -195,7 +195,7 @@ class AllowDocDisburse(APIView):
             doc_obj.can_be_disbursed = True
             doc_obj.save()
             # task for notifying checkers
-            notifiy_checkers.delay(doc_obj.id)
+            notify_checkers.delay(doc_obj.id)
             return Response(status=200)
 
         return Response(status=403)

@@ -120,7 +120,7 @@ def generate_file(doc_id):
 
 
 @app.task()
-def notifiy_checkers(doc_id):
+def notify_checkers(doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
     checkers = User.objects.get_all_checkers(doc_obj.owner.hierarchy)
     if not checkers.exists():
@@ -131,7 +131,7 @@ def notifiy_checkers(doc_id):
         The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
         Thanks, BR"""
     send_mail(
-        from_email=settings.EMAIL_HOST_USER,
+        from_email=settings.SERVER_EMAIL,
         recipient_list=[checker.email for checker in checkers],
         subject='[Payroll] Disbursement Notification',
         message=message
@@ -154,7 +154,7 @@ def notify_maker(doc):
     message = MESSAGE_SUCC if doc.is_processed else MESSAGE_FAIL
 
     send_mail(
-        from_email=settings.EMAIL_HOST_USER,
+        from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email],
         subject='[Payroll] File Upload Notification',
         message=message

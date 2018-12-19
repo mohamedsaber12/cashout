@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.views import PasswordResetView as AbstractPasswordResetView
 from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -522,3 +523,7 @@ class EntityBranding(SuperRequiredMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         kwargs.update({'request': self.request})
         return kwargs
+
+
+class PasswordResetView(AbstractPasswordResetView):
+    success_url = reverse_lazy('users:password_reset_done')

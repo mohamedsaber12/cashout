@@ -2,8 +2,7 @@ from django.contrib.auth.views import (PasswordChangeDoneView,
                                        PasswordChangeView,
                                        PasswordResetCompleteView,
                                        PasswordResetConfirmView,
-                                       PasswordResetDoneView,
-                                       PasswordResetView)
+                                       PasswordResetDoneView)
 from django.urls import path
 
 from users import views
@@ -17,9 +16,10 @@ urlpatterns = [
     path('change_password/<user>/', views.change_password, name="change_password"),
     path('password/reset/done/', PasswordResetDoneView.as_view(),
          name='password_reset_done'),
-    path('password/reset/', PasswordResetView.as_view(),
-         {'post_reset_redirect': '/password/reset/done/',
-          'html_email_template_name': 'registration/password_reset_email.html'},
+    path('password/reset/', views.PasswordResetView.as_view(),
+         # kwargs={'post_reset_redirect': '/password/reset/done/',
+         # 'success_url': '/password/reset/doness/',
+         #  'html_email_template_name': 'registration/password_reset_email.html'},
          name='password_reset_done'),
     path('password/reset/<uidb64>/<token>/',
          PasswordResetConfirmView.as_view(success_url='/', template_name='users/password_reset_confirm.html'), name='password_reset_confirm'),

@@ -4,7 +4,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.contrib.auth import logout
-from two_factor.utils import default_device
+from django_otp import user_has_device
 
 EXEMPT_URLS = [re.compile(settings.LOGIN_URL.lstrip('/'))]
 if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
@@ -67,11 +67,17 @@ class CheckerTwoFactorAuthMiddleWare:
         two_factor_base_url = 'account/two_factor/'
         media_path = settings.MEDIA_URL
         is_media_path = True if media_path in path and f'{media_path}documents/' not in path else False
+        urls = [
+            reverse("two_factor:profile"),
+            reverse("two_factor:login"),
+            reverse("two_factor:setup"),
+            '/account/two_factor/qrcode/'
+        ]
         if request.user.is_authenticated and request.user.is_checker and not is_media_path:
-            user_verified = request.user.is_verified() or default_device(request.user)
-            if two_factor_base_url in path and user_verified:
-                return redirect(reverse("data:main_view"))
-            if not user_verified and not two_factor_base_url in path:
+            if two_factor_base_url in path and request.user.is_verified():
+                return redirect(reverse("data:main_view"))            
+            if not request.user.is_verified() and user_has_device(request.user) and (not path in urls or path == reverse("two_factor:profile")):
+                return redirect(reverse("two_factor:login"))
+            if not request.user.is_verified() and not path in urls:
                 return redirect(reverse("two_factor:profile"))
-
-        
+            

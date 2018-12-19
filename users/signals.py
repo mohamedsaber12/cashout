@@ -9,7 +9,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext as _
 
-from users.models import CheckerUser, MakerUser, RootUser, Setup, Brand, SuperAdminUser
+from users.models import CheckerUser, MakerUser, RootUser, Setup, Brand, SuperAdminUser,Client
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
 MESSAGE = 'Dear {0}\n' \
@@ -34,11 +34,6 @@ def send_random_pass_to_checker(sender, instance, created, **kwargs):
     notify_user(sender, instance, created, **kwargs)
 
 
-@receiver(pre_save, sender=RootUser)
-def root_pre_save(sender, instance, *args, **kwargs):
-    set_brand(instance)
-
-
 @receiver(pre_save, sender=CheckerUser)
 def checker_pre_save(sender, instance, *args, **kwargs):
     instance.username = generate_username(instance, sender)
@@ -55,9 +50,19 @@ def super_admin_pre_save(sender, instance, *args, **kwargs):
         instance.brand = Brand.objects.create()
 
 
+@receiver(post_save, sender=Client)
+def client_post_save(sender, instance,created, **kwargs):
+    if created:
+        set_client_brand(instance)
+
+
 def set_brand(instance):
     if not instance.brand:
         instance.brand = instance.super_admin.brand
+
+
+def set_client_brand(instance):
+    instance.client.brand = instance.creator.brand
 
 
 def generate_username(user, user_model):

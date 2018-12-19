@@ -205,6 +205,7 @@ LOGIN_EXEMPT_URLS = (
     r'^password/reset/done/$',
     r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)/(?P<token>.+)/$',
     r'^password/done/$',
+    r'^api*'
 )
 
 

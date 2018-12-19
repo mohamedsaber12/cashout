@@ -69,15 +69,17 @@ class CheckerTwoFactorAuthMiddleWare:
         is_media_path = True if media_path in path and f'{media_path}documents/' not in path else False
         urls = [
             reverse("two_factor:profile"),
-            reverse("two_factor:login"),
+            reverse("users:otp_login"),
             reverse("two_factor:setup"),
             '/account/two_factor/qrcode/'
         ]
+        
         if request.user.is_authenticated and request.user.is_checker and not is_media_path:
-            if two_factor_base_url in path and request.user.is_verified():
+            is_verified = request.user.is_verified() or request.user.is_totp_verified
+            if two_factor_base_url in path and is_verified:
                 return redirect(reverse("data:main_view"))            
-            if not request.user.is_verified() and user_has_device(request.user) and (not path in urls or path == reverse("two_factor:profile")):
-                return redirect(reverse("two_factor:login"))
-            if not request.user.is_verified() and not path in urls:
+            if not request.user.is_totp_verified and user_has_device(request.user) and (not path in urls or path == reverse("two_factor:profile")):
+                return redirect(reverse("users:otp_login"))
+            if not is_verified and not path in urls:
                 return redirect(reverse("two_factor:profile"))
             

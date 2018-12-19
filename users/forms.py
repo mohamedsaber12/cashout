@@ -412,3 +412,56 @@ MakerMemberFormSet = modelformset_factory(
 CheckerMemberFormSet = modelformset_factory(
     model=CheckerUser, form=CheckerCreationForm, 
     min_num=1, validate_min=True, can_delete=True, extra=1)
+
+from django_otp.forms import OTPAuthenticationFormMixin
+class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
+    """
+    A form that verifies an authenticated user. It looks very much like
+    :class:`~django_otp.forms.OTPAuthenticationForm`, but without the username
+    and password. The first argument must be an authenticated user; you can use
+    this in place of :class:`~django.contrib.auth.forms.AuthenticationForm` by
+    currying it::
+
+        from functools import partial
+
+        from django.contrib.auth.decoratorrs import login_required
+        from django.contrib.auth.views import login
+
+
+        @login_required
+        def verify(request):
+            form_cls = partial(OTPTokenForm, request.user)
+
+            return login(request, template_name='my_verify_template.html', authentication_form=form_cls)
+
+
+    This form will ask the user to choose one of their registered devices and
+    enter an OTP token. Validation will succeed if the token is verified. See
+    :class:`~django_otp.forms.OTPAuthenticationForm` for details on writing a
+    compatible template (leaving out the username and password, of course).
+
+    :param user: An authenticated user.
+    :type user: :class:`~django.contrib.auth.models.User`
+
+    :param request: The current request.
+    :type request: :class:`~django.http.HttpRequest`
+    """
+    #otp_device = forms.ChoiceField(choices=[])
+    otp_token = forms.CharField(required=False)
+    #otp_challenge = forms.CharField(required=False)
+
+    def __init__(self, user, request=None, *args, **kwargs):
+        super(OTPTokenForm, self).__init__(*args, **kwargs)
+
+        self.user = user
+        #self.fields['otp_device'].choices = self.device_choices(user)
+
+    def clean(self):
+        super(OTPTokenForm, self).clean()
+
+        self.clean_otp(self.user)
+
+        return self.cleaned_data
+
+    def get_user(self):
+        return self.user

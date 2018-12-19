@@ -1,5 +1,7 @@
 from __future__ import print_function, unicode_literals
 
+from django.views.decorators.debug import sensitive_post_parameters
+from django_otp.forms import OTPTokenForm
 import datetime
 import json
 import logging
@@ -19,14 +21,18 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from django.views.generic.edit import FormView
 from django.utils.translation import gettext as _
-
+from two_factor.views.core import LoginView as AbstractOTPLoginView
+from two_factor.forms import AuthenticationTokenForm
+from django.views.decorators.cache import never_cache
+from two_factor.views.utils import class_view_decorator
 from data.forms import FileCategoryForm
 from data.models import FileCategory
 from data.utils import get_client_ip
 from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
                          BrandForm, LevelFormSet, MakerCreationForm,
                          MakerMemberFormSet, PasswordChangeForm,
-                         SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm, RootCreationForm)
+                         SetPasswordForm, CheckerCreationForm, MakerCreationForm, 
+                         ProfileEditForm, RootCreationForm,OTPTokenForm)
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User, Brand
 from users.models import Client
@@ -52,7 +58,8 @@ def ourlogout(request):
     LOGOUT_LOGGER.debug(
         '%s logged out at %s from IP Address %s' % (
             request.user.username, now, get_client_ip(request)))
-
+    request.user.is_totp_verified = False
+    request.user.save()
     logout(request)
     response = HttpResponseRedirect(reverse('users:user_login_view'))
     return response
@@ -81,6 +88,8 @@ def login_view(request):
                     'Logged in ' + str(now) + ' %s with IP Address: %s' % (
                         request.user, IP))
                 if user.is_checker:
+                    user.is_totp_verified = False
+                    user.save()
                     return HttpResponseRedirect(reverse('two_factor:profile'))
 
                 return HttpResponseRedirect(reverse('data:main_view'))
@@ -527,3 +536,22 @@ class EntityBranding(SuperRequiredMixin, UpdateView):
 
 class PasswordResetView(AbstractPasswordResetView):
     success_url = reverse_lazy('users:password_reset_done')
+
+
+
+class OTPLoginView(FormView):
+
+    template_name = 'two_factor/login.html'   
+    success_url = '/'
+    def post(self,request,*args,**kwargs):
+        form = OTPTokenForm(data=request.POST, user=self.request.user)
+        if form.is_valid():
+            request.user.is_totp_verified = True
+            request.user.save()
+            return self.form_valid(form)
+        return self.form_invalid(form)   
+
+    def get_form(self, form_class=None):
+        """Return an instance of the form to be used in this view."""
+        
+        return OTPTokenForm(user=self.request.user)

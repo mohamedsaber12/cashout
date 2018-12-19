@@ -124,9 +124,14 @@
         $('body').css('color', ColorLuminance(color, -0.5));
         $(".nav.child_menu li a").on('mouseover', function (ev) {
             $(this).removeAttr('style');
-        });
+        });    
         $('.fa-bars').css('color', color);
         $('#sidebar-div').css('background',color);
+        //small menu
+         $("#menu_toggle").on('click', function (e) {
+            $('.nav-sm ul.nav.child_menu').css('background', color)
+        });
+        //circles in child menu in sidebar
         $('head').append('<style>.nav-md ul.nav.child_menu li:before{background:' + to + ' !important;}</style>');
     });
 </script>

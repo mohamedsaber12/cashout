@@ -20,6 +20,7 @@ from django.urls import include, path
 from two_factor.urls import urlpatterns as tf_urls
 
 from data.views import protected_serve
+from disbursement.decorators import protected_media_serve
 
 if settings.DEBUG:
     import debug_toolbar
@@ -53,5 +54,8 @@ urlpatterns += [
     path('api/secure/', include('disb.api.urls', namespace='disbursement_api'))
 ]
 
-urlpatterns += static(settings.MEDIA_URL,
+urlpatterns += static(settings.MEDIA_URL + 'documents/',
                       document_root=settings.MEDIA_ROOT, view=protected_serve)
+
+urlpatterns += static(settings.MEDIA_URL,
+                      document_root=settings.MEDIA_ROOT, view=protected_media_serve)

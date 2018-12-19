@@ -13,8 +13,8 @@ if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
 ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
     re.compile(r'^profile*'),
-    re.compile(r'^media*'),
-    re.compile(reverse('users:entity_branding').lstrip('/'))
+    re.compile(reverse('users:entity_branding').lstrip('/')),
+    re.compile(settings.MEDIA_URL.lstrip('/'))
 )
 
 
@@ -31,7 +31,7 @@ class EntitySetupCompletionMiddleWare:
         assert hasattr(request, 'user')
         path = request.path_info.lstrip('/')
         url_is_exempt = any(url.match(path) for url in EXEMPT_URLS)
-        url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)       
+        url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)
         if path == reverse('users:logout').lstrip('/'):
             logout(request)
         if request.user.is_authenticated:
@@ -64,8 +64,10 @@ class CheckerTwoFactorAuthMiddleWare:
 
     def process_view(self, request, view_func, view_args, view_kwargs):
         path = request.path_info
-        two_factor_base_url = 'account/two_factor/'        
-        if request.user.is_authenticated and request.user.is_checker:
+        two_factor_base_url = 'account/two_factor/'
+        media_path = settings.MEDIA_URL
+        is_media_path = True if media_path in path and f'{media_path}documents/' not in path else False
+        if request.user.is_authenticated and request.user.is_checker and not is_media_path:
             user_verified = request.user.is_verified() or default_device(request.user)
             if two_factor_base_url in path and user_verified:
                 return redirect(reverse("data:main_view"))

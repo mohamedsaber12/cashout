@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
@@ -32,14 +33,14 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
-    mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
+    mobile_no = models.CharField(max_length=16, verbose_name= _('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(
         null=True, db_index=True, default=0)
     verification_time = models.DateTimeField(null=True)
     level = models.ForeignKey(
         'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
-    email = models.EmailField('email address', blank=False, unique=True)
+    email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
     avatar_thumbnail = ProcessedImageField(upload_to='avatars',

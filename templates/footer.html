@@ -1,4 +1,8 @@
-<div class="pull-right">
-    <a href="https://www.paymobsolutions.com">Paymob</a> - Payroll Solution
+{% load i18n %}
+{% load custom_tags %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+    <a href="https://www.paymobsolutions.com">{% trans 'Paymob' %}</a> - {% trans 'Payroll Solution'%}
 </div>
 <div class="clearfix"></div>

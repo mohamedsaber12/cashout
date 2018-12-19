@@ -8,7 +8,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
                           inlineformset_factory, modelformset_factory)
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand
 
@@ -21,18 +21,18 @@ class SetPasswordForm(forms.Form):
     password_widget = forms.TextInput(
         attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'})
     error_messages = {
-        'password_mismatch': "The two passwords fields didn't match.",
-        'weak_password': "Password must contain at least 8 characters",
+        'password_mismatch': _("The two passwords fields didn't match."),
+        'weak_password': _("Password must contain at least 8 characters"),
     }
     new_password1 = forms.CharField(
-        label="New password",
+        label=_("New password"),
         widget=password_widget,
         strip=False,
         help_text=password_validation.password_validators_help_text_html(),
         # validators= [ComplexPasswordValidator],
     )
     new_password2 = forms.CharField(
-        label="New password confirmation",
+        label=_("New password confirmation"),
         strip=False,
         widget=password_widget,
     )
@@ -74,11 +74,11 @@ class PasswordChangeForm(SetPasswordForm):
     password_widget = forms.TextInput(
         attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'})
     error_messages = dict(SetPasswordForm.error_messages, **{
-        'password_incorrect': "Your old password was entered incorrectly. Please enter it again.",
-        'similar_password': "Your old password is similar to the new password. ",
+        'password_incorrect': _("Your old password was entered incorrectly. Please enter it again."),
+        'similar_password': _("Your old password is similar to the new password. "),
     })
     old_password = forms.CharField(
-        label="Old password",
+        label=_("Old password"),
         strip=False,
         widget=password_widget,
     )
@@ -297,8 +297,8 @@ class LevelForm(forms.ModelForm):
 
 
 class MakerCreationForm(forms.ModelForm):
-    first_name = forms.CharField()
-    last_name = forms.CharField()
+    first_name = forms.CharField(label=_('First name'))
+    last_name = forms.CharField(label=_('Last name'))
 
     class Meta:
         model = MakerUser
@@ -337,8 +337,8 @@ class MakerCreationForm(forms.ModelForm):
 
 
 class CheckerCreationForm(forms.ModelForm):
-    first_name = forms.CharField()
-    last_name = forms.CharField()
+    first_name = forms.CharField(label=_('First name'))
+    last_name = forms.CharField(label=_('Last name'))
 
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
@@ -346,6 +346,8 @@ class CheckerCreationForm(forms.ModelForm):
         self.fields["level"].choices = [('', '------')] + [
             (r.id, f'{r} {i+1}') for i, r in enumerate(Levels.objects.filter(created__hierarchy=request.user.hierarchy).order_by('max_amount_can_be_disbursed'))
         ]
+
+        self.fields["level"].label = _('Level')
 
         for field in iter(self.fields):
             # get current classes from Meta

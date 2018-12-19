@@ -6,6 +6,7 @@ import xlrd
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError
+from django.utils.translation import gettext as _
 
 from data.models import Doc
 from disb.models import DisbursementData
@@ -47,7 +48,7 @@ def handle_disbursement_file(doc_obj_id):
                     amount.append(float(item.value))
                 except ValueError:
                     doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = "This file may be has invalid amounts"
+                    doc_obj.processing_failure_reason = _("This file may be has invalid amounts")
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -66,7 +67,7 @@ def handle_disbursement_file(doc_obj_id):
                     str_value = '002' + str_value
                 else:
                     doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = "This file may be has invalid msisdns"
+                    doc_obj.processing_failure_reason = _("This file may be has invalid msisdns")
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -88,13 +89,13 @@ def handle_disbursement_file(doc_obj_id):
             return True
         except IntegrityError:
             doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = "This file contains duplicates"
+            doc_obj.processing_failure_reason = _("This file contains duplicates")
             doc_obj.save()
             notify_maker(doc_obj)
             return False
     else:
         doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = "This file may be has msisdn which has no amount"
+        doc_obj.processing_failure_reason = _("This file may be has msisdn which has no amount")
         doc_obj.save()
         notify_maker(doc_obj)
         return False
@@ -103,7 +104,7 @@ def handle_disbursement_file(doc_obj_id):
 @app.task()
 def generate_file(doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    filename = 'failed_disbursed_%s.xlsx' % str(doc_id)
+    filename = _('failed_disbursed_%s.xlsx') % str(doc_id)
 
     dataset = DisbursementDataResource(
         file_category=doc_obj.file_category,
@@ -156,6 +157,6 @@ def notify_maker(doc):
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email],
-        subject='[Payroll] File Upload Notification',
+        subject= _('[Payroll] File Upload Notification'),
         message=message
     )

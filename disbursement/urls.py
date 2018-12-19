@@ -18,7 +18,6 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from two_factor.urls import urlpatterns as tf_urls
-
 from data.views import protected_serve
 from disbursement.decorators import protected_media_serve
 
@@ -46,7 +45,8 @@ else:
     handler400 = 'disbursement.views.bad_request_view'
 
 
-urlpatterns += [
+urlpatterns += [    
+    path('i18n/', include('django.conf.urls.i18n')),
     path('', include('data.urls', namespace='data')),
     path('', include('users.urls', namespace='users')),
     path('', include('disb.urls', namespace='disbursement')),

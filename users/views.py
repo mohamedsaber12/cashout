@@ -18,6 +18,7 @@ from django.urls import reverse, reverse_lazy
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from django.views.generic.edit import FormView
+from django.utils.translation import gettext as _
 
 from data.forms import FileCategoryForm
 from data.models import FileCategory
@@ -443,7 +444,7 @@ class AddCheckerView(BaseAddMemberView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
-            {'who': 'checker', 'success_url': reverse_lazy("users:add_checker")})
+            {'who': _('checker'), 'success_url': reverse_lazy("users:add_checker")})
         return context
 
 
@@ -457,7 +458,7 @@ class AddMakerView(BaseAddMemberView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(
-            {'who': 'maker', 'success_url': reverse_lazy("users:add_maker")})
+            {'who': _('maker'), 'success_url': reverse_lazy("users:add_maker")})
         return context
 
 

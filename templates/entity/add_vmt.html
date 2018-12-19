@@ -1,9 +1,10 @@
 {% extends 'base_form_singlepage.html' %}
+{% load i18n %}
 {% load custom_tags %}
-{% block title %} VMT {% endblock %}
+{% block title %} {% trans 'VMT' %} {% endblock %}
 {% block form %}
     <form action="." method="post">
-      <h1>VMT Credentials</h1>
+      <h1>{% trans 'VMT Credentials' %}</h1>
 
         {% csrf_token %}
             <div>
@@ -25,7 +26,7 @@
             </div>
 
       <div>
-        <input class="btn btn-default submit" type="submit" value="Create">
+        <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
       </div>
 
       <div class="clearfix"></div>

@@ -1,5 +1,7 @@
 {% extends 'new_base.html' %}
 {% load static %}
+{% load i18n %}
+{% load l10n %}
 {% block gentellacss %}
     <link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
     <link rel="stylesheet" href="{% static 'gentella/switchery.min.css'%}">
@@ -9,47 +11,47 @@
         }
     </style>
 {% endblock %}
-{% block title %}Settings{% endblock %}
+{% block title %}{% trans 'Settings' %}{% endblock %}
 {% block body %}
         <form action="" method="post">
     </form>
 
-    <p>Please follow the steps to setup your payroll settings.</p>
+    <p>{% trans 'Please follow the steps to setup your payroll settings.' %}</p>
     <div id="disb_widget" class="form_wizard wizard_horizontal">
       <ul class="wizard_steps">
         <li>
           <a href="#step-1">
-            <span class="step_no">1</span>
+            <span class="step_no">{{1|localize}}</span>
             <span class="step_descr">
-                              Levels<br />
-                              <small>Add levels for checkers</small>
+                              {% trans 'Levels' %}<br />
+                              <small>{% trans 'Add levels for checkers' %}</small>
                           </span>
           </a>
         </li>
         <li>
           <a href="#step-2">
-            <span class="step_no">2</span>
+            <span class="step_no">{{2|localize}}</span>
             <span class="step_descr">
-                              Makers<br />
-                              <small>Add Maker users</small>
+                              {% trans 'Makers' %}<br />
+                              <small>{% trans 'Add Maker users' %}</small>
                           </span>
           </a>
         </li>
         <li>
           <a href="#step-3">
-            <span class="step_no">3</span>
+            <span class="step_no">{{3|localize}}</span>
             <span class="step_descr">
-              Checkers<br />
-              <small>Add Checker users</small>
+              {% trans 'Checkers' %}<br />
+              <small>{% trans 'Add Checker users' %}</small>
           </span>
           </a>
         </li>
         <li>
           <a href="#step-4">
-            <span class="step_no">4</span>
+            <span class="step_no">{{4|localize}}</span>
             <span class="step_descr">
-              Category<br />
-              <small>Add File Specs</small>
+              {% trans 'Category' %}<br />
+              <small>{% trans 'Add File Specs' %}</small>
           </span>
           </a>
         </li>
@@ -127,7 +129,7 @@
 </table>
     
 
-            <button id="add_level_btn" class="btn btn-success">Add another level</button>
+            <button id="add_level_btn" class="btn btn-success">{% trans 'Add another level' %}</button>
 
       </div>
       <div id="step-2">
@@ -194,7 +196,7 @@
         {% endfor %}
     </tr>
 </table>
-<button id="add_maker_btn" class="btn btn-success">Add family member</button>
+<button id="add_maker_btn" class="btn btn-success">{% trans 'Add family member' %}</button>
       </div>
       <div id="step-3">
         
@@ -260,7 +262,7 @@
         {% endfor %}
     </tr>
 </table>
-<button id="add_checker_btn" class="btn btn-success">Add family member</button>
+<button id="add_checker_btn" class="btn btn-success">{% trans 'Add family member' %}</button>
       </div>
        
       
@@ -314,6 +316,9 @@
         let step = parseInt('{{step}}');
         var wizard = $('#disb_widget').smartWizard({
             selected: step,
+            labelNext:' {% trans "Next" %} ',
+            labelPrevious: ' {% trans "Previous" %} ',
+            labelFinish: ' {% trans "Finish" %} ',
             onLeaveStep:leaveAStepCallback,
             onFinish: onFinishCallback
 

@@ -1,5 +1,6 @@
 from django import forms
 from django.forms import modelformset_factory
+from django.utils.translation import gettext as _
 
 from disb.models import Agent, VMTData
 
@@ -40,7 +41,7 @@ class AgentForm(forms.ModelForm):
 
 
 class PinForm(forms.Form):
-    pin = forms.CharField(widget=forms.PasswordInput(attrs={'size': 6, 'maxlength': 6, 'placeholder':'Pin'}))
+    pin = forms.CharField(widget=forms.PasswordInput(attrs={'size': 6, 'maxlength': 6, 'placeholder':_('Pin')}))
 
 
 AgentFormSet = modelformset_factory(

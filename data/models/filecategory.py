@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 # Create your models here.
 
@@ -15,41 +16,41 @@ class FileCategoryManager(models.Manager):
 
 class FileCategory(models.Model):
     file_type = models.CharField(
-        max_length=128, unique=False, verbose_name='File Category Name')
+        max_length=128, unique=False, verbose_name=_('File Category Name'))
     identifier1 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 1')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
     identifier2 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 2')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 2'))
     identifier3 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 3')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 3'))
     identifier4 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 4')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 4'))
     identifier5 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 5')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 5'))
     identifier6 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 6')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 6'))
     identifier7 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 7')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 7'))
     identifier8 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 8')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 8'))
     identifier9 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 9')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 9'))
     identifier10 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name='Header 10')
+        max_length=128, null=True, blank=True, verbose_name=_('Header 10'))
     num_of_identifiers = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)],
-                                             verbose_name='Number of identifiers filled')
+                                             verbose_name=_('Number of identifiers filled'))
     user_created = models.OneToOneField(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
     has_header = models.BooleanField(
-        default=True, verbose_name='Will the excel file uploaded has header?')
+        default=True, verbose_name=_('Will the excel file uploaded has header?'))
     unique_field = models.CharField(max_length=128, null=True, blank=True,
-                                    verbose_name='What is the unique field?')
+                                    verbose_name=_('What is the unique field?'))
     amount_field = models.CharField(max_length=128, null=True, blank=True,
-                                    verbose_name='what is amount field?',
-                                    help_text='for ex: loan_field')
+                                    verbose_name=_('what is amount field?'),
+                                    help_text=_('for ex: loan_field'))
     no_of_reviews_required = models.PositiveSmallIntegerField(default=3,
-                                                              verbose_name='Number of reviews',
-                                                              help_text='Number of reviews required to be disbursed'
+                                                              verbose_name=_('Number of reviews'),
+                                                              help_text=_('Number of reviews required to be disbursed')
                                                               )
 
     objects = FileCategoryManager()

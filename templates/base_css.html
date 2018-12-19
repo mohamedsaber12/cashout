@@ -1,4 +1,6 @@
 {% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 
 <link rel="icon" href="" type="image/ico" />
 
@@ -15,9 +17,17 @@
 <!-- bootstrap-daterangepicker -->
 <link href="{% static 'gentella/daterangepicker.css' %}" rel="stylesheet">
 
-<!-- Custom Theme Style -->
-<link href="{% static 'gentella/css/index/custom.min.css' %}" rel="stylesheet">
+{% if LANGUAGE_CODE == 'en' %}
 
+<!-- ltr Custom Theme Style -->
+<link href="{% static 'gentella/css/index/custom.min.css' %}" rel="stylesheet">
+{%else%}
+<!-- Bootstrap rtl -->
+<link href="{% static 'gentella/vendors/bootstrap-rtl/dist/css/bootstrap-rtl.min.css' %}" rel="stylesheet">
+
+<!-- rtl Custom Theme Style -->
+<link href="{% static 'gentella/rtl/build/css/custom.min.css' %}" rel="stylesheet">
+{%endif%}
 <style>
     .site_title{
         display:contents;

@@ -16,7 +16,7 @@
 
     {% if has_file_category and request.user.is_maker %}
         <div class="well upload-nav col-xs-12">
-                <h3 class="navbar-left">Upload Form</h3>
+                <h3 class="navbar-left">{% trans 'Upload Form' %}</h3>
                 
                 <div class="x_content">
                     <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
@@ -30,7 +30,7 @@
 
         <div class="well upload-nav col-xs-12">
 
-            <strong  style="margin-top: 15px;">Please Add file category first</strong>
+            <strong  style="margin-top: 15px;">{% trans 'Please Add file category first' %}</strong>
             
         </div>
     {% endif %}

@@ -1,8 +1,10 @@
 {% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
 
 {% if cancel_url %}
   <a href="{{ cancel_url }}"
-     class="pull-right btn btn-danger">{% trans "Cancel" %}</a>
+     class="pull-{{'right'|invert_dir:LANGUAGE_CODE}} btn btn-danger">{% trans "Cancel" %}</a>
 {% endif %}
 {% if wizard.steps.prev %}
   <button name="wizard_goto_step" type="submit"

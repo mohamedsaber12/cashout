@@ -1,7 +1,10 @@
 {% extends 'new_base.html' %}
 {% load i18n %}
 {% load static %}
-{% block title %} Branding {% endblock %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Branding' %} {% endblock %}
 
 {% block gentellacss %}
 <link href="{% static 'gentella/vendors/mjolnic-bootstrap-colorpicker/bootstrap-colorpicker.min.css' %}" rel="stylesheet">
@@ -13,7 +16,7 @@
 
 <div class="page-title">
     <div class="title_left">
-        <h3>Entity Branding</h3>
+        <h3>{% trans 'Entity Branding' %}</h3>
     </div>
 
 
@@ -29,7 +32,7 @@
 
                         {% csrf_token %}
                         <div class="form-group">
-                            <label class="control-label col-md-3 col-sm-3 col-xs-12">Color</label>
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">{% trans 'Color' %}</label>
                             <div class="col-md-9 col-sm-9 col-xs-12">
                                 
                                     <div id="color-picker" style="display: inline-block;" ></div>
@@ -54,7 +57,7 @@
 
 
                         {% endfor %}
-                        <input type="submit" value="submit" class="btn btn-upload btn-success pull-right">
+                        <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                     </form>
 
 

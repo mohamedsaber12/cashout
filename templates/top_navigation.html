@@ -1,3 +1,8 @@
+{% load i18n %}
+{% get_available_languages as LANGUAGES %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
 <div class="nav_menu">
   <nav>
     <div class="nav toggle">
@@ -15,18 +20,30 @@
           {%endif%}  
           <span class=" fa fa-angle-down"></span>
         </a>
-        <ul class="dropdown-menu dropdown-usermenu pull-right">
-          <li><a href="javascript:;"> Profile</a></li>
+        <ul class="dropdown-menu dropdown-usermenu pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+          <li><a href="javascript:;"> {% trans 'Profile' %}</a></li>
           {% if request.user.is_root %}
             <li>
               <a href="javascript:;">
-                <span class="badge bg-red pull-right">{{ request.user.setup.percentage }}%</span>
-                <span>Settings</span>
+                <span class="badge bg-red pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{{ request.user.setup.percentage }}%</span>
+                <span>{% trans 'Settings'%}</span>
               </a>
             </li>
           {%endif%}  
-          <li><a href="javascript:;">Help</a></li>
-          <li><a href="{% url 'users:logout' %}"><i class="fa fa-sign-out pull-right"></i> Log Out</a></li>
+          <li><a style="pointer-events: none;cursor: default;">Language:</a>
+          </li>
+          {% for code,lang in LANGUAGES %}
+            <li>
+              {% if code == LANGUAGE_CODE %}
+                <a style="pointer-events: none;cursor: default;color:black;">&emsp;{{lang}}</a>
+              {%else%}  
+                <a id="lang" data="{{code}}" >&emsp;{{lang}}</a>
+              {%endif%}   
+            </li>
+          {%endfor%}
+                  
+         
+          <li><a href="{% url 'users:logout' %}"><i class="fa fa-sign-out pull-{{'right'|invert_dir:LANGUAGE_CODE}}"></i> {% trans 'Log Out' %}</a></li>
         </ul>
       </li>
 

@@ -1,10 +1,11 @@
 {% extends 'base_form_singlepage.html' %}
+{% load i18n %}
 {% load custom_tags %}
 {% load static %}
-{% block title %} Agents {% endblock %}
+{% block title %} {% trans 'Agents' %} {% endblock %}
 {% block form %}
     <form action="." method="post" id="step_1_form" >
-      <h1>Add Agents</h1>
+      <h1>{% trans 'Add Agents' %}</h1>
 
           {% csrf_token %}
 
@@ -62,7 +63,7 @@
                 {% endfor %}
             </div>
       <div>
-        <input class="btn btn-default submit" type="submit" value="Create">
+        <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
       </div>
 
       <div class="clearfix"></div>

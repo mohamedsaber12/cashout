@@ -43,7 +43,8 @@ class VMTData(models.Model):
             "REQUEST_GATEWAY_TYPE": self.request_gateway_type,
             "SERVICETYPE": "P2P",
             "TYPE": "BPREQ",
-            "WALLETISSUER": self.wallet_issuer
+            "WALLETISSUER": self.wallet_issuer,
+            "SOURCE": "DISB"
         }
         return data
 

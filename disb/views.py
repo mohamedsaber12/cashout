@@ -73,14 +73,16 @@ def disburse(request, doc_id):
         response = reverse_lazy('data:doc_viewer', kwargs={'doc_id': doc_id})
         return redirect(response)
 
-
 @setup_required
 @login_required
 def disbursement_list(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
-            'data.can_disburse') and doc_obj.is_disbursed:
-        context = {'Ddata': doc_obj.disbursement_data.all()}
+    can_disburse = doc_obj.can_user_disburse(request.user)[0]
+    if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and doc_obj.is_disbursed:
+        context = {
+            'Ddata': doc_obj.disbursement_data.all(),
+            'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0
+        }
     else:
         context = {'Ddata': None}
     context.update({'doc_id': doc_id})
@@ -91,12 +93,14 @@ def disbursement_list(request, doc_id):
 @login_required
 def generate_failed_disbursement_data(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    if doc_obj.owner.hierarchy == request.user.hierarchy and request.user.has_perm(
-            'data.can_disburse') and doc_obj.is_disbursed:
+    can_disburse = doc_obj.can_user_disburse(request.user)[0]
+    if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and doc_obj.is_disbursed:
         generate_file_task = generate_file.delay(doc_id)
-        return render_to_response("disbursement/disbursement_file_download.html", {"task_id": str(generate_file_task.task_id),
-                                                                                   "media_url": settings.MEDIA_URL})
-
+        return render(request,
+                      template_name="disbursement/disbursement_file_download.html",
+                      context={"task_id": str(generate_file_task.task_id), "media_url": settings.MEDIA_URL}
+        )
+    return HttpResponse(status=403)
 
 @setup_required
 @login_required

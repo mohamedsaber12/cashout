@@ -1,10 +1,7 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
-{% load staticfiles %}
 {% block title %} Transactions {% endblock %}
-{% block extra_head %}
-{% endblock %}
-
 {% block body %}
 <div id="content">{% trans 'Please wait.' %} <span id="loading"></span></div>
 {% endblock %}
@@ -18,8 +15,8 @@
 
             $.getJSON(url+"?task_id=".concat('{{task_id}}'), function(data){
                 if(data.filename) {
-                    var file_url = '{{media_url}}' + 'disbursement/' + data.filename;
-                    $("#content").html("{% trans 'If your download doesn't start automatically, please click' %} <a href='" + file_url + "'>{% trans 'here' %}</a>.");
+                    var file_url = '{{media_url}}' + 'documents/disbursement/' + data.filename;
+                    $("#content").html("{% trans 'If your download does not start automatically, please click' %} <a href='" + file_url + "'>{% trans 'here' %}</a>.");
                     window.location.href = file_url;
                 } else {
                     setTimeout(worker, 5000);

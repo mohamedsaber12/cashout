@@ -13,7 +13,8 @@ from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
 from users.models import User
-
+import random
+import string
 
 @app.task(ignore_result=False)
 def handle_disbursement_file(doc_obj_id):
@@ -103,16 +104,20 @@ def handle_disbursement_file(doc_obj_id):
 
 @app.task()
 def generate_file(doc_id):
+    def randomword(length):
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
     doc_obj = Doc.objects.get(id=doc_id)
-    filename = _('failed_disbursed_%s.xlsx') % str(doc_id)
+    filename = _('failed_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
 
     dataset = DisbursementDataResource(
         file_category=doc_obj.file_category,
         doc=doc_obj
     )
-    dataset = dataset.export('xlsx')
-    with open("%s%s%s" % (settings.MEDIA_ROOT, "/disbursement/", filename), "w+") as f:
-        f.writelines(dataset.get_xlsx())
+    dataset = dataset.export()
+    with open("%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename), "wb") as f:
+        f.write(dataset.xlsx)
 
     return filename
 #

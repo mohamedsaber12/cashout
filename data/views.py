@@ -274,6 +274,7 @@ def document_view(request, doc_id):
 def protected_serve(request, path, document_root=None, show_indexes=False):
     DOWNLOAD_LOGGER.debug(
         get_client_ip(request) + ' downloaded ' + path + 'at' + str(datetime.datetime.now()) + ' ' + str(request.user))
+    path = 'documents/' + path
     try:
         doc = Doc.objects.get(file=path)
         if doc.owner.hierarchy == request.user.hierarchy:

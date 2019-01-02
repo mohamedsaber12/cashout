@@ -303,7 +303,7 @@ class MakerCreationForm(forms.ModelForm):
     class Meta:
         model = MakerUser
         fields = ('first_name', 'last_name',
-                  'mobile_no', 'email', 'is_staff')
+                  'mobile_no', 'email')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

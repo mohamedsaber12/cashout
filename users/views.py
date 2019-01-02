@@ -368,8 +368,13 @@ def delete(request):
     if request.is_ajax() and request.method == 'POST':
         try:
             data = request.POST.copy()
-            user = User.objects.get(id=int(data['user_id']))
-            user.delete()
+            if data.get('client'):
+                client = Client.objects.get(id=int(data['user_id']))
+                user = client.client
+                client.delete_client()
+            else:
+                user = User.objects.get(id=int(data['user_id']))
+                user.delete()
             DELETE_USER_VIEW_LOGGER.debug(f'user deleted with username {user.username}')
             return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
         except User.DoesNotExist:

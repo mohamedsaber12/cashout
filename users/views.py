@@ -498,7 +498,6 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def form_valid(self, form):
         self.object = form.save()
-        import ipdb; ipdb.set_trace()
         EntitySetup.objects.create(user=self.request.user, entity=self.object)
         Client.objects.create(creator=self.request.user, client=self.object)
         ROOT_CREATE_LOGGER.debug(

@@ -37,5 +37,7 @@ urlpatterns = [
     path('client/toggle/', views.toggle_client, name='toggle'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
     path('clients/', views.Clients.as_view(), name='clients'),
-    path('settings/branding/', views.EntityBranding.as_view(), name='entity_branding')
+    path('settings/branding/', views.EntityBranding.as_view(), name='entity_branding'),
+    path('account/token/', views.OTPLoginView.as_view(), name='otp_login')
+
 ]

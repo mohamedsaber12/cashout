@@ -50,6 +50,7 @@ class User(AbstractUser):
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     brand = models.ForeignKey(
         'users.Brand', on_delete=models.SET_NULL, null=True)
+    is_totp_verified = models.BooleanField(null=True, default=False)
     
     objects = UserManager()
 

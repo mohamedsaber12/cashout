@@ -8,9 +8,11 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
                           inlineformset_factory, modelformset_factory)
+from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 
 from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand
+from users.signals import ALLOWED_CHARACTERS
 
 
 class SetPasswordForm(forms.Form):
@@ -230,8 +232,8 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
         model = CheckerUser
 
 
-class RootCreationForm(UserForm):
-    class Meta(UserCreationForm.Meta):
+class RootCreationForm(forms.ModelForm):
+    class Meta:
         model = RootUser
         fields = ("username", "email")
         field_classes = {}
@@ -247,7 +249,7 @@ class RootCreationForm(UserForm):
         return name
 
     def save(self, commit=True):
-        user = super(UserForm, self).save(commit=False)
+        user = super().save(commit=False)
         if self.request.user.is_superadmin:
             maximum = max(RootUser.objects.values_list(
                 'hierarchy', flat=True), default=False)
@@ -261,7 +263,9 @@ class RootCreationForm(UserForm):
 
         if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy
-
+        random_pass = get_random_string(
+            allowed_chars=ALLOWED_CHARACTERS, length=12)
+        user.set_password(random_pass)
         user.save()
         return user
 

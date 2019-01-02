@@ -6,26 +6,21 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.views import PasswordResetView as AbstractPasswordResetView
-from django.db import IntegrityError, transaction
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render
-from rest_framework.authtoken.models import Token
+from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
+from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
-from django.views.generic.edit import FormView
-from django.utils.translation import gettext as _
+from rest_framework.authtoken.models import Token
 
 from data.forms import FileCategoryForm
-from data.models import FileCategory
 from data.utils import get_client_ip
-from users.forms import (CheckerCreationForm, CheckerMemberFormSet,
-                         BrandForm, LevelFormSet, MakerCreationForm,
-                         MakerMemberFormSet, PasswordChangeForm,
+from users.forms import (CheckerMemberFormSet,
+                         BrandForm, LevelFormSet, MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm, ProfileEditForm, RootCreationForm)
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User, Brand
@@ -470,7 +465,7 @@ class ProfileView(DetailView):
     template_name = 'users/profile.html'
 
     def get_object(self, queryset=None):
-        return self.request.user
+        return get_object_or_404(User, username=self.kwargs['username'])
 
 
 class ProfileUpdateView(UpdateView):
@@ -482,7 +477,7 @@ class ProfileUpdateView(UpdateView):
     form_class = ProfileEditForm
 
     def get_object(self, queryset=None):
-        return self.request.user
+        return get_object_or_404(User, username=self.kwargs['username'])
 
 
 class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
@@ -503,6 +498,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def form_valid(self, form):
         self.object = form.save()
+        import ipdb; ipdb.set_trace()
         EntitySetup.objects.create(user=self.request.user, entity=self.object)
         Client.objects.create(creator=self.request.user, client=self.object)
         ROOT_CREATE_LOGGER.debug(

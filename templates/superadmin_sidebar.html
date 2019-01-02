@@ -52,7 +52,7 @@
                     </ul>
                 </li>
                 
-                <li><a href="{% url 'users:profile' %}"><i class="fa fa-user"></i>{% trans 'Profile' %}</a>
+                <li><a href="{% url 'users:profile' request.user.username %}"><i class="fa fa-user"></i>{% trans 'Profile' %}</a>
                 </li>
 
                 <li><a href="{% url 'users:entity_branding' %}"><i class="fa fa-cog"></i>{% trans 'Branding' %}</a></li>

@@ -98,7 +98,10 @@ class User(AbstractUser):
 
     @property
     def can_pass(self):
-        return self.root.setup.can_pass()
+        try:
+            return self.root.setup.can_pass()
+        except:
+            return False
 
     @cached_property
     def is_root(self):

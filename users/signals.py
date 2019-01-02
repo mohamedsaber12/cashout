@@ -20,6 +20,7 @@ MESSAGE = 'Dear {0}\n' \
 
 @receiver(post_save, sender=RootUser)
 def create_setup(sender, instance, created, **kwargs):
+    notify_user(sender, instance, created, **kwargs)
     if created:
         Setup.objects.create(user=instance)
 

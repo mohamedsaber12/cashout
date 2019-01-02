@@ -70,7 +70,7 @@
                             <li><a href="{% url 'users:settings' %}">{% trans 'Setup' %}</a></li>
                             <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
                         {% endif %}
-                        <li><a href="{% url 'users:profile' %}">{% trans 'Profile' %}</a></li>                        
+                        <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
                     </ul>
                 </li>
 

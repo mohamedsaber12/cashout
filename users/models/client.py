@@ -1,5 +1,5 @@
 from django.db import models
-
+from users.models import User
 
 class ClientManager(models.Manager):
     def toggle(self, *args, **kwargs):
@@ -10,6 +10,7 @@ class ClientManager(models.Manager):
         except:
             return False
 
+    
 
 class Client(models.Model):
     creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.DO_NOTHING, related_name='clients')
@@ -23,3 +24,7 @@ class Client(models.Model):
     def toggle_activation(self):
         self.is_active = not self.is_active
         self.save()
+
+    def delete_client(self):
+        User.objects.filter(hierarchy=self.client.hierarchy).delete()
+        self.delete()

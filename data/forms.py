@@ -163,21 +163,21 @@ class FileCategoryForm(forms.ModelForm):
             else:
                 field.widget.attrs['class'] = 'form-control'
 
-    def clean_file_type(self):
+    def clean_name(self):
         try:
-            file_category = FileCategory.objects.get(Q(file_type=self.cleaned_data["file_type"]) &
+            file_category = FileCategory.objects.get(Q(name=self.cleaned_data["name"]) &
                                                      Q(user_created__hierarchy=self.request.user.hierarchy))
         except:
             file_category = None
 
         try:
-            if not file_category == self.obj and self.cleaned_data["file_type"] == file_category.file_type:
+            if not file_category == self.obj and self.cleaned_data["name"] == file_category.name:
                 raise forms.ValidationError(self.add_error(
-                    'file_type', _('Name already Exist') ))
+                    'name', _('Name already Exist') ))
             else:
-                return self.cleaned_data["file_type"]
+                return self.cleaned_data["name"]
         except AttributeError:
-            return self.cleaned_data["file_type"]
+            return self.cleaned_data["name"]
 
     def clean_no_of_reviews_required(self):
         checkers_no = User.objects.get_all_checkers(
@@ -189,7 +189,7 @@ class FileCategoryForm(forms.ModelForm):
 
 
 class FileCategoryViewForm(forms.ModelForm):
-    file_type = forms.ModelChoiceField(queryset=None,
+    name = forms.ModelChoiceField(queryset=None,
                                        widget=forms.Select(attrs={'class': 'form-control',
                                                                   'style': 'height: 32px;/n'
                                                                            'margin-top: 2px;'}),
@@ -208,12 +208,12 @@ class FileCategoryViewForm(forms.ModelForm):
     class Meta:
         model = FileCategory
         fields = [
-            'file_type'
+            'name'
         ]
 
     def __init__(self):
         super(FileCategoryViewForm, self).__init__()
-        self.fields["file_type"].queryset = FileCategory.objects.filter(
+        self.fields["name"].queryset = FileCategory.objects.filter(
             Q(user_created__hierarchy=self.request.user.hierarchy))
 
 

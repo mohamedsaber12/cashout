@@ -8,7 +8,14 @@ from django.utils.translation import gettext_lazy as _
 
 from data.utils import pkgen, update_filename
 
+
 class Doc(models.Model):
+    DISBURSEMENT = 1
+    COLLECTION = 2
+    types = (
+        DISBURSEMENT, 'DISBURSEMENT',
+        COLLECTION, 'COLLECTION'
+    )
     id = models.CharField(primary_key=True, editable=False,
                           unique=True, db_index=True, max_length=32, default=pkgen)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
@@ -27,6 +34,7 @@ class Doc(models.Model):
     processing_failure_reason = models.CharField(max_length=256, null=True)
     total_amount = models.FloatField(default=False)
     total_count = models.PositiveIntegerField(default=False)
+    type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
 
     class Meta:
         permissions = (("upload_file", "upload file"),

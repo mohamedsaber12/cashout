@@ -15,7 +15,7 @@ class FileCategoryManager(models.Manager):
 
 
 class FileCategory(models.Model):
-    file_type = models.CharField(
+    name = models.CharField(
         max_length=128, unique=False, verbose_name=_('File Category Name'))
     identifier1 = models.CharField(
         max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
@@ -57,13 +57,13 @@ class FileCategory(models.Model):
 
     class Meta:
         verbose_name_plural = 'File Categories'
-        unique_together = (('user_created', 'file_type'),)
+        unique_together = (('user_created', 'name'),)
 
     def __unicode__(self):
-        return self.user_created.username + ' ' + self.file_type
+        return self.user_created.username + ' ' + self.name
 
     def __str__(self):
-        return self.user_created.username + ' ' + self.file_type
+        return self.user_created.username + ' ' + self.name
 
     def identifiers(self):
         fields = []
@@ -82,9 +82,5 @@ class FileCategory(models.Model):
     # TODO : POSTPONED not now
     def save(self, *args, **kwargs):
         """Add a permission for every file category"""
-        # Permission.objects.get_or_create(content_type=ContentType.objects.get_for_model(Doc),
-        #                                  codename="access_type_%s" % self.file_type,
-        #                                  name="access type %s" % self.file_type)
-
         self.num_of_identifiers = len(self.identifiers())
         super(FileCategory, self).save(*args, **kwargs)

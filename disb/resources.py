@@ -15,7 +15,7 @@ class DisbursementDataResource(resources.ModelResource):
         self.msisdn_position = 0
 
     def get_export_headers(self):
-        headers = self.file_category.identifiers()
+        headers = self.doc.format.identifiers()
         amount_field = self.file_category.amount_field
         msisdn_field = self.file_category.unique_field
         for pos, header in enumerate(headers):

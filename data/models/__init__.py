@@ -1,9 +1,13 @@
 from data.models.doc import Doc
 from data.models.doc_review import DocReview
 from data.models.filecategory import FileCategory
+from data.models.format import Format
+from data.models.file_data import FileData
 
 __all__ = [
     'Doc',
     'FileCategory',
-    'DocReview'
+    'DocReview',
+    'Format',
+    'FileData'
 ]

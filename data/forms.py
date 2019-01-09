@@ -75,7 +75,7 @@ class FileDocumentForm(forms.ModelForm):
         Function that validates the file type, file name and size
         """
         file = self.cleaned_data['file']
-        file_category = self.category
+        format_type = self.cleaned_data['format']
         if file:
 
             file_type = file.content_type.split('/')[1]
@@ -119,7 +119,7 @@ class FileDocumentForm(forms.ModelForm):
                 with os.fdopen(fd, 'wb') as out:
                     out.write(file.read())
 
-                if file_category.num_of_identifiers != 0:
+                if format_type.num_of_identifiers != 0:
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
@@ -127,7 +127,7 @@ class FileDocumentForm(forms.ModelForm):
                             _('File uploaded in not in proper form'))
                     xl_sheet = xl_workbook.sheet_by_index(0)
 
-                    if len(file_category.identifiers()) != xl_sheet.ncols:
+                    if len(format_type.identifiers()) != xl_sheet.ncols:
                         raise forms.ValidationError(
                             _('File uploaded in not in proper form'))
             finally:
@@ -144,6 +144,8 @@ class FileDocumentForm(forms.ModelForm):
         model = Doc
         fields = [
             'file',
+            'format',
+            'type_of'
         ]
 
 
@@ -151,17 +153,12 @@ class FileCategoryForm(forms.ModelForm):
     class Meta:
         model = FileCategory
         fields = '__all__'
-        exclude = ('user_created',
-                   'num_of_identifiers')
+        exclude = ('user_created',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            if field_name == 'has_header':
-                field.widget.attrs['class'] = 'js-switch'
-                pass
-            else:
-                field.widget.attrs['class'] = 'form-control'
+            field.widget.attrs['class'] = 'form-control'
 
     def clean_name(self):
         try:

@@ -26,7 +26,7 @@ from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
 from data.models import Doc, DocReview, FileCategory
-from data.tasks import handle_disbursement_file
+from data.tasks import handle_disbursement_file, handle_uploaded_file
 from data.utils import get_client_ip, paginator
 from users.decorators import setup_required
 from users.models import User
@@ -67,7 +67,10 @@ def file_upload(request):
             now = datetime.datetime.now()
             UPLOAD_LOGGER.debug(
                 '%s uploaded file at ' % request.user + str(now))
-            handle_disbursement_file.delay(file_doc.id)
+            if file_doc.type_of == Doc.COLLECTION:
+                handle_uploaded_file.delay(file_doc.id)
+            else:
+                handle_disbursement_file.delay(file_doc.id)
 
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
@@ -79,7 +82,6 @@ def file_upload(request):
 
             return JsonResponse(form_doc.errors, status=400)
 
-    
     doc_list = Doc.objects.filter(
         owner__hierarchy=request.user.hierarchy)
     doc_list = filter_docs_by_date(request, doc_list)

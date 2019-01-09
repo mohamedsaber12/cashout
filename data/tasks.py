@@ -1,14 +1,18 @@
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
 
+import json
+import re
 import tablib
 import xlrd
+from dateutil.parser import parse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.utils.translation import gettext as _
 
 from data.models import Doc
+from data.models import FileData
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
@@ -120,10 +124,96 @@ def generate_file(doc_id):
         f.write(dataset.xlsx)
 
     return filename
-#
-# @app.task()
-# def send_disbursement_notification():
 
+
+
+@app.task(ignore_result=False)
+def handle_uploaded_file(doc_obj_id):
+    """
+    A function that parse the document and save it into the File Data
+    It has 3 cases :
+    Category has files so check if draft or delete stale data
+    Category has no files
+
+    :param doc_obj_id: uploaded file id.
+    :param category_id: category that contains this file.
+    :return: void.
+    """
+    doc_obj = Doc.objects.get(id=doc_obj_id)
+    format = doc_obj.format
+    xl_workbook = xlrd.open_workbook(doc_obj.file.path)
+    category = doc_obj.file_category
+    # Process excel file row by row.
+    xl_sheet = xl_workbook.sheet_by_index(0)
+    row_index = 0
+    for row in xl_sheet.get_rows():
+        data = tablib.Dataset(headers=format.identifiers())
+        excl_data = []
+        for cell in row:
+            if cell.ctype == 3:  # Date
+                try:
+                    cell.value = xlrd.xldate.xldate_as_datetime(cell.value, 0).date().strftime('%d-%m-%Y')
+                    excl_data.append(cell.value)
+
+                except ValueError:
+                    excl_data.append(cell.value)
+
+            elif cell.ctype == 2:  # Number
+                val = str(cell.value).split(".")
+                if val[1] == '0':
+                    excl_data.append(val[0])
+                else:
+                    excl_data.append(str(cell.value))
+            else:
+                if re.match(r'\s*(?P<d>\d\d?)(?P<sep>\D)(?P<m>\d\d?)(?P=sep)(?P<Y>\d\d\d\d)', cell.value):
+                    cell.value = re.sub('[/.:]', '-', cell.value)
+
+                elif cell.value.startswith('`'):
+                    cell.value = cell.value.split('`')[-1]
+
+                excl_data.append(str(cell.value.encode('utf-8')))
+
+        map(data.append, [excl_data, ])
+
+        # Specify unique fields to search with.
+        processed_data = json.loads(data.json)[0]
+        search_dict = {
+            'data__%s' % category.unique_field: processed_data[category.unique_field],
+            'file_category': category,
+            'is_draft': False,
+        }
+        creation_dict = {
+            'file_category': category,
+            'is_draft': False,
+            'doc': doc_obj,
+            'data': processed_data
+        }
+
+        # Creates if no records, updates if record with partial exists, skip otherwise.
+        file_data = FileData.objects.filter(**search_dict)
+        if not file_data:
+            file_data = FileData.objects.create(**creation_dict)
+        else:
+            records_to_be_updated = file_data.filter(has_transaction=False).first()
+            try:
+                records_to_be_updated.data = processed_data
+                file_data = records_to_be_updated
+                records_to_be_updated.save()
+            except AttributeError:
+                file_data = file_data.first()
+
+        try:
+            if category.date_field:
+                file_data.date = parse(file_data.data[category.date_field]).date()
+            else:
+                file_data.date = parse(file_data.data['due_date']).date()
+        except (KeyError, ValueError):
+            from datetime import datetime
+            file_data.date = datetime.now()
+        file_data.save()
+        
+    doc_obj.is_processed = True
+    doc_obj.save()
 
 @app.task()
 def notify_checkers(doc_id):

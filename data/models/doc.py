@@ -21,7 +21,7 @@ class Doc(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE, related_name='doc')
     file_category = models.ForeignKey(
-        'data.FileCategory', null=True, on_delete=models.CASCADE)
+        'data.FileCategory', null=True, on_delete=models.CASCADE, related_name='doc')
     file = models.FileField(upload_to=update_filename,
                             null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -35,6 +35,7 @@ class Doc(models.Model):
     total_amount = models.FloatField(default=False)
     total_count = models.PositiveIntegerField(default=False)
     type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
+    format = models.OneToOneField('data.Format', on_delete=models.DO_NOTHING, null=True)
 
     class Meta:
         permissions = (("upload_file", "upload file"),

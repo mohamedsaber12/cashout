@@ -19,7 +19,6 @@ class DisbursementFileCategory(factory.django.DjangoModelFactory):
     identifier3 = 'Name'
     user_created = factory.SubFactory(DisbursementUserFactory)
     name = 'test'
-    has_header = True
     unique_field = 'MSISDN'
     amount_field = 'Amount'
     category_type = 2

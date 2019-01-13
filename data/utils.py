@@ -11,8 +11,8 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from two_factor.views import SetupView as BaseSetupView
 
-from data.models import FileCategory
-from data.models import Format
+from data.models.filecategory import FileCategory
+from data.models.format import Format
 
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 

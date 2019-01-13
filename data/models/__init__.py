@@ -1,8 +1,8 @@
-from data.models.doc import Doc
-from data.models.doc_review import DocReview
-from data.models.filecategory import FileCategory
-from data.models.format import Format
-from data.models.file_data import FileData
+from .doc import Doc
+from .doc_review import DocReview
+from .filecategory import FileCategory
+from .format import Format
+from .file_data import FileData
 
 __all__ = [
     'Doc',

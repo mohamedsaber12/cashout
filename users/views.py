@@ -17,7 +17,7 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from django.views.generic.edit import FormView
 from django_otp.forms import OTPTokenForm
-from rest_framework.authtoken.models import Token
+from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from data.forms import FileCategoryForm
 from data.utils import get_client_ip
@@ -184,6 +184,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
                         obj.save()
+                        obj.permissions.add(request.user.root.get_all_permissions())
                      
                 #if form is filecategory form
                 else:
@@ -266,7 +267,6 @@ class SettingsUpView(RootRequiredMixin, CreateView):
 
         return data
 
-  
     def get_form(self, form_class=None):
         """Return an instance of the form to be used in this view."""
         if form_class is None:
@@ -424,6 +424,7 @@ class BaseAddMemberView(RootRequiredMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.hierarchy = self.request.user.hierarchy
         self.object.save()
+        self.object.permissions.add(self.request.user.get_all_permissions())
         return super().form_valid(form)
 
 
@@ -495,7 +496,12 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     template_name = 'entity/add_root.html'
 
     def get_success_url(self):
-        return reverse('disbursement:add_agents', kwargs={'token': Token.objects.get_or_create(user=self.object)[0].key})
+        token, created = ExpiringToken.objects.get_or_create(user=self.object)
+        if created:
+            return reverse('disbursement:add_agents', kwargs={'token': token.key})
+        if token.expired():
+            token = ExpiringToken.objects.create(user=self.object)
+        return reverse('disbursement:add_agents', kwargs={'token': token.key})
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -530,11 +536,10 @@ class PasswordResetView(AbstractPasswordResetView):
     success_url = reverse_lazy('users:password_reset_done')
 
 
-
 class OTPLoginView(FormView):
-
-    template_name = 'two_factor/login.html'   
+    template_name = 'two_factor/login.html'
     success_url = '/'
+
     def post(self,request,*args,**kwargs):
         form = OTPTokenForm(data=request.POST, user=self.request.user)
         if form.is_valid():

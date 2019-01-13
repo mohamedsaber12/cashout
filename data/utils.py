@@ -11,6 +11,9 @@ from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from two_factor.views import SetupView as BaseSetupView
 
+from data.models import FileCategory
+from data.models import Format
+
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 
 
@@ -154,15 +157,19 @@ def paginator(request, object):
         docs = paginator_obj.page(paginator_obj.num_pages)
     return docs
 
-
-# HINT: sql function to write
-"""
-CREATE OR REPLACE FUNCTION safe_cast_to_numeric(TEXT) RETURNS NUMERIC AS $$
-BEGIN
-    RETURN cast($1 AS NUMERIC);
-EXCEPTION
-    WHEN invalid_text_representation THEN
-        RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-"""
+def combine_data():
+    categories = FileCategory.objects.all()
+    for category in categories:
+        Format.objects.create(
+            identifier1=category.identifier1,
+            identifier2=category.identifier2,
+            identifier3=category.identifier3,
+            identifier4=category.identifier4,
+            identifier5=category.identifier5,
+            identifier6=category.identifier6,
+            identifier7=category.identifier7,
+            identifier8=category.identifier8,
+            identifier9=category.identifier9,
+            identifier10=category.identifier10,
+            category=category
+        )

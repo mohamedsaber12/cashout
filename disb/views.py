@@ -14,7 +14,7 @@ from django.shortcuts import redirect, render, render_to_response
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.views.generic import CreateView
-from rest_framework.authtoken.models import Token
+from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from data.decorators import otp_required
 from data.models import Doc
@@ -136,7 +136,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
         return reverse('users:clients')
 
     def get_context_data(self, **kwargs):
-        root = Token.objects.get(key=self.kwargs['token']).user
+        root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         data = super().get_context_data(**kwargs)
         if not 'agentform' in data:
             data['agentform'] = self.form_class(
@@ -151,7 +151,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
         return data
 
     def post(self, request, *args, **kwargs):
-        root = Token.objects.get(key=self.kwargs['token']).user
+        root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         agentform = self.form_class(
             request.POST,
             queryset=Agent.objects.filter(

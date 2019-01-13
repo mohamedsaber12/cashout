@@ -13,8 +13,8 @@ class Doc(models.Model):
     DISBURSEMENT = 1
     COLLECTION = 2
     types = (
-        DISBURSEMENT, 'DISBURSEMENT',
-        COLLECTION, 'COLLECTION'
+        (DISBURSEMENT, 'DISBURSEMENT'),
+        (COLLECTION, 'COLLECTION')
     )
     id = models.CharField(primary_key=True, editable=False,
                           unique=True, db_index=True, max_length=32, default=pkgen)

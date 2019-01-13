@@ -61,6 +61,8 @@ class User(AbstractUser):
             ("can_disable_two_factor", "the user can disable two factor"),
             ("can_use_two_factor_backup", "the user can use two factor backup tokens"),
             ("can_use_two_factor", "the user can use two factor"),
+            ("has_disbursement", "the client has disbursement options"),
+            ("has_collection", "the client has collection options"),
         )
 
     def __str__(self):  # __unicode__ for Python 2
@@ -68,7 +70,6 @@ class User(AbstractUser):
 
     def child(self):
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
-
 
     @property
     def can_disburse(self):

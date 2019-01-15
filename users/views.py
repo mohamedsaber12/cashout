@@ -19,8 +19,9 @@ from django.views.generic.edit import FormView
 from django_otp.forms import OTPTokenForm
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
-from data.forms import FileCategoryForm
+from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet
 from data.utils import get_client_ip
+from data.models import Format
 from users.forms import (CheckerMemberFormSet,
                          BrandForm, LevelFormSet, MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm,
@@ -170,27 +171,45 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 # create new file_category
                 else:    
                     form = FileCategoryForm(data=request.POST)
+
+            elif data['step'] == '5':
+                form = FormatFormSet(
+                    data,
+                    prefix='format'
+                )
+            elif data['step'] == '6':
+                form = CollectionDataForm(data=request.POST, request=self.request)
             
             if form and form.is_valid():              
                 objs = form.save(commit=False)
                 
                 # if form is a formset
-                if not isinstance(form, FileCategoryForm):
+                if isinstance(objs, list):
                     # delete formsets marked to be deleted
                     for obj in form.deleted_objects:
                         obj.delete()
-              
-                    for obj in objs:
-                        obj.hierarchy = request.user.hierarchy
-                        obj.created_id = request.user.root.id
-                        obj.save()
-                        if isinstance(obj, User):
-                            obj.user_permissions.add(*Permission.objects.filter(user=request.user.root))
-                     
+
+                    if len(objs) > 0:
+                        if isinstance(objs[0], User):
+                            for obj in objs:
+                                obj.hierarchy = request.user.hierarchy
+                                obj.created_id = request.user.root.id
+                                obj.save()
+                                obj.user_permissions.add(*Permission.objects.filter(user=request.user.root))
+                        elif isinstance(obj,Format):
+                            for obj in objs:
+                                # user must already have file_category
+                                obj.category = self.request.user.file_category
+                                obj.save()
+
                 #if form is filecategory form
-                else:
+                elif isinstance(form, FileCategoryForm):
                     objs.user_created = request.user.root
                     objs.save()
+                #if form is CollectionDataForm form
+                elif isinstance(form, CollectionDataForm):
+                    objs.save()
+
                 # update setup model flags
                 if data['step'] == '1':
                     setup = Setup.objects.get(
@@ -207,9 +226,24 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         user__hierarchy=request.user.hierarchy)
                     setup.category_setup = True
                     setup.save()
+                if data['step'] == '5':
+                    setup = Setup.objects.get(
+                        user__hierarchy=request.user.hierarchy)
+                    setup.format_setup = True
+                    setup.save()
+                    if request.user.has_perm('users.has_disbursement'):
+                        SETUP_VIEW_LOGGER.debug(
+                            f'Root user: {request.user.username} Finished Setup successfully')
+                        return HttpResponseRedirect(reverse("data:main_view"), status=278)
+                if data['step'] == '6':
+                    setup = Setup.objects.get(
+                        user__hierarchy=request.user.hierarchy)
+                    setup.collection_data_setup = True
+                    setup.save()
                     SETUP_VIEW_LOGGER.debug(
                         f'Root user: {request.user.username} Finished Setup successfully')
                     return HttpResponseRedirect(reverse("data:main_view"), status=278)
+                
                 return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
             #form could be filecategory or formset 

@@ -206,7 +206,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 elif isinstance(form, FileCategoryForm):
                     objs.user_created = request.user.root
                     objs.save()
-                #if form is CollectionDataForm form
+                #if form is CollectionData form
                 elif isinstance(form, CollectionDataForm):
                     objs.save()
 
@@ -246,7 +246,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 
                 return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
-            #form could be filecategory or formset 
+            #form could be filecategory, CollectionData or formset
             #only formsets have non_form_errors but normal form doesn't
             non_form_errors = getattr(form, 'non_form_errors', None)
             if non_form_errors is not None:

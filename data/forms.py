@@ -9,7 +9,7 @@ from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from data.models import Doc, DocReview, FileCategory
+from data.models import Doc, DocReview, FileCategory,CollectionData,Format
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 from users.models import User
@@ -149,6 +149,32 @@ class FileDocumentForm(forms.ModelForm):
         ]
 
 
+class CollectionDataForm(forms.ModelForm):
+    class Meta:
+        model = CollectionData
+        fields = '__all__'
+        exclude = ('category',)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        self.category = self.request.user.file_category
+        collection_data = CollectionData.objects.filter(
+            category=self.category).first()
+        
+        super().__init__(*args, instance=collection_data, ** kwargs)
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+        
+
+    def save(self,commit=True):
+        if commit == False:
+            return super(CollectionDataForm,self).save(commit=False)
+        
+        if not self.instance.category:    
+            self.instance.category = self.category
+        return super(CollectionDataForm, self).save(commit=True)
+
 class FileCategoryForm(forms.ModelForm):
     class Meta:
         model = FileCategory
@@ -270,3 +296,13 @@ class DownloadFilterForm(forms.Form):
             self.add_error('end_date', _('Can\'t be blank'))
 
         return cleaned_data
+
+class FormatForm(forms.ModelForm):
+    class Meta:
+        model = Format
+        fields = '__all__'
+        exclude = ('category',)
+
+FormatFormSet = forms.modelformset_factory(
+    model=Format, form=FormatForm,
+    min_num=1, validate_min=True, can_delete=True, extra=1)

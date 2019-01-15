@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'data',
     'users',
     'disb',
+    'payment'
 ]
 
 MIDDLEWARE = [

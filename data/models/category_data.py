@@ -48,3 +48,28 @@ class Format(models.Model):
         """Add a permission for every file category"""
         self.num_of_identifiers = len(self.identifiers())
         super().save(*args, **kwargs)
+
+
+class CollectionData(models.Model):
+    category = models.OneToOneField('data.FileCategory', on_delete=models.CASCADE, related_name='collection')
+    has_partial_payment = models.BooleanField(default=0, verbose_name='Will there be partial payment?',
+                                              help_text='If yes please mention the amount field below')
+    can_overpay = models.BooleanField(default=0, verbose_name='This user accept over payment?')
+    overflow_partial_acceptance_per_client = models.BooleanField(default=0,
+                                                                 verbose_name='This biller accept over flow or partial per client?')
+    unique_field = models.CharField(max_length=128,
+                                    verbose_name='What is the unique field?')
+    unique_field2 = models.CharField(max_length=128, blank=True,
+                                     verbose_name='What is the unique field?')
+    total_amount_field = models.CharField(max_length=128, blank=True,
+                                    verbose_name='what is total of loan amount field?',
+                                    help_text='for ex: loan_field')
+    payable_amount_field = models.CharField(max_length=128,
+                                            verbose_name='what is paid amount field?',
+                                            help_text='For ex: Installment field')
+    date_field = models.CharField(max_length=128,
+                                  verbose_name='what is date field?',
+                                  help_text='Don\'t write number of identifier, write the field itself')
+    mobile_field = models.CharField(max_length=128, null=True, blank=True,
+                                    verbose_name='what is Phone number field?',
+                                    help_text='For ex: mobile_no, it can be one of the unique fields')

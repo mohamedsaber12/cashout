@@ -1,10 +1,12 @@
 from __future__ import unicode_literals
 import operator
 from datetime import datetime
+from functools import reduce
+
 from django.db import models
 from django.conf import settings
 
-from users.models import UserAccount
+from users.models import RootUser
 
 # Create your models here.
 from data.models import FileData
@@ -25,7 +27,7 @@ class TransactionManager(models.Manager):
         try:
             account_id = int(kwargs['account_id'])
             if account_id == request.user.id:
-                request_user = UserAccount.objects.get(id=account_id)
+                request_user = RootUser.objects.get(id=account_id)
                 filters.append(('biller__hierarchy_id', request_user.hierarchy))
             else:
                 return 0, self.model.objects.none()

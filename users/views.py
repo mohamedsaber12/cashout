@@ -6,7 +6,7 @@ import logging
 
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser,Permission
 from django.contrib.auth.views import PasswordResetView as AbstractPasswordResetView
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -184,7 +184,8 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         obj.hierarchy = request.user.hierarchy
                         obj.created_id = request.user.root.id
                         obj.save()
-                        obj.permissions.add(request.user.root.get_all_permissions())
+                        if isinstance(obj, User):
+                            obj.user_permissions.add(*Permission.objects.filter(user=request.user.root))
                      
                 #if form is filecategory form
                 else:
@@ -424,7 +425,7 @@ class BaseAddMemberView(RootRequiredMixin, CreateView):
         self.object = form.save(commit=False)
         self.object.hierarchy = self.request.user.hierarchy
         self.object.save()
-        self.object.permissions.add(self.request.user.get_all_permissions())
+        self.object.user_permissions.add(*Permission.objects.filter(user=self.request.user))
         return super().form_valid(form)
 
 

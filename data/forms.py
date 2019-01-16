@@ -168,12 +168,13 @@ class CollectionDataForm(forms.ModelForm):
         
 
     def save(self,commit=True):
-        if commit == False:
-            return super(CollectionDataForm,self).save(commit=False)
-        
-        if not self.instance.category:    
-            self.instance.category = self.category
-        return super(CollectionDataForm, self).save(commit=True)
+        instance = super(CollectionDataForm, self).save(commit=False)
+        has_category = getattr(instance, 'category', None)
+        if has_category is None:
+            instance.category = self.category
+        if commit:
+            instance.save()
+        return instance
 
 class FileCategoryForm(forms.ModelForm):
     class Meta:

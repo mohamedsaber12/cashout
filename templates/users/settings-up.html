@@ -55,6 +55,26 @@
           </span>
           </a>
         </li>
+        <li>
+            <a href="#step-5">
+                <span class="step_no">{{5|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Format' %}<br />
+                    <small>{% trans 'Add File Formats' %}</small>
+                </span>
+            </a>
+        </li>
+        {% if perms.users.has_collection %}
+            <li>
+                <a href="#step-6">
+                    <span class="step_no">{{6|localize}}</span>
+                    <span class="step_descr">
+                        {% trans 'Collection' %}<br />
+                        <small>{% trans 'Add Collection Data' %}</small>
+                    </span>
+                </a>
+            </li>
+        {%endif%}
       </ul>
 
     <span id='non_form_errors' class="error_span"></span>
@@ -298,6 +318,112 @@
                         {% endfor %}
             </form>
         </div>
+    
+       
+        <!-- step-5 --> 
+        <div id="step-5">
+        
+            <form action="." method="post" id="step_5_form">
+        
+                {% csrf_token %}
+        
+                <table class="table" id="formatform">
+                    {{ formatform.management_form }}
+                    {% for form in formatform.forms %}
+                    {% if forloop.first %}
+                    <thead>
+                        <tr>
+                            {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+        
+                    {% endif %}
+                    {% endfor %}
+                    <tbody>
+        
+                        {% for form in formatform.forms %}
+        
+                        <tr class="format_formset_row">
+                            {% for field in form.visible_fields %}
+                            <td id="format_{{field.name}}">
+                                {# Include the hidden fields in the form #}
+                                {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                {% endif %}
+                                {{ field.errors.as_ul }}
+                                {{ field }}
+                                <span class="error_span"></span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+            </form>
+        
+            <!-- empty form -->
+        
+            <table id="format_empty_form" style="display: none">
+                <tr class="format_formset_row">
+                    {% for field in formatform.empty_form.visible_fields %}
+                    <td id="format_{{field.name}}">
+                        {# Include the hidden fields in the form #}
+                        {% if forloop.first %}
+                        {% for hidden in formatform.empty_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        {% endif %}
+                        {{ field.errors.as_ul }}
+                        {{ field }}
+                        <span class="error_span"></span>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </table>
+            <button id="add_format_btn" class="btn btn-success">{% trans 'Add format' %}</button>
+        </div>
+        <!-- step-5 -->
+
+        <!-- step-6 -->
+        <div id="step-6">
+            <form action="." method="post" id="step_6_form" class="form-horizontal form-label-left">
+        
+                {% csrf_token %}
+        
+                {% for field in collectiondataform.visible_fields %}
+                {% if forloop.first %}
+                {% for hidden in form.hidden_fields %}
+                {{ hidden }}
+                {% endfor %}
+                {% endif %}
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                    <div class="col-md-6 col-sm-9 col-xs-12">
+                        {% ifequal field.name "has_header" %}
+                        <div class="">
+                            <label>
+                                {{ field }}
+                            </label>
+                        </div>
+                        {% else %}
+                        {{ field.errors.as_ul }}
+                        {{ field }}
+                        {% endifequal %}
+                        <span id="collection_data_error_{{field.name}}" class="error_span"></span>
+                    </div>
+                </div>
+        
+        
+                {% endfor %}
+            </form>
+        </div>
+        <!-- step-6 -->
+
     </div>
 
 {% endblock %}
@@ -312,7 +438,12 @@
         if (form_idx === '4') {
             $('#add_level_btn').hide()
         }
-
+        let final_step;
+        if ($('#step-6').length)
+            final_step = 6;
+        else
+            final_step = 5;
+        
         let step = parseInt('{{step}}');
         var wizard = $('#disb_widget').smartWizard({
             selected: step,
@@ -340,8 +471,7 @@
         $('.stepContainer').height(newheight+"px");
 
         function onFinishCallback(objs, context){
-            
-            return stepSubmit(4);
+            return stepSubmit(final_step);    
         }
 
         function leaveAStepCallback(obj, context){
@@ -396,8 +526,18 @@
             increase_height()
         });
 
-        function stepSubmit(step_no) {
+        $('#add_format_btn').click(function () {
+            let form_idx = $('#id_format-TOTAL_FORMS').val();
 
+            $('#step-5 #formatform tbody').append($('#format_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+        });
+
+        function stepSubmit(step_no) {
+            
             var bool_return = false;
             let step_no_string = String(step_no)
 
@@ -410,39 +550,27 @@
                 async: false,
                 data: form_data + "&step=" + step_no_string,
                 success: function (data, text, xhr) {
-
+                    
                     $('.error_span').html('');
 
-                    if (step_no == 4) {
-                        if (xhr.status == 278) {
-                            window.location.href = xhr.getResponseHeader("Location");
-                        }
-                        if (!data.valid) {
-                            for (let field_name in data.errors) {
-                                let err_value = data.errors[field_name][0]
-                                $('#category_error_' + field_name).html(err_value)
+                    if (xhr.status == 278 && step_no == final_step) {
+                        window.location.href = xhr.getResponseHeader("Location");
+                    }
+                    
+                    if (!data.valid && !data.form_is_formset) {
+                        for (let field_name in data.errors) {
+                            let err_value = data.errors[field_name][0]
+                            $('#' + data.prefix + '_error_' + field_name).html(err_value)
 
-                            }
                         }
                     }
-                    if (!data.valid && step_no != 4) {
-
-
+                    else if (!data.valid && data.form_is_formset) {
 
                         if (data.non_form_errors && data.non_form_errors[0]) {
                             $('#non_form_errors').html(data.non_form_errors[0])
                         }
 
-                        let prefix;
-                        if (step_no == 1)
-                            prefix = 'level';
-                        else if (step_no == 2)
-                            prefix = 'maker';
-                        else if (step_no == 3)
-                            prefix = 'checker';
-                        else
-                            return;
-
+                        let prefix = data.prefix
                         let rows = $('#' + prefix + 'form' + ' .' + prefix + '_formset_row');
                         for (let i in data.errors) {
                             for (let field_name in data.errors[i]) {
@@ -454,7 +582,8 @@
                     }
 
                     bool_return = data.valid;
-                    console.log(step_no)
+                    
+                    // refresh before step 3 (checkers) to get new levels
                     if (step_no==2 && bool_return){
                         window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(step_no)
                     }

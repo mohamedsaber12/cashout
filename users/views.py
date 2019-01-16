@@ -179,7 +179,8 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             elif data['step'] == '5':
                 form = FormatFormSet(
                     data,
-                    prefix='format'
+                    prefix='format',
+                    form_kwargs={'request': self.request}
                 )
             elif data['step'] == '6':
                 form = CollectionDataForm(data=request.POST, request=self.request)
@@ -283,7 +284,8 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             queryset=Format.objects.filter(
                 category=category
             ),
-            prefix='format'
+            prefix='format',
+            form_kwargs={'request': self.request}
         )
         data['makerform'] = self.form_class(
             queryset=self.model.objects.filter(

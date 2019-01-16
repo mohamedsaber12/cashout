@@ -299,11 +299,48 @@ class DownloadFilterForm(forms.Form):
         return cleaned_data
 
 class FormatForm(forms.ModelForm):
+
+    def __init__(self, *args, request, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = request
+
     class Meta:
         model = Format
         fields = '__all__'
         exclude = ('category', 'num_of_identifiers',)
 
+
+class BaseFormatFormSet(forms.BaseModelFormSet):
+
+    def clean(self):
+        
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        
+        for form in self.forms:
+            if form.cleaned_data == {} or form.cleaned_data['DELETE']:
+                continue
+            identifiers = []
+            for i in range(1,11):
+                identifier_value = form.cleaned_data.get(f'identifier{i}',None)
+                if identifier_value:
+                    identifiers.append(identifier_value)
+            category_unique_field = form.request.user.file_category.unique_field
+            if category_unique_field and category_unique_field not in identifiers:
+                raise forms.ValidationError(
+                    f"Identifiers must contain the disbursement unique field '{category_unique_field}' ")
+
+            if form.request.user.has_perm('users.has_collection'):
+                collection = getattr(form.request.user.file_category,'collection',None)
+                if collection is not None:
+                    if collection.unique_field not in identifiers:
+                        raise forms.ValidationError(
+                            f"Identifiers must contain the collection unique field '{collection.unique_field}' ")
+                    if collection.unique_field2 and collection.unique_field2 not in identifiers:
+                        raise forms.ValidationError(
+                            f"Identifiers must contain the collection unique field '{collection.unique_field2}' ")
+
 FormatFormSet = forms.modelformset_factory(
-    model=Format, form=FormatForm,
+    model=Format, form=FormatForm, formset=BaseFormatFormSet,
     min_num=1, validate_min=True, can_delete=True, extra=1)

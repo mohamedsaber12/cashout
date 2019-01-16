@@ -302,7 +302,7 @@ class FormatForm(forms.ModelForm):
     class Meta:
         model = Format
         fields = '__all__'
-        exclude = ('category',)
+        exclude = ('category', 'num_of_identifiers',)
 
 FormatFormSet = forms.modelformset_factory(
     model=Format, form=FormatForm,

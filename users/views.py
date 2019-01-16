@@ -17,6 +17,7 @@ from django.views import View
 from django.views.generic import CreateView, DetailView, ListView, UpdateView
 from django.views.generic.edit import FormView
 from django_otp.forms import OTPTokenForm
+from django.forms.formsets import BaseFormSet
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet
@@ -144,12 +145,14 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             form = None
             data = request.POST.copy()
             FileCategoryForm.request = request
+            prefix = None
             # populate forms with data
             if data['step'] == '1':
                 form = LevelFormSet(
                     data,
                     prefix='level'
                 )
+
             elif data['step'] == '3':
                 form = CheckerMemberFormSet(
                     data,
@@ -171,6 +174,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 # create new file_category
                 else:    
                     form = FileCategoryForm(data=request.POST)
+                prefix = 'category'    
 
             elif data['step'] == '5':
                 form = FormatFormSet(
@@ -179,12 +183,15 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 )
             elif data['step'] == '6':
                 form = CollectionDataForm(data=request.POST, request=self.request)
+                prefix = 'collection_data'
+            
+            form_is_formset = isinstance(form, BaseFormSet)
             
             if form and form.is_valid():              
                 objs = form.save(commit=False)
                 
                 # if form is a formset
-                if isinstance(objs, list):
+                if form_is_formset:
                     # delete formsets marked to be deleted
                     for obj in form.deleted_objects:
                         obj.delete()
@@ -196,7 +203,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                                 obj.created_id = request.user.root.id
                                 obj.save()
                                 obj.user_permissions.add(*Permission.objects.filter(user=request.user.root))
-                        elif isinstance(obj,Format):
+                        elif isinstance(objs[0],Format):
                             for obj in objs:
                                 # user must already have file_category
                                 obj.category = self.request.user.file_category
@@ -231,7 +238,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         user__hierarchy=request.user.hierarchy)
                     setup.format_setup = True
                     setup.save()
-                    if request.user.has_perm('users.has_disbursement'):
+                    if not request.user.has_perm('users.has_collection'):
                         SETUP_VIEW_LOGGER.debug(
                             f'Root user: {request.user.username} Finished Setup successfully')
                         return HttpResponseRedirect(reverse("data:main_view"), status=278)
@@ -246,17 +253,15 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                 
                 return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
-            #form could be filecategory, CollectionData or formset
-            #only formsets have non_form_errors but normal form doesn't
-            non_form_errors = getattr(form, 'non_form_errors', None)
-            if non_form_errors is not None:
-                non_form_errors = non_form_errors()
             return HttpResponse(
                 content=json.dumps({
                     "valid": False,                                                    
                     "reason": "validation", 
                     "errors": form.errors, 
-                    "non_form_errors": non_form_errors
+                    #only formsets have non_form_errors but normal form doesn't
+                    "non_form_errors": form.non_form_errors() if form_is_formset else None,
+                    "form_is_formset": form_is_formset,
+                    'prefix': prefix or form.prefix
                 }),
                 content_type="application/json")
 
@@ -271,13 +276,21 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         with the step as query paramter to know wich step to initiate when loading the template.
         """
         data = super().get_context_data(**kwargs)
+        category = getattr(self.request.user, 'file_category', None)
 
+        data['collectiondataform'] = CollectionDataForm(request=self.request)
+        data['formatform'] = FormatFormSet(
+            queryset=Format.objects.filter(
+                category=category
+            ),
+            prefix='format'
+        )
         data['makerform'] = self.form_class(
             queryset=self.model.objects.filter(
                 hierarchy=self.request.user.hierarchy
             ),
             prefix='maker'
-        )
+        )        
         data['checkerform'] = CheckerMemberFormSet(
             queryset=CheckerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy
@@ -292,11 +305,20 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             prefix='level'
         )
         data['step'] = self.request.GET.get('step', '0')
-        if int(data['step']) < 0 or int(data['step']) > 2:
+        if  (
+                ( 
+                    ( int(data['step']) < 0 or int(data['step']) > 4 ) and 
+                    self.request.user.has_perm('users.has_collection') 
+                ) or 
+                (
+                    ( int(data['step']) < 0 or int(data['step']) > 3) and
+                    not self.request.user.has_perm('users.has_collection')
+                )
+            ):
             data['step'] = '0'
-        file_category = getattr(self.request.user, 'file_category', None)
-        if file_category is not None:
-            data['filecategoryform'] = FileCategoryForm(instance=file_category)
+        
+        if category is not None:
+            data['filecategoryform'] = FileCategoryForm(instance=category)
         else:
             data['filecategoryform'] = FileCategoryForm()
 

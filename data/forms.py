@@ -157,18 +157,36 @@ class CollectionDataForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        self.category = self.request.user.file_category
-        collection_data = CollectionData.objects.filter(
-            category=self.category).first()
+        self.category = getattr(self.request.user,'file_category',None)
+        collection_data = None
+        if self.category is not None:
+            collection_data = CollectionData.objects.filter(
+                category=self.category).first()
         
         super().__init__(*args, instance=collection_data, ** kwargs)
 
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'form-control'
         
+    def clean(self):
+        unique_field = self.cleaned_data.get('unique_field')
+        unique_field2 = self.cleaned_data.get('unique_field2')
+        format_qs = Format.objects.filter(
+            data_type=2, hierarchy=self.request.user.hierarchy)
+        if format_qs.exists():
+            for format_instance in format_qs:
+                identifiers = format_instance.identifiers()
+                if unique_field2 and not all(i in identifiers for i in [unique_field, unique_field2]):
+                    raise forms.ValidationError(
+                        'you need to add both unique fields in formats first')
+
+                if unique_field not in identifiers:
+                    raise forms.ValidationError(self.add_error(
+                        'unique_field', 'you need to add this field in formats first'))
+
 
     def save(self,commit=True):
-        instance = super(CollectionDataForm, self).save(commit=False)
+        instance = super().save(commit=False)
         has_category = getattr(instance, 'category', None)
         if has_category is None:
             instance.category = self.category
@@ -211,6 +229,16 @@ class FileCategoryForm(forms.ModelForm):
                 _('number of reviews must be less than or equal the number of checkers'))
         return self.cleaned_data['no_of_reviews_required']
 
+    def clean_unique_field(self):
+        value = self.cleaned_data['unique_field']
+        format_qs = Format.objects.filter(data_type=1, hierarchy=self.request.user.hierarchy)
+        if value and format_qs.exists():
+            for format_instance in format_qs:
+                if value not in format_instance.identifiers():
+                    raise forms.ValidationError(
+                        'you need to add this field in formats first')
+       
+        return self.cleaned_data['unique_field']
 
 class FileCategoryViewForm(forms.ModelForm):
     name = forms.ModelChoiceField(queryset=None,
@@ -299,16 +327,42 @@ class DownloadFilterForm(forms.Form):
         return cleaned_data
 
 class FormatForm(forms.ModelForm):
-
+    
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
+
         self.request = request
+        self.data_type_field_exist = request.user.has_perm('users.has_disbursement') and request.user.has_perm(
+            'users.has_collection')
+        if not self.data_type_field_exist:
+            del self.fields['data_type']
 
     class Meta:
         model = Format
         fields = '__all__'
-        exclude = ('category', 'num_of_identifiers',)
+        exclude = ('category', 'num_of_identifiers', 'collection', 'hierarchy')
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.hierarchy = self.request.user.hierarchy
+        category = self.request.user.file_category
+        if self.data_type_field_exist:
+            data_type = self.cleaned_data.get('data_type')
+            if data_type == 1:
+                instance.category = category
+            else:
+                instance.collection = CollectionData.objects.filter(
+                    category=category).first()
+        elif self.request.user.has_perm('users.has_disbursement'):
+            instance.category = category
+            instance.data_type = 1
+        elif self.request.user.has_perm('users.has_collection'):
+            instance.collection = CollectionData.objects.filter(
+                category=category).first()
+            instance.data_type = 2
+        if commit:
+            instance.save()
+        return instance
 
 class BaseFormatFormSet(forms.BaseModelFormSet):
 
@@ -318,28 +372,26 @@ class BaseFormatFormSet(forms.BaseModelFormSet):
             # Don't bother validating the formset unless each form is valid on its own
             return
         
+        request = self.forms[0].request
+        category_unique_field = request.user.file_category.unique_field
+        collection = getattr(request.user.file_category, 'collection', None)
         for form in self.forms:
             if form.cleaned_data == {} or form.cleaned_data['DELETE']:
-                continue
-            identifiers = []
-            for i in range(1,11):
-                identifier_value = form.cleaned_data.get(f'identifier{i}',None)
-                if identifier_value:
-                    identifiers.append(identifier_value)
-            category_unique_field = form.request.user.file_category.unique_field
-            if category_unique_field and category_unique_field not in identifiers:
+                continue 
+            format_instance = form.save(commit=False)    
+            identifiers = format_instance.identifiers()
+
+            if format_instance.data_type == 1 and category_unique_field and category_unique_field not in identifiers:
                 raise forms.ValidationError(
                     f"Identifiers must contain the disbursement unique field '{category_unique_field}' ")
 
-            if form.request.user.has_perm('users.has_collection'):
-                collection = getattr(form.request.user.file_category,'collection',None)
-                if collection is not None:
-                    if collection.unique_field not in identifiers:
-                        raise forms.ValidationError(
-                            f"Identifiers must contain the collection unique field '{collection.unique_field}' ")
-                    if collection.unique_field2 and collection.unique_field2 not in identifiers:
-                        raise forms.ValidationError(
-                            f"Identifiers must contain the collection unique field '{collection.unique_field2}' ")
+            if format_instance.data_type == 2:
+                if collection.unique_field not in identifiers:
+                    raise forms.ValidationError(
+                        f"Identifiers must contain the collection unique field '{collection.unique_field}' ")
+                if collection.unique_field2 and collection.unique_field2 not in identifiers:
+                    raise forms.ValidationError(
+                        f"Identifiers must contain the collection unique field '{collection.unique_field2}' ")
 
 FormatFormSet = forms.modelformset_factory(
     model=Format, form=FormatForm, formset=BaseFormatFormSet,

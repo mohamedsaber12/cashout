@@ -2,6 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+TYPES = ((1, 'Disbursement',), (2, 'Collection',))
 
 class Format(models.Model):
     identifier1 = models.CharField(
@@ -28,6 +29,13 @@ class Format(models.Model):
                                              verbose_name=_('Number of identifiers filled'))
     category = models.ForeignKey(
         'data.FileCategory', blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
+
+    collection = models.ForeignKey(
+        'data.CollectionData', blank=True, null=True, on_delete=models.CASCADE, related_name='format')
+    data_type = models.PositiveSmallIntegerField(
+        choices=TYPES)
+
+    hierarchy = models.PositiveSmallIntegerField()
 
     def identifiers(self):
         fields = []

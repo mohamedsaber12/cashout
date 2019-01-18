@@ -1,0 +1,72 @@
+{% load i18n %}
+{% load l10n %}
+
+<div id="step-{{step}}" style="overflow-x: scroll;" form_prefix="format">
+
+    <form action="." method="post" id="step_{{step}}_form">
+
+        {% csrf_token %}
+
+        <table class="table" id="formatform">
+            {{ formatform.management_form }}
+            {% for form in formatform.forms %}
+            {% if forloop.first %}
+            <thead>
+                <tr>
+                    {% for field in form.visible_fields %}
+                    <th>{{ field.label|capfirst }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+
+            {% endif %}
+            {% endfor %}
+            <tbody>
+
+                {% for form in formatform.forms %}
+
+                <tr class="format_formset_row">
+                    {% for field in form.visible_fields %}
+                    <td id="format_{{field.name}}">
+                        {# Include the hidden fields in the form #}
+                        {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        {% endif %}
+                        {{ field.errors.as_ul }}
+                        {{ field }}
+                        <span class="error_span"></span>
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </form>
+
+
+    <!-- empty form -->
+    
+    <table id="format_empty_form" style="display: none">
+        <tr class="format_formset_row">
+            {% for field in formatform.empty_form.visible_fields %}
+            <td id="format_{{field.name}}">
+                {# Include the hidden fields in the form #}
+                {% if forloop.first %}
+                {% for hidden in formatform.empty_form.hidden_fields %}
+                {{ hidden }}
+                {% endfor %}
+                {% endif %}
+                {{ field.errors.as_ul }}
+                {{ field }}
+                <span class="error_span"></span>
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+    <button id="add_format_btn" class="btn btn-success">{% trans 'Add format' %}</button>
+
+
+    </div>

@@ -39,17 +39,11 @@ class Format(models.Model):
     name = models.CharField(max_length=128, unique=False)
 
     def identifiers(self):
+        """return list of identifiers"""
         fields = []
         for field in self._meta.fields:
-            if 'identifier' in field.name:
-                if getattr(self, field.name) == '' or field.name == 'num_of_identifiers':
-                    continue
-                fields.append(str(getattr(self, field.name)))
-        for _ in range(len(fields)):
-            try:
-                fields.remove('None')
-            except:
-                break
+            if 'identifier' in field.name and getattr(self, field.name) and field.name != 'num_of_identifiers':
+                fields.append(str(getattr(self, field.name)).lower())
         return fields
 
     def data_type(self):
@@ -62,15 +56,15 @@ class Format(models.Model):
 
     def headers_match(self,headers):
         identifiers = self.identifiers()
-        return all(i in identifiers for i in headers)
+        return all(i.lower() in identifiers for i in headers if i)
 
-    def valdiate_disbursement_unique(self):
+    def validate_disbursement_unique(self):
         unique_field = self.category.unique_field
         if unique_field and unique_field not in self.identifiers():
             return False
         return True  
 
-    def valdiate_collection_unique(self):
+    def validate_collection_unique(self):
         unique_field = self.collection.unique_field
         unique_field2 = self.collection.unique_field2
         identifiers = self.identifiers()

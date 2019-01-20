@@ -134,3 +134,16 @@ class User(AbstractUser):
 
     def uncomplete_entity_creation(self):
         return self.entity_setups.filter(Q(agents_setup=False)).first()
+
+    def data_type(self):
+        DATA_TYPES = {
+            'Disbursement':1,
+            'Collection':2,
+            'Both':3
+        }
+        if self.request.user.has_perm('users.has_disbursement') and self.request.user.has_perm('users.has_collection'):
+            return DATA_TYPES['Both']
+        elif self.request.user.has_perm('users.has_disbursement'):
+            return DATA_TYPES['Disbursement']
+        elif self.request.user.has_perm('users.has_collection'):
+            return DATA_TYPES['Collection']

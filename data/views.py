@@ -51,7 +51,6 @@ def file_upload(request):
     Documents can be filtered by date.
     Documents are paginated ("docs_paginated") but not used in template.
     """
-    FileDocumentForm.request = request
     format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
     collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
@@ -64,17 +63,14 @@ def file_upload(request):
         can_upload = False
 
     if request.method == 'POST' and request.user.is_maker and can_upload and request.user.root.client.is_active:
-        FileDocumentForm.category = category
-        form_doc = FileDocumentForm(request.POST, request.FILES)
+        form_doc = FileDocumentForm(
+            request.POST, request.FILES,request=request, collection=collection, category=category)
 
         if form_doc.is_valid():
-            file_doc = Doc(owner=request.user,
-                           file=request.FILES['file'],
-                           file_category=category)
-            file_doc.save()
+            file_doc = form_doc.save()
             now = datetime.datetime.now()
             UPLOAD_LOGGER.debug(
-                '%s uploaded file at ' % request.user + str(now))
+                '%s uploaded file at ' % request.user + str(now))           
             if file_doc.type_of == Doc.COLLECTION:
                 handle_uploaded_file.delay(file_doc.id)
             else:

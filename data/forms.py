@@ -71,6 +71,9 @@ class FileDocumentForm(forms.ModelForm):
     )
 
     def __init__(self,*args,**kwargs):
+        self.request = kwargs.pop('request')
+        self.category = kwargs.pop('category')
+        self.collection = kwargs.pop('collection')
         super().__init__(*args, **kwargs)
         if self.request.user.data_type() != 3:
             del self.fields['type_of']
@@ -85,12 +88,10 @@ class FileDocumentForm(forms.ModelForm):
 
         if file:
             # validate unique fields
-            if type_of == 1:
-                format_type.valdiate_disbursement_unique()
+            if type_of == 1 and not format_type.validate_disbursement_unique():
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Disbursement unique field"))
-            if type_of == 2:
-                format_type.valdiate_collection_unique()
+            if type_of == 2 and not format_type.validate_collection_unique():
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Collection unique fields"))
 
@@ -147,8 +148,8 @@ class FileDocumentForm(forms.ModelForm):
                     if len(format_type.identifiers()) != xl_sheet.ncols:
                         raise forms.ValidationError(
                             _('File uploaded in not in proper form'))
-                    # validate headers        
-                    cell_obj = xl_sheet.get_rows()[0]
+                    # validate headers
+                    cell_obj = next(xl_sheet.get_rows())
                     headers = [data.value for data in cell_obj]
                     if not format_type.headers_match(headers):
                         raise forms.ValidationError(
@@ -160,11 +161,16 @@ class FileDocumentForm(forms.ModelForm):
         return file
 
     def save(self, commit=True):
-        m = super().save(commit=commit)
-        self.instance.owner = self.request.user
-        if not self.instance.type_of:
-            self.instance.type_of = self.request.user.data_type()
-        return m
+        instance = super().save(commit=False)
+        instance.owner = self.request.user
+        instance.file_category = self.category
+        instance.collection_data = self.collection
+
+        if not instance.type_of:
+            instance.type_of = self.request.user.data_type()
+        if commit:
+            instance.save()
+        return instance
 
     class Meta:
         model = Doc

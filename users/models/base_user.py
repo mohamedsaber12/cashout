@@ -141,9 +141,9 @@ class User(AbstractUser):
             'Collection':2,
             'Both':3
         }
-        if self.request.user.has_perm('users.has_disbursement') and self.request.user.has_perm('users.has_collection'):
+        if self.has_perm('users.has_disbursement') and self.has_perm('users.has_collection'):
             return DATA_TYPES['Both']
-        elif self.request.user.has_perm('users.has_disbursement'):
+        elif self.has_perm('users.has_disbursement'):
             return DATA_TYPES['Disbursement']
-        elif self.request.user.has_perm('users.has_collection'):
+        elif self.has_perm('users.has_collection'):
             return DATA_TYPES['Collection']

@@ -29,7 +29,7 @@ def handle_disbursement_file(doc_obj_id):
     Category has no files
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
-
+    
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
     xl_sheet = xl_workbook.sheet_by_index(0)
     amount_position, msisdn_position = 0, 0
@@ -142,7 +142,7 @@ def handle_uploaded_file(doc_obj_id):
     doc_obj = Doc.objects.get(id=doc_obj_id)
     format = doc_obj.format
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
-    category = doc_obj.file_category
+    collection_data = doc_obj.collection_data
     # Process excel file row by row.
     xl_sheet = xl_workbook.sheet_by_index(0)
     row_index = 0
@@ -178,12 +178,12 @@ def handle_uploaded_file(doc_obj_id):
         # Specify unique fields to search with.
         processed_data = json.loads(data.json)[0]
         search_dict = {
-            'data__%s' % category.unique_field: processed_data[category.unique_field],
-            'file_category': category,
+            'data__%s' % collection_data.unique_field: processed_data[collection_data.unique_field],
+            'user__hierarchy': collection_data.user.hierarchy,
             'is_draft': False,
         }
         creation_dict = {
-            'file_category': category,
+            'user': collection_data.user,
             'is_draft': False,
             'doc': doc_obj,
             'data': processed_data
@@ -203,8 +203,9 @@ def handle_uploaded_file(doc_obj_id):
                 file_data = file_data.first()
 
         try:
-            if category.date_field:
-                file_data.date = parse(file_data.data[category.date_field]).date()
+            if collection_data.date_field:
+                file_data.date = parse(
+                    file_data.data[collection_data.date_field]).date()
             else:
                 file_data.date = parse(file_data.data['due_date']).date()
         except (KeyError, ValueError):

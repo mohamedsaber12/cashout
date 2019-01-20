@@ -16,14 +16,28 @@
 
     {% if can_upload and request.user.is_maker %}
         <div class="well upload-nav col-xs-12">
-                <h3 class="navbar-left">{% trans 'Upload Form' %}</h3>
-                <select name="type_of" id="type_of">
-                    <option value="1">Disbursement</option>
-                    <option value="2">Collection</option>
-                </select>
-                <select name="format" id="format">
-                    <option value=""></option>
-                </select>
+                <h3 class="navbar-left col-xs-12">{% trans 'Upload Form' %}</h3>
+                {% if request.user.data_type == 3 %}
+                <div class="form-group col-xs-12">
+                    <label class="control-label col-md-1 col-sm-1 col-xs-1">Type</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        <select class="form-control" name="type_of" id="type_of">
+                            <option value="1">Disbursement</option>
+                            <option value="2">Collection</option>
+                        </select>
+                    </div>
+                </div>   
+                {%endif%}
+                <div class="form-group col-xs-12">
+                    <label class="control-label col-md-1 col-sm-1 col-xs-1">Format</label>
+                    <div class="col-md-6 col-sm-6 col-xs-12">
+                        <select class="form-control" name="format" id="format">
+                            {% for format in format_qs %}
+                                <option value="{{format.id}}">{{format.name}}</option>
+                            {%endfor%}
+                        </select>
+                    </div>
+                </div>
                 <div class="x_content">
                     <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
                     </form>
@@ -41,6 +55,7 @@
             <strong style="margin-top: 15px;">{% trans 'Please Add Collection first' %}</strong>
             {% else %}
             <strong style="margin-top: 15px;">{% trans 'Please Add Collection and/or Disbursement first' %}</strong>
+            {% endif %}
         </div>
     {% endif %}
 

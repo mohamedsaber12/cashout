@@ -109,6 +109,14 @@
                     fail_modal.modal('show');
 
                 });
+                this.on('sending',function (file,xhr,formData) {
+                    // add format and type to upload form
+                    formData.append('format',$('#format').val());
+                    if($('#type_of').length){
+                        formData.append('type_of', $('#type_of').val());
+                    }
+
+                });
             }
         }
         

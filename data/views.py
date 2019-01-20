@@ -25,7 +25,7 @@ from django.views.generic import ListView
 from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
-from data.models import Doc, DocReview, FileCategory
+from data.models import Doc, DocReview, FileCategory, Format,CollectionData
 from data.tasks import handle_disbursement_file, handle_uploaded_file
 from data.utils import get_client_ip, paginator
 from users.decorators import setup_required
@@ -52,10 +52,18 @@ def file_upload(request):
     Documents are paginated ("docs_paginated") but not used in template.
     """
     FileDocumentForm.request = request
+    format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
-    has_file_category = bool(category)
+    collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
+    can_upload = True
+    if request.user.data_type == 3 and  not category.exists() and not collection.exists()):
+        can_upload = False
+    elif request.user.data_type == 2 and not collection.exists():
+        can_upload = False
+    elif request.user.data_type == 1 and not category.exists():
+        can_upload = False
 
-    if request.method == 'POST' and request.user.is_maker and has_file_category and request.user.root.client.is_active:
+    if request.method == 'POST' and request.user.is_maker and can_upload and request.user.root.client.is_active:
         FileDocumentForm.category = category
         form_doc = FileDocumentForm(request.POST, request.FILES)
 
@@ -92,8 +100,9 @@ def file_upload(request):
 
     context = {
         'docs_paginated': docs_paginated,
-        'has_file_category': has_file_category,
-        'doc_list': doc_list
+        'doc_list': doc_list,
+        'format_qs': format_qs,
+        'can_upload':can_upload
     }
 
     return render(request, 'data/index.html', context=context)

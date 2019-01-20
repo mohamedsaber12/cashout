@@ -22,6 +22,8 @@ class Doc(models.Model):
                               on_delete=models.CASCADE, related_name='doc')
     file_category = models.ForeignKey(
         'data.FileCategory', null=True, on_delete=models.CASCADE, related_name='doc')
+    collection_data = models.ForeignKey(
+        'data.CollectionData', null=True, on_delete=models.CASCADE, related_name='collection_doc')
     file = models.FileField(upload_to=update_filename,
                             null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

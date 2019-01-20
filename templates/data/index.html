@@ -14,10 +14,16 @@
 
 {% block body %}
 
-    {% if has_file_category and request.user.is_maker %}
+    {% if can_upload and request.user.is_maker %}
         <div class="well upload-nav col-xs-12">
                 <h3 class="navbar-left">{% trans 'Upload Form' %}</h3>
-                
+                <select name="type_of" id="type_of">
+                    <option value="1">Disbursement</option>
+                    <option value="2">Collection</option>
+                </select>
+                <select name="format" id="format">
+                    <option value=""></option>
+                </select>
                 <div class="x_content">
                     <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{% csrf_token %}
                     </form>
@@ -26,12 +32,15 @@
                             
         </div>
     
-    {% elif not has_file_category %}
+    {% elif not can_upload %}
 
         <div class="well upload-nav col-xs-12">
-
-            <strong  style="margin-top: 15px;">{% trans 'Please Add file category first' %}</strong>
-            
+            {% if request.user.data_type == 1 %}
+            <strong  style="margin-top: 15px;">{% trans 'Please Add Disbursement first' %}</strong>
+            {% elif request.user.data_type == 2 %}
+            <strong style="margin-top: 15px;">{% trans 'Please Add Collection first' %}</strong>
+            {% else %}
+            <strong style="margin-top: 15px;">{% trans 'Please Add Collection and/or Disbursement first' %}</strong>
         </div>
     {% endif %}
 

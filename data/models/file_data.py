@@ -6,6 +6,7 @@ from django.contrib.postgres.fields import JSONField
 from django.db import models
 from django.db.models import Q
 from django.http import JsonResponse
+from django.conf import settings
 
 # Create your models here.
 from django_extensions.db.models import TimeStampedModel
@@ -114,6 +115,8 @@ class FileData(TimeStampedModel):
     date = models.DateField(blank=True, null=True)
     is_draft = models.BooleanField(default=0, verbose_name='Drafted')
     is_downloaded = models.BooleanField(default=0)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='file_data')
     objects = FileDataManager()
 
     class Meta:

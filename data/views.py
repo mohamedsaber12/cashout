@@ -56,7 +56,7 @@ def file_upload(request):
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
     collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
     can_upload = True
-    if request.user.data_type == 3 and  not category.exists() and not collection.exists()):
+    if request.user.data_type == 3 and  not category.exists() and not collection.exists():
         can_upload = False
     elif request.user.data_type == 2 and not collection.exists():
         can_upload = False

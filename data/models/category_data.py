@@ -1,8 +1,9 @@
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
-TYPES = ((1, 'Disbursement',), (2, 'Collection',))
+TYPES = ((1, 'Disbursement',), (2, 'Collection',),(3,'Both'))
 
 class Format(models.Model):
     identifier1 = models.CharField(
@@ -32,10 +33,10 @@ class Format(models.Model):
 
     collection = models.ForeignKey(
         'data.CollectionData', blank=True, null=True, on_delete=models.CASCADE, related_name='format')
-    data_type = models.PositiveSmallIntegerField(
-        choices=TYPES)
 
     hierarchy = models.PositiveSmallIntegerField()
+
+    name = models.CharField(max_length=128, unique=False)
 
     def identifiers(self):
         fields = []
@@ -51,6 +52,35 @@ class Format(models.Model):
                 break
         return fields
 
+    def data_type(self):
+        if self.category and self.collection:
+            return TYPES[2][0]
+        elif self.category:
+            return TYPES[0][0]
+        elif self.collection:
+            return TYPES[1][0]
+
+    def headers_match(self,headers):
+        identifiers = self.identifiers()
+        return all(i in identifiers for i in headers)
+
+    def valdiate_disbursement_unique(self):
+        unique_field = self.category.unique_field
+        if unique_field and unique_field not in self.identifiers():
+            return False
+        return True  
+
+    def valdiate_collection_unique(self):
+        unique_field = self.collection.unique_field
+        unique_field2 = self.collection.unique_field2
+        identifiers = self.identifiers()
+        if unique_field2 and not all(i in identifiers for i in [unique_field, unique_field2]):
+            return False
+        if unique_field not in identifiers:
+            return False
+        return True
+
+                  
     # TODO : POSTPONED not now
     def save(self, *args, **kwargs):
         """Add a permission for every file category"""
@@ -59,7 +89,8 @@ class Format(models.Model):
 
 
 class CollectionData(models.Model):
-    category = models.OneToOneField('data.FileCategory', on_delete=models.CASCADE, related_name='collection')
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='collection_data')
     has_partial_payment = models.BooleanField(default=0, verbose_name='Will there be partial payment?',
                                               help_text='If yes please mention the amount field below')
     can_overpay = models.BooleanField(default=0, verbose_name='This user accept over payment?')

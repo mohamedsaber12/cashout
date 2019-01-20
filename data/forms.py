@@ -70,21 +70,26 @@ class FileDocumentForm(forms.ModelForm):
                     'xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
     )
 
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args, **kwargs)
+        if self.request.user.data_type() != 3:
+            del self.fields['type_of']
+
     def clean_file(self):
         """
         Function that validates the file type, file name and size
         """
         file = self.cleaned_data['file']
         format_type = self.cleaned_data['format']
-        data_type = self.cleaned_data['type_of']
+        type_of = self.cleaned_data['type_of']
 
         if file:
             # validate unique fields
-            if data_type == 1:
+            if type_of == 1:
                 format_type.valdiate_disbursement_unique()
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Disbursement unique field"))
-            if data_type == 2:
+            if type_of == 2:
                 format_type.valdiate_collection_unique()
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Collection unique fields"))
@@ -155,16 +160,18 @@ class FileDocumentForm(forms.ModelForm):
         return file
 
     def save(self, commit=True):
-        m = super(FileDocumentForm, self).save(commit=commit)
+        m = super().save(commit=commit)
         self.instance.owner = self.request.user
+        if not self.instance.type_of:
+            self.instance.type_of = self.request.user.data_type()
         return m
 
     class Meta:
         model = Doc
         fields = [
-            'file',
             'format',
-            'type_of'
+            'type_of',
+            'file'
         ]
 
 

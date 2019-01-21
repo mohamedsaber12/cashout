@@ -329,11 +329,11 @@ class DownloadFilterForm(forms.Form):
 
 class FormatForm(forms.ModelForm):
     
-    def __init__(self, *args, request, **kwargs):
+    def __init__(self, *args, request=None, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.request = request
-        
+    
     class Meta:
         model = Format
         fields = '__all__'

@@ -24,11 +24,11 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import ListView
 from django.views.static import serve
 
-from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
+from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
 from data.tasks import handle_disbursement_file, handle_uploaded_file
 from data.utils import get_client_ip, paginator
-from users.decorators import setup_required
+from users.decorators import setup_required, maker_only
 from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -324,3 +324,21 @@ def doc_download(request, doc_id):
     else:
         raise Http404
 
+
+@method_decorator([setup_required, login_required, maker_only], name='dispatch')
+class FormatListView(ListView):
+    
+    template_name = "data/formats.html"
+    context_object_name = "format_qs"
+     
+    def get_queryset(self):
+        return Format.objects.filter(hierarchy=self.request.user.hierarchy)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['formatform'] = FormatFormSet(
+            queryset=context['format_qs'],
+            prefix='format'
+        )
+        context['formatform'].can_delete = False
+        return context

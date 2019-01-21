@@ -16,3 +16,18 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
     if function:
         return actual_decorator(function)
     return actual_decorator
+
+
+def maker_only(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+    """
+    Decorator for views that checks that the user is maker, redirecting
+    to '/' if not.
+    """
+    actual_decorator = user_passes_test(
+        lambda u: u.is_maker,
+        login_url=login_url,
+        redirect_field_name=None
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator

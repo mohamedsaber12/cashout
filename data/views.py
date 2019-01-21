@@ -4,7 +4,7 @@ from __future__ import print_function, unicode_literals
 import datetime
 import json
 import logging
-
+import xlrd
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet
@@ -226,7 +226,7 @@ def document_view(request, doc_id):
     List checkers reviews.
     Checkers can review document.
     """
-    template_name = 'data/document_viewer.html'
+    template_name = 'data/document_viewer_disbursement.html'
     doc = get_object_or_404(Doc, id=doc_id)
     review_form_errors = None
     reviews = None
@@ -360,3 +360,30 @@ class FormatListView(ListView):
         )
         context['formatform'].can_delete = False
         return context
+
+
+@method_decorator([setup_required, login_required], name='dispatch')
+class RetrieveCollectionData(DetailView):
+    http_method_names = ['get']
+    template_name = "data/document_viewer_collection.html"
+
+    def get_queryset(self,*args,**kwargs):
+        return Doc.objects.filter(id=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        doc_obj = context['object']
+        xl_workbook = xlrd.open_workbook(doc_obj.file.path)
+        xl_sheet = xl_workbook.sheet_by_index(0)
+
+        excl_data = []
+        for row in xl_sheet.get_rows():
+            row_data = []
+            for x, data in enumerate(row):
+                row_data.append(data.value)
+            excl_data.append(row_data)
+        
+        
+        context['excel_data'] = excl_data
+        return context
+    

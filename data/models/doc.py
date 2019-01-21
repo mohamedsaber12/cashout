@@ -71,7 +71,10 @@ class Doc(models.Model):
 
     def get_absolute_url(self):
         from django.urls import reverse
-        return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+        if self.type_of == self.DISBURSEMENT:
+            return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+        else:
+            return reverse("data:doc_collection_detail", kwargs={'pk': self.id})
 
     def can_user_disburse(self, checker):
         """"

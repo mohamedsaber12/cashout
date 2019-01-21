@@ -58,8 +58,13 @@
             {% endif %}
         </div>
     {% endif %}
-
-    {% include 'data/document_details_list.html' with object_list=doc_list %}
+    
+    {% if doc_list_disbursement %}
+        {% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement %}
+    {%endif%} 
+    {% if doc_list_collection %}
+        {% include 'data/document_collection_list.html' with object_list=doc_list_collection %}
+    {%endif%}
 
 <!-- modals -->
 

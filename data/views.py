@@ -55,11 +55,11 @@ def file_upload(request):
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
     collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
     can_upload = True
-    if request.user.data_type == 3 and  not category.exists() and not collection.exists():
+    if request.user.data_type() == 3 and  not category and not collection:
         can_upload = False
-    elif request.user.data_type == 2 and not collection.exists():
+    elif request.user.data_type() == 2 and not collection:
         can_upload = False
-    elif request.user.data_type == 1 and not category.exists():
+    elif request.user.data_type() == 1 and not category:
         can_upload = False
 
     if request.method == 'POST' and request.user.is_maker and can_upload and request.user.root.client.is_active:
@@ -85,18 +85,36 @@ def file_upload(request):
                     datetime.datetime.now(), get_client_ip(request)))
 
             return JsonResponse(form_doc.errors, status=400)
-
-    doc_list = Doc.objects.filter(
-        owner__hierarchy=request.user.hierarchy)
-    doc_list = filter_docs_by_date(request, doc_list)
-    try:
-        docs_paginated = paginator(request, doc_list)
-    except:
-        docs_paginated = paginator(request, '')
-
+    
+    doc_list_collection = None
+    doc_list_disbursement = None
+    if request.user.data_type() == 3:
+        doc_list_disbursement = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.DISBURSEMENT)
+        doc_list_collection = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.COLLECTION)
+        doc_list_disbursement = filter_docs_by_date(
+            request, doc_list_disbursement)
+        doc_list_collection = filter_docs_by_date(
+            request, doc_list_collection)
+    if request.user.data_type() == 2:
+        doc_list_disbursement = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.DISBURSEMENT)
+        doc_list_disbursement = filter_docs_by_date(
+            request, doc_list_disbursement)
+    if request.user.data_type() == 1:
+        doc_list_collection = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.COLLECTION)
+        doc_list_collection = filter_docs_by_date(
+            request, doc_list_collection)
+   
     context = {
-        'docs_paginated': docs_paginated,
-        'doc_list': doc_list,
+        'doc_list_disbursement': doc_list_disbursement,
+        'doc_list_collection': doc_list_collection,
         'format_qs': format_qs,
         'can_upload':can_upload
     }

@@ -16,7 +16,7 @@ from data.models import FileData
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
-from users.models import User
+from users.models import User, MakerUser
 import random
 import string
 
@@ -215,6 +215,7 @@ def handle_uploaded_file(doc_obj_id):
         
     doc_obj.is_processed = True
     doc_obj.save()
+    notify_makers_collection(doc_obj)
 
 @app.task()
 def notify_checkers(doc_id):
@@ -255,4 +256,20 @@ def notify_maker(doc):
         recipient_list=[maker.email],
         subject= _('[Payroll] File Upload Notification'),
         message=message
+    )
+
+
+def notify_makers_collection(doc):
+    makers = MakerUser.objects.filter(doc.owner.hierarchy)
+    doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+
+    MESSAGE_SUCC = f"""Dear Maker 
+        The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
+        Thanks, BR"""
+
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[maker.email for maker in makers],
+        subject=_('[Payroll] Collection File Upload Notification'),
+        message=MESSAGE_SUCC
     )

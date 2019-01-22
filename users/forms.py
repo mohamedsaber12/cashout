@@ -356,22 +356,13 @@ class CheckerCreationForm(forms.ModelForm):
         for field in iter(self.fields):
             # get current classes from Meta
             classes = self.fields[field].widget.attrs.get("class")
-            if field == 'is_staff':
-                if classes is not None:
-                    classes += " icheckbox_flat-green checked"
-                else:
-                    classes = "icheckbox_flat-green"
-                self.fields[field].widget.attrs.update({
-                    'class': classes
-                })
+            if classes is not None:
+                classes += " form-control"
             else:
-                if classes is not None:
-                    classes += " form-control"
-                else:
-                    classes = "form-control"
-                self.fields[field].widget.attrs.update({
-                    'class': classes
-                })
+                classes = "form-control"
+            self.fields[field].widget.attrs.update({
+                'class': classes
+            })
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -383,7 +374,7 @@ class CheckerCreationForm(forms.ModelForm):
     class Meta:
         model = CheckerUser
         fields = ['first_name', 'last_name',
-                  'email', 'mobile_no', 'level', 'is_staff']
+                  'email', 'mobile_no', 'level']
 
 
 class BrandForm(forms.ModelForm):

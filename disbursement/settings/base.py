@@ -201,6 +201,7 @@ LOGIN_EXEMPT_URLS = (
     r'^user/logout/$',
     r'^user/login/$',
     r'^password/reset/$',
+    r'^forgot-password/$',
     r'^change_password/(?P<user>[0-9A-Za-z]+)/$',
     r'^password/reset/done/$',
     r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)/(?P<token>.+)/$',

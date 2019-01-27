@@ -157,10 +157,12 @@ def paginator(request, object):
         docs = paginator_obj.page(paginator_obj.num_pages)
     return docs
 
+
 def combine_data():
     categories = FileCategory.objects.all()
     for category in categories:
         Format.objects.create(
+            name=category.name,
             identifier1=category.identifier1,
             identifier2=category.identifier2,
             identifier3=category.identifier3,
@@ -171,5 +173,6 @@ def combine_data():
             identifier8=category.identifier8,
             identifier9=category.identifier9,
             identifier10=category.identifier10,
-            category=category
+            category=category,
+            hierarchy=category.user_created.hierarchy
         )

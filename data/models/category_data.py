@@ -3,9 +3,17 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
-TYPES = ((1, 'Disbursement',), (2, 'Collection',),(3,'Both'))
+
 
 class Format(models.Model):
+    DISBURSEMENT = 1
+    COLLECTION = 2
+    COLLECTION_DISBURSEMENT = 3
+    TYPES = (
+        (DISBURSEMENT, 'Disbursement'),
+        (COLLECTION, 'Collection'),
+        (COLLECTION_DISBURSEMENT, 'Both')
+    )
     identifier1 = models.CharField(
         max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
     identifier2 = models.CharField(
@@ -48,11 +56,11 @@ class Format(models.Model):
 
     def data_type(self):
         if self.category and self.collection:
-            return TYPES[2][0]
+            return self.COLLECTION_DISBURSEMENT
         elif self.category:
-            return TYPES[0][0]
+            return self.DISBURSEMENT
         elif self.collection:
-            return TYPES[1][0]
+            return self.COLLECTION
 
     def headers_match(self,headers):
         identifiers = self.identifiers()
@@ -62,7 +70,7 @@ class Format(models.Model):
         unique_field = self.category.unique_field
         if unique_field and unique_field not in self.identifiers():
             return False
-        return True  
+        return True
 
     def validate_collection_unique(self):
         unique_field = self.collection.unique_field
@@ -74,7 +82,9 @@ class Format(models.Model):
             return False
         return True
 
-                  
+    def __str__(self):
+        return self.name
+
     # TODO : POSTPONED not now
     def save(self, *args, **kwargs):
         """Add a permission for every file category"""

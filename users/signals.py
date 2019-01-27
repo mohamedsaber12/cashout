@@ -54,16 +54,14 @@ def super_admin_pre_save(sender, instance, *args, **kwargs):
 @receiver(post_save, sender=Client)
 def client_post_save(sender, instance,created, **kwargs):
     if created:
-        set_client_brand(instance)
+        root_user = instance.client
+        root_user.brand = instance.creator.brand
+        root_user.save()
 
 
 def set_brand(instance):
     if not instance.brand:
         instance.brand = instance.super_admin.brand
-
-
-def set_client_brand(instance):
-    instance.client.brand = instance.creator.brand
 
 
 def generate_username(user, user_model):

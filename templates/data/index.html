@@ -98,6 +98,16 @@
 
         Dropzone.options.fileUpload = {
             maxFiles: 1,
+            accept: function (file, done) {
+                bootbox.confirm("Upload file?", function (result) { 
+                    if (result) {
+                        done();
+                    }
+                    else {
+                        done('Upload cancelled');
+                    }   
+                });    
+            },
             init: function () {
                 this.on("success", function (file,a,b) {
                      $('#success-modal').modal('show');
@@ -110,7 +120,9 @@
                         fail_modal.find('.modal-body #p1').text(message.file[0]);
                     if (message['non_field_errors'])
                         fail_modal.find('.modal-body #p2').text(message.non_field_errors[0]);
-
+                    if (message === 'Upload cancelled')
+                        fail_modal.find('.modal-body #p1').text(message);
+                    
                     fail_modal.modal('show');
 
                 });

@@ -127,7 +127,7 @@ class User(AbstractUser):
         return full_name.strip()
 
     def get_absolute_url(self):
-        return reverse("users:profile")
+        return reverse("users:profile", kwargs={'username': self.username})
 
     def has_uncomplete_entity_creation(self):
         return self.entity_setups.filter(Q(agents_setup=False)).count() > 0

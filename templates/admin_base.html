@@ -48,7 +48,7 @@
                         <ul class="nav child_menu">
                             <li><a href="{% url 'users:settings' %}">Setup</a></li>
                             <li><a href="{% url 'users:levels' %}">levels</a></li>
-                            <li><a href="{% url 'users:profile' %}">Profile</a></li>
+                            <li><a href="{% url 'users:profile' request.user.username  %}">Profile</a></li>
                         </ul>
                         </li>
                 </ul>

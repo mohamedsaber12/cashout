@@ -71,6 +71,9 @@
                             <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
                         {% endif %}
                         <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
+                        {% if request.user.is_maker %}
+                            <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+                        {%endif%}
                     </ul>
                 </li>
 

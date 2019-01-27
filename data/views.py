@@ -4,7 +4,7 @@ from __future__ import print_function, unicode_literals
 import datetime
 import json
 import logging
-
+import xlrd
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
@@ -21,14 +21,14 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views.generic import ListView
+from django.views.generic import ListView, DetailView
 from django.views.static import serve
 
-from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm
-from data.models import Doc, DocReview, FileCategory
-from data.tasks import handle_disbursement_file
+from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet
+from data.models import Doc, DocReview, FileCategory, Format,CollectionData
+from data.tasks import handle_disbursement_file, handle_uploaded_file
 from data.utils import get_client_ip, paginator
-from users.decorators import setup_required
+from users.decorators import setup_required, maker_only
 from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -51,23 +51,30 @@ def file_upload(request):
     Documents can be filtered by date.
     Documents are paginated ("docs_paginated") but not used in template.
     """
-    FileDocumentForm.request = request
+    format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
-    has_file_category = bool(category)
+    collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
+    can_upload = True
+    if request.user.data_type() == 3 and  not category and not collection:
+        can_upload = False
+    elif request.user.data_type() == 2 and not collection:
+        can_upload = False
+    elif request.user.data_type() == 1 and not category:
+        can_upload = False
 
-    if request.method == 'POST' and request.user.is_maker and has_file_category and request.user.root.client.is_active:
-        FileDocumentForm.category = category
-        form_doc = FileDocumentForm(request.POST, request.FILES)
+    if request.method == 'POST' and request.user.is_maker and can_upload and request.user.root.client.is_active:
+        form_doc = FileDocumentForm(
+            request.POST, request.FILES,request=request, collection=collection, category=category)
 
         if form_doc.is_valid():
-            file_doc = Doc(owner=request.user,
-                           file=request.FILES['file'],
-                           file_category=category)
-            file_doc.save()
+            file_doc = form_doc.save()
             now = datetime.datetime.now()
             UPLOAD_LOGGER.debug(
-                '%s uploaded file at ' % request.user + str(now))
-            handle_disbursement_file.delay(file_doc.id)
+                '%s uploaded file at ' % request.user + str(now))           
+            if file_doc.type_of == Doc.COLLECTION:
+                handle_uploaded_file.delay(file_doc.id)
+            else:
+                handle_disbursement_file.delay(file_doc.id)
 
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
@@ -78,20 +85,38 @@ def file_upload(request):
                     datetime.datetime.now(), get_client_ip(request)))
 
             return JsonResponse(form_doc.errors, status=400)
-
     
-    doc_list = Doc.objects.filter(
-        owner__hierarchy=request.user.hierarchy)
-    doc_list = filter_docs_by_date(request, doc_list)
-    try:
-        docs_paginated = paginator(request, doc_list)
-    except:
-        docs_paginated = paginator(request, '')
-
+    doc_list_collection = None
+    doc_list_disbursement = None
+    if request.user.data_type() == 3:
+        doc_list_disbursement = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.DISBURSEMENT)
+        doc_list_collection = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.COLLECTION)
+        doc_list_disbursement = filter_docs_by_date(
+            request, doc_list_disbursement)
+        doc_list_collection = filter_docs_by_date(
+            request, doc_list_collection)
+    if request.user.data_type() == 2:
+        doc_list_disbursement = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.DISBURSEMENT)
+        doc_list_disbursement = filter_docs_by_date(
+            request, doc_list_disbursement)
+    if request.user.data_type() == 1:
+        doc_list_collection = Doc.objects.filter(
+            owner__hierarchy=request.user.hierarchy,
+            type_of=Doc.COLLECTION)
+        doc_list_collection = filter_docs_by_date(
+            request, doc_list_collection)
+   
     context = {
-        'docs_paginated': docs_paginated,
-        'has_file_category': has_file_category,
-        'doc_list': doc_list
+        'doc_list_disbursement': doc_list_disbursement,
+        'doc_list_collection': doc_list_collection,
+        'format_qs': format_qs,
+        'can_upload':can_upload
     }
 
     return render(request, 'data/index.html', context=context)
@@ -201,7 +226,7 @@ def document_view(request, doc_id):
     List checkers reviews.
     Checkers can review document.
     """
-    template_name = 'data/document_viewer.html'
+    template_name = 'data/document_viewer_disbursement.html'
     doc = get_object_or_404(Doc, id=doc_id)
     review_form_errors = None
     reviews = None
@@ -317,3 +342,48 @@ def doc_download(request, doc_id):
     else:
         raise Http404
 
+
+@method_decorator([setup_required, login_required, maker_only], name='dispatch')
+class FormatListView(ListView):
+    
+    template_name = "data/formats.html"
+    context_object_name = "format_qs"
+     
+    def get_queryset(self):
+        return Format.objects.filter(hierarchy=self.request.user.hierarchy)
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(*args, **kwargs)
+        context['formatform'] = FormatFormSet(
+            queryset=context['format_qs'],
+            prefix='format'
+        )
+        context['formatform'].can_delete = False
+        return context
+
+
+@method_decorator([setup_required, login_required], name='dispatch')
+class RetrieveCollectionData(DetailView):
+    http_method_names = ['get']
+    template_name = "data/document_viewer_collection.html"
+
+    def get_queryset(self,*args,**kwargs):
+        return Doc.objects.filter(id=self.kwargs['pk'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        doc_obj = context['object']
+        xl_workbook = xlrd.open_workbook(doc_obj.file.path)
+        xl_sheet = xl_workbook.sheet_by_index(0)
+
+        excl_data = []
+        for row in xl_sheet.get_rows():
+            row_data = []
+            for x, data in enumerate(row):
+                row_data.append(data.value)
+            excl_data.append(row_data)
+        
+        
+        context['excel_data'] = excl_data
+        return context
+    

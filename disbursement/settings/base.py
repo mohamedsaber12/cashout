@@ -22,7 +22,6 @@ env = environ.Env()
 BASE_DIR = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
@@ -33,7 +32,6 @@ SECRET_KEY = '_3yre1ofg7bw9c51u+gcnjh977=1f*+8r2zj-q(ainog2h&tb('
 DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1']
-
 
 # Application definition
 
@@ -53,7 +51,6 @@ INSTALLED_APPS = [
     'django_celery_beat',
     'imagekit',
 
-
     # security
     'request_id',
     'django_otp',
@@ -65,6 +62,7 @@ INSTALLED_APPS = [
     'data',
     'users',
     'disb',
+    'payment'
 ]
 
 MIDDLEWARE = [
@@ -106,7 +104,7 @@ WSGI_APPLICATION = 'disbursement.wsgi.application'
 
 CELERY_TIMEZONE = 'Africa/Cairo'
 
-#Send results back as AMQP messages
+# Send results back as AMQP messages
 CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_RESULT_PERSISTENT = False
 
@@ -136,7 +134,6 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 # https://docs.djangoproject.com/en/2.0/topics/i18n/
 
@@ -154,7 +151,6 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
@@ -174,7 +170,6 @@ LOCALE_PATHS = (
 )
 FILE_UPLOAD_PERMISSIONS = 0o644
 
-
 OTP_LOGIN_URL = reverse_lazy('users:user_login_view')
 # LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = 'users:user_login_view'
@@ -186,9 +181,7 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.BasicAuthentication',
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_expiring_authtoken.authentication.ExpiringTokenAuthentication',
     ),
     'DEFAULT_PARSER_CLASSES': (
         'rest_framework.parsers.JSONParser',
@@ -208,7 +201,6 @@ LOGIN_EXEMPT_URLS = (
     r'^password/done/$',
     r'^api*'
 )
-
 
 LOGGING = {
     'version': 1,
@@ -280,7 +272,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/deleted_users.log',
         },
-        'delete_group':{
+        'delete_group': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/deleted_groups.log',
@@ -305,7 +297,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/setup_view.log',
         },
-        'delete_user_view':{
+        'delete_user_view': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/delete_user_view.log',
@@ -335,7 +327,27 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/failed_disbursement_download.log',
         },
-        
+        'bill_inquiry_req': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/request_bill.log',
+        },
+        'bill_payment_req': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/request_trx.log',
+        },
+        'bill_inquiry_res': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/response_bill.log',
+        },
+        'bill_payment_res': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/response_trx.log',
+        },
+
     },
 
     'loggers': {
@@ -388,7 +400,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'delete_groups':{
+        'delete_groups': {
             'handlers': ['delete_group'],
             'level': 'DEBUG',
             'propagate': True,
@@ -413,22 +425,22 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'delete_user_view':{
+        'delete_user_view': {
             'handlers': ['delete_user_view'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'levels_view':{
+        'levels_view': {
             'handlers': ['levels_view'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'root_create':{
+        'root_create': {
             'handlers': ['root_create'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'agent_create':{
+        'agent_create': {
             'handlers': ['agent_create'],
             'level': 'DEBUG',
             'propagate': True,
@@ -438,11 +450,31 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'failed_disbursement_download':{
+        'failed_disbursement_download': {
             'handlers': ['failed_disbursement_download'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'bill_inquiry_req': {
+            'handlers': ['bill_inquiry_req'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'bill_inquiry_res': {
+            'handlers': ['bill_inquiry_res'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'bill_payment_req': {
+            'handlers': ['bill_payment_req'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'bill_payment_res': {
+            'handlers': ['bill_payment_res'],
+            'level': 'DEBUG',
+            'propagate': True,
         }
-        
+
     },
 }

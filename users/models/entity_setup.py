@@ -1,6 +1,7 @@
 from django.db import models
 from django.urls import reverse_lazy
 from django.utils.functional import cached_property
+from rest_framework_expiring_authtoken.models import ExpiringToken
 
 
 class EntitySetup(models.Model):
@@ -32,4 +33,10 @@ class EntitySetup(models.Model):
 
     def get_reverse(self):
         if not self.agents_setup:
-            return reverse_lazy('disbursement:add_agents', kwargs={'token': self.entity.auth_token.key})
+            token, created = ExpiringToken.objects.get_or_create(user=self.entity)
+            if created:
+                return reverse_lazy('disbursement:add_agents', kwargs={'token': token.key})
+            if token.expired():
+                token = ExpiringToken.objects.create(user=self.entity)
+            return reverse_lazy('disbursement:add_agents', kwargs={'token': token.key})
+

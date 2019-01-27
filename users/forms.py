@@ -5,9 +5,9 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserChangeForm as AbstractUserChangeForm
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
-                          inlineformset_factory, modelformset_factory)
+                          inlineformset_factory, modelformset_factory, CheckboxInput)
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
@@ -19,6 +19,7 @@ from django.utils.encoding import force_bytes
 
 from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand
 from users.signals import ALLOWED_CHARACTERS
+from django_otp.forms import OTPAuthenticationFormMixin
 
 
 class SetPasswordForm(forms.Form):
@@ -239,6 +240,12 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
 
 
 class RootCreationForm(forms.ModelForm):
+    business_type = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'flat', 'style': 'position: absolute;'}),
+        choices=(("c", "Collection"), ("d", "Disbursement")),
+
+    )
+
     class Meta:
         model = RootUser
         fields = ("username", "email")
@@ -256,6 +263,7 @@ class RootCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        business_type = self.cleaned_data['business_type']
         if self.request.user.is_superadmin:
             maximum = max(RootUser.objects.values_list(
                 'hierarchy', flat=True), default=False)
@@ -273,6 +281,10 @@ class RootCreationForm(forms.ModelForm):
             allowed_chars=ALLOWED_CHARACTERS, length=12)
         user.set_password(random_pass)
         user.save()
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement')) \
+            if 'd' in business_type else None
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_collection')) \
+            if 'c' in business_type else None
         return user
 
 
@@ -414,7 +426,7 @@ CheckerMemberFormSet = modelformset_factory(
     model=CheckerUser, form=CheckerCreationForm, 
     min_num=1, validate_min=True, can_delete=True, extra=1)
 
-from django_otp.forms import OTPAuthenticationFormMixin
+
 class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
     """
     A form that verifies an authenticated user. It looks very much like

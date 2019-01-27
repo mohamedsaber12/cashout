@@ -9,7 +9,7 @@ from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from data.models import Doc, DocReview, FileCategory
+from data.models import Doc, DocReview, FileCategory,CollectionData,Format
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 from users.models import User
@@ -70,13 +70,31 @@ class FileDocumentForm(forms.ModelForm):
                     'xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
     )
 
+    def __init__(self,*args,**kwargs):
+        self.request = kwargs.pop('request')
+        self.category = kwargs.pop('category')
+        self.collection = kwargs.pop('collection')
+        super().__init__(*args, **kwargs)
+        if self.request.user.data_type() != 3:
+            del self.fields['type_of']
+
     def clean_file(self):
         """
         Function that validates the file type, file name and size
         """
         file = self.cleaned_data['file']
-        file_category = self.category
+        format_type = self.cleaned_data['format']
+        type_of = self.cleaned_data['type_of']
+
         if file:
+            # validate unique fields
+            if type_of == 1 and not format_type.validate_disbursement_unique():
+                raise forms.ValidationError(
+                    _("This Format doesn't contain the Disbursement unique field"))
+            if type_of == 2 and not format_type.validate_collection_unique():
+                raise forms.ValidationError(
+                    _("This Format doesn't contain the Collection unique fields"))
+
 
             file_type = file.content_type.split('/')[1]
             number_of_dots = len(file.name.split('.'))
@@ -119,7 +137,7 @@ class FileDocumentForm(forms.ModelForm):
                 with os.fdopen(fd, 'wb') as out:
                     out.write(file.read())
 
-                if file_category.num_of_identifiers != 0:
+                if format_type.num_of_identifiers != 0:
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
@@ -127,57 +145,92 @@ class FileDocumentForm(forms.ModelForm):
                             _('File uploaded in not in proper form'))
                     xl_sheet = xl_workbook.sheet_by_index(0)
 
-                    if len(file_category.identifiers()) != xl_sheet.ncols:
+                    if len(format_type.identifiers()) != xl_sheet.ncols:
                         raise forms.ValidationError(
                             _('File uploaded in not in proper form'))
+                    # validate headers
+                    cell_obj = next(xl_sheet.get_rows())
+                    headers = [data.value for data in cell_obj]
+                    if not format_type.headers_match(headers):
+                        raise forms.ValidationError(
+                            _("File headers doesn't match the format identifiers"))
+
             finally:
                 os.unlink(tmp)  # delete the temp file no matter what
 
         return file
 
     def save(self, commit=True):
-        m = super(FileDocumentForm, self).save(commit=commit)
-        self.instance.owner = self.request.user
-        return m
+        instance = super().save(commit=False)
+        instance.owner = self.request.user
+        instance.file_category = self.category
+        instance.collection_data = self.collection
+
+        if not instance.type_of:
+            instance.type_of = self.request.user.data_type()
+        if commit:
+            instance.save()
+        return instance
 
     class Meta:
         model = Doc
         fields = [
-            'file',
+            'format',
+            'type_of',
+            'file'
         ]
 
+
+class CollectionDataForm(forms.ModelForm):
+    class Meta:
+        model = CollectionData
+        fields = '__all__'
+        exclude = ('user',)
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        collection_data = CollectionData.objects.filter(
+            user__hierarchy=self.request.user.hierarchy).first()
+        
+        super().__init__(*args, instance=collection_data, ** kwargs)
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs['class'] = 'form-control'
+
+
+    def save(self,commit=True):
+        instance = super().save(commit=False)
+        instance.user = self.request.user
+        if commit:
+            instance.save()
+        return instance
 
 class FileCategoryForm(forms.ModelForm):
     class Meta:
         model = FileCategory
         fields = '__all__'
-        exclude = ('user_created',
-                   'num_of_identifiers')
+        exclude = ('user_created',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
-            if field_name == 'has_header':
-                field.widget.attrs['class'] = 'js-switch'
-                pass
-            else:
-                field.widget.attrs['class'] = 'form-control'
+            field.widget.attrs['class'] = 'form-control'
 
-    def clean_file_type(self):
+    def clean_name(self):
         try:
-            file_category = FileCategory.objects.get(Q(file_type=self.cleaned_data["file_type"]) &
+            file_category = FileCategory.objects.get(Q(name=self.cleaned_data["name"]) &
                                                      Q(user_created__hierarchy=self.request.user.hierarchy))
         except:
             file_category = None
 
         try:
-            if not file_category == self.obj and self.cleaned_data["file_type"] == file_category.file_type:
+            if not file_category == self.obj and self.cleaned_data["name"] == file_category.name:
                 raise forms.ValidationError(self.add_error(
-                    'file_type', _('Name already Exist') ))
+                    'name', _('Name already Exist') ))
             else:
-                return self.cleaned_data["file_type"]
+                return self.cleaned_data["name"]
         except AttributeError:
-            return self.cleaned_data["file_type"]
+            return self.cleaned_data["name"]
 
     def clean_no_of_reviews_required(self):
         checkers_no = User.objects.get_all_checkers(
@@ -189,7 +242,7 @@ class FileCategoryForm(forms.ModelForm):
 
 
 class FileCategoryViewForm(forms.ModelForm):
-    file_type = forms.ModelChoiceField(queryset=None,
+    name = forms.ModelChoiceField(queryset=None,
                                        widget=forms.Select(attrs={'class': 'form-control',
                                                                   'style': 'height: 32px;/n'
                                                                            'margin-top: 2px;'}),
@@ -208,12 +261,12 @@ class FileCategoryViewForm(forms.ModelForm):
     class Meta:
         model = FileCategory
         fields = [
-            'file_type'
+            'name'
         ]
 
     def __init__(self):
         super(FileCategoryViewForm, self).__init__()
-        self.fields["file_type"].queryset = FileCategory.objects.filter(
+        self.fields["name"].queryset = FileCategory.objects.filter(
             Q(user_created__hierarchy=self.request.user.hierarchy))
 
 
@@ -273,3 +326,34 @@ class DownloadFilterForm(forms.Form):
             self.add_error('end_date', _('Can\'t be blank'))
 
         return cleaned_data
+
+class FormatForm(forms.ModelForm):
+    
+    def __init__(self, *args, request=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.request = request
+    
+    class Meta:
+        model = Format
+        fields = '__all__'
+        exclude = ('category', 'num_of_identifiers', 'collection', 'hierarchy')
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.hierarchy = self.request.user.hierarchy
+        if self.request.user.has_perm('users.has_disbursement') and self.request.user.has_perm('users.has_collection'):
+            instance.category = self.request.user.file_category
+            instance.collection = self.request.user.collection_data
+        elif self.request.user.has_perm('users.has_disbursement'):
+            instance.category = self.request.user.file_category
+        elif self.request.user.has_perm('users.has_collection'):
+            instance.collection = self.request.user.collection_data
+        if commit:
+            instance.save()
+        return instance
+
+
+FormatFormSet = forms.modelformset_factory(
+    model=Format, form=FormatForm,
+    min_num=1, validate_min=True, can_delete=True, extra=1)

@@ -8,13 +8,22 @@ from django.utils.translation import gettext_lazy as _
 
 from data.utils import pkgen, update_filename
 
+
 class Doc(models.Model):
+    DISBURSEMENT = 1
+    COLLECTION = 2
+    types = (
+        (DISBURSEMENT, 'DISBURSEMENT'),
+        (COLLECTION, 'COLLECTION')
+    )
     id = models.CharField(primary_key=True, editable=False,
                           unique=True, db_index=True, max_length=32, default=pkgen)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE, related_name='doc')
     file_category = models.ForeignKey(
-        'data.FileCategory', null=True, on_delete=models.CASCADE)
+        'data.FileCategory', null=True, on_delete=models.CASCADE, related_name='doc')
+    collection_data = models.ForeignKey(
+        'data.CollectionData', null=True, on_delete=models.CASCADE, related_name='collection_doc')
     file = models.FileField(upload_to=update_filename,
                             null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,6 +36,8 @@ class Doc(models.Model):
     processing_failure_reason = models.CharField(max_length=256, null=True)
     total_amount = models.FloatField(default=False)
     total_count = models.PositiveIntegerField(default=False)
+    type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
+    format = models.OneToOneField('data.Format', on_delete=models.DO_NOTHING, null=True)
 
     class Meta:
         permissions = (("upload_file", "upload file"),
@@ -60,7 +71,10 @@ class Doc(models.Model):
 
     def get_absolute_url(self):
         from django.urls import reverse
-        return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+        if self.type_of == self.DISBURSEMENT:
+            return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+        else:
+            return reverse("data:doc_collection_detail", kwargs={'pk': self.id})
 
     def can_user_disburse(self, checker):
         """"

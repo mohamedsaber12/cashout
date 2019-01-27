@@ -61,6 +61,8 @@ class User(AbstractUser):
             ("can_disable_two_factor", "the user can disable two factor"),
             ("can_use_two_factor_backup", "the user can use two factor backup tokens"),
             ("can_use_two_factor", "the user can use two factor"),
+            ("has_disbursement", "the client has disbursement options"),
+            ("has_collection", "the client has collection options"),
         )
 
     def __str__(self):  # __unicode__ for Python 2
@@ -68,7 +70,6 @@ class User(AbstractUser):
 
     def child(self):
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
-
 
     @property
     def can_disburse(self):
@@ -133,3 +134,16 @@ class User(AbstractUser):
 
     def uncomplete_entity_creation(self):
         return self.entity_setups.filter(Q(agents_setup=False)).first()
+
+    def data_type(self):
+        DATA_TYPES = {
+            'Disbursement':1,
+            'Collection':2,
+            'Both':3
+        }
+        if self.has_perm('users.has_disbursement') and self.has_perm('users.has_collection'):
+            return DATA_TYPES['Both']
+        elif self.has_perm('users.has_disbursement'):
+            return DATA_TYPES['Disbursement']
+        elif self.has_perm('users.has_collection'):
+            return DATA_TYPES['Collection']

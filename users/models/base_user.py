@@ -26,7 +26,7 @@ class UserManager(AbstractUserManager):
         return self.filter(hierarchy=hierarchy)
 
     def get_all_makers(self, hierarchy):
-        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=1).order_by('max_amount_can_be_disbursed')
+        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=1).order_by('level__max_amount_can_be_disbursed')
 
     def get_all_checkers(self, hierarchy):
         return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level__level_of_authority')

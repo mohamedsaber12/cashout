@@ -10,6 +10,12 @@ from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
                           inlineformset_factory, modelformset_factory, CheckboxInput)
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
 from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand
 from users.signals import ALLOWED_CHARACTERS
@@ -368,22 +374,13 @@ class CheckerCreationForm(forms.ModelForm):
         for field in iter(self.fields):
             # get current classes from Meta
             classes = self.fields[field].widget.attrs.get("class")
-            if field == 'is_staff':
-                if classes is not None:
-                    classes += " icheckbox_flat-green checked"
-                else:
-                    classes = "icheckbox_flat-green"
-                self.fields[field].widget.attrs.update({
-                    'class': classes
-                })
+            if classes is not None:
+                classes += " form-control"
             else:
-                if classes is not None:
-                    classes += " form-control"
-                else:
-                    classes = "form-control"
-                self.fields[field].widget.attrs.update({
-                    'class': classes
-                })
+                classes = "form-control"
+            self.fields[field].widget.attrs.update({
+                'class': classes
+            })
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -395,7 +392,7 @@ class CheckerCreationForm(forms.ModelForm):
     class Meta:
         model = CheckerUser
         fields = ['first_name', 'last_name',
-                  'email', 'mobile_no', 'level', 'is_staff']
+                  'email', 'mobile_no', 'level']
 
 
 class BrandForm(forms.ModelForm):
@@ -481,3 +478,42 @@ class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
 
     def get_user(self):
         return self.user
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(label='')
+    email2 = forms.EmailField(label='')
+    email.widget.attrs.update({'class': 'form-control','placeholder':_('Email')})
+    email2.widget.attrs.update({'class': 'form-control', 'placeholder': _('Confirm Email')})
+
+    def clean(self):
+        email = self.cleaned_data.get('email')
+        email2 = self.cleaned_data.get('email2')
+        if not(email and email2):
+            return
+        if email != email2:
+            raise forms.ValidationError("Emails don't match")
+        else:    
+            user_qs = User.objects.filter(email=email)
+            if not user_qs.exists():
+                raise forms.ValidationError("No user with this email exists")
+            self.user = user_qs.first()
+
+    def send_email(self):
+        MESSAGE = 'Dear {0}\n' \
+            'Please follow <a href="{1}">this link</a> to reset password, \n' \
+            'Then login with your username: {2} and new password \n' \
+            'Thanks, BR'
+
+        # one time token
+        token = default_token_generator.make_token(self.user)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk)).decode("utf-8")
+        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
+            'uidb64': uid, 'token': token})
+
+        send_mail(
+            from_email=settings.SERVER_EMAIL,
+            recipient_list=[self.user.email],
+            subject=_('[Payroll] Password Notification'),
+            message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
+        )

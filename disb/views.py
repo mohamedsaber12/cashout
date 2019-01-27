@@ -26,6 +26,7 @@ from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
 from users.mixins import SuperRequiredMixin
 from users.models import EntitySetup
+from users.tasks import send_agent_pin_to_client
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -175,6 +176,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
                 agents_msisdn.append(obj.msisdn)
 
             agentform.save()
+            send_agent_pin_to_client.delay(pinform.cleaned_data['pin'], root.id)
+            
             entity_setup = EntitySetup.objects.get(user=self.request.user,
                                                    entity=root)
             entity_setup.agents_setup = True

@@ -8,7 +8,9 @@ class EntitySetup(models.Model):
     """
     Entity Setup model to save the state of the entity creation setup by super admin
     """
+    #superadmin
     user = models.ForeignKey('users.User', on_delete=models.CASCADE, related_name='entity_setups')
+    #root
     entity = models.OneToOneField('users.User', on_delete=models.CASCADE)
     agents_setup = models.BooleanField(default=False)
 

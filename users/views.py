@@ -26,7 +26,7 @@ from data.models import Format
 from users.forms import (CheckerMemberFormSet,
                          BrandForm, LevelFormSet, MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm,
-                         ProfileEditForm, RootCreationForm, OTPTokenForm)
+                         ProfileEditForm, RootCreationForm, OTPTokenForm, ForgotPasswordForm)
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
 from users.models import CheckerUser, Levels, MakerUser, Setup, User, Brand
 from users.models import Client
@@ -639,3 +639,29 @@ class OTPLoginView(FormView):
         """Return an instance of the form to be used in this view."""
         
         return OTPTokenForm(user=self.request.user)
+
+
+class ForgotPasswordView(FormView):
+    form_class = ForgotPasswordForm
+    template_name = 'users/forget-password.html'
+
+    def form_valid(self, form):
+        """called when form is valid"""
+        form.send_email()
+        context = self.get_context_data()
+        context['success'] = True
+        context['form'] = self.form_class()
+        # no success url redirect
+        return render(self.request, self.template_name, context)
+
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handle POST requests: instantiate a form instance with the passed
+        POST variables and then check if it's valid.
+        """
+        form = self.form_class(request.POST)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)

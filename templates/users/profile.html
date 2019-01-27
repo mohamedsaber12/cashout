@@ -1,67 +1,88 @@
 {% extends 'new_base.html' %}
-{% block customcss %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
 
-{% endblock %}
+{% block title %}{{ request.user.username }} {% trans 'profile' %}{% endblock %}
 {% block body %}
     <div class="page-title">
-            <div class="title_left">
-                <h3>{{ object.get_full_name }}</h3>
-            </div>
+      <div class="title_left">
+          <h3>{{ object.get_full_name }}</h3>
+      </div>
 
+      <div class="clearfix"></div>
 
-        <div class="clearfix"></div>
-
-    <div class="row">
-        <div class="col-lg-12">
+      <div class="row">
+          <div class="col-lg-12">
+              
             <div class="panel panel-default">
+                
                 <div class="panel-body">
-              <div class="row">
-                <div class="col-md-3 col-lg-3 " align="center"> <img alt="User Pic" src="{{ object.avatar_thumbnail.url }}" class="img-circle img-responsive"> </div>
+                
+                  <div class="row">
+                    
+                    <div class="col-md-3 col-lg-3 "> 
+                      <img alt="User Pic" src="{{ object.avatar_thumbnail.url }}" class="img-circle img-responsive"> 
+                    </div>
 
-                <div class=" col-md-9 col-lg-9 ">
-                  <table class="table table-user-information">
-                    <tbody>
-                      <tr>
-                        <td>Title:</td>
-                        <td>{{ object.title }}</td>
-                      </tr>
-                      <tr>
-                        <td>first Name:</td>
-                        <td>{{ object.first_name }}</td>
-                      </tr>
-                      <tr>
-                        <td>Last Name:</td>
-                        <td>{{ object.last_name }}</td>
-                      </tr>
-                      <tr>
-                        <td>Join date:</td>
-                        <td>{{ object.date_joined }}</td>
-                      </tr>
-                      <tr>
-                        <td>Account Type:</td>
-                        <td>{% if object.user_type == 3 %}Admin{% elif object.user_type == 2 %}Checker{% elif object.user_type == 1  %} Maker {% endif %}</td>
-                      </tr>
-                      <tr>
-                        <td>Email</td>
-                        <td><a href="mailto:{{ object.email }}">{{ object.email }}</a></td>
-                      </tr>
-                        <td>Phone Number</td>
-                        <td>{{ object.mobile_no }}
-                        </td>
+                    <div class=" col-md-9 col-lg-9 ">
+                      <table class="table table-user-information">
+                        <tbody>
+                          <tr>
+                            <td>{% trans 'Title:' %}</td>
+                            <td>{{ object.title }}</td>
+                          </tr>
+                          <tr>
+                            <td>{% trans 'First Name:' %}</td>
+                            <td>{{ object.first_name }}</td>
+                          </tr>
+                          <tr>
+                            <td>{% trans 'Last Name:' %}</td>
+                            <td>{{ object.last_name }}</td>
+                          </tr>
+                          <tr>
+                            <td>{% trans 'Join date:' %}</td>
+                            <td>{{ object.date_joined }}</td>
+                          </tr>
+                          <tr>
+                            <td>{% trans 'Account Type:' %}</td>
+                            <td>{% if object.user_type == 3 %}{% trans 'Admin' %}{% elif object.user_type == 2 %}{% trans 'Checker' %}{% elif object.user_type == 1  %} {% trans 'Maker' %} {% endif %}</td>
+                          </tr>
+                          <tr>
+                            <td>{% trans 'Email' %}</td>
+                            <td><a href="mailto:{{ object.email }}">{{ object.email }}</a></td>
+                          </tr>
+                            <td>{% trans 'Phone Number' %}</td>
+                            <td>{{ object.mobile_no }}
+                            </td>
 
-                      </tr>
+                          </tr>
 
-                    </tbody>
-                  </table>
+                        </tbody>
+                      </table>
+
+                    </div>
+
+                  </div>
 
                 </div>
+              
+              
+
+            <div class="panel-footer">
+                  <a data-original-title="Broadcast Message" data-toggle="tooltip" type="button" class="btn btn-sm btn-primary disabled" href="#"><i class="glyphicon glyphicon-envelope"></i></a>
+                  <span class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                      <a href="{% url 'users:edit_profile' object.username %}" data-original-title="Edit Data" data-toggle="tooltip" type="button" class="btn btn-sm btn-warning"><i class="glyphicon glyphicon-edit"></i></a>
+                      {% ifequal request.user.username object.username %}
+                      <a href="{% url 'users:change_password' request.user.username %}" data-original-title="Change Password" data-toggle="tooltip" type="button" class="btn btn-sm btn-danger"><i class="fa fa-key"></i></a>
+                      {% endifequal %}
+                  </span>
               </div>
+            
             </div>
-                 <div class="panel-footer">
-                        <a data-original-title="Broadcast Message" data-toggle="tooltip" type="button" class="btn btn-sm btn-primary disabled" href="#"><i class="glyphicon glyphicon-envelope"></i></a>
-                        <span class="pull-right">
-                            <a href="{% url 'users:edit_profile' %}" data-original-title="Edit Data" data-toggle="tooltip" type="button" class="btn btn-sm btn-warning"><i class="glyphicon glyphicon-edit"></i></a>
-                            <a href="{% url 'users:change_password' request.user.username %}" data-original-title="Change Password" data-toggle="tooltip" type="button" class="btn btn-sm btn-danger"><i class="fa fa-key"></i></a>
-                        </span>
-                    </div>
+            
+          </div>  
+      </div>    
+
+    </div>                
 {% endblock %}

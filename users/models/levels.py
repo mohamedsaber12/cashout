@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 LEVELS = (
     (1, 'Level 1'),
@@ -14,10 +15,15 @@ class Levels(models.Model):
     of users in the hierarchy tree
     Added by the root of the tree only
     """
-    max_amount_can_be_disbursed = models.FloatField(default=0)
-    level_of_authority = models.PositiveSmallIntegerField(choices=LEVELS)
+    max_amount_can_be_disbursed = models.FloatField(
+        default=0, verbose_name=_('Max amount can be disbursed'))
+    level_of_authority = models.PositiveSmallIntegerField(
+        choices=LEVELS, null=True, blank=True)
     created = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return f'amount is {self.max_amount_can_be_disbursed} of level {self.level_of_authority}'
+        return f'amount is {self.max_amount_can_be_disbursed} of level'
+
+    class Meta:
+        ordering = ('-max_amount_can_be_disbursed',)

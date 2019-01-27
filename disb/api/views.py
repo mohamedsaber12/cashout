@@ -8,6 +8,8 @@ import xlrd
 from django.contrib.auth.hashers import check_password
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.translation import gettext as _
+
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.generics import UpdateAPIView
@@ -17,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from data.models import Doc
-from data.tasks import notifiy_checkers
+from data.tasks import notify_checkers
 from disb.api.permission_classes import BlacklistPermission
 from disb.api.serializers import (DisbursementCallBackSerializer,
                                   DisbursementSerializer)
@@ -28,6 +30,25 @@ DATA_LOGGER = logging.getLogger("disburse")
 
 
 class DisburseAPIView(APIView):
+    """
+    Api for disbursing the data.
+    The JSON sent to the external api:
+    {
+        "LOGIN": "",
+        "PASSWORD": "",
+        "REQUEST_GATEWAY_CODE": "",
+        "REQUEST_GATEWAY_TYPE": "",
+        "SERVICETYPE": "P2P",
+        "TYPE": "BPREQ",
+        "WALLETISSUER": "",
+        "SENDERS": [
+            {'MSISDN': "",'PIN': ""},
+        ],
+        "RECIPIENTS": [
+            {'MSISDN':"", 'AMOUNT':"", 'TXNID':""},
+        ]
+    }
+    """
     permission_classes = (BlacklistPermission,)
 
     def post(self, request, *args, **kwargs):
@@ -38,7 +59,7 @@ class DisburseAPIView(APIView):
         serializer = DisbursementSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = User.objects.get(username=serializer.validated_data['user'])
-        vmt = VMTData.objects.get(vmt=user.root)
+        vmt = VMTData.objects.get(vmt=user.root.client.creator)
         provider_id = Doc.objects.get(
             id=serializer.validated_data['doc_id']).owner.root.id
         pin = serializer.validated_data['pin']
@@ -82,9 +103,9 @@ class DisburseAPIView(APIView):
                         txn_id = response.json()["TXNID"]
                 except KeyError:
                     return HttpResponse(
-                        json.dumps({'message': 'Disbursement process stopped during an internal error, can you try again '
-                                               'or contact you support team',
-                                    'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                        json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                         can you try again or contact your support team'),
+                                    'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
                 print(txn_status)
 
@@ -94,19 +115,22 @@ class DisburseAPIView(APIView):
                 disb_data.txn_status = txn_status
                 disb_data.save()
                 doc_obj.save()
-                return HttpResponse(json.dumps({'message': 'Disbursement process is running, you can check reports later',
-                                                'header': 'Disbursed, Thanks!!'}), status=200)
+                return HttpResponse(json.dumps({'message': _('Disbursement process is running, you can check reports later'),
+                                                'header': _('Disbursed, Thanks')}), status=200)
             else:
-                return HttpResponse(json.dumps({'message': 'Disbursement process stopped during an internal error, can you try again '
-                                                'or contact you support team',
-                                                'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                 can you try again or contact you support team'),
+                                                'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
         else:
             return HttpResponse(
-                json.dumps({'message': 'Pin you entered is not correct',
-                            'header': 'Error occurred, We are sorry!!'}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                json.dumps({'message': _('Pin you entered is not correct'),
+                            'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 
 class DisburseCallBack(UpdateAPIView):
+    """
+    API to receive disbursment transactions status from external api
+    """
     serializer_class = DisbursementCallBackSerializer
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
@@ -138,7 +162,7 @@ class RetrieveDocData(APIView):
         try:
             doc_obj = Doc.objects.get(id=self.kwargs['doc_id'])
         except Doc.DoesNotExist:
-            return JsonResponse({"message": "Document is not found"}, status=404)
+            return JsonResponse({"message": _("Document is not found")}, status=404)
         xl_workbook = xlrd.open_workbook(doc_obj.file.path)
 
         xl_sheet = xl_workbook.sheet_by_index(0)
@@ -159,6 +183,9 @@ class RetrieveDocData(APIView):
 
 
 class AllowDocDisburse(APIView):
+    """
+    View for makers to Notify and allow the checkers that there is document ready for dibursment. 
+    """
     permission_classes = (IsAuthenticated,)
     http_method_names = ['post']
 
@@ -166,10 +193,11 @@ class AllowDocDisburse(APIView):
         doc_obj = get_object_or_404(Doc, id=self.kwargs['doc_id'])
         if request.user.is_maker and doc_obj.is_processed:
             if doc_obj.can_be_disbursed:
-                return JsonResponse({"message": "Checkers already notified"}, status=400)
+                return JsonResponse({"message": _("Checkers already notified")}, status=400)
             doc_obj.can_be_disbursed = True
             doc_obj.save()
-            notifiy_checkers.delay(doc_obj.id)
+            # task for notifying checkers
+            notify_checkers.delay(doc_obj.id)
             return Response(status=200)
 
         return Response(status=403)

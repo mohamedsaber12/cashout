@@ -1,0 +1,143 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Branding' %} {% endblock %}
+
+{% block gentellacss %}
+<link href="{% static 'gentella/vendors/mjolnic-bootstrap-colorpicker/bootstrap-colorpicker.min.css' %}" rel="stylesheet">
+
+{%endblock%}
+
+{% block body %}
+
+
+<div class="page-title">
+    <div class="title_left">
+        <h3>{% trans 'Entity Branding' %}</h3>
+    </div>
+
+
+    <div class="clearfix">
+
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="panel panel-default">
+                <div class="panel-body">
+                    <form action="{% url 'users:entity_branding' %}" method="post" class="form-horizontal" enctype="multipart/form-data">
+
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label class="control-label col-md-3 col-sm-3 col-xs-12">{% trans 'Color' %}</label>
+                            <div class="col-md-9 col-sm-9 col-xs-12">
+                                
+                                    <div id="color-picker" style="display: inline-block;" ></div>
+                                    
+                                
+                            </div>
+                        </div>
+                        
+                        {% for field in form.visible_fields %}
+                            {% if forloop.first %}
+                            {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                            {% endfor %}
+                            {% endif %}
+                            <div class="form-group">
+                                <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                                <div class="col-md-6 col-sm-9 col-xs-12">
+                                    {{ field.errors.as_ul }}
+                                    {{ field }}
+                                </div>
+                            </div>
+
+
+                        {% endfor %}
+                        <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                    </form>
+
+
+                    <!-- /.table-responsive -->
+                </div>
+                <!-- /.panel-body -->
+            </div>
+            <!-- /.panel -->
+        </div>
+        <!-- /.col-lg-12 -->
+    </div>
+    <!-- /.row -->
+</div>
+<!-- /#page-wrapper -->
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'gentella/vendors/mjolnic-bootstrap-colorpicker/bootstrap-colorpicker.min.js' %}"></script>
+
+<script>
+    $(document).ready(function () {
+        let default_color = '#ffaa00'
+        if ( '{{brand_color}}' != 'None'){
+            default_color = '{{brand_color}}'
+        }
+        
+        $('#color-picker').colorpicker({
+            color: default_color,
+            container: true,
+            inline: true
+        }).on('changeColor', function (e) {
+            
+            let color = e.color.toString('rgba');
+            let color_hex = e.color.toString('hex');
+            $('input[name=color]').val(color_hex);
+            $('.left_col .scroll-view').css('background-color', color);
+            $('html').css('background-color', color);
+            $('.site_title').css('background-color', color);
+            $('.nav_title').css('background', color);
+            $('.container').css('background', color);
+            $('.main_container').css('background', color);
+            
+            
+            let frm = ColorLuminance(color_hex, -0.02);
+            let to = ColorLuminance(frm, -0.05);
+            let color_gradient = '-webkit-gradient(linear, left top, left bottom, from(' + to + '), to(' + frm + '))'
+            let $SIDEBAR_MENU = $('#sidebar-menu');
+            let atag = $SIDEBAR_MENU.find('a');
+            if ($(atag).parent().is('.active')) {
+
+                $(atag).css('background', color_gradient);
+            }
+            $SIDEBAR_MENU.find('.current-page').find('a').removeAttr('style');
+            $SIDEBAR_MENU.find('a').on('click', function (ev) {
+                let $li = $(this).parent();
+                
+                if ($li.is('.active')) {
+                    $(this).css('background', color_gradient);
+                }
+            });
+            $('body').css('color', ColorLuminance(color_hex, -0.5));
+            $(".nav.child_menu li a").on('mouseover', function (ev) {
+                $(this).removeAttr('style');
+            });
+            
+            $('.fa-bars').css('color', color_hex);
+            $('#sidebar-div').css('background', color_hex);
+            //small menu
+            $("#menu_toggle").on('click', function (e) {
+                $('.nav-sm ul.nav.child_menu').css('background', color_hex)
+            });
+            $('head').append('<style>.nav-md ul.nav.child_menu li:before{background:'+ to+' !important;}</style>');
+            
+        });
+        
+        
+       
+    });    
+</script>
+
+{% endblock %}

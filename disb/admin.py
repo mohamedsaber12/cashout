@@ -4,12 +4,12 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.core.exceptions import FieldError
 
-from disb.forms import AgentForm
+from disb.forms import AgentAdminForm
 from disb.models import Agent, VMTData
 
 
 class AgentAdmin(admin.ModelAdmin):
-    form = AgentForm
+    form = AgentAdminForm
 
     def get_readonly_fields(self, request, obj=None):
         if obj:
@@ -40,14 +40,6 @@ class AgentAdmin(admin.ModelAdmin):
 
 
 class VMTDataAdmin(admin.ModelAdmin):
-    exclude = ('vmt',)
-
-    def save_form(self, request, form, change):
-        instance = form.save(commit=False)
-        if not change:
-            instance.vmt = request.user if request.user.is_root else request.user.root
-        return instance
-
     def has_add_permission(self, request):
         if request.user.is_superuser:
             return True
@@ -57,13 +49,6 @@ class VMTDataAdmin(admin.ModelAdmin):
         except VMTData.DoesNotExist:
             return super(VMTDataAdmin, self).has_add_permission(request)
 
-    def get_queryset(self, request):
-        try:
-            hierarchy = request.user.hierarchy
-            qs = super(VMTDataAdmin, self).get_queryset(request)
-            return qs.filter(vmt__hierarchy=hierarchy)
-        except FieldError:
-            return super(VMTDataAdmin, self).get_queryset(request)
 
 admin.site.register(Agent, AgentAdmin)
 admin.site.register(VMTData, VMTDataAdmin)

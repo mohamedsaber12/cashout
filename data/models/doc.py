@@ -4,9 +4,9 @@ import os
 
 from django.conf import settings
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 from data.utils import pkgen, update_filename
-
 
 class Doc(models.Model):
     id = models.CharField(primary_key=True, editable=False,
@@ -63,21 +63,32 @@ class Doc(models.Model):
         return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
 
     def can_user_disburse(self, checker):
+        """"
+        Check if checker can disburse current documemt(self) or not.
+        return tuple:
+        can disburse:boolean
+        reason: reason why checker can not disburse 
+        code: error code
+        """
         reviews = self.reviews.all()
         reason = ''
-        if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
-            if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
-                if checker.level.max_amount_can_be_disbursed >= self.total_amount:
-                    return True, reason, 0
+        if checker.root.client.is_active:
+            if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
+                if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
+                    if checker.level.max_amount_can_be_disbursed >= self.total_amount:
+                        return True, reason, 0
+                    else:
+                        reason = _("Not Permitted to disburse")
+                        code = 3
                 else:
-                    reason = "Not Permitted to disburse"
-                    code = 3
+                    reason = _("Document is still suspend due to shortage of checking")
+                    code = 2
             else:
-                reason = "Document is still suspend due to shortage of checking"
-                code = 2
+                reason = _("Issues are submitted by some users, please resolve any conflict first")
+                code = 1
         else:
-            reason = "Issues are submitted by some users, please resolve any conflict first"
-            code = 1
+            reason = _("Your Entity is deactivated")
+            code = 4
         return False, reason, code
 
     def disbursement_ratio(self):

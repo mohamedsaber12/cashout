@@ -33,28 +33,29 @@ from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
-UNAUTHORIZED_UPLOAD_LOGGER = logging.getLogger("unauthorized_upload")
 UNAUTHORIZED_FILE_DELETE_LOGGER = logging.getLogger("unauthorized_file_delete")
 UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
+VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 
 
 @login_required
 @setup_required
 def file_upload(request):
     """
-    Function that allows the logged in user from the can_upload group to upload
-    a file. The file is later processed by the function 'handle_uploaded_file'.
-    It handles the ajax calls for the OTP check too
+    POST:
+    View that allows the maker with a file category to upload a disbursement file.
+    The file is later processed by the task 'handle_disbursement_file'.
+    GET:
+    View that list all documents related to logged in user hierarchy.
+    Documents can be filtered by date.
+    Documents are paginated ("docs_paginated") but not used in template.
     """
     FileDocumentForm.request = request
-    docs = Doc.objects.select_related('owner').filter(
-        Q(owner__hierarchy=request.user.hierarchy)
-    )
     category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
     has_file_category = bool(category)
 
-    if request.method == 'POST' and request.user.is_maker and has_file_category:
+    if request.method == 'POST' and request.user.is_maker and has_file_category and request.user.root.client.is_active:
         FileDocumentForm.category = category
         form_doc = FileDocumentForm(request.POST, request.FILES)
 
@@ -78,27 +79,25 @@ def file_upload(request):
 
             return JsonResponse(form_doc.errors, status=400)
 
-    else:
-        form_doc = None
-        files = files_based_on_group_of_logged_in_user(request, docs)
-        if isinstance(files, QuerySet):
-            try:
-                docs = paginator(request, files)
-            except:
-                docs = paginator(request, '')
-        else:
-            docs = files
+    
+    doc_list = Doc.objects.filter(
+        owner__hierarchy=request.user.hierarchy)
+    doc_list = filter_docs_by_date(request, doc_list)
+    try:
+        docs_paginated = paginator(request, doc_list)
+    except:
+        docs_paginated = paginator(request, '')
 
-    context = {'docs': docs,
-               'form_doc': form_doc,
-               'has_file_category': has_file_category
-               }
+    context = {
+        'docs_paginated': docs_paginated,
+        'has_file_category': has_file_category,
+        'doc_list': doc_list
+    }
 
     return render(request, 'data/index.html', context=context)
 
 
-# TODO: Customize permissions based on file types permissions
-def files_based_on_group_of_logged_in_user(request, docs):
+def filter_docs_by_date(request, docs):
     """
     Function to return the document files based of date
     :param request:
@@ -116,6 +115,7 @@ def files_based_on_group_of_logged_in_user(request, docs):
     return docs
 
 
+## this view is not used ##
 @setup_required
 @login_required
 def check_download_xlsx(request):
@@ -133,7 +133,7 @@ def check_download_xlsx(request):
     else:
         return HttpResponse("Wrong request")
 
-
+## this view is not used ##
 @setup_required
 @login_required
 def download_excel_with_trx_temp_view(request):
@@ -166,7 +166,7 @@ def download_excel_with_trx_temp_view(request):
     else:
         raise Http404
 
-
+## this view is not used ##
 @setup_required
 @login_required
 @permission_required('data.delete_file')
@@ -194,40 +194,34 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
     return render(request, template_name, {'object': file_obj})
 
 
-
-def page_not_found_view(request):
-    return render(request, 'data/404.html', status=404)
-
-
-def error_view(request):
-    return render(request, 'data/500.html', status=500)
-
-
-def permission_denied_view(request):
-    return render(request, 'data/403.html', status=403)
-
-
-def bad_request_view(request):
-    return render(request, 'data/400.html', status=400)
-
-
 @login_required
 def document_view(request, doc_id):
+    """
+    View document given doc_id.
+    List checkers reviews.
+    Checkers can review document.
+    """
     template_name = 'data/document_viewer.html'
     doc = get_object_or_404(Doc, id=doc_id)
     review_form_errors = None
     reviews = None
-    # True if user already reviewed this doc
+    # True if checker already reviewed this doc
     user_review_exist = None
     can_user_disburse = {}
     if doc.owner.hierarchy == request.user.hierarchy:
+        # doc already dibursed
         if doc.is_disbursed:
             return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
         if request.user.is_checker:
+            # makers must notify checkers and allow the document to be dibursed
+            # checker should not have access to doc url or id before that
             if not doc.can_be_disbursed:
+                VIEW_DOCUMENT_LOGGER.debug(
+                    f'Document doc_id {doc_id} can not be disbursed, checker {request.user.username}')
                 raise Http404
 
             reviews = DocReview.objects.filter(doc=doc)
+            #check if checker already reviewed this doc
             user_review_exist = DocReview.objects.filter(
                 doc=doc, user_created=request.user).exists()
 
@@ -251,7 +245,10 @@ def document_view(request, doc_id):
             }
 
     else:
-        messages.warning(request, "This document doesn't exist")
+        VIEW_DOCUMENT_LOGGER.debug(
+            f"""user viewing document from other hierarchy, 
+            user: {request.user.username},user hierarchy: {request.user.hierarchy}, 
+            doc hierarchy: {doc.owner.hierarchy} """)
         return redirect(reverse("data:main_view"))
 
     context = {
@@ -267,6 +264,8 @@ def document_view(request, doc_id):
     else:
         context['redirect'] = 'false'
 
+    VIEW_DOCUMENT_LOGGER.debug(
+        f'user: {request.user.username} viewed doc_id:{doc_id} ')
     return render(request, template_name=template_name, context=context)
 
 
@@ -275,6 +274,7 @@ def document_view(request, doc_id):
 def protected_serve(request, path, document_root=None, show_indexes=False):
     DOWNLOAD_LOGGER.debug(
         get_client_ip(request) + ' downloaded ' + path + 'at' + str(datetime.datetime.now()) + ' ' + str(request.user))
+    path = 'documents/' + path
     try:
         doc = Doc.objects.get(file=path)
         if doc.owner.hierarchy == request.user.hierarchy:
@@ -303,6 +303,8 @@ def doc_download(request, doc_id):
                 doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
+            DOWNLOAD_LOGGER.debug(
+                f'user {request.user.username} downloaded doc_id: {doc_id} at {str(datetime.datetime.now())}')
         except Exception:
             DOWNLOAD_LOGGER.debug(
                 'user: {0} tried to download doc_id: {1} but 404 was raised.'.format(
@@ -315,11 +317,3 @@ def doc_download(request, doc_id):
     else:
         raise Http404
 
-
-class DocumentDetailsListView(LoginRequiredMixin, ListView):
-    model = Doc
-    template_name = 'data/document_details_list.html'
-
-    def get_queryset(self):
-        return super().get_queryset().filter(
-            owner__hierarchy=self.request.user.hierarchy)

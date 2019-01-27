@@ -35,7 +35,7 @@ class DisbursementDataResource(resources.ModelResource):
 
     def get_queryset(self):
         qs = super(DisbursementDataResource, self).get_queryset()
-        return qs.filter(is_disbursed=0)
+        return qs.filter(is_disbursed=0, doc_id=self.doc.id)
 
     def export_resource(self, obj):
         obj_resources = super(DisbursementDataResource, self).export_resource(obj)

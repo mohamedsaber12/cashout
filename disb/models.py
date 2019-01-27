@@ -16,7 +16,7 @@ class VMTData(models.Model):
     request_gateway_type = models.CharField(max_length=32)
     wallet_issuer = models.CharField(max_length=64)
     vmt = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
+        'users.SuperAdminUser',
         related_name='vmt',
         on_delete=models.CASCADE
     )
@@ -28,7 +28,7 @@ class VMTData(models.Model):
         ], max_length=16)
 
     def __str__(self):
-        return "{} {}".format(self.vmt.username, self.login_password)
+        return "VMT for {} entities".format(self.vmt.username)
 
     def return_vmt_data(self):
         """
@@ -43,19 +43,22 @@ class VMTData(models.Model):
             "REQUEST_GATEWAY_TYPE": self.request_gateway_type,
             "SERVICETYPE": "P2P",
             "TYPE": "BPREQ",
-            "WALLETISSUER": self.wallet_issuer
+            "WALLETISSUER": self.wallet_issuer,
+            "SOURCE": "DISB"
         }
         return data
 
 
 class Agent(models.Model):
+    # root user
     wallet_provider = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='agents',on_delete=models.CASCADE)
     msisdn = models.CharField(max_length=16)
-    pin = models.CharField(max_length=128)
+    pin = models.CharField(max_length=128, null=True)
 
-    def set_pin(self, raw_pin):
+    def set_pin(self, raw_pin, commit=True):
         self.pin = make_password(raw_pin)
-        self.save()
+        if commit:
+            self.save()
 
     def __str__(self):
         return self.msisdn

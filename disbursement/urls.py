@@ -18,8 +18,8 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import include, path
 from two_factor.urls import urlpatterns as tf_urls
-
 from data.views import protected_serve
+from disbursement.decorators import protected_media_serve
 
 if settings.DEBUG:
     import debug_toolbar
@@ -32,7 +32,21 @@ else:
         path('secure-portal/', admin.site.urls),
     ]
 
-urlpatterns += [
+
+    handler404 = 'disbursement.views.page_not_found_view'
+
+
+    handler500 = 'disbursement.views.error_view'
+
+
+    handler403 = 'disbursement.views.permission_denied_view'
+
+
+    handler400 = 'disbursement.views.bad_request_view'
+
+
+urlpatterns += [    
+    path('i18n/', include('django.conf.urls.i18n')),
     path('', include('data.urls', namespace='data')),
     path('', include('users.urls', namespace='users')),
     path('', include('disb.urls', namespace='disbursement')),
@@ -40,5 +54,8 @@ urlpatterns += [
     path('api/secure/', include('disb.api.urls', namespace='disbursement_api'))
 ]
 
-urlpatterns += static(settings.MEDIA_URL,
+urlpatterns += static(settings.MEDIA_URL + 'documents/',
                       document_root=settings.MEDIA_ROOT, view=protected_serve)
+
+urlpatterns += static(settings.MEDIA_URL,
+                      document_root=settings.MEDIA_ROOT, view=protected_media_serve)

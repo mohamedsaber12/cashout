@@ -1,0 +1,24 @@
+{% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<!DOCTYPE html>
+<html lang="{{LANGUAGE_CODE}}" dir="{% if LANGUAGE_CODE == 'en' %}ltr{%else%}rtl{%endif%}">
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <!-- Meta, title, CSS, favicons, etc. -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+    <title>PAYMOB | {% block title %}{% endblock %}</title>
+    {% include 'base_css.html' %}
+    {% block gentellacss %}{% endblock %}
+    {% block customcss %}{% endblock %}
+</head>
+
+{%block body_content%}
+{%endblock%}
+</html>

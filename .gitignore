@@ -1,7 +1,7 @@
 .idea
 *.pyc
 */migrations/
-media/
+media/*
 *.log
 db.sqlite3
 */local.py
@@ -23,9 +23,7 @@ __pycache__/
 
 # Distribution / packaging
 bin/
-build/
 develop-eggs/
-dist/
 eggs/
 lib/
 lib64/
@@ -66,3 +64,7 @@ coverage.xml
 
 # Sphinx documentation
 docs/_build/
+
+#keep default imgs in media
+!media/user.png
+!media/pm_name.png

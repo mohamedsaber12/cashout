@@ -1,14 +1,15 @@
 {% extends 'base_form_singlepage.html' %}
-{% block title %} Login {% endblock %}
+{% load i18n %}
+{% block title %} {% trans 'Login' %} {% endblock %}
 {% block form %}
     <form action="." method="post">
         {% csrf_token %}
-      <h1>Login</h1>
+      <h1>{% trans 'Login' %}</h1>
       <div>
-        <input type="text" class="form-control" placeholder="Username" required name="username"/>
+        <input type="text" class="form-control" placeholder="{% trans 'Username' %}" required name="username"/>
       </div>
       <div>
-        <input type="password" class="form-control" placeholder="Password" required name="password"/>
+        <input type="password" class="form-control" placeholder="{% trans 'Password' %}" required name="password"/>
       </div>
       <div>
         {% if error_invalid %}
@@ -16,8 +17,8 @@
         {% endif %}
       </div>
       <div>
-        <input class="btn btn-default submit" type="submit" value="Log in">
-        <a class="reset_pass" href="#">Lost your password?</a>
+        <input class="btn btn-default submit" type="submit" value="{% trans 'Login' %}">
+        <a class="reset_pass" href="{% url 'users:forgot_password' %}">{% trans 'Lost your password?' %}</a>
       </div>
 
       <div class="clearfix"></div>
@@ -28,8 +29,8 @@
         <br />
 
         <div>
-          <h1><i class="fa fa-paw"></i> Payroll Dashboard</h1>
-          <p>©2019 All Rights Reserved. Payroll Dashoard! is a Paymob solution. Privacy and Terms</p>
+          <h1>{% trans 'Payroll Dashboard' %}</h1>
+          <p>{% trans '©2019 All Rights Reserved. Payroll Dashoard! is a Paymob solution. Privacy and Terms' %}</p>
         </div>
       </div>
     </form>

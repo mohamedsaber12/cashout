@@ -1,0 +1,209 @@
+
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Clients' %} {% endblock %}
+
+{% block body %}
+    <!-- page content -->
+        <div class="col" role="main">
+          <div class="">
+            <div class="page-title">
+              <div class="title_left">
+                <h3>{% trans 'Users' %}</h3>
+              </div>
+
+              <div class="title_right">
+                   <form action="." method="get">
+                        <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
+                          <div class="input-group">
+
+                            <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for...">
+                            <span class="input-group-btn">
+                              <button class="btn btn-default" type="submit" value="search">{% trans 'Go!'%}</button>
+                            </span>
+                          </div>
+                      </div>
+                   </form>
+              </div>
+            </div>
+
+            <div class="clearfix"></div>
+
+            <div class="row">
+              <div class="col-md-12">
+                <div class="x_panel">
+                  <div class="x_content">
+                    <div class="row">
+                      <div class="col-md-12 col-sm-12 col-xs-12 text-center">
+                        <ul class="pagination pagination-split">
+                          <li><a href="?q=active">{% trans 'Active'%}</a></li>
+                          <li><a href="?q=inactive">{% trans 'InActive'%}</a></li>
+                        </ul>
+                      </div>
+
+                      <div class="clearfix"></div>
+                        {% for user in users %}
+                          <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
+                            <div class="well profile_view" style="width: 100%;">
+                              <div class="col-sm-12">
+                                <h4 class="brief"><i>{% ifequal user.is_active True %}{% trans 'Active'%}{% else %}{% trans 'InActive'%}{% endifequal %}</i></h4>
+                                <div class="left col-xs-7">
+                                  <h2>{{ user.client.username }}</h2>
+                                  <p><strong>{% trans 'About:' %} </strong> {{ user.client.title }} </p>
+                                  <ul class="list-unstyled">
+                                    <li><i class="fa fa-mail-forward"></i> {% trans 'Email:' %} {{ user.client.email }}</li>
+                                    <li><i class="fa fa-phone"></i> {% trans 'Phone #:' %} {{ user.client.mobile_no }}</li>
+                                  </ul>
+                                </div>
+                                <div class="right col-xs-5 text-center">
+                                  <img src="{{ user.client.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                                </div>
+                              </div>
+                              <div class="col-xs-12 bottom text-center">
+                                <div class="col-xs-12 col-sm-offset-8 col-sm-4 emphasis">
+                                  <button type="button" class="btn btn-toggle btn-xs" data-toggle="modal" data-target="#activation-modal" onclick="update_modal({{ user.id }}, '{{ user.is_active }}')">
+                                  
+                                    {% ifequal user.is_active True %}
+                                      <i class="fa fa-times"></i>
+                                      {% else %}
+                                      <i class="fa fa-check"></i>
+                                      {% endifequal %}
+                                      
+                                  </button>
+                                  <button type="button" class="btn btn-toggle btn-xs" data-toggle="modal" data-target="#delete-user-modal" onclick="delete_modal({{ user.id }})">
+                                    <i class="fa fa-trash-o"></i>
+                                  </button>
+                                </div>
+                              </div>
+                     
+                            </div>
+                          </div>
+                        {% empty %}
+                            <h4 class="text-center">{% trans 'No clients are set here...' %}
+                                <a class="btn btn-default btn-sm" href="{% url 'users:add_client' %}">{% trans 'Add' %}</a>
+                            </h4>
+                        {% endfor %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /page content -->
+
+          <div id="delete-user-modal" class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+          
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                  </button>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
+                </div>
+                <div class="modal-body">
+                  <h4 id="modal-body-header">Delete User?</h4>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+                  <button type="button" class="btn btn-danger" id="delete-btn" data-id="" onclick="delete_user()">{% trans 'Delete' %}</button>
+                </div>
+          
+              </div>
+            </div>
+          </div>
+
+          <div id="activation-modal" class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                  </button>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
+                </div>
+                <div class="modal-body">
+                  <h4 id="modal-body-header"></h4>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+                  <button type="button" class="btn btn-danger" id="activate_btn" data-id="" onclick="toggle()"></button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        <div class="modal fade delete-success" tabindex="-1" role="dialog" aria-hidden="true">
+            <div class="modal-dialog modal-sm">
+              <div class="modal-content">
+
+                <div class="modal-header">
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+                  </button>
+                  <h4 class="modal-title" id="myModalLabel2">{% trans 'Successful' %}</h4>
+                </div>
+                <div class="modal-body">
+                  <h4>{% trans 'Done Successfully' %}</h4>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+                </div>
+
+              </div>
+            </div>
+          </div>
+{% endblock %}
+{% block script %}
+<script type="text/javascript">
+    function update_modal(obj_id, activation) {
+        $("#activate_btn").data('id', obj_id);
+        if (activation == 'True') {
+            $("#activation-modal #modal-body-header").text("{% trans 'Do you want to deactivate?' %}");
+            $("#activate_btn").text("{% trans 'Deactivate?' %}");
+
+        }else{
+            $("#activation-modal #modal-body-header").text("{% trans 'Do you want to activate?' %}");
+            $("#activate_btn").text("{% trans 'Activate?' %}");
+
+        }
+    }
+    function delete_modal(obj_id){
+      $("#delete-btn").data('id', obj_id);
+    }
+    function toggle(){
+        var id = $("#activate_btn").data('id');
+        $.ajax({
+            url: "{% url 'users:toggle' %}",
+            type: "POST",
+            data: {user_id: id, action: 'toggle'},
+            success: function(data, text, xhr) {
+                if (data["valid"]==true){
+                    $("#activation-modal").modal('hide');
+                    location.reload()
+                }
+            }
+        });
+
+    }
+    function delete_user() {
+        var id = $("#delete-btn").data('id');
+        $.ajax({
+          url: "{% url 'users:delete' %}",
+          type: "POST",
+          data: { user_id: id,client:true },
+          success: function (data, text, xhr) {
+            console.log(data)
+            if (data["valid"] == "true") {
+              $("#delete-user-modal").modal('hide');
+              location.reload()
+            }
+          }
+        });
+
+      }
+
+</script>
+{% endblock %}

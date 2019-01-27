@@ -1,0 +1,19 @@
+{% extends "error-pages/base.html" %}
+{% load i18n %}
+
+{% block title %} {% trans 'Page' %} 403 {% endblock title %}
+
+
+{% block body %}
+<div class="col-md-12">
+    <div class="col-middle">
+        <div class="text-center text-center">
+            <h1 class="error-number">400</h1>
+            <h2>{% trans 'Bad Request' %}</h2>
+            <p>{% trans 'The server cannot process the request due to something that is perceived to be a client error.' %}
+            </p>
+            <a href="{% url 'data:main_view' %}">{% trans 'Back to home' %}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

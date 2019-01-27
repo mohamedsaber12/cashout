@@ -7,11 +7,12 @@ import xlrd
 from django import forms
 from django.core.validators import FileExtensionValidator
 from django.db.models import Q
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from data.models import Doc, DocReview, FileCategory
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
+from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 
@@ -52,10 +53,8 @@ class DocReviewForm(forms.ModelForm):
         return self.cleaned_data['is_ok']
 
     def clean_comment(self):
-        print('clean_comment', self.cleaned_data.get(
-            'is_ok'), self.cleaned_data.get('comment'))
         if not self.cleaned_data.get('is_ok') and not self.cleaned_data.get('comment'):
-            raise forms.ValidationError('comment field is required')
+            raise forms.ValidationError(_('comment field is required'))
         return self.cleaned_data.get('comment')
 
 
@@ -66,7 +65,7 @@ class FileDocumentForm(forms.ModelForm):
 
     file = forms.FileField(
         label=_('Select a file'),
-        help_text='max. 42 megabytes',
+        help_text=_('max. 42 megabytes'),
         validators=(FileExtensionValidator(allowed_extensions=[
                     'xls', 'xlsx', 'csv', 'txt', 'doc', 'docx']),)
     )
@@ -98,7 +97,7 @@ class FileDocumentForm(forms.ModelForm):
                         raise forms.ValidationError(
                             _('Filename must be less than 255 characters'))
 
-                    if 'openxml' not in file_type and file_category.is_processed:
+                    if 'openxml' not in file_type:
                         UPLOAD_LOGGER.debug('UPLOAD ERROR: file_type not supported %s by %s at %s from IP Address %s' % (
                             str(file_type),
                             str(self.request.user.username),
@@ -120,7 +119,7 @@ class FileDocumentForm(forms.ModelForm):
                 with os.fdopen(fd, 'wb') as out:
                     out.write(file.read())
 
-                if file_category.num_of_identifiers != 0 and file_category.processed:
+                if file_category.num_of_identifiers != 0:
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
@@ -153,13 +152,14 @@ class FileCategoryForm(forms.ModelForm):
         model = FileCategory
         fields = '__all__'
         exclude = ('user_created',
-                   'num_of_identifiers', 'is_processed')
+                   'num_of_identifiers')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             if field_name == 'has_header':
                 field.widget.attrs['class'] = 'js-switch'
+                pass
             else:
                 field.widget.attrs['class'] = 'form-control'
 
@@ -173,11 +173,19 @@ class FileCategoryForm(forms.ModelForm):
         try:
             if not file_category == self.obj and self.cleaned_data["file_type"] == file_category.file_type:
                 raise forms.ValidationError(self.add_error(
-                    'file_type', 'Name already Exist'))
+                    'file_type', _('Name already Exist') ))
             else:
                 return self.cleaned_data["file_type"]
         except AttributeError:
             return self.cleaned_data["file_type"]
+
+    def clean_no_of_reviews_required(self):
+        checkers_no = User.objects.get_all_checkers(
+            self.request.user.hierarchy).count()
+        if self.cleaned_data['no_of_reviews_required'] > checkers_no:
+            raise forms.ValidationError(
+                _('number of reviews must be less than or equal the number of checkers'))
+        return self.cleaned_data['no_of_reviews_required']
 
 
 class FileCategoryViewForm(forms.ModelForm):
@@ -214,7 +222,7 @@ class OtpForm(forms.Form):
         attrs={'class': 'form-control', 'type': 'text', 'id': 'pin1'})
     pin1 = forms.CharField(max_length=6,
                            label="",
-                           help_text='You will recieve a message on your phone within 30 seconds',
+                           help_text=_('You will recieve a message on your phone within 30 seconds'),
                            widget=otp_widget,
                            strip=False,
                            )
@@ -260,8 +268,8 @@ class DownloadFilterForm(forms.Form):
         end_date = cleaned_data.get("end_date", None)
 
         if start_date is None:
-            self.add_error('start_date', 'Can\'t be blank')
+            self.add_error('start_date', _('Can\'t be blank'))
         if end_date is None:
-            self.add_error('end_date', 'Can\'t be blank')
+            self.add_error('end_date', _('Can\'t be blank'))
 
         return cleaned_data

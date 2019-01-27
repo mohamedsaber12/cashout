@@ -1,14 +1,17 @@
 {% extends 'new_base.html' %}
 {% load i18n %}
 {% load static %}
-{% block title %} Levels {% endblock %}
+{% load custom_tags %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block title %} {% trans 'Add new family member'%} {% endblock %}
 
 {% block body %}
 
 
         <div class="page-title">
             <div class="title_left">
-                <h3>Add {{ who }}</h3>
+                <h3>{% trans 'Add' %} {{ who }}</h3>
             </div>
 
 
@@ -18,7 +21,7 @@
         <div class="col-lg-12">
             <div class="panel panel-default">
                 <div class="panel-body">
-                    <form action="." method="post" class="form-horizontal" >
+                    <form action="{{ success_url }}" method="post" class="form-horizontal" >
 
                           {% csrf_token %}
                         {% for field in form.visible_fields %}
@@ -45,7 +48,7 @@
 
 
                         {% endfor %}
-                        <input type="submit" value="submit" class="btn btn-upload btn-success pull-right">
+                        <input type="submit" value="submit" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                     </form>
 
 

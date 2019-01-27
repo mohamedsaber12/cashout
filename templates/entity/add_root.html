@@ -1,0 +1,41 @@
+{% extends 'base_form_singlepage.html' %}
+{% load i18n %}
+{% load custom_tags %}
+{% block title %} {% trans 'Root' %} {% endblock %}
+{% block form %}
+    <form action="." method="post">
+      <h1>{% trans 'Add Entity User' %}</h1>
+
+        {% csrf_token %}
+            <div>
+                {% for field in form.visible_fields %}
+                        <div class="form-group">
+                            <div class="col-xs-12">
+
+                                    <div class="">
+                                        {{ field | add_class:'form-control'}}
+                                        {{ field.errors.as_ul }}
+
+                                    </div>
+
+                            </div>
+                        </div>
+
+                {% endfor %}
+            </div>
+
+      <div>
+        <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
+      </div>
+
+      <div class="clearfix"></div>
+
+      <div class="separator">
+
+        <div class="clearfix"></div>
+        <br />
+
+      </div>
+    </form>
+
+{% endblock %}

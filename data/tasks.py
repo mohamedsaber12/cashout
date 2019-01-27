@@ -6,13 +6,15 @@ import xlrd
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError
+from django.utils.translation import gettext as _
 
 from data.models import Doc
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
 from users.models import User
-
+import random
+import string
 
 @app.task(ignore_result=False)
 def handle_disbursement_file(doc_obj_id):
@@ -47,7 +49,7 @@ def handle_disbursement_file(doc_obj_id):
                     amount.append(float(item.value))
                 except ValueError:
                     doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = "This file may be has invalid amounts"
+                    doc_obj.processing_failure_reason = _("This file may be has invalid amounts")
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -66,7 +68,7 @@ def handle_disbursement_file(doc_obj_id):
                     str_value = '002' + str_value
                 else:
                     doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = "This file may be has invalid msisdns"
+                    doc_obj.processing_failure_reason = _("This file may be has invalid msisdns")
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -88,13 +90,13 @@ def handle_disbursement_file(doc_obj_id):
             return True
         except IntegrityError:
             doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = "This file contains duplicates"
+            doc_obj.processing_failure_reason = _("This file contains duplicates")
             doc_obj.save()
             notify_maker(doc_obj)
             return False
     else:
         doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = "This file may be has msisdn which has no amount"
+        doc_obj.processing_failure_reason = _("This file may be has msisdn which has no amount")
         doc_obj.save()
         notify_maker(doc_obj)
         return False
@@ -102,16 +104,20 @@ def handle_disbursement_file(doc_obj_id):
 
 @app.task()
 def generate_file(doc_id):
+    def randomword(length):
+        letters = string.ascii_lowercase
+        return ''.join(random.choice(letters) for i in range(length))
+
     doc_obj = Doc.objects.get(id=doc_id)
-    filename = 'failed_disbursed_%s.xlsx' % str(doc_id)
+    filename = _('failed_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
 
     dataset = DisbursementDataResource(
         file_category=doc_obj.file_category,
         doc=doc_obj
     )
-    dataset = dataset.export('xlsx')
-    with open("%s%s%s" % (settings.MEDIA_ROOT, "/disbursement/", filename), "w+") as f:
-        f.writelines(dataset.get_xlsx())
+    dataset = dataset.export()
+    with open("%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename), "wb") as f:
+        f.write(dataset.xlsx)
 
     return filename
 #
@@ -120,7 +126,7 @@ def generate_file(doc_id):
 
 
 @app.task()
-def notifiy_checkers(doc_id):
+def notify_checkers(doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
     checkers = User.objects.get_all_checkers(doc_obj.owner.hierarchy)
     if not checkers.exists():
@@ -131,7 +137,7 @@ def notifiy_checkers(doc_id):
         The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
         Thanks, BR"""
     send_mail(
-        from_email=settings.EMAIL_HOST_USER,
+        from_email=settings.SERVER_EMAIL,
         recipient_list=[checker.email for checker in checkers],
         subject='[Payroll] Disbursement Notification',
         message=message
@@ -154,8 +160,8 @@ def notify_maker(doc):
     message = MESSAGE_SUCC if doc.is_processed else MESSAGE_FAIL
 
     send_mail(
-        from_email=settings.EMAIL_HOST_USER,
+        from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email],
-        subject='[Payroll] File Upload Notification',
+        subject= _('[Payroll] File Upload Notification'),
         message=message
     )

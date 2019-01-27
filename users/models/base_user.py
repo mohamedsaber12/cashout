@@ -9,6 +9,7 @@ from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
@@ -25,23 +26,21 @@ class UserManager(AbstractUserManager):
         return self.filter(hierarchy=hierarchy)
 
     def get_all_makers(self, hierarchy):
-        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=1).order_by('max_amount_can_be_disbursed')
+        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=1).order_by('level__max_amount_can_be_disbursed')
 
     def get_all_checkers(self, hierarchy):
         return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level__level_of_authority')
 
 
 class User(AbstractUser):
-    mobile_no = models.CharField(max_length=16, verbose_name='Mobile Number')
-    otp = models.CharField(max_length=6, null=True, blank=True)
+    mobile_no = models.CharField(max_length=16, verbose_name= _('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(
         null=True, db_index=True, default=0)
-    is_otp_verified = models.BooleanField(default=False)
     verification_time = models.DateTimeField(null=True)
     level = models.ForeignKey(
         'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
-    email = models.EmailField('email address', blank=False)
+    email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
     avatar_thumbnail = ProcessedImageField(upload_to='avatars',
@@ -49,7 +48,10 @@ class User(AbstractUser):
                                            format='JPEG',
                                            options={'quality': 60}, null=True, default='user.png')
     title = models.CharField(max_length=128, default='', null=True, blank=True)
-
+    brand = models.ForeignKey(
+        'users.Brand', on_delete=models.SET_NULL, null=True)
+    is_totp_verified = models.BooleanField(null=True, default=False)
+    
     objects = UserManager()
 
     class Meta:
@@ -67,10 +69,6 @@ class User(AbstractUser):
     def child(self):
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
 
-    def clean_otp(self):
-        self.otp = None
-        self.save()
-        return 'cleaned'
 
     @property
     def can_disburse(self):
@@ -79,22 +77,6 @@ class User(AbstractUser):
         else:
             return False
 
-    def check_verification(self, otp_method):
-        if otp_method == '3':
-            return True
-        try:
-            diff = datetime.datetime.utcnow().replace(
-                tzinfo=pytz.UTC) - self.verification_time
-            if diff.total_seconds() < 1800 and self.is_otp_verified:
-                return True
-        except TypeError:
-            return False
-        return False
-
-    def otp_verify(self):
-        self.verification_time = datetime.datetime.now()
-        self.is_otp_verified = True
-        self.save()
 
     @property
     def root(self):
@@ -105,8 +87,22 @@ class User(AbstractUser):
             return RootUser.objects.get(hierarchy=self.hierarchy)
 
     @property
+    def super_admin(self):
+        if self.is_superadmin:
+            return self
+        else:
+            from users.models import SuperAdminUser
+            from users.models import Client
+            client = Client.objects.get(client=self.root)
+            super_admin = client.creator
+            return SuperAdminUser.objects.get(id=super_admin.id)
+
+    @property
     def can_pass(self):
-        return self.root.setup.can_pass()
+        try:
+            return self.root.setup.can_pass()
+        except:
+            return False
 
     @cached_property
     def is_root(self):
@@ -121,9 +117,19 @@ class User(AbstractUser):
         return self.user_type == 2
 
     @cached_property
+    def is_superadmin(self):
+        return self.user_type == 0
+
+    @cached_property
     def get_full_name(self):
         full_name = '%s %s' % (self.first_name.capitalize(), self.last_name)
         return full_name.strip()
 
     def get_absolute_url(self):
-        return reverse("users:profile")
+        return reverse("users:profile", kwargs={'username': self.username})
+
+    def has_uncomplete_entity_creation(self):
+        return self.entity_setups.filter(Q(agents_setup=False)).count() > 0
+
+    def uncomplete_entity_creation(self):
+        return self.entity_setups.filter(Q(agents_setup=False)).first()

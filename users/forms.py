@@ -8,9 +8,17 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group
 from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
                           inlineformset_factory, modelformset_factory)
-from django.utils.translation import ugettext_lazy as _
+from django.utils.crypto import get_random_string
+from django.utils.translation import gettext_lazy as _
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
 
-from users.models import CheckerUser, Levels, MakerUser, RootUser, User
+from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand
+from users.signals import ALLOWED_CHARACTERS
 
 
 class SetPasswordForm(forms.Form):
@@ -21,18 +29,18 @@ class SetPasswordForm(forms.Form):
     password_widget = forms.TextInput(
         attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'})
     error_messages = {
-        'password_mismatch': "The two passwords fields didn't match.",
-        'weak_password': "Password must contain at least 8 characters",
+        'password_mismatch': _("The two passwords fields didn't match."),
+        'weak_password': _("Password must contain at least 8 characters"),
     }
     new_password1 = forms.CharField(
-        label="New password",
+        label=_("New password"),
         widget=password_widget,
         strip=False,
         help_text=password_validation.password_validators_help_text_html(),
         # validators= [ComplexPasswordValidator],
     )
     new_password2 = forms.CharField(
-        label="New password confirmation",
+        label=_("New password confirmation"),
         strip=False,
         widget=password_widget,
     )
@@ -74,11 +82,11 @@ class PasswordChangeForm(SetPasswordForm):
     password_widget = forms.TextInput(
         attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'})
     error_messages = dict(SetPasswordForm.error_messages, **{
-        'password_incorrect': "Your old password was entered incorrectly. Please enter it again.",
-        'similar_password': "Your old password is similar to the new password. ",
+        'password_incorrect': _("Your old password was entered incorrectly. Please enter it again."),
+        'similar_password': _("Your old password is similar to the new password. "),
     })
     old_password = forms.CharField(
-        label="Old password",
+        label=_("Old password"),
         strip=False,
         widget=password_widget,
     )
@@ -230,36 +238,40 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
         model = CheckerUser
 
 
-class RootCreationForm(UserForm):
-    class Meta(UserCreationForm.Meta):
+class RootCreationForm(forms.ModelForm):
+    class Meta:
         model = RootUser
+        fields = ("username", "email")
+        field_classes = {}
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
         super(RootCreationForm, self).__init__(*args, **kwargs)
-        if not self.request.user.is_superuser:
-            self.fields["username"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
-                                                self.request.user.username
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def clean_username(self):
+        name = self.cleaned_data['username']
+        return name
 
     def save(self, commit=True):
-        user = super(UserForm, self).save(commit=False)
-        if self.request.user.is_superuser:
-            if user.is_superuser:
-                user.hierarchy = 0
-
-            else:
-                maximum = max(RootUser.objects.values_list(
-                    'hierarchy', flat=True), default=False)
-                if not maximum:
-                    maximum = 0
-                try:
-                    user.hierarchy = maximum + 1
-                except TypeError:
-                    user.hierarchy = 1
-                user.user_type = 3
+        user = super().save(commit=False)
+        if self.request.user.is_superadmin:
+            maximum = max(RootUser.objects.values_list(
+                'hierarchy', flat=True), default=False)
+            if not maximum:
+                maximum = 0
+            try:
+                user.hierarchy = maximum + 1
+            except TypeError:
+                user.hierarchy = 1
+            user.user_type = 3
 
         if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy
-
+        random_pass = get_random_string(
+            allowed_chars=ALLOWED_CHARACTERS, length=12)
+        user.set_password(random_pass)
         user.save()
         return user
 
@@ -283,40 +295,25 @@ class UserChangeForm(AbstractUserChangeForm):
 class ProfileEditForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ("first_name", "last_name", "mobile_no", "email", "title", "avatar_thumbnail")
+        fields = ("first_name", "last_name", "mobile_no",
+                  "email", "title", "avatar_thumbnail")
 
 
 class LevelForm(forms.ModelForm):
     class Meta:
         model = Levels
-        exclude = ('created',)
+        exclude = ('created', 'level_of_authority')
 
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.fields['level_of_authority'].choices = [
-            (1, 'Level 1'), (2, 'Level 2'), (3, 'Level 3'), (4, 'Level 4')]
-
-
-class BaseLevelFormSet(BaseModelFormSet):
-    def clean(self):
-        """Checks that no two levels are not same."""
-        if any(self.errors):
-            # Don't bother validating the formset unless each form is valid on its own
-            return
-        level_of_authorities = []
-        for form in self.forms:
-            level_of_authority = form.cleaned_data['level_of_authority']
-            if level_of_authority in level_of_authorities:
-                raise forms.ValidationError(
-                    "Levels must be unique.")
-            level_of_authorities.append(level_of_authority)
 
 
 class MakerCreationForm(forms.ModelForm):
+    first_name = forms.CharField(label=_('First name'))
+    last_name = forms.CharField(label=_('Last name'))
+
     class Meta:
         model = MakerUser
-        fields = ('username', 'first_name', 'last_name',
-                  'mobile_no', 'email', 'is_staff')
+        fields = ('first_name', 'last_name',
+                  'mobile_no', 'email')
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -341,6 +338,7 @@ class MakerCreationForm(forms.ModelForm):
                 })
 
     def save(self, commit=True):
+
         user = super().save(commit=False)
         user.user_type = 1
         if commit:
@@ -349,32 +347,28 @@ class MakerCreationForm(forms.ModelForm):
 
 
 class CheckerCreationForm(forms.ModelForm):
+    first_name = forms.CharField(label=_('First name'))
+    last_name = forms.CharField(label=_('Last name'))
+
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.fields["level"].choices = [('', '------')] + [
-            (r.id, str(r)) for r in Levels.objects.filter(created__hierarchy=request.user.hierarchy)
+            (r.id, f'{r} {i+1}') for i, r in enumerate(Levels.objects.filter(created__hierarchy=request.user.hierarchy).order_by('max_amount_can_be_disbursed'))
         ]
+
+        self.fields["level"].label = _('Level')
 
         for field in iter(self.fields):
             # get current classes from Meta
             classes = self.fields[field].widget.attrs.get("class")
-            if field == 'is_staff':
-                if classes is not None:
-                    classes += " icheckbox_flat-green checked"
-                else:
-                    classes = "icheckbox_flat-green"
-                self.fields[field].widget.attrs.update({
-                    'class': classes
-                })
+            if classes is not None:
+                classes += " form-control"
             else:
-                if classes is not None:
-                    classes += " form-control"
-                else:
-                    classes = "form-control"
-                self.fields[field].widget.attrs.update({
-                    'class': classes
-                })
+                classes = "form-control"
+            self.fields[field].widget.attrs.update({
+                'class': classes
+            })
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -385,18 +379,129 @@ class CheckerCreationForm(forms.ModelForm):
 
     class Meta:
         model = CheckerUser
-        fields = ['username', 'first_name', 'last_name',
-                  'email', 'mobile_no', 'level', 'is_staff']
+        fields = ['first_name', 'last_name',
+                  'email', 'mobile_no', 'level']
 
+
+class BrandForm(forms.ModelForm):
+    def __init__(self, *args, request, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.request = request
+
+    color = forms.CharField(widget=forms.HiddenInput())
+    class Meta:
+        model = Brand
+        fields = ("color", "logo")
+
+    def save(self, commit=True):
+        brand = super().save(commit=False)
+        if commit:
+            brand.save()
+            self.request.user.brand = brand
+            self.request.user.save()
+        return brand
 
 LevelFormSet = modelformset_factory(
-    model=Levels, form=LevelForm, formset=BaseLevelFormSet,
-    max_num=4, min_num=1, can_delete=True,
-    validate_max=True, extra=0, validate_min=True
+    model=Levels, form=LevelForm,  max_num=4,
+    min_num=1, can_delete=True, extra=1, validate_min=True, validate_max=True
 )
 
 MakerMemberFormSet = modelformset_factory(
-    model=MakerUser, form=MakerCreationForm, can_delete=True)
+    model=MakerUser, form=MakerCreationForm, 
+    min_num=1, validate_min=True, can_delete=True, extra=1)
 
 CheckerMemberFormSet = modelformset_factory(
-    model=CheckerUser, form=CheckerCreationForm, can_delete=True)
+    model=CheckerUser, form=CheckerCreationForm, 
+    min_num=1, validate_min=True, can_delete=True, extra=1)
+
+from django_otp.forms import OTPAuthenticationFormMixin
+class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
+    """
+    A form that verifies an authenticated user. It looks very much like
+    :class:`~django_otp.forms.OTPAuthenticationForm`, but without the username
+    and password. The first argument must be an authenticated user; you can use
+    this in place of :class:`~django.contrib.auth.forms.AuthenticationForm` by
+    currying it::
+
+        from functools import partial
+
+        from django.contrib.auth.decoratorrs import login_required
+        from django.contrib.auth.views import login
+
+
+        @login_required
+        def verify(request):
+            form_cls = partial(OTPTokenForm, request.user)
+
+            return login(request, template_name='my_verify_template.html', authentication_form=form_cls)
+
+
+    This form will ask the user to choose one of their registered devices and
+    enter an OTP token. Validation will succeed if the token is verified. See
+    :class:`~django_otp.forms.OTPAuthenticationForm` for details on writing a
+    compatible template (leaving out the username and password, of course).
+
+    :param user: An authenticated user.
+    :type user: :class:`~django.contrib.auth.models.User`
+
+    :param request: The current request.
+    :type request: :class:`~django.http.HttpRequest`
+    """
+    #otp_device = forms.ChoiceField(choices=[])
+    otp_token = forms.CharField(required=False)
+    #otp_challenge = forms.CharField(required=False)
+
+    def __init__(self, user, request=None, *args, **kwargs):
+        super(OTPTokenForm, self).__init__(*args, **kwargs)
+
+        self.user = user
+        #self.fields['otp_device'].choices = self.device_choices(user)
+
+    def clean(self):
+        super(OTPTokenForm, self).clean()
+
+        self.clean_otp(self.user)
+
+        return self.cleaned_data
+
+    def get_user(self):
+        return self.user
+
+
+class ForgotPasswordForm(forms.Form):
+    email = forms.EmailField(label='')
+    email2 = forms.EmailField(label='')
+    email.widget.attrs.update({'class': 'form-control','placeholder':_('Email')})
+    email2.widget.attrs.update({'class': 'form-control', 'placeholder': _('Confirm Email')})
+
+    def clean(self):
+        email = self.cleaned_data.get('email')
+        email2 = self.cleaned_data.get('email2')
+        if not(email and email2):
+            return
+        if email != email2:
+            raise forms.ValidationError("Emails don't match")
+        else:    
+            user_qs = User.objects.filter(email=email)
+            if not user_qs.exists():
+                raise forms.ValidationError("No user with this email exists")
+            self.user = user_qs.first()
+
+    def send_email(self):
+        MESSAGE = 'Dear {0}\n' \
+            'Please follow <a href="{1}">this link</a> to reset password, \n' \
+            'Then login with your username: {2} and new password \n' \
+            'Thanks, BR'
+
+        # one time token
+        token = default_token_generator.make_token(self.user)
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk)).decode("utf-8")
+        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
+            'uidb64': uid, 'token': token})
+
+        send_mail(
+            from_email=settings.SERVER_EMAIL,
+            recipient_list=[self.user.email],
+            subject=_('[Payroll] Password Notification'),
+            message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
+        )

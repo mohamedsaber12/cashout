@@ -117,6 +117,7 @@ class FileData(TimeStampedModel):
     is_downloaded = models.BooleanField(default=0)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='file_data')
+    has_full_payment = models.BooleanField(default=False)
     objects = FileDataManager()
 
     class Meta:

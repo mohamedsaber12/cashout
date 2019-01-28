@@ -30,13 +30,16 @@
                     <td id="format_{{field.name}}">
                         {# Include the hidden fields in the form #}
                         {% if forloop.first %}
-                        {% for hidden in form.hidden_fields %}
-                        {{ hidden }}
-                        {% endfor %}
+                            {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                            {% endfor %}
                         {% endif %}
                         {{ field.errors.as_ul }}
                         {{ field }}
                         <span class="error_span"></span>
+                        {% if forloop.first %}
+                        <p class="error_span" id="format_row_{{forloop.parentloop.counter0}}_error"></p>
+                        {%endif%}
                     </td>
                     {% endfor %}
                 </tr>
@@ -62,6 +65,9 @@
                 {{ field.errors.as_ul }}
                 {{ field }}
                 <span class="error_span"></span>
+                {% if forloop.first %}
+                <p class="error_span" id="format_row_{{forloop.parentloop.counter0}}_error"></p>
+                {%endif%}
             </td>
             {% endfor %}
         </tr>

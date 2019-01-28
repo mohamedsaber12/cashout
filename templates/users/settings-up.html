@@ -501,6 +501,9 @@
                             for (let field_name in data.errors[i]) {
                                 let err_value = data.errors[i][field_name][0]
                                 $(rows[i]).find('#' + prefix + '_' + field_name + ' span').html(err_value)
+                                if (field_name === '__all__'){
+                                    $(rows[i]).find( '#' + prefix + '_row_' + i + '_error').html(err_value)
+                                }
                             }
                         }
 

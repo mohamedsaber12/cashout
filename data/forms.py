@@ -342,6 +342,13 @@ class FormatForm(forms.ModelForm):
                   'identifier9', 'identifier10')
         exclude = ('category', 'num_of_identifiers', 'collection', 'hierarchy')
 
+    def clean(self):
+        data = self.cleaned_data.copy()
+        del data['DELETE']
+        ids = Format(**data).identifiers()
+        if len(ids) < 2:
+            raise forms.ValidationError('You need to add at least two headers')
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hierarchy = self.request.user.hierarchy

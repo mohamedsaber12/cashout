@@ -173,7 +173,7 @@ def handle_uploaded_file(doc_obj_id):
 
                 excl_data.append(str(cell.value.encode('utf-8')))
 
-        map(data.append, [excl_data, ])
+        *map(data.append, [excl_data, ]),
 
         # Specify unique fields to search with.
         processed_data = json.loads(data.json)[0]

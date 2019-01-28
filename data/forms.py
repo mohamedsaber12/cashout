@@ -336,7 +336,10 @@ class FormatForm(forms.ModelForm):
     
     class Meta:
         model = Format
-        fields = '__all__'
+        fields = ('name', 'identifier1', 'identifier2',
+                  'identifier3', 'identifier4', 'identifier5', 
+                  'identifier6', 'identifier7', 'identifier8',
+                  'identifier9', 'identifier10')
         exclude = ('category', 'num_of_identifiers', 'collection', 'hierarchy')
 
     def save(self, commit=True):

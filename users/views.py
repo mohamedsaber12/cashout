@@ -28,10 +28,9 @@ from users.forms import (CheckerMemberFormSet,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm,
                          ProfileEditForm, RootCreationForm, OTPTokenForm, ForgotPasswordForm)
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
-from users.models import CheckerUser, Levels, MakerUser, Setup, User, Brand
-from users.models import Client
-from users.models import EntitySetup
-from users.models import RootUser
+from users.models import (CheckerUser, Levels, MakerUser, 
+                            Setup, User, Brand, Client, EntitySetup, RootUser)
+
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -149,7 +148,8 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             if data['prefix'] == 'level':
                 form = LevelFormSet(
                     data,
-                    prefix='level'
+                    prefix='level',
+                    form_kwargs={'request': self.request}
                 )
 
             elif data['prefix'] == 'checker':
@@ -201,7 +201,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                                 obj.created_id = request.user.root.id
                                 obj.save()
                                 obj.user_permissions.add(*Permission.objects.filter(user=request.user.root))
-                        elif isinstance(objs[0],Format):
+                        elif isinstance(objs[0], Format) or isinstance(objs[0], Levels):
                             for obj in objs:
                                 obj.save()
 
@@ -294,7 +294,8 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             queryset=Levels.objects.filter(
                 created__hierarchy=self.request.user.hierarchy
             ),
-            prefix='level'
+            prefix='level',
+            form_kwargs={'request': self.request}
         )
         if category is not None:
             data['filecategoryform'] = FileCategoryForm(instance=category)
@@ -468,7 +469,8 @@ class LevelsView(RootRequiredMixin, View):
 
         form = LevelFormSet(
             request.POST,
-            prefix='level'
+            prefix='level',
+            form_kwargs={'request': self.request}
         )
         if form and form.is_valid():
 
@@ -478,8 +480,6 @@ class LevelsView(RootRequiredMixin, View):
                 obj.delete()
             
             for obj in objs:
-                obj.hierarchy = request.user.hierarchy
-                obj.created_id = request.user.root.id
                 obj.save()
                 
             return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
@@ -496,7 +496,7 @@ class LevelsView(RootRequiredMixin, View):
             created__hierarchy=request.user.hierarchy
         )
         context = {
-            'levelform': LevelFormSet(queryset=initial_query, prefix='level')
+            'levelform': LevelFormSet(queryset=initial_query, prefix='level', form_kwargs={'request': self.request})
         }
         return render(request, 'users/add_levels.html', context)
 

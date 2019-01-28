@@ -312,10 +312,21 @@ class ProfileEditForm(forms.ModelForm):
 
 
 class LevelForm(forms.ModelForm):
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, ** kwargs)
+
     class Meta:
         model = Levels
         exclude = ('created', 'level_of_authority')
 
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.created = self.request.user.root
+        if commit:
+            instance.save()
+        return instance
 
 
 class MakerCreationForm(forms.ModelForm):

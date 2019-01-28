@@ -18,9 +18,9 @@ class FileCategory(models.Model):
         max_length=128, blank=True, null=True, unique=False, verbose_name=_('File Category Name'))
     user_created = models.OneToOneField(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
-    unique_field = models.CharField(max_length=128, null=True, blank=True,
+    unique_field = models.CharField(max_length=128,
                                     verbose_name=_('What is the unique field?'))
-    amount_field = models.CharField(max_length=128, null=True, blank=True,
+    amount_field = models.CharField(max_length=128,
                                     verbose_name=_('what is amount field?'),
                                     help_text=_('for ex: loan_field'))
     no_of_reviews_required = models.PositiveSmallIntegerField(default=3,

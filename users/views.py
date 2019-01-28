@@ -326,11 +326,17 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         prefix = self.request.GET.get('prefix', None)
         
         if  (   
-                (prefix is None) or
+                (
+                    prefix is None or 
+                    prefix not in ['level','format', 'maker', 'checker', 'category', 'collection_data']
+                ) or
                 (prefix == 'maker' and not setup.levels_setup) or
                 (
+                    prefix == 'checker' and not MakerUser.objects.filter(
+                    hierarchy=self.request.user.hierarchy).exists()
+                ) or
+                (
                     (
-                        prefix == 'checker' or 
                         prefix == 'category' or
                         prefix == 'collection_data'
                     ) and 

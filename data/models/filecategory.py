@@ -15,7 +15,7 @@ class FileCategoryManager(models.Manager):
 
 class FileCategory(models.Model):
     name = models.CharField(
-        max_length=128, unique=False, verbose_name=_('File Category Name'))
+        max_length=128, blank=True, null=True, unique=False, verbose_name=_('File Category Name'))
     user_created = models.OneToOneField(
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
     unique_field = models.CharField(max_length=128, null=True, blank=True,
@@ -35,7 +35,7 @@ class FileCategory(models.Model):
         unique_together = (('user_created', 'name'),)
 
     def __unicode__(self):
-        return self.user_created.username + ' ' + self.name
+        return self.user_created.username
 
     def __str__(self):
-        return self.user_created.username + ' ' + self.name
+        return self.user_created.username

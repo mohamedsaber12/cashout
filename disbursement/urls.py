@@ -51,7 +51,9 @@ urlpatterns += [
     path('', include('users.urls', namespace='users')),
     path('', include('disb.urls', namespace='disbursement')),
     path('', include(tf_urls, namespace='two_factor')),
-    path('api/secure/', include('disb.api.urls', namespace='disbursement_api'))
+    path('api/secure/', include('disb.api.urls', namespace='disbursement_api')),
+    path('api/secure/', include('data.api.urls', namespace='data_api')),
+    path('api/secure/', include('payment.api.urls', namespace='payment_api'))
 ]
 
 urlpatterns += static(settings.MEDIA_URL + 'documents/',

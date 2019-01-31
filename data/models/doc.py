@@ -37,7 +37,7 @@ class Doc(models.Model):
     total_amount = models.FloatField(default=False)
     total_count = models.PositiveIntegerField(default=False)
     type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
-    format = models.OneToOneField('data.Format', on_delete=models.DO_NOTHING, null=True)
+    format = models.ForeignKey('data.Format', on_delete=models.DO_NOTHING, null=True)
 
     class Meta:
         permissions = (("upload_file", "upload file"),

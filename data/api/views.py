@@ -14,7 +14,6 @@ class BillInquiryAPIView(GenericAPIView):
     with Token Authentication
     """
     serializer_class = BillInquiryRequestSerializer
-    authentication_classes = ()
 
     def log(self, _type: str, _from: str, _to: str, data: dict):
         """
@@ -37,11 +36,11 @@ class BillInquiryAPIView(GenericAPIView):
         DATA_LOGGER.debug(f'Data to {_to} from { _from }<-- \n {str(data)}')
 
     def post(self, request, *args, **kwargs):
-        self.log("req", request.user.username, request.data("aggregator", "N/A"), request.data)
+        self.log("req", request.user.username, request.data.get("aggregator", "N/A"), request.data)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.biller = request.user
-        self.collection = self.biller.collection
+        self.collection = self.biller.collection_data
         try:
             response = self.serialize_response_data(serializer.validated_data)
         except Exception as e:
@@ -59,22 +58,21 @@ class BillInquiryAPIView(GenericAPIView):
         :return: QuerySet, otherwise JsonResponse.
         """
         try:
-
             if self.collection.unique_field2:
                 file_data = FileData.objects.filter(
                     Q(user=self.biller) &
                     Q(has_full_payment=False) &
-                    Q(**{'data__%s' % self.collection.unique_field: data['bill_reference']}) &
-                    Q(**{'data__%s' % self.collection.unique_field2: data['bill_reference2']})
+                    Q(**{f'data__{self.collection.unique_field}': data['bill_reference']}) &
+                    Q(**{f'data__{self.collection.unique_field2}': data['bill_reference2']})
                 )
             else:
                 file_data = FileData.objects.filter(
-                    Q(**{'data__%s' % self.collection.unique_field: data['bill_reference']}) &
+                    Q(**{f'data__{self.collection.unique_field}': data['bill_reference']}) &
                     Q(user=self.biller) &
                     Q(has_full_payment=False)
                 )
 
-            return file_data
+            return file_data.first()
         except KeyError:
             return JsonResponse(
                 {'message': 'Bill Reference is not found', 'code': '2404'},
@@ -100,3 +98,5 @@ class BillInquiryAPIView(GenericAPIView):
 
         elif isinstance(file_data, JsonResponse):
             return file_data
+        else:
+            return JsonResponse({"msg": "no data supplied"}, status=status.HTTP_404_NOT_FOUND)

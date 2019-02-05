@@ -8,11 +8,9 @@ from django.conf import settings
 class Format(models.Model):
     DISBURSEMENT = 1
     COLLECTION = 2
-    COLLECTION_DISBURSEMENT = 3
     TYPES = (
         (DISBURSEMENT, 'Disbursement'),
         (COLLECTION, 'Collection'),
-        (COLLECTION_DISBURSEMENT, 'Both')
     )
     identifier1 = models.CharField(
         max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
@@ -44,6 +42,8 @@ class Format(models.Model):
 
     hierarchy = models.PositiveSmallIntegerField()
 
+    data_type = models.SmallIntegerField(choices=TYPES,default=1)
+
     name = models.CharField(max_length=128, unique=False)
 
     def identifiers(self):
@@ -54,14 +54,7 @@ class Format(models.Model):
                 fields.append(str(getattr(self, field.name)).lower())
         return fields
 
-    def data_type(self):
-        if self.category and self.collection:
-            return self.COLLECTION_DISBURSEMENT
-        elif self.category:
-            return self.DISBURSEMENT
-        elif self.collection:
-            return self.COLLECTION
-
+ 
     def headers_match(self,headers):
         identifiers = self.identifiers()
         return all(i.lower() in identifiers for i in headers if i)

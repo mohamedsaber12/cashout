@@ -1,0 +1,270 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load l10n %}
+{% block gentellacss %}
+    <link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
+    <link rel="stylesheet" href="{% static 'gentella/switchery.min.css'%}">
+    <style>
+        .error_span{
+            color: red;
+        }
+    </style>
+{% endblock %}
+{% block title %}{% trans 'Settings' %}{% endblock %}
+{% block body %}
+        <form action="" method="post">
+    </form>
+
+    <p>{% trans 'Please follow the steps to setup your collection settings.' %}</p>
+    <div id="disb_widget" class="form_wizard wizard_horizontal">
+      <ul class="wizard_steps">
+        
+        <li>
+            <a href="#step-1">
+                <span class="step_no">{{1|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Collection' %}<br />
+                    <small>{% trans 'Add Collection Data' %}</small>
+                </span>
+            </a>
+        </li>
+        <li>
+            <a href="#step-2">
+                <span class="step_no">{{2|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Format' %}<br />
+                    <small>{% trans 'Add File Formats' %}</small>
+                </span>
+            </a>
+        </li>
+        <li>
+            <a href="#step-3">
+                <span class="step_no">{{3|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Uploaders' %}<br />
+                    <small>{% trans 'Add Uploaders' %}</small>
+                </span>
+            </a>
+        </li>
+
+        
+
+      </ul>
+
+    <span id='non_form_errors' class="error_span"></span>
+      
+    {% include "users/settings_up_collection_form.html" with step=1 collectiondataform=collectiondataform %}
+    
+    {% include "users/settings_up_format_form.html" with step=2 formatform=formatform %}
+
+
+      <div id="step-3" form_prefix="uploader">
+        
+        <form action="." method="post" id="step_3_form">
+
+          {% csrf_token %}
+
+        <table class="table" id="uploaderform">
+            {{ uploaderform.management_form }}
+            {% for form in uploaderform.forms %}
+                {% if forloop.first %}
+                <thead>
+                    <tr>
+                        {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+
+                {% endif %}
+            {% endfor %}
+            <tbody>
+
+            {% for form in uploaderform.forms %}
+
+                <tr class="uploader_formset_row" >
+                    {% for field in form.visible_fields %}
+                        <td id="uploader_{{field.name}}">
+                            {# Include the hidden fields in the form #}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            {{ field.errors.as_ul }}
+                            {{ field }}
+                            <span class="error_span"></span>
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+                </tbody>
+        </table>
+
+        </form>
+
+<!-- empty form -->
+
+<table id="uploader_empty_form" style="display: none">
+    <tr class="uploader_formset_row">
+        {% for field in uploaderform.empty_form.visible_fields %}
+        <td id="uploader_{{field.name}}"> 
+            {# Include the hidden fields in the form #}
+            {% if forloop.first %}
+            {% for hidden in uploaderform.empty_form.hidden_fields %}
+            {{ hidden }}
+            {% endfor %}
+            {% endif %}
+            {{ field.errors.as_ul }}
+            {{ field }}
+            <span class="error_span"></span>
+        </td>
+        {% endfor %}
+    </tr>
+</table>
+<button id="add_uploader_btn" class="btn btn-success">{% trans 'Add Uploader' %}</button>
+      </div>
+     
+     
+     
+
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'gentella/jquery.smartWizard.js' %}"></script>
+<script src="{% static 'gentella/switchery.min.js' %}"></script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+     
+        let final_step = 3;
+        let step = parseInt('{{step}}');
+        var wizard = $('#disb_widget').smartWizard({
+            selected: step,
+            labelNext:' {% trans "Next" %} ',
+            labelPrevious: ' {% trans "Previous" %} ',
+            labelFinish: ' {% trans "Finish" %} ',
+            onLeaveStep:leaveAStepCallback,
+            onFinish: onFinishCallback
+
+        });
+        if(step>0){
+            for (let index = 0; index <= step; index++) {
+                $('#disb_widget').smartWizard('enableStep', index);   
+            }
+        }   
+        $('#loading-image').bind('ajaxStart', function(){
+            $(this).show();
+        }).bind('ajaxStop', function(){
+            $(this).hide();
+        });
+        var oldheight = $('.stepContainer').css('height');
+        oldheight = parseInt(oldheight.replace("px", ""));
+        var newheight = oldheight+20;
+        $('.stepContainer').height(newheight+"px");
+
+        function onFinishCallback(objs, context){
+            return stepSubmit(final_step);    
+        }
+
+        function leaveAStepCallback(obj, context){
+            if(context.fromStep > context.toStep){
+                let form_prefix = $("#step-" + String(context.toStep)).attr('form_prefix');
+                window.location.href =  "{% url 'users:settings' %}" + '?step=' + 
+                String(context.toStep-1) + "&prefix=" + form_prefix
+            
+            }
+            else    
+                return stepSubmit(context.fromStep);
+        }
+
+
+        function increase_height() {
+            let oldheight = $('.stepContainer').css('height');
+            oldheight = parseInt(oldheight.replace("px", ""));
+            let newheight = oldheight + 50;
+            $('.stepContainer').height(newheight + "px");
+        }
+
+        $('#add_uploader_btn').click(function () {
+            let form_idx = $('#id_uploader-TOTAL_FORMS').val();
+
+            $('#step-2 #uploaderform tbody').append($('#uploader_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_uploader-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+        });
+
+
+
+        $('#add_format_btn').click(function () {
+            let form_idx = $('#id_format-TOTAL_FORMS').val();
+
+            $('#step-'+ final_step + ' #formatform tbody').append($('#format_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+        });
+
+        function stepSubmit(step_no) {
+            
+            var bool_return = false;
+            let step_no_string = String(step_no)
+
+            var form_data = $("#step_" + step_no_string + "_form").serialize();
+            let form_prefix = $("#step-" + step_no_string).attr('form_prefix');
+
+            $.ajax({
+                type: 'post',
+                url: "{% url 'users:settings' %}",
+                async: false,
+                data: form_data + "&step=" + step_no_string + "&prefix=" + form_prefix,
+                success: function (data, text, xhr) {
+                    
+                    $('.error_span').html('');
+
+                    if (xhr.status == 278 && step_no == final_step) {
+                        window.location.href = xhr.getResponseHeader("Location");
+                    }
+                    
+                    if (!data.valid && !data.form_is_formset) {
+                        for (let field_name in data.errors) {
+                            let err_value = data.errors[field_name][0]
+                            $('#' + data.prefix + '_error_' + field_name).html(err_value)
+
+                        }
+                    }
+                    else if (!data.valid && data.form_is_formset) {
+
+                        if (data.non_form_errors && data.non_form_errors[0]) {
+                            $('#non_form_errors').html(data.non_form_errors[0])
+                        }
+
+                        let prefix = data.prefix
+                        let rows = $('#' + prefix + 'form' + ' .' + prefix + '_formset_row');
+                        for (let i in data.errors) {
+                            for (let field_name in data.errors[i]) {
+                                let err_value = data.errors[i][field_name][0]
+                                $(rows[i]).find('#' + prefix + '_' + field_name + ' span').html(err_value)
+                                if (field_name === '__all__'){
+                                    $(rows[i]).find( '#' + prefix + '_row_' + i + '_error').html(err_value)
+                                }
+                            }
+                        }
+
+                    }
+                    
+                }
+
+            });
+        }
+
+    });
+
+</script>
+{% endblock %}

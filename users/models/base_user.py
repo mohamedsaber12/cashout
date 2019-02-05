@@ -18,6 +18,10 @@ TYPES = (
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
+    # collection only
+    (4, 'Uploader'),
+    # maker and uploader
+    (5, 'UpMaker'),
 )
 
 
@@ -51,7 +55,7 @@ class User(AbstractUser):
     brand = models.ForeignKey(
         'users.Brand', on_delete=models.SET_NULL, null=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
-    
+
     objects = UserManager()
 
     class Meta:
@@ -99,9 +103,16 @@ class User(AbstractUser):
             return SuperAdminUser.objects.get(id=super_admin.id)
 
     @property
-    def can_pass(self):
+    def can_pass_disbursement(self):
         try:
-            return self.root.setup.can_pass()
+            return self.root.setup.can_pass_disbursement()
+        except:
+            return False
+
+    @property
+    def can_pass_collection(self):
+        try:
+            return self.root.setup.can_pass_collection()
         except:
             return False
 
@@ -116,6 +127,14 @@ class User(AbstractUser):
     @cached_property
     def is_checker(self):
         return self.user_type == 2
+
+    @cached_property
+    def is_uploader(self):
+        return self.user_type == 4
+
+    @cached_property
+    def is_upmaker(self):
+        return self.user_type == 5
 
     @cached_property
     def is_superadmin(self):
@@ -147,3 +166,14 @@ class User(AbstractUser):
             return DATA_TYPES['Disbursement']
         elif self.has_perm('users.has_collection'):
             return DATA_TYPES['Collection']
+
+    def get_status(self,request):
+        data_type = self.data_type()
+        if data_type == 3:
+            return request.COOKIES.get('status') == 'disbursement'
+        if data_type == 1:
+            return 'disbursement'
+        if data_type == 2:
+            return 'collection'
+
+

@@ -355,10 +355,14 @@ class FormatForm(forms.ModelForm):
         if self.request.user.has_perm('users.has_disbursement') and self.request.user.has_perm('users.has_collection'):
             instance.category = self.request.user.file_category
             instance.collection = self.request.user.collection_data
+            status = self.request.COOKIES.get('status')
+            instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
         elif self.request.user.has_perm('users.has_disbursement'):
             instance.category = self.request.user.file_category
+            instance.data_type = instance.DISBURSEMENT
         elif self.request.user.has_perm('users.has_collection'):
             instance.collection = self.request.user.collection_data
+            instance.data_type = instance.COLLECTION
         if commit:
             instance.save()
         return instance

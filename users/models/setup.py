@@ -12,18 +12,22 @@ class Setup(models.Model):
     levels_setup = models.BooleanField(default=False)
     users_setup = models.BooleanField(default=False)
     category_setup = models.BooleanField(default=False)
-    format_setup = models.BooleanField(default=False)
+    format_disbursement_setup = models.BooleanField(default=False)
     #collection
+    uploaders_setup = models.BooleanField(default=False)
+    format_collection_setup = models.BooleanField(default=False)
     collection_setup = models.BooleanField(default=False)
 
     def __str__(self):
         return '{0}_setup'.format(str(self.user))
 
     def can_pass_disbursement(self):
-        return all([self.levels_setup, self.users_setup, self.category_setup, self.format_setup]):
+        return all([self.levels_setup, self.users_setup, self.category_setup,
+                    self.format_disbursement_setup])
         
     def can_pass_collection(self):
-        return self.collection_setup
+        return all([self.collection_setup, self.format_collection_setup, 
+                    self.uploaders_setup])
 
     def can_add_users(self):
         if self.levels_setup:
@@ -39,6 +43,6 @@ class Setup(models.Model):
                 per += 25
                 if self.category_setup:
                     per += 25
-                    if self.format_setup:
+                    if self.format_disbursement_setup:
                         per += 25
         return per

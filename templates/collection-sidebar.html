@@ -49,15 +49,6 @@
                 {% if request.user.is_root %}
                 <li><a><i class="fa fa-user"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
-                        
-                        <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
-                            <ul class="nav child_menu">
-                                <li><a href="{% url 'users:add_checker' %}">{% trans 'Checker' %}</a>
-                                </li>
-                                <li><a href="{% url 'users:add_maker' %}">{% trans 'Maker' %}</a>
-                                </li>
-                            </ul>
-                        </li>
                         <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a>
                         </li>
                     </ul>
@@ -67,13 +58,10 @@
                 <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
                         {% if request.user.is_root %}
-                            <li><a href="{% url 'users:settings' %}">{% trans 'Setup' %}</a></li>
-                            <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
+                            <li><a href="{% url 'users:settings-collection' %}">{% trans 'Setup' %}</a></li>
                         {% endif %}
                         <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
-                        {% if request.user.is_maker %}
-                            <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
-                        {%endif%}
+                        <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
                     </ul>
                 </li>
 

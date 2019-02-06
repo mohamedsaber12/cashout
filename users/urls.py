@@ -24,7 +24,10 @@ urlpatterns = [
     path('password/done/', PasswordResetCompleteView.as_view(),
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
-    path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
+    path('settings/up/dibursement', views.DisbursementSettingsUpView.as_view(),
+         name='settings-dibursement'),
+    path('settings/up/collection', views.CollectionSettingsUpView.as_view(),
+         name='settings-collection'),
     path('levels/', views.LevelsView.as_view(), name='levels'),
     path('profile/<username>/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/<username>/', views.ProfileUpdateView.as_view(), name='edit_profile'),
@@ -36,6 +39,8 @@ urlpatterns = [
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
     path('clients/', views.Clients.as_view(), name='clients'),
     path('settings/branding/', views.EntityBranding.as_view(), name='entity_branding'),
-    path('account/token/', views.OTPLoginView.as_view(), name='otp_login')
+    path('account/token/', views.OTPLoginView.as_view(), name='otp_login'),
+    path('redirect/', views.RedirectPageView.as_view(), name='redirect')
+    
 
 ]

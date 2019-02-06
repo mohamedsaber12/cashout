@@ -11,3 +11,11 @@ def brand_context(request):
         }
        
     return {}
+
+
+def current_status(request):
+    """return value is disbursement or collection"""
+    if not request.user.is_authenticated:
+        return {}
+    print(request.user.get_status(request))
+    return {'current_status': request.user.get_status(request)}

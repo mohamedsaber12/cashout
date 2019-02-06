@@ -331,7 +331,7 @@
         function leaveAStepCallback(obj, context){
             if(context.fromStep > context.toStep){
                 let form_prefix = $("#step-" + String(context.toStep)).attr('form_prefix');
-                window.location.href =  "{% url 'users:settings' %}" + '?step=' + 
+                window.location.href =  "{% url 'users:settings-dibursement' %}" + '?step=' + 
                 String(context.toStep-1) + "&prefix=" + form_prefix
             
             }
@@ -394,7 +394,7 @@
 
         function stepSubmit(step_no) {
             
-            var bool_return = false;
+            let bool_return = false;
             let step_no_string = String(step_no)
 
             var form_data = $("#step_" + step_no_string + "_form").serialize();
@@ -402,7 +402,7 @@
 
             $.ajax({
                 type: 'post',
-                url: "{% url 'users:settings' %}",
+                url: "{% url 'users:settings-dibursement' %}",
                 async: false,
                 data: form_data + "&step=" + step_no_string + "&prefix=" + form_prefix,
                 success: function (data, text, xhr) {
@@ -442,12 +442,15 @@
                     
                     // refresh before step 3 (checkers) to get new levels
                     if (step_no==2 && data.valid){
-                        window.location.href =  "{% url 'users:settings' %}" + '?step=' + String(step_no)
+                        window.location.href =  "{% url 'users:settings-dibursement' %}" + '?step=' + String(step_no)
                         + "&prefix=checker"
                     }
+                    
+                    bool_return = data.valid
                 }
 
             });
+            return bool_return;
         }
 
     });

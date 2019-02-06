@@ -173,7 +173,7 @@
         function leaveAStepCallback(obj, context){
             if(context.fromStep > context.toStep){
                 let form_prefix = $("#step-" + String(context.toStep)).attr('form_prefix');
-                window.location.href =  "{% url 'users:settings' %}" + '?step=' + 
+                window.location.href =  "{% url 'users:settings-collection' %}" + '?step=' + 
                 String(context.toStep-1) + "&prefix=" + form_prefix
             
             }
@@ -213,7 +213,7 @@
 
         function stepSubmit(step_no) {
             
-            var bool_return = false;
+            let bool_return = false;
             let step_no_string = String(step_no)
 
             var form_data = $("#step_" + step_no_string + "_form").serialize();
@@ -221,7 +221,7 @@
 
             $.ajax({
                 type: 'post',
-                url: "{% url 'users:settings' %}",
+                url: "{% url 'users:settings-collection' %}",
                 async: false,
                 data: form_data + "&step=" + step_no_string + "&prefix=" + form_prefix,
                 success: function (data, text, xhr) {
@@ -259,9 +259,11 @@
 
                     }
                     
+                    bool_return = data.valid
                 }
 
             });
+            return bool_return;
         }
 
     });

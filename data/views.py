@@ -52,71 +52,85 @@ def file_upload(request):
     Documents are paginated ("docs_paginated") but not used in template.
     """
     format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
-    category = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
-    collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
-    can_upload = True
-    if request.user.data_type() == 3 and  not category and not collection:
-        can_upload = False
-    elif request.user.data_type() == 2 and not collection:
-        can_upload = False
-    elif request.user.data_type() == 1 and not category:
-        can_upload = False
-
-    if request.method == 'POST' and request.user.is_maker and can_upload and request.user.root.client.is_active:
-        form_doc = FileDocumentForm(
-            request.POST, request.FILES,request=request, collection=collection, category=category)
-
-        if form_doc.is_valid():
-            file_doc = form_doc.save()
-            now = datetime.datetime.now()
-            UPLOAD_LOGGER.debug(
-                '%s uploaded file at ' % request.user + str(now))           
-            if file_doc.type_of == Doc.COLLECTION:
-                handle_uploaded_file.delay(file_doc.id)
-            else:
-                handle_disbursement_file.delay(file_doc.id)
-
-            # Redirect to the document list after POST
-            return HttpResponseRedirect(request.path)
-        else:
-            UPLOAD_ERROR_LOGGER.debug(
-                'UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
-                    form_doc.errors, request.user,
-                    datetime.datetime.now(), get_client_ip(request)))
-
-            return JsonResponse(form_doc.errors, status=400)
-    
     doc_list_collection = None
     doc_list_disbursement = None
-    if request.user.data_type() == 3:
+    can_upload = False
+    user_has_upload_perm = False
+    status = request.user.get_status(request)
+    if status == 'disbursement':
+        format_qs = format_qs.filter(data_type=1)
+        category = FileCategory.objects.get_by_hierarchy(
+            request.user.hierarchy)
+        can_upload = bool(category)
+        user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
+        if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
+            form_doc = FileDocumentForm(
+                request.POST, request.FILES, request=request, category=category)
+
+            if form_doc.is_valid():
+                file_doc = form_doc.save()
+                now = datetime.datetime.now()
+                UPLOAD_LOGGER.debug(
+                    '%s uploaded disbursement file at ' % request.user + str(now))
+             
+                handle_disbursement_file.delay(file_doc.id)
+
+                # Redirect to the document list after POST
+                return HttpResponseRedirect(request.path)
+            else:
+                UPLOAD_ERROR_LOGGER.debug(
+                    'Disbursement UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
+                        form_doc.errors, request.user,
+                        datetime.datetime.now(), get_client_ip(request)))
+
+                return JsonResponse(form_doc.errors, status=400)
+
         doc_list_disbursement = Doc.objects.filter(
             owner__hierarchy=request.user.hierarchy,
             type_of=Doc.DISBURSEMENT)
+        doc_list_disbursement = filter_docs_by_date(
+            request, doc_list_disbursement)
+    else:
+        format_qs = format_qs.filter(data_type=2)
+        collection = CollectionData.objects.filter(
+            user__hierarchy=request.user.hierarchy).first()
+        can_upload = bool(collection)
+        user_has_upload_perm = request.user.is_uploader or request.user.is_upmaker
+        if (request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active):
+            form_doc = FileDocumentForm(
+                request.POST, request.FILES,request=request, collection=collection)
+
+            if form_doc.is_valid():
+                file_doc = form_doc.save()
+                now = datetime.datetime.now()
+                UPLOAD_LOGGER.debug(
+                    '%s uploaded collection file at ' % request.user + str(now))           
+                handle_uploaded_file.delay(file_doc.id)                
+
+                # Redirect to the document list after POST
+                return HttpResponseRedirect(request.path)
+            else:
+                UPLOAD_ERROR_LOGGER.debug(
+                    'Collection UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
+                        form_doc.errors, request.user,
+                        datetime.datetime.now(), get_client_ip(request)))
+
+                return JsonResponse(form_doc.errors, status=400)
+        
         doc_list_collection = Doc.objects.filter(
             owner__hierarchy=request.user.hierarchy,
             type_of=Doc.COLLECTION)
-        doc_list_disbursement = filter_docs_by_date(
-            request, doc_list_disbursement)
         doc_list_collection = filter_docs_by_date(
             request, doc_list_collection)
-    if request.user.data_type() == 2:
-        doc_list_disbursement = Doc.objects.filter(
-            owner__hierarchy=request.user.hierarchy,
-            type_of=Doc.DISBURSEMENT)
-        doc_list_disbursement = filter_docs_by_date(
-            request, doc_list_disbursement)
-    if request.user.data_type() == 1:
-        doc_list_collection = Doc.objects.filter(
-            owner__hierarchy=request.user.hierarchy,
-            type_of=Doc.COLLECTION)
-        doc_list_collection = filter_docs_by_date(
-            request, doc_list_collection)
+    
    
     context = {
         'doc_list_disbursement': doc_list_disbursement,
         'doc_list_collection': doc_list_collection,
         'format_qs': format_qs,
-        'can_upload':can_upload
+        'can_upload':can_upload,
+        'user_has_upload_perm': user_has_upload_perm,
+        'status': status
     }
 
     return render(request, 'data/index.html', context=context)

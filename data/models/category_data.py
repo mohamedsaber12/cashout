@@ -34,11 +34,6 @@ class Format(models.Model):
         max_length=128, null=True, blank=True, verbose_name=_('Header 10'))
     num_of_identifiers = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)],
                                              verbose_name=_('Number of identifiers filled'))
-    category = models.ForeignKey(
-        'data.FileCategory', blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
-
-    collection = models.ForeignKey(
-        'data.CollectionData', blank=True, null=True, on_delete=models.CASCADE, related_name='format')
 
     hierarchy = models.PositiveSmallIntegerField()
 

@@ -21,6 +21,12 @@ def user_passes_test_with_request(test_func, login_url=None, redirect_field_name
             if test_func(request):
                 return view_func(request, *args, **kwargs)
             path = request.build_absolute_uri()
+            status = request.COOKIES.get('status')
+            if status == 'collection':
+                login_url = reverse('users:settings-collection')
+            elif status == 'disbursement':
+                login_url = reverse('users:settings-dibursement')
+                
             resolved_login_url = resolve_url(login_url or settings.LOGIN_URL)
             # If the login url is the same scheme and net location then just
             # use the path as the "next" url.
@@ -36,23 +42,24 @@ def user_passes_test_with_request(test_func, login_url=None, redirect_field_name
     return decorator
 
 
-def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/settings/up/'):
+def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url=None):
     """
     Decorator for views that checks that the user is logged in, redirecting
     to the log-in page if necessary.
     """
     def root_can_pass(request):
         user = request.user
-        
+        status = request.COOKIES.get('status')
+
         if not user.is_root:
             return True
-        status = request.COOKIES.get('status')
         if status == 'disbursement' and user.can_pass_disbursement:
             return True
         if status == 'collection' and user.can_pass_collection:
             return True
         return False
 
+    
     actual_decorator = user_passes_test_with_request(
         root_can_pass,
         login_url=login_url,

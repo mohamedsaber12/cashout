@@ -367,12 +367,14 @@ class MakerCreationForm(forms.ModelForm):
             uploader.user_type = 5
             self.uploader_id = uploader.id
             uploader.save()
-
+        return email
+        
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 1
-        if self.uploader_id:
-            user.id = self.uploader_id
+        uploader_id = getattr(self, 'uploader_id',None)
+        if uploader_id:
+            user.id = uploader_id
         if commit:
             user.save()
         return user
@@ -419,7 +421,7 @@ class UploaderCreationForm(forms.ModelForm):
     first_name = forms.CharField(label=_('First name'))
     last_name = forms.CharField(label=_('Last name'))
 
-    def __init__(self, *args, request, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field in iter(self.fields):
@@ -440,12 +442,15 @@ class UploaderCreationForm(forms.ModelForm):
             maker.user_type = 5
             self.maker_id = maker.id
             maker.save()
-    
+
+        return email
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 4
-        if self.maker_id:
-            user.id = self.maker_id
+        maker_id = getattr(self,'maker_id',None)
+        if maker_id:
+            user.id = maker_id
         if commit:
             user.save()
         return user

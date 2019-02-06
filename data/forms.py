@@ -72,11 +72,10 @@ class FileDocumentForm(forms.ModelForm):
 
     def __init__(self,*args,**kwargs):
         self.request = kwargs.pop('request')
-        self.category = kwargs.pop('category')
-        self.collection = kwargs.pop('collection')
+        self.category = kwargs.pop('category',None)
+        self.collection = kwargs.pop('collection',None)
+        self.type_of = 1 if self.category else 2
         super().__init__(*args, **kwargs)
-        if self.request.user.data_type() != 3:
-            del self.fields['type_of']
 
     def clean_file(self):
         """
@@ -84,14 +83,13 @@ class FileDocumentForm(forms.ModelForm):
         """
         file = self.cleaned_data['file']
         format_type = self.cleaned_data['format']
-        type_of = self.cleaned_data['type_of']
 
         if file:
             # validate unique fields
-            if type_of == 1 and not format_type.validate_disbursement_unique():
+            if self.type_of == 1 and not format_type.validate_disbursement_unique():
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Disbursement unique field"))
-            if type_of == 2 and not format_type.validate_collection_unique():
+            if self.type_of == 2 and not format_type.validate_collection_unique():
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Collection unique fields"))
 
@@ -167,7 +165,7 @@ class FileDocumentForm(forms.ModelForm):
         instance.collection_data = self.collection
 
         if not instance.type_of:
-            instance.type_of = self.request.user.data_type()
+            instance.type_of = self.type_of
         if commit:
             instance.save()
         return instance
@@ -176,7 +174,6 @@ class FileDocumentForm(forms.ModelForm):
         model = Doc
         fields = [
             'format',
-            'type_of',
             'file'
         ]
 
@@ -340,7 +337,8 @@ class FormatForm(forms.ModelForm):
                   'identifier3', 'identifier4', 'identifier5', 
                   'identifier6', 'identifier7', 'identifier8',
                   'identifier9', 'identifier10')
-        exclude = ('category', 'num_of_identifiers', 'collection', 'hierarchy')
+        exclude = ('category', 'num_of_identifiers',
+                   'collection', 'hierarchy', 'data_type')
 
     def clean(self):
         data = self.cleaned_data.copy()
@@ -352,17 +350,8 @@ class FormatForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hierarchy = self.request.user.hierarchy
-        if self.request.user.has_perm('users.has_disbursement') and self.request.user.has_perm('users.has_collection'):
-            instance.category = self.request.user.file_category
-            instance.collection = self.request.user.collection_data
-            status = self.request.COOKIES.get('status')
-            instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
-        elif self.request.user.has_perm('users.has_disbursement'):
-            instance.category = self.request.user.file_category
-            instance.data_type = instance.DISBURSEMENT
-        elif self.request.user.has_perm('users.has_collection'):
-            instance.collection = self.request.user.collection_data
-            instance.data_type = instance.COLLECTION
+        status = self.request.user.get_status(self.request)
+        instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
         if commit:
             instance.save()
         return instance

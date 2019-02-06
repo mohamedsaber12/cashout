@@ -10,7 +10,11 @@
             {% if request.user.is_superadmin %}
                 {% include "superadmin_sidebar.html" %}
             {% else %}
-                {% include "sidebar.html" %}
+                {% if current_status == 'collection' %}
+                  {% include "collection-sidebar.html" %}
+                {%else%}
+                  {% include "disbursement-sidebar.html" %}
+                {%endif%}  
             {% endif %}
         </div>
   

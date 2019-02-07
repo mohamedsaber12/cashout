@@ -61,8 +61,11 @@
                             <li><a href="{% url 'users:settings-collection' %}">{% trans 'Setup' %}</a></li>
                         {% endif %}
                         <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
-                        <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
-                    </ul>
+
+                        {% if request.user.is_root and request.user.setup.can_pass_collection or not request.user.is_root %}
+                            <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+                        {%endif%}
+                        </ul>
                 </li>
 
  

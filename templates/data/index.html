@@ -44,6 +44,8 @@
 
         {% if doc_list_disbursement %}
             {% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement %}
+        {%else%}
+            <h3>No Documents uploaded yet</h3>
         {%endif%}
     
     {% elif status == 'collection' %}
@@ -77,6 +79,8 @@
         {% endif %}
         {% if doc_list_collection %}
             {% include 'data/document_collection_list.html' with object_list=doc_list_collection %}
+        {%else%}
+            <h3>No Documents uploaded yet</h3>
         {%endif%}
     {%endif%}
 

@@ -28,7 +28,8 @@ from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,Forma
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
 from data.tasks import handle_disbursement_file, handle_uploaded_file
 from data.utils import get_client_ip, paginator
-from users.decorators import setup_required, maker_only
+from users.decorators import (setup_required, root_or_maker_or_uploader, 
+                              collection_users, disbursement_users)
 from users.models import User
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -232,7 +233,7 @@ def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
             return redirect('data:main_view')
     return render(request, template_name, {'object': file_obj})
 
-
+@disbursement_users
 @login_required
 def document_view(request, doc_id):
     """
@@ -357,14 +358,17 @@ def doc_download(request, doc_id):
         raise Http404
 
 
-@method_decorator([setup_required, login_required, maker_only], name='dispatch')
+@method_decorator([setup_required, login_required, root_or_maker_or_uploader], name='dispatch')
 class FormatListView(ListView):
-    
+
     template_name = "data/formats.html"
     context_object_name = "format_qs"
-     
+
     def get_queryset(self):
-        return Format.objects.filter(hierarchy=self.request.user.hierarchy)
+        data_type = 1
+        if self.request.user.get_status(self.request) == 'collection':
+            data_type = 2
+        return Format.objects.filter(hierarchy=self.request.user.hierarchy, data_type=data_type)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
@@ -372,11 +376,37 @@ class FormatListView(ListView):
             queryset=context['format_qs'],
             prefix='format'
         )
-        context['formatform'].can_delete = False
+        if not self.request.user.is_root:
+            context['formatform'].can_delete = False
         return context
 
+    def post(self, request, *args, **kwargs):
+        form = FormatFormSet(
+            request.POST,
+            prefix='format',
+            form_kwargs={'request': request}
+        )
+        if form and form.is_valid():
 
-@method_decorator([setup_required, login_required], name='dispatch')
+            objs = form.save(commit=False)
+
+            for obj in form.deleted_objects:
+                obj.delete()
+
+            for obj in objs:
+                obj.save()
+
+            return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
+
+        return HttpResponse(content=json.dumps({
+            "valid": False,
+            "reason": "validation",
+            "errors": form.errors,
+            "non_form_errors": form.non_form_errors()
+        }), content_type="application/json")
+
+
+@method_decorator([setup_required, login_required, collection_users], name='dispatch')
 class RetrieveCollectionData(DetailView):
     http_method_names = ['get']
     template_name = "data/document_viewer_collection.html"

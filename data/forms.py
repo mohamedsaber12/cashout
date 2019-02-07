@@ -350,8 +350,9 @@ class FormatForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hierarchy = self.request.user.hierarchy
-        status = self.request.user.get_status(self.request)
-        instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
+        if not instance.data_type:
+            status = self.request.user.get_status(self.request)
+            instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
         if commit:
             instance.save()
         return instance

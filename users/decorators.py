@@ -8,7 +8,8 @@ from django.contrib.auth.decorators import user_passes_test
 from django.urls import reverse
 
 
-def user_passes_test_with_request(test_func, login_url=None, redirect_field_name=REDIRECT_FIELD_NAME):
+def user_passes_test_with_request(test_func, login_url=None, 
+        redirect_field_name=REDIRECT_FIELD_NAME, handle_login_url=None):
     """
     Decorator for views that checks that the user passes the given test,
     redirecting to the log-in page if necessary. The test should be a callable
@@ -21,13 +22,8 @@ def user_passes_test_with_request(test_func, login_url=None, redirect_field_name
             if test_func(request):
                 return view_func(request, *args, **kwargs)
             path = request.build_absolute_uri()
-            status = request.user.get_status(request)
-            if status == 'collection':
-                login_url = reverse('users:settings-collection')
-            elif status == 'disbursement':
-                login_url = reverse('users:settings-dibursement')
-            else:
-                login_url = reverse('users:redirect')
+            if handle_login_url:
+                login_url  = handle_login_url(request)
 
             resolved_login_url = resolve_url(login_url or settings.LOGIN_URL)
             # If the login url is the same scheme and net location then just
@@ -61,24 +57,73 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
             return True
         return False
 
-    
+    def handle_login_url(request):
+        status = request.user.get_status(request)
+        if status == 'collection':
+            login_url = reverse('users:settings-collection')
+        elif status == 'disbursement':
+            login_url = reverse('users:settings-dibursement')
+        else:
+            login_url = reverse('users:redirect')
+        return login_url    
+
     actual_decorator = user_passes_test_with_request(
         root_can_pass,
         login_url=login_url,
-        redirect_field_name=redirect_field_name
+        redirect_field_name=redirect_field_name,
+        handle_login_url=handle_login_url
     )
     if function:
         return actual_decorator(function)
     return actual_decorator
 
 
-def maker_only(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+def collection_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+    """
+    Decorator for views that checks that the user is maker, redirecting
+    to '/' if not.
+    """
+    def can_pass(request):
+        user = request.user
+        status = request.user.get_status(request)
+        return user.is_uploader or user.is_upmaker or (user.is_root and status == 'collection')
+
+    actual_decorator = user_passes_test_with_request(
+        can_pass,
+        login_url=login_url,
+        redirect_field_name=None
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator
+
+
+def root_or_maker_or_uploader(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
     """
     Decorator for views that checks that the user is maker, redirecting
     to '/' if not.
     """
     actual_decorator = user_passes_test(
-        lambda u: u.is_maker,
+        lambda u: u.is_maker or u.is_root or u.is_uploader or u.is_upmaker,
+        login_url=login_url,
+        redirect_field_name=None
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator
+
+def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+    """
+    Decorator for views that checks that the user is maker, redirecting
+    to '/' if not.
+    """
+    def can_pass(request):
+        user = request.user
+        status = request.user.get_status(request)
+        return user.is_maker or user.is_checker or (user.is_root and status == 'disbursement')
+    
+    actual_decorator = user_passes_test_with_request(
+        can_pass,
         login_url=login_url,
         redirect_field_name=None
     )

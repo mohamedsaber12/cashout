@@ -498,24 +498,31 @@ class Members(RootRequiredMixin, ListView):
     template_name = 'users/members.html'
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        qs = qs.filter(hierarchy=self.request.user.hierarchy,
-                       user_type__in=[1, 2])
+        if 'disbursement' == self.request.user.get_status(self.request):
+
+            qs = super().get_queryset()
+            qs = qs.filter(hierarchy=self.request.user.hierarchy,
+                        user_type__in=[1, 2,5])
+            if self.request.GET.get("q"):
+                type_of = self.request.GET.get("q")
+                if type_of == 'maker':
+                    value = 1
+                elif type_of == 'checker':
+                    value = 2
+                else:
+                    return qs
+                return qs.filter(user_type=value)
+        else:
+            qs = UploaderUser.objects.filter(
+                hierarchy=self.request.user.hierarchy)
+        
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
                              Q(first_name__icontains=search) |
                              Q(last_name__icontains=search)
                              )
-        if self.request.GET.get("q"):
-            type_of = self.request.GET.get("q")
-            if type_of == 'maker':
-                value = 1
-            elif type_of == 'checker':
-                value = 2
-            else:
-                return qs
-            return qs.filter(user_type=value)
+        
         return qs
 
 
@@ -798,10 +805,11 @@ class RedirectPageView(View):
     template_name = 'users/redirect_page.html'
 
     def get(self, request, *args, **kwargs):
+        if not (request.user.is_upmaker or (request.user.is_root and request.user.data_type() == 3)):
+            return redirect('/')
         status = request.GET.get('status',None)
         if status is not None and status in ['disbursement','collection']:
-            response = redirect(reverse('data:main_view'))
-            response.set_cookie('status', status)
-            return response
+            request.session['status'] = status
+            return redirect(reverse('data:main_view'))
 
         return render(request, self.template_name, {})

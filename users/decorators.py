@@ -21,12 +21,14 @@ def user_passes_test_with_request(test_func, login_url=None, redirect_field_name
             if test_func(request):
                 return view_func(request, *args, **kwargs)
             path = request.build_absolute_uri()
-            status = request.COOKIES.get('status')
+            status = request.user.get_status(request)
             if status == 'collection':
                 login_url = reverse('users:settings-collection')
             elif status == 'disbursement':
                 login_url = reverse('users:settings-dibursement')
-                
+            else:
+                login_url = reverse('users:redirect')
+
             resolved_login_url = resolve_url(login_url or settings.LOGIN_URL)
             # If the login url is the same scheme and net location then just
             # use the path as the "next" url.
@@ -49,7 +51,7 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
     """
     def root_can_pass(request):
         user = request.user
-        status = request.COOKIES.get('status')
+        status = request.session.get('status')
 
         if not user.is_root:
             return True

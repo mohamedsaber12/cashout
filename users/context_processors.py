@@ -17,5 +17,9 @@ def current_status(request):
     """return value is disbursement or collection"""
     if not request.user.is_authenticated:
         return {}
-    print(request.user.get_status(request))
-    return {'current_status': request.user.get_status(request)}
+    current_status = request.user.get_status(request)
+    other_status = 'disbursement' if current_status == 'collection' else 'collection'
+    return {
+        'current_status': current_status,
+        'other_status': other_status
+        }

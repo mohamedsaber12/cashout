@@ -170,7 +170,7 @@ class User(AbstractUser):
     def get_status(self,request):
         data_type = self.data_type()
         if data_type == 3:
-            return 'disbursement' if request.COOKIES.get('status') == 'disbursement' else 'collection'
+            return request.session.get('status')
         if data_type == 1:
             return 'disbursement'
         if data_type == 2:

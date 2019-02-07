@@ -363,18 +363,17 @@ class MakerCreationForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         uploader = UploaderUser.objects.filter(email=email).first()
-        if uploader and uploader.data_type == 3:
+        if uploader and uploader.data_type() == 3:
             uploader.user_type = 5
-            self.uploader_id = uploader.id
-            uploader.save()
+            self.instance = uploader
+
         return email
         
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.user_type = 1
-        uploader_id = getattr(self, 'uploader_id',None)
-        if uploader_id:
-            user.id = uploader_id
+        if user.user_type != 5:
+            user.user_type = 1
+      
         if commit:
             user.save()
         return user
@@ -438,19 +437,17 @@ class UploaderCreationForm(forms.ModelForm):
     def clean_email(self):
         email = self.cleaned_data.get('email')
         maker = MakerUser.objects.filter(email=email).first()
-        if maker and maker.data_type == 3:
+        if maker and maker.data_type() == 3:
             maker.user_type = 5
-            self.maker_id = maker.id
-            maker.save()
-
+            self.instance = maker
+            
         return email
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.user_type = 4
-        maker_id = getattr(self,'maker_id',None)
-        if maker_id:
-            user.id = maker_id
+        if user.user_type != 5:
+            user.user_type = 4
+
         if commit:
             user.save()
         return user

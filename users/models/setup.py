@@ -35,7 +35,7 @@ class Setup(models.Model):
         return False
 
     @cached_property
-    def percentage(self):
+    def disbursement_percentage(self):
         per = 0
         if self.levels_setup:
             per += 25
@@ -45,4 +45,15 @@ class Setup(models.Model):
                     per += 25
                     if self.format_disbursement_setup:
                         per += 25
+        return per
+
+    @cached_property
+    def collection_percentage(self):
+        per = 0
+        if self.collection_setup:
+            per += 40
+            if self.format_collection_setup:
+                per += 30
+                if self.uploaders_setup:
+                    per += 30          
         return per

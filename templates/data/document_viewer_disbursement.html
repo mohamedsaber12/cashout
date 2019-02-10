@@ -84,7 +84,22 @@
                         {% trans 'Count:' %} {{doc.total_count}} | {% trans 'Total Amount:' %} {{doc.total_amount}}
                     </p>
                     <table id="doc-datatable" class="table table-striped table-bordered">
-                       
+                        <thead>
+                            {% for head in excel_data.0 %}
+                            <th>{{head}}</th>
+                            {%endfor%}
+                        </thead>
+                        <tbody>
+                            {% for row in excel_data %}
+                            {% if not forloop.first%}
+                            <tr>
+                                {% for col in row%}
+                                <td>{{col}}</td>
+                                {%endfor%}
+                            </tr>
+                            {%endif%}
+                            {%endfor%}
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -275,37 +290,7 @@
             $('#AgentModal').removeClass('hide');
             $('#AgentModal').modal();
         });
-
-        var data = [];
-        let url = "{% url 'disbursement_api:docrows' doc.id %}"
-        $.ajax({
-            type: "GET",
-            url: url,
-            success: function (result, xhr, message) {
-                let excel_data = result[0];
-                let columns_arr = excel_data[0].concat([]);
-                let columns_title=[];
-                for(const head of columns_arr){
-                    columns_title.push({title: head})
-                }
-                excel_data.splice(0, 1);
-
-                $('#doc-datatable').DataTable({
-                    data: excel_data,
-                    columns: columns_title
-                });
-                
-            },
-            error: function (xhr, error, reason) {
-                $('#modal-header').append('Error Occurred!!');
-                $('#modal-message').append("<p>{% trans 'It seems that you don\'t have access or requested a wrong document' %}</p><br>");
-                $('#myModal').removeClass('hide');
-                $('#myModal').modal();
-            },
-            contentType: "application/json;charset=utf-8",
-            dataType: 'json',
-        });
-
+         $('#doc-datatable').DataTable();
 
         if ('{{redirect}}' == 'true') {
             if ('{{disburse}}' == 1) {

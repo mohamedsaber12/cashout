@@ -1,5 +1,6 @@
 # from users.validators import ComplexPasswordValidator
 
+import copy
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import password_validation
@@ -365,6 +366,7 @@ class MakerCreationForm(forms.ModelForm):
         uploader = UploaderUser.objects.filter(email=email).first()
         if uploader and uploader.data_type() == 3:
             uploader.user_type = 5
+            self.instance_copy = copy.copy(uploader)
             self.instance = uploader
 
         return email
@@ -373,7 +375,9 @@ class MakerCreationForm(forms.ModelForm):
         user = super().save(commit=False)
         if user.user_type != 5:
             user.user_type = 1
-      
+        else:
+            user = self.instance_copy
+
         if commit:
             user.save()
         return user
@@ -439,6 +443,7 @@ class UploaderCreationForm(forms.ModelForm):
         maker = MakerUser.objects.filter(email=email).first()
         if maker and maker.data_type() == 3:
             maker.user_type = 5
+            self.instance_copy = copy.copy(maker)
             self.instance = maker
             
         return email
@@ -447,7 +452,9 @@ class UploaderCreationForm(forms.ModelForm):
         user = super().save(commit=False)
         if user.user_type != 5:
             user.user_type = 4
-
+        else:
+            user = self.instance_copy
+            
         if commit:
             user.save()
         return user

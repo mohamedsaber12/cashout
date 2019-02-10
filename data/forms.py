@@ -163,9 +163,8 @@ class FileDocumentForm(forms.ModelForm):
         instance.owner = self.request.user
         instance.file_category = self.category
         instance.collection_data = self.collection
+        instance.type_of = self.type_of
 
-        if not instance.type_of:
-            instance.type_of = self.type_of
         if commit:
             instance.save()
         return instance
@@ -350,9 +349,8 @@ class FormatForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hierarchy = self.request.user.hierarchy
-        if not instance.data_type:
-            status = self.request.user.get_status(self.request)
-            instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
+        status = self.request.user.get_status(self.request)
+        instance.data_type = instance.DISBURSEMENT if status == 'disbursement' else instance.COLLECTION
         if commit:
             instance.save()
         return instance

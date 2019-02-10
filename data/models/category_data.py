@@ -46,23 +46,28 @@ class Format(models.Model):
         fields = []
         for field in self._meta.fields:
             if 'identifier' in field.name and getattr(self, field.name) and field.name != 'num_of_identifiers':
-                fields.append(str(getattr(self, field.name)).lower())
+                fields.append(str(getattr(self, field.name)))
         return fields
 
  
     def headers_match(self,headers):
         identifiers = self.identifiers()
-        return all(i.lower() in identifiers for i in headers if i)
+        return all(i in identifiers for i in headers if i)
 
     def validate_disbursement_unique(self):
-        unique_field = self.category.unique_field
+        from data.models import FileCategory
+        category = FileCategory.objects.filter(
+            user_created__hierarchy=self.hierarchy).first()
+        unique_field = category.unique_field
         if unique_field and unique_field not in self.identifiers():
             return False
         return True
 
     def validate_collection_unique(self):
-        unique_field = self.collection.unique_field
-        unique_field2 = self.collection.unique_field2
+        collection = CollectionData.objects.filter(
+            user__hierarchy=self.hierarchy).first()
+        unique_field = collection.unique_field
+        unique_field2 = collection.unique_field2
         identifiers = self.identifiers()
         if unique_field2 and not all(i in identifiers for i in [unique_field, unique_field2]):
             return False

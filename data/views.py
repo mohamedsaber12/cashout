@@ -291,12 +291,22 @@ def document_view(request, doc_id):
             doc hierarchy: {doc.owner.hierarchy} """)
         return redirect(reverse("data:main_view"))
 
+    xl_workbook = xlrd.open_workbook(doc.file.path)
+    xl_sheet = xl_workbook.sheet_by_index(0)
+    excel_data = []
+    for row in xl_sheet.get_rows():
+        row_data = []
+        for x, data in enumerate(row):
+            row_data.append(data.value)
+        excel_data.append(row_data)
+            
     context = {
         'doc': doc,
         'review_form_errors': review_form_errors,
         'reviews': reviews,
         'user_review_exist': user_review_exist,
-        'can_user_disburse': can_user_disburse
+        'can_user_disburse': can_user_disburse,
+        'excel_data': excel_data
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'

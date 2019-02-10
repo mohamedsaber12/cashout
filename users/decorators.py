@@ -47,7 +47,7 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
     """
     def root_can_pass(request):
         user = request.user
-        status = request.session.get('status')
+        status = request.user.get_status(request)
 
         if not user.is_root:
             return True

@@ -169,11 +169,11 @@ class User(AbstractUser):
 
     def get_status(self,request):
         data_type = self.data_type()
-        if data_type == 3:
+        if data_type == 3 and (self.is_upmaker or self.is_root):
             return request.session.get('status')
-        if data_type == 1:
+        if data_type == 1 or self.is_maker or self.is_checker or (self.is_root and data_type == 1):
             return 'disbursement'
-        if data_type == 2:
+        if data_type == 2 or self.is_uploader or (self.is_root and data_type == 2):
             return 'collection'
 
 

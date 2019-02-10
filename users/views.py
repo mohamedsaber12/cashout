@@ -245,7 +245,8 @@ class CollectionSettingsUpView(RootRequiredMixin, CreateView):
 
         data['formatform'] = FormatFormSet(
             queryset=Format.objects.filter(
-                hierarchy=self.request.user.hierarchy
+                hierarchy=self.request.user.hierarchy,
+                data_type = 2
             ),
             prefix='format',
             form_kwargs={'request': self.request}
@@ -440,7 +441,8 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
 
         data['formatform'] = FormatFormSet(
             queryset=Format.objects.filter(
-                hierarchy=self.request.user.hierarchy
+                hierarchy=self.request.user.hierarchy,
+                data_type=1
             ),
             prefix='format',
             form_kwargs={'request': self.request}

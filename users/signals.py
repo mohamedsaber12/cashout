@@ -9,7 +9,8 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext as _
 
-from users.models import CheckerUser, MakerUser, RootUser, Setup, Brand, SuperAdminUser,Client
+from users.models import (CheckerUser, MakerUser, RootUser, Setup,
+ Brand, SuperAdminUser,Client,UploaderUser)
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
 MESSAGE = 'Dear {0}\n' \
@@ -25,6 +26,11 @@ def create_setup(sender, instance, created, **kwargs):
         Setup.objects.create(user=instance)
 
 
+@receiver(post_save, sender=UploaderUser)
+def send_random_pass_to_uploader(sender, instance, created, **kwargs):
+    notify_user(sender, instance, created, **kwargs)
+
+
 @receiver(post_save, sender=MakerUser)
 def send_random_pass_to_maker(sender, instance, created, **kwargs):
     notify_user(sender, instance, created, **kwargs)
@@ -37,13 +43,20 @@ def send_random_pass_to_checker(sender, instance, created, **kwargs):
 
 @receiver(pre_save, sender=CheckerUser)
 def checker_pre_save(sender, instance, *args, **kwargs):
-    instance.username = generate_username(instance, sender)
+    generate_username(instance, sender)
     set_brand(instance)
 
 @receiver(pre_save, sender=MakerUser)
 def maker_pre_save(sender, instance, *args, **kwargs):
-    instance.username = generate_username(instance, sender)
+    generate_username(instance, sender)
     set_brand(instance)
+
+
+@receiver(pre_save, sender=UploaderUser)
+def uploader_pre_save(sender, instance, *args, **kwargs):
+    generate_username(instance, sender)
+    set_brand(instance)
+
 
 @receiver(pre_save, sender=SuperAdminUser)
 def super_admin_pre_save(sender, instance, *args, **kwargs):
@@ -66,7 +79,7 @@ def set_brand(instance):
 
 def generate_username(user, user_model):
     """
-    Generate username for maker and checker in this format: 
+    Generate username for make, checker and uploader in this format: 
     {first_name}-{last_name}-{hierarchy}-{user_type}'
     if new user has same first and last name then format is
     {first_name}-{last_name}-{hierarchy}-{user_type}-
@@ -74,18 +87,15 @@ def generate_username(user, user_model):
     """
     # user already exist
     if user.id:
-        existing_user = user_model.objects.get(id=user.id)
-        # first and last name are not changed
-        if existing_user.first_name == user.first_name and existing_user.last_name == user.last_name:
-            return user.username
-
-    # new user or existing user updating first name or/and last name
+        return
+    # new user
     username = f'{user.first_name}-{user.last_name}-{user.hierarchy}-{user.user_type}'
     user_qs = user_model.objects.filter(username__contains=username)
     if not user_qs.exists():
-        return username
+        user.username = username
+        return
     username = f'{username}-{ user_qs.count() + 1 }'
-    return username
+    user.username = username
 
 
 def notify_user(sender, instance, created, **kwargs):

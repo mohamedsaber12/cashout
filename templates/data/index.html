@@ -63,8 +63,8 @@
                     </div>
                 </div>
                 <div class="x_content">
-                    <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">{%
-                        csrf_token %}
+                    <form id="fileUpload" class="dropzone" action=" {% url 'data:main_view' %}" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
                     </form>
             
                 </div>

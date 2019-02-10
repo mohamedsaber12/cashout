@@ -11,7 +11,7 @@ from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication
+from rest_framework.authentication import TokenAuthentication,SessionAuthentication
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -187,6 +187,7 @@ class AllowDocDisburse(APIView):
     View for makers to Notify and allow the checkers that there is document ready for dibursment. 
     """
     permission_classes = (IsAuthenticated,)
+    authentication_classes = (SessionAuthentication,)
     http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):

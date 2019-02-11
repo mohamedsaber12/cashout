@@ -13,7 +13,9 @@ def user_passes_test_with_request(test_func, login_url=None,
     """
     Decorator for views that checks that the user passes the given test,
     redirecting to the log-in page if necessary. The test should be a callable
-    that takes the user object and returns True if the user passes.
+    that takes the user object and returns True if the user passes.'
+
+    @param handle_login_url:function that takes request as param and return login_url.
     """
 
     def decorator(view_func):
@@ -42,8 +44,7 @@ def user_passes_test_with_request(test_func, login_url=None,
 
 def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url=None):
     """
-    Decorator for views that checks that the user is logged in, redirecting
-    to the log-in page if necessary.
+    checks if root user finished setup and can access the view or not
     """
     def root_can_pass(request):
         user = request.user
@@ -80,8 +81,7 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
 
 def collection_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
     """
-    Decorator for views that checks that the user is maker, redirecting
-    to '/' if not.
+    collection users only allowed
     """
     def can_pass(request):
         user = request.user
@@ -100,8 +100,7 @@ def collection_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, log
 
 def root_or_maker_or_uploader(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
     """
-    Decorator for views that checks that the user is maker, redirecting
-    to '/' if not.
+    root and maker and uploader only allowed
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_maker or u.is_root or u.is_uploader or u.is_upmaker,
@@ -114,8 +113,7 @@ def root_or_maker_or_uploader(function=None, redirect_field_name=REDIRECT_FIELD_
 
 def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
     """
-    Decorator for views that checks that the user is maker, redirecting
-    to '/' if not.
+    disbursement_users only allowed
     """
     def can_pass(request):
         user = request.user
@@ -124,6 +122,20 @@ def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, l
     
     actual_decorator = user_passes_test_with_request(
         can_pass,
+        login_url=login_url,
+        redirect_field_name=None
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator
+
+
+def root_or_superadmin(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+    """
+    root and super admin only allowed
+    """
+    actual_decorator = user_passes_test(
+        lambda u: u.is_root or u.is_superadmin,
         login_url=login_url,
         redirect_field_name=None
     )

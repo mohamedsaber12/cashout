@@ -31,7 +31,7 @@ from users.forms import (CheckerMemberFormSet,
 from users.mixins import RootRequiredMixin, SuperRequiredMixin
 from users.models import (CheckerUser, Levels, MakerUser, UploaderUser,
                             Setup, User, Brand, Client, EntitySetup, RootUser)
-
+from users.decorators import root_or_superadmin
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -560,17 +560,20 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
+@login_required
 def toggle_client(request):
     """
     Activate or deactivate client
     """
-    if request.is_ajax() and request.method=='POST':
+    if request.is_ajax() and request.method=='POST' and request.user.is_superadmin:
         data = request.POST.copy()
         is_toggled = Client.objects.toggle(id=int(data['user_id']))
         return HttpResponse(content=json.dumps({"valid": is_toggled}), content_type="application/json")
     else:
         raise Http404()
 
+
+@root_or_superadmin
 @login_required
 def delete(request):
     """

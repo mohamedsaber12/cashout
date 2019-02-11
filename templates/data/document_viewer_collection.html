@@ -24,6 +24,10 @@
                 <div class="x_title">
                     <h2>{% trans 'Collection Document data' %} <small>{% trans 'Document name:' %} {{object.filename}}</small></h2>
                     <ul class="nav navbar-right panel_toolbox">
+                        <li>
+                            <button data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" id="doc-delete-btn"> {% trans 'Delete' %}
+                            </button>
+                        </li>
                         <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                         </li>
                     </ul>
@@ -55,7 +59,7 @@
 
     
 
-
+{% include 'data/document_delete_modal.html' %}
 
 
 
@@ -81,4 +85,7 @@
         $('#collection-doc-detail-datatable').DataTable();
     });
 </script>
+
+{% include 'data/document_delete_script.html' %}
+
 {% endblock %}

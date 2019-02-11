@@ -76,6 +76,10 @@ class Doc(models.Model):
         else:
             return reverse("data:doc_collection_detail", kwargs={'pk': self.id})
 
+    def get_delete_url(self):
+        from django.urls import reverse
+        return reverse("data:file_delete", kwargs={'pk': self.id})
+
     def can_user_disburse(self, checker):
         """"
         Check if checker can disburse current documemt(self) or not.

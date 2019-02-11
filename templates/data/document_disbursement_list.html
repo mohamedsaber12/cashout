@@ -32,6 +32,7 @@
                                     <th>{% trans 'Disbursement Progress' %}</th>
                                     <th>{% trans 'Status' %}</th>
                                     <th>{% trans 'View' %}</th>
+                                    <th>{% trans 'Delete' %}</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -87,9 +88,12 @@
                                             <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md"> {% trans 'View' %}
                                             </a>
                                         </td>
+                                        <td>
+                                            <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" id="doc-delete-btn"> {% trans 'Delete' %}
+                                            </a>
+                                        </td>
                                     </tr>
-                                {% empty %}
-                                    <tr><td>{% trans "There's no files uploaded yet.." %}</td></tr>
+                               
                                 {%endfor%}    
                               
                         

@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views.generic import ListView, DetailView
+from django.views.generic import ListView, DetailView,View
 from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet
@@ -206,32 +206,30 @@ def download_excel_with_trx_temp_view(request):
     else:
         raise Http404
 
-## this view is not used ##
-@setup_required
-@login_required
-@permission_required('data.delete_file')
-def file_delete(request, pk, template_name='data/file_confirm_delete.html'):
+
+@method_decorator([setup_required, login_required], name='dispatch')
+class FileDeleteView(View):
     """
     Function that deletes a file
     """
-    file_obj = get_object_or_404(Doc, pk=pk)
-    if request.method == 'POST':
-        if request.user.has_perm('data.delete_file'):
-            file_obj.delete()
-            now = datetime.datetime.now()
-            DELETED_FILES_LOGGER.debug(
-                '%s deleted a file at %s with IP Address %s' % (
-                    request.user, now, get_client_ip(request)))
-            return redirect('data:main_view')
-        else:
-            UNAUTHORIZED_FILE_DELETE_LOGGER.debug(
-                "Unauthorized file delete %s id %s at %s IP Address %s" % (
-                    request.user, request.user.id,
-                    str(datetime.datetime.now()), get_client_ip(request)))
-            messages.add_message(request, messages.INFO,
-                                 "You are not authorized to delete a file")
-            return redirect('data:main_view')
-    return render(request, template_name, {'object': file_obj})
+
+    def post(self, request,pk=None, *args, **kwargs):
+        if not request.is_ajax():
+            return JsonResponse(data={}, status=403)
+            
+        file_obj = get_object_or_404(Doc, pk=pk)
+        file_obj.delete()
+        now = datetime.datetime.now()
+        DELETED_FILES_LOGGER.debug(
+            '%s deleted a file at %s with IP Address %s' % (
+                request.user, now, get_client_ip(request)))
+        return JsonResponse(data={},status=200)
+        
+        # case user has no permission
+        # UNAUTHORIZED_FILE_DELETE_LOGGER.debug(
+        #     "Unauthorized file delete %s id %s at %s IP Address %s" % (
+        #         request.user, request.user.id,
+        #         str(datetime.datetime.now()), get_client_ip(request)))
 
 @disbursement_users
 @login_required

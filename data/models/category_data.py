@@ -39,7 +39,8 @@ class Format(models.Model):
 
     data_type = models.SmallIntegerField(choices=TYPES,default=1)
 
-    name = models.CharField(max_length=128, unique=False)
+    name = models.CharField(max_length=128, unique=False,
+                            verbose_name=_('Description'))
 
     def identifiers(self):
         """return list of identifiers"""

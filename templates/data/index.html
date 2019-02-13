@@ -127,6 +127,7 @@
 
         Dropzone.options.fileUpload = {
             maxFiles: 1,
+            dictDefaultMessage:'{% trans "Drop a file here to upload or click to browse one" %}',
             accept: function (file, done) {
                 bootbox.confirm("Upload file?", function (result) { 
                     if (result) {

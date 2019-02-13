@@ -721,7 +721,11 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     form_class = RootCreationForm
     template_name = 'entity/add_root.html'
 
-    def get_success_url(self):
+    def get_success_url(self, is_collection=False):
+        
+        if is_collection:
+            return reverse('users:clients')
+
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
         if created:
             return reverse('disbursement:add_agents', kwargs={'token': token.key})
@@ -736,11 +740,19 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def form_valid(self, form):
         self.object = form.save()
-        EntitySetup.objects.create(user=self.request.user, entity=self.object)
+        entity_dict = {
+            "user": self.request.user,
+            "entity": self.object
+        }
+        is_collection = self.object.data_type() == 2
+        if is_collection:
+            entity_dict['agents_setup'] = True
+
+        EntitySetup.objects.create(**entity_dict)
         Client.objects.create(creator=self.request.user, client=self.object)
         ROOT_CREATE_LOGGER.debug(
             f'Root created with username {self.object.username} from IP Address {get_client_ip(self.request)}')
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_success_url(is_collection))
 
 
 class EntityBranding(SuperRequiredMixin, UpdateView):

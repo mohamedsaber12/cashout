@@ -49,7 +49,18 @@
                           <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
                             <div class="well profile_view" style="width: 100%;">
                               <div class="col-sm-12">
-                                <h4 class="brief"><i>{% ifequal user.is_active True %}{% trans 'Active'%}{% else %}{% trans 'InActive'%}{% endifequal %}</i></h4>
+                                <h4 class="brief">
+                                  <i>{% ifequal user.is_active True %}{% trans 'Active'%}{% else %}{% trans 'InActive'%}{% endifequal %}</i>
+                                  <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                                    {% if user.client.data_type == 3 %}
+                                      Disbursement and Collection
+                                    {% elif user.client.data_type == 2 %}
+                                      Collection
+                                    {% elif user.client.data_type == 1 %}
+                                      Disbursement
+                                    {%endif%}
+                                  </i>
+                                </h4>
                                 <div class="left col-xs-7">
                                   <h2>{{ user.client.username }}</h2>
                                   <p><strong>{% trans 'About:' %} </strong> {{ user.client.title }} </p>

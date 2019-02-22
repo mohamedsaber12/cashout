@@ -21,7 +21,7 @@
                 <div class="form-group col-xs-12">
                     <label class="control-label col-md-1 col-sm-1 col-xs-1">Format</label>
                     <div class="col-md-6 col-sm-6 col-xs-12">
-                        <select class="form-control" name="format" id="format">
+                        <select class="form-control" name="file_category" id="category">
                             {% for format in format_qs %}
                                 <option value="{{format.id}}">{{format.name}}</option>
                             {%endfor%}
@@ -158,7 +158,12 @@
                 });
                 this.on('sending',function (file,xhr,formData) {
                     // add format to upload form
-                    formData.append('format',$('#format').val());
+                    if ($('#format').length){
+                        formData.append('format', $('#format').val());
+                    }
+                    else if($('#category').length){
+                        formData.append('file_category', $('#category').val());
+                    }
                 });
             }
         }

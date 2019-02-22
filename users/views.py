@@ -20,18 +20,19 @@ from django_otp.forms import OTPTokenForm
 from django.forms.formsets import BaseFormSet
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
-from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet
+from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet,FileCategoryFormSet
 from data.utils import get_client_ip
-from data.models import Format
+from data.models import Format,FileCategory
 from users.forms import (CheckerMemberFormSet,
                          BrandForm, LevelFormSet, MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm,
                          ProfileEditForm, RootCreationForm, OTPTokenForm, ForgotPasswordForm,
-                         UploaderMemberFormSet)
-from users.mixins import RootRequiredMixin, SuperRequiredMixin
+                         UploaderMemberFormSet, ClientFeesForm)
+from users.mixins import RootRequiredMixin, SuperRequiredMixin, SuperFinishedSetupMixin
 from users.models import (CheckerUser, Levels, MakerUser, UploaderUser,
                             Setup, User, Brand, Client, EntitySetup, RootUser)
 from users.decorators import root_or_superadmin
+from disb.forms import PinForm
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -146,7 +147,6 @@ class CollectionSettingsUpView(RootRequiredMixin, CreateView):
         if request.is_ajax():
             form = None
             data = request.POST.copy()
-            FileCategoryForm.request = request
             # populate forms with data
        
             if data['prefix'] == 'uploader':
@@ -296,7 +296,6 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
         if request.is_ajax():
             form = None
             data = request.POST.copy()
-            FileCategoryForm.request = request
             # populate forms with data
             if data['prefix'] == 'level':
                 form = LevelFormSet(
@@ -318,30 +317,22 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
                     prefix='maker'
                 )
             elif data['prefix'] == 'category':
-                file_category = getattr(
-                    self.request.user, 'file_category', None)
-                # user already has a file_category then update
-                if file_category is not None:
-                    form = FileCategoryForm(
-                        instance=file_category, data=request.POST)
-                # create new file_category
-                else:
-                    form = FileCategoryForm(data=request.POST)
-
-            elif data['prefix'] == 'format':
-                form = FormatFormSet(
+                form = FileCategoryFormSet(
                     data,
-                    prefix='format',
+                    prefix='category',
                     form_kwargs={'request': self.request}
                 )
+            elif data['prefix'] == 'pin':
+                form = PinForm(data,root=request.user)
            
             form_is_formset = isinstance(form, BaseFormSet)
 
-            if form and form.is_valid():
-                objs = form.save(commit=False)
-
+            if form and form.is_valid():  
                 # if form is a formset
                 if form_is_formset:
+
+                    objs = form.save(commit=False)
+
                     # delete formsets marked to be deleted
                     for obj in form.deleted_objects:
                         obj.delete()
@@ -353,35 +344,29 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
                                 obj.save()
                                 obj.user_permissions.add(
                                     *Permission.objects.filter(user=request.user.root))
-                        elif isinstance(objs[0], Format) or isinstance(objs[0], Levels):
+                        elif isinstance(objs[0], FileCategory) or isinstance(objs[0], Levels):
                             for obj in objs:
                                 obj.save()
-
-                #if form is filecategory form
-                elif isinstance(form, FileCategoryForm):
-                    objs.user_created = request.user.root
-                    objs.save()
+                elif isinstance(form, PinForm):
+                    form.save_agents()
 
                 # update setup model flags
+                setup = Setup.objects.get(
+                    user__hierarchy=request.user.hierarchy)
                 if data['prefix'] == 'level':
-                    setup = Setup.objects.get(
-                        user__hierarchy=request.user.hierarchy)
                     setup.levels_setup = True
                     setup.save()
+                elif data['prefix'] == 'pin':
+                    setup.pin_setup = True
+                    setup.save()
+                elif data['prefix'] == 'maker':
+                    setup.maker_setup = True
+                    setup.save()
                 elif data['prefix'] == 'checker':
-                    setup = Setup.objects.get(
-                        user__hierarchy=request.user.hierarchy)
-                    setup.users_setup = True
+                    setup.checker_setup = True
                     setup.save()
                 elif data['prefix'] == 'category':
-                    setup = Setup.objects.get(
-                        user__hierarchy=request.user.hierarchy)
                     setup.category_setup = True
-                    setup.save()
-                elif data['prefix'] == 'format':
-                    setup = Setup.objects.get(
-                        user__hierarchy=request.user.hierarchy)
-                    setup.format_disbursement_setup = True
                     setup.save()
                     SETUP_VIEW_LOGGER.debug(
                         f'Root user: {request.user.username} Finished Disbursement Setup successfully')
@@ -412,12 +397,8 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
         with the step as query paramter to know wich step to initiate when loading the template.
         """
         data = super().get_context_data(**kwargs)
-        category = getattr(self.request.user, 'file_category', None)
-        if category is not None:
-            data['filecategoryform'] = FileCategoryForm(instance=category)
-        else:
-            data['filecategoryform'] = FileCategoryForm()
 
+        data['pinform'] = PinForm(root=self.request.user)
         data['makerform'] = self.form_class(
             queryset=MakerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy
@@ -439,12 +420,11 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
             form_kwargs={'request': self.request}
         )
 
-        data['formatform'] = FormatFormSet(
-            queryset=Format.objects.filter(
-                hierarchy=self.request.user.hierarchy,
-                data_type=1
+        data['filecategoryform'] = FileCategoryFormSet(
+            queryset=FileCategory.objects.filter(
+                user_created__hierarchy=self.request.user.hierarchy
             ),
-            prefix='format',
+            prefix='category',
             form_kwargs={'request': self.request}
         )
 
@@ -461,20 +441,21 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
         if (
             (
                 prefix is None or
-                prefix not in ['level', 'format',
-                                'maker', 'checker', 'category']
-            ) or
-            (prefix == 'maker' and not setup.levels_setup) or
-            (
-                prefix == 'checker' and not MakerUser.objects.filter(
-                    hierarchy=self.request.user.hierarchy).exists()
+                prefix not in ['level', 'maker', 'checker', 'category', 'pin']
             ) or
             (
-                prefix == 'category' and not setup.users_setup
+                prefix == 'maker' and not setup.pin_setup 
+            )or
+            (
+                prefix == 'level' and not setup.maker_setup
             ) or
             (
-                prefix == 'format'
-            )
+                prefix == 'checker' and not setup.levels_setup
+            ) or
+            (
+                prefix == 'category' and not setup.checker_setup
+            ) 
+            
         ):
             data['step'] = '0'
 
@@ -753,6 +734,22 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         ROOT_CREATE_LOGGER.debug(
             f'Root created with username {self.object.username} from IP Address {get_client_ip(self.request)}')
         return HttpResponseRedirect(self.get_success_url(is_collection))
+
+
+class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin,CreateView):
+    """
+    View for superadmin to setup fees for the client
+    """
+    model = Client
+    form_class = ClientFeesForm
+    template_name = 'entity/add_client_fees.html'
+    success_url = reverse_lazy('users:clients')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        root = ExpiringToken.objects.get(key=self.kwargs['token']).user
+        kwargs.update({'instance': root.client})
+        return kwargs
 
 
 class EntityBranding(SuperRequiredMixin, UpdateView):

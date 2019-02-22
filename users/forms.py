@@ -18,7 +18,7 @@ from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
-from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand, UploaderUser
+from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand, UploaderUser, Client, EntitySetup
 from users.signals import ALLOWED_CHARACTERS
 from django_otp.forms import OTPAuthenticationFormMixin
 
@@ -592,3 +592,31 @@ class ForgotPasswordForm(forms.Form):
             subject=_('[Payroll] Password Notification'),
             message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
         )
+
+
+class ClientFeesForm(forms.ModelForm):
+    CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'),(-1,'other'))
+    fees_percentage = forms.ChoiceField(
+        widget=forms.Select, choices=CHOICES)
+    other = forms.IntegerField(max_value=100,min_value=0,required=False)
+
+    class Meta:
+        model = Client
+        fields = ('fees_percentage','other')
+
+    def clean(self):
+        fees_percentage = self.cleaned_data.get('fees_percentage')
+        other = self.cleaned_data.get('other')
+        if fees_percentage == '-1' and other is None:
+            raise forms.ValidationError(self.add_error('other','this field is required'))
+
+    def save(self,commit=True):
+        client = super().save(commit=False)
+        if self.cleaned_data.get('fees_percentage') == '-1':
+            client.fees_percentage = self.cleaned_data.get('other')
+        if commit:
+            client.save()
+            entity_setup = EntitySetup.objects.get(entity=client.client)
+            entity_setup.fees_setup = True
+            entity_setup.save()
+        return client

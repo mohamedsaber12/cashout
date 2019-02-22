@@ -1,5 +1,6 @@
 import os
 import random, string, datetime, urllib, logging
+import xlsxwriter
 from urllib.parse import urlencode
 
 from django.core.paginator import PageNotAnInteger, EmptyPage
@@ -176,3 +177,21 @@ def combine_data():
             category=category,
             hierarchy=category.user_created.hierarchy
         )
+
+
+def excell_letter_to_index(col_name):
+    """convert excell column name(string) ex: 'A' or 'AB' to its numeric position"""
+    num = 0
+    for c in col_name:
+        if c in string.ascii_letters:
+            num = num * 26 + (ord(c.upper()) - ord('A')) + 1
+    return num
+    
+def excell_position(col_index,row_index):
+    """
+    @param col_index int: excel column index (zero indexed).
+    @param row_index int: excel row index (zero indexed).
+    return string: corresponding column row position, ex: 'A1'.
+    """
+    return xlsxwriter.utility.xl_col_to_name(col_index) + str(row_index+1)
+

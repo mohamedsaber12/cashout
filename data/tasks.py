@@ -5,6 +5,7 @@ import json
 import re
 import tablib
 import xlrd
+import itertools
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.mail import send_mail
@@ -13,6 +14,7 @@ from django.utils.translation import gettext as _
 
 from data.models import Doc
 from data.models import FileData
+from data.utils import excell_position
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
@@ -32,28 +34,19 @@ def handle_disbursement_file(doc_obj_id):
     
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
     xl_sheet = xl_workbook.sheet_by_index(0)
-    amount_position, msisdn_position = 0, 0
-    amount_field = doc_obj.file_category.amount_field
-    msisdn_field = doc_obj.file_category.unique_field
+    amount_position, msisdn_position = doc_obj.file_category.fields_cols()
+    start_index = doc_obj.file_category.starting_row()
     amount, msisdn = [], []
-    for row, cell_obj in enumerate(xl_sheet.get_rows()):
-        if row == 0:
-            headers = [data.value for data in cell_obj]
-            for pos, header in enumerate(headers):
-                if header == amount_field:
-                    amount_position = pos
-                elif header == msisdn_field:
-                    msisdn_position = pos
-                else:
-                    continue
-            continue
+    rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
+    for row, cell_obj in enumerate(rows,start_index):
         for pos, item in enumerate(cell_obj):
             if pos == amount_position:
                 try:
                     amount.append(float(item.value))
                 except ValueError:
                     doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _("This file may be has invalid amounts")
+                    doc_obj.processing_failure_reason = _(
+                        "This file may has invalid amount at ") + excell_position(pos,row)
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -72,7 +65,8 @@ def handle_disbursement_file(doc_obj_id):
                     str_value = '002' + str_value
                 else:
                     doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _("This file may be has invalid msisdns")
+                    doc_obj.processing_failure_reason = _(
+                        "This file may be has invalid msisdn at ") + excell_position(pos, row)
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False

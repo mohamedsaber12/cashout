@@ -1,0 +1,23 @@
+{% load custom_tags %}
+<div id="step-{{step}}" form_prefix="pin">
+    <form action="." method="post" id="step_{{step}}_form" class="form-horizontal form-label-left">
+
+        {% csrf_token %}
+
+        {% for field in pinform.visible_fields %}
+            {% if forloop.first %}
+                {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                {% endfor %}
+            {% endif %}
+            <div class="form-group">
+                <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                <div class="col-md-6 col-sm-9 col-xs-12">
+                    {{ field | add_class:'form-control'}}
+                    {{ field.errors.as_ul }}
+                    <span id="pin_error_{{field.name}}" class="error_span"></span>
+                </div>
+            </div>
+        {% endfor %}
+    </form>
+</div>

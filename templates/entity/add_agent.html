@@ -9,12 +9,30 @@
 
           {% csrf_token %}
 
+        <!-- super agent form -->
+        <h4>Super agent</h4>
+        {% for field in super_agent_form.visible_fields %}
+        
+            <div class="form-group">
+                <label class="control-label col-md-2 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                <div class="col-md-9 col-sm-9 col-xs-12">
+                    {{ field | add_class:'form-control'}}
+                    {{ field.errors.as_ul }}
+                </div>
+            </div>
+                
+        {%endfor%}
+        <!--  -->
+
+        <h4>Agents</h4>
+         
         <table class="table" id="agentform">
             {{ agentform.management_form }}
             {% for form in agentform.forms %}
                 {% if forloop.first %}
                 <thead>
                     <tr>
+                        <!-- <th>Super agent</th> -->
                         {% for field in form.visible_fields %}
                             <th>{{ field.label|capfirst }}</th>
                         {% endfor %}
@@ -46,22 +64,7 @@
             </tbody>
 
         </table>
-        <div>
-                {% for field in pinform.visible_fields %}
-                        <div class="form-group">
-                            <div class="col-xs-12">
-
-                                <div class="">
-                                    {{ field | add_class:'form-control'}}
-                                    {{ field.errors.as_ul }}
-
-                                </div>
-
-                            </div>
-                        </div>
-
-                {% endfor %}
-            </div>
+       
       <div>
         <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
       </div>

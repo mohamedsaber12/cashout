@@ -19,15 +19,17 @@
     <p>{% trans 'Please follow the steps to setup your payroll settings.' %}</p>
     <div id="disb_widget" class="form_wizard wizard_horizontal">
       <ul class="wizard_steps">
+
         <li>
-          <a href="#step-1">
-            <span class="step_no">{{1|localize}}</span>
-            <span class="step_descr">
-                              {% trans 'Levels' %}<br />
-                              <small>{% trans 'Add levels for checkers' %}</small>
-                          </span>
-          </a>
+            <a href="#step-1">
+                <span class="step_no">{{1|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Add Pin' %}<br />
+                    <small>{% trans 'Add Pin' %}</small>
+                </span>
+            </a>
         </li>
+
         <li>
           <a href="#step-2">
             <span class="step_no">{{2|localize}}</span>
@@ -37,9 +39,22 @@
                           </span>
           </a>
         </li>
+
+
+
         <li>
-          <a href="#step-3">
-            <span class="step_no">{{3|localize}}</span>
+            <a href="#step-3">
+                <span class="step_no">{{3|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Levels' %}<br />
+                    <small>{% trans 'Add levels for checkers' %}</small>
+                </span>
+            </a>
+        </li>
+
+        <li>
+          <a href="#step-4">
+            <span class="step_no">{{4|localize}}</span>
             <span class="step_descr">
               {% trans 'Checkers' %}<br />
               <small>{% trans 'Add Checker users' %}</small>
@@ -47,16 +62,6 @@
           </a>
         </li>
 
-        <li>
-            <a href="#step-4">
-                <span class="step_no">{{4|localize}}</span>
-                <span class="step_descr">
-                {% trans 'Disbursement' %}<br />
-                <small>{% trans 'Add File Specs' %}</small>
-            </span>
-            </a>
-        </li>
-        
         <li>
             <a href="#step-5">
                 <span class="step_no">{{5|localize}}</span>
@@ -66,85 +71,11 @@
                 </span>
             </a>
         </li>
-        
 
       </ul>
 
     <span id='non_form_errors' class="error_span"></span>
-        <div id="step-1" form_prefix="level">
-
-
-
-            <form action="." method="post" id="step_1_form">
-            
-                {% csrf_token %}
-            
-                <table class="table" id="levelform">
-                    {{ levelform.management_form }}
-                    {% for form in levelform.forms %}
-                    {% if forloop.first %}
-                    <thead>
-                        <tr>
-                            {% for field in form.visible_fields %}
-                            <th>{{ field.label|capfirst }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-            
-                    {% endif %}
-                    {% endfor %}
-                    <tbody>
-            
-                        {% for form in levelform.forms %}
-            
-                        <tr class="level_formset_row">
-                            {% for field in form.visible_fields %}
-                                <td id="level_{{field.name}}">
-                                    {# Include the hidden fields in the form #}
-                                    {% if forloop.first %}
-                                    {% for hidden in form.hidden_fields %}
-                                    {{ hidden }}
-                                    {% endfor %}
-                                    {% endif %}
-                                    {{ field.errors.as_ul }}
-                                    {{ field }}
-                                    <span class="error_span"></span>
-                                </td>
-                                    {% endfor %}                        
-                        </tr>
-                                
-                        {% endfor %}
-
-                        
-                    </tbody>
-                </table>
-            
-            </form>
-            
-        <!-- empty form -->
-
-        <table id="level_empty_form" style="display: none">
-        <tr class="level_formset_row"  >
-        {% for field in levelform.empty_form.visible_fields %}
-        <td id="level_{{field.name}}">
-        {# Include the hidden fields in the form #}
-        {% if forloop.first %}
-        {% for hidden in levelform.empty_form.hidden_fields %}
-        {{ hidden }}
-        {% endfor %}
-        {% endif %}
-        {{ field.errors.as_ul }}
-        {{ field }}
-        <span class="error_span"></span>
-        </td>
-        {% endfor %}
-        </tr>
-        </table>
-
-
-            <button id="add_level_btn" class="btn btn-success">{% trans 'Add another level' %}</button>
-
-        </div>
+        {% include "users/setting_up_pin_form.html" with step=1  pinform=pinform %}
         <div id="step-2" form_prefix="maker">
 
         <form action="." method="post" id="step_2_form">
@@ -211,77 +142,150 @@
         </table>
         <button id="add_maker_btn" class="btn btn-success">{% trans 'Add family member' %}</button>
         </div>
-        <div id="step-3" form_prefix="checker">
-
-        <form action="." method="post" id="step_3_form">
-
-            {% csrf_token %}
-
-        <table class="table" id="checkerform">
-            {{ checkerform.management_form }}
-            {% for form in checkerform.forms %}
-                {% if forloop.first %}
-                <thead>
-                    <tr>
-                        {% for field in form.visible_fields %}
+        
+        <div id="step-3" form_prefix="level">
+        
+        
+        
+            <form action="." method="post" id="step_3_form">
+        
+                {% csrf_token %}
+        
+                <table class="table" id="levelform">
+                    {{ levelform.management_form }}
+                    {% for form in levelform.forms %}
+                    {% if forloop.first %}
+                    <thead>
+                        <tr>
+                            {% for field in form.visible_fields %}
                             <th>{{ field.label|capfirst }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-
-                {% endif %}
-            {% endfor %}
-            <tbody>
-
-            {% for form in checkerform.forms %}
-
-                <tr class="checker_formset_row">
-                    {% for field in form.visible_fields %}
-                        <td id="checker_{{field.name}}">
-                            {# Include the hidden fields in the form #}
-                            {% if forloop.first %}
+                            {% endfor %}
+                        </tr>
+                    </thead>
+        
+                    {% endif %}
+                    {% endfor %}
+                    <tbody>
+        
+                        {% for form in levelform.forms %}
+        
+                        <tr class="level_formset_row">
+                            {% for field in form.visible_fields %}
+                            <td id="level_{{field.name}}">
+                                {# Include the hidden fields in the form #}
+                                {% if forloop.first %}
                                 {% for hidden in form.hidden_fields %}
-                                    {{ hidden }}
+                                {{ hidden }}
                                 {% endfor %}
-                            {% endif %}
-                            {{ field.errors.as_ul }}
-                            {{ field }}
-                            <span class="error_span"></span>
-                        </td>
+                                {% endif %}
+                                {{ field.errors.as_ul }}
+                                {{ field }}
+                                <span class="error_span"></span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+        
+                        {% endfor %}
+        
+        
+                    </tbody>
+                </table>
+        
+            </form>
+        
+            <!-- empty form -->
+        
+            <table id="level_empty_form" style="display: none">
+                <tr class="level_formset_row">
+                    {% for field in levelform.empty_form.visible_fields %}
+                    <td id="level_{{field.name}}">
+                        {# Include the hidden fields in the form #}
+                        {% if forloop.first %}
+                        {% for hidden in levelform.empty_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        {% endif %}
+                        {{ field.errors.as_ul }}
+                        {{ field }}
+                        <span class="error_span"></span>
+                    </td>
                     {% endfor %}
                 </tr>
-            {% endfor %}
-                </tbody>
-        </table>
-
-        </form>
-
-        <!-- empty form -->
-
-        <table id="checker_empty_form" style="display: none">
-        <tr class="checker_formset_row">
-        {% for field in checkerform.empty_form.visible_fields %}
-        <td id="checker_{{field.name}}">
-            {# Include the hidden fields in the form #}
-            {% if forloop.first %}
-            {% for hidden in checkerform.empty_form.hidden_fields %}
-            {{ hidden }}
-            {% endfor %}
-            {% endif %}
-            {{ field.errors.as_ul }}
-            {{ field }}
-            <span class="error_span"></span>
-        </td>
-        {% endfor %}
-        </tr>
-        </table>
-        <button id="add_checker_btn" class="btn btn-success">{% trans 'Add family member' %}</button>
+            </table>
+        
+        
+            <button id="add_level_btn" class="btn btn-success">{% trans 'Add another level' %}</button>
+        
         </div>
-    
-        {% include "users/settings_up_category_form.html" with step=4  filecategoryform=filecategoryform %}
+        <div id="step-4" form_prefix="checker">
+        
+            <form action="." method="post" id="step_4_form">
+        
+                {% csrf_token %}
+        
+                <table class="table" id="checkerform">
+                    {{ checkerform.management_form }}
+                    {% for form in checkerform.forms %}
+                    {% if forloop.first %}
+                    <thead>
+                        <tr>
+                            {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+        
+                    {% endif %}
+                    {% endfor %}
+                    <tbody>
+        
+                        {% for form in checkerform.forms %}
+        
+                        <tr class="checker_formset_row">
+                            {% for field in form.visible_fields %}
+                            <td id="checker_{{field.name}}">
+                                {# Include the hidden fields in the form #}
+                                {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                {{ hidden }}
+                                {% endfor %}
+                                {% endif %}
+                                {{ field.errors.as_ul }}
+                                {{ field }}
+                                <span class="error_span"></span>
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        
+            </form>
+        
+            <!-- empty form -->
+        
+            <table id="checker_empty_form" style="display: none">
+                <tr class="checker_formset_row">
+                    {% for field in checkerform.empty_form.visible_fields %}
+                    <td id="checker_{{field.name}}">
+                        {# Include the hidden fields in the form #}
+                        {% if forloop.first %}
+                        {% for hidden in checkerform.empty_form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        {% endif %}
+                        {{ field.errors.as_ul }}
+                        {{ field }}
+                        <span class="error_span"></span>
+                    </td>
+                    {% endfor %}
+                </tr>
+            </table>
+            <button id="add_checker_btn" class="btn btn-success">{% trans 'Add family member' %}</button>
+        </div>
 
-        {% include "users/settings_up_format_form.html" with step=5  formatform=formatform %}
-    
+        {% include "users/settings_up_category_form.html" with step=5  filecategoryform=filecategoryform %}
+
     
     </div>
 
@@ -354,7 +358,7 @@
                 $(this).hide()
             }
 
-            $('#step-1 #levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#step-3 #levelform tbody').append($('#level_empty_form tbody').html().replace(/__prefix__/g, form_idx));
             $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
             increase_height()
@@ -376,17 +380,17 @@
 
             let form_idx = $('#id_checker-TOTAL_FORMS').val();
 
-            $('#step-3 #checkerform tbody').append($('#checker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#step-4 #checkerform tbody').append($('#checker_empty_form tbody').html().replace(/__prefix__/g, form_idx));
             $('#id_checker-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
             increase_height()
         });
 
-        $('#add_format_btn').click(function () {
-            let form_idx = $('#id_format-TOTAL_FORMS').val();
+        $('#add_category_btn').click(function () {
+            let form_idx = $('#id_category-TOTAL_FORMS').val();
 
-            $('#step-'+ final_step + ' #formatform tbody').append($('#format_empty_form tbody').html().replace(/__prefix__/g, form_idx));
-            $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+            $('#step-5 #categoryform tbody').append($('#category_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
             increase_height()
 
@@ -440,8 +444,8 @@
 
                     }
                     
-                    // refresh before step 3 (checkers) to get new levels
-                    if (step_no==2 && data.valid){
+                    // refresh before step 4 (checkers) to get new levels
+                    if (step_no==3 && data.valid){
                         window.location.href =  "{% url 'users:settings-dibursement' %}" + '?step=' + String(step_no)
                         + "&prefix=checker"
                     }

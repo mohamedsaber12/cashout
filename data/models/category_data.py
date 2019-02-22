@@ -6,12 +6,9 @@ from django.conf import settings
 
 
 class Format(models.Model):
-    DISBURSEMENT = 1
-    COLLECTION = 2
-    TYPES = (
-        (DISBURSEMENT, 'Disbursement'),
-        (COLLECTION, 'Collection'),
-    )
+    """
+    For Collection only
+    """
     identifier1 = models.CharField(
         max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
     identifier2 = models.CharField(
@@ -37,8 +34,6 @@ class Format(models.Model):
 
     hierarchy = models.PositiveSmallIntegerField()
 
-    data_type = models.SmallIntegerField(choices=TYPES,default=1)
-
     name = models.CharField(max_length=128, unique=False,
                             verbose_name=_('Description'))
 
@@ -54,15 +49,6 @@ class Format(models.Model):
     def headers_match(self,headers):
         identifiers = self.identifiers()
         return all(i in identifiers for i in headers if i)
-
-    def validate_disbursement_unique(self):
-        from data.models import FileCategory
-        category = FileCategory.objects.filter(
-            user_created__hierarchy=self.hierarchy).first()
-        unique_field = category.unique_field
-        if unique_field and unique_field not in self.identifiers():
-            return False
-        return True
 
     def validate_collection_unique(self):
         collection = CollectionData.objects.filter(

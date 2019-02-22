@@ -54,6 +54,7 @@ class Agent(models.Model):
     wallet_provider = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='agents',on_delete=models.CASCADE)
     msisdn = models.CharField(max_length=16)
     pin = models.CharField(max_length=128, null=True)
+    super = models.BooleanField(default=False)
 
     def set_pin(self, raw_pin, commit=True):
         self.pin = make_password(raw_pin)

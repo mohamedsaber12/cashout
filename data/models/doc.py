@@ -21,7 +21,7 @@ class Doc(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE, related_name='doc')
     file_category = models.ForeignKey(
-        'data.FileCategory', null=True, on_delete=models.CASCADE, related_name='doc')
+        'data.FileCategory', null=True, on_delete=models.DO_NOTHING, related_name='doc')
     collection_data = models.ForeignKey(
         'data.CollectionData', null=True, on_delete=models.CASCADE, related_name='collection_doc')
     file = models.FileField(upload_to=update_filename,

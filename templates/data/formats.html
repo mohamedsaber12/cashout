@@ -37,7 +37,11 @@
                 <div class="clearfix"></div>
             </div>
             {%if request.user.is_root%}
-            {% include "users/settings_up_format_form.html" with step=6 formatform=formatform view_only=True %}
+                {% if current_status == 'collection' %}
+                    {% include "users/settings_up_format_form.html" with step=6 formatform=formatform %}
+                {%else%}
+                    {% include "users/settings_up_category_form.html" with step=6 filecategoryform=formatform %}
+                {%endif%}    
             {%else%}
             <div class="x_content">
 
@@ -58,7 +62,7 @@
                     <tbody>
 
                         {% for form in formatform.forms %}
-
+                        {% if form.instance %}
                         <tr class="format_formset_row">
                             {% for field in form.visible_fields %}
                             <td id="format_{{field.name}}">
@@ -68,6 +72,7 @@
                             </td>
                             {% endfor %}
                         </tr>
+                        {%endif%}
                         {% endfor %}
                     </tbody>
 
@@ -125,6 +130,16 @@
 
         });
 
+        $('#add_category_btn').click(function () {
+            let form_idx = $('#id_category-TOTAL_FORMS').val();
+
+            $('#categoryform tbody').append($('#category_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+        });
+
         $('#submit').click(function () {
             let form_data = $("form").serialize();
             $.ajax({
@@ -141,7 +156,9 @@
                             $('#non_form_errors').html(data.non_form_errors[0])
                         }
 
-                        let prefix = 'format';
+                        let current_status  = "{{current_status}}"
+                        let prefix = (current_status == 'collection') ? 'format':'category'
+                        
 
                         let rows = $('#' + prefix + 'form' + ' .' + prefix + '_formset_row');
                         for (let i in data.errors) {

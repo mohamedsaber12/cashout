@@ -24,7 +24,7 @@ from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import ListView, DetailView,View
 from django.views.static import serve
 
-from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet
+from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
 from data.tasks import handle_disbursement_file, handle_uploaded_file
 from data.utils import get_client_ip, paginator
@@ -52,21 +52,20 @@ def file_upload(request):
     Documents can be filtered by date.
     Documents are paginated ("docs_paginated") but not used in template.
     """
-    format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
+    format_qs = None
     doc_list_collection = None
     doc_list_disbursement = None
     can_upload = False
     user_has_upload_perm = False
     status = request.user.get_status(request)
     if status == 'disbursement':
-        format_qs = format_qs.filter(data_type=1)
-        category = FileCategory.objects.get_by_hierarchy(
+        format_qs = FileCategory.objects.get_by_hierarchy(
             request.user.hierarchy)
-        can_upload = bool(category)
+        can_upload = format_qs.exists()
         user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
         if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
             form_doc = FileDocumentForm(
-                request.POST, request.FILES, request=request, category=category)
+                request.POST, request.FILES, request=request, is_disbursement=True)
 
             if form_doc.is_valid():
                 file_doc = form_doc.save()
@@ -92,7 +91,7 @@ def file_upload(request):
         doc_list_disbursement = filter_docs_by_date(
             request, doc_list_disbursement)
     else:
-        format_qs = format_qs.filter(data_type=2)
+        format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
         collection = CollectionData.objects.filter(
             user__hierarchy=request.user.hierarchy).first()
         can_upload = bool(collection)
@@ -373,27 +372,47 @@ class FormatListView(ListView):
     context_object_name = "format_qs"
 
     def get_queryset(self):
-        data_type = 1
         if self.request.user.get_status(self.request) == 'collection':
-            data_type = 2
-        return Format.objects.filter(hierarchy=self.request.user.hierarchy, data_type=data_type)
+            return Format.objects.filter(hierarchy=self.request.user.hierarchy)
+        else:
+            return FileCategory.objects.get_by_hierarchy(self.request.user.hierarchy)
 
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
-        context['formatform'] = FormatFormSet(
-            queryset=context['format_qs'],
-            prefix='format'
-        )
-        if not self.request.user.is_root:
-            context['formatform'].can_delete = False
+        if self.request.user.get_status(self.request) == 'collection':
+            context['formatform'] = FormatFormSet(
+                queryset=context['format_qs'],
+                prefix='format'
+            )
+            if not self.request.user.is_root:
+                context['formatform'].can_delete = False
+                context['formatform'].extra = 0
+        else:
+            context['formatform'] = FileCategoryFormSet(
+                queryset=context['format_qs'],
+                prefix='category'
+            )
+            
+            if not self.request.user.is_root:
+                context['formatform'].can_delete = False
+                context['formatform'].extra = 0
+
+        
         return context
 
     def post(self, request, *args, **kwargs):
-        form = FormatFormSet(
-            request.POST,
-            prefix='format',
-            form_kwargs={'request': request}
-        )
+        if self.request.user.get_status(self.request) == 'collection':
+            form = FormatFormSet(
+                request.POST,
+                prefix='format',
+                form_kwargs={'request': request}
+            )
+        else:
+            form = FileCategoryFormSet(
+                request.POST,
+                prefix='category',
+                form_kwargs={'request': request}
+            )
         if form and form.is_valid():
 
             objs = form.save(commit=False)

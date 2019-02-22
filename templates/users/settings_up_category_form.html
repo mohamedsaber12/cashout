@@ -1,34 +1,79 @@
-
+{% load i18n %}
+{% load l10n %}
 
 <div id="step-{{step}}" form_prefix="category">
-    <form action="." method="post" id="step_{{step}}_form" class="form-horizontal form-label-left">
+
+    <form action="." method="post" id="step_{{step}}_form">
 
         {% csrf_token %}
 
-        {% for field in filecategoryform.visible_fields %}
-        {% if forloop.first %}
-        {% for hidden in form.hidden_fields %}
-        {{ hidden }}
-        {% endfor %}
-        {% endif %}
-        <div class="form-group">
-            <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
-            <div class="col-md-6 col-sm-9 col-xs-12">
-                {% ifequal field.name "has_header" %}
-                <div class="">
-                    <label>
+        <table class="table" id="categoryform">
+            {{ filecategoryform.management_form }}
+            {% for form in filecategoryform.forms %}
+            {% if forloop.first %}
+            <thead>
+                <tr>
+                    {% for field in form.visible_fields %}
+                    <th>{{ field.label|capfirst }}</th>
+                    {% endfor %}
+                </tr>
+            </thead>
+
+            {% endif %}
+            {% endfor %}
+            <tbody>
+
+                {% for form in filecategoryform.forms %}
+
+                <tr class="category_formset_row">
+                    {% for field in form.visible_fields %}
+                    <td id="category_{{field.name}}">
+                        {# Include the hidden fields in the form #}
+                        {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                        {{ hidden }}
+                        {% endfor %}
+                        {% endif %}
+                        {{ field.errors.as_ul }}
                         {{ field }}
-                    </label>
-                </div>
-                {% else %}
+                        <br>
+                        <span class="error_span"></span>
+                        {% if forloop.first %}
+                        <p class="error_span" id="category_row_{{forloop.parentloop.counter0}}_error"></p>
+                        {%endif%}
+                    </td>
+                    {% endfor %}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </form>
+
+
+    <!-- empty form -->
+
+    <table id="category_empty_form" style="display: none">
+        <tr class="category_formset_row">
+            {% for field in filecategoryform.empty_form.visible_fields %}
+            <td id="category_{{field.name}}">
+                {# Include the hidden fields in the form #}
+                {% if forloop.first %}
+                {% for hidden in filecategoryform.empty_form.hidden_fields %}
+                {{ hidden }}
+                {% endfor %}
+                {% endif %}
                 {{ field.errors.as_ul }}
                 {{ field }}
-                {% endifequal %}
-                <span id="category_error_{{field.name}}" class="error_span"></span>
-            </div>
-        </div>
+                <span class="error_span"></span>
+                {% if forloop.first %}
+                <p class="error_span" id="category_row_{{forloop.parentloop.counter0}}_error"></p>
+                {%endif%}
+            </td>
+            {% endfor %}
+        </tr>
+    </table>
+    <button id="add_category_btn" class="btn btn-success">{% trans 'Add format' %}</button>
 
 
-        {% endfor %}
-    </form>
 </div>

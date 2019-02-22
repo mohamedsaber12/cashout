@@ -149,10 +149,10 @@ class User(AbstractUser):
         return reverse("users:profile", kwargs={'username': self.username})
 
     def has_uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False)).count() > 0
+        return self.entity_setups.uncomplete_entity_creations().count() > 0
 
     def uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False)).first()
+        return self.entity_setups.uncomplete_entity_creations().first()
 
     def data_type(self):
         DATA_TYPES = {

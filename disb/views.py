@@ -24,7 +24,7 @@ from disb.forms import VMTDataForm, AgentFormSet, AgentForm, PinForm
 from disb.models import Agent, VMTData
 from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
-from users.mixins import SuperRequiredMixin
+from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin
 from users.models import EntitySetup
 from users.tasks import send_agent_pin_to_client
 
@@ -125,7 +125,7 @@ def failed_disbursed_for_download(request):
     return response
 
 
-class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
+class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
     """
     View for super user to create Agents for the entity. 
     """
@@ -133,8 +133,14 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
     form_class = AgentFormSet
     template_name = 'entity/add_agent.html'
 
-    def get_success_url(self):
-        return reverse('users:clients')
+    def get_success_url(self,root):
+        token, created = ExpiringToken.objects.get_or_create(user=root)
+        if created:
+            return reverse('users:add_fees', kwargs={'token': token.key})
+        if token.expired():
+            token = ExpiringToken.objects.create(user=root)
+        return reverse('users:add_fees', kwargs={'token': token.key})
+        
 
     def get_context_data(self, **kwargs):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
@@ -142,27 +148,44 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
         if not 'agentform' in data:
             data['agentform'] = self.form_class(
                 queryset=Agent.objects.filter(
-                    wallet_provider=root
+                    wallet_provider=root,
+                    super = False
                 ),
                 prefix='agents',
                 form_kwargs={'root': root}
             )
-        if not 'pinform' in data:
-            data['pinform'] = PinForm()
-        return data
+        
+        if not 'super_agent_form' in data:
+            data['super_agent_form'] = AgentForm(
+                initial=Agent.objects.filter(
+                    wallet_provider=root,
+                    super=False
+                ),
+                root = root
+            )
+        return data 
 
     def post(self, request, *args, **kwargs):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
+        # pop superagent data
+        data = request.POST.copy()
+        data.pop('msisdn',None)
         agentform = self.form_class(
-            request.POST,
+            data,
             queryset=Agent.objects.filter(
                 wallet_provider=root
             ),
             prefix='agents',
             form_kwargs={'root': root}
         )
-        pinform = PinForm(request.POST)
-        if pinform.is_valid() and agentform.is_valid():
+        super_agent_form = AgentForm(
+            {'msisdn': request.POST.get('msisdn')}, root=root)
+        if agentform.is_valid() and super_agent_form.is_valid():
+            super_agent = super_agent_form.save(commit=False)
+            super_agent.super = True
+            super_agent.wallet_provider = root
+            super_agent.save()
+
             agents_msisdn = []
             objs = agentform.save(commit=False)
             try:
@@ -171,21 +194,19 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, CreateView):
             except AttributeError:
                 pass
             for obj in objs:
-                obj.set_pin(pinform.cleaned_data['pin'], False)
                 obj.wallet_provider = root
                 agents_msisdn.append(obj.msisdn)
 
             agentform.save()
-            send_agent_pin_to_client.delay(pinform.cleaned_data['pin'], root.id)
             
             entity_setup = EntitySetup.objects.get(user=self.request.user,
                                                    entity=root)
             entity_setup.agents_setup = True
             entity_setup.save()
             AGENT_CREATE_LOGGER.debug( f'Agents created from IP Address {get_client_ip(self.request)} with msisdns {" - ".join(agents_msisdn)}')
-            return HttpResponseRedirect(self.get_success_url())
+            return HttpResponseRedirect(self.get_success_url(root))
         else:
-            return self.render_to_response(self.get_context_data(agentform=agentform, pinform=pinform))
+            return self.render_to_response(self.get_context_data(agentform=agentform, super_agent_form=super_agent_form))
 
     def get_form(self, form_class=None):
         """Return an instance of the form to be used in this view."""

@@ -18,7 +18,7 @@ from data.utils import excell_position
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
-from users.models import User, MakerUser
+from users.models import User, MakerUser,CheckerUser
 import random
 import string
 
@@ -124,6 +124,7 @@ def generate_file(doc_id):
 @app.task(ignore_result=False)
 def handle_uploaded_file(doc_obj_id):
     """
+    #related to collection#
     A function that parse the document and save it into the File Data
     It has 3 cases :
     Category has files so check if draft or delete stale data
@@ -215,9 +216,11 @@ def handle_uploaded_file(doc_obj_id):
     notify_makers_collection(doc_obj)
 
 @app.task()
-def notify_checkers(doc_id):
+def notify_checkers(doc_id, level):
+    """related to disbursement"""
     doc_obj = Doc.objects.get(id=doc_id)
-    checkers = User.objects.get_all_checkers(doc_obj.owner.hierarchy)
+    checkers = CheckerUser.objects.filter(
+        hierarchy=doc_obj.owner.hierarchy).filter(level__level_of_authority=level)
     if not checkers.exists():
         return
 
@@ -233,7 +236,35 @@ def notify_checkers(doc_id):
     )
 
 
+@app.task()
+def doc_review_maker_mail(doc_id,review_id):
+    """related to disbursement"""
+    doc = Doc.objects.get(id=doc_id)
+    review = doc.reviews.get(id=review_id)
+    maker = doc.owner
+    doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+    if review.is_ok:
+        MESSAGE = f"""Dear {maker.first_name}
+            The file named <a href='{doc_view_url}'>{doc.filename()}</a> passed the review 
+            number {doc.reviews.filter(is_ok=True).count()} out of {doc.file_category.no_of_reviews_required} by
+            the checker: {review.user_created.first_name} {review.user_created.last_name}
+            Thanks, BR"""
+    else:
+        MESSAGE = f"""Dear {maker.first_name}
+            The file named <a href='{doc_view_url}'>{doc.filename()}</a> didn't pass the review by
+            the checker: {review.user_created.first_name} {review.user_created.last_name}
+            and the reason is: {review.comment}
+            Thanks, BR"""
+
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[maker.email],
+        subject= _('[Payroll] File Upload Notification'),
+        message=MESSAGE
+    )
+
 def notify_maker(doc):
+    """related to disbursement"""
     maker = doc.owner
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
 

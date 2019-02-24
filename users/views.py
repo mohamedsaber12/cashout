@@ -344,9 +344,15 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
                                 obj.save()
                                 obj.user_permissions.add(
                                     *Permission.objects.filter(user=request.user.root))
-                        elif isinstance(objs[0], FileCategory) or isinstance(objs[0], Levels):
+                        elif isinstance(objs[0], FileCategory):
                             for obj in objs:
                                 obj.save()
+                        elif isinstance(objs[0], Levels):
+                            for obj in objs:
+                                obj.save()
+                            Levels.update_levels_authority(
+                                self.request.user.root)
+
                 elif isinstance(form, PinForm):
                     form.save_agents()
 
@@ -590,7 +596,7 @@ class LevelsView(RootRequiredMixin, View):
         form = LevelFormSet(
             request.POST,
             prefix='level',
-            form_kwargs={'request': self.request}
+            form_kwargs={'request': request}
         )
         if form and form.is_valid():
 
@@ -601,7 +607,8 @@ class LevelsView(RootRequiredMixin, View):
             
             for obj in objs:
                 obj.save()
-                
+
+            Levels.update_levels_authority(request.user.root)
             return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
         return HttpResponse(content=json.dumps({

@@ -110,7 +110,7 @@
         </div>
     </div>
 
-    {% if request.user.is_checker and not user_review_exist%}
+    {% if request.user.is_checker and not hide_review_form %}
        
         <div class="row">
             <div class="col-md-8 col-xs-12">

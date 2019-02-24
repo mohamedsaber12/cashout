@@ -198,7 +198,7 @@ class AllowDocDisburse(APIView):
             doc_obj.can_be_disbursed = True
             doc_obj.save()
             # task for notifying checkers
-            notify_checkers.delay(doc_obj.id)
+            notify_checkers.delay(doc_obj.id,1)
             return Response(status=200)
 
         return Response(status=403)

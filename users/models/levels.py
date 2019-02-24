@@ -16,14 +16,28 @@ class Levels(models.Model):
     Added by the root of the tree only
     """
     max_amount_can_be_disbursed = models.FloatField(
-        default=0, verbose_name=_('Max amount can be disbursed'))
+        default=0, unique=True, verbose_name=_('Max amount can be disbursed'))
     level_of_authority = models.PositiveSmallIntegerField(
         choices=LEVELS, null=True, blank=True)
     created = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
-        return f'amount is {self.max_amount_can_be_disbursed} of level'
+        return f'amount is {self.max_amount_can_be_disbursed} of level {self.level_of_authority}'
 
     class Meta:
-        ordering = ('-max_amount_can_be_disbursed',)
+        ordering = ('max_amount_can_be_disbursed',)
+
+    @classmethod
+    def update_levels_authority(cls,root):
+        """
+        order levels in ascending order by max_amount_can_be_disbursed and 
+        give them a level number(level_of_authority).
+        """
+        levels_qs = cls.objects.filter(created=root)
+        levels_values = list(levels_qs.values_list('max_amount_can_be_disbursed', flat=True))
+        for level in levels_qs:
+            level.level_of_authority = levels_values.index(
+                level.max_amount_can_be_disbursed) + 1
+            level.save()    
+

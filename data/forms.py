@@ -274,9 +274,11 @@ class FileCategoryForm(forms.ModelForm):
         if '-' not in unique_field or '-' not in amount_field:
             raise forms.ValidationError(
                 _("Msisdn and Amount fields must be in the following format col-row ex: A-1 "))
-        instance = FileCategory(unique_field=unique_field,amount_field=amount_field)
-        col1,row1 = instance.get_field_position(unique_field)
-        col2,row2 = instance.get_field_position(amount_field)
+        col1, row1 = unique_field.split('-')
+        col2, row2 = amount_field.split('-')
+        if not col1.isalpha() or not col2.isalpha() or not row1.isnumeric() or not row2.isnumeric():
+            raise forms.ValidationError(
+                _("Msisdn and Amount fields must be in the form letter-number "))
         if row1 != row2:
             raise forms.ValidationError(_("Msisdn and Amount fields must be on the same row"))
         elif col1 == col2:

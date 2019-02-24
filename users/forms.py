@@ -391,7 +391,8 @@ class CheckerCreationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["level"].choices = [('', '------')] + [
-            (r.id, f'{r} {i+1}') for i, r in enumerate(Levels.objects.filter(created__hierarchy=request.user.hierarchy).order_by('max_amount_can_be_disbursed'))
+            (r.id, f'{r}') for r in Levels.objects.filter(
+                created__hierarchy=request.user.hierarchy).order_by('max_amount_can_be_disbursed')
         ]
 
         self.fields["level"].label = _('Level')

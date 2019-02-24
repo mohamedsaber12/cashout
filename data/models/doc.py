@@ -124,3 +124,20 @@ class Doc(models.Model):
         success_percentage = round(
             success_percentage, 2) if success_percentage != 0 else 0
         return success_percentage
+
+
+    def can_user_review(self,checker):
+        """
+        return tuple
+        (can_user_review, user_already_reviewed)
+        """
+        if self.reviews.filter(user_created=checker).exists():
+            return False, True
+        reviews = self.reviews.all()
+        return (checker.level.level_of_authority <= reviews.count()+1 , False)
+        
+    def is_reviews_completed(self):
+        return self.reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required
+
+    def is_reviews_rejected(self):
+        return self.reviews.filter(is_ok=False).count() != 0 

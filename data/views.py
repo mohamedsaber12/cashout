@@ -26,11 +26,11 @@ from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
-from data.tasks import handle_disbursement_file, handle_uploaded_file
+from data.tasks import handle_disbursement_file, handle_uploaded_file, notify_checkers
 from data.utils import get_client_ip, paginator
 from users.decorators import (setup_required, root_or_maker_or_uploader, 
                               collection_users, disbursement_users)
-from users.models import User
+from users.models import User 
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -242,8 +242,8 @@ def document_view(request, doc_id):
     doc = get_object_or_404(Doc, id=doc_id)
     review_form_errors = None
     reviews = None
-    # True if checker already reviewed this doc
-    user_review_exist = None
+    # True if checker already reviewed this doc or reviews are completed
+    hide_review_form = True
     can_user_disburse = {}
     if doc.owner.hierarchy == request.user.hierarchy:
         # doc already dibursed
@@ -256,13 +256,22 @@ def document_view(request, doc_id):
                 VIEW_DOCUMENT_LOGGER.debug(
                     f'Document doc_id {doc_id} can not be disbursed, checker {request.user.username}')
                 raise Http404
+            
+            if not doc.is_reviews_completed():
+                if doc.is_reviews_rejected():
+                    hide_review_form = True
+                else:
+                    # user_can_review: if can't then can't view the doc
+                    # user_review_exist: checks if checker already reviewed this doc
+                    user_can_review, user_review_exist = doc.can_user_review(request.user)
+                    if not user_can_review:
+                        raise Http404
+                    # user can review then user review doesn't exist then show review form
+                    hide_review_form = False
 
             reviews = DocReview.objects.filter(doc=doc)
-            #check if checker already reviewed this doc
-            user_review_exist = DocReview.objects.filter(
-                doc=doc, user_created=request.user).exists()
 
-            if request.method == "POST" and not user_review_exist:
+            if request.method == "POST" and not hide_review_form:
 
                 doc_review_form = DocReviewForm(request.POST)
                 if doc_review_form.is_valid():
@@ -270,7 +279,15 @@ def document_view(request, doc_id):
                     doc_review_obj.user_created = request.user
                     doc_review_obj.doc = doc
                     doc_review_obj.save()
-                    user_review_exist = True
+                    # notify checkers of next level if review is ok and
+                    # no checker of the same current level already notified them
+                    if doc_review_obj.is_ok and not reviews.filter(
+                        user_created__level=request.user.level).exist():
+                        notify_checkers.delay(
+                            doc.id, request.user.level.level_of_authority+1) 
+                    # notify the maker either way
+                    doc_review_maker_mail.delay(doc.id, doc_review_obj.id)
+                    hide_review_form = True
                 else:
                     review_form_errors = doc_review_form.errors
 
@@ -301,7 +318,7 @@ def document_view(request, doc_id):
         'doc': doc,
         'review_form_errors': review_form_errors,
         'reviews': reviews,
-        'user_review_exist': user_review_exist,
+        'hide_review_form': hide_review_form,
         'can_user_disburse': can_user_disburse,
         'excel_data': excel_data
     }

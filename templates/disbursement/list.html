@@ -15,11 +15,13 @@
 {% block body %}
 
 {% if has_failed %}
-<!-- button -->
 <div class="row">
-    <div class="col-md-12 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button  id="export-failed" data-url="{% url 'disbursement:export_failed' doc_id %}" 
-        class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
+    <div hidden id="alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        You will receive an email shortly with the failed data file to download
+    </div>
+    <!-- button -->
+    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+        <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
         </button>
     </div>
 </div>
@@ -88,11 +90,17 @@
 <script>
 
     $(document).ready(function () {
-
+        
         $('#transaction-table').DataTable();
         $('#export-failed').on('click',function(ev) {
-            let url = $(this).attr('data-url');
-            document.location = url
+            $.ajax({
+                type:'GET',
+                url: '{{request.path}}' + '?export_failed=true',
+                success: function (data, text, xhr) {
+                    $('#alert-msg').show()
+                },
+            })
+            
         });
     });
 

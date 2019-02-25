@@ -47,6 +47,8 @@
                     </ul>
                 </li>
                 {% if request.user.is_root %}
+                <li><a href="#"><i class="fa fa-user"></i> {% trans 'Balance inquiry' %} </a>
+                </li>
                 <li><a><i class="fa fa-user"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
                         
@@ -63,6 +65,7 @@
                     </ul>
                 </li>
                 {% endif %}
+                <li><a href="#"><i class="fa fa-user"></i> {% trans 'Registration' %} </a>
 
                 <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">

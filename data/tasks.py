@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.utils.translation import gettext as _
+from django.urls import reverse
 
 from data.models import Doc
 from data.models import FileData
@@ -101,7 +102,7 @@ def handle_disbursement_file(doc_obj_id):
 
 
 @app.task()
-def generate_file(doc_id):
+def generate_file(doc_id,user_id):
     def randomword(length):
         letters = string.ascii_lowercase
         return ''.join(random.choice(letters) for i in range(length))
@@ -114,10 +115,31 @@ def generate_file(doc_id):
         doc=doc_obj
     )
     dataset = dataset.export()
-    with open("%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename), "wb") as f:
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+    with open(file_path, "wb") as f:
         f.write(dataset.xlsx)
 
-    return filename
+    user = User.objects.get(id=user_id)
+    disb_doc_view_url = settings.BASE_URL + \
+        reverse('disbursement:disbursed_data', doc_id)
+
+    download_url = settings.BASE_UR + file_path
+
+    MESSAGE_SUCC = f"""Dear {user.first_name} 
+        You can download the failed disbursement data related to this document
+        <a href='{disb_doc_view_url}'>{doc.filename()}</a>
+        from here <a href='{download_url}'>Download</a>
+        Thanks, BR"""
+
+    subject = f'[{user.brand.mail_subject}]'
+
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[user.email],
+        subject=subject + _(' Failed Disbursement File Download'),
+        message=MESSAGE_SUCC
+    )
 
 
 
@@ -228,10 +250,13 @@ def notify_checkers(doc_id, level):
     message = f"""Dear Checker 
         The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
         Thanks, BR"""
+    
+    subject = f'[{checkers[0].brand.mail_subject}]'
+    
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[checker.email for checker in checkers],
-        subject='[Payroll] Disbursement Notification',
+        subject= subject + ' Disbursement Notification',
         message=message
     )
 
@@ -256,10 +281,12 @@ def doc_review_maker_mail(doc_id,review_id):
             and the reason is: {review.comment}
             Thanks, BR"""
 
+    subject = f'[{maker.brand.mail_subject}]'
+
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email],
-        subject= _('[Payroll] File Upload Notification'),
+        subject= subject + _(' File Upload Notification'),
         message=MESSAGE
     )
 
@@ -278,11 +305,13 @@ def notify_maker(doc):
         Thanks, BR"""
 
     message = MESSAGE_SUCC if doc.is_processed else MESSAGE_FAIL
-
+    
+    subject = f'[{maker.brand.mail_subject}]'
+    
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email],
-        subject= _('[Payroll] File Upload Notification'),
+        subject= subject + _(' File Upload Notification'),
         message=message
     )
 
@@ -295,9 +324,11 @@ def notify_makers_collection(doc):
         The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
         Thanks, BR"""
 
+    subject = f'[{makers[0].brand.mail_subject}]'
+
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email for maker in makers],
-        subject=_('[Payroll] Collection File Upload Notification'),
+        subject= subject + _(' Collection File Upload Notification'),
         message=MESSAGE_SUCC
     )

@@ -78,24 +78,35 @@ def disburse(request, doc_id):
 @login_required
 def disbursement_list(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    can_disburse = doc_obj.can_user_disburse(request.user)[0]
-    if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and doc_obj.is_disbursed:
+
+    can_view = (
+        doc_obj.owner.hierarchy == request.user.hierarchy and
+        (
+            doc_obj.owner == request.user or
+            request.user.is_checker or
+            request.user.is_root
+        ) and
+        doc_obj.is_disbursed
+    )
+    if not can_view:
+        if request.is_ajax() and request.GET.get('export_failed') == 'true':
+            generate_file.delay(doc_id,request.user.id)
+            return HttpResponse(status=200)
         context = {
             'Ddata': doc_obj.disbursement_data.all(),
-            'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0
+            'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
+            'doc_id': doc_id
         }
-    else:
-        context = {'Ddata': None}
-    context.update({'doc_id': doc_id})
-    return render(request, template_name='disbursement/list.html', context=context)
+        return render(request, template_name='disbursement/list.html', context=context)
+
+    return HttpResponse(status=403)
 
 
 @setup_required
 @login_required
 def generate_failed_disbursement_data(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    can_disburse = doc_obj.can_user_disburse(request.user)[0]
-    if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and doc_obj.is_disbursed:
+    if doc_obj.owner.hierarchy == request.user.hierarchy and doc_obj.is_disbursed:
         generate_file_task = generate_file.delay(doc_id)
         return render(request,
                       template_name="disbursement/disbursement_file_download.html",

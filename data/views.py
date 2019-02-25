@@ -26,10 +26,11 @@ from django.views.static import serve
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
-from data.tasks import handle_disbursement_file, handle_uploaded_file, notify_checkers
+from data.tasks import (handle_disbursement_file, handle_uploaded_file, notify_checkers, 
+doc_review_maker_mail)
 from data.utils import get_client_ip, paginator
 from users.decorators import (setup_required, root_or_maker_or_uploader, 
-                              collection_users, disbursement_users)
+                              collection_users, disbursement_users, root_only)
 from users.models import User 
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -206,7 +207,7 @@ def download_excel_with_trx_temp_view(request):
         raise Http404
 
 
-@method_decorator([setup_required, login_required], name='dispatch')
+@method_decorator([root_only, setup_required, login_required], name='dispatch')
 class FileDeleteView(View):
     """
     Function that deletes a file
@@ -215,20 +216,16 @@ class FileDeleteView(View):
     def post(self, request,pk=None, *args, **kwargs):
         if not request.is_ajax():
             return JsonResponse(data={}, status=403)
-            
-        file_obj = get_object_or_404(Doc, pk=pk)
+    
+        file_obj = get_object_or_404(
+            Doc, pk=pk, owner__hierarchy=request.user.hierarchy)
         file_obj.delete()
         now = datetime.datetime.now()
         DELETED_FILES_LOGGER.debug(
             '%s deleted a file at %s with IP Address %s' % (
                 request.user, now, get_client_ip(request)))
         return JsonResponse(data={},status=200)
-        
-        # case user has no permission
-        # UNAUTHORIZED_FILE_DELETE_LOGGER.debug(
-        #     "Unauthorized file delete %s id %s at %s IP Address %s" % (
-        #         request.user, request.user.id,
-        #         str(datetime.datetime.now()), get_client_ip(request)))
+
 
 @disbursement_users
 @login_required
@@ -264,32 +261,35 @@ def document_view(request, doc_id):
                     # user_can_review: if can't then can't view the doc
                     # user_review_exist: checks if checker already reviewed this doc
                     user_can_review, user_review_exist = doc.can_user_review(request.user)
-                    if not user_can_review:
+                    if not user_can_review and not user_review_exist:
                         raise Http404
                     # user can review then user review doesn't exist then show review form
-                    hide_review_form = False
+                    hide_review_form = user_review_exist
 
             reviews = DocReview.objects.filter(doc=doc)
 
             if request.method == "POST" and not hide_review_form:
 
                 doc_review_form = DocReviewForm(request.POST)
+                
                 if doc_review_form.is_valid():
                     doc_review_obj = doc_review_form.save(commit=False)
                     doc_review_obj.user_created = request.user
                     doc_review_obj.doc = doc
                     doc_review_obj.save()
                     # notify checkers of next level if review is ok and
-                    # no checker of the same current level already notified them
-                    if doc_review_obj.is_ok and not reviews.filter(
-                        user_created__level=request.user.level).exist():
+                    # no checkers of the same current level already notified them
+                    checkers_already_notified = reviews.filter(
+                        user_created__level=request.user.level).exclude(
+                        id=doc_review_obj.id).exists()
+                    if doc_review_obj.is_ok and not checkers_already_notified:
                         notify_checkers.delay(
                             doc.id, request.user.level.level_of_authority+1) 
                     # notify the maker either way
                     doc_review_maker_mail.delay(doc.id, doc_review_obj.id)
                     hide_review_form = True
                 else:
-                    review_form_errors = doc_review_form.errors
+                    review_form_errors = doc_review_form.errors['comment'][0]
 
             can_user_disburse = doc.can_user_disburse(request.user)
             can_user_disburse = {
@@ -305,22 +305,17 @@ def document_view(request, doc_id):
             doc hierarchy: {doc.owner.hierarchy} """)
         return redirect(reverse("data:main_view"))
 
-    xl_workbook = xlrd.open_workbook(doc.file.path)
-    xl_sheet = xl_workbook.sheet_by_index(0)
-    excel_data = []
-    for row in xl_sheet.get_rows():
-        row_data = []
-        for x, data in enumerate(row):
-            row_data.append(data.value)
-        excel_data.append(row_data)
-            
+    doc_data = None
+    if doc.is_processed:
+        doc_data = doc.disbursement_data.all()
+    
     context = {
         'doc': doc,
         'review_form_errors': review_form_errors,
         'reviews': reviews,
         'hide_review_form': hide_review_form,
         'can_user_disburse': can_user_disburse,
-        'excel_data': excel_data
+        'doc_data': doc_data
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'
@@ -382,7 +377,7 @@ def doc_download(request, doc_id):
         raise Http404
 
 
-@method_decorator([setup_required, login_required, root_or_maker_or_uploader], name='dispatch')
+@method_decorator([root_or_maker_or_uploader, setup_required, login_required], name='dispatch')
 class FormatListView(ListView):
 
     template_name = "data/formats.html"
@@ -450,7 +445,7 @@ class FormatListView(ListView):
         }), content_type="application/json")
 
 
-@method_decorator([setup_required, login_required, collection_users], name='dispatch')
+@method_decorator([collection_users, setup_required, login_required], name='dispatch')
 class RetrieveCollectionData(DetailView):
     http_method_names = ['get']
     template_name = "data/document_viewer_collection.html"

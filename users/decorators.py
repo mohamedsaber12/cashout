@@ -86,7 +86,7 @@ def collection_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, log
     def can_pass(request):
         user = request.user
         status = request.user.get_status(request)
-        return user.is_uploader or user.is_upmaker or (user.is_root and status == 'collection')
+        return user.is_uploader or ( (user.is_root or user.is_upmaker) and status == 'collection')
 
     actual_decorator = user_passes_test_with_request(
         can_pass,
@@ -118,7 +118,7 @@ def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, l
     def can_pass(request):
         user = request.user
         status = request.user.get_status(request)
-        return user.is_maker or user.is_checker or (user.is_root and status == 'disbursement')
+        return user.is_maker or user.is_checker or ((user.is_root or user.is_upmaker) and status == 'disbursement')
     
     actual_decorator = user_passes_test_with_request(
         can_pass,
@@ -136,6 +136,20 @@ def root_or_superadmin(function=None, redirect_field_name=REDIRECT_FIELD_NAME, l
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_root or u.is_superadmin,
+        login_url=login_url,
+        redirect_field_name=None
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator
+
+
+def root_only(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+    """
+    root only allowed
+    """
+    actual_decorator = user_passes_test(
+        lambda u: u.is_root,
         login_url=login_url,
         redirect_field_name=None
     )

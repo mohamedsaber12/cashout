@@ -21,24 +21,23 @@ MESSAGE = 'Dear {0}\n' \
 
 @receiver(post_save, sender=RootUser)
 def create_setup(sender, instance, created, **kwargs):
-    notify_user(sender, instance, created, **kwargs)
     if created:
         Setup.objects.create(user=instance)
 
 
 @receiver(post_save, sender=UploaderUser)
 def send_random_pass_to_uploader(sender, instance, created, **kwargs):
-    notify_user(sender, instance, created, **kwargs)
+    notify_user(instance, created)
 
 
 @receiver(post_save, sender=MakerUser)
 def send_random_pass_to_maker(sender, instance, created, **kwargs):
-    notify_user(sender, instance, created, **kwargs)
+    notify_user(instance, created)
 
 
 @receiver(post_save, sender=CheckerUser)
 def send_random_pass_to_checker(sender, instance, created, **kwargs):
-    notify_user(sender, instance, created, **kwargs)
+    notify_user(instance, created)
 
 
 @receiver(pre_save, sender=CheckerUser)
@@ -70,6 +69,8 @@ def client_post_save(sender, instance,created, **kwargs):
         root_user = instance.client
         root_user.brand = instance.creator.brand
         root_user.save()
+        notify_user(root_user , created)
+
 
 
 def set_brand(instance):
@@ -98,7 +99,7 @@ def generate_username(user, user_model):
     user.username = username
 
 
-def notify_user(sender, instance, created, **kwargs):
+def notify_user(instance, created):
     if created:
         random_pass = get_random_string(
             allowed_chars=ALLOWED_CHARACTERS, length=12)
@@ -111,10 +112,12 @@ def notify_user(sender, instance, created, **kwargs):
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
+        subject = f'[{instance.brand.mail_subject}]'
+
         send_mail(
             from_email=settings.SERVER_EMAIL,
             recipient_list=[instance.email],
-            subject=_('[Payroll] Password Notification'),
+            subject= subject + _(' Password Notification'),
             message=MESSAGE.format(instance.first_name,
                                    url, instance.email, instance.username)
         )

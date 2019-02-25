@@ -475,7 +475,7 @@ class BrandForm(forms.ModelForm):
     color = forms.CharField(widget=forms.HiddenInput())
     class Meta:
         model = Brand
-        fields = ("color", "logo")
+        fields = "__all__"
 
     def save(self, commit=True):
         brand = super().save(commit=False)
@@ -587,10 +587,12 @@ class ForgotPasswordForm(forms.Form):
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
+        subject = f'[{self.user.brand.mail_subject}]'
+
         send_mail(
             from_email=settings.SERVER_EMAIL,
             recipient_list=[self.user.email],
-            subject=_('[Payroll] Password Notification'),
+            subject=subject + _(' Password Notification'),
             message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
         )
 

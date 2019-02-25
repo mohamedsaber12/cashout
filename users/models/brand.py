@@ -13,3 +13,5 @@ class Brand(models.Model):
                                       format='JPEG',
                                options={'quality': 60}, null=True, default='pm_name.png')
 
+    mail_subject = models.CharField(
+        max_length=200, null=True, blank=True, default='Payroll')

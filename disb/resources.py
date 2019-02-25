@@ -11,19 +11,10 @@ class DisbursementDataResource(resources.ModelResource):
     def __init__(self, doc, file_category):
         self.file_category = file_category
         self.doc = doc
-        self.amount_position = 0
-        self.msisdn_position = 0
+        self.amount_position, self.msisdn_position = file_category.fields_cols()
 
     def get_export_headers(self):
-        headers = self.doc.format.identifiers()
-        amount_field = self.file_category.amount_field
-        msisdn_field = self.file_category.unique_field
-        for pos, header in enumerate(headers):
-            if amount_field == header:
-                self.amount_position = pos
-            elif msisdn_field == header:
-                self.msisdn_position = pos
-        return headers
+        return ['msisdn','amount']
 
     def arrange(self, obj_res):
         amount = obj_res[0]

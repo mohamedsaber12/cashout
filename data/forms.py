@@ -54,7 +54,7 @@ class DocReviewForm(forms.ModelForm):
 
     def clean_comment(self):
         if not self.cleaned_data.get('is_ok') and not self.cleaned_data.get('comment'):
-            raise forms.ValidationError(_('comment field is required'))
+            raise forms.ValidationError(_('Rejection reason is required'))
         return self.cleaned_data.get('comment')
 
 

@@ -15,9 +15,12 @@ def send_agent_pin_to_client(pin_raw,root_user_id):
     message = f"""Dear Client 
         The agent pin is: {pin_raw}
         Thanks, BR"""
+
+    subject = f'[{root.brand.mail_subject}]'
+
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[root.email],
-        subject='[Payroll] Pin Notification',
+        subject=subject + ' Pin Notification',
         message=message
     )

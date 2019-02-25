@@ -29,7 +29,9 @@
                                     <th>{% trans 'Document Name' %}</th>
                                     <th>{% trans 'Uploaded By' %}</th>
                                     <th>{% trans 'View' %}</th>
-                                    <th>{% trans 'Delete' %}</th>
+                                    {% if request.user.is_root %}
+                                        <th>{% trans 'Delete' %}</th>
+                                    {%endif%}
                                 </tr>
                             </thead>
                             <tbody>
@@ -47,10 +49,12 @@
                                             <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md"> {% trans 'View' %}
                                             </a>
                                         </td>
+                                        {% if request.user.is_root %}
                                         <td>
-                                            <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" id="doc-delete-btn"> {% trans 'Delete' %}
+                                            <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
                                             </a>
                                         </td>
+                                        {%endif%}
                                     </tr>
                                 
                                 {%endfor%}    

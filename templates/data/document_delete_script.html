@@ -1,37 +1,38 @@
 <script>
-    $(function () {
-        let deleteModal = $('#doc-delete-modal');
-        $('#doc-delete-btn').click(function () {
-            deleteModal.modal('show');
-        });
+    
+        function delete_func(elem){
+        
+            let deleteModal = $('#doc-delete-modal');
+            deleteModal.modal('show');  
+            let url = elem.getAttribute('data-uri');
+            console.log(url)
+            $('#doc-delete-submit').click(function () {
+                $.ajax({
+                    type: "POST",
+                    url: url,
+                    success: function (result, xhr, message) {
+                        $('#doc-delete-submit').attr('disabled',true)
+                        $('#message').hide();
+                        $('#succ-message').show();
+                        setTimeout(function () {
+                            window.location = "{% url 'data:main_view' %}";
+                        }, 2000);
 
-        $('#doc-delete-submit').click(function () {
-            url = $('#doc-delete-btn').attr('data-uri');
-            $.ajax({
-                type: "POST",
-                url: url,
-                success: function (result, xhr, message) {
-                    $('#doc-delete-submit').attr('disabled',true)
-                    $('#message').hide();
-                    $('#succ-message').show();
-                    setTimeout(function () {
-                        window.location = "{% url 'data:main_view' %}";
-                    }, 2000);
+                    },
+                    error: function (xhr, error, reason) {    
+                        $('#doc-delete-submit').attr('disabled', true)                
+                        $('#message').hide();
+                        $('#fail-message').show();
+                        setTimeout(function () {
+                            window.location = "{% url 'data:main_view' %}";
+                        }, 2000);
+                        
+                    }
+                });
 
-                },
-                error: function (xhr, error, reason) {    
-                    $('#doc-delete-submit').attr('disabled', true)                
-                    $('#message').hide();
-                    $('#fail-message').show();
-                    setTimeout(function () {
-                        window.location = "{% url 'data:main_view' %}";
-                    }, 2000);
-                    
-                }
+
             });
+        };
 
-
-        });
-
-    });
+    
 </script>

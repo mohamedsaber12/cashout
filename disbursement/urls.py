@@ -44,6 +44,8 @@ else:
 
     handler400 = 'disbursement.views.bad_request_view'
 
+    handler401 = 'disbursement.views.unauthorized_view'
+
 
 urlpatterns += [    
     path('i18n/', include('django.conf.urls.i18n')),

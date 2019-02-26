@@ -1,0 +1,20 @@
+{% extends "error-pages/base.html" %}
+{% load i18n %}
+
+{% block title %} {% trans 'Page' %} 401 {% endblock title %}
+
+
+{% block body %}
+  <div class="col-md-12">
+    <div class="col-middle">
+      <div class="text-center text-center">
+        <h1 class="error-number">401</h1>
+        <h2>{% trans 'Unauthorized' %}</h2>
+         <p>{% trans 'You do not have the permission required to access this resource.' %}
+        </p>
+        <a href="{% url 'data:main_view' %}">{% trans 'Back to home' %}</a>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

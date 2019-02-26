@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+import os
 import json
 import logging
 from datetime import datetime
@@ -88,7 +88,7 @@ def disbursement_list(request, doc_id):
         ) and
         doc_obj.is_disbursed
     )
-    if not can_view:
+    if can_view:
         if request.is_ajax() and request.GET.get('export_failed') == 'true':
             generate_file.delay(doc_id,request.user.id)
             return HttpResponse(status=200)
@@ -99,42 +99,44 @@ def disbursement_list(request, doc_id):
         }
         return render(request, template_name='disbursement/list.html', context=context)
 
-    return HttpResponse(status=403)
+    return HttpResponse(status=401)
 
 
 @setup_required
 @login_required
-def generate_failed_disbursement_data(request, doc_id):
+def failed_disbursed_for_download(request, doc_id):
     doc_obj = Doc.objects.get(id=doc_id)
-    if doc_obj.owner.hierarchy == request.user.hierarchy and doc_obj.is_disbursed:
-        generate_file_task = generate_file.delay(doc_id)
-        return render(request,
-                      template_name="disbursement/disbursement_file_download.html",
-                      context={"task_id": str(generate_file_task.task_id), "media_url": settings.MEDIA_URL}
-        )
-    return HttpResponse(status=403)
 
-@setup_required
-@login_required
-def failed_disbursed_for_download(request):
-    task_id = request.GET.get("task_id")
-    filename = request.GET.get("filename")
+    can_view = (
+        doc_obj.owner.hierarchy == request.user.hierarchy and
+        (
+            doc_obj.owner == request.user or
+            request.user.is_checker or
+            request.user.is_root
+        ) and
+        doc_obj.is_disbursed
+    )
+    if not can_view:
+        return HttpResponse(status=401)
 
-    if request.is_ajax():
-        result = generate_file.AsyncResult(task_id)
-        if result.ready():
-            FAILED_DISBURSEMENT_DOWNLOAD.debug(f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
-            return HttpResponse(json.dumps({"filename": result.get()}))
+    filename = request.GET.get('filename',None)
+    if not filename:
+        raise Http404
+      
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                        "/documents/disbursement/", filename)
+    if not os.path.exists(file_path):
+        raise Http404
+
+    with open(file_path, 'rb') as fh:
+        response = HttpResponse(fh.read(), content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        response['X-Accel-Redirect'] = file_path
         FAILED_DISBURSEMENT_DOWNLOAD.debug(
-            f'file not ready yet to be downloaded user: {request.user.username}')
-        return HttpResponse(json.dumps({"filename": None}))
+            f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
 
-    else:
-        response = HttpResponse(content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s' % str(
-            filename)
-    return response
-
+        return response
+    
 
 class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
     """

@@ -231,6 +231,7 @@ class FileDeleteView(View):
 @login_required
 def document_view(request, doc_id):
     """
+    related to disbursement
     View document given doc_id.
     List checkers reviews.
     Checkers can review document.
@@ -244,7 +245,14 @@ def document_view(request, doc_id):
     can_user_disburse = {}
     if doc.owner.hierarchy == request.user.hierarchy:
         # doc already dibursed
-        if doc.is_disbursed:
+        if (
+                doc.is_disbursed and 
+                (
+                    doc.owner == request.user or
+                    request.user.is_checker or
+                    request.user.is_root
+                )
+            ):
             return redirect(reverse("disbursement:disbursed_data", args=(doc_id,)))
         if request.user.is_checker:
             # makers must notify checkers and allow the document to be dibursed

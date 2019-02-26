@@ -103,6 +103,7 @@ def handle_disbursement_file(doc_obj_id):
 
 @app.task()
 def generate_file(doc_id,user_id):
+    """related to disbursement"""
     def randomword(length):
         letters = string.ascii_lowercase
         return ''.join(random.choice(letters) for i in range(length))
@@ -122,16 +123,18 @@ def generate_file(doc_id,user_id):
 
     user = User.objects.get(id=user_id)
     disb_doc_view_url = settings.BASE_URL + \
-        reverse('disbursement:disbursed_data', doc_id)
+        str(reverse('disbursement:disbursed_data', kwargs={'doc_id':doc_id}))
 
-    download_url = settings.BASE_UR + file_path
+    download_url = settings.BASE_URL + \
+        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + \
+        '?filename=' + filename
 
     MESSAGE_SUCC = f"""Dear {user.first_name} 
         You can download the failed disbursement data related to this document
-        <a href='{disb_doc_view_url}'>{doc.filename()}</a>
-        from here <a href='{download_url}'>Download</a>
+        <a href='{disb_doc_view_url}'>{doc_obj.filename()}</a>
+        from here <a href="{download_url}" >Download</a>
         Thanks, BR"""
-
+    
     subject = f'[{user.brand.mail_subject}]'
 
     send_mail(

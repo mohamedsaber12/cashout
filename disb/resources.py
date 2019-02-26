@@ -9,20 +9,10 @@ class DisbursementDataResource(resources.ModelResource):
         fields = ('amount', 'msisdn')
 
     def __init__(self, doc, file_category):
-        self.file_category = file_category
         self.doc = doc
-        self.amount_position, self.msisdn_position = file_category.fields_cols()
 
     def get_export_headers(self):
-        return ['msisdn','amount']
-
-    def arrange(self, obj_res):
-        amount = obj_res[0]
-        msisdn = obj_res[1]
-        data = ['']*3
-        data[self.amount_position] = str(amount)
-        data[self.msisdn_position] = msisdn
-        return data
+        return ['amount', 'msisdn']
 
     def get_queryset(self):
         qs = super(DisbursementDataResource, self).get_queryset()
@@ -30,4 +20,4 @@ class DisbursementDataResource(resources.ModelResource):
 
     def export_resource(self, obj):
         obj_resources = super(DisbursementDataResource, self).export_resource(obj)
-        return self.arrange(obj_resources)
+        return obj_resources

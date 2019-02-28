@@ -398,12 +398,15 @@
         });
 
         function stepSubmit(step_no) {
-            
+
             let bool_return = false;
             let step_no_string = String(step_no)
-
-            var form_data = $("#step_" + step_no_string + "_form").serialize();
+            
             let form_prefix = $("#step-" + step_no_string).attr('form_prefix');
+            if (form_prefix == 'pin' && "{{pinform}}" == 'None'){
+                return true
+            }
+            var form_data = $("#step_" + step_no_string + "_form").serialize();
 
             $.ajax({
                 type: 'post',

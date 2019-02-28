@@ -72,7 +72,8 @@ class CheckerTwoFactorAuthMiddleWare:
             reverse("two_factor:profile"),
             reverse("users:otp_login"),
             reverse("two_factor:setup"),
-            '/account/two_factor/qrcode/'
+            '/account/two_factor/qrcode/',
+            reverse("set_language")
         ]
         
         if request.user.is_authenticated and request.user.is_checker and not is_media_path:

@@ -43,21 +43,33 @@ class AgentForm(forms.ModelForm):
 class PinForm(forms.Form):
 
     pin = forms.CharField(required=True,max_length=6,min_length=6, widget=forms.PasswordInput(
-            attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Pin')}))
+        attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Add new pin')}))
 
     def __init__(self, *args, root, **kwargs):
         self.root = root
         super().__init__(*args, **kwargs)
         self.agents = Agent.objects.filter(wallet_provider=root)
+        ## if they want change pin ##
+        # for field_name, field in self.fields.items():
+        #     if field_name == 'pin':
+        #         if agent and not agent.pin:
+        #             field.label = _("Add new pin")
+        #         else:
+        #             field.label = _("Change pin")
+        #             field.required = False
+        #         break
+
+    def get_form(self):
         agent = self.agents.first()
-        for field_name, field in self.fields.items():
-            if field_name == 'pin':
-                if agent and not agent.pin:
-                    field.label = _("Add new pin")
-                else:
-                    field.label = _("Change pin")
-                    field.required = False
-                break
+        if agent and agent.pin:
+            return None
+        return self    
+
+    def clean_pin(self):
+        pin = self.cleaned_data.get('pin')
+        if pin and not pin.isnumeric():
+            raise forms.ValidationError(_("Pin must be numeric"))
+        return pin
 
     def save_agents(self):
         raw_pin = self.cleaned_data.get('pin')
@@ -69,4 +81,5 @@ class PinForm(forms.Form):
         self.agents.update(pin=hashed_pin)
 
 AgentFormSet = modelformset_factory(
-    model=Agent, form=AgentForm, can_delete=True)
+    model=Agent, form=AgentForm, can_delete=True, 
+    min_num=1, validate_min=True)

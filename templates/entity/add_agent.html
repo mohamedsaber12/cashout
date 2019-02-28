@@ -2,6 +2,15 @@
 {% load i18n %}
 {% load custom_tags %}
 {% load static %}
+{% block customcss %}
+<style>
+.errorlist{
+    color:red;
+}
+
+</style>
+
+{% endblock %}
 {% block title %} {% trans 'Agents' %} {% endblock %}
 {% block form %}
     <form action="." method="post" id="step_1_form" >
@@ -25,7 +34,9 @@
         <!--  -->
 
         <h4>Agents</h4>
-         
+        {% if agentform.non_form_errors%}
+         {{ agentform.non_form_errors }}
+        {%endif%}
         <table class="table" id="agentform">
             {{ agentform.management_form }}
             {% for form in agentform.forms %}

@@ -44,23 +44,4 @@
 {% block script %}
 <script src="{% static 'gentella/jquery.min.js' %}"></script>
 <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
-<script>
-    let fees_val = $('#id_fees_percentage').val()
-    if (fees_val !== '-1'){
-        $('#div-other').hide();
-    }
-    
-
-    $('#id_fees_percentage').change(function () {
-        let value =  $(this).val();
-        if (value === '-1'){
-            $('#div-other').show();
-            $('#id_other').val('');
-        }
-        else{
-            $('#div-other').hide();
-        }
-    });
-
-</script>
 {% endblock %}

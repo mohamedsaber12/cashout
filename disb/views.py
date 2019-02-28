@@ -13,14 +13,14 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render, render_to_response
 from django.urls import reverse
 from django.urls import reverse_lazy
-from django.views.generic import CreateView
+from django.views.generic import CreateView,View
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import generate_file
 from data.utils import redirect_params,get_client_ip
-from disb.forms import VMTDataForm, AgentFormSet, AgentForm, PinForm
+from disb.forms import VMTDataForm, AgentFormSet, AgentForm
 from disb.models import Agent, VMTData
 from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
@@ -138,12 +138,10 @@ def failed_disbursed_for_download(request, doc_id):
         return response
     
 
-class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
+class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
     """
     View for super user to create Agents for the entity. 
     """
-    model = Agent
-    form_class = AgentFormSet
     template_name = 'entity/add_agent.html'
 
     def get_success_url(self,root):
@@ -155,35 +153,29 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateV
         return reverse('users:add_fees', kwargs={'token': token.key})
         
 
-    def get_context_data(self, **kwargs):
+    def get(self,request,*args, **kwargs):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
-        data = super().get_context_data(**kwargs)
-        if not 'agentform' in data:
-            data['agentform'] = self.form_class(
-                queryset=Agent.objects.filter(
-                    wallet_provider=root,
-                    super = False
-                ),
+        context = {
+            'agentform' : AgentFormSet(
+                queryset=Agent.objects.filter(wallet_provider=root,super = False),
                 prefix='agents',
                 form_kwargs={'root': root}
-            )
-        
-        if not 'super_agent_form' in data:
-            data['super_agent_form'] = AgentForm(
-                initial=Agent.objects.filter(
-                    wallet_provider=root,
-                    super=False
-                ),
+            ),
+
+            'super_agent_form':  AgentForm(
+                initial=Agent.objects.filter(wallet_provider=root,super=False),
                 root = root
             )
-        return data 
+        }
+        return render(request, template_name=self.template_name, context=context)
+
 
     def post(self, request, *args, **kwargs):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         # pop superagent data
         data = request.POST.copy()
         data.pop('msisdn',None)
-        agentform = self.form_class(
+        agentform = AgentFormSet(
             data,
             queryset=Agent.objects.filter(
                 wallet_provider=root
@@ -219,12 +211,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateV
             AGENT_CREATE_LOGGER.debug( f'Agents created from IP Address {get_client_ip(self.request)} with msisdns {" - ".join(agents_msisdn)}')
             return HttpResponseRedirect(self.get_success_url(root))
         else:
-            return self.render_to_response(self.get_context_data(agentform=agentform, super_agent_form=super_agent_form))
+            context = {
+                "agentform" : agentform,
+                "super_agent_form" : super_agent_form,
+            }
+            return render(request, template_name=self.template_name, context=context)
 
-    def get_form(self, form_class=None):
-        """Return an instance of the form to be used in this view."""
-        if form_class is None:
-            form_class = self.get_form_class()
-        kwargs = self.get_form_kwargs()
-        kwargs.pop('instance')
-        return form_class(**kwargs)
+    

@@ -323,7 +323,7 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
                     form_kwargs={'request': self.request}
                 )
             elif data['prefix'] == 'pin':
-                form = PinForm(data,root=request.user)
+                form = PinForm(data,root=request.user).get_form()
            
             form_is_formset = isinstance(form, BaseFormSet)
 
@@ -404,7 +404,7 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
         """
         data = super().get_context_data(**kwargs)
 
-        data['pinform'] = PinForm(root=self.request.user)
+        data['pinform'] = PinForm(root=self.request.user).get_form()
         data['makerform'] = self.form_class(
             queryset=MakerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy

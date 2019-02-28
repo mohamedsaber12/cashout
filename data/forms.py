@@ -221,10 +221,10 @@ class CollectionDataForm(forms.ModelForm):
         return instance
 
 class FileCategoryForm(forms.ModelForm):
-    amount_field = forms.CharField(label=_('amount header position'),
-        widget=forms.TextInput(attrs={'placeholder': 'ex: A-1'}))
-    unique_field = forms.CharField(label=_('msisdn header position'),
-        widget=forms.TextInput(attrs={'placeholder': 'ex: B-1'}))
+    amount_field = forms.CharField(
+        label=_('amount header position %s') % "(B-1)")
+    unique_field = forms.CharField(
+        label=_('msisdn header position %s') % "(A-1)")
     class Meta:
         model = FileCategory
         fields = '__all__'
@@ -263,7 +263,11 @@ class FileCategoryForm(forms.ModelForm):
     def clean_no_of_reviews_required(self):
         checkers_no = User.objects.get_all_checkers(
             self.request.user.hierarchy).count()
-        if self.cleaned_data['no_of_reviews_required'] > checkers_no:
+        no_of_reviews = self.cleaned_data['no_of_reviews_required']
+        if no_of_reviews == 0:
+            raise forms.ValidationError(
+                _('number of reviews must be greater than zero'))
+        if no_of_reviews > checkers_no:
             raise forms.ValidationError(
                 _('number of reviews must be less than or equal the number of checkers'))
         return self.cleaned_data['no_of_reviews_required']
@@ -271,6 +275,8 @@ class FileCategoryForm(forms.ModelForm):
     def clean(self):
         unique_field = self.cleaned_data.get('unique_field')
         amount_field = self.cleaned_data.get('amount_field')
+        if not (unique_field and amount_field):
+            return super().clean()
         if '-' not in unique_field or '-' not in amount_field:
             raise forms.ValidationError(
                 _("Msisdn and Amount fields must be in the following format col-row ex: A-1 "))

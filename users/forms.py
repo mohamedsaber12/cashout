@@ -598,25 +598,19 @@ class ForgotPasswordForm(forms.Form):
 
 
 class ClientFeesForm(forms.ModelForm):
-    CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'),(-1,'other'))
-    fees_percentage = forms.ChoiceField(
+    CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'))
+    fees_percentage = forms.ChoiceField(label=_("Fees"),
         widget=forms.Select, choices=CHOICES)
-    other = forms.IntegerField(max_value=100,min_value=0,required=False)
 
     class Meta:
         model = Client
-        fields = ('fees_percentage','other')
+        fields = ('fees_percentage',)
 
     def clean(self):
         fees_percentage = self.cleaned_data.get('fees_percentage')
-        other = self.cleaned_data.get('other')
-        if fees_percentage == '-1' and other is None:
-            raise forms.ValidationError(self.add_error('other','this field is required'))
-
+    
     def save(self,commit=True):
         client = super().save(commit=False)
-        if self.cleaned_data.get('fees_percentage') == '-1':
-            client.fees_percentage = self.cleaned_data.get('other')
         if commit:
             client.save()
             entity_setup = EntitySetup.objects.get(entity=client.client)

@@ -16,9 +16,10 @@ class Levels(models.Model):
     Added by the root of the tree only
     """
     max_amount_can_be_disbursed = models.FloatField(
-        default=0, unique=True, verbose_name=_('Max amount can be disbursed'))
+        default=0, verbose_name=_('Max amount can be disbursed'))
     level_of_authority = models.PositiveSmallIntegerField(
         choices=LEVELS, null=True, blank=True)
+    # root
     created = models.ForeignKey(
         'users.User', on_delete=models.CASCADE, null=True)
 

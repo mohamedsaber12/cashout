@@ -322,6 +322,20 @@ class LevelForm(forms.ModelForm):
         model = Levels
         exclude = ('created', 'level_of_authority')
 
+    def clean_max_amount_can_be_disbursed(self):
+        amount = self.cleaned_data.get('max_amount_can_be_disbursed')
+        if not amount:
+            return amount
+        levels_qs = Levels.objects.filter(
+            created=self.request.user,
+            max_amount_can_be_disbursed=amount)
+        if self.instance and self.instance.id:
+            levels_qs = levels_qs.exclude(id=self.instance.id)    
+
+        if levels_qs.exists():    
+            raise forms.ValidationError(_('Level with this amount already exist'))
+        return amount
+
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.created = self.request.user.root

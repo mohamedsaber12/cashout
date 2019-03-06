@@ -403,7 +403,7 @@
             let step_no_string = String(step_no)
             
             let form_prefix = $("#step-" + step_no_string).attr('form_prefix');
-            if (form_prefix == 'pin' && "{{pinform}}" == 'None'){
+            if (form_prefix == 'pin' && "{{pinform_exist}}" == 'False'){
                 return true
             }
             var form_data = $("#step_" + step_no_string + "_form").serialize();

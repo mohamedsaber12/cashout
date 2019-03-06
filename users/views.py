@@ -405,6 +405,7 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
         data = super().get_context_data(**kwargs)
 
         data['pinform'] = PinForm(root=self.request.user).get_form()
+        data['pinform_exist'] = bool(data['pinform'])
         data['makerform'] = self.form_class(
             queryset=MakerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy

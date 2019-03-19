@@ -71,15 +71,51 @@ class PinForm(forms.Form):
             raise forms.ValidationError(_("Pin must be numeric"))
         return pin
 
-    def save_agents(self):
+    def set_pin(self):
         raw_pin = self.cleaned_data.get('pin')
         if not raw_pin:
-            return
+            return False
+        msisdns = list(self.agents.values_list('msisdn', flat=True))
+        ok,error = self.call_wallet(raw_pin, msisdns)
+        if not ok:
+            self.add_error('pin',error)
+            return False
         agent = self.agents.first()
-        agent.set_pin(raw_pin,commit=False)
+        agent.set_pin(raw_pin, commit=False)
         hashed_pin = agent.pin
         self.agents.update(pin=hashed_pin)
+        return True
 
+    def call_wallet(self,pin,msisdns):
+        import requests
+        from disbursement.utils import get_dot_env
+        env = get_dot_env()
+        vmt = VMTData.objects.get(vmt=self.root.client.creator)
+        data = vmt.return_vmt_data(VMTData.SET_PIN)
+        data["USERS"] = msisdns
+        data["PIN"] = pin
+        response = requests.post(
+            env.str(vmt.vmt_environment), json=data, verify=False)
+        if response.ok:
+            if response.json()["TXNSTATUS"] == '200':
+                return True,None
+            error_message = response.json().get('MESSAGE', None) or _("Failed to set pin")
+            return False, error_message
+        return False, _("Set pin process stopped during an internal error,\
+                 can you try again or contact you support team")
+
+
+class BalanceInquiryPinForm(forms.Form):
+    pin = forms.CharField(required=True, max_length=6, min_length=6, widget=forms.PasswordInput(
+        attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Enter pin')}))
+
+    def clean_pin(self):
+        pin = self.cleaned_data.get('pin')
+        if pin and not pin.isnumeric():
+            raise forms.ValidationError(_("Pin must be numeric"))
+        return pin
+
+        
 AgentFormSet = modelformset_factory(
     model=Agent, form=AgentForm, can_delete=True, 
     min_num=1, validate_min=True)

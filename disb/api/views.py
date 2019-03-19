@@ -74,7 +74,7 @@ class DisburseAPIView(APIView):
             recepients = DisbursementData.objects.select_related('doc').filter(doc_id=serializer.validated_data['doc_id']).\
                 extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values(
                     'MSISDN', 'AMOUNT', 'TXNID')
-            data = vmt.return_vmt_data()
+            data = vmt.return_vmt_data(VMTData.DISBURSEMENT)
 
             data.update({
                 "SENDERS": senders,

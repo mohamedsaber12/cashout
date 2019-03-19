@@ -354,7 +354,19 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
                                 self.request.user.root)
 
                 elif isinstance(form, PinForm):
-                    form.save_agents()
+                    ok = form.set_pin()
+                    if not ok:
+                        return HttpResponse(
+                            content=json.dumps({
+                                "valid": False,
+                                "reason": "validation",
+                                "errors": form.errors,
+                                #only formsets have non_form_errors but normal form doesn't
+                                "non_form_errors": form.non_form_errors() if form_is_formset else None,
+                                "form_is_formset": form_is_formset,
+                                'prefix': data['prefix']
+                            }),
+                            content_type="application/json")
 
                 # update setup model flags
                 setup = Setup.objects.get(

@@ -10,6 +10,17 @@ class VMTData(models.Model):
     """
     VMT is the credentials needed by UIG to request disbursement
     """
+    # disbursment at checker user
+    DISBURSEMENT = 1
+    # balance inquiry at root user
+    BALANCE_INQUIRY = 2
+    # bulk msisdns change profile at root user
+    CHANGE_PROFILE = 3
+    # bulk agents set pin at root user
+    SET_PIN = 4
+    # bulk agents validation at superadmin
+    USER_INQUIRY = 5
+
     login_username = models.CharField(max_length=32)
     login_password = models.CharField(max_length=32)
     request_gateway_code = models.CharField(max_length=32)
@@ -30,7 +41,7 @@ class VMTData(models.Model):
     def __str__(self):
         return "VMT for {} entities".format(self.vmt.username)
 
-    def return_vmt_data(self):
+    def return_vmt_data(self,purpose):
         """
         Return dict of vmt data represented by VMT attributes used
         by the UIG
@@ -41,12 +52,39 @@ class VMTData(models.Model):
             "PASSWORD": self.login_password,
             "REQUEST_GATEWAY_CODE": self.request_gateway_code,
             "REQUEST_GATEWAY_TYPE": self.request_gateway_type,
-            "SERVICETYPE": "P2P",
-            "TYPE": "BPREQ",
             "WALLETISSUER": self.wallet_issuer,
-            "SOURCE": "DISB"
         }
+        if purpose == self.DISBURSEMENT:
+            data.update({
+                "SERVICETYPE": "P2P",
+                "SOURCE": "DISB",
+                "TYPE": "BPREQ",
+            })
+        elif purpose == self.USER_INQUIRY:
+            data.update({
+                "USERS": "",  # msisdn_list
+                "TYPE": "BUSRINQREQ"
+            })
+        elif purpose == self.CHANGE_PROFILE:
+            data.update({
+                "USERS": "",  # msisdn_newprofile_obj_list
+                "TYPE": "BCHGPREQ"
+            })
+        elif purpose == self.SET_PIN:
+            data.update({
+                "USERS": "",  # msisdn_list
+                "TYPE": "BPINSETREQ",
+                "PIN": "" # pin
+            })
+        elif purpose == self.BALANCE_INQUIRY:
+            data.update({
+                "MSISDN": "",
+                "PIN":"",
+                "TYPE": "CBEREQ"
+            })
         return data
+
+
 
 
 class Agent(models.Model):

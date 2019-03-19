@@ -1,7 +1,7 @@
 from django.urls import path
 
 from disb.views import (disburse, disbursement_list,
-    failed_disbursed_for_download, SuperAdminAgentsSetup)
+                        failed_disbursed_for_download, SuperAdminAgentsSetup, BalanceInquiry)
 
 app_name = 'disbursement'
 
@@ -11,4 +11,7 @@ urlpatterns = [
     path('disburse/export_failed_download/<doc_id>/',
          failed_disbursed_for_download, name='download_failed'),
     path('client/creation/agents/<token>/', SuperAdminAgentsSetup.as_view(), name='add_agents'),
+    path('agent/balance-inquiry',
+         BalanceInquiry.as_view(), name='balance_inquiry'),
+    
 ]

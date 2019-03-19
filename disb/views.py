@@ -20,11 +20,11 @@ from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import generate_file
 from data.utils import redirect_params,get_client_ip
-from disb.forms import VMTDataForm, AgentFormSet, AgentForm
+from disb.forms import VMTDataForm, AgentFormSet, AgentForm,BalanceInquiryPinForm
 from disb.models import Agent, VMTData
 from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
-from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin
+from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin,RootRequiredMixin
 from users.models import EntitySetup
 from users.tasks import send_agent_pin_to_client
 
@@ -189,9 +189,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             super_agent = super_agent_form.save(commit=False)
             super_agent.super = True
             super_agent.wallet_provider = root
-            super_agent.save()
-
-            agents_msisdn = []
+            
+            agents_msisdn = [super_agent.msisdn]
             objs = agentform.save(commit=False)
             try:
                 for obj in agentform.deleted_objects:
@@ -202,6 +201,11 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 obj.wallet_provider = root
                 agents_msisdn.append(obj.msisdn)
 
+            ok,error = self.validate_agent_wallet(request, agents_msisdn)
+            if not ok:
+                return self.handle_form_errors(agentform, super_agent_form)
+
+            super_agent.save()
             agentform.save()
             
             entity_setup = EntitySetup.objects.get(user=self.request.user,
@@ -217,4 +221,88 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             }
             return render(request, template_name=self.template_name, context=context)
 
-    
+    def validate_agent_wallet(self, request, msisdns):
+        import requests
+        from disbursement.utils import get_dot_env
+        env = get_dot_env()
+        vmt = VMTData.objects.get(vmt=request.user)
+        data = vmt.return_vmt_data(VMTData.USER_INQUIRY)
+        data["USERS"] = msisdns
+        response = requests.post(
+            env.str(vmt.vmt_environment), json=data, verify=False)
+        if response.ok:
+            if response.json()["TXNSTATUS"] == '200':
+                return True, None
+            error_message = response.json().get('MESSAGE', None) or _("Agents creation failed")
+            return False, error_message
+        return False, _("Agents creation process stopped during an internal error,\
+                can you try again or contact you support team")
+
+    def handle_form_errors(agentform, super_agent_form):
+        # add errros to forms
+        context = {
+            "agentform": agentform,
+            "super_agent_form": super_agent_form,
+        }
+        return render(request, template_name=self.template_name, context=context)
+
+
+class BalanceInquiry(RootRequiredMixin, View):
+    """
+    View for super user to create Agents for the entity. 
+    """
+    template_name = 'disbursement/balance_inquiry.html'
+
+
+    def get(self, request, *args, **kwargs):
+
+        context = {
+            "form" : BalanceInquiryPinForm()
+        }
+        return render(request, template_name=self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+
+        form = BalanceInquiryPinForm(request.POST)
+        if not form.is_valid():
+            context = {    
+                "form":form
+            }
+            return render(request, template_name=self.template_name, context=context)
+        
+        ok, error_or_balance = self.get_wallet_balance(
+            request, form.data.get('pin'))
+        if ok:
+            context = {
+                "balance": error_or_balance,         
+            }
+        else:
+            context = {
+                "error_message": error_or_balance,
+            }
+        form = BalanceInquiryPinForm()
+        context['form'] = form    
+        return render(request, template_name=self.template_name, context=context)
+   
+    def get_wallet_balance(self, request,pin):
+        import requests
+        from disbursement.utils import get_dot_env
+        env = get_dot_env()
+        vmt = VMTData.objects.get(vmt=request.user.root.client.creator)
+        data = vmt.return_vmt_data(VMTData.BALANCE_INQUIRY)
+        super_agent = Agent.objects.get(wallet_provider=request.user,super=True)
+        data["MSISDN"]=  super_agent.msisdn
+        data["PIN"]= pin
+        
+        response = requests.post(
+            env.str(vmt.vmt_environment), json=data, verify=False)
+        if response.ok:
+            resp_json = response.json()
+            if resp_json["TXNSTATUS"] == '200':
+                return True, resp_json['BALANCE']
+            error_message = resp_json.get(
+                'MESSAGE', None) or _("Balance inquiry failed")
+            return False, error_message
+        return False, _("Balance inquiry process stopped during an internal error,\
+                can you try again or contact you support team")
+

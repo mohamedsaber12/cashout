@@ -6,10 +6,10 @@ import logging
 from datetime import datetime
 
 import requests
+from django.utils.translation import gettext as _
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render, render_to_response
 from django.urls import reverse
 from django.urls import reverse_lazy
@@ -247,7 +247,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         return render(request, template_name=self.template_name, context=context)
 
 
-class BalanceInquiry(RootRequiredMixin, View):
+class BalanceInquiry(RootRequiredMixin, SuperFinishedSetupMixin, View):
     """
     View for super user to create Agents for the entity. 
     """

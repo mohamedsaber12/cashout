@@ -23,7 +23,7 @@ class FileCategory(models.Model):
         settings.AUTH_USER_MODEL, blank=True, null=True, on_delete=models.CASCADE, 
         related_name='file_category')
     unique_field = models.CharField(max_length=128,
-                                    verbose_name=_('msisdn header position'))
+                                    verbose_name=_('mobile number header position'))
     amount_field = models.CharField(max_length=128,
                                     verbose_name=_('amount header position'),
                                     help_text=_('for ex: loan_field'))

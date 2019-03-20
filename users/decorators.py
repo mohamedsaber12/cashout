@@ -17,17 +17,18 @@ def user_passes_test_with_request(test_func, login_url=None,
 
     @param handle_login_url:function that takes request as param and return login_url.
     """
-
+    
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
             if test_func(request):
                 return view_func(request, *args, **kwargs)
             path = request.build_absolute_uri()
+            new_login_url = None
             if handle_login_url:
-                login_url  = handle_login_url(request)
-
-            resolved_login_url = resolve_url(login_url or settings.LOGIN_URL)
+                new_login_url  = handle_login_url(request)
+            
+            resolved_login_url = resolve_url(new_login_url or login_url or settings.LOGIN_URL)
             # If the login url is the same scheme and net location then just
             # use the path as the "next" url.
             login_scheme, login_netloc = urlparse(resolved_login_url)[:2]
@@ -150,6 +151,25 @@ def root_only(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url=
     """
     actual_decorator = user_passes_test(
         lambda u: u.is_root,
+        login_url=login_url,
+        redirect_field_name=None
+    )
+    if function:
+        return actual_decorator(function)
+    return actual_decorator
+
+
+def maker_only(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
+    """
+    makers only allowed
+    """
+    def can_pass(request):
+        user = request.user
+        status = request.user.get_status(request)
+        return user.is_maker or ( user.is_upmaker and status == 'disbursement')
+
+    actual_decorator = user_passes_test_with_request(
+        can_pass,
         login_url=login_url,
         redirect_field_name=None
     )

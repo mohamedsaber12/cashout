@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.conf import settings
 from django.contrib.auth.hashers import make_password
 from django.db import models
+from django.utils.translation import gettext_lazy as _
 
 
 class VMTData(models.Model):
@@ -90,7 +91,7 @@ class VMTData(models.Model):
 class Agent(models.Model):
     # root user
     wallet_provider = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='agents',on_delete=models.CASCADE)
-    msisdn = models.CharField(max_length=16)
+    msisdn = models.CharField(max_length=16,verbose_name=_("Mobile number"))
     pin = models.CharField(max_length=128, null=True)
     super = models.BooleanField(default=False)
 
@@ -119,8 +120,8 @@ class DisbursementData(models.Model):
     doc = models.ForeignKey('data.Doc', null=True, related_name='disbursement_data', on_delete=models.CASCADE)
     date = models.DateField(blank=True, null=True)
     is_disbursed = models.BooleanField(default=0)
-    amount = models.FloatField(verbose_name='AMOUNT')
-    msisdn = models.CharField(max_length=16, verbose_name='MSISDN')
+    amount = models.FloatField(verbose_name=_('AMOUNT'))
+    msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     reason = models.TextField()
 
     class Meta:

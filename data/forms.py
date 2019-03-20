@@ -9,7 +9,7 @@ from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from data.models import Doc, DocReview, FileCategory,CollectionData,Format
+from data.models import Doc, DocReview, FileCategory, CollectionData, Format
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 from users.models import User
@@ -224,7 +224,7 @@ class FileCategoryForm(forms.ModelForm):
     amount_field = forms.CharField(
         label=_('amount header position %s') % "(B-1)")
     unique_field = forms.CharField(
-        label=_('msisdn header position %s') % "(A-1)")
+        label=_('mobile number header position %s') % "(A-1)")
     class Meta:
         model = FileCategory
         fields = '__all__'
@@ -279,17 +279,17 @@ class FileCategoryForm(forms.ModelForm):
             return super().clean()
         if '-' not in unique_field or '-' not in amount_field:
             raise forms.ValidationError(
-                _("Msisdn and Amount fields must be in the following format col-row ex: A-1 "))
+                _("Mobile number and Amount fields must be in the following format col-row ex: A-1 "))
         col1, row1 = unique_field.split('-')
         col2, row2 = amount_field.split('-')
         if not col1.isalpha() or not col2.isalpha() or not row1.isnumeric() or not row2.isnumeric():
             raise forms.ValidationError(
-                _("Msisdn and Amount fields must be in the form letter-number "))
+                _("Mobile number and Amount fields must be in the form letter-number "))
         if row1 != row2:
-            raise forms.ValidationError(_("Msisdn and Amount fields must be on the same row"))
+            raise forms.ValidationError(_("Mobile number and Amount fields must be on the same row"))
         elif col1 == col2:
             raise forms.ValidationError(
-                _("Msisdn and Amount fields can not be on the same column"))
+                _("Mobile number and Amount fields can not be on the same column"))
 
         return self.cleaned_data
 

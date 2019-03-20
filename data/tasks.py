@@ -47,7 +47,7 @@ def handle_disbursement_file(doc_obj_id):
                 except ValueError:
                     doc_obj.is_processed = False
                     doc_obj.processing_failure_reason = _(
-                        "This file may has invalid amount at ") + excell_position(pos,row)
+                        "This file has invalid amount at ") + excell_position(pos,row)
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -67,7 +67,15 @@ def handle_disbursement_file(doc_obj_id):
                 else:
                     doc_obj.is_processed = False
                     doc_obj.processing_failure_reason = _(
-                        "This file may be has invalid msisdn at ") + excell_position(pos, row)
+                        "This file has invalid mobile number at ") + excell_position(pos, row)
+                    doc_obj.save()
+                    notify_maker(doc_obj)
+                    return False
+                # if msisdn is duplicate    
+                if str_value in msisdn:
+                    doc_obj.is_processed = False
+                    doc_obj.processing_failure_reason = _(
+                        "This file has duplicate mobile number at ") + excell_position(pos, row)
                     doc_obj.save()
                     notify_maker(doc_obj)
                     return False
@@ -95,7 +103,8 @@ def handle_disbursement_file(doc_obj_id):
             return False
     else:
         doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = _("This file may be has msisdn which has no amount")
+        doc_obj.processing_failure_reason = _(
+            "This file may has mobile number which has no amount")
         doc_obj.save()
         notify_maker(doc_obj)
         return False

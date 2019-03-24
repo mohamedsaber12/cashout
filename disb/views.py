@@ -32,6 +32,8 @@ DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
 FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger(
     "failed_disbursement_download")
+FAILED_VALIDATION_DOWNLOAD = logging.getLogger(
+    "failed_validation_download")
 
 @setup_required
 @otp_required
@@ -136,7 +138,36 @@ def failed_disbursed_for_download(request, doc_id):
             f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
 
         return response
-    
+
+
+@setup_required
+@login_required
+def download_failed_validation_file(request, doc_id):
+    doc_obj = Doc.objects.get(id=doc_id)
+    can_view = (
+        doc_obj.owner == request.user and request.user.is_maker
+    )
+    if not can_view:
+        return HttpResponse(status=401)
+
+    filename = request.GET.get('filename', None)
+    if not filename:
+        raise Http404
+
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+    if not os.path.exists(file_path):
+        raise Http404
+
+    with open(file_path, 'rb') as fh:
+        response = HttpResponse(
+            fh.read(), content_type='application/vnd.ms-excel')
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        response['X-Accel-Redirect'] = file_path
+        FAILED_VALIDATION_DOWNLOAD.debug(
+            f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
+
+        return response
 
 class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
     """

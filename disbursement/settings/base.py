@@ -328,6 +328,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/failed_disbursement_download.log',
         },
+        'failed_validation_download': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/failed_validation_download.log',
+        },
         'bill_inquiry_req': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -453,6 +458,11 @@ LOGGING = {
         },
         'failed_disbursement_download': {
             'handlers': ['failed_disbursement_download'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'failed_validation_download': {
+            'handlers': ['failed_validation_download'],
             'level': 'DEBUG',
             'propagate': True,
         },

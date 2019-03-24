@@ -15,16 +15,18 @@ from django.urls import reverse
 
 from data.models import Doc
 from data.models import FileData
-from data.utils import excell_position
+from data.utils import export_excel,randomword
 from disb.models import DisbursementData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
 from users.models import User, MakerUser,CheckerUser
+from data.decorators import respects_language
 import random
 import string
 
 @app.task(ignore_result=False)
-def handle_disbursement_file(doc_obj_id):
+@respects_language
+def handle_disbursement_file(doc_obj_id,**kwargs):
     """
     A function that parse the document and save it into the File Data
     It has 3 cases :
@@ -37,20 +39,28 @@ def handle_disbursement_file(doc_obj_id):
     xl_sheet = xl_workbook.sheet_by_index(0)
     amount_position, msisdn_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
-    amount, msisdn = [], []
     rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
+    list_of_dicts = []
     for row, cell_obj in enumerate(rows,start_index):
+        row_dict = {
+            'amount':'',
+            'error':'',
+            'msisdn':''
+        }
         for pos, item in enumerate(cell_obj):
             if pos == amount_position:
                 try:
-                    amount.append(float(item.value))
+                    row_dict['amount'] = float(item.value)
+                    if not row_dict['error']:
+                        row_dict['error']  = None
+                    
                 except ValueError:
-                    doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _(
-                        "This file has invalid amount at ") + excell_position(pos,row)
-                    doc_obj.save()
-                    notify_maker(doc_obj)
-                    return False
+                    if row_dict['error']:
+                        row_dict['error'] += '\nInvalid amount'
+                    else:
+                        row_dict['error'] = '\nInvalid amount'
+                    row_dict['amount'] = item.value
+                   
             elif pos == msisdn_position:
                 if item.ctype == 2:
                     str_value = str(int(item.value))
@@ -65,57 +75,74 @@ def handle_disbursement_file(doc_obj_id):
                 elif str_value.startswith('01'):
                     str_value = '002' + str_value
                 else:
-                    doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _(
-                        "This file has invalid mobile number at ") + excell_position(pos, row)
-                    doc_obj.save()
-                    notify_maker(doc_obj)
-                    return False
-                # if msisdn is duplicate    
-                if str_value in msisdn:
-                    doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _(
-                        "This file has duplicate mobile number at ") + excell_position(pos, row)
-                    doc_obj.save()
-                    notify_maker(doc_obj)
-                    return False
-                msisdn.append(str_value)
+                    row_dict['msisdn'] = item.value
+                    if row_dict['error']:
+                        row_dict['error'] +=  "\nInvalid mobile number"
+                    else:
+                        row_dict['error'] = "Invalid mobile number"
+                    
+                # if msisdn is duplicate   
+                if list(filter(lambda d: d['msisdn'] == str_value, list_of_dicts)):
+                    row_dict['msisdn'] = item.value
+                    if row_dict['error']:
+                        row_dict['error'] += "\nDuplicate mobile number"
+                    else:
+                        row_dict['error'] = "Duplicate mobile number"
+                  
+                else:
+                    if not row_dict['error']:
+                        row_dict['error'] = None
+                    row_dict['msisdn'] = str_value
+        
+        list_of_dicts.append(row_dict)
+    
+    msisdn,amount,errors = [],[],[]
+    for dict in list_of_dicts:
+        msisdn.append(dict['msisdn'])
+        amount.append(dict['amount'])
+        errors.append(dict['error'])
 
-    amount_length = len(amount)
-    if amount_length == len(msisdn):
-        data = zip(amount, msisdn)
-        try:
-            DisbursementData.objects.bulk_create(
-                [DisbursementData(doc=doc_obj, amount=float(
-                    i[0]), msisdn=i[1]) for i in data]
-            )
-            doc_obj.total_amount = sum(amount)
-            doc_obj.total_count = amount_length
-            doc_obj.is_processed = True
-            doc_obj.save()
-            notify_maker(doc_obj)
-            return True
-        except IntegrityError:
-            doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = _("This file contains duplicates")
-            doc_obj.save()
-            notify_maker(doc_obj)
-            return False
-    else:
+    valid = True
+    for item in errors:
+        if item is not None:
+            valid = False    
+    if not valid:
+        filename = 'failed_disbursement_validation_%s.xlsx' % (
+             randomword(4))
+
+        file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+
+        data = list(zip(amount, msisdn,errors))
+        headers = ['amount','mobile number', 'errors']
+        data.insert(0,headers)
+        export_excel(file_path, data)
+        download_url = settings.BASE_URL + \
+            str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
+            '?filename=' + filename
         doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = _(
-            "This file may has mobile number which has no amount")
+        doc_obj.processing_failure_reason = _("File validation error")
         doc_obj.save()
-        notify_maker(doc_obj)
+        notify_maker(doc_obj, download_url)
         return False
+    
+    data = zip(amount, msisdn)        
+    DisbursementData.objects.bulk_create(
+        [DisbursementData(doc=doc_obj, amount=float(
+            i[0]), msisdn=i[1]) for i in data]
+    )
+    doc_obj.total_amount = sum(amount)
+    doc_obj.total_count = len(amount)
+    doc_obj.is_processed = True
+    doc_obj.save()
+    notify_maker(doc_obj)
+    return True
+
 
 
 @app.task()
 def generate_file(doc_id,user_id):
     """related to disbursement"""
-    def randomword(length):
-        letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
 
     doc_obj = Doc.objects.get(id=doc_id)
     filename = _('failed_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
@@ -302,21 +329,23 @@ def doc_review_maker_mail(doc_id,review_id):
         message=MESSAGE
     )
 
-def notify_maker(doc):
+def notify_maker(doc,download_url=None):
     """related to disbursement"""
     maker = doc.owner
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
 
-    MESSAGE_SUCC = f"""Dear {maker.first_name} 
-        The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
-        You can now notify checkers, 
-        Thanks, BR"""
-    MESSAGE_FAIL = f"""Dear {maker.first_name}
-        The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
-        The reason is: {doc.processing_failure_reason}
-        Thanks, BR"""
-
-    message = MESSAGE_SUCC if doc.is_processed else MESSAGE_FAIL
+    message = '' 
+    if doc.is_processed:
+        message = f"""Dear {maker.first_name} 
+            The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
+            You can now notify checkers, 
+            Thanks, BR"""
+    else: 
+        message = f"""Dear {maker.first_name}
+            The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
+            The reason is: {doc.processing_failure_reason}
+            You can download the file containing errors from <a href="{download_url}" >here</a>
+            Thanks, BR"""
     
     subject = f'[{maker.brand.mail_subject}]'
     

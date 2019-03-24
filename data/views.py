@@ -18,6 +18,7 @@ from django.http import (Http404, HttpResponse, HttpResponseRedirect,
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
@@ -74,7 +75,8 @@ def file_upload(request):
                 UPLOAD_LOGGER.debug(
                     '%s uploaded disbursement file at ' % request.user + str(now))
              
-                handle_disbursement_file.delay(file_doc.id)
+                handle_disbursement_file.delay(
+                    file_doc.id, language=translation.get_language())
 
                 # Redirect to the document list after POST
                 return HttpResponseRedirect(request.path)

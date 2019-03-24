@@ -195,3 +195,20 @@ def excell_position(col_index,row_index):
     """
     return xlsxwriter.utility.xl_col_to_name(col_index) + str(row_index+1)
 
+
+def export_excel(file_path, data):
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(file_path)
+    worksheet = workbook.add_worksheet()
+
+    # Iterate over the data and write it out row by row.
+    for row, items in enumerate(data):
+        for col, item in enumerate(items):
+            worksheet.write(row, col, item)
+
+    workbook.close()
+
+
+def randomword(length):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))

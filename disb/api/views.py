@@ -19,7 +19,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from data.models import Doc
-from data.tasks import notify_checkers
+from data.tasks import notify_checkers,handle_change_profile_callback
 from disb.api.permission_classes import BlacklistPermission
 from disb.api.serializers import (DisbursementCallBackSerializer,
                                   DisbursementSerializer)
@@ -151,6 +151,26 @@ class DisburseCallBack(UpdateAPIView):
             except DisbursementData.DoesNotExist:
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
 
+        return JsonResponse({}, status=status.HTTP_202_ACCEPTED)
+
+
+class ChangeProfileCallBack(UpdateAPIView):
+    """
+    API to receive Change profile transactions status from external wallet api
+    """
+    authentication_classes = (TokenAuthentication,)
+    permission_classes = (IsAuthenticated,)
+    renderer_classes = (JSONRenderer,)
+
+    def update(self, request, *args, **kwargs):
+        DATA_LOGGER.debug(datetime.now().strftime(
+            '%d/%m/%Y %H:%M') + '----> CHANGE PROFILE CALLBACK <-- \n' + str(request.data))
+        if len(request.data['transactions']) == 0:
+            return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
+        doc_obj = Doc.objects.filter(txn_id=request.data['batch_id']).first()
+        if not doc_obj:
+            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+        handle_change_profile_callback.delay(doc_obj.id,request.data['transactions'])
         return JsonResponse({}, status=status.HTTP_202_ACCEPTED)
 
 

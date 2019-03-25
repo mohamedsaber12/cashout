@@ -68,8 +68,9 @@ class VMTData(models.Model):
             })
         elif purpose == self.CHANGE_PROFILE:
             data.update({
-                "USERS": "",  # msisdn_newprofile_obj_list
-                "TYPE": "BCHGPREQ"
+                "USERS": "",  # msisdn
+                "TYPE": "BCHGPREQ",
+                "FEES":""
             })
         elif purpose == self.SET_PIN:
             data.update({
@@ -81,7 +82,7 @@ class VMTData(models.Model):
             data.update({
                 "MSISDN": "",
                 "PIN":"",
-                "TYPE": "CBEREQ"
+                "TYPE": "PRBALINQREQ"
             })
         return data
 

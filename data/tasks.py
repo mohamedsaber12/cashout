@@ -6,6 +6,8 @@ import re
 import tablib
 import xlrd
 import itertools
+import requests
+from disbursement.utils import get_dot_env
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.mail import send_mail
@@ -16,7 +18,7 @@ from django.urls import reverse
 from data.models import Doc
 from data.models import FileData
 from data.utils import export_excel,randomword
-from disb.models import DisbursementData
+from disb.models import DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
 from users.models import User, MakerUser,CheckerUser
@@ -105,7 +107,9 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     valid = True
     for item in errors:
         if item is not None:
-            valid = False    
+            valid = False 
+            break
+
     if not valid:
         filename = 'failed_disbursement_validation_%s.xlsx' % (
              randomword(4))
@@ -126,6 +130,30 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         notify_maker(doc_obj, download_url)
         return False
     
+
+    env = get_dot_env()
+    vmt = VMTData.objects.get(vmt=doc_obj.owner.root.client.creator)
+    data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
+    data["USERS"] = msisdn
+    data["FEES"] = doc_obj.owner.root.client.get_fees()
+    response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+    error_message = None
+    if response.ok:
+        reponse_dict = response.json()
+        if reponse_dict["TXNSTATUS"] != '200':
+            error_message = reponse_dict.get('MESSAGE', None) or _(
+                "Failed to make registration")
+            
+    else:
+        error_message = _("Registration process stopped during an internal error,\
+                 can you try again or contact your support team")
+    if error_message:
+        doc_obj.is_processed = False
+        doc_obj.processing_failure_reason = error_message
+        doc_obj.save()
+        notify_maker(doc_obj)
+        return False
+
     data = zip(amount, msisdn)        
     DisbursementData.objects.bulk_create(
         [DisbursementData(doc=doc_obj, amount=float(
@@ -133,11 +161,44 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     )
     doc_obj.total_amount = sum(amount)
     doc_obj.total_count = len(amount)
-    doc_obj.is_processed = True
+    doc_obj.is_processed = False
+    doc_obj.txn_id = reponse_dict['batch_id']
     doc_obj.save()
-    notify_maker(doc_obj)
     return True
 
+@app.task()
+def handle_change_profile_callback(doc_id,transactions):
+    doc_obj = Doc.objects.get(id=doc_id)
+    msisdns,errors = [],[]
+    error = False
+    for status,msisdn,msg in transactions:
+        if status != "200":
+            error = True
+            errors.push(msg)
+        msisdns.push(msisdn)    
+    if not error:
+        notify_maker(doc_obj)
+        return
+    
+    doc_obj.disbursement_data.delete()
+    filename = 'failed_disbursement_validation_%s.xlsx' % (
+        randomword(4))
+
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+
+    data = list(zip(msisdns, errors))
+    headers = ['mobile number', 'errors']
+    data.insert(0, headers)
+    export_excel(file_path, data)
+    download_url = settings.BASE_URL + \
+        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
+        '?filename=' + filename
+    doc_obj.is_processed = False
+    doc_obj.processing_failure_reason = _("Mobile numbers validation error")
+    doc_obj.save()
+    notify_maker(doc_obj, download_url)
+    return
 
 
 @app.task()
@@ -340,12 +401,17 @@ def notify_maker(doc,download_url=None):
             The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
             You can now notify checkers, 
             Thanks, BR"""
-    else: 
-        message = f"""Dear {maker.first_name}
-            The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
-            The reason is: {doc.processing_failure_reason}
-            You can download the file containing errors from <a href="{download_url}" >here</a>
-            Thanks, BR"""
+    else:
+        MSG = f"""Dear {maker.first_name}
+                The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
+                The reason is: {doc.processing_failure_reason}"""
+        if download_url:
+            message = f"""{MSG}
+                You can download the file containing errors from <a href="{download_url}" >here</a>
+                Thanks, BR"""
+        else:
+            message = f"""{MSG}
+                Thanks, BR"""
     
     subject = f'[{maker.brand.mail_subject}]'
     

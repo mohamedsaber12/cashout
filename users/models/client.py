@@ -31,3 +31,11 @@ class Client(models.Model):
     def delete_client(self):
         User.objects.filter(hierarchy=self.client.hierarchy).delete()
         self.delete()
+
+    def get_fees(self):
+        if self.fees_percentage == 100:
+            return "Full"
+        elif self.fees_percentage == 50:
+            return "Half"
+        else:
+            return "No fees"   

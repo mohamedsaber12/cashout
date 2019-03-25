@@ -14,9 +14,13 @@
 {% block title %} {% trans 'Agents' %} {% endblock %}
 {% block form %}
     <form action="." method="post" id="step_1_form" >
-      <h1>{% trans 'Add Agents' %}</h1>
+        <h1>{% trans 'Add Agents' %}</h1>
+        
+        {%if non_form_error%}
+            <span style="color:red;">non_form_error</span>
+        {%endif%}
 
-          {% csrf_token %}
+        {% csrf_token %}
 
         <!-- super agent form -->
         <h4>Super agent</h4>

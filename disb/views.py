@@ -13,6 +13,7 @@ from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, render, render_to_response
 from django.urls import reverse
 from django.urls import reverse_lazy
+from django.utils.decorators import method_decorator
 from django.views.generic import CreateView,View
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
@@ -232,9 +233,17 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 obj.wallet_provider = root
                 agents_msisdn.append(obj.msisdn)
 
-            ok,error = self.validate_agent_wallet(request, agents_msisdn)
+            ok,error,data = self.validate_agent_wallet(request, agents_msisdn)
             if not ok:
-                return self.handle_form_errors(agentform, super_agent_form)
+                if data:
+                    return self.handle_form_errors(agentform, super_agent_form, data)
+                else:# handle non form errors
+                    context = {
+                        "non_form_error":error,
+                        "agentform": agentform,
+                        "super_agent_form": super_agent_form,
+                    }
+                    return render(request, template_name=self.template_name, context=context)
 
             super_agent.save()
             agentform.save()
@@ -262,15 +271,17 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
         if response.ok:
-            if response.json()["TXNSTATUS"] == '200':
-                return True, None
-            error_message = response.json().get('MESSAGE', None) or _("Agents creation failed")
-            return False, error_message
+            response_dict = response.json()
+            if response_dict["TXNSTATUS"] == '200':
+                return True, None, None
+            error_message = response_dict.get(
+                'MESSAGE', None) or _("Agents creation failed")
+            return False, error_message,response_dict
         return False, _("Agents creation process stopped during an internal error,\
-                can you try again or contact you support team")
+                can you try again or contact you support team"), None
 
-    def handle_form_errors(agentform, super_agent_form):
-        # add errros to forms
+    def handle_form_errors(self,agentform, super_agent_form, data):
+        # add errros from data to forms
         context = {
             "agentform": agentform,
             "super_agent_form": super_agent_form,
@@ -278,7 +289,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         return render(request, template_name=self.template_name, context=context)
 
 
-class BalanceInquiry(RootRequiredMixin, SuperFinishedSetupMixin, View):
+@method_decorator([setup_required], name='dispatch')
+class BalanceInquiry(RootRequiredMixin, View):
     """
     View for super user to create Agents for the entity. 
     """

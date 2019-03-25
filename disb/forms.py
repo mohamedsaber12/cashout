@@ -31,6 +31,7 @@ class VMTDataForm(forms.ModelForm):
 
 
 class AgentForm(forms.ModelForm):
+    msisdn = forms.CharField(max_length=11,min_length=11,label=_("Mobile number"))
     class Meta:
         model = Agent
         fields = ('msisdn',)
@@ -39,6 +40,15 @@ class AgentForm(forms.ModelForm):
         self.root = root
         super().__init__(*args, **kwargs)
 
+    def clean_msisdn(self):
+        msisdn = self.cleaned_data.get('msisdn',None)
+        if not msisdn:
+            return msisdn
+        import re
+        r = re.compile('(201|01)[0-2|5]\d{7}')
+        if not r.match(msisdn):
+            raise forms.ValidationError(_("Mobile number is not valid"))
+        return msisdn    
 
 class PinForm(forms.Form):
 

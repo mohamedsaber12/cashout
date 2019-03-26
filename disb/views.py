@@ -234,17 +234,20 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 obj.wallet_provider = root
                 agents_msisdn.append(obj.msisdn)
 
-            ok,error,data = self.validate_agent_wallet(request, agents_msisdn)
-            if not ok:
-                if data:
-                    return self.handle_form_errors(agentform, super_agent_form, data)
-                else:# handle non form errors
+            transactions, error = self.validate_agent_wallet(
+                request, agents_msisdn)
+            if not transactions:
+                    # handle non form errors
                     context = {
                         "non_form_error":error,
                         "agentform": agentform,
                         "super_agent_form": super_agent_form,
                     }
                     return render(request, template_name=self.template_name, context=context)
+
+            # transactions exist # check if have error or not #
+            if self.error_exist(transactions):
+                return self.handle_form_errors(agentform, super_agent_form, transactions)
 
             super_agent.save()
             agentform.save()
@@ -276,22 +279,47 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             str(response.status_code) + ' -- ' + str(response.text))
         if response.ok:
             response_dict = response.json()
-            if response_dict["TXNSTATUS"] == '200':
-                return True, None, None
-            error_message = response_dict.get(
-                'MESSAGE', None) or _("Agents creation failed")
-            return False, error_message,response_dict
-        return False, _("Agents creation process stopped during an internal error,\
-                can you try again or contact you support team"), None
+            transactions = response_dict.get('TRANSACTIONS',None)
+            if not transactions:
+                error_message = response_dict.get(
+                    'MESSAGE', None) or _("Agents creation failed")
+                return None, error_message
+            return transactions, None
+        return None, _("Agents creation process stopped during an internal error,\
+                can you try again or contact you support team")
 
-    def handle_form_errors(self,agentform, super_agent_form, data):
+    def handle_form_errors(self,agentform, super_agent_form, transactions):
         # add errros from data to forms
+        super_msisdn = super_agent_form.data.get('msisdn')
+        super_msg = self.get_msg(super_msisdn,transactions)
+        if super_msg:
+            super_agent_form.add_error('msisdn', super_msg)
+        for form in agentform.forms:
+            msisdn = form.cleaned_data.get('msisdn')
+            msg = self.get_msg(msisdn, transactions)
+            if msg:
+                form.add_error('msisdn', msg)
+
         context = {
             "agentform": agentform,
             "super_agent_form": super_agent_form,
         }
-        return render(request, template_name=self.template_name, context=context)
+        return render(self.request, template_name=self.template_name, context=context)
 
+    def error_exist(self,transactions):
+        for trx in  transactions:
+            msg = trx.get('MESSAGE',None)
+            if msg:
+                return True
+        return False           
+
+    def get_msg(self,msisdn,transactions):
+        obj = list(filter(
+            lambda trx: trx['MSISDN'] == msisdn, transactions))
+        if not obj:
+            return None
+        obj = obj[0]
+        return obj.get('MESSAGE', None)
 
 @method_decorator([setup_required], name='dispatch')
 class BalanceInquiry(RootRequiredMixin, View):

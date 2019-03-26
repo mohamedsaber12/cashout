@@ -7,6 +7,8 @@ import tablib
 import xlrd
 import itertools
 import requests
+import logging
+from datetime import datetime
 from disbursement.utils import get_dot_env
 from dateutil.parser import parse
 from django.conf import settings
@@ -25,6 +27,10 @@ from users.models import User, MakerUser,CheckerUser
 from data.decorators import respects_language
 import random
 import string
+
+
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
+
 
 @app.task(ignore_result=False)
 @respects_language
@@ -137,6 +143,9 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     data["USERS"] = msisdn
     data["FEES"] = doc_obj.owner.root.client.get_fees()
     response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+    WALLET_API_LOGGER.debug(
+        datetime.now().strftime('%d/%m/%Y %H:%M') + '----> CHANGE PROFILE <-- \n' +
+                            str(response.status_code) + ' -- ' + str(response.text))
     error_message = None
     if response.ok:
         reponse_dict = response.json()
@@ -329,7 +338,6 @@ def handle_uploaded_file(doc_obj_id):
             else:
                 file_data.date = parse(file_data.data['due_date']).date()
         except (KeyError, ValueError):
-            from datetime import datetime
             file_data.date = datetime.now()
         file_data.save()
         

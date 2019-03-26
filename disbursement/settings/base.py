@@ -1,3 +1,4 @@
+import datetime
 """
 Django settings for disbursement project.
 
@@ -189,6 +190,8 @@ REST_FRAMEWORK = {
     ),
 }
 
+EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(days=3)
+
 ADMIN_SITE_HEADER = "PayMob Administration"
 
 LOGIN_EXEMPT_URLS = (
@@ -237,6 +240,11 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/upload.log',
+        },
+        'wallet_api': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/wallet_api.log',
         },
         'download_serve': {
             'level': 'DEBUG',
@@ -368,6 +376,11 @@ LOGGING = {
         },
         'upload': {
             'handlers': ['file_upload'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'wallet_api': {
+            'handlers': ['wallet_api'],
             'level': 'DEBUG',
             'propagate': True,
         },

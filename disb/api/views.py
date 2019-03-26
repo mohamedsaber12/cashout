@@ -17,6 +17,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthentication
 
 from data.models import Doc
 from data.tasks import notify_checkers,handle_change_profile_callback
@@ -158,13 +159,16 @@ class ChangeProfileCallBack(UpdateAPIView):
     """
     API to receive Change profile transactions status from external wallet api
     """
-    authentication_classes = (TokenAuthentication,)
+    authentication_classes = (ExpiringTokenAuthentication,)
     permission_classes = (IsAuthenticated,)
     renderer_classes = (JSONRenderer,)
 
     def update(self, request, *args, **kwargs):
         DATA_LOGGER.debug(datetime.now().strftime(
             '%d/%m/%Y %H:%M') + '----> CHANGE PROFILE CALLBACK <-- \n' + str(request.data))
+        transactions = request.data.get('transactions',None)
+        if not transactions:
+            return JsonResponse({'message': 'Transactions are not sent'}, status=status.HTTP_404_NOT_FOUND)
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
         doc_obj = Doc.objects.filter(txn_id=request.data['batch_id']).first()

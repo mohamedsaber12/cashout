@@ -35,6 +35,7 @@ FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger(
     "failed_disbursement_download")
 FAILED_VALIDATION_DOWNLOAD = logging.getLogger(
     "failed_validation_download")
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
 @setup_required
 @otp_required
@@ -270,6 +271,9 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         data["USERS"] = msisdns
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
+        WALLET_API_LOGGER.debug(
+            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> USER INQUIRY <-- \n' +
+            str(response.status_code) + ' -- ' + str(response.text))
         if response.ok:
             response_dict = response.json()
             if response_dict["TXNSTATUS"] == '200':
@@ -339,6 +343,9 @@ class BalanceInquiry(RootRequiredMixin, View):
         
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
+        WALLET_API_LOGGER.debug(
+            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> BALANCE INQUIRY <-- \n' +
+            str(response.status_code) + ' -- ' + str(response.text))
         if response.ok:
             resp_json = response.json()
             if resp_json["TXNSTATUS"] == '200':

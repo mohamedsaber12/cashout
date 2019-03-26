@@ -1,8 +1,12 @@
+import logging
 from django import forms
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
-
 from disb.models import Agent, VMTData
+from datetime import datetime
+
+
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
 
 class AgentAdminForm(forms.ModelForm):
@@ -106,6 +110,9 @@ class PinForm(forms.Form):
         data["PIN"] = pin
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
+        WALLET_API_LOGGER.debug(
+            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> SET PIN <-- \n' +
+            str(response.status_code) + ' -- ' + str(response.text))
         if response.ok:
             if response.json()["TXNSTATUS"] == '200':
                 return True,None

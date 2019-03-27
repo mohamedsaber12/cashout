@@ -165,10 +165,8 @@ def download_failed_validation_file(request, doc_id):
         response = HttpResponse(
             fh.read(), content_type='application/vnd.ms-excel')
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        #response['X-Accel-Redirect'] = file_path
         FAILED_VALIDATION_DOWNLOAD.debug(
             f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
-        print(response)
         return response
 
 class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):

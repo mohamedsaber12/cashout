@@ -171,7 +171,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     doc_obj.total_amount = sum(amount)
     doc_obj.total_count = len(amount)
     doc_obj.is_processed = False
-    doc_obj.txn_id = reponse_dict['batch_id']
+    doc_obj.txn_id = reponse_dict['BATCH_ID']
     doc_obj.save()
     return True
 

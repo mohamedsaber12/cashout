@@ -90,10 +90,11 @@ class PinForm(forms.Form):
         if not raw_pin:
             return False
         msisdns = list(self.agents.values_list('msisdn', flat=True))
-        ok,error = self.call_wallet(raw_pin, msisdns)
-        if not ok:
+        transactions,error = self.call_wallet(raw_pin, msisdns)
+        if error:
             self.add_error('pin',error)
             return False
+        # handle transactions list    
         agent = self.agents.first()
         agent.set_pin(raw_pin, commit=False)
         hashed_pin = agent.pin
@@ -114,11 +115,14 @@ class PinForm(forms.Form):
             datetime.now().strftime('%d/%m/%Y %H:%M') + '----> SET PIN <-- \n' +
             str(response.status_code) + ' -- ' + str(response.text))
         if response.ok:
-            if response.json()["TXNSTATUS"] == '200':
-                return True,None
-            error_message = response.json().get('MESSAGE', None) or _("Failed to set pin")
-            return False, error_message
-        return False, _("Set pin process stopped during an internal error,\
+            response_dict = response.json()
+            transactions = response_dict.get('transactions', None)
+            if not transactions:
+                error_message = response_dict.get(
+                    'MESSAGE', None) or _("Failed to set pin")
+                return None, error_message
+            return transactions, None
+        return None, _("Set pin process stopped during an internal error,\
                  can you try again or contact you support team")
 
 

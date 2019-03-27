@@ -183,13 +183,10 @@ def handle_change_profile_callback(doc_id,transactions):
     for msisdn, status, _ in transactions:
         if status != "200":
             error = True
-            msg = ""
-            for v in status.values():
-                msg += v + '\n'
-            errors.push(msg)
+            errors.append('\n'.join(status.values()))
         else: 
-            error.push(None)    
-        msisdns.push(msisdn)    
+            errors.append(None)    
+        msisdns.append(msisdn)    
     if not error:
         notify_maker(doc_obj)
         return

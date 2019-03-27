@@ -308,8 +308,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
     def error_exist(self,transactions):
         for trx in  transactions:
-            msg = trx.get('MESSAGE',None)
-            if msg:
+            valid = trx.get('USER_TYPE',None)
+            if not valid:
                 return True
         return False           
 
@@ -319,7 +319,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         if not obj:
             return None
         obj = obj[0]
-        return obj.get('MESSAGE', None)
+        valid = obj.get('USER_TYPE', None)
+        if valid:
+            return None
+        return obj.get('MESSAGE', "Unknown error")
 
 @method_decorator([setup_required], name='dispatch')
 class BalanceInquiry(RootRequiredMixin, View):

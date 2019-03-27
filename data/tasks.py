@@ -141,7 +141,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     vmt = VMTData.objects.get(vmt=doc_obj.owner.root.client.creator)
     data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
     data["USERS"] = msisdn
-    data["FEES"] = doc_obj.owner.root.client.get_fees()
+    data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
     response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
     WALLET_API_LOGGER.debug(
         datetime.now().strftime('%d/%m/%Y %H:%M') + '----> CHANGE PROFILE <-- \n' +
@@ -184,6 +184,8 @@ def handle_change_profile_callback(doc_id,transactions):
         if status != "200":
             error = True
             errors.push(msg)
+        else: 
+            error.push(None)    
         msisdns.push(msisdn)    
     if not error:
         notify_maker(doc_obj)

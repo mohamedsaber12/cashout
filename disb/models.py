@@ -70,7 +70,7 @@ class VMTData(models.Model):
             data.update({
                 "USERS": "",  # msisdn
                 "TYPE": "BCHGPREQ",
-                "FEES":""
+                "NEWPROFILE":""
             })
         elif purpose == self.SET_PIN:
             data.update({

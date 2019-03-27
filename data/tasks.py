@@ -191,7 +191,7 @@ def handle_change_profile_callback(doc_id,transactions):
         notify_maker(doc_obj)
         return
     
-    doc_obj.disbursement_data.delete()
+    doc_obj.disbursement_data.all().delete()
     filename = 'failed_disbursement_validation_%s.xlsx' % (
         randomword(4))
 

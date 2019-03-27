@@ -203,7 +203,7 @@ def handle_change_profile_callback(doc_id,transactions):
     data.insert(0, headers)
     export_excel(file_path, data)
     download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
+        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_id})) + \
         '?filename=' + filename
     doc_obj.is_processed = False
     doc_obj.processing_failure_reason = _("Mobile numbers validation error")

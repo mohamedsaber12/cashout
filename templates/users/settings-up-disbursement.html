@@ -319,16 +319,14 @@
                 $('#disb_widget').smartWizard('enableStep', index);   
             }
         }   
-        $('#loading-image').bind('ajaxStart', function(){
-            $(this).show();
-        }).bind('ajaxStop', function(){
-            $(this).hide();
-        });
+       
         var oldheight = $('.stepContainer').css('height');
         oldheight = parseInt(oldheight.replace("px", ""));
         var newheight = oldheight+20;
         $('.stepContainer').height(newheight+"px");
 
+        var ajax_fired = false;
+        
         function onFinishCallback(objs, context){
             return stepSubmit(final_step);    
         }
@@ -340,9 +338,15 @@
                 String(context.toStep-1) + "&prefix=" + form_prefix
             
             }
-            else    
-                return stepSubmit(context.fromStep);
+            else{    
+                if (ajax_fired){
+                    ajax_fired = false
+                    return true;
+                }
+                else
+                    return stepSubmit(context.fromStep);
                 // return false to stay on step and true to continue navigation
+            }
         }
 
 
@@ -411,7 +415,7 @@
             $.ajax({
                 type: 'post',
                 url: "{% url 'users:settings-dibursement' %}",
-                async: false,
+                async: true,
                 data: form_data + "&step=" + step_no_string + "&prefix=" + form_prefix,
                 success: function (data, text, xhr) {
                     
@@ -455,6 +459,11 @@
                     }
                     
                     bool_return = data.valid
+                    if (bool_return){
+                        ajax_fired = true;
+                        $("#disb_widget").smartWizard('goForward');
+
+                    }
                 }
 
             });

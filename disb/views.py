@@ -27,7 +27,6 @@ from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
 from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin,RootRequiredMixin
 from users.models import EntitySetup
-from users.tasks import send_agent_pin_to_client
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")

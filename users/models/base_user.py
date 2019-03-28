@@ -14,6 +14,7 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 TYPES = (
+    # when creating super AN EMIAL MUST be created.
     (0, 'Super'),
     (1, 'Maker'),
     (2, 'Checker'),

@@ -4,7 +4,7 @@ from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
 from disb.models import Agent, VMTData
 from datetime import datetime
-
+from users.tasks import set_pin_error_mail
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
@@ -122,7 +122,7 @@ class PinForm(forms.Form):
         failed_trx = list(filter(
             lambda trx: trx['TXNSTATUS'] != "200", transactions))
         if failed_trx:
-            #send mail in a task
+            set_pin_error_mail.delay(self.root.id)
             return _("Failed to set pin")    
         return None
 

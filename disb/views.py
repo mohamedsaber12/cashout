@@ -313,7 +313,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
     def get_msg(self,msisdn,transactions):
         obj = list(filter(
-            lambda trx: trx['MSISDN'] == msisdn, transactions))
+            lambda trx: self.msisdn_slice(trx['MSISDN']) == msisdn, transactions))
         if not obj:
             return None
         obj = obj[0]
@@ -321,6 +321,9 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         if valid:
             return None
         return obj.get('MESSAGE', "Unknown error")
+
+    def msisdn_slice(self,msisdn):
+        return msisdn[-11:]
 
 @method_decorator([setup_required], name='dispatch')
 class BalanceInquiry(RootRequiredMixin, View):

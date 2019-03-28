@@ -63,15 +63,6 @@ class PinForm(forms.Form):
         self.root = root
         super().__init__(*args, **kwargs)
         self.agents = Agent.objects.filter(wallet_provider=root)
-        ## if they want change pin ##
-        # for field_name, field in self.fields.items():
-        #     if field_name == 'pin':
-        #         if agent and not agent.pin:
-        #             field.label = _("Add new pin")
-        #         else:
-        #             field.label = _("Change pin")
-        #             field.required = False
-        #         break
 
     def get_form(self):
         agent = self.agents.first()
@@ -94,11 +85,13 @@ class PinForm(forms.Form):
         if error:
             self.add_error('pin',error)
             return False
-        # handle transactions list    
-        agent = self.agents.first()
-        agent.set_pin(raw_pin, commit=False)
-        hashed_pin = agent.pin
-        self.agents.update(pin=hashed_pin)
+        # handle transactions list 
+        error = self.get_transactions_error(transactions)
+        if error:
+            self.add_error('pin', error)
+            return False
+        
+        self.agents.update(pin=True)
         return True
 
     def call_wallet(self,pin,msisdns):
@@ -125,6 +118,13 @@ class PinForm(forms.Form):
         return None, _("Set pin process stopped during an internal error,\
                  can you try again or contact you support team")
 
+    def get_transactions_error(self, transactions):
+        failed_trx = list(filter(
+            lambda trx: trx['TXNSTATUS'] != "200", transactions))
+        if failed_trx:
+            #send mail in a task
+            return _("Failed to set pin")    
+        return None
 
 class BalanceInquiryPinForm(forms.Form):
     pin = forms.CharField(required=True, max_length=6, min_length=6, widget=forms.PasswordInput(

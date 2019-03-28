@@ -180,10 +180,10 @@ def handle_change_profile_callback(doc_id,transactions):
     doc_obj = Doc.objects.get(id=doc_id)
     msisdns,errors = [],[]
     error = False
-    for msisdn, status, msg in transactions:
+    for msisdn, status, msg_list in transactions:
         if status != "200":
             error = True
-            errors.append('\n'.join(status.values()))
+            errors.append('\n'.join(msg_list))
         else: 
             errors.append(None)    
         msisdns.append(msisdn)    

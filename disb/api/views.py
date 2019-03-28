@@ -5,7 +5,6 @@ from datetime import datetime
 import environ
 import requests
 import xlrd
-from django.contrib.auth.hashers import check_password
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
@@ -65,67 +64,64 @@ class DisburseAPIView(APIView):
             id=serializer.validated_data['doc_id']).owner.root.id
         pin = serializer.validated_data['pin']
         agents = Agent.objects.select_related().filter(wallet_provider_id=provider_id)
-        pin_is_true = check_password(pin, agents.first().pin)
-        if pin_is_true:
-            senders = agents.extra(
-                select={'MSISDN': 'msisdn'}).values('MSISDN')
-            senders = list(senders)
-            for d in senders:
-                d.update({'PIN': pin})
-            recepients = DisbursementData.objects.select_related('doc').filter(doc_id=serializer.validated_data['doc_id']).\
-                extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values(
-                    'MSISDN', 'AMOUNT', 'TXNID')
-            data = vmt.return_vmt_data(VMTData.DISBURSEMENT)
+        senders = agents.extra(
+            select={'MSISDN': 'msisdn'}).values('MSISDN')
+        senders = list(senders)
+        for d in senders:
+            d.update({'PIN': pin})
+        recepients = DisbursementData.objects.select_related('doc').filter(doc_id=serializer.validated_data['doc_id']).\
+            extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values(
+                'MSISDN', 'AMOUNT', 'TXNID')
+        data = vmt.return_vmt_data(VMTData.DISBURSEMENT)
 
-            data.update({
-                "SENDERS": senders,
-                "RECIPIENTS": list(recepients),
-            })
+        data.update({
+            "SENDERS": senders,
+            "RECIPIENTS": list(recepients),
+        })
 
-            response = requests.post(
-                env.str(vmt.vmt_environment), json=data, verify=False)
+        response = requests.post(
+            env.str(vmt.vmt_environment), json=data, verify=False)
+        try:
+            DATA_LOGGER.debug(datetime.now().strftime(
+                '%d/%m/%Y %H:%M') + '----> DISBURSE <-- \n' + str(response.json()))
+        except ValueError:
+            DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
+                                str(response.status_code) + ' -- ' + str(response.reason))
+
+        if response.ok and response.json()["TXNSTATUS"] == '200':
+            doc_obj = Doc.objects.get(
+                id=serializer.validated_data['doc_id'])
+            doc_obj.is_disbursed = True
+            doc_obj.disbursed_by = request.user
             try:
-                DATA_LOGGER.debug(datetime.now().strftime(
-                    '%d/%m/%Y %H:%M') + '----> DISBURSE <-- \n' + str(response.json()))
-            except ValueError:
-                DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
-                                  str(response.status_code) + ' -- ' + str(response.reason))
-
-            if response.ok and response.json()["TXNSTATUS"] == '200':
-                doc_obj = Doc.objects.get(
-                    id=serializer.validated_data['doc_id'])
-                doc_obj.is_disbursed = True
-                doc_obj.disbursed_by = request.user
+                txn_status = response.json()["TXNSTATUS"]
                 try:
-                    txn_status = response.json()["TXNSTATUS"]
-                    try:
-                        txn_id = response.json()["BATCH_ID"]
-                    except KeyError:
-                        txn_id = response.json()["TXNID"]
+                    txn_id = response.json()["BATCH_ID"]
                 except KeyError:
-                    return HttpResponse(
-                        json.dumps({'message': _('Disbursement process stopped during an internal error,\
-                         can you try again or contact your support team'),
-                                    'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
+                    txn_id = response.json()["TXNID"]
+            except KeyError:
+                return HttpResponse(
+                    json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                        can you try again or contact your support team'),
+                                'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
-                print(txn_status)
 
-                disb_data, create = DisbursementDocData.objects.get_or_create(
-                    doc=doc_obj)
-                disb_data.txn_id = txn_id
-                disb_data.txn_status = txn_status
-                disb_data.save()
-                doc_obj.save()
-                return HttpResponse(json.dumps({'message': _('Disbursement process is running, you can check reports later'),
-                                                'header': _('Disbursed, Thanks')}), status=200)
-            else:
-                return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
-                 can you try again or contact you support team'),
-                                                'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
+            disb_data, create = DisbursementDocData.objects.get_or_create(
+                doc=doc_obj)
+            disb_data.txn_id = txn_id
+            disb_data.txn_status = txn_status
+            disb_data.save()
+            doc_obj.save()
+            return HttpResponse(json.dumps({'message': _('Disbursement process is running, you can check reports later'),
+                                            'header': _('Disbursed, Thanks')}), status=200)
         else:
-            return HttpResponse(
-                json.dumps({'message': _('Pin you entered is not correct'),
-                            'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
+            return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                can you try again or contact you support team'),
+                                            'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
+        # 
+        #     return HttpResponse(
+        #         json.dumps({'message': _('Pin you entered is not correct'),
+        #                     'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 
 class DisburseCallBack(UpdateAPIView):

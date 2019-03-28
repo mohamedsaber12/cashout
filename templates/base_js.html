@@ -162,3 +162,16 @@
 
     });
 </script>
+<script>
+        
+    $(document).ajaxStart(function () {
+        console.log('show loading')
+        $('.loading').show();
+    });
+    $(document).ajaxStop(function () {
+      console.log('hide loading')
+        $(".loading").hide();
+    });  
+
+
+</script>

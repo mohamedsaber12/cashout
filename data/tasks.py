@@ -188,6 +188,8 @@ def handle_change_profile_callback(doc_id,transactions):
             errors.append(None)    
         msisdns.append(msisdn)    
     if not error:
+        doc_obj.is_processed = True
+        doc_obj.save()
         notify_maker(doc_obj)
         return
     

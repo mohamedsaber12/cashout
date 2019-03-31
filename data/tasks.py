@@ -177,6 +177,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
 
 @app.task()
 def handle_change_profile_callback(doc_id,transactions):
+    """realted to disbursement"""
     doc_obj = Doc.objects.get(id=doc_id)
     msisdns,errors = [],[]
     error = False

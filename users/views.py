@@ -731,6 +731,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         if created:
             return reverse('disbursement:add_agents', kwargs={'token': token.key})
         if token.expired():
+            token.delete()
             token = ExpiringToken.objects.create(user=self.object)
         return reverse('disbursement:add_agents', kwargs={'token': token.key})
 

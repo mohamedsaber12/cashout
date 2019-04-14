@@ -179,6 +179,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         if created:
             return reverse('users:add_fees', kwargs={'token': token.key})
         if token.expired():
+            token.delete()
             token = ExpiringToken.objects.create(user=root)
         return reverse('users:add_fees', kwargs={'token': token.key})
         

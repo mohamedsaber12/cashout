@@ -47,6 +47,7 @@ class EntitySetup(models.Model):
             if created:
                 return reverse_lazy('disbursement:add_agents', kwargs={'token': token.key})
             if token.expired():
+                token.delete()
                 token = ExpiringToken.objects.create(user=self.entity)
             return reverse_lazy('disbursement:add_agents', kwargs={'token': token.key})
 
@@ -55,6 +56,7 @@ class EntitySetup(models.Model):
             if created:
                 return reverse_lazy('users:add_fees', kwargs={'token': token.key})
             if token.expired():
+                token.delete()
                 token = ExpiringToken.objects.create(user=self.entity)
             return reverse_lazy('users:add_fees', kwargs={'token': token.key})    
 

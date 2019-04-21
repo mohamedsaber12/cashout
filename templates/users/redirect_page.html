@@ -4,13 +4,13 @@
 {% block form %}
     <div class="pull-left">
 
-        <a href="{% url 'users:redirect' %}?status=collection" class="btn btn-success btn-lg">Collection</a>
+        <a href="{% url 'users:redirect' %}?status=collection" class="btn btn-success btn-lg">{% trans 'Collection' %}</a>
 
     </div>
 
     <div class="pull-right">
     
-        <a href="{% url 'users:redirect' %}?status=disbursement" class="btn btn-success btn-lg">Disbursement</a>
+        <a href="{% url 'users:redirect' %}?status=disbursement" class="btn btn-success btn-lg">{% trans 'Disbursement' %}</a>
     
     </div>
 {% endblock %}

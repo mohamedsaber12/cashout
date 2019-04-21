@@ -13,6 +13,6 @@
 <form method="post" action=".">
     {% csrf_token %}
 {{form.as_p}}
-<button class="btn btn-success" type="submit">submit </button>
+<button class="btn btn-success" type="submit">{% trans 'submit' %} </button>
 </form>
 {%endblock%}

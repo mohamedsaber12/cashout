@@ -216,7 +216,8 @@ def handle_change_profile_callback(doc_id,transactions):
 
 
 @app.task()
-def generate_file(doc_id,user_id):
+@respects_language
+def generate_file(doc_id, user_id, **kwargs):
     """related to disbursement"""
 
     doc_obj = Doc.objects.get(id=doc_id)
@@ -240,11 +241,11 @@ def generate_file(doc_id,user_id):
         str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + \
         '?filename=' + filename
 
-    MESSAGE_SUCC = f"""Dear {user.first_name} 
+    MESSAGE_SUCC = _("""Dear {} 
         You can download the failed disbursement data related to this document
-        <a href='{disb_doc_view_url}'>{doc_obj.filename()}</a>
-        from here <a href="{download_url}" >Download</a>
-        Thanks, BR"""
+        <a href='{}'>{}</a>
+        from here <a href="{}" >Download</a>
+        Thanks, BR""")
     
     subject = f'[{user.brand.mail_subject}]'
 
@@ -252,13 +253,15 @@ def generate_file(doc_id,user_id):
         from_email=settings.SERVER_EMAIL,
         recipient_list=[user.email],
         subject=subject + _(' Failed Disbursement File Download'),
-        message=MESSAGE_SUCC
+        message=MESSAGE_SUCC.format(
+            user.first_name, disb_doc_view_url, doc_obj.filename(), download_url)
     )
 
 
 
 @app.task(ignore_result=False)
-def handle_uploaded_file(doc_obj_id):
+@respects_language
+def handle_uploaded_file(doc_obj_id, **kwargs):
     """
     #related to collection#
     A function that parse the document and save it into the File Data
@@ -351,7 +354,8 @@ def handle_uploaded_file(doc_obj_id):
     notify_makers_collection(doc_obj)
 
 @app.task()
-def notify_checkers(doc_id, level):
+@respects_language
+def notify_checkers(doc_id, level, **kwargs):
     """related to disbursement"""
     doc_obj = Doc.objects.get(id=doc_id)
     checkers = CheckerUser.objects.filter(
@@ -360,39 +364,55 @@ def notify_checkers(doc_id, level):
         return
 
     doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
-    message = f"""Dear Checker 
-        The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
-        Thanks, BR"""
+    message = _("""Dear Checker 
+        The file named <a href='{}'>{}</a> is ready for disbursement
+        Thanks, BR""")
     
     subject = f'[{checkers[0].brand.mail_subject}]'
     
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[checker.email for checker in checkers],
-        subject= subject + ' Disbursement Notification',
-        message=message
+        subject= subject + _(' Disbursement Notification'),
+        message=message.format(doc_view_url, doc_obj.filename())
     )
 
 
 @app.task()
-def doc_review_maker_mail(doc_id,review_id):
+@respects_language
+def doc_review_maker_mail(doc_id, review_id, **kwargs):
     """related to disbursement"""
     doc = Doc.objects.get(id=doc_id)
     review = doc.reviews.get(id=review_id)
     maker = doc.owner
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
     if review.is_ok:
-        MESSAGE = f"""Dear {maker.first_name}
-            The file named <a href='{doc_view_url}'>{doc.filename()}</a> passed the review 
-            number {doc.reviews.filter(is_ok=True).count()} out of {doc.file_category.no_of_reviews_required} by
-            the checker: {review.user_created.first_name} {review.user_created.last_name}
-            Thanks, BR"""
+        MESSAGE = _("""Dear {}
+            The file named <a href='{}'>{}</a> passed the review 
+            number {} out of {} by
+            the checker: {} {}
+            Thanks, BR""").format(
+                maker.first_name, 
+                doc_view_url, 
+                doc.filename(),
+                doc.reviews.filter(is_ok=True).count(), 
+                doc.file_category.no_of_reviews_required,
+                review.user_created.first_name,
+                review.user_created.last_name
+            )
     else:
-        MESSAGE = f"""Dear {maker.first_name}
-            The file named <a href='{doc_view_url}'>{doc.filename()}</a> didn't pass the review by
-            the checker: {review.user_created.first_name} {review.user_created.last_name}
-            and the reason is: {review.comment}
-            Thanks, BR"""
+        MESSAGE = _("""Dear {}
+            The file named <a href='{}'>{}</a> didn't pass the review by
+            the checker: {} {}
+            and the reason is: {}
+            Thanks, BR""").format(
+                maker.first_name,
+                doc_view_url,
+                doc.filename(),
+                review.user_created.first_name,
+                review.user_created.last_name,
+                review.comment
+            )
 
     subject = f'[{maker.brand.mail_subject}]'
 
@@ -410,21 +430,26 @@ def notify_maker(doc,download_url=None):
 
     message = '' 
     if doc.is_processed:
-        message = f"""Dear {maker.first_name} 
-            The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
+        message = _("""Dear {} 
+            The file named <a href='{}'>{}</a> was validated successfully 
             You can now notify checkers, 
-            Thanks, BR"""
+            Thanks, BR""").format(maker.first_name, doc_view_url, doc.filename())
     else:
-        MSG = f"""Dear {maker.first_name}
-                The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
-                The reason is: {doc.processing_failure_reason}"""
+        MSG = _("""Dear {}
+                The file named <a href='{}'>{}</a> failed validation
+                The reason is: {}""").format(
+                    maker.first_name,
+                    doc_view_url,
+                    doc.filename(),
+                    doc.processing_failure_reason
+                )
         if download_url:
-            message = f"""{MSG}
-                You can download the file containing errors from <a href="{download_url}" >here</a>
-                Thanks, BR"""
+            message = _("""{}
+                You can download the file containing errors from <a href="{}" >here</a>
+                Thanks, BR""").format(MSG, download_url)
         else:
-            message = f"""{MSG}
-                Thanks, BR"""
+            message = _("""{}
+                Thanks, BR""").format(MSG)
     
     subject = f'[{maker.brand.mail_subject}]'
     
@@ -440,9 +465,9 @@ def notify_makers_collection(doc):
     makers = MakerUser.objects.filter(hierarchy=doc.owner.hierarchy)
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
 
-    MESSAGE_SUCC = f"""Dear Maker 
-        The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
-        Thanks, BR"""
+    MESSAGE_SUCC = _("""Dear Maker 
+        The file named <a href='{}'>{}</a> was validated successfully 
+        Thanks, BR""").format(doc_view_url, doc.filename())
 
     subject = f'[{makers[0].brand.mail_subject}]'
 

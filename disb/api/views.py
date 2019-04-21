@@ -8,6 +8,7 @@ import xlrd
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
+from django.utils import translation
 
 from rest_framework import status
 from rest_framework.authentication import TokenAuthentication,SessionAuthentication
@@ -218,7 +219,8 @@ class AllowDocDisburse(APIView):
             doc_obj.can_be_disbursed = True
             doc_obj.save()
             # task for notifying checkers
-            notify_checkers.delay(doc_obj.id,1)
+            notify_checkers.delay(
+                doc_obj.id, 1, language=translation.get_language())
             return Response(status=200)
 
         return Response(status=403)

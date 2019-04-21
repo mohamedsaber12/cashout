@@ -108,7 +108,8 @@ def file_upload(request):
                 now = datetime.datetime.now()
                 UPLOAD_LOGGER.debug(
                     '%s uploaded collection file at ' % request.user + str(now))           
-                handle_uploaded_file.delay(file_doc.id)                
+                handle_uploaded_file.delay(
+                    file_doc.id, language=translation.get_language())
 
                 # Redirect to the document list after POST
                 return HttpResponseRedirect(request.path)
@@ -294,9 +295,10 @@ def document_view(request, doc_id):
                         id=doc_review_obj.id).exists()
                     if doc_review_obj.is_ok and not checkers_already_notified:
                         notify_checkers.delay(
-                            doc.id, request.user.level.level_of_authority+1) 
+                            doc.id, request.user.level.level_of_authority+1, language=translation.get_language())
                     # notify the maker either way
-                    doc_review_maker_mail.delay(doc.id, doc_review_obj.id)
+                    doc_review_maker_mail.delay(
+                        doc.id, doc_review_obj.id, language=translation.get_language())
                     hide_review_form = True
                 else:
                     review_form_errors = doc_review_form.errors['comment'][0]

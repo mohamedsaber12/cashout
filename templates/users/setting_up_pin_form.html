@@ -1,4 +1,6 @@
 {% load custom_tags %}
+{% load i18n %}
+
 <div id="step-{{step}}" form_prefix="pin">
     {%if pinform%}
     <form action="." method="post" id="step_{{step}}_form" class="form-horizontal form-label-left">
@@ -22,6 +24,6 @@
         {% endfor %}
     </form>
     {%else%}
-    <h3 style="color: green">Pin has been created</h3>
+    <h3 style="color: green">{% trans 'Pin has been created' %}</h3>
     {%endif%}
 </div>

@@ -7,6 +7,7 @@ from datetime import datetime
 
 import requests
 from django.utils.translation import gettext as _
+from django.utils import translation
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
@@ -93,7 +94,8 @@ def disbursement_list(request, doc_id):
     )
     if can_view:
         if request.is_ajax() and request.GET.get('export_failed') == 'true':
-            generate_file.delay(doc_id,request.user.id)
+            generate_file.delay(doc_id, request.user.id,
+                                language=translation.get_language())
             return HttpResponse(status=200)
         context = {
             'Ddata': doc_obj.disbursement_data.all(),

@@ -17,7 +17,7 @@
 {% if has_failed %}
 <div class="row">
     <div hidden id="alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        You will receive an email shortly with the failed data file to download
+        {% trans 'You will receive an email shortly with the failed data file to download' %}
     </div>
     <!-- button -->
     <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">

@@ -17,13 +17,13 @@
         <h1>{% trans 'Add Agents' %}</h1>
         
         {%if non_form_error%}
-            <span style="color:red;">non_form_error</span>
+            <span style="color:red;">{{non_form_error}}</span>
         {%endif%}
 
         {% csrf_token %}
 
         <!-- super agent form -->
-        <h4>Super agent</h4>
+        <h4>{% trans 'Super agent' %}</h4>
         {% for field in super_agent_form.visible_fields %}
         
             <div class="form-group">
@@ -37,7 +37,7 @@
         {%endfor%}
         <!--  -->
 
-        <h4>Agents</h4>
+        <h4>{% trans 'Agents' %}</h4>
         {% if agentform.non_form_errors%}
          {{ agentform.non_form_errors }}
         {%endif%}
@@ -101,7 +101,7 @@
     <script type="text/javascript">
         var levelform = $('.agent_form');
         levelform.formset({
-            addText: 'add another agent',
+            addText: ' {% trans "add another agent" %} ' ,
             deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
             prefix: '{{ agentform.prefix }}',
             formCssClass: 'level'

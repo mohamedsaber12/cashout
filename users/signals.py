@@ -13,10 +13,10 @@ from users.models import (CheckerUser, MakerUser, RootUser, Setup,
  Brand, SuperAdminUser,Client,UploaderUser)
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
-MESSAGE = 'Dear {0}\n' \
+MESSAGE = _('Dear {0}\n' \
           'Your account is created on the panel with email: {2} and username: {3} \n' \
           'Please follow <a href="{1}">this link</a> to reset password as soon as possible, \n' \
-          'Thanks, BR'
+          'Thanks, BR')
 
 
 @receiver(post_save, sender=RootUser)

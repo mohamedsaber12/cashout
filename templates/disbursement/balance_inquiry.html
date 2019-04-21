@@ -20,7 +20,7 @@
             <div class="panel-body">
                 {% if balance %}
                 <div>
-                    <h3>Balance is {{balance}}</h3>
+                    <h3>{% blocktrans %} Balance is {{balance}} {% endblocktrans %}</h3>
                 </div>
                 {% elif error_message %}
                 <div>

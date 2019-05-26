@@ -63,3 +63,6 @@ CSRF_COOKIE_SECURE = True
 
 # base url
 BASE_URL = 'https://payroll.paymobsolutions.com'
+
+# session expiration
+SESSION_EXPIRE_SECONDS = 300

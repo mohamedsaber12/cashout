@@ -158,58 +158,6 @@ def filter_docs_by_date(request, docs):
     return docs
 
 
-## this view is not used ##
-@setup_required
-@login_required
-def check_download_xlsx(request):
-    if request.is_ajax():
-        pk = request.GET.get("doc_id")
-        doc = Doc.objects.get(id=pk)
-        result = {}
-
-        if doc.is_downloaded:
-            result.update(check=False)
-        else:
-            result.update(check=True)
-
-        return HttpResponse(json.dumps(result), content_type='application/json')
-    else:
-        return HttpResponse("Wrong request")
-
-## this view is not used ##
-@setup_required
-@login_required
-def download_excel_with_trx_temp_view(request):
-    """
-    View Handling and validating the form only then send the filter parameters to
-    ajax response to trigger the url of the excel download
-    :param request:
-    :return:
-    """
-    if request.method == 'POST':
-        form = DownloadFilterForm(request.POST)
-        if form.is_valid():
-            start_date = request.POST.get('start_date', None)
-            end_date = request.POST.get('end_date', None)
-            file_category = get_object_or_404(
-                FileCategory, user_created=request.user)
-            url = reverse('download_xls', kwargs={
-                "start_date": start_date,
-                "end_date": end_date,
-                "file_category_id": file_category.id
-            })
-
-            return HttpResponse(
-                content_type="application/json",
-                content=json.dumps({"url": url})
-            )
-
-        else:
-            return HttpResponse(content_type="application/json", content=form.errors)
-    else:
-        raise Http404
-
-
 @method_decorator([root_only, setup_required, login_required], name='dispatch')
 class FileDeleteView(View):
     """

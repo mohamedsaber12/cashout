@@ -43,3 +43,6 @@ ADMINS = [('Amir Raouf', 'amirraouf@paymobsolutions.com'),
 # celery
 
 CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
+
+# session expiration
+SESSION_EXPIRE_SECONDS = 300

@@ -1,13 +1,14 @@
 {% load custom_tags %}
 {% load i18n %}
 
-<div id="step-{{step}}" form_prefix="pin">
-    {%if pinform%}
-    <form action="." method="post" id="step_{{step}}_form" class="form-horizontal form-label-left">
+<div id="step-1">
+    {%if form%}
+    <form action="{% url 'users:setting-dibursement-pin' %}" method="post" class="form-horizontal form-label-left">
+            {{ form.non_field_errors }}
 
         {% csrf_token %}
 
-        {% for field in pinform.visible_fields %}
+        {% for field in form.visible_fields %}
             {% if forloop.first %}
                 {% for hidden in form.hidden_fields %}
                     {{ hidden }}
@@ -18,7 +19,6 @@
                 <div class="col-md-6 col-sm-9 col-xs-12">
                     {{ field | add_class:'form-control'}}
                     {{ field.errors.as_ul }}
-                    <span id="pin_error_{{field.name}}" class="error_span"></span>
                 </div>
             </div>
         {% endfor %}

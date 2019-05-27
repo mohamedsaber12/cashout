@@ -282,6 +282,58 @@ class CollectionSettingsUpView(RootRequiredMixin, CreateView):
         return form_class(**kwargs)
 
 
+class PinFormView(RootRequiredMixin,FormView):
+    template_name = 'users/setting-up-dibursement/pin.html'
+    setup = None
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests: instantiate a blank version of the form."""
+        if request.GET.get('q',None) == 'next':
+            setup = self.get_setup()
+            if setup.pin_setup == True:
+                return HttpResponseRedirect(self.get_success_url())
+        return self.render_to_response(self.get_context_data())
+
+    def get_form(self, form_class=None):
+        """Return an instance of the form to be used in this view."""
+        return PinForm(root=self.request.user).get_form()
+
+    def get_context_data(self, **kwargs):
+        """update context data"""
+    
+        data = super().get_context_data(**kwargs)
+        data['form_exist'] = bool(PinForm(root=self.request.user).get_form())
+        data['enabled_steps'] = '-'.join(self.get_setup().disbursement_enabled_steps())
+        return data
+
+    def post(self, request, *args, **kwargs):
+        form = PinForm(request.POST, root=request.user).get_form()
+        if form and form.is_valid():
+            ok = form.set_pin()
+            if not ok:
+                return self.form_invalid(form)
+            setup = self.get_setup()
+            setup.pin_setup = True
+            setup.save()
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+    def get_setup(self):
+        if self.setup is None:
+            self.setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
+        return self.setup
+
+    def get_success_url(self):
+        to_step = request.GET.get('to_step', None)
+        if to_step == '3':
+            return reverse('users:setting-dibursement-levels')
+        if to_step == '4':
+            return reverse('users:setting-dibursement-checkers')
+        if to_step == '5':
+            return reverse('users:setting-dibursement-formats')
+        
+        return reverse('users:setting-dibursement-makers')
+
 class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
     """
     View for the root user to setup levels, makers, checkers and file category.
@@ -573,8 +625,8 @@ def toggle_client(request):
         raise Http404()
 
 
-@root_or_superadmin
 @login_required
+@root_or_superadmin
 def delete(request):
     """
     Delete any user by user_id

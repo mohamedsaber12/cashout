@@ -50,9 +50,9 @@ def redirect_home(request):
     status = request.user.get_status(request)
     return redirect(f'data:{status}_home')
 
-@disbursement_users
 @login_required
 @setup_required
+@disbursement_users
 def disbursement_home(request):
     """
     POST:
@@ -103,9 +103,9 @@ def disbursement_home(request):
 
     return render(request, 'data/disbursement_home.html', context=context)
 
-@collection_users
 @login_required
 @setup_required
+@collection_users
 def collection_home(request):
     """
     POST:
@@ -178,8 +178,8 @@ class FileDeleteView(View):
         return JsonResponse(data={},status=200)
 
 
-@disbursement_users
 @login_required
+@disbursement_users
 def document_view(request, doc_id):
     """
     related to disbursement
@@ -288,8 +288,8 @@ def document_view(request, doc_id):
     return render(request, template_name=template_name, context=context)
 
 
-@setup_required
 @login_required
+@setup_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
     DOWNLOAD_LOGGER.debug(
         get_client_ip(request) + ' downloaded ' + path + 'at' + str(datetime.datetime.now()) + ' ' + str(request.user))
@@ -306,8 +306,8 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
         return redirect('data:main_view')
 
 
-@setup_required
 @login_required
+@setup_required
 def doc_download(request, doc_id):
     """
     Downloads Excel file that user had uploaded before.

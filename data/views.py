@@ -24,6 +24,7 @@ from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import ListView, DetailView,View
 from django.views.static import serve
+from django.views.decorators.http import require_safe
 
 from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
@@ -42,9 +43,17 @@ DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 
 
+@require_safe
 @login_required
 @setup_required
-def file_upload(request):
+def redirect_home(request):
+    status = request.user.get_status(request)
+    return redirect(f'data:{status}_home')
+
+@disbursement_users
+@login_required
+@setup_required
+def disbursement_home(request):
     """
     POST:
     View that allows the maker with a file category to upload a disbursement file.
@@ -54,108 +63,99 @@ def file_upload(request):
     Documents can be filtered by date.
     Documents are paginated ("docs_paginated") but not used in template.
     """
-    format_qs = None
-    doc_list_collection = None
-    doc_list_disbursement = None
-    can_upload = False
-    user_has_upload_perm = False
-    status = request.user.get_status(request)
-    if status == 'disbursement':
-        format_qs = FileCategory.objects.get_by_hierarchy(
-            request.user.hierarchy)
-        can_upload = format_qs.exists()
-        user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
-        if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
-            form_doc = FileDocumentForm(
-                request.POST, request.FILES, request=request, is_disbursement=True)
+    format_qs = FileCategory.objects.get_by_hierarchy(
+        request.user.hierarchy)
+    can_upload = bool(format_qs)
+    user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
+    if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
+        form_doc = FileDocumentForm(
+            request.POST, request.FILES, request=request, is_disbursement=True)
 
-            if form_doc.is_valid():
-                file_doc = form_doc.save()
-                now = datetime.datetime.now()
-                UPLOAD_LOGGER.debug(
-                    '%s uploaded disbursement file at ' % request.user + str(now))
-             
-                handle_disbursement_file.delay(
-                    file_doc.id, language=translation.get_language())
+        if form_doc.is_valid():
+            file_doc = form_doc.save()
+            now = datetime.datetime.now()
+            UPLOAD_LOGGER.debug(
+                '%s uploaded disbursement file at ' % request.user + str(now))
 
-                # Redirect to the document list after POST
-                return HttpResponseRedirect(request.path)
-            else:
-                UPLOAD_ERROR_LOGGER.debug(
-                    'Disbursement UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
-                        form_doc.errors, request.user,
-                        datetime.datetime.now(), get_client_ip(request)))
+            handle_disbursement_file.delay(
+                file_doc.id, language=translation.get_language())
 
-                return JsonResponse(form_doc.errors, status=400)
+            # Redirect to the document list after POST
+            return HttpResponseRedirect(request.path)
+        else:
+            UPLOAD_ERROR_LOGGER.debug(
+                'Disbursement UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
+                    form_doc.errors, request.user,
+                    datetime.datetime.now(), get_client_ip(request)))
 
-        doc_list_disbursement = Doc.objects.filter(
-            owner__hierarchy=request.user.hierarchy,
-            type_of=Doc.DISBURSEMENT)
-        doc_list_disbursement = filter_docs_by_date(
-            request, doc_list_disbursement)
-    else:
-        format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
-        collection = CollectionData.objects.filter(
-            user__hierarchy=request.user.hierarchy).first()
-        can_upload = bool(collection)
-        user_has_upload_perm = request.user.is_uploader or request.user.is_upmaker
-        if (request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active):
-            form_doc = FileDocumentForm(
-                request.POST, request.FILES,request=request, collection=collection)
+            return JsonResponse(form_doc.errors, status=400)
 
-            if form_doc.is_valid():
-                file_doc = form_doc.save()
-                now = datetime.datetime.now()
-                UPLOAD_LOGGER.debug(
-                    '%s uploaded collection file at ' % request.user + str(now))           
-                handle_uploaded_file.delay(
-                    file_doc.id, language=translation.get_language())
-
-                # Redirect to the document list after POST
-                return HttpResponseRedirect(request.path)
-            else:
-                UPLOAD_ERROR_LOGGER.debug(
-                    'Collection UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
-                        form_doc.errors, request.user,
-                        datetime.datetime.now(), get_client_ip(request)))
-
-                return JsonResponse(form_doc.errors, status=400)
-        
-        doc_list_collection = Doc.objects.filter(
-            owner__hierarchy=request.user.hierarchy,
-            type_of=Doc.COLLECTION)
-        doc_list_collection = filter_docs_by_date(
-            request, doc_list_collection)
+    doc_list_disbursement = Doc.objects.filter(
+        owner__hierarchy=request.user.hierarchy,
+        type_of=Doc.DISBURSEMENT)
     
-   
     context = {
         'doc_list_disbursement': doc_list_disbursement,
-        'doc_list_collection': doc_list_collection,
         'format_qs': format_qs,
-        'can_upload':can_upload,
+        'can_upload': can_upload,
         'user_has_upload_perm': user_has_upload_perm,
-        'status': status
     }
 
-    return render(request, 'data/index.html', context=context)
+    return render(request, 'data/disbursement_home.html', context=context)
 
-
-def filter_docs_by_date(request, docs):
+@collection_users
+@login_required
+@setup_required
+def collection_home(request):
     """
-    Function to return the document files based of date
-    :param request:
-    :param docs:
-    :return:
+    POST:
+    View that allows the maker with a file category to upload a disbursement file.
+    The file is later processed by the task 'handle_disbursement_file'.
+    GET:
+    View that list all documents related to logged in user hierarchy.
+    Documents can be filtered by date.
+    Documents are paginated ("docs_paginated") but not used in template.
     """
-    if not (request.GET.get('from_date') and request.GET.get('to_date')):
-        return docs
-    else:
-        docs = docs.filter(
-            created_at__range=(request.GET.get('from_date', ''),
-                               request.GET.get('to_date', ''))
-        )
+    format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
+    collection = CollectionData.objects.filter(
+        user__hierarchy=request.user.hierarchy).first()
+    can_upload = bool(collection)
+    user_has_upload_perm = request.user.is_uploader or request.user.is_upmaker
+    if (request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active):
+        form_doc = FileDocumentForm(
+            request.POST, request.FILES, request=request, collection=collection)
 
-    return docs
+        if form_doc.is_valid():
+            file_doc = form_doc.save()
+            now = datetime.datetime.now()
+            UPLOAD_LOGGER.debug(
+                '%s uploaded collection file at ' % request.user + str(now))
+            handle_uploaded_file.delay(
+                file_doc.id, language=translation.get_language())
+
+            # Redirect to the document list after POST
+            return HttpResponseRedirect(request.path)
+        else:
+            UPLOAD_ERROR_LOGGER.debug(
+                'Collection UPLOAD ERROR: %s by %s at %s from IP Address %s' % (
+                    form_doc.errors, request.user,
+                    datetime.datetime.now(), get_client_ip(request)))
+
+            return JsonResponse(form_doc.errors, status=400)
+
+    doc_list_collection = Doc.objects.filter(
+        owner__hierarchy=request.user.hierarchy,
+        type_of=Doc.COLLECTION)
+
+
+    context = {
+        'doc_list_collection': doc_list_collection,
+        'format_qs': format_qs,
+        'can_upload': can_upload,
+        'user_has_upload_perm': user_has_upload_perm,
+    }
+
+    return render(request, 'data/collection_home.html', context=context)
 
 
 @method_decorator([root_only, setup_required, login_required], name='dispatch')
@@ -263,7 +263,7 @@ def document_view(request, doc_id):
             f"""user viewing document from other hierarchy, 
             user: {request.user.username},user hierarchy: {request.user.hierarchy}, 
             doc hierarchy: {doc.owner.hierarchy} """)
-        return redirect(reverse("data:main_view"))
+        return redirect(reverse("data:disbursement_home"))
 
     doc_data = None
     if doc.is_processed:

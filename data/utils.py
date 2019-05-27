@@ -10,7 +10,6 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.auth.base_user import BaseUserManager
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from two_factor.views import SetupView as BaseSetupView
 
 from data.models.filecategory import FileCategory
 from data.models.category_data import Format
@@ -55,20 +54,6 @@ def update_filename(instance, filename):
 
 def generate_pass():
     return BaseUserManager().make_random_password(length=6)
-
-
-class SetupView(BaseSetupView):
-    """
-    Disbursement checking
-    """
-    def get(self, request, *args, **kwargs):
-        """
-        Start the setup wizard. Redirect if already enabled.
-        """
-        if request.user.can_disburse:
-            return super(SetupView, self).get(request, *args, **kwargs)
-        else:
-            return redirect(reverse_lazy('data:main_view'))
 
 
 def redirect_params(url, kw, params=None):

@@ -196,7 +196,7 @@ class CollectionSettingsUpView(RootRequiredMixin, CreateView):
                     setup.save()
                     SETUP_VIEW_LOGGER.debug(
                         f'Root user: {request.user.username} Finished Collection Setup successfully')
-                    return HttpResponseRedirect(reverse("data:main_view"), status=278)
+                    return HttpResponseRedirect(reverse("data:collection_home"), status=278)
                 elif data['prefix'] == 'format':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
@@ -388,7 +388,7 @@ class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
                     setup.save()
                     SETUP_VIEW_LOGGER.debug(
                         f'Root user: {request.user.username} Finished Disbursement Setup successfully')
-                    return HttpResponseRedirect(reverse("data:main_view"), status=278)
+                    return HttpResponseRedirect(reverse("data:disbursement_home"), status=278)
               
                 return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
@@ -845,6 +845,6 @@ class RedirectPageView(View):
         status = request.GET.get('status',None)
         if status is not None and status in ['disbursement','collection']:
             request.session['status'] = status
-            return redirect(reverse('data:main_view'))
+            return redirect(reverse(f'data:{status}_home'))
 
         return render(request, self.template_name, {})

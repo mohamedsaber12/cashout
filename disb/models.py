@@ -11,7 +11,7 @@ class VMTData(models.Model):
     """
     VMT is the credentials needed by UIG to request disbursement
     """
-    # disbursment at checker user
+    # disbursement at checker user
     DISBURSEMENT = 1
     # balance inquiry at root user
     BALANCE_INQUIRY = 2

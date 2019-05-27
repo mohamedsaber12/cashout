@@ -50,7 +50,7 @@ class Doc(models.Model):
                        ("can_disburse", "Can disburse file data"),
                        )
         verbose_name_plural = 'Documents'
-        ordering = ('created_at', )
+        ordering = ('-created_at', )
 
     def delete(self, *args, **kwargs):
         try:

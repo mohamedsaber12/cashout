@@ -1,3 +1,4 @@
+import datetime
 """
 Django settings for disbursement project.
 
@@ -68,6 +69,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django_session_timeout.middleware.SessionTimeoutMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -92,7 +94,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'users.context_processors.brand_context'
+                'users.context_processors.brand_context',
+                'users.context_processors.current_status'
             ],
         },
     },
@@ -188,6 +191,8 @@ REST_FRAMEWORK = {
     ),
 }
 
+EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(days=3)
+
 ADMIN_SITE_HEADER = "PayMob Administration"
 
 LOGIN_EXEMPT_URLS = (
@@ -236,6 +241,11 @@ LOGGING = {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': 'logs/upload.log',
+        },
+        'wallet_api': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/wallet_api.log',
         },
         'download_serve': {
             'level': 'DEBUG',
@@ -327,6 +337,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/failed_disbursement_download.log',
         },
+        'failed_validation_download': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/failed_validation_download.log',
+        },
         'bill_inquiry_req': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
@@ -362,6 +377,11 @@ LOGGING = {
         },
         'upload': {
             'handlers': ['file_upload'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'wallet_api': {
+            'handlers': ['wallet_api'],
             'level': 'DEBUG',
             'propagate': True,
         },
@@ -452,6 +472,11 @@ LOGGING = {
         },
         'failed_disbursement_download': {
             'handlers': ['failed_disbursement_download'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'failed_validation_download': {
+            'handlers': ['failed_validation_download'],
             'level': 'DEBUG',
             'propagate': True,
         },

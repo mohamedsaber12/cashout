@@ -6,14 +6,9 @@ from django.conf import settings
 
 
 class Format(models.Model):
-    DISBURSEMENT = 1
-    COLLECTION = 2
-    COLLECTION_DISBURSEMENT = 3
-    TYPES = (
-        (DISBURSEMENT, 'Disbursement'),
-        (COLLECTION, 'Collection'),
-        (COLLECTION_DISBURSEMENT, 'Both')
-    )
+    """
+    For Collection only
+    """
     identifier1 = models.CharField(
         max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
     identifier2 = models.CharField(
@@ -36,45 +31,30 @@ class Format(models.Model):
         max_length=128, null=True, blank=True, verbose_name=_('Header 10'))
     num_of_identifiers = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)],
                                              verbose_name=_('Number of identifiers filled'))
-    category = models.ForeignKey(
-        'data.FileCategory', blank=True, null=True, on_delete=models.CASCADE, related_name='file_category')
-
-    collection = models.ForeignKey(
-        'data.CollectionData', blank=True, null=True, on_delete=models.CASCADE, related_name='format')
 
     hierarchy = models.PositiveSmallIntegerField()
 
-    name = models.CharField(max_length=128, unique=False)
+    name = models.CharField(max_length=128, unique=False,
+                            verbose_name=_('Description'))
 
     def identifiers(self):
         """return list of identifiers"""
         fields = []
         for field in self._meta.fields:
             if 'identifier' in field.name and getattr(self, field.name) and field.name != 'num_of_identifiers':
-                fields.append(str(getattr(self, field.name)).lower())
+                fields.append(str(getattr(self, field.name)))
         return fields
 
-    def data_type(self):
-        if self.category and self.collection:
-            return self.COLLECTION_DISBURSEMENT
-        elif self.category:
-            return self.DISBURSEMENT
-        elif self.collection:
-            return self.COLLECTION
-
+ 
     def headers_match(self,headers):
         identifiers = self.identifiers()
-        return all(i.lower() in identifiers for i in headers if i)
-
-    def validate_disbursement_unique(self):
-        unique_field = self.category.unique_field
-        if unique_field and unique_field not in self.identifiers():
-            return False
-        return True
+        return all(i in identifiers for i in headers if i)
 
     def validate_collection_unique(self):
-        unique_field = self.collection.unique_field
-        unique_field2 = self.collection.unique_field2
+        collection = CollectionData.objects.filter(
+            user__hierarchy=self.hierarchy).first()
+        unique_field = collection.unique_field
+        unique_field2 = collection.unique_field2
         identifiers = self.identifiers()
         if unique_field2 and not all(i in identifiers for i in [unique_field, unique_field2]):
             return False

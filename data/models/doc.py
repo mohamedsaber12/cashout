@@ -21,7 +21,7 @@ class Doc(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE, related_name='doc')
     file_category = models.ForeignKey(
-        'data.FileCategory', null=True, on_delete=models.CASCADE, related_name='doc')
+        'data.FileCategory', null=True, on_delete=models.DO_NOTHING, related_name='doc')
     collection_data = models.ForeignKey(
         'data.CollectionData', null=True, on_delete=models.CASCADE, related_name='collection_doc')
     file = models.FileField(upload_to=update_filename,
@@ -50,7 +50,7 @@ class Doc(models.Model):
                        ("can_disburse", "Can disburse file data"),
                        )
         verbose_name_plural = 'Documents'
-        ordering = ('created_at', )
+        ordering = ('-created_at', )
 
     def delete(self, *args, **kwargs):
         try:
@@ -75,6 +75,10 @@ class Doc(models.Model):
             return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
         else:
             return reverse("data:doc_collection_detail", kwargs={'pk': self.id})
+
+    def get_delete_url(self):
+        from django.urls import reverse
+        return reverse("data:file_delete", kwargs={'pk': self.id})
 
     def can_user_disburse(self, checker):
         """"
@@ -120,3 +124,20 @@ class Doc(models.Model):
         success_percentage = round(
             success_percentage, 2) if success_percentage != 0 else 0
         return success_percentage
+
+
+    def can_user_review(self,checker):
+        """
+        return tuple
+        (can_user_review, user_already_reviewed)
+        """
+        if self.reviews.filter(user_created=checker).exists():
+            return False, True
+        reviews = self.reviews.all()
+        return (checker.level.level_of_authority <= reviews.count()+1 , False)
+        
+    def is_reviews_completed(self):
+        return self.reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required
+
+    def is_reviews_rejected(self):
+        return self.reviews.filter(is_ok=False).count() != 0 

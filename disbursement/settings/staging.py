@@ -39,7 +39,20 @@ EMAIL_HOST_PASSWORD = 'AmwPtRx02knXLgv+ERiFIE4vAJlA7Gy1oxUbAosUDBLr'
 ADMINS = [('Amir Raouf', 'amirraouf@paymobsolutions.com'),
           ('karim abdelhakim', 'karimabdelhakim@paymobsolutions.com'),
           ]
-
 # celery
 
 CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
+
+# ssl
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# base url
+BASE_URL = 'https://payroll.paymobsolutions.com'
+
+# session expiration
+SESSION_EXPIRE_SECONDS = 300
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True

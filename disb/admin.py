@@ -35,7 +35,6 @@ class AgentAdmin(admin.ModelAdmin):
         instance = form.save(commit=False)
         if not change:
             instance.wallet_provider = request.user if request.user.is_root else request.user.root
-            instance.set_pin(instance.pin)
         return instance
 
 

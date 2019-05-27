@@ -68,3 +68,9 @@ docs/_build/
 #keep default imgs in media
 !media/user.png
 !media/pm_name.png
+
+!/media/documents/
+/media/documents/*
+!/media/documents/disbursement/
+/media/documents/disbursement/*
+!/media/documents/disbursement/.gitkeep

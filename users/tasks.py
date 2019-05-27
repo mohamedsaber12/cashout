@@ -6,18 +6,31 @@ from django.core.mail import send_mail
 from django.utils.translation import gettext as _
 from disbursement.settings.celery import app
 from users.models import RootUser
+from disb.models import Agent
 
 @app.task()
-def send_agent_pin_to_client(pin_raw,root_user_id):
+def set_pin_error_mail(root_user_id):
+    """
+    related to disbursement.
+    Send mail with set pin error to SuperAdmin.
+    """
     root = RootUser.objects.filter(id=root_user_id).first()
     if not root:
         return
-    message = f"""Dear Client 
-        The agent pin is: {pin_raw}
+    super_admin = root.client.creator    
+    agents_msisdns = Agent.objects.filter(
+        wallet_provider=root).values_list('msisdn', flat=True)
+    agents_msisdns = '-'.join(agents_msisdns)    
+    message = f"""Dear {super_admin.username} 
+        Please ask your wallet provider to reset pin for these mobile numbers
+        {agents_msisdns}
         Thanks, BR"""
+
+    subject = f'[{root.brand.mail_subject}]'
+
     send_mail(
         from_email=settings.SERVER_EMAIL,
-        recipient_list=[root.email],
-        subject='[Payroll] Pin Notification',
+        recipient_list=[super_admin.email],
+        subject=subject + ' Set Pin Notification',
         message=message
     )

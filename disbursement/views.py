@@ -13,5 +13,9 @@ def permission_denied_view(request, **kwargs):
     return render(request, 'error-pages/403.html', status=403)
 
 
+def unauthorized_view(request, **kwargs):
+    return render(request, 'error-pages/401.html', status=401)
+
+
 def bad_request_view(request, **kwargs):
     return render(request, 'error-pages/400.html', status=400)

@@ -1,0 +1,57 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+{% block customcss %}
+<style>
+    .errorlist {
+        color: red;
+    }
+</style>
+
+{% endblock %}
+{% block title %} {% trans 'Balance Inquiry' %} {% endblock %}
+{% block body %}
+
+
+<div class="row">
+    <div class="col-lg-12">
+        <div class="panel panel-default">
+            <div class="panel-body">
+                {% if balance %}
+                <div>
+                    <h3>{% blocktrans %} Balance is {{balance}} {% endblocktrans %}</h3>
+                </div>
+                {% elif error_message %}
+                <div>
+                    <p style="color:red">{{error_message}}</p>
+                </div>
+                {%endif%}
+                <form action="{% url 'disbursement:balance_inquiry' %}" method="post"
+                    class="form-horizontal form-label-left">
+
+                    {% csrf_token %}
+
+                    {% for field in form.visible_fields %}
+                    {% if forloop.first %}
+                    {% for hidden in form.hidden_fields %}
+                    {{ hidden }}
+                    {% endfor %}
+                    {% endif %}
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                        <div class="col-md-6 col-sm-9 col-xs-12">
+                            {{ field | add_class:'form-control'}}
+                            {{ field.errors.as_ul }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <input type="submit" value="{% trans 'submit' %}"
+                        class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{%endblock%}

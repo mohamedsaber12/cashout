@@ -9,7 +9,7 @@ from django.core.validators import FileExtensionValidator
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
-from data.models import Doc, DocReview, FileCategory,CollectionData,Format
+from data.models import Doc, DocReview, FileCategory, CollectionData, Format
 # TO BE SET IN settings.py
 from data.utils import get_client_ip
 from users.models import User
@@ -54,7 +54,7 @@ class DocReviewForm(forms.ModelForm):
 
     def clean_comment(self):
         if not self.cleaned_data.get('is_ok') and not self.cleaned_data.get('comment'):
-            raise forms.ValidationError(_('comment field is required'))
+            raise forms.ValidationError(_('Rejection reason is required'))
         return self.cleaned_data.get('comment')
 
 
@@ -72,26 +72,31 @@ class FileDocumentForm(forms.ModelForm):
 
     def __init__(self,*args,**kwargs):
         self.request = kwargs.pop('request')
-        self.category = kwargs.pop('category')
-        self.collection = kwargs.pop('collection')
+        self.is_disbursement = kwargs.pop('is_disbursement', False)
+        self.collection = kwargs.pop('collection',None)
         super().__init__(*args, **kwargs)
-        if self.request.user.data_type() != 3:
-            del self.fields['type_of']
-
+        if self.is_disbursement:
+            self.type_of = 1
+            del self.fields['format']
+        else:
+            self.type_of = 2
+            del self.fields['file_category']
+        
     def clean_file(self):
         """
         Function that validates the file type, file name and size
         """
         file = self.cleaned_data['file']
-        format_type = self.cleaned_data['format']
-        type_of = self.cleaned_data['type_of']
+        format_type = None
+        category = None
+        if self.type_of == 2:
+            format_type = self.cleaned_data['format']
+        else:
+            category = self.cleaned_data['file_category']
 
         if file:
             # validate unique fields
-            if type_of == 1 and not format_type.validate_disbursement_unique():
-                raise forms.ValidationError(
-                    _("This Format doesn't contain the Disbursement unique field"))
-            if type_of == 2 and not format_type.validate_collection_unique():
+            if format_type and not format_type.validate_collection_unique():
                 raise forms.ValidationError(
                     _("This Format doesn't contain the Collection unique fields"))
 
@@ -137,7 +142,7 @@ class FileDocumentForm(forms.ModelForm):
                 with os.fdopen(fd, 'wb') as out:
                     out.write(file.read())
 
-                if format_type.num_of_identifiers != 0:
+                if format_type and format_type.num_of_identifiers != 0:
                     try:
                         xl_workbook = xlrd.open_workbook(tmp)
                     except Exception:
@@ -155,6 +160,18 @@ class FileDocumentForm(forms.ModelForm):
                         raise forms.ValidationError(
                             _("File headers doesn't match the format identifiers"))
 
+                elif self.type_of == 1:
+                    try:
+                        xl_workbook = xlrd.open_workbook(tmp)
+                    except Exception:
+                        raise forms.ValidationError(
+                            _('File uploaded in not in proper form'))
+                    xl_sheet = xl_workbook.sheet_by_index(0)
+
+                    if category.MIN_IDS_LENGTH > xl_sheet.ncols:                    
+                        raise forms.ValidationError(
+                            _('File uploaded in not in proper form'))
+
             finally:
                 os.unlink(tmp)  # delete the temp file no matter what
 
@@ -163,20 +180,18 @@ class FileDocumentForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.owner = self.request.user
-        instance.file_category = self.category
         instance.collection_data = self.collection
+        instance.type_of = self.type_of
 
-        if not instance.type_of:
-            instance.type_of = self.request.user.data_type()
         if commit:
-            instance.save()
+            instance.save()    
         return instance
 
     class Meta:
         model = Doc
         fields = [
+            'file_category',
             'format',
-            'type_of',
             'file'
         ]
 
@@ -206,39 +221,84 @@ class CollectionDataForm(forms.ModelForm):
         return instance
 
 class FileCategoryForm(forms.ModelForm):
+    amount_field = forms.CharField(
+        label=_('amount header position %s') % "(B-1)")
+    unique_field = forms.CharField(
+        label=_('mobile number header position %s') % "(A-1)")
     class Meta:
         model = FileCategory
         fields = '__all__'
         exclude = ('user_created',)
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request=None, **kwargs):
         super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            field.widget.attrs['class'] = 'form-control'
+        self.request = request
 
     def clean_name(self):
-        try:
-            file_category = FileCategory.objects.get(Q(name=self.cleaned_data["name"]) &
-                                                     Q(user_created__hierarchy=self.request.user.hierarchy))
-        except:
-            file_category = None
-
-        try:
-            if not file_category == self.obj and self.cleaned_data["name"] == file_category.name:
-                raise forms.ValidationError(self.add_error(
-                    'name', _('Name already Exist') ))
-            else:
+      
+        file_category_qs = FileCategory.objects.filter(
+            Q(name=self.cleaned_data["name"]) &
+            Q(user_created__hierarchy=self.request.user.hierarchy))
+        
+        file_category = file_category_qs.first()
+        
+        # updating
+        if self.instance:
+            # not updating name -> ok
+            if file_category_qs.exists() and file_category.id == self.instance.id:
                 return self.cleaned_data["name"]
-        except AttributeError:
-            return self.cleaned_data["name"]
+            # updating name but it arleady exist -> not ok
+            if file_category_qs.exists() and file_category.id != self.instance.id:
+                raise forms.ValidationError(self.add_error(
+                    'name', _('this name already exist')))
+            # updating name and it doesn't exist -> ok     
+
+        # creating
+        elif file_category_qs.exists():
+            raise forms.ValidationError(self.add_error(
+                'name', _('this name already exist')))
+
+        return self.cleaned_data["name"]
 
     def clean_no_of_reviews_required(self):
         checkers_no = User.objects.get_all_checkers(
             self.request.user.hierarchy).count()
-        if self.cleaned_data['no_of_reviews_required'] > checkers_no:
+        no_of_reviews = self.cleaned_data['no_of_reviews_required']
+        if no_of_reviews == 0:
+            raise forms.ValidationError(
+                _('number of reviews must be greater than zero'))
+        if no_of_reviews > checkers_no:
             raise forms.ValidationError(
                 _('number of reviews must be less than or equal the number of checkers'))
         return self.cleaned_data['no_of_reviews_required']
+
+    def clean(self):
+        unique_field = self.cleaned_data.get('unique_field')
+        amount_field = self.cleaned_data.get('amount_field')
+        if not (unique_field and amount_field):
+            return super().clean()
+        if '-' not in unique_field or '-' not in amount_field:
+            raise forms.ValidationError(
+                _("Mobile number and Amount fields must be in the following format col-row ex: A-1 "))
+        col1, row1 = unique_field.split('-')
+        col2, row2 = amount_field.split('-')
+        if not col1.isalpha() or not col2.isalpha() or not row1.isnumeric() or not row2.isnumeric():
+            raise forms.ValidationError(
+                _("Mobile number and Amount fields must be in the form letter-number "))
+        if row1 != row2:
+            raise forms.ValidationError(_("Mobile number and Amount fields must be on the same row"))
+        elif col1 == col2:
+            raise forms.ValidationError(
+                _("Mobile number and Amount fields can not be on the same column"))
+
+        return self.cleaned_data
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.user_created = self.request.user.root
+        if commit:
+            instance.save()
+        return instance
 
 
 class FileCategoryViewForm(forms.ModelForm):
@@ -340,7 +400,8 @@ class FormatForm(forms.ModelForm):
                   'identifier3', 'identifier4', 'identifier5', 
                   'identifier6', 'identifier7', 'identifier8',
                   'identifier9', 'identifier10')
-        exclude = ('category', 'num_of_identifiers', 'collection', 'hierarchy')
+        exclude = ('category', 'num_of_identifiers',
+                   'collection', 'hierarchy', 'data_type')
 
     def clean(self):
         data = self.cleaned_data.copy()
@@ -352,13 +413,6 @@ class FormatForm(forms.ModelForm):
     def save(self, commit=True):
         instance = super().save(commit=False)
         instance.hierarchy = self.request.user.hierarchy
-        if self.request.user.has_perm('users.has_disbursement') and self.request.user.has_perm('users.has_collection'):
-            instance.category = self.request.user.file_category
-            instance.collection = self.request.user.collection_data
-        elif self.request.user.has_perm('users.has_disbursement'):
-            instance.category = self.request.user.file_category
-        elif self.request.user.has_perm('users.has_collection'):
-            instance.collection = self.request.user.collection_data
         if commit:
             instance.save()
         return instance
@@ -366,4 +420,8 @@ class FormatForm(forms.ModelForm):
 
 FormatFormSet = forms.modelformset_factory(
     model=Format, form=FormatForm,
+    min_num=1, validate_min=True, can_delete=True, extra=1)
+
+FileCategoryFormSet = forms.modelformset_factory(
+    model=FileCategory, form=FileCategoryForm,
     min_num=1, validate_min=True, can_delete=True, extra=1)

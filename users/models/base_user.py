@@ -14,10 +14,15 @@ from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 TYPES = (
+    # when creating super AN EMIAL MUST be created.
     (0, 'Super'),
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
+    # collection only
+    (4, 'Uploader'),
+    # maker and uploader
+    (5, 'UpMaker'),
 )
 
 
@@ -51,7 +56,7 @@ class User(AbstractUser):
     brand = models.ForeignKey(
         'users.Brand', on_delete=models.SET_NULL, null=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
-    
+
     objects = UserManager()
 
     class Meta:
@@ -99,9 +104,16 @@ class User(AbstractUser):
             return SuperAdminUser.objects.get(id=super_admin.id)
 
     @property
-    def can_pass(self):
+    def can_pass_disbursement(self):
         try:
-            return self.root.setup.can_pass()
+            return self.root.setup.can_pass_disbursement()
+        except:
+            return False
+
+    @property
+    def can_pass_collection(self):
+        try:
+            return self.root.setup.can_pass_collection()
         except:
             return False
 
@@ -118,6 +130,14 @@ class User(AbstractUser):
         return self.user_type == 2
 
     @cached_property
+    def is_uploader(self):
+        return self.user_type == 4
+
+    @cached_property
+    def is_upmaker(self):
+        return self.user_type == 5
+
+    @cached_property
     def is_superadmin(self):
         return self.user_type == 0
 
@@ -130,10 +150,10 @@ class User(AbstractUser):
         return reverse("users:profile", kwargs={'username': self.username})
 
     def has_uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False)).count() > 0
+        return self.entity_setups.uncomplete_entity_creations().count() > 0
 
     def uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False)).first()
+        return self.entity_setups.uncomplete_entity_creations().first()
 
     def data_type(self):
         DATA_TYPES = {
@@ -147,3 +167,14 @@ class User(AbstractUser):
             return DATA_TYPES['Disbursement']
         elif self.has_perm('users.has_collection'):
             return DATA_TYPES['Collection']
+
+    def get_status(self,request):
+        data_type = self.data_type()
+        if data_type == 3 and (self.is_upmaker or self.is_root):
+            return request.session.get('status')
+        if data_type == 1 or self.is_maker or self.is_checker or (self.is_root and data_type == 1):
+            return 'disbursement'
+        if data_type == 2 or self.is_uploader or (self.is_root and data_type == 2):
+            return 'collection'
+
+

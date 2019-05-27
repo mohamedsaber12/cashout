@@ -1,5 +1,6 @@
 import os
 import random, string, datetime, urllib, logging
+import xlsxwriter
 from urllib.parse import urlencode
 
 from django.core.paginator import PageNotAnInteger, EmptyPage
@@ -9,7 +10,6 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.auth.base_user import BaseUserManager
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from two_factor.views import SetupView as BaseSetupView
 
 from data.models.filecategory import FileCategory
 from data.models.category_data import Format
@@ -54,20 +54,6 @@ def update_filename(instance, filename):
 
 def generate_pass():
     return BaseUserManager().make_random_password(length=6)
-
-
-class SetupView(BaseSetupView):
-    """
-    Disbursement checking
-    """
-    def get(self, request, *args, **kwargs):
-        """
-        Start the setup wizard. Redirect if already enabled.
-        """
-        if request.user.can_disburse:
-            return super(SetupView, self).get(request, *args, **kwargs)
-        else:
-            return redirect(reverse_lazy('data:main_view'))
 
 
 def redirect_params(url, kw, params=None):
@@ -176,3 +162,38 @@ def combine_data():
             category=category,
             hierarchy=category.user_created.hierarchy
         )
+
+
+def excell_letter_to_index(col_name):
+    """convert excell column name(string) ex: 'A' or 'AB' to its numeric position"""
+    num = 0
+    for c in col_name:
+        if c in string.ascii_letters:
+            num = num * 26 + (ord(c.upper()) - ord('A')) + 1
+    return num
+    
+def excell_position(col_index,row_index):
+    """
+    @param col_index int: excel column index (zero indexed).
+    @param row_index int: excel row index (zero indexed).
+    return string: corresponding column row position, ex: 'A1'.
+    """
+    return xlsxwriter.utility.xl_col_to_name(col_index) + str(row_index+1)
+
+
+def export_excel(file_path, data):
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(file_path)
+    worksheet = workbook.add_worksheet()
+
+    # Iterate over the data and write it out row by row.
+    for row, items in enumerate(data):
+        for col, item in enumerate(items):
+            worksheet.write(row, col, item)
+
+    workbook.close()
+
+
+def randomword(length):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))

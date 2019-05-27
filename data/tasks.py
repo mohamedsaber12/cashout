@@ -5,23 +5,36 @@ import json
 import re
 import tablib
 import xlrd
+import itertools
+import requests
+import logging
+from datetime import datetime
+from disbursement.utils import get_dot_env
 from dateutil.parser import parse
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import IntegrityError
 from django.utils.translation import gettext as _
+from django.urls import reverse
 
 from data.models import Doc
 from data.models import FileData
-from disb.models import DisbursementData
+from data.utils import export_excel,randomword
+from disb.models import DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
-from users.models import User, MakerUser
+from users.models import User, MakerUser,CheckerUser
+from data.decorators import respects_language
 import random
 import string
 
+
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
+
+
 @app.task(ignore_result=False)
-def handle_disbursement_file(doc_obj_id):
+@respects_language
+def handle_disbursement_file(doc_obj_id,**kwargs):
     """
     A function that parse the document and save it into the File Data
     It has 3 cases :
@@ -32,31 +45,30 @@ def handle_disbursement_file(doc_obj_id):
     
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
     xl_sheet = xl_workbook.sheet_by_index(0)
-    amount_position, msisdn_position = 0, 0
-    amount_field = doc_obj.file_category.amount_field
-    msisdn_field = doc_obj.file_category.unique_field
-    amount, msisdn = [], []
-    for row, cell_obj in enumerate(xl_sheet.get_rows()):
-        if row == 0:
-            headers = [data.value for data in cell_obj]
-            for pos, header in enumerate(headers):
-                if header == amount_field:
-                    amount_position = pos
-                elif header == msisdn_field:
-                    msisdn_position = pos
-                else:
-                    continue
-            continue
+    amount_position, msisdn_position = doc_obj.file_category.fields_cols()
+    start_index = doc_obj.file_category.starting_row()
+    rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
+    list_of_dicts = []
+    for row, cell_obj in enumerate(rows,start_index):
+        row_dict = {
+            'amount':'',
+            'error':'',
+            'msisdn':''
+        }
         for pos, item in enumerate(cell_obj):
             if pos == amount_position:
                 try:
-                    amount.append(float(item.value))
+                    row_dict['amount'] = float(item.value)
+                    if not row_dict['error']:
+                        row_dict['error']  = None
+                    
                 except ValueError:
-                    doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _("This file may be has invalid amounts")
-                    doc_obj.save()
-                    notify_maker(doc_obj)
-                    return False
+                    if row_dict['error']:
+                        row_dict['error'] += '\nInvalid amount'
+                    else:
+                        row_dict['error'] = '\nInvalid amount'
+                    row_dict['amount'] = item.value
+                   
             elif pos == msisdn_position:
                 if item.ctype == 2:
                     str_value = str(int(item.value))
@@ -71,46 +83,142 @@ def handle_disbursement_file(doc_obj_id):
                 elif str_value.startswith('01'):
                     str_value = '002' + str_value
                 else:
-                    doc_obj.is_processed = False
-                    doc_obj.processing_failure_reason = _("This file may be has invalid msisdns")
-                    doc_obj.save()
-                    notify_maker(doc_obj)
-                    return False
-                msisdn.append(str_value)
+                    row_dict['msisdn'] = item.value
+                    if row_dict['error']:
+                        row_dict['error'] +=  "\nInvalid mobile number"
+                    else:
+                        row_dict['error'] = "Invalid mobile number"
+                    
+                # if msisdn is duplicate   
+                if list(filter(lambda d: d['msisdn'] == str_value, list_of_dicts)):
+                    row_dict['msisdn'] = item.value
+                    if row_dict['error']:
+                        row_dict['error'] += "\nDuplicate mobile number"
+                    else:
+                        row_dict['error'] = "Duplicate mobile number"
+                  
+                else:
+                    if not row_dict['error']:
+                        row_dict['error'] = None
+                    row_dict['msisdn'] = str_value
+        
+        list_of_dicts.append(row_dict)
+    
+    msisdn,amount,errors = [],[],[]
+    for dict in list_of_dicts:
+        msisdn.append(dict['msisdn'])
+        amount.append(dict['amount'])
+        errors.append(dict['error'])
 
-    amount_length = len(amount)
-    if amount_length == len(msisdn):
-        data = zip(amount, msisdn)
-        try:
-            DisbursementData.objects.bulk_create(
-                [DisbursementData(doc=doc_obj, amount=float(
-                    i[0]), msisdn=i[1]) for i in data]
-            )
-            doc_obj.total_amount = sum(amount)
-            doc_obj.total_count = amount_length
-            doc_obj.is_processed = True
-            doc_obj.save()
-            notify_maker(doc_obj)
-            return True
-        except IntegrityError:
-            doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = _("This file contains duplicates")
-            doc_obj.save()
-            notify_maker(doc_obj)
-            return False
-    else:
+    valid = True
+    for item in errors:
+        if item is not None:
+            valid = False 
+            break
+
+    if not valid:
+        filename = 'failed_disbursement_validation_%s.xlsx' % (
+             randomword(4))
+
+        file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+
+        data = list(zip(amount, msisdn,errors))
+        headers = ['amount','mobile number', 'errors']
+        data.insert(0,headers)
+        export_excel(file_path, data)
+        download_url = settings.BASE_URL + \
+            str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
+            '?filename=' + filename
         doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = _("This file may be has msisdn which has no amount")
+        doc_obj.processing_failure_reason = _("File validation error")
+        doc_obj.save()
+        notify_maker(doc_obj, download_url)
+        return False
+    
+
+    env = get_dot_env()
+    vmt = VMTData.objects.get(vmt=doc_obj.owner.root.client.creator)
+    data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
+    data["USERS"] = msisdn
+    data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
+    response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+    WALLET_API_LOGGER.debug(
+        datetime.now().strftime('%d/%m/%Y %H:%M') + '----> CHANGE PROFILE <-- \n' +
+                            str(response.status_code) + ' -- ' + str(response.text))
+    error_message = None
+    if response.ok:
+        reponse_dict = response.json()
+        if reponse_dict["TXNSTATUS"] != '200':
+            error_message = reponse_dict.get('MESSAGE', None) or _(
+                "Failed to make registration")
+            
+    else:
+        error_message = _("Registration process stopped during an internal error,\
+                 can you try again or contact your support team")
+    if error_message:
+        doc_obj.is_processed = False
+        doc_obj.processing_failure_reason = error_message
         doc_obj.save()
         notify_maker(doc_obj)
         return False
 
+    data = zip(amount, msisdn)        
+    DisbursementData.objects.bulk_create(
+        [DisbursementData(doc=doc_obj, amount=float(
+            i[0]), msisdn=i[1]) for i in data]
+    )
+    doc_obj.total_amount = sum(amount)
+    doc_obj.total_count = len(amount)
+    doc_obj.is_processed = False
+    doc_obj.txn_id = reponse_dict['BATCH_ID']
+    doc_obj.save()
+    return True
 
 @app.task()
-def generate_file(doc_id):
-    def randomword(length):
-        letters = string.ascii_lowercase
-        return ''.join(random.choice(letters) for i in range(length))
+def handle_change_profile_callback(doc_id,transactions):
+    """realted to disbursement"""
+    doc_obj = Doc.objects.get(id=doc_id)
+    msisdns,errors = [],[]
+    error = False
+    for msisdn, status, msg_list in transactions:
+        if status != "200":
+            error = True
+            errors.append('\n'.join(msg_list))
+        else: 
+            errors.append(None)    
+        msisdns.append(msisdn)    
+    if not error:
+        doc_obj.is_processed = True
+        doc_obj.save()
+        notify_maker(doc_obj)
+        return
+    
+    doc_obj.disbursement_data.all().delete()
+    filename = 'failed_disbursement_validation_%s.xlsx' % (
+        randomword(4))
+
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+
+    data = list(zip(msisdns, errors))
+    headers = ['mobile number', 'errors']
+    data.insert(0, headers)
+    export_excel(file_path, data)
+    download_url = settings.BASE_URL + \
+        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_id})) + \
+        '?filename=' + filename
+    doc_obj.is_processed = False
+    doc_obj.processing_failure_reason = _("Mobile numbers validation error")
+    doc_obj.save()
+    notify_maker(doc_obj, download_url)
+    return
+
+
+@app.task()
+@respects_language
+def generate_file(doc_id, user_id, **kwargs):
+    """related to disbursement"""
 
     doc_obj = Doc.objects.get(id=doc_id)
     filename = _('failed_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
@@ -120,16 +228,42 @@ def generate_file(doc_id):
         doc=doc_obj
     )
     dataset = dataset.export()
-    with open("%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename), "wb") as f:
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+    with open(file_path, "wb") as f:
         f.write(dataset.xlsx)
 
-    return filename
+    user = User.objects.get(id=user_id)
+    disb_doc_view_url = settings.BASE_URL + \
+        str(reverse('disbursement:disbursed_data', kwargs={'doc_id':doc_id}))
+
+    download_url = settings.BASE_URL + \
+        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + \
+        '?filename=' + filename
+
+    MESSAGE_SUCC = _("""Dear {} 
+        You can download the failed disbursement data related to this document
+        <a href='{}'>{}</a>
+        from here <a href="{}" >Download</a>
+        Thanks, BR""")
+    
+    subject = f'[{user.brand.mail_subject}]'
+
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[user.email],
+        subject=subject + _(' Failed Disbursement File Download'),
+        message=MESSAGE_SUCC.format(
+            user.first_name, disb_doc_view_url, doc_obj.filename(), download_url)
+    )
 
 
 
 @app.task(ignore_result=False)
-def handle_uploaded_file(doc_obj_id):
+@respects_language
+def handle_uploaded_file(doc_obj_id, **kwargs):
     """
+    #related to collection#
     A function that parse the document and save it into the File Data
     It has 3 cases :
     Category has files so check if draft or delete stale data
@@ -212,7 +346,6 @@ def handle_uploaded_file(doc_obj_id):
             else:
                 file_data.date = parse(file_data.data['due_date']).date()
         except (KeyError, ValueError):
-            from datetime import datetime
             file_data.date = datetime.now()
         file_data.save()
         
@@ -221,43 +354,109 @@ def handle_uploaded_file(doc_obj_id):
     notify_makers_collection(doc_obj)
 
 @app.task()
-def notify_checkers(doc_id):
+@respects_language
+def notify_checkers(doc_id, level, **kwargs):
+    """related to disbursement"""
     doc_obj = Doc.objects.get(id=doc_id)
-    checkers = User.objects.get_all_checkers(doc_obj.owner.hierarchy)
+    checkers = CheckerUser.objects.filter(
+        hierarchy=doc_obj.owner.hierarchy).filter(level__level_of_authority=level)
     if not checkers.exists():
         return
 
     doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
-    message = f"""Dear Checker 
-        The file named <a href='{doc_view_url}'>{doc_obj.filename()}</a> is ready for disbursement
-        Thanks, BR"""
+    message = _("""Dear Checker 
+        The file named <a href='{}'>{}</a> is ready for disbursement
+        Thanks, BR""")
+    
+    subject = f'[{checkers[0].brand.mail_subject}]'
+    
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[checker.email for checker in checkers],
-        subject='[Payroll] Disbursement Notification',
-        message=message
+        subject= subject + _(' Disbursement Notification'),
+        message=message.format(doc_view_url, doc_obj.filename())
     )
 
 
-def notify_maker(doc):
+@app.task()
+@respects_language
+def doc_review_maker_mail(doc_id, review_id, **kwargs):
+    """related to disbursement"""
+    doc = Doc.objects.get(id=doc_id)
+    review = doc.reviews.get(id=review_id)
     maker = doc.owner
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+    if review.is_ok:
+        MESSAGE = _("""Dear {}
+            The file named <a href='{}'>{}</a> passed the review 
+            number {} out of {} by
+            the checker: {} {}
+            Thanks, BR""").format(
+                maker.first_name, 
+                doc_view_url, 
+                doc.filename(),
+                doc.reviews.filter(is_ok=True).count(), 
+                doc.file_category.no_of_reviews_required,
+                review.user_created.first_name,
+                review.user_created.last_name
+            )
+    else:
+        MESSAGE = _("""Dear {}
+            The file named <a href='{}'>{}</a> didn't pass the review by
+            the checker: {} {}
+            and the reason is: {}
+            Thanks, BR""").format(
+                maker.first_name,
+                doc_view_url,
+                doc.filename(),
+                review.user_created.first_name,
+                review.user_created.last_name,
+                review.comment
+            )
 
-    MESSAGE_SUCC = f"""Dear {maker.first_name} 
-        The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
-        You can now notify checkers, 
-        Thanks, BR"""
-    MESSAGE_FAIL = f"""Dear {maker.first_name}
-        The file named <a href='{doc_view_url}'>{doc.filename()}</a> failed validation
-        The reason is: {doc.processing_failure_reason}
-        Thanks, BR"""
-
-    message = MESSAGE_SUCC if doc.is_processed else MESSAGE_FAIL
+    subject = f'[{maker.brand.mail_subject}]'
 
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email],
-        subject= _('[Payroll] File Upload Notification'),
+        subject= subject + _(' File Upload Notification'),
+        message=MESSAGE
+    )
+
+def notify_maker(doc,download_url=None):
+    """related to disbursement"""
+    maker = doc.owner
+    doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+
+    message = '' 
+    if doc.is_processed:
+        message = _("""Dear {} 
+            The file named <a href='{}'>{}</a> was validated successfully 
+            You can now notify checkers, 
+            Thanks, BR""").format(maker.first_name, doc_view_url, doc.filename())
+    else:
+        MSG = _("""Dear {}
+                The file named <a href='{}'>{}</a> failed validation
+                The reason is: {}""").format(
+                    maker.first_name,
+                    doc_view_url,
+                    doc.filename(),
+                    doc.processing_failure_reason
+                )
+        if download_url:
+            message = _("""{}
+                You can download the file containing errors from <a href="{}" >here</a>
+                Thanks, BR""").format(MSG, download_url)
+        else:
+            message = _("""{}
+                Thanks, BR""").format(MSG)
+    
+    subject = f'[{maker.brand.mail_subject}]'
+    
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[maker.email],
+        subject= subject + _(' File Upload Notification'),
         message=message
     )
 
@@ -266,13 +465,15 @@ def notify_makers_collection(doc):
     makers = MakerUser.objects.filter(hierarchy=doc.owner.hierarchy)
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
 
-    MESSAGE_SUCC = f"""Dear Maker 
-        The file named <a href='{doc_view_url}'>{doc.filename()}</a> was validated successfully 
-        Thanks, BR"""
+    MESSAGE_SUCC = _("""Dear Maker 
+        The file named <a href='{}'>{}</a> was validated successfully 
+        Thanks, BR""").format(doc_view_url, doc.filename())
+
+    subject = f'[{makers[0].brand.mail_subject}]'
 
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[maker.email for maker in makers],
-        subject=_('[Payroll] Collection File Upload Notification'),
+        subject= subject + _(' Collection File Upload Notification'),
         message=MESSAGE_SUCC
     )

@@ -1,10 +1,13 @@
 from users.models.base_user import UserManager, User
+from django.db.models import Q
 
 
 class MakerManager(UserManager):
     def get_queryset(self):
         return super(MakerManager, self).get_queryset().filter(
-            user_type=1)
+            Q(user_type=1) |
+            Q(user_type=5)
+        )
 
     def create_user(self, username, email=None, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)

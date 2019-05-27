@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from django.core.validators import MaxValueValidator,MinValueValidator
 
 class ClientManager(models.Manager):
     def toggle(self, *args, **kwargs):
@@ -15,6 +16,8 @@ class Client(models.Model):
     creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)
     client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, null=True, related_name='client')
     is_active = models.BooleanField(default=True)
+    fees_percentage = models.PositiveSmallIntegerField(
+        validators=[MaxValueValidator(100)], default=100)
     objects = ClientManager()
 
     def __str__(self):
@@ -28,3 +31,11 @@ class Client(models.Model):
     def delete_client(self):
         User.objects.filter(hierarchy=self.client.hierarchy).delete()
         self.delete()
+
+    def get_fees(self):
+        if self.fees_percentage == 100:
+            return "Full"
+        elif self.fees_percentage == 50:
+            return "Half"
+        else:
+            return "No fees"   

@@ -32,6 +32,9 @@
                                     <th>{% trans 'Disbursement Progress' %}</th>
                                     <th>{% trans 'Status' %}</th>
                                     <th>{% trans 'View' %}</th>
+                                    {% if request.user.is_root %}
+                                        <th>{% trans 'Delete' %}</th>
+                                    {%endif%}    
                                 </tr>
                             </thead>
                             <tbody>
@@ -87,9 +90,14 @@
                                             <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md"> {% trans 'View' %}
                                             </a>
                                         </td>
+                                        {% if request.user.is_root %}
+                                        <td>
+                                            <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
+                                            </a>
+                                        </td>
+                                        {%endif%}
                                     </tr>
-                                {% empty %}
-                                    <tr><td>{% trans "There's no files uploaded yet.." %}</td></tr>
+                               
                                 {%endfor%}    
                               
                         

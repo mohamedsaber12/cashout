@@ -20,17 +20,19 @@ from django_otp.forms import OTPTokenForm
 from django.forms.formsets import BaseFormSet
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
-from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet
+from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet,FileCategoryFormSet
 from data.utils import get_client_ip
-from data.models import Format
+from data.models import Format,FileCategory
 from users.forms import (CheckerMemberFormSet,
                          BrandForm, LevelFormSet, MakerMemberFormSet, PasswordChangeForm,
                          SetPasswordForm, CheckerCreationForm, MakerCreationForm,
-                         ProfileEditForm, RootCreationForm, OTPTokenForm, ForgotPasswordForm)
-from users.mixins import RootRequiredMixin, SuperRequiredMixin
-from users.models import (CheckerUser, Levels, MakerUser, 
+                         ProfileEditForm, RootCreationForm, OTPTokenForm, ForgotPasswordForm,
+                         UploaderMemberFormSet, ClientFeesForm)
+from users.mixins import RootRequiredMixin, SuperRequiredMixin, SuperFinishedSetupMixin
+from users.models import (CheckerUser, Levels, MakerUser, UploaderUser,
                             Setup, User, Brand, Client, EntitySetup, RootUser)
-
+from users.decorators import root_or_superadmin
+from disb.forms import PinForm
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")
@@ -85,6 +87,8 @@ def login_view(request):
                     user.save()
                     return HttpResponseRedirect(reverse('two_factor:profile'))
 
+                if user.is_upmaker or (user.is_root and user.data_type() == 3):
+                    return HttpResponseRedirect(reverse('users:redirect'))
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
                 FAILED_LOGIN_LOGGER.debug(
@@ -129,51 +133,27 @@ def change_password(request, user):
     return HttpResponseRedirect(reverse('users:user_login_view'))
 
 
-class SettingsUpView(RootRequiredMixin, CreateView):
+class CollectionSettingsUpView(RootRequiredMixin, CreateView):
     """
     View for the root user to setup levels, makers, checkers and file category.
 
     """
-    model = MakerUser
-    template_name = 'users/settings-up.html'
-    form_class = MakerMemberFormSet
+    model = UploaderUser
+    template_name = 'users/settings-up-collection.html'
+    form_class = UploaderMemberFormSet
     success_url = "/"
 
     def post(self, request, *args, **kwargs):        
         if request.is_ajax():
             form = None
             data = request.POST.copy()
-            FileCategoryForm.request = request
             # populate forms with data
-            if data['prefix'] == 'level':
-                form = LevelFormSet(
+       
+            if data['prefix'] == 'uploader':
+                form = UploaderMemberFormSet(
                     data,
-                    prefix='level',
-                    form_kwargs={'request': self.request}
+                    prefix='uploader'
                 )
-
-            elif data['prefix'] == 'checker':
-                form = CheckerMemberFormSet(
-                    data,
-                    prefix='checker',
-                    # pass request to get hierarchy levels and include them in checker form
-                    form_kwargs={'request': self.request}
-                )
-            elif data['prefix'] == 'maker':
-                form = MakerMemberFormSet(
-                    data,
-                    prefix='maker'
-                )
-            elif data['prefix'] == 'category':
-                file_category = getattr(self.request.user, 'file_category', None)
-                # user already has a file_category then update
-                if file_category is not None:
-                    form = FileCategoryForm(
-                        instance=file_category, data=request.POST)
-                # create new file_category
-                else:    
-                    form = FileCategoryForm(data=request.POST)
-
             elif data['prefix'] == 'format':
                 form = FormatFormSet(
                     data,
@@ -198,50 +178,37 @@ class SettingsUpView(RootRequiredMixin, CreateView):
                         if isinstance(objs[0], User):
                             for obj in objs:
                                 obj.hierarchy = request.user.hierarchy
-                                obj.created_id = request.user.root.id
                                 obj.save()
                                 obj.user_permissions.add(*Permission.objects.filter(user=request.user.root))
                         elif isinstance(objs[0], Format) or isinstance(objs[0], Levels):
                             for obj in objs:
                                 obj.save()
 
-                #if form is filecategory form
-                elif isinstance(form, FileCategoryForm):
-                    objs.user_created = request.user.root
-                    objs.save()
                 #if form is CollectionData form
                 elif isinstance(form, CollectionDataForm):
                     objs.save()
-
-                # update setup model flags
-                if data['prefix'] == 'level':
+                
+         
+                if data['prefix'] == 'uploader':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
-                    setup.levels_setup = True
+                    setup.uploaders_setup = True
                     setup.save()
-                elif data['prefix'] == 'checker':
+                    SETUP_VIEW_LOGGER.debug(
+                        f'Root user: {request.user.username} Finished Collection Setup successfully')
+                    return HttpResponseRedirect(reverse("data:collection_home"), status=278)
+                elif data['prefix'] == 'format':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
-                    setup.users_setup = True
-                    setup.save()
-                elif data['prefix'] == 'category':
-                    setup = Setup.objects.get(
-                        user__hierarchy=request.user.hierarchy)
-                    setup.category_setup = True
+                    setup.format_collection_setup = True
                     setup.save()
                 elif data['prefix'] == 'collection_data':
                     setup = Setup.objects.get(
                         user__hierarchy=request.user.hierarchy)
-                    setup.collection_data_setup = True
+                    setup.collection_setup = True
                     setup.save()
-                elif data['prefix'] == 'format':
-                    setup = Setup.objects.get(
-                        user__hierarchy=request.user.hierarchy)
-                    setup.format_setup = True
-                    setup.save()
-                    SETUP_VIEW_LOGGER.debug(f'Root user: {request.user.username} Finished Setup successfully')
-                    return HttpResponseRedirect(reverse("data:main_view"), status=278)
-                
+
+
                 return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
             return HttpResponse(
@@ -266,23 +233,197 @@ class SettingsUpView(RootRequiredMixin, CreateView):
         Add step number to context because pressing previous refresh the view but
         with the step as query paramter to know wich step to initiate when loading the template.
         """
-        data = super().get_context_data(**kwargs)
-        category = getattr(self.request.user, 'file_category', None)
+        data = super().get_context_data(**kwargs)   
+        data['uploaderform'] = UploaderMemberFormSet(
+            queryset=UploaderUser.objects.filter(
+                hierarchy=self.request.user.hierarchy
+            ),
+            prefix='uploader'
+        )
 
         data['collectiondataform'] = CollectionDataForm(request=self.request)
+
         data['formatform'] = FormatFormSet(
             queryset=Format.objects.filter(
-                hierarchy=self.request.user.hierarchy
+                hierarchy=self.request.user.hierarchy,
+                data_type = 2
             ),
             prefix='format',
             form_kwargs={'request': self.request}
-        )
+        )   
+
+        data['step'] = self.request.GET.get('step', '0')
+
+        if  (int(data['step']) <= 0 or int(data['step']) > 2):
+            data['step'] = '0'
+            return data
+        
+        setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
+        prefix = self.request.GET.get('prefix', None)
+        
+        if (
+            (
+                prefix is None or
+                prefix not in ['collection_data', 'format', 'uploader']
+            ) or
+            (prefix == 'format' and not setup.collection_setup) or
+            (prefix == 'uploader')
+        ):
+            data['step'] = '0'
+        
+        return data
+
+    def get_form(self, form_class=None):
+        """Return an instance of the form to be used in this view."""
+        if form_class is None:
+            form_class = self.get_form_class()
+        kwargs = self.get_form_kwargs()
+        kwargs.pop('instance')
+        return form_class(**kwargs)
+
+
+class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
+    """
+    View for the root user to setup levels, makers, checkers and file category.
+
+    """
+    model = MakerUser
+    template_name = 'users/settings-up-disbursement.html'
+    form_class = MakerMemberFormSet
+    success_url = "/"
+
+    def post(self, request, *args, **kwargs):
+        if request.is_ajax():
+            form = None
+            data = request.POST.copy()
+            # populate forms with data
+            if data['prefix'] == 'level':
+                form = LevelFormSet(
+                    data,
+                    prefix='level',
+                    form_kwargs={'request': self.request}
+                )
+
+            elif data['prefix'] == 'checker':
+                form = CheckerMemberFormSet(
+                    data,
+                    prefix='checker',
+                    # pass request to get hierarchy levels and include them in checker form
+                    form_kwargs={'request': self.request}
+                )
+            elif data['prefix'] == 'maker':
+                form = MakerMemberFormSet(
+                    data,
+                    prefix='maker'
+                )
+            elif data['prefix'] == 'category':
+                form = FileCategoryFormSet(
+                    data,
+                    prefix='category',
+                    form_kwargs={'request': self.request}
+                )
+            elif data['prefix'] == 'pin':
+                form = PinForm(data,root=request.user).get_form()
+           
+            form_is_formset = isinstance(form, BaseFormSet)
+
+            if form and form.is_valid():  
+                # if form is a formset
+                if form_is_formset:
+
+                    objs = form.save(commit=False)
+
+                    # delete formsets marked to be deleted
+                    for obj in form.deleted_objects:
+                        obj.delete()
+
+                    if len(objs) > 0:
+                        if isinstance(objs[0], User):
+                            for obj in objs:
+                                obj.hierarchy = request.user.hierarchy
+                                obj.save()
+                                obj.user_permissions.add(
+                                    *Permission.objects.filter(user=request.user.root))
+                        elif isinstance(objs[0], FileCategory):
+                            for obj in objs:
+                                obj.save()
+                        elif isinstance(objs[0], Levels):
+                            for obj in objs:
+                                obj.save()
+                            Levels.update_levels_authority(
+                                self.request.user.root)
+
+                elif isinstance(form, PinForm):
+                    ok = form.set_pin()
+                    if not ok:
+                        return HttpResponse(
+                            content=json.dumps({
+                                "valid": False,
+                                "reason": "validation",
+                                "errors": form.errors,
+                                #only formsets have non_form_errors but normal form doesn't
+                                "non_form_errors": form.non_form_errors() if form_is_formset else None,
+                                "form_is_formset": form_is_formset,
+                                'prefix': data['prefix']
+                            }),
+                            content_type="application/json")
+
+                # update setup model flags
+                setup = Setup.objects.get(
+                    user__hierarchy=request.user.hierarchy)
+                if data['prefix'] == 'level':
+                    setup.levels_setup = True
+                    setup.save()
+                elif data['prefix'] == 'pin':
+                    setup.pin_setup = True
+                    setup.save()
+                elif data['prefix'] == 'maker':
+                    setup.maker_setup = True
+                    setup.save()
+                elif data['prefix'] == 'checker':
+                    setup.checker_setup = True
+                    setup.save()
+                elif data['prefix'] == 'category':
+                    setup.category_setup = True
+                    setup.save()
+                    SETUP_VIEW_LOGGER.debug(
+                        f'Root user: {request.user.username} Finished Disbursement Setup successfully')
+                    return HttpResponseRedirect(reverse("data:disbursement_home"), status=278)
+              
+                return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
+
+            return HttpResponse(
+                content=json.dumps({
+                    "valid": False,
+                    "reason": "validation",
+                    "errors": form.errors,
+                    #only formsets have non_form_errors but normal form doesn't
+                    "non_form_errors": form.non_form_errors() if form_is_formset else None,
+                    "form_is_formset": form_is_formset,
+                    'prefix': data['prefix']
+                }),
+                content_type="application/json")
+
+        SETUP_VIEW_LOGGER.debug(
+            f'404 Response because The POST Request is not ajax from user {request.user.username}')
+        raise Http404()
+
+    def get_context_data(self, **kwargs):
+        """
+        Add the needed forms to the context.
+        Add step number to context because pressing previous refresh the view but
+        with the step as query paramter to know wich step to initiate when loading the template.
+        """
+        data = super().get_context_data(**kwargs)
+
+        data['pinform'] = PinForm(root=self.request.user).get_form()
+        data['pinform_exist'] = bool(data['pinform'])
         data['makerform'] = self.form_class(
-            queryset=self.model.objects.filter(
+            queryset=MakerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy
             ),
             prefix='maker'
-        )        
+        )
         data['checkerform'] = CheckerMemberFormSet(
             queryset=CheckerUser.objects.filter(
                 hierarchy=self.request.user.hierarchy
@@ -297,61 +438,44 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             prefix='level',
             form_kwargs={'request': self.request}
         )
-        if category is not None:
-            data['filecategoryform'] = FileCategoryForm(instance=category)
-        else:
-            data['filecategoryform'] = FileCategoryForm()
+
+        data['filecategoryform'] = FileCategoryFormSet(
+            queryset=FileCategory.objects.filter(
+                user_created__hierarchy=self.request.user.hierarchy
+            ),
+            prefix='category',
+            form_kwargs={'request': self.request}
+        )
 
         data['step'] = self.request.GET.get('step', '0')
         if data['step'] == 0:
             return data
-        if  (   
-                (
-                    int(data['step']) < 0
-                ) or
-                (
-                    (int(data['step']) > 4) and self.request.user.has_perm('users.has_collection')
-                    and self.request.user.has_perm('users.has_disbursement')
-                ) or
-                ( 
-                    int(data['step']) > 3  and not ( self.request.user.has_perm('users.has_collection') 
-                    and self.request.user.has_perm('users.has_disbursement') )
-                )
-
-            ):
+        if (int(data['step']) < 0 or int(data['step']) > 4):
             data['step'] = '0'
             return data
-        
+
         setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
         prefix = self.request.GET.get('prefix', None)
-        
-        if  (   
-                (
-                    prefix is None or 
-                    prefix not in ['level','format', 'maker', 'checker', 'category', 'collection_data']
-                ) or
-                (prefix == 'maker' and not setup.levels_setup) or
-                (
-                    prefix == 'checker' and not MakerUser.objects.filter(
-                    hierarchy=self.request.user.hierarchy).exists()
-                ) or
-                (
-                    (
-                        prefix == 'category' or
-                        prefix == 'collection_data'
-                    ) and 
-                    not setup.users_setup
-                ) or
-                (
-                    prefix == 'collection_data' and
-                    self.request.user.has_perm('users.has_collection') and
-                    self.request.user.has_perm('users.has_disbursement') and
-                    not setup.category_setup
-                ) or
-                (
-                    prefix == 'format'
-                )
-            ):
+
+        if (
+            (
+                prefix is None or
+                prefix not in ['level', 'maker', 'checker', 'category', 'pin']
+            ) or
+            (
+                prefix == 'maker' and not setup.pin_setup 
+            )or
+            (
+                prefix == 'level' and not setup.maker_setup
+            ) or
+            (
+                prefix == 'checker' and not setup.levels_setup
+            ) or
+            (
+                prefix == 'category' and not setup.checker_setup
+            ) 
+            
+        ):
             data['step'] = '0'
 
         return data
@@ -362,8 +486,7 @@ class SettingsUpView(RootRequiredMixin, CreateView):
             form_class = self.get_form_class()
         kwargs = self.get_form_kwargs()
         kwargs.pop('instance')
-        return form_class(**kwargs)
-
+        return form_class(**kwargs)   
 
 class Members(RootRequiredMixin, ListView):
     """
@@ -377,24 +500,31 @@ class Members(RootRequiredMixin, ListView):
     template_name = 'users/members.html'
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        qs = qs.filter(hierarchy=self.request.user.hierarchy,
-                       user_type__in=[1, 2])
+        if 'disbursement' == self.request.user.get_status(self.request):
+
+            qs = super().get_queryset()
+            qs = qs.filter(hierarchy=self.request.user.hierarchy,
+                        user_type__in=[1, 2,5])
+            if self.request.GET.get("q"):
+                type_of = self.request.GET.get("q")
+                if type_of == 'maker':
+                    value = 1
+                elif type_of == 'checker':
+                    value = 2
+                else:
+                    return qs
+                return qs.filter(user_type=value)
+        else:
+            qs = UploaderUser.objects.filter(
+                hierarchy=self.request.user.hierarchy)
+        
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
                              Q(first_name__icontains=search) |
                              Q(last_name__icontains=search)
                              )
-        if self.request.GET.get("q"):
-            type_of = self.request.GET.get("q")
-            if type_of == 'maker':
-                value = 1
-            elif type_of == 'checker':
-                value = 2
-            else:
-                return qs
-            return qs.filter(user_type=value)
+        
         return qs
 
 
@@ -430,17 +560,20 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
+@login_required
 def toggle_client(request):
     """
     Activate or deactivate client
     """
-    if request.is_ajax() and request.method=='POST':
+    if request.is_ajax() and request.method=='POST' and request.user.is_superadmin:
         data = request.POST.copy()
         is_toggled = Client.objects.toggle(id=int(data['user_id']))
         return HttpResponse(content=json.dumps({"valid": is_toggled}), content_type="application/json")
     else:
         raise Http404()
 
+
+@root_or_superadmin
 @login_required
 def delete(request):
     """
@@ -476,7 +609,7 @@ class LevelsView(RootRequiredMixin, View):
         form = LevelFormSet(
             request.POST,
             prefix='level',
-            form_kwargs={'request': self.request}
+            form_kwargs={'request': request}
         )
         if form and form.is_valid():
 
@@ -487,7 +620,8 @@ class LevelsView(RootRequiredMixin, View):
             
             for obj in objs:
                 obj.save()
-                
+
+            Levels.update_levels_authority(request.user.root)
             return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
 
         return HttpResponse(content=json.dumps({
@@ -588,11 +722,16 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     form_class = RootCreationForm
     template_name = 'entity/add_root.html'
 
-    def get_success_url(self):
+    def get_success_url(self, is_collection=False):
+        
+        if is_collection:
+            return reverse('users:clients')
+
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
         if created:
             return reverse('disbursement:add_agents', kwargs={'token': token.key})
         if token.expired():
+            token.delete()
             token = ExpiringToken.objects.create(user=self.object)
         return reverse('disbursement:add_agents', kwargs={'token': token.key})
 
@@ -603,11 +742,35 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def form_valid(self, form):
         self.object = form.save()
-        EntitySetup.objects.create(user=self.request.user, entity=self.object)
+        entity_dict = {
+            "user": self.request.user,
+            "entity": self.object
+        }
+        is_collection = self.object.data_type() == 2
+        if is_collection:
+            entity_dict['agents_setup'] = True
+
+        EntitySetup.objects.create(**entity_dict)
         Client.objects.create(creator=self.request.user, client=self.object)
         ROOT_CREATE_LOGGER.debug(
             f'Root created with username {self.object.username} from IP Address {get_client_ip(self.request)}')
-        return HttpResponseRedirect(self.get_success_url())
+        return HttpResponseRedirect(self.get_success_url(is_collection))
+
+
+class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin,CreateView):
+    """
+    View for superadmin to setup fees for the client
+    """
+    model = Client
+    form_class = ClientFeesForm
+    template_name = 'entity/add_client_fees.html'
+    success_url = reverse_lazy('users:clients')
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        root = ExpiringToken.objects.get(key=self.kwargs['token']).user
+        kwargs.update({'instance': root.client})
+        return kwargs
 
 
 class EntityBranding(SuperRequiredMixin, UpdateView):
@@ -671,3 +834,17 @@ class ForgotPasswordView(FormView):
             return self.form_valid(form)
         else:
             return self.form_invalid(form)
+
+
+class RedirectPageView(View):
+    template_name = 'users/redirect_page.html'
+
+    def get(self, request, *args, **kwargs):
+        if not (request.user.is_upmaker or (request.user.is_root and request.user.data_type() == 3)):
+            return redirect('/')
+        status = request.GET.get('status',None)
+        if status is not None and status in ['disbursement','collection']:
+            request.session['status'] = status
+            return redirect(reverse(f'data:{status}_home'))
+
+        return render(request, self.template_name, {})

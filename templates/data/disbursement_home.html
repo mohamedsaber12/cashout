@@ -1,0 +1,139 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% block title %}Disbursement Files {% endblock %}
+{% block gentellacss %}
+<link rel="stylesheet" href="{% static 'gentella/vendors/dropzone/dist/min/dropzone.min.css' %}">
+<!-- Datatables -->
+<link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}"
+    rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}"
+    rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+{% if can_upload and user_has_upload_perm %}
+<div class="well upload-nav col-xs-12">
+    <h3 class="navbar-left col-xs-12">{% trans 'Upload Form' %}</h3>
+    <div class="form-group col-xs-12">
+        <label class="control-label col-md-1 col-sm-1 col-xs-1">Format</label>
+        <div class="col-md-6 col-sm-6 col-xs-12">
+            <select class="form-control" name="file_category" id="category">
+                {% for format in format_qs %}
+                <option value="{{format.id}}">{{format.name}}</option>
+                {%endfor%}
+            </select>
+        </div>
+    </div>
+    <div class="x_content">
+        <form id="fileUpload" class="dropzone" action=" {% url 'data:disbursement_home' %}" method="post"
+            enctype="multipart/form-data">{% csrf_token %}
+        </form>
+
+    </div>
+
+</div>
+
+{% elif not can_upload  %}
+<div class="well upload-nav col-xs-12">
+    <strong style="margin-top: 15px;">{% trans 'Please Add Disbursement first' %}</strong>
+</div>
+{% endif %}
+
+{% if doc_list_disbursement %}
+{% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement %}
+{%else%}
+<div class="x_content">
+    <h3>No Documents uploaded yet</h3>
+</div>
+{%endif%}
+
+<!-- modals -->
+
+{% include 'data/upload-response-modals.html' %}
+
+{% include 'data/document_delete_modal.html' %}
+
+{% endblock %}
+
+
+{% block script %}
+
+<!-- Dropzone.js -->
+<script src="{% static 'gentella/vendors/dropzone/dist/min/dropzone.min.js' %}"></script>
+<!-- Datatables -->
+<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+<script>
+
+    $(function () {
+
+        $('#fileTable').DataTable();
+
+        Dropzone.options.fileUpload = {
+            maxFiles: 1,
+            dictDefaultMessage: '{% trans "Drop a file here to upload or click to browse one" %}',
+            accept: function (file, done) {
+                bootbox.confirm("Upload file?", function (result) {
+                    if (result) {
+                        done();
+                    }
+                    else {
+                        done('Upload cancelled');
+                    }
+                });
+            },
+            init: function () {
+                this.on("success", function (file, a, b) {
+                    $('#success-modal').modal('show');
+                    this.removeAllFiles();
+                });
+                this.on("error", function (file, message, obj) {
+                    this.removeAllFiles();
+                    var fail_modal = $('#fail-modal');
+                    if (message['file'])
+                        fail_modal.find('.modal-body #p1').text(message.file[0]);
+                    if (message['non_field_errors'])
+                        fail_modal.find('.modal-body #p2').text(message.non_field_errors[0]);
+                    if (message === 'Upload cancelled')
+                        fail_modal.find('.modal-body #p1').text(message);
+
+                    fail_modal.modal('show');
+
+                });
+                this.on('sending', function (file, xhr, formData) {
+                    // add format to upload form
+                    if ($('#category').length) {
+                        formData.append('file_category', $('#category').val());
+                    }
+                });
+            }
+        }
+
+    });
+
+</script>
+
+<script>
+    $(function () {
+        $('[data-toggle="tooltip"]').tooltip()
+    })
+</script>
+
+{% include 'data/document_delete_script.html' %}
+
+{% endblock %}

@@ -109,7 +109,7 @@ class PinForm(forms.Form):
             str(response.status_code) + ' -- ' + str(response.text))
         if response.ok:
             response_dict = response.json()
-            transactions = response_dict.get('transactions', None)
+            transactions = response_dict.get('TRANSACTIONS', None)
             if not transactions:
                 error_message = response_dict.get(
                     'MESSAGE', None) or _("Failed to set pin")

@@ -353,7 +353,7 @@ class MakerCreationForm(forms.ModelForm):
         fields = ('first_name', 'last_name',
                   'mobile_no', 'email')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args,request, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
             # get current classes from Meta
@@ -374,6 +374,7 @@ class MakerCreationForm(forms.ModelForm):
                 self.fields[field].widget.attrs.update({
                     'class': classes
                 })
+        self.request = request
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -392,8 +393,12 @@ class MakerCreationForm(forms.ModelForm):
         else:
             user = self.instance_copy
 
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
 
@@ -421,12 +426,18 @@ class CheckerCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
+        self.request = request    
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 2
+
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
     class Meta:

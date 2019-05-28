@@ -14,7 +14,7 @@ from django.shortcuts import redirect, render, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
 from django.views import View
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
+from django.views.generic import CreateView, DetailView, ListView, UpdateView, TemplateView
 from django.views.generic.edit import FormView
 from django_otp.forms import OTPTokenForm
 from django.forms.formsets import BaseFormSet
@@ -324,7 +324,7 @@ class PinFormView(RootRequiredMixin,FormView):
         return self.setup
 
     def get_success_url(self):
-        to_step = request.GET.get('to_step', None)
+        to_step = self.request.GET.get('to_step', None)
         if to_step == '3':
             return reverse('users:setting-dibursement-levels')
         if to_step == '4':
@@ -333,6 +333,185 @@ class PinFormView(RootRequiredMixin,FormView):
             return reverse('users:setting-dibursement-formats')
         
         return reverse('users:setting-dibursement-makers')
+
+
+class BaseFormsetView(RootRequiredMixin, TemplateView):
+    """BaseView for setup Formsets"""
+
+    setup = None
+    
+    def get_context_data(self, **kwargs):
+        """update context data"""
+
+        data = super().get_context_data(**kwargs)
+        form = kwargs.get('form', None)
+        data['form'] = form or self.form_class(
+            queryset=self.get_queryset(),
+            prefix=self.prefix,
+            form_kwargs={'request': self.request}
+        )
+        data['enabled_steps'] = '-'.join(
+            self.get_setup().disbursement_enabled_steps())
+        return data
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(
+            request.POST,
+            prefix=self.prefix,
+            form_kwargs={'request': self.request}
+        )
+        if form.is_valid():
+            return self.form_valid(form)
+
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def get_setup(self):
+        if self.setup is None:
+            self.setup = Setup.objects.get(
+                user__hierarchy=self.request.user.hierarchy)
+        return self.setup
+
+    def form_valid(self,form):
+        form.save()
+        setup = self.get_setup()
+        setattr(setup,f'{self.prefix}_setup',True)
+        setup.save()
+        return redirect(self.get_success_url())
+
+
+class MakerFormView(BaseFormsetView):
+    template_name = 'users/setting-up-dibursement/makers.html'
+    form_class = MakerMemberFormSet
+    model = MakerUser
+    prefix = 'maker'
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+       
+        setup = self.get_setup()
+        if setup.pin_setup == False:
+            return reverse('users:setting-dibursement-pin')
+        return self.render_to_response(self.get_context_data())
+
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '1':
+            return reverse('users:setting-dibursement-pin')
+        if to_step == '4':
+            return reverse('users:setting-dibursement-checkers')
+        if to_step == '5':
+            return reverse('users:setting-dibursement-formats')
+
+        return reverse('users:setting-dibursement-levels')
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            hierarchy=self.request.user.hierarchy
+        )
+
+class CheckerFormView(BaseFormsetView):
+    template_name = 'users/setting-up-dibursement/checkers.html'
+    form_class = CheckerMemberFormSet
+    model = CheckerUser
+    prefix = 'checker'
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+
+        setup = self.get_setup()
+        if setup.levels_setup == False:
+            return reverse('users:setting-dibursement-levels')
+        return self.render_to_response(self.get_context_data())
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '1':
+            return reverse('users:setting-dibursement-pin')
+        if to_step == '2':
+            return reverse('users:setting-dibursement-makers')
+        if to_step == '3':
+            return reverse('users:setting-dibursement-levels')
+
+        return reverse('users:setting-dibursement-formats')
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            hierarchy=self.request.user.hierarchy
+        )
+
+class LevelsFormView(BaseFormsetView):
+    template_name = 'users/setting-up-dibursement/levels.html'
+    form_class = LevelFormSet
+    model = Levels
+    prefix = 'level'
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+
+        setup = self.get_setup()
+        if setup.maker_setup == False:
+            return reverse('users:setting-dibursement-makers')
+        return self.render_to_response(self.get_context_data())
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '1':
+            return reverse('users:setting-dibursement-pin')
+        if to_step == '2':
+            return reverse('users:setting-dibursement-makers')
+        if to_step == '5':
+            return reverse('users:setting-dibursement-formats')
+
+        return reverse('users:setting-dibursement-checkers')
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            created__hierarchy=self.request.user.hierarchy
+        )
+
+    def form_valid(self, form):
+        form.save()
+        Levels.update_levels_authority(
+            self.request.user.root)
+        setup = self.get_setup()
+        setup.levels_setup = True
+        setup.save()
+        return redirect(self.get_success_url())
+
+
+class CategoryFormView(BaseFormsetView):
+    template_name = 'users/setting-up-dibursement/category.html'
+    form_class = FileCategoryFormSet
+    model = FileCategory
+    prefix = 'category'
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+
+        setup = self.get_setup()
+        if setup.checker_setup == False:
+            return reverse('users:setting-dibursement-checkers')
+        return self.render_to_response(self.get_context_data())
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '1':
+            return reverse('users:setting-dibursement-pin')
+        if to_step == '2':
+            return reverse('users:setting-dibursement-makers')
+        if to_step == '3':
+            return reverse('users:setting-dibursement-levels')
+        if to_step == '4':
+            return reverse('users:setting-dibursement-checkers')
+
+        return reverse('data:disbursement_home')
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            user_created__hierarchy=self.request.user.hierarchy
+        )
+
 
 class DisbursementSettingsUpView(RootRequiredMixin, CreateView):
     """
@@ -651,46 +830,34 @@ def delete(request):
         raise Http404()
 
 
-class LevelsView(RootRequiredMixin, View):
-    """
-    View for adding Levels
-    """
-
-    def post(self, request, *args, **kwargs):
-
-        form = LevelFormSet(
-            request.POST,
-            prefix='level',
-            form_kwargs={'request': request}
-        )
-        if form and form.is_valid():
-
-            objs = form.save(commit=False)
-            
-            for obj in form.deleted_objects:
-                obj.delete()
-            
-            for obj in objs:
-                obj.save()
-
-            Levels.update_levels_authority(request.user.root)
-            return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
-
-        return HttpResponse(content=json.dumps({
-            "valid": False,
-            "reason": "validation",
-            "errors": form.errors,
-            "non_form_errors": form.non_form_errors()
-        }), content_type="application/json")
+class LevelsView(LevelsFormView):
+    """ View for adding levels """
+    template_name = 'users/add_levels.html'
 
     def get(self, request, *args, **kwargs):
-        initial_query = Levels.objects.filter(
-            created__hierarchy=request.user.hierarchy
+        """Handle GET requests"""
+        return self.render_to_response(self.get_context_data())
+
+    def get_success_url(self):
+        return reverse('users:levels')
+
+    def get_context_data(self, **kwargs):
+        """update context data"""
+
+        data = super().get_context_data(**kwargs)
+        form = kwargs.get('form', None)
+        data['levelform'] = form or self.form_class(
+            queryset=self.get_queryset(),
+            prefix=self.prefix,
+            form_kwargs={'request': self.request}
         )
-        context = {
-            'levelform': LevelFormSet(queryset=initial_query, prefix='level', form_kwargs={'request': self.request})
-        }
-        return render(request, 'users/add_levels.html', context)
+        return data
+
+    def form_valid(self, form):
+        form.save()
+        Levels.update_levels_authority(
+            self.request.user.root)
+        return redirect(self.get_success_url())
 
 
 class BaseAddMemberView(RootRequiredMixin, CreateView):
@@ -735,6 +902,14 @@ class AddMakerView(BaseAddMemberView):
     """
     model = MakerUser
     form_class = MakerCreationForm
+
+    def get_form_kwargs(self):
+        """
+        pass request to form kwargs
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'request': self.request})
+        return kwargs
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

@@ -73,7 +73,7 @@
 
     </ul>
 
-    {% include "users/setting-up-dibursement/pin_form.html" with form=form %}
+    {% include "users/setting-up-dibursement/formset_form.html" with btn_title='Add another level' step_1_index=3 formset=form action='users:setting-dibursement-levels' %}
 
 </div>
 
@@ -85,9 +85,14 @@
 <script type="text/javascript">
 
     $(document).ready(function () {
-       
+
+        let form_idx = $('#id_level-TOTAL_FORMS').val();
+        if (form_idx === '4') {
+            $('#add_btn').hide()
+        }
+
         var wizard = $('#disb_widget').smartWizard({
-            selected: 0,//0 indexed
+            selected: 2,//0 indexed
             labelNext: ' {% trans "Next" %} ',
             labelPrevious: ' {% trans "Previous" %} ',
             labelFinish: ' {% trans "Finish" %} ',
@@ -95,12 +100,12 @@
             onLeaveStep: leaveAStepCallback
 
         });
-        
+
         let enabled_steps = "{{enabled_steps}}";
-                console.log(enabled_steps);
+        console.log(enabled_steps);
 
         enabled_steps = enabled_steps.split('-');
-        
+
         enabled_steps.forEach(element => {
             //1 indexed
             $('#disb_widget').smartWizard('enableStep', parseInt(element));
@@ -109,16 +114,34 @@
 
 
         function leaveAStepCallback(obj, context) {
-            if("{{form_exist}}" == "False"){
-                window.location.href = window.location.href += '?q=next&to_step=' + context.toStep; ;
-            }
-            else{
-                let action = $("form").attr('action') + '?to_step=' + context.toStep;
-                $("form").attr('action', action)
-                $("form").submit();
-            }
-            
+
+            let action = $("form").attr('action') + '?to_step=' + context.toStep;
+            $("form").attr('action', action)
+            $("form").submit();
+
         }
+
+        function increase_height() {
+            let oldheight = $('.stepContainer').css('height');
+            oldheight = parseInt(oldheight.replace("px", ""));
+            let newheight = oldheight + 50;
+            $('.stepContainer').height(newheight + "px");
+        }
+
+        $('#add_btn').click(function () {
+            let form_idx = $('#id_level-TOTAL_FORMS').val();
+            if (form_idx === '3') {
+                $(this).hide()
+            }
+
+            $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+
+        });
+
 
 
     });

@@ -40,7 +40,7 @@
                 {% if current_status == 'collection' %}
                     {% include "users/settings_up_format_form.html" with step=6 formatform=formatform %}
                 {%else%}
-                    {% include "users/settings_up_category_form.html" with step=6 filecategoryform=formatform %}
+                    {% include "users/setting-up-dibursement/formset_form.html" with btn_title='Add format' step_1_index=6 formset=formatform action='users:setting-dibursement-formats' %}
                 {%endif%}    
             {%else%}
             <div class="x_content">
@@ -113,13 +113,14 @@
 
         $('#formats-datatable').DataTable();
         $('#step-6').append("<button id='submit' class='btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}'>{% trans 'Submit' %}</button>")
+        
         function increase_height() {
             let oldheight = $('.stepContainer').css('height');
             oldheight = parseInt(oldheight.replace("px", ""));
             let newheight = oldheight + 50;
             $('.stepContainer').height(newheight + "px");
         }
-
+        
         $('#add_format_btn').click(function () {
             let form_idx = $('#id_format-TOTAL_FORMS').val();
 
@@ -130,15 +131,18 @@
 
         });
 
-        $('#add_category_btn').click(function () {
+        
+
+        $('#add_btn').click(function () {
             let form_idx = $('#id_category-TOTAL_FORMS').val();
 
-            $('#categoryform tbody').append($('#category_empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
             $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
             increase_height()
 
         });
+
 
         $('#submit').click(function () {
             let form_data = $("form").serialize();

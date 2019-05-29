@@ -324,8 +324,14 @@ class LevelForm(forms.ModelForm):
 
     def clean_max_amount_can_be_disbursed(self):
         amount = self.cleaned_data.get('max_amount_can_be_disbursed')
-        if not amount:
+        
+        if not amount and amount != 0:
             return amount
+        
+        if amount <= 0:
+            raise forms.ValidationError(
+                _('Amount must be greater than or equal 0'))
+
         levels_qs = Levels.objects.filter(
             created=self.request.user,
             max_amount_can_be_disbursed=amount)

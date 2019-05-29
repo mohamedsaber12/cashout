@@ -296,7 +296,7 @@
 <script src="{% static 'gentella/switchery.min.js' %}"></script>
 <script type="text/javascript">
 
-    $(document).ready(function () {
+    $(document).ready(function () {     
         let form_idx = $('#id_level-TOTAL_FORMS').val();
         if (form_idx === '4') {
             $('#add_level_btn').hide()
@@ -304,6 +304,19 @@
         let final_step = 5;
         
         let step = parseInt('{{step}}');
+        
+        //press next when user press enter
+        $(window).keydown(function (event) {
+            if (event.keyCode == 13) {
+                event.preventDefault();
+                if($('.buttonNext').hasClass('buttonDisabled')){
+                    $('.buttonFinish').click();
+                }
+                else
+                    $("#disb_widget").smartWizard('goForward');        
+            }
+        });
+
         var wizard = $('#disb_widget').smartWizard({
             selected: step,
             labelNext:' {% trans "Next" %} ',

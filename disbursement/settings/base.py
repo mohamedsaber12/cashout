@@ -113,6 +113,8 @@ CELERY_RESULT_PERSISTENT = False
 
 CELERY_ACCEPT_CONTENT = ['json']
 
+CELERY_RESULT_ACCEPT_CONTENT = ['json']
+
 CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
 
 CELERY_TASK_SERIALIZER = 'json'

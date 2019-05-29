@@ -15,7 +15,8 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^profile*'),
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
-    re.compile(settings.MEDIA_URL.lstrip('/'))
+    re.compile(settings.MEDIA_URL.lstrip('/')),
+    re.compile(reverse('set_language').lstrip('/'))
 )
 
 

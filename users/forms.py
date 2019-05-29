@@ -330,7 +330,7 @@ class LevelForm(forms.ModelForm):
         
         if amount <= 0:
             raise forms.ValidationError(
-                _('Amount must be greater than or equal 0'))
+                _('Amount must be greater than 0'))
 
         levels_qs = Levels.objects.filter(
             created=self.request.user,

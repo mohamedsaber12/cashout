@@ -76,3 +76,15 @@ class Setup(models.Model):
         if self.category_setup == True:
             steps.append('5')
         return steps
+
+    def collection_enabled_steps(self):
+        """1-indexed"""
+        steps = []
+        if self.uploaders_setup == True:
+            steps.append('1')
+        if self.format_collection_setup == True:
+            steps.append('2')
+        if self.collection_setup == True:
+            steps.append('3')
+      
+        return steps

@@ -62,9 +62,9 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
     def handle_login_url(request):
         status = request.user.get_status(request)
         if status == 'collection':
-            login_url = reverse('users:settings-collection')
+            login_url = reverse('users:setting-collection-collectiondata')
         elif status == 'disbursement':
-            login_url = reverse('users:settings-dibursement')
+            login_url = reverse('users:setting-dibursement-pin')
         else:
             login_url = reverse('users:redirect')
         return login_url    

@@ -245,8 +245,7 @@ class CollectionSettingsUpView(RootRequiredMixin, CreateView):
 
         data['formatform'] = FormatFormSet(
             queryset=Format.objects.filter(
-                hierarchy=self.request.user.hierarchy,
-                data_type = 2
+                hierarchy=self.request.user.hierarchy
             ),
             prefix='format',
             form_kwargs={'request': self.request}
@@ -335,6 +334,45 @@ class PinFormView(RootRequiredMixin,FormView):
         return reverse('users:setting-dibursement-makers')
 
 
+class CollectionFormView(RootRequiredMixin, FormView):
+    template_name = 'users/setting-up-collection/collection.html'
+    setup = None
+
+    def get_form(self, form_class=None):
+        """Return an instance of the form to be used in this view."""
+        return CollectionDataForm(request=self.request)
+
+    def get_context_data(self, **kwargs):
+        """update context data"""
+        data = super().get_context_data(**kwargs)
+        data['enabled_steps'] = '-'.join(
+            self.get_setup().disbursement_enabled_steps())
+        return data
+
+    def post(self, request, *args, **kwargs):
+        form = CollectionDataForm(request.POST, request=self.request)
+        if form and form.is_valid():
+            setup = self.get_setup()
+            setup.collection_setup = True
+            setup.save()
+            return self.form_valid(form)
+        return self.form_invalid(form)
+
+    def get_setup(self):
+        if self.setup is None:
+            self.setup = Setup.objects.get(
+                user__hierarchy=self.request.user.hierarchy)
+        return self.setup
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '3':
+            return reverse('users:setting-collection-uploader')
+
+        return reverse('users:setting-collection-formats')
+
+
+
 class BaseFormsetView(RootRequiredMixin, TemplateView):
     """BaseView for setup Formsets"""
 
@@ -351,7 +389,8 @@ class BaseFormsetView(RootRequiredMixin, TemplateView):
             form_kwargs={'request': self.request}
         )
         data['enabled_steps'] = '-'.join(
-            self.get_setup().disbursement_enabled_steps())
+            getattr(self.get_setup(), f'{self.data_type}_enabled_steps')()
+            )
         return data
 
     def post(self, request, *args, **kwargs):
@@ -374,9 +413,70 @@ class BaseFormsetView(RootRequiredMixin, TemplateView):
     def form_valid(self,form):
         form.save()
         setup = self.get_setup()
-        setattr(setup,f'{self.prefix}_setup',True)
+        setattr(setup,f'{self.setup_key}_setup',True)
         setup.save()
         return redirect(self.get_success_url())
+
+
+class UploaderFormView(BaseFormsetView):
+    template_name = 'users/setting-up-collection/uploader.html'
+    form_class = UploaderMemberFormSet
+    model = UploaderUser
+    prefix = 'uploader'
+    setup_key = 'uploaders'
+    data_type = 'collection'
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+
+        setup = self.get_setup()
+        if setup.format_collection_setup == False:
+            return reverse('users:setting-collection-formats')
+        return self.render_to_response(self.get_context_data())
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '1':
+            return reverse('users:setting-collection-collectiondata')
+        if to_step == '2':
+            return reverse('users:setting-collection-formats')
+    
+        return reverse('data:collection_home')
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            hierarchy=self.request.user.hierarchy
+        )
+
+
+class FormatFormView(BaseFormsetView):
+    template_name = 'users/setting-up-collection/formats.html'
+    form_class = FormatFormSet
+    model = Format
+    prefix = 'format'
+    setup_key = 'format_collection_setup'
+    data_type = 'collection'
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests"""
+
+        setup = self.get_setup()
+        if setup.collection_setup == False:
+            return reverse('users:setting-collection-collectiondata')
+        return self.render_to_response(self.get_context_data())
+
+    def get_success_url(self):
+        to_step = self.request.GET.get('to_step', None)
+        if to_step == '1':
+            return reverse('users:setting-collection-collectiondata')
+  
+        return reverse('users:setting-collection-uploader')
+
+    def get_queryset(self):
+        return self.model.objects.filter(
+            hierarchy=self.request.user.hierarchy
+        )
+
 
 
 class MakerFormView(BaseFormsetView):
@@ -384,6 +484,8 @@ class MakerFormView(BaseFormsetView):
     form_class = MakerMemberFormSet
     model = MakerUser
     prefix = 'maker'
+    setup_key = 'maker'
+    data_type = 'disbursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
@@ -415,6 +517,8 @@ class CheckerFormView(BaseFormsetView):
     form_class = CheckerMemberFormSet
     model = CheckerUser
     prefix = 'checker'
+    setup_key = 'checker'
+    data_type = 'dibursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
@@ -445,6 +549,7 @@ class LevelsFormView(BaseFormsetView):
     form_class = LevelFormSet
     model = Levels
     prefix = 'level'
+    data_type = 'dibursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
@@ -485,6 +590,8 @@ class CategoryFormView(BaseFormsetView):
     form_class = FileCategoryFormSet
     model = FileCategory
     prefix = 'category'
+    setup_key = 'category'
+    data_type = 'dibursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""

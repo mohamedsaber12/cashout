@@ -450,7 +450,7 @@ class UploaderCreationForm(forms.ModelForm):
     first_name = forms.CharField(label=_('First name'))
     last_name = forms.CharField(label=_('Last name'))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field in iter(self.fields):
@@ -463,6 +463,7 @@ class UploaderCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
+        self.request = request    
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -480,9 +481,13 @@ class UploaderCreationForm(forms.ModelForm):
             user.user_type = 4
         else:
             user = self.instance_copy
-            
+
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
     class Meta:

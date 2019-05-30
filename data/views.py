@@ -48,7 +48,7 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 @setup_required
 def redirect_home(request):
     if request.user.is_superuser:
-        return redirect('/admin')
+        return redirect(reverse('admin:index'))
     status = request.user.get_status(request)
     return redirect(f'data:{status}_home')
 

@@ -11,7 +11,7 @@ from django.utils import translation
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import redirect, render, render_to_response
+from django.shortcuts import redirect, render, render_to_response,get_object_or_404
 from django.urls import reverse
 from django.urls import reverse_lazy
 from django.utils.decorators import method_decorator
@@ -81,8 +81,7 @@ def disburse(request, doc_id):
 @setup_required
 @login_required
 def disbursement_list(request, doc_id):
-    doc_obj = Doc.objects.get(id=doc_id)
-
+    doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
         doc_obj.owner.hierarchy == request.user.hierarchy and
         (

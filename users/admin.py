@@ -63,7 +63,7 @@ def deactivate_selected(modeladmin, request, queryset):
             else:
                 DELETED_GROUPS_LOGGER.debug(
                     'User Deactivated at %s by %s from IP Address %s' % (
-                        now, obj.name, get_client_ip(request)))
+                        now, obj.username, get_client_ip(request)))
             obj.is_active = False
             obj.save()
     else:

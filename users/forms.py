@@ -612,7 +612,7 @@ class ForgotPasswordForm(forms.Form):
         send_mail(
             from_email=settings.SERVER_EMAIL,
             recipient_list=[self.user.email],
-            subject=subject + _(' Password Notification'),
+            subject="{}{}".format(subject, _(' Password Notification')),
             message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
         )
 

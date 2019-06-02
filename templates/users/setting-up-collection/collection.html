@@ -63,7 +63,8 @@
 <script type="text/javascript">
 
     $(document).ready(function () {
-
+        //press next when user press enter
+    
         var wizard = $('#disb_widget').smartWizard({
             selected: 0,//0 indexed
             labelNext: ' {% trans "Next" %} ',
@@ -75,7 +76,6 @@
         });
 
         let enabled_steps = "{{enabled_steps}}";
-        console.log(enabled_steps);
 
         enabled_steps = enabled_steps.split('-');
 
@@ -96,4 +96,5 @@
     });
 
 </script>
+<script src="{% static 'js/submit_enter_btn.js' %}"></script>
 {% endblock %}

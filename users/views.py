@@ -282,7 +282,7 @@ class CollectionSettingsUpView(RootRequiredMixin, CreateView):
 
 
 class PinFormView(RootRequiredMixin,FormView):
-    template_name = 'users/setting-up-dibursement/pin.html'
+    template_name = 'users/setting-up-disbursement/pin.html'
     setup = None
 
     def get(self, request, *args, **kwargs):
@@ -325,13 +325,13 @@ class PinFormView(RootRequiredMixin,FormView):
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
         if to_step == '3':
-            return reverse('users:setting-dibursement-levels')
+            return reverse('users:setting-disbursement-levels')
         if to_step == '4':
-            return reverse('users:setting-dibursement-checkers')
+            return reverse('users:setting-disbursement-checkers')
         if to_step == '5':
-            return reverse('users:setting-dibursement-formats')
+            return reverse('users:setting-disbursement-formats')
         
-        return reverse('users:setting-dibursement-makers')
+        return reverse('users:setting-disbursement-makers')
 
 
 class CollectionFormView(RootRequiredMixin, FormView):
@@ -480,7 +480,7 @@ class FormatFormView(BaseFormsetView):
 
 
 class MakerFormView(BaseFormsetView):
-    template_name = 'users/setting-up-dibursement/makers.html'
+    template_name = 'users/setting-up-disbursement/makers.html'
     form_class = MakerMemberFormSet
     model = MakerUser
     prefix = 'maker'
@@ -492,20 +492,20 @@ class MakerFormView(BaseFormsetView):
        
         setup = self.get_setup()
         if setup.pin_setup == False:
-            return reverse('users:setting-dibursement-pin')
+            return reverse('users:setting-disbursement-pin')
         return self.render_to_response(self.get_context_data())
 
 
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
         if to_step == '1':
-            return reverse('users:setting-dibursement-pin')
+            return reverse('users:setting-disbursement-pin')
         if to_step == '4':
-            return reverse('users:setting-dibursement-checkers')
+            return reverse('users:setting-disbursement-checkers')
         if to_step == '5':
-            return reverse('users:setting-dibursement-formats')
+            return reverse('users:setting-disbursement-formats')
 
-        return reverse('users:setting-dibursement-levels')
+        return reverse('users:setting-disbursement-levels')
 
     def get_queryset(self):
         return self.model.objects.filter(
@@ -513,31 +513,31 @@ class MakerFormView(BaseFormsetView):
         )
 
 class CheckerFormView(BaseFormsetView):
-    template_name = 'users/setting-up-dibursement/checkers.html'
+    template_name = 'users/setting-up-disbursement/checkers.html'
     form_class = CheckerMemberFormSet
     model = CheckerUser
     prefix = 'checker'
     setup_key = 'checker'
-    data_type = 'dibursement'
+    data_type = 'disbursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
 
         setup = self.get_setup()
         if setup.levels_setup == False:
-            return reverse('users:setting-dibursement-levels')
+            return reverse('users:setting-disbursement-levels')
         return self.render_to_response(self.get_context_data())
 
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
         if to_step == '1':
-            return reverse('users:setting-dibursement-pin')
+            return reverse('users:setting-disbursement-pin')
         if to_step == '2':
-            return reverse('users:setting-dibursement-makers')
+            return reverse('users:setting-disbursement-makers')
         if to_step == '3':
-            return reverse('users:setting-dibursement-levels')
+            return reverse('users:setting-disbursement-levels')
 
-        return reverse('users:setting-dibursement-formats')
+        return reverse('users:setting-disbursement-formats')
 
     def get_queryset(self):
         return self.model.objects.filter(
@@ -545,30 +545,30 @@ class CheckerFormView(BaseFormsetView):
         )
 
 class LevelsFormView(BaseFormsetView):
-    template_name = 'users/setting-up-dibursement/levels.html'
+    template_name = 'users/setting-up-disbursement/levels.html'
     form_class = LevelFormSet
     model = Levels
     prefix = 'level'
-    data_type = 'dibursement'
+    data_type = 'disbursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
 
         setup = self.get_setup()
         if setup.maker_setup == False:
-            return reverse('users:setting-dibursement-makers')
+            return reverse('users:setting-disbursement-makers')
         return self.render_to_response(self.get_context_data())
 
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
         if to_step == '1':
-            return reverse('users:setting-dibursement-pin')
+            return reverse('users:setting-disbursement-pin')
         if to_step == '2':
-            return reverse('users:setting-dibursement-makers')
+            return reverse('users:setting-disbursement-makers')
         if to_step == '5':
-            return reverse('users:setting-dibursement-formats')
+            return reverse('users:setting-disbursement-formats')
 
-        return reverse('users:setting-dibursement-checkers')
+        return reverse('users:setting-disbursement-checkers')
 
     def get_queryset(self):
         return self.model.objects.filter(
@@ -586,31 +586,31 @@ class LevelsFormView(BaseFormsetView):
 
 
 class CategoryFormView(BaseFormsetView):
-    template_name = 'users/setting-up-dibursement/category.html'
+    template_name = 'users/setting-up-disbursement/category.html'
     form_class = FileCategoryFormSet
     model = FileCategory
     prefix = 'category'
     setup_key = 'category'
-    data_type = 'dibursement'
+    data_type = 'disbursement'
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
 
         setup = self.get_setup()
         if setup.checker_setup == False:
-            return reverse('users:setting-dibursement-checkers')
+            return reverse('users:setting-disbursement-checkers')
         return self.render_to_response(self.get_context_data())
 
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
         if to_step == '1':
-            return reverse('users:setting-dibursement-pin')
+            return reverse('users:setting-disbursement-pin')
         if to_step == '2':
-            return reverse('users:setting-dibursement-makers')
+            return reverse('users:setting-disbursement-makers')
         if to_step == '3':
-            return reverse('users:setting-dibursement-levels')
+            return reverse('users:setting-disbursement-levels')
         if to_step == '4':
-            return reverse('users:setting-dibursement-checkers')
+            return reverse('users:setting-disbursement-checkers')
 
         return reverse('data:disbursement_home')
 

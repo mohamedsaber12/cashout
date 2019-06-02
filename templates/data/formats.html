@@ -109,7 +109,6 @@
 
         $('#formats-datatable').DataTable();
         $('#step-6').append("<button id='submit' class='btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}'>{% trans 'Submit' %}</button>")
-        $('#step-6 form').attr('style','overflow-x: scroll')
         function increase_height() {
             let oldheight = $('.stepContainer').css('height');
             oldheight = parseInt(oldheight.replace("px", ""));
@@ -119,6 +118,7 @@
 
         let current_status = "{{current_status}}";
         if(current_status == 'collection'){
+            $('#step-6 form').attr('style', 'overflow-x: scroll');
             $('#add_btn').click(function () {
                 let form_idx = $('#id_format-TOTAL_FORMS').val();
 

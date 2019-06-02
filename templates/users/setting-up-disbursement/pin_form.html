@@ -3,7 +3,7 @@
 
 <div id="step-1">
     {%if form%}
-    <form action="{% url 'users:setting-dibursement-pin' %}" method="post" class="form-horizontal form-label-left">
+    <form action="{% url 'users:setting-disbursement-pin' %}" method="post" class="form-horizontal form-label-left">
         {{ form.non_field_errors }}
 
         {% csrf_token %}

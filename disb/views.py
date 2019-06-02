@@ -47,7 +47,7 @@ def disburse(request, doc_id):
     :return:
     """
     if request.method == 'POST':
-        doc_obj = Doc.objects.get(id=doc_id)
+        doc_obj = get_object_or_404(Doc, id=doc_id)
         can_disburse = doc_obj.can_user_disburse(request.user)[0]
         # request.user.is_verified = False  #TODO
         if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and not doc_obj.is_disbursed:
@@ -109,7 +109,7 @@ def disbursement_list(request, doc_id):
 @setup_required
 @login_required
 def failed_disbursed_for_download(request, doc_id):
-    doc_obj = Doc.objects.get(id=doc_id)
+    doc_obj = get_object_or_404(Doc, id=doc_id)
 
     can_view = (
         doc_obj.owner.hierarchy == request.user.hierarchy and
@@ -145,7 +145,7 @@ def failed_disbursed_for_download(request, doc_id):
 @setup_required
 @login_required
 def download_failed_validation_file(request, doc_id):
-    doc_obj = Doc.objects.get(id=doc_id)
+    doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
         doc_obj.owner == request.user and request.user.is_maker
     )

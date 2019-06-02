@@ -1,6 +1,4 @@
 # -*- coding: UTF-8 -*-
-from __future__ import print_function
-
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.translation import gettext as _
@@ -21,16 +19,16 @@ def set_pin_error_mail(root_user_id):
     agents_msisdns = Agent.objects.filter(
         wallet_provider=root).values_list('msisdn', flat=True)
     agents_msisdns = '-'.join(agents_msisdns)    
-    message = f"""Dear {super_admin.username} 
+    message = _("""Dear {} 
         Please ask your wallet provider to reset pin for these mobile numbers
-        {agents_msisdns}
-        Thanks, BR"""
-
+        {}
+        Thanks, BR""")
+    
     subject = f'[{root.brand.mail_subject}]'
 
     send_mail(
         from_email=settings.SERVER_EMAIL,
         recipient_list=[super_admin.email],
         subject=subject + ' Set Pin Notification',
-        message=message
+        message=message.format(super_admin.username, agents_msisdns)
     )

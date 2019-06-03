@@ -27,16 +27,14 @@ class RootRequiredMixin(LoginRequiredMixin):
 
 class CollectionRootRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
-        status = request.user.get_status(request)
-        if not (request.user.is_authenticated and request.user.is_root and status == 'collection'):
+        if not (request.user.is_authenticated and request.user.is_root and request.user.get_status(request) == 'collection'):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
 
 class DisbursementRootRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
-        status = request.user.get_status(request)
-        if not (request.user.is_authenticated and request.user.is_root and status == 'disbursement'):
+        if not (request.user.is_authenticated and request.user.is_root and request.user.get_status(request) == 'disbursement'):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 

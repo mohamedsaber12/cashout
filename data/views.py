@@ -297,7 +297,7 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
         get_client_ip(request) + ' downloaded ' + path + 'at' + str(datetime.datetime.now()) + ' ' + str(request.user))
     path = 'documents/' + path
     try:
-        doc = Doc.objects.get(file=path)
+        doc = get_object_or_404(Doc, file=path)
         if doc.owner.hierarchy == request.user.hierarchy:
             return serve(request, path, document_root, show_indexes)
         else:
@@ -317,7 +317,7 @@ def doc_download(request, doc_id):
     :param doc_id: Document's id to be fetched.
     :return: Downloadable excel or 404.
     """
-    doc = Doc.objects.get(id=doc_id)
+    doc = get_object_or_404(Doc, id=doc_id)
     if doc.owner.hierarchy == request.user.hierarchy:
         try:
             response = HttpResponse(

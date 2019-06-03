@@ -1,10 +1,15 @@
 import re
+from importlib import import_module
 
 from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import redirect
 from django.contrib.auth import logout
 from django_otp import user_has_device
+
+from users.models import Visitor
+
+engine = import_module(settings.SESSION_ENGINE)
 
 EXEMPT_URLS = [re.compile(settings.LOGIN_URL.lstrip('/'))]
 if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
@@ -15,7 +20,8 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^profile*'),
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
-    re.compile(settings.MEDIA_URL.lstrip('/'))
+    re.compile(settings.MEDIA_URL.lstrip('/')),
+    re.compile(reverse('set_language').lstrip('/'))
 )
 
 
@@ -85,3 +91,32 @@ class CheckerTwoFactorAuthMiddleWare:
             if not is_verified and not path in urls:
                 return redirect(reverse("two_factor:profile"))
             
+
+class PreventConcurrentLoginsMiddleware:
+    """
+    Django middleware that prevents multiple concurrent logins..
+    Adapted from http://stackoverflow.com/a/1814797 and https://gist.github.com/peterdemin/5829440
+    """
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if request.user.is_authenticated:
+            key_from_cookie = request.session.session_key
+            if hasattr(request.user, 'visitor'):
+                session_key_in_visitor_db = request.user.visitor.session_key
+                if session_key_in_visitor_db != key_from_cookie:
+                    # Delete the Session object from database and cache
+                    engine.SessionStore(session_key_in_visitor_db).delete()
+                    request.user.visitor.session_key = key_from_cookie
+                    request.user.visitor.save()
+            else:
+                Visitor.objects.create(
+                    user=request.user,
+                    session_key=key_from_cookie
+                )

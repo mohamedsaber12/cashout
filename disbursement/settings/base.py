@@ -69,6 +69,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'users.middleware.PreventConcurrentLoginsMiddleware',
     'django_session_timeout.middleware.SessionTimeoutMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -112,6 +113,8 @@ CELERY_RESULT_BACKEND = 'rpc://'
 CELERY_RESULT_PERSISTENT = False
 
 CELERY_ACCEPT_CONTENT = ['json']
+
+CELERY_RESULT_ACCEPT_CONTENT = ['json']
 
 CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
 

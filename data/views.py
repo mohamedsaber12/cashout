@@ -22,7 +22,7 @@ from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.encoding import force_bytes, force_text
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.views.generic import ListView, DetailView,View
+from django.views.generic import ListView, DetailView, View, TemplateView
 from django.views.static import serve
 from django.views.decorators.http import require_safe
 
@@ -47,12 +47,14 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 @login_required
 @setup_required
 def redirect_home(request):
+    if request.user.is_superuser:
+        return redirect(reverse('admin:index'))
     status = request.user.get_status(request)
     return redirect(f'data:{status}_home')
 
-@disbursement_users
 @login_required
 @setup_required
+@disbursement_users
 def disbursement_home(request):
     """
     POST:
@@ -103,9 +105,9 @@ def disbursement_home(request):
 
     return render(request, 'data/disbursement_home.html', context=context)
 
-@collection_users
 @login_required
 @setup_required
+@collection_users
 def collection_home(request):
     """
     POST:
@@ -178,8 +180,8 @@ class FileDeleteView(View):
         return JsonResponse(data={},status=200)
 
 
-@disbursement_users
 @login_required
+@disbursement_users
 def document_view(request, doc_id):
     """
     related to disbursement
@@ -288,8 +290,8 @@ def document_view(request, doc_id):
     return render(request, template_name=template_name, context=context)
 
 
-@setup_required
 @login_required
+@setup_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
     DOWNLOAD_LOGGER.debug(
         get_client_ip(request) + ' downloaded ' + path + 'at' + str(datetime.datetime.now()) + ' ' + str(request.user))
@@ -306,8 +308,8 @@ def protected_serve(request, path, document_root=None, show_indexes=False):
         return redirect('data:main_view')
 
 
-@setup_required
 @login_required
+@setup_required
 def doc_download(request, doc_id):
     """
     Downloads Excel file that user had uploaded before.
@@ -338,10 +340,9 @@ def doc_download(request, doc_id):
 
 
 @method_decorator([root_or_maker_or_uploader, setup_required, login_required], name='dispatch')
-class FormatListView(ListView):
+class FormatListView(TemplateView):
 
     template_name = "data/formats.html"
-    context_object_name = "format_qs"
 
     def get_queryset(self):
         if self.request.user.get_status(self.request) == 'collection':
@@ -349,19 +350,23 @@ class FormatListView(ListView):
         else:
             return FileCategory.objects.get_by_hierarchy(self.request.user.hierarchy)
 
+    def get_success_url(self):
+        return reverse('data:list_format')
+
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(*args, **kwargs)
+        form = kwargs.get('form', None)
         if self.request.user.get_status(self.request) == 'collection':
-            context['formatform'] = FormatFormSet(
-                queryset=context['format_qs'],
+            context['formatform'] = form or FormatFormSet(
+                queryset=self.get_queryset(),
                 prefix='format'
             )
             if not self.request.user.is_root:
                 context['formatform'].can_delete = False
                 context['formatform'].extra = 0
         else:
-            context['formatform'] = FileCategoryFormSet(
-                queryset=context['format_qs'],
+            context['formatform'] = form or FileCategoryFormSet(
+                queryset=self.get_queryset(),
                 prefix='category'
             )
             
@@ -386,24 +391,10 @@ class FormatListView(ListView):
                 form_kwargs={'request': request}
             )
         if form and form.is_valid():
+            form.save()
+            return redirect(self.get_success_url())
 
-            objs = form.save(commit=False)
-
-            for obj in form.deleted_objects:
-                obj.delete()
-
-            for obj in objs:
-                obj.save()
-
-            return HttpResponse(content=json.dumps({"valid": True}), content_type="application/json")
-
-        return HttpResponse(content=json.dumps({
-            "valid": False,
-            "reason": "validation",
-            "errors": form.errors,
-            "non_form_errors": form.non_form_errors()
-        }), content_type="application/json")
-
+        return self.render_to_response(self.get_context_data(form=form))
 
 @method_decorator([collection_users, setup_required, login_required], name='dispatch')
 class RetrieveCollectionData(DetailView):

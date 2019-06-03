@@ -206,7 +206,6 @@
           type: "POST",
           data: { user_id: id,client:true },
           success: function (data, text, xhr) {
-            console.log(data)
             if (data["valid"] == "true") {
               $("#delete-user-modal").modal('hide');
               location.reload()

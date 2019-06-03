@@ -60,3 +60,31 @@ class Setup(models.Model):
                 if self.uploaders_setup:
                     per += 30          
         return per
+
+
+    def disbursement_enabled_steps(self):
+        """1-indexed"""
+        steps = []
+        if self.pin_setup == True:
+            steps.append('1')
+        if self.maker_setup == True:
+            steps.append('2')
+        if self.levels_setup == True:
+            steps.append('3')
+        if self.checker_setup == True:
+            steps.append('4')
+        if self.category_setup == True:
+            steps.append('5')
+        return steps
+
+    def collection_enabled_steps(self):
+        """1-indexed"""
+        steps = []
+        if self.uploaders_setup == True:
+            steps.append('1')
+        if self.format_collection_setup == True:
+            steps.append('2')
+        if self.collection_setup == True:
+            steps.append('3')
+      
+        return steps

@@ -324,8 +324,14 @@ class LevelForm(forms.ModelForm):
 
     def clean_max_amount_can_be_disbursed(self):
         amount = self.cleaned_data.get('max_amount_can_be_disbursed')
-        if not amount:
+        
+        if not amount and amount != 0:
             return amount
+        
+        if amount <= 0:
+            raise forms.ValidationError(
+                _('Amount must be greater than 0'))
+
         levels_qs = Levels.objects.filter(
             created=self.request.user,
             max_amount_can_be_disbursed=amount)
@@ -353,7 +359,7 @@ class MakerCreationForm(forms.ModelForm):
         fields = ('first_name', 'last_name',
                   'mobile_no', 'email')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args,request, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
             # get current classes from Meta
@@ -374,6 +380,7 @@ class MakerCreationForm(forms.ModelForm):
                 self.fields[field].widget.attrs.update({
                     'class': classes
                 })
+        self.request = request
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -392,8 +399,12 @@ class MakerCreationForm(forms.ModelForm):
         else:
             user = self.instance_copy
 
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
 
@@ -421,12 +432,18 @@ class CheckerCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
+        self.request = request    
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 2
+
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
     class Meta:
@@ -439,7 +456,7 @@ class UploaderCreationForm(forms.ModelForm):
     first_name = forms.CharField(label=_('First name'))
     last_name = forms.CharField(label=_('Last name'))
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field in iter(self.fields):
@@ -452,6 +469,7 @@ class UploaderCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
+        self.request = request    
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -469,9 +487,13 @@ class UploaderCreationForm(forms.ModelForm):
             user.user_type = 4
         else:
             user = self.instance_copy
-            
+
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
     class Meta:
@@ -606,7 +628,7 @@ class ForgotPasswordForm(forms.Form):
         send_mail(
             from_email=settings.SERVER_EMAIL,
             recipient_list=[self.user.email],
-            subject=subject + _(' Password Notification'),
+            subject="{}{}".format(subject, _(' Password Notification')),
             message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
         )
 

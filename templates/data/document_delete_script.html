@@ -5,7 +5,6 @@
             let deleteModal = $('#doc-delete-modal');
             deleteModal.modal('show');  
             let url = elem.getAttribute('data-uri');
-            console.log(url)
             $('#doc-delete-submit').click(function () {
                 $.ajax({
                     type: "POST",

@@ -58,7 +58,7 @@
                 <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">
                         {% if request.user.is_root %}
-                            <li><a href="{% url 'users:settings-collection' %}">{% trans 'Setup' %}</a></li>
+                            <li><a href="{% url 'users:setting-collection-collectiondata' %}">{% trans 'Setup' %}</a></li>
                         {% endif %}
                         <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
 

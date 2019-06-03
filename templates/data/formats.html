@@ -13,7 +13,7 @@
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
 <style>
-    .error_span {
+    .errorlist {
         color: red;
     }
 </style>
@@ -37,11 +37,7 @@
                 <div class="clearfix"></div>
             </div>
             {%if request.user.is_root%}
-                {% if current_status == 'collection' %}
-                    {% include "users/settings_up_format_form.html" with step=6 formatform=formatform %}
-                {%else%}
-                    {% include "users/settings_up_category_form.html" with step=6 filecategoryform=formatform %}
-                {%endif%}    
+                {% include "users/formset_form.html" with btn_title='Add format' step_1_index=6 formset=formatform action='data:list_format' %}
             {%else%}
             <div class="x_content">
 
@@ -120,68 +116,37 @@
             $('.stepContainer').height(newheight + "px");
         }
 
-        $('#add_format_btn').click(function () {
-            let form_idx = $('#id_format-TOTAL_FORMS').val();
+        let current_status = "{{current_status}}";
+        if(current_status == 'collection'){
+            $('#step-6 form').attr('style', 'overflow-x: scroll');
+            $('#add_btn').click(function () {
+                let form_idx = $('#id_format-TOTAL_FORMS').val();
 
-            $('#formatform tbody').append($('#format_empty_form tbody').html().replace(/__prefix__/g, form_idx));
-            $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+                $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+                $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
-            increase_height()
-
-        });
-
-        $('#add_category_btn').click(function () {
-            let form_idx = $('#id_category-TOTAL_FORMS').val();
-
-            $('#categoryform tbody').append($('#category_empty_form tbody').html().replace(/__prefix__/g, form_idx));
-            $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
-
-            increase_height()
-
-        });
-
-        $('#submit').click(function () {
-            let form_data = $("form").serialize();
-            $.ajax({
-                type: 'post',
-                url: "{% url 'data:list_format' %}",
-                data: form_data,
-                success: function (data, text, xhr) {
-
-                    $('.error_span').html('');
-
-                    if (!data.valid) {
-
-                        if (data.non_form_errors && data.non_form_errors[0]) {
-                            $('#non_form_errors').html(data.non_form_errors[0])
-                        }
-
-                        let current_status  = "{{current_status}}"
-                        let prefix = (current_status == 'collection') ? 'format':'category'
-                        
-
-                        let rows = $('#' + prefix + 'form' + ' .' + prefix + '_formset_row');
-                        for (let i in data.errors) {
-                            for (let field_name in data.errors[i]) {
-                                let err_value = data.errors[i][field_name][0]
-                                $(rows[i]).find('#' + prefix + '_' + field_name + ' span').html(err_value)
-                                if (field_name === '__all__') {
-                                    $(rows[i]).find('#' + prefix + '_row_' + i + '_error').html(err_value)
-                                }
-                            }
-                        }
-
-                    }
-                    else {
-                        window.location.reload()
-                    }
-
-                }
+                increase_height()
 
             });
+        }
+        else{
+            $('#add_btn').click(function () {
+                let form_idx = $('#id_category-TOTAL_FORMS').val();
 
+                $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+                $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+                increase_height()
+
+            });
+        }
+        
+        
+
+
+        $('#submit').click(function () {
+            $("form").submit();
         });
-
     });
 
 

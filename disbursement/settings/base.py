@@ -18,16 +18,12 @@ import environ
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
-env = environ.Env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '_3yre1ofg7bw9c51u+gcnjh977=1f*+8r2zj-q(ainog2h&tb('
+env = environ.Env()
+env.read_env(os.path.join(BASE_DIR,'.env'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -150,7 +146,7 @@ LANGUAGES = (
     ('ar', _('Arabic')),
 )
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Cairo'
 
 USE_I18N = True
 

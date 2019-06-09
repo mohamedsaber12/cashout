@@ -9,13 +9,6 @@ from users.tasks import set_pin_error_mail
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
 
-class AgentAdminForm(forms.ModelForm):
-    pin = forms.CharField(widget=forms.TextInput(attrs={'size': 6, 'maxlength': 6}))
-
-    class Meta:
-        model = Agent
-        exclude = ('wallet_provider',)
-
 
 class VMTDataForm(forms.ModelForm):
     class Meta:

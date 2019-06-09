@@ -54,6 +54,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'axes',
 
     # apps
     'data',
@@ -76,6 +77,15 @@ MIDDLEWARE = [
     'users.middleware.CheckerTwoFactorAuthMiddleWare',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    'axes.backends.AxesBackend',
+
+    # Django ModelBackend is the default authentication backend.
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'disbursement.urls'
@@ -502,3 +512,9 @@ LOGGING = {
 
     },
 }
+
+
+AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_LOCKOUT_TEMPLATE = 'data/login.html'
+AXES_VERBOSE = False

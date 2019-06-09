@@ -98,15 +98,17 @@ class PinForm(forms.Form):
         import requests
         from disbursement.utils import get_dot_env
         env = get_dot_env()
-        vmt = VMTData.objects.get(vmt=self.root.client.creator)
+        superadmin = self.root.client.creator
+        vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.SET_PIN)
         data["USERS"] = msisdns
         data["PIN"] = pin
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
-        WALLET_API_LOGGER.debug(
-            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> SET PIN <-- \n' +
-            str(response.status_code) + ' -- ' + str(response.text))
+        WALLET_API_LOGGER.debug(f"""
+            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> SET PIN <--
+            Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
+            Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)

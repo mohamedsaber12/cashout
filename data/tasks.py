@@ -138,14 +138,16 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     
 
     env = get_dot_env()
-    vmt = VMTData.objects.get(vmt=doc_obj.owner.root.client.creator)
+    superadmin = doc_obj.owner.root.client.creator
+    vmt = VMTData.objects.get(vmt=superadmin)
     data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
     data["USERS"] = msisdn
     data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
     response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
-    WALLET_API_LOGGER.debug(
-        datetime.now().strftime('%d/%m/%Y %H:%M') + '----> CHANGE PROFILE <-- \n' +
-                            str(response.status_code) + ' -- ' + str(response.text))
+    WALLET_API_LOGGER.debug(f"""
+    {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE <--
+    Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
+    Response-> {str(response.status_code)} -- {str(response.text)}""")
     error_message = None
     if response.ok:
         reponse_dict = response.json()

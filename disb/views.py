@@ -273,9 +273,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         data["USERS"] = msisdns
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
-        WALLET_API_LOGGER.debug(
-            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> USER INQUIRY <-- \n' +
-            str(response.status_code) + ' -- ' + str(response.text))
+        WALLET_API_LOGGER.debug(f"""
+            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY <--
+            Users-> vmt(superadmin): {request.user.username}
+            Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS',None)
@@ -368,7 +369,8 @@ class BalanceInquiry(RootRequiredMixin, View):
         import requests
         from disbursement.utils import get_dot_env
         env = get_dot_env()
-        vmt = VMTData.objects.get(vmt=request.user.root.client.creator)
+        superadmin = request.user.root.client.creator
+        vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.BALANCE_INQUIRY)
         super_agent = Agent.objects.get(wallet_provider=request.user,super=True)
         data["MSISDN"]=  super_agent.msisdn
@@ -376,9 +378,10 @@ class BalanceInquiry(RootRequiredMixin, View):
         
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
-        WALLET_API_LOGGER.debug(
-            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> BALANCE INQUIRY <-- \n' +
-            str(response.status_code) + ' -- ' + str(response.text))
+        WALLET_API_LOGGER.debug(f"""
+            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> BALANCE INQUIRY <--
+            Users-> vmt(superadmin):{superadmin.username}
+            Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             resp_json = response.json()
             if resp_json["TXNSTATUS"] == '200':

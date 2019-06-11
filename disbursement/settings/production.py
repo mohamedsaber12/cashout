@@ -55,3 +55,4 @@ BASE_URL = 'https://payroll.paymobsolutions.com'
 # session expiration
 SESSION_EXPIRE_SECONDS = 300
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True

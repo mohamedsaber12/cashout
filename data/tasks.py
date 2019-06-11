@@ -138,33 +138,40 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     
 
     env = get_dot_env()
-    superadmin = doc_obj.owner.root.client.creator
-    vmt = VMTData.objects.get(vmt=superadmin)
-    data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
-    data["USERS"] = msisdn
-    data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
-    response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
-    WALLET_API_LOGGER.debug(f"""
-    {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE <--
-    Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
-    Response-> {str(response.status_code)} -- {str(response.text)}""")
-    error_message = None
-    if response.ok:
-        reponse_dict = response.json()
-        if reponse_dict["TXNSTATUS"] != '200':
-            error_message = reponse_dict.get('MESSAGE', None) or _(
-                "Failed to make registration")
-            
-    else:
-        error_message = _("Registration process stopped during an internal error,\
-                 can you try again or contact your support team")
-    if error_message:
-        doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = error_message
-        doc_obj.save()
-        notify_maker(doc_obj)
-        return False
+    reponse_dict = None
+    if env.str('CALL_WALLETS', 'TRUE') == 'TRUE':      
+        superadmin = doc_obj.owner.root.client.creator
+        vmt = VMTData.objects.get(vmt=superadmin)
+        data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
+        data["USERS"] = msisdn
+        data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
+        response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+        WALLET_API_LOGGER.debug(f"""
+        {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE <--
+        Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
+        Response-> {str(response.status_code)} -- {str(response.text)}""")
+        error_message = None
+        if response.ok:
+            reponse_dict = response.json()
+            if reponse_dict["TXNSTATUS"] != '200':
+                error_message = reponse_dict.get('MESSAGE', None) or _(
+                    "Failed to make registration")
+                
+        else:
+            error_message = _("Registration process stopped during an internal error,\
+                    can you try again or contact your support team")
+        if error_message:
+            doc_obj.is_processed = False
+            doc_obj.processing_failure_reason = error_message
+            doc_obj.save()
+            notify_maker(doc_obj)
+            return False
 
+        doc_obj.is_processed = False
+    else:
+        doc_obj.is_processed = True
+        notify_maker(doc_obj)
+    
     data = zip(amount, msisdn)        
     DisbursementData.objects.bulk_create(
         [DisbursementData(doc=doc_obj, amount=float(
@@ -172,8 +179,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     )
     doc_obj.total_amount = sum(amount)
     doc_obj.total_count = len(amount)
-    doc_obj.is_processed = False
-    doc_obj.txn_id = reponse_dict['BATCH_ID']
+    doc_obj.txn_id = reponse_dict['BATCH_ID'] if reponse_dict else None
     doc_obj.save()
     return True
 

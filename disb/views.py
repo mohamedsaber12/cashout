@@ -28,6 +28,7 @@ from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
 from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin,RootRequiredMixin
 from users.models import EntitySetup
+from disbursement.utils import get_dot_env
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -175,6 +176,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
     """
     template_name = 'entity/add_agent.html'
 
+    def __init__(self,*args,**kwargs):
+        super().__init__(*args, **kwargs)
+        self.env = get_dot_env()
+
     def get_success_url(self,root):
         token, created = ExpiringToken.objects.get_or_create(user=root)
         if created:
@@ -233,20 +238,21 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 obj.wallet_provider = root
                 agents_msisdn.append(obj.msisdn)
 
-            transactions, error = self.validate_agent_wallet(
-                request, agents_msisdn)
-            if not transactions:
-                    # handle non form errors
-                    context = {
-                        "non_form_error":error,
-                        "agentform": agentform,
-                        "super_agent_form": super_agent_form,
-                    }
-                    return render(request, template_name=self.template_name, context=context)
+            if self.env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
+                transactions, error = self.validate_agent_wallet(
+                    request, agents_msisdn)
+                if not transactions:
+                        # handle non form errors
+                        context = {
+                            "non_form_error":error,
+                            "agentform": agentform,
+                            "super_agent_form": super_agent_form,
+                        }
+                        return render(request, template_name=self.template_name, context=context)
 
-            # transactions exist # check if have error or not #
-            if self.error_exist(transactions):
-                return self.handle_form_errors(agentform, super_agent_form, transactions)
+                # transactions exist # check if have error or not #
+                if self.error_exist(transactions):
+                    return self.handle_form_errors(agentform, super_agent_form, transactions)
 
             super_agent.save()
             agentform.save()
@@ -266,16 +272,15 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
     def validate_agent_wallet(self, request, msisdns):
         import requests
-        from disbursement.utils import get_dot_env
-        env = get_dot_env()
         vmt = VMTData.objects.get(vmt=request.user)
         data = vmt.return_vmt_data(VMTData.USER_INQUIRY)
         data["USERS"] = msisdns
         response = requests.post(
-            env.str(vmt.vmt_environment), json=data, verify=False)
-        WALLET_API_LOGGER.debug(
-            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> USER INQUIRY <-- \n' +
-            str(response.status_code) + ' -- ' + str(response.text))
+            self.env.str(vmt.vmt_environment), json=data, verify=False)
+        WALLET_API_LOGGER.debug(f"""
+            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY <--
+            Users-> vmt(superadmin): {request.user.username}
+            Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS',None)
@@ -368,7 +373,8 @@ class BalanceInquiry(RootRequiredMixin, View):
         import requests
         from disbursement.utils import get_dot_env
         env = get_dot_env()
-        vmt = VMTData.objects.get(vmt=request.user.root.client.creator)
+        superadmin = request.user.root.client.creator
+        vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.BALANCE_INQUIRY)
         super_agent = Agent.objects.get(wallet_provider=request.user,super=True)
         data["MSISDN"]=  super_agent.msisdn
@@ -376,9 +382,10 @@ class BalanceInquiry(RootRequiredMixin, View):
         
         response = requests.post(
             env.str(vmt.vmt_environment), json=data, verify=False)
-        WALLET_API_LOGGER.debug(
-            datetime.now().strftime('%d/%m/%Y %H:%M') + '----> BALANCE INQUIRY <-- \n' +
-            str(response.status_code) + ' -- ' + str(response.text))
+        WALLET_API_LOGGER.debug(f"""
+            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> BALANCE INQUIRY <--
+            Users-> vmt(superadmin):{superadmin.username}
+            Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             resp_json = response.json()
             if resp_json["TXNSTATUS"] == '200':

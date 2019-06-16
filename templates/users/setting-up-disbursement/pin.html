@@ -109,7 +109,8 @@
 
         function leaveAStepCallback(obj, context) {
             if("{{form_exist}}" == "False"){
-                window.location.href = window.location.href += '?q=next&to_step=' + context.toStep; ;
+                let url = "{% url 'users:setting-disbursement-pin' %}";                
+                window.location.href = url + '?q=next&to_step=' + context.toStep;
             }
             else{
                 let action = $("form").attr('action') + '?to_step=' + context.toStep;

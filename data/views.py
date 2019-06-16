@@ -79,7 +79,7 @@ def disbursement_home(request):
             UPLOAD_LOGGER.debug(
                 '%s uploaded disbursement file at ' % request.user + str(now))
 
-            handle_disbursement_file(
+            handle_disbursement_file.delay(
                 file_doc.id, language=translation.get_language())
 
             # Redirect to the document list after POST

@@ -89,8 +89,8 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
                     else:
                         row_dict['error'] = "Invalid mobile number"
                     
-                # if msisdn is duplicate   
-                if list(filter(lambda d: d['msisdn'] == str_value, list_of_dicts)):
+                # if msisdn is duplicate
+                if list(filter(lambda d: d['msisdn'].replace(" ", "") == str_value.replace(" ", ""), list_of_dicts)):
                     row_dict['msisdn'] = item.value
                     if row_dict['error']:
                         row_dict['error'] += "\nDuplicate mobile number"

@@ -41,24 +41,14 @@ class FileCategoryAdmin(admin.ModelAdmin):
 
 
 class DocAdmin(admin.ModelAdmin):
-    form = FileDocumentForm
-    list_filter = (('created_at', DateRangeFilter),)
+    list_filter = (('created_at'),)
     readonly_fields = ('file',)
-    list_display = ('filename', 'owner', 'file_category', 'created_at')
+    list_display = ('filename', 'owner', 'type_of', 'created_at')
 
     def has_add_permission(self, request):
         return False
 
-    def get_queryset(self, request):
-        qs = super(DocAdmin, self).get_queryset(request)
-        return qs.filter(owner__hierarchy=request.user.hierarchy)
-
-    def get_form(self, request, obj=None, **kwargs):
-        DocumentForm = super(DocAdmin, self).get_form(
-            request, obj=obj, **kwargs)
-        DocumentForm.request = request
-        return DocumentForm
-
+  
 
 admin.site.register(Doc, DocAdmin)
 admin.site.register(FileCategory, FileCategoryAdmin)

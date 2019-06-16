@@ -18,16 +18,12 @@ import environ
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
-env = environ.Env()
 
 BASE_DIR = os.path.dirname(os.path.dirname(
     os.path.dirname(os.path.abspath(__file__))))
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = '_3yre1ofg7bw9c51u+gcnjh977=1f*+8r2zj-q(ainog2h&tb('
+env = environ.Env()
+env.read_env(os.path.join(BASE_DIR,'.env'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -58,6 +54,7 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
+    'axes',
 
     # apps
     'data',
@@ -80,6 +77,15 @@ MIDDLEWARE = [
     'users.middleware.CheckerTwoFactorAuthMiddleWare',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'axes.middleware.AxesMiddleware',
+]
+
+AUTHENTICATION_BACKENDS = [
+    # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
+    'axes.backends.AxesBackend',
+
+    # Django ModelBackend is the default authentication backend.
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 ROOT_URLCONF = 'disbursement.urls'
@@ -150,7 +156,7 @@ LANGUAGES = (
     ('ar', _('Arabic')),
 )
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Africa/Cairo'
 
 USE_I18N = True
 
@@ -506,3 +512,9 @@ LOGGING = {
 
     },
 }
+
+
+AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_LOCKOUT_TEMPLATE = 'data/login.html'
+AXES_VERBOSE = False

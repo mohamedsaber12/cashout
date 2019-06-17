@@ -4,6 +4,7 @@ DEBUG = False
 
 ALLOWED_HOSTS += (
     'payroll.paymobsolutions.com',
+    '18.216.10.222'
 )
 
 INSTALLED_APPS += (

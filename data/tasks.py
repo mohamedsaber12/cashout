@@ -30,6 +30,7 @@ import string
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
+CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
 
 @app.task(ignore_result=False)
@@ -384,6 +385,11 @@ def notify_checkers(doc_id, level, **kwargs):
         subject= subject + _(' Disbursement Notification'),
         message=message.format(doc_view_url, doc_obj.filename())
     )
+
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""
+        {datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+        checkers: {" and ".join([checker.username for checker in checkers])}
+        vmt(superadmin):{doc_obj.owner.root.client.creator}""")
 
 
 @app.task()

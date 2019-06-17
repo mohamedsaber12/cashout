@@ -100,7 +100,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
                 else:
                     if not row_dict['error']:
                         row_dict['error'] = None
-                    row_dict['msisdn'] = str_value
+                    row_dict['msisdn'] = str_value.replace(" ", "")
         
         list_of_dicts.append(row_dict)
     

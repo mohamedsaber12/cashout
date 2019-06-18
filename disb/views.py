@@ -10,7 +10,7 @@ from django.utils.translation import gettext as _
 from django.utils import translation
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, Http404
 from django.shortcuts import redirect, render, render_to_response,get_object_or_404
 from django.urls import reverse
 from django.urls import reverse_lazy

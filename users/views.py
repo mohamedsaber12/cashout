@@ -19,6 +19,10 @@ from django.views.generic.edit import FormView
 from django_otp.forms import OTPTokenForm
 from django.forms.formsets import BaseFormSet
 from rest_framework_expiring_authtoken.models import ExpiringToken
+from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
+from rest_framework.authtoken.serializers import AuthTokenSerializer
+from rest_framework.response import Response
+from rest_framework.status import HTTP_400_BAD_REQUEST
 
 from data.forms import FileCategoryForm, CollectionDataForm,FormatFormSet,FileCategoryFormSet
 from data.utils import get_client_ip
@@ -829,3 +833,30 @@ class RedirectPageView(View):
             return redirect(reverse(f'data:{status}_home'))
 
         return render(request, self.template_name, {})
+
+
+
+
+
+class ExpiringAuthToken(ObtainExpiringAuthToken):
+    def post(self, request):
+        """Respond to POSTed username/password with token."""
+        serializer = AuthTokenSerializer(
+            data=request.data, context={"request": request})
+
+        if serializer.is_valid():
+            token, _ = self.model.objects.get_or_create(
+                user=serializer.validated_data['user']
+            )
+
+            if token.expired():
+                # If the token is expired, generate a new one.
+                token.delete()
+                token = self.model.objects.create(
+                    user=serializer.validated_data['user']
+                )
+
+            data = {'token': token.key}
+            return Response(data)
+
+        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)

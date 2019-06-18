@@ -7,7 +7,7 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from data.utils import pkgen, update_filename
-
+from users.models import CheckerUser
 
 class Doc(models.Model):
     DISBURSEMENT = 1
@@ -134,7 +134,21 @@ class Doc(models.Model):
         if self.reviews.filter(user_created=checker).exists():
             return False, True
         reviews = self.reviews.all()
-        return (checker.level.level_of_authority <= reviews.count()+1 , False)
+        
+        can_review = False
+        levels = CheckerUser.objects.filter(hierarchy=checker.hierarchy).values_list(
+            'level__level_of_authority', flat=True)
+        levels = list(set(levels))
+        checker_level = checker.level.level_of_authority
+        if min(levels) == checker_level:
+            can_review = True
+        else:
+            levels = [level for level in levels if level < checker_level]
+            levels = [max(levels,default=0), checker_level]
+            if reviews.filter(user_created__level__level_of_authority__in=levels).exist():
+                can_review = True
+    
+        return (can_review , False)
         
     def is_reviews_completed(self):
         return self.reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required

@@ -33,7 +33,7 @@ doc_review_maker_mail)
 from data.utils import get_client_ip, paginator
 from users.decorators import (setup_required, root_or_maker_or_uploader, 
                               collection_users, disbursement_users, root_only)
-from users.models import User 
+from users.models import User, CheckerUser
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -239,13 +239,19 @@ def document_view(request, doc_id):
                     doc_review_obj.doc = doc
                     doc_review_obj.save()
                     # notify checkers of next level if review is ok and
-                    # no checkers of the same current level already notified them
+                    # no checker of the same current level already notified them
                     checkers_already_notified = reviews.filter(
                         user_created__level=request.user.level).exclude(
                         id=doc_review_obj.id).exists()
                     if doc_review_obj.is_ok and not checkers_already_notified:
-                        notify_checkers.delay(
-                            doc.id, request.user.level.level_of_authority+1, language=translation.get_language())
+                        levels = CheckerUser.objects.filter(hierarchy=request.user.hierarchy).values_list(
+                            'level__level_of_authority', flat=True)
+                        levels = list(levels)
+                        levels = [level for level in levels if level >
+                                  request.user.level.level_of_authority]
+                        if levels:
+                            notify_checkers.delay(
+                                doc.id, min(levels), language=translation.get_language())
                     # notify the maker either way
                     doc_review_maker_mail.delay(
                         doc.id, doc_review_obj.id, language=translation.get_language())

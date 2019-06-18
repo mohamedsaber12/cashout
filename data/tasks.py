@@ -30,6 +30,7 @@ import string
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
+CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
 
 @app.task(ignore_result=False)
@@ -89,8 +90,8 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
                     else:
                         row_dict['error'] = "Invalid mobile number"
                     
-                # if msisdn is duplicate   
-                if list(filter(lambda d: d['msisdn'] == str_value, list_of_dicts)):
+                # if msisdn is duplicate
+                if list(filter(lambda d: d['msisdn'].replace(" ", "") == str_value.replace(" ", ""), list_of_dicts)):
                     row_dict['msisdn'] = item.value
                     if row_dict['error']:
                         row_dict['error'] += "\nDuplicate mobile number"
@@ -100,7 +101,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
                 else:
                     if not row_dict['error']:
                         row_dict['error'] = None
-                    row_dict['msisdn'] = str_value
+                    row_dict['msisdn'] = str_value.replace(" ", "")
         
         list_of_dicts.append(row_dict)
     
@@ -384,6 +385,11 @@ def notify_checkers(doc_id, level, **kwargs):
         subject= subject + _(' Disbursement Notification'),
         message=message.format(doc_view_url, doc_obj.filename())
     )
+
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""
+        {datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+        checkers: {" and ".join([checker.username for checker in checkers])}
+        vmt(superadmin):{doc_obj.owner.root.client.creator}""")
 
 
 @app.task()

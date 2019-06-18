@@ -371,6 +371,11 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/response_trx.log',
         },
+        'checkers_notification':{
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/checkers_notification.log',
+        }
 
     },
 
@@ -506,6 +511,11 @@ LOGGING = {
         },
         'bill_payment_res': {
             'handlers': ['bill_payment_res'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'checkers_notification':{
+            'handlers': ['checkers_notification'],
             'level': 'DEBUG',
             'propagate': True,
         }

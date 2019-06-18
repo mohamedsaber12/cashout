@@ -25,7 +25,7 @@ from disb.api.permission_classes import BlacklistPermission
 from disb.api.serializers import (DisbursementCallBackSerializer,
                                   DisbursementSerializer)
 from disb.models import Agent, DisbursementData, DisbursementDocData, VMTData
-from users.models import User
+from users.models import User,CheckerUser
 
 DATA_LOGGER = logging.getLogger("disburse")
 
@@ -218,9 +218,14 @@ class AllowDocDisburse(APIView):
                 return JsonResponse({"message": _("Checkers already notified")}, status=400)
             doc_obj.can_be_disbursed = True
             doc_obj.save()
+
+            levels = CheckerUser.objects.filter(hierarchy=doc_obj.owner.hierarchy).values_list(
+                'level__level_of_authority',flat=True)
+            if not levels:
+                return Response(status=404)
             # task for notifying checkers
             notify_checkers.delay(
-                doc_obj.id, 1, language=translation.get_language())
+                doc_obj.id,  min(list(levels)), language=translation.get_language())
             return Response(status=200)
 
         return Response(status=403)

@@ -80,15 +80,20 @@ class DisburseAPIView(APIView):
             "RECIPIENTS": list(recepients),
         })
 
-        response = requests.post(
-            env.str(vmt.vmt_environment), json=data, verify=False)
         try:
+            response = requests.post(
+                env.str(vmt.vmt_environment), json=data, verify=False)
             DATA_LOGGER.debug(datetime.now().strftime(
                 '%d/%m/%Y %H:%M') + '----> DISBURSE <-- \n' + str(response.json()))
         except ValueError:
             DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
                                 str(response.status_code) + ' -- ' + str(response.reason))
-
+        except Exception as e:
+            DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
+                              str(e))
+            return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
+                can you try again or contact you support team'),
+                                            'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
         if response.ok and response.json()["TXNSTATUS"] == '200':
             doc_obj = Doc.objects.get(
                 id=serializer.validated_data['doc_id'])

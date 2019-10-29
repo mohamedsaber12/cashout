@@ -97,8 +97,16 @@ class PinForm(forms.Form):
         data = vmt.return_vmt_data(VMTData.SET_PIN)
         data["USERS"] = msisdns
         data["PIN"] = pin
-        response = requests.post(
-            self.env.str(vmt.vmt_environment), json=data, verify=False)
+        try:
+            response = requests.post(
+                self.env.str(vmt.vmt_environment), json=data, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"""
+                {datetime.now().strftime('%d/%m/%Y %H:%M')}----> SET PIN ERROR<--
+                Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
+                Error-> {e}""")
+            return None, _("Set pin process stopped during an internal error,\
+                 can you try again or contact you support team")
         WALLET_API_LOGGER.debug(f"""
             {datetime.now().strftime('%d/%m/%Y %H:%M')}----> SET PIN <--
             Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}

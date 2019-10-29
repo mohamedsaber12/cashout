@@ -275,8 +275,17 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         vmt = VMTData.objects.get(vmt=request.user)
         data = vmt.return_vmt_data(VMTData.USER_INQUIRY)
         data["USERS"] = msisdns
-        response = requests.post(
-            self.env.str(vmt.vmt_environment), json=data, verify=False)
+        try:
+            response = requests.post(
+                self.env.str(vmt.vmt_environment), json=data, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"""
+                {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY ERROR<--
+                Users-> vmt(superadmin): {request.user.username}
+                Error-> {e}""")
+            return None, _("Agents creation process stopped during an internal error,\
+                can you try again or contact you support team")
+
         WALLET_API_LOGGER.debug(f"""
             {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY <--
             Users-> vmt(superadmin): {request.user.username}
@@ -379,9 +388,17 @@ class BalanceInquiry(RootRequiredMixin, View):
         super_agent = Agent.objects.get(wallet_provider=request.user,super=True)
         data["MSISDN"]=  super_agent.msisdn
         data["PIN"]= pin
-        
-        response = requests.post(
-            env.str(vmt.vmt_environment), json=data, verify=False)
+        try:
+            response = requests.post(
+                env.str(vmt.vmt_environment), json=data, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"""
+                {datetime.now().strftime('%d/%m/%Y %H:%M')}----> BALANCE INQUIRY ERROR<--
+                Users-> vmt(superadmin):{superadmin.username}
+                Error-> {e}""")
+            return False, _("Balance inquiry process stopped during an internal error,\
+                can you try again or contact you support team")
+
         WALLET_API_LOGGER.debug(f"""
             {datetime.now().strftime('%d/%m/%Y %H:%M')}----> BALANCE INQUIRY <--
             Users-> vmt(superadmin):{superadmin.username}

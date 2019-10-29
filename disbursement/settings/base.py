@@ -49,7 +49,6 @@ INSTALLED_APPS = [
     'imagekit',
 
     # security
-    'request_id',
     'django_otp',
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
@@ -64,6 +63,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'log_request_id.middleware.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'users.middleware.PreventConcurrentLoginsMiddleware',
@@ -110,23 +110,16 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'disbursement.wsgi.application'
 
-# Celery
-
-CELERY_TIMEZONE = 'Africa/Cairo'
-
+# Celery configs
 # Send results back as AMQP messages
-CELERY_RESULT_BACKEND = 'rpc://'
-CELERY_RESULT_PERSISTENT = False
-
-CELERY_ACCEPT_CONTENT = ['json']
-
+CELERY_RESULT_BACKEND        = 'rpc://'
+CELERY_BROKER_URL            = env.str('CELERY_BROKER_URL')
 CELERY_RESULT_ACCEPT_CONTENT = ['json']
-
-CELERY_BROKER_URL = 'amqp://paymobsecure:(!~)qwe!~@localhost//'
-
-CELERY_TASK_SERIALIZER = 'json'
-
-MAX_TASK_RETRIES = 10
+CELERY_ACCEPT_CONTENT        = ['json']
+CELERY_TASK_SERIALIZER       = 'json'
+CELERY_RESULT_PERSISTENT     = False
+MAX_TASK_RETRIES             = 10
+CELERY_TIMEZONE              = 'Africa/Cairo'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -189,6 +182,7 @@ LOGIN_REDIRECT_URL = 'two_factor:setup'
 # RestFramework
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
+    'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
@@ -221,7 +215,7 @@ LOGGING = {
     'disable_existing_loggers': False,
     "filters": {
         "request_id": {
-            "()": "request_id.logging.RequestIdFilter"
+            "()": "log_request_id.filters.RequestIDFilter"
         }
     },
     'formatters': {

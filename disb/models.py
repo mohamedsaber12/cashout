@@ -126,3 +126,7 @@ class DisbursementData(models.Model):
 
     def __str__(self):
         return self.msisdn
+
+    @property
+    def get_is_disbursed(self):
+        return 'Yes' if self.is_disbursed else 'No'

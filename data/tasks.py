@@ -239,7 +239,7 @@ def handle_change_profile_callback(doc_id,transactions):
 
 @app.task()
 @respects_language
-def generate_file(doc_id, user_id, **kwargs):
+def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
     """related to disbursement"""
 
     doc_obj = Doc.objects.get(id=doc_id)
@@ -247,7 +247,8 @@ def generate_file(doc_id, user_id, **kwargs):
 
     dataset = DisbursementDataResource(
         file_category=doc_obj.file_category,
-        doc=doc_obj
+        doc=doc_obj,
+        is_disbursed=False
     )
     dataset = dataset.export()
     file_path = "%s%s%s" % (settings.MEDIA_ROOT,
@@ -280,6 +281,94 @@ def generate_file(doc_id, user_id, **kwargs):
     )
 
 
+@app.task()
+@respects_language
+def generate_success_disbursed_data(doc_id, user_id, **kwargs):
+    """related to disbursement"""
+
+    doc_obj = Doc.objects.get(id=doc_id)
+    filename = _('success_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
+
+    dataset = DisbursementDataResource(
+        file_category=doc_obj.file_category,
+        doc=doc_obj,
+        is_disbursed=True
+    )
+    dataset = dataset.export()
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+    with open(file_path, "wb") as f:
+        f.write(dataset.xlsx)
+
+    user = User.objects.get(id=user_id)
+    disb_doc_view_url = settings.BASE_URL + \
+        str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
+
+    download_url = settings.BASE_URL + \
+        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + \
+        '?filename=' + filename
+
+    MESSAGE_SUCC = _("""Dear {} 
+        You can download the success disbursement data related to this document
+        <a href='{}'>{}</a>
+        from here <a href="{}" >Download</a>
+        Thanks, BR""")
+
+    subject = f'[{user.brand.mail_subject}]'
+
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[user.email],
+        subject=subject + _(' Success Disbursement File Download'),
+        message=MESSAGE_SUCC.format(
+            user.first_name, disb_doc_view_url, doc_obj.filename(), download_url)
+    )
+
+
+@app.task()
+@respects_language
+def generate_all_disbursed_data(doc_id, user_id, **kwargs):
+    """related to disbursement.
+        generate success and failed disbursed data
+    """
+
+    doc_obj = Doc.objects.get(id=doc_id)
+    filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(4))
+
+    dataset = DisbursementDataResource(
+        file_category=doc_obj.file_category,
+        doc=doc_obj,
+        is_disbursed=None
+    )
+    dataset = dataset.export()
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
+                            "/documents/disbursement/", filename)
+    with open(file_path, "wb") as f:
+        f.write(dataset.xlsx)
+
+    user = User.objects.get(id=user_id)
+    disb_doc_view_url = settings.BASE_URL + \
+        str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
+
+    download_url = settings.BASE_URL + \
+        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + \
+        '?filename=' + filename
+
+    MESSAGE_SUCC = _("""Dear {} 
+        You can download the disbursement data related to this document
+        <a href='{}'>{}</a>
+        from here <a href="{}" >Download</a>
+        Thanks, BR""")
+
+    subject = f'[{user.brand.mail_subject}]'
+
+    send_mail(
+        from_email=settings.SERVER_EMAIL,
+        recipient_list=[user.email],
+        subject=subject + _(' Disbursement Data File Download'),
+        message=MESSAGE_SUCC.format(
+            user.first_name, disb_doc_view_url, doc_obj.filename(), download_url)
+    )
 
 @app.task(ignore_result=False)
 @respects_language

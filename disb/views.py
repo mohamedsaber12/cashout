@@ -20,11 +20,11 @@ from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import generate_file
+from data.tasks import (generate_failed_disbursed_data, generate_success_disbursed_data, 
+generate_all_disbursed_data)
 from data.utils import redirect_params,get_client_ip
 from disb.forms import VMTDataForm, AgentFormSet, AgentForm,BalanceInquiryPinForm
 from disb.models import Agent, VMTData
-from disb.resources import DisbursementDataResource
 from users.decorators import setup_required
 from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin,RootRequiredMixin
 from users.models import EntitySetup
@@ -93,13 +93,23 @@ def disbursement_list(request, doc_id):
         doc_obj.is_disbursed
     )
     if can_view:
-        if request.is_ajax() and request.GET.get('export_failed') == 'true':
-            generate_file.delay(doc_id, request.user.id,
-                                language=translation.get_language())
-            return HttpResponse(status=200)
+        if request.is_ajax(): 
+            if request.GET.get('export_failed') == 'true':
+                generate_failed_disbursed_data.delay(doc_id, request.user.id,
+                                    language=translation.get_language())
+                return HttpResponse(status=200)
+            elif request.GET.get('export_success') == 'true':
+                generate_success_disbursed_data.delay(doc_id, request.user.id,
+                                    language=translation.get_language())
+                return HttpResponse(status=200)
+            elif request.GET.get('export_all') == 'true':
+                generate_all_disbursed_data.delay(doc_id, request.user.id,
+                                                      language=translation.get_language())
+                return HttpResponse(status=200)
         context = {
             'Ddata': doc_obj.disbursement_data.all(),
             'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
+            'has_success': doc_obj.disbursement_data.filter(is_disbursed=True).count() != 0,
             'doc_id': doc_id
         }
         return render(request, template_name='disbursement/list.html', context=context)

@@ -146,7 +146,20 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
         data["USERS"] = msisdn
         data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
-        response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+        try:
+            response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"""
+            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE ERROR<--
+            Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
+            Error-> {e}""")
+            doc_obj.is_processed = False
+            doc_obj.processing_failure_reason = _("Registration process stopped during an internal error,\
+                    can you try again or contact your support team")
+            doc_obj.save()
+            notify_maker(doc_obj)
+            return False
+
         WALLET_API_LOGGER.debug(f"""
         {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE <--
         Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}

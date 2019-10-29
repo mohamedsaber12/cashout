@@ -14,14 +14,39 @@
 
 {% block body %}
 
+
+<div class="row">
+    <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        {% trans 'You will receive an email shortly with the file to download' %}
+    </div>
+    <!-- button -->
+    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+        <button id="export-all"
+            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
+        </button>
+    </div>
+</div>
 {% if has_failed %}
 <div class="row">
-    <div hidden id="alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+    <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
         {% trans 'You will receive an email shortly with the failed data file to download' %}
     </div>
     <!-- button -->
     <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
         <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
+        </button>
+    </div>
+</div>
+{%endif%}
+{% if has_success %}
+<div class="row">
+    <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        {% trans 'You will receive an email shortly with the success data file to download' %}
+    </div>
+    <!-- button -->
+    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+        <button id="export-success"
+            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
         </button>
     </div>
 </div>
@@ -97,10 +122,30 @@
                 type:'GET',
                 url: '{{request.path}}' + '?export_failed=true',
                 success: function (data, text, xhr) {
-                    $('#alert-msg').show()
+                    $('#failed-alert-msg').show()
                 },
             })
             
+        });
+        $('#export-success').on('click', function (ev) {
+            $.ajax({
+                type: 'GET',
+                url: '{{request.path}}' + '?export_success=true',
+                success: function (data, text, xhr) {
+                    $('#success-alert-msg').show()
+                },
+            })
+
+        });
+        $('#export-all').on('click', function (ev) {
+            $.ajax({
+                type: 'GET',
+                url: '{{request.path}}' + '?export_all=true',
+                success: function (data, text, xhr) {
+                    $('#all-alert-msg').show()
+                },
+            })
+
         });
     });
 

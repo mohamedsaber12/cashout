@@ -16,7 +16,14 @@
 
 {% block body %}
 
-{% if can_upload and user_has_upload_perm %}
+{% if not request.user.root.super_admin.vmt %}
+<div class="well upload-nav col-xs-12">
+    <p style="padding: 25px 25px; font-size: 40px; text-align: center;">
+        {% trans 'Your SuperAdmin setup is not completed yet!' %}
+    </p>
+</div>
+
+{% elif can_upload and user_has_upload_perm %}
 <div class="well upload-nav col-xs-12">
     <h3 class="navbar-left col-xs-12">{% trans 'Upload Form' %}</h3>
     <div class="form-group col-xs-12">

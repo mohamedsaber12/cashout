@@ -1,116 +1,116 @@
 {% load i18n %}
-        <div class="page-title">
-            <div class="title_left">
-                <h3>{% trans 'Disbursement Documents' %}</h3>
+<div class="page-title">
+    <div class="title_left">
+        <h3>{% trans 'Disbursement Documents' %}</h3>
+    </div>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>{% trans 'Documents list' %}</h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                </ul>
+                <div class="clearfix"></div>
             </div>
 
-        </div>
-        
-        <div class="clearfix"></div>
+            <div class="x_content">
+                <!-- start doc list -->
+                <table class="table table-striped projects">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%">{% trans 'Document Name' %}</th>
+                            <th style="width: 20%">{% trans 'Reviews' %}</th>
+                            <th>{% trans 'Disbursed By' %}</th>
+                            <th>{% trans 'Disbursement Progress' %}</th>
+                            <th>{% trans 'Status' %}</th>
+                            <th>{% trans 'View' %}</th>
+                            {% if request.user.is_root %}
+                                <th>{% trans 'Delete' %}</th>
+                            {%endif%}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for doc in object_list %}
+                            <tr>
+                                <td>
+                                    <a>{{doc.filename}}</a>
+                                    <br />
+                                    <small>{% trans 'Created' %} {{doc.created_at}}</small>
+                                </td>
+                                <td>
+                                    {% if doc.reviews.exists %}
+                                        <ul class="list-inline">
+                                            {% for review in doc.reviews.all %}
+                                                <li>
 
-        <div class="row">
-            <div class="col-md-12">
-                <div class="x_panel">
-                    <div class="x_title">
-                        <h2>{% trans 'Documents list' %}</h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                            </li>
-                       
-                        </ul>
-                        <div class="clearfix"></div>
-                    </div>
-                    <div class="x_content">
+                                                    <img style="background-color:{%if review.is_ok%}green{%else%}red{%endif%}"
+                                                    data-toggle="tooltip" data-placement="top" title="{{review.user_created.username}}"
+                                                     src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
+                                                </li>
+                                            {%endfor%}
+                                        </ul>
+                                    {%else%}
+                                        <p>{% trans 'No reviews yet' %}</p>
+                                    {%endif%}
 
-                        <!-- start doc list -->
-                        <table class="table table-striped projects">
-                            <thead>
-                                <tr>
-                                    <th style="width: 20%">{% trans 'Document Name' %}</th>
-                                    <th style="width: 20%">{% trans 'Reviews' %}</th>
-                                    <th>{% trans 'Disbursed By' %}</th>
-                                    <th>{% trans 'Disbursement Progress' %}</th>
-                                    <th>{% trans 'Status' %}</th>
-                                    <th>{% trans 'View' %}</th>
-                                    {% if request.user.is_root %}
-                                        <th>{% trans 'Delete' %}</th>
-                                    {%endif%}    
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for doc in object_list %}
-                                    <tr>
-                                        <td>
-                                            <a>{{doc.filename}}</a>
-                                            <br />
-                                            <small>{% trans 'Created' %} {{doc.created_at}}</small>
-                                        </td>
-                                        <td>
-                                            {% if doc.reviews.exists %}
-                                                <ul class="list-inline">
-                                                    {% for review in doc.reviews.all %}
-                                                        <li>
-
-                                                            <img style="background-color:{%if review.is_ok%}green{%else%}red{%endif%}" 
-                                                            data-toggle="tooltip" data-placement="top" title="{{review.user_created.username}}"
-                                                             src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
-                                                        </li>
-                                                    {%endfor%}    
-                                                </ul>
-                                            {%else%}
-                                                <p>{% trans 'No reviews yet' %}</p>
-                                            {%endif%}
-
-                                        </td>
-                                        <td>
-                                            {{doc.disbursed_by.username}}
-                                        </td>
-                                        <td class="project_progress">
-                                            <div class="progress progress_sm">
-                                                <div class="progress-bar bg-green" role="progressbar" data-transitiongoal="{{doc.disbursement_ratio}}"></div>
-                                            </div>
-                                            <small>{{doc.disbursement_ratio}}% {% trans 'Complete' %}</small>
-                                        </td>
-                                        <td>
-                                            
-                                            {% if not doc.is_processed%}
-                                                <h4><span class="label label-danger">{% trans 'Failed' %}</span></h4>
-                                                {%if doc.processing_failure_reason%}
-                                                    {{ doc.processing_failure_reason}}
-                                                {%endif%}    
-                                            {%elif doc.is_disbursed%}
-                                                <h4><span class="label label-success">{% trans 'Disbursed' %}</span></h4>
-                                            {%elif doc.can_be_disbursed %}
-                                                <h4><span class="label label-info">{% trans 'Waiting disbursement' %}</span></h4>
-                                            {%else%}
-                                                <h4><span class="label label-info">{% trans 'Proccessed' %}</span></h4>
-                                            {%endif%}
-                                        </td>
-                                        <td>
-                                            <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md"> {% trans 'View' %}
-                                            </a>
-                                        </td>
-                                        {% if request.user.is_root %}
-                                        <td>
-                                            <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
-                                            </a>
-                                        </td>
+                                </td>
+                                <td>
+                                    {% if doc.is_disbursed %}
+                                        {{doc.disbursed_by.username}}
+                                    {% else %}
+                                        <h4><span class="label label-info">{% trans 'Not disbursed yet' %}</span></h4>
+                                    {% endif %}
+                                </td>
+                                <td class="project_progress">
+                                    <div class="progress progress_sm">
+                                        <div class="progress-bar bg-green" role="progressbar" data-transitiongoal="{{doc.disbursement_ratio}}"></div>
+                                    </div>
+                                    <small>{{doc.disbursement_ratio}}% {% trans 'Complete' %}</small>
+                                </td>
+                                <td>
+                                    {% if not doc.is_processed%}
+                                        <h4><span class="label label-danger">{% trans 'Failed' %}</span></h4>
+                                        {%if doc.processing_failure_reason%}
+                                            {{ doc.processing_failure_reason}}
                                         {%endif%}
-                                    </tr>
-                               
-                                {%endfor%}    
-                              
-                        
-                            </tbody>
-                        </table>
-                        <!-- end doc list -->
-
-                    </div>
-                </div>
+                                    {%elif doc.is_disbursed%}
+                                        <h4><span class="label label-success">{% trans 'Disbursed' %}</span></h4>
+                                    {%elif doc.can_be_disbursed %}
+                                        <h4><span class="label label-info">{% trans 'Waiting disbursement' %}</span></h4>
+                                    {%else%}
+                                        <h4><span class="label label-info">{% trans 'Proccessed' %}</span></h4>
+                                    {%endif%}
+                                </td>
+                                <td>
+                                    {% if doc.can_be_disbursed %}
+                                        <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md">{% trans 'View' %}</a>
+                                    {% elif doc.can_be_disbursed == False and doc.owner == request.user %}
+                                        <a href="{{doc.get_absolute_url}}" class="btn btn-warning btn-md addMore"
+                                           title="{% trans 'No checkers notified yet' %}">{% trans 'View' %}</a>
+                                    {% else %}
+                                        <button disabled class="btn btn-info addMore"
+                                                title="{% trans 'Not ready for disbursement yet' %}">{% trans 'View' %}</button>
+                                    {% endif %}
+                                </td>
+                                {% if request.user.is_root %}
+                                <td>
+                                    <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
+                                    </a>
+                                </td>
+                                {%endif%}
+                            </tr>
+                        {%endfor%}
+                    </tbody>
+                </table>
+                <!-- end doc list -->
             </div>
+
         </div>
-    
-
-
-
-
+    </div>
+</div>

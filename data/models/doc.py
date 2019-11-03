@@ -145,7 +145,7 @@ class Doc(models.Model):
         else:
             levels = [level for level in levels if level < checker_level]
             levels = [max(levels,default=0), checker_level]
-            if reviews.filter(user_created__level__level_of_authority__in=levels).exist():
+            if reviews.filter(user_created__level__level_of_authority__in=levels):
                 can_review = True
     
         return (can_review , False)

@@ -307,6 +307,12 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 error_message = response_dict.get(
                     'MESSAGE', None) or _("Agents creation failed")
                 return None, error_message
+            #fix the agents has pin bug
+            else:
+                has_pin = response_dict.get('HAS_PIN', None)
+                if has_pin == "TRUE":
+                    error_message = "Agent you have entered has already a pin, contact"
+                    return None, error_message
             return transactions, None
         return None, _("Agents creation process stopped during an internal error,\
                 can you try again or contact you support team")

@@ -3,6 +3,8 @@ import random, string, datetime, urllib, logging
 import xlsxwriter
 from urllib.parse import urlencode
 
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 from django.core.paginator import PageNotAnInteger, EmptyPage
 from django.core.paginator import Paginator
 from django.utils.timezone import now
@@ -171,7 +173,8 @@ def excell_letter_to_index(col_name):
         if c in string.ascii_letters:
             num = num * 26 + (ord(c.upper()) - ord('A')) + 1
     return num
-    
+
+
 def excell_position(col_index,row_index):
     """
     @param col_index int: excel column index (zero indexed).
@@ -197,3 +200,24 @@ def export_excel(file_path, data):
 def randomword(length):
     letters = string.ascii_lowercase
     return ''.join(random.choice(letters) for i in range(length))
+
+
+def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
+    """
+    Send a message to inform the user with disbursement/collection related action.
+    :param user_obj: Request's user instance that the mail will be sent to.
+    :param subject_tail: Tailed mail subject header after his/her chosen mail header brand.
+    :param message_body: Body of the message that will be sent.
+    :param recipients: If there are multiple makers/checkers to be notified.
+    :return: Action of sending the mail to the user.
+    """
+    from_email = settings.SERVER_EMAIL
+    if recipients is None:
+        subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+        recipient_list = [user_obj.email]
+    else:
+        subject = f'[{recipients[0].brand.mail_subject}]' + subject_tail
+        recipient_list = [recipient.email for recipient in recipients]
+    mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
+    mail_to_be_sent.attach_alternative(message_body, "text/html")
+    return mail_to_be_sent.send()

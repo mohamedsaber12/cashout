@@ -181,11 +181,17 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
             notify_maker(doc_obj)
             return False
 
-        doc_obj.is_processed = False
-    else:
         doc_obj.is_processed = True
         notify_maker(doc_obj)
-    
+    else:
+        error_message = _("Registration process stopped during an internal error,\
+                            can you try again or contact your support team")
+        doc_obj.is_processed = False
+        doc_obj.processing_failure_reason = error_message
+        doc_obj.save()
+        notify_maker(doc_obj)
+        return False
+
     data = zip(amount, msisdn)        
     DisbursementData.objects.bulk_create(
         [DisbursementData(doc=doc_obj, amount=float(
@@ -196,6 +202,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     doc_obj.txn_id = reponse_dict['BATCH_ID'] if reponse_dict else None
     doc_obj.save()
     return True
+
 
 @app.task()
 def handle_change_profile_callback(doc_id,transactions):

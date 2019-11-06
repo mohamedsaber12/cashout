@@ -204,7 +204,7 @@ def handle_change_profile_callback(doc_id,transactions):
     msisdns,errors = [],[]
     error = False
     for msisdn, status, msg_list in transactions:
-        if status != "200":
+        if status != "200" and status != "629":
             error = True
             errors.append('\n'.join(msg_list))
         else: 

@@ -125,10 +125,25 @@ class PinForm(forms.Form):
     def get_transactions_error(self, transactions):
         failed_trx = list(filter(
             lambda trx: trx['TXNSTATUS'] != "200", transactions))
-        if failed_trx:
-            set_pin_error_mail.delay(self.root.id)
-            return _("Failed to set pin")    
-        return None
+
+        error_message = "Pin setting error, please try again later. For assistance call 7001"
+
+        for agent_index in range(len(failed_trx)):
+            if failed_trx[agent_index]['TXNSTATUS'] == "407":
+                error_message = failed_trx[agent_index]['MESSAGE']
+                break
+
+            elif failed_trx[agent_index]['TXNSTATUS'] == "608":
+                error_message = "Pin has been already registered for those agents. For assistance call 7001"
+                break
+
+            elif failed_trx[agent_index]['TXNSTATUS'] == "1661":
+                error_message = failed_trx[agent_index]['MESSAGE']
+                break
+
+        set_pin_error_mail.delay(self.root.id)
+        return error_message
+
 
 class BalanceInquiryPinForm(forms.Form):
     pin = forms.CharField(required=True, max_length=6, min_length=6, widget=forms.PasswordInput(

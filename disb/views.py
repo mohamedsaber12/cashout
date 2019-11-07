@@ -309,7 +309,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 return None, error_message
             else:
                 for agent in transactions:
-                    if agent.get('HAS_PIN', None) == "TRUE":
+                    if agent.get('HAS_PIN', None):
                         error_message = "Agents already have registered and have a pin, For assistance call 7001"
                         return None, error_message
                     if agent.get("USER_TYPE") != "Super-Agent" and agent.get("USER_TYPE") != "Agent":

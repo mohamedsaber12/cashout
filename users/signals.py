@@ -1,6 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from django.urls import reverse
@@ -13,9 +13,9 @@ from users.models import (CheckerUser, MakerUser, RootUser, Setup,
  Brand, SuperAdminUser,Client,UploaderUser)
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
-MESSAGE = _('Dear {0}\n' \
-          'Your account is created on the panel with email: {2} and username: {3} \n' \
-          'Please follow <a href="{1}">this link</a> to reset password as soon as possible, \n' \
+MESSAGE = _('Dear <strong>{0}</strong><br><br>' \
+          'Your account is created on the panel with email: <strong>{2}</strong> and username: <strong>{3}</strong> <br>' \
+          'Please follow <a href="{1}" ><strong>this link</strong></a> to reset password as soon as possible, <br><br>' \
           'Thanks, BR')
 
 
@@ -80,7 +80,7 @@ def set_brand(instance):
 
 def generate_username(user, user_model):
     """
-    Generate username for make, checker and uploader in this format: 
+    Generate username for make, checker and uploader in this format:
     {first_name}-{last_name}-{hierarchy}-{user_type}'
     if new user has same first and last name then format is
     {first_name}-{last_name}-{hierarchy}-{user_type}-
@@ -112,12 +112,11 @@ def notify_user(instance, created):
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
+        from_email = settings.SERVER_EMAIL
         subject = f'[{instance.brand.mail_subject}]'
-
-        send_mail(
-            from_email=settings.SERVER_EMAIL,
-            recipient_list=[instance.email],
-            subject= subject + _(' Password Notification'),
-            message=MESSAGE.format(instance.first_name,
-                                   url, instance.email, instance.username)
-        )
+        subject = subject + _(' Password Notification')
+        message = MESSAGE.format(instance.first_name, url, instance.email, instance.username)
+        recipient_list = [instance.email]
+        mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
+        mail_to_be_sent.attach_alternative(message, "text/html")
+        mail_to_be_sent.send()

@@ -149,7 +149,7 @@ def failed_disbursed_for_download(request, doc_id):
         response['X-Accel-Redirect'] = file_path
         FAILED_DISBURSEMENT_DOWNLOAD.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
         user: {request.user.username} 
-        downloaded failed disbursement file named: {filename}
+        downloaded failed disbursement file with doc_id: {doc_obj.id} 
         """)
 
         return response
@@ -302,9 +302,9 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 can you try again or contact you support team")
 
         WALLET_API_LOGGER.debug(f"""
-            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY <--
-            Users-> vmt(superadmin): {request.user.username}
-            Response-> {str(response.status_code)} -- {str(response.text)}""")
+        {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY <--
+        Users-> vmt(superadmin): {request.user.username}
+        Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS',None)

@@ -488,10 +488,10 @@ def notify_checkers(doc_id, level, **kwargs):
         message=message.format(doc_view_url, doc_obj.filename())
     )
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""
-        {datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
-        checkers: {" and ".join([checker.username for checker in checkers])}
-        vmt(superadmin):{doc_obj.owner.root.client.creator}""")
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    checkers: {" and ".join([checker.username for checker in checkers])}
+    vmt(superadmin):{doc_obj.owner.root.client.creator}
+    """)
 
 
 @app.task()

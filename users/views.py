@@ -1,6 +1,6 @@
 from __future__ import print_function, unicode_literals
 
-import datetime
+from datetime import datetime
 import json
 import logging
 
@@ -54,10 +54,9 @@ def ourlogout(request):
     """
     if isinstance(request.user, AnonymousUser):
         return HttpResponseRedirect(reverse('users:user_login_view'))
-    now = datetime.datetime.now()
     LOGOUT_LOGGER.debug(
-        '%s logged out at %s from IP Address %s' % (
-            request.user.username, now, get_client_ip(request)))
+        f"{datetime.now().strftime('%d/%m/%Y %H:%M')} --> User: {request.user.username} Logged Out from IP Address {get_client_ip(request)}"
+    )
     request.user.is_totp_verified = False
     request.user.save()
     logout(request)
@@ -75,7 +74,6 @@ def login_view(request):
         if request.user.is_checker:
             return HttpResponseRedirect(reverse('two_factor:profile'))
         return redirect('data:main_view')
-    now = datetime.datetime.now()
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
@@ -83,10 +81,9 @@ def login_view(request):
         if user:
             if user.is_active:
                 login(request, user)
-                IP = get_client_ip(request)
                 LOGIN_LOGGER.debug(
-                    'Logged in ' + str(now) + ' %s with IP Address: %s' % (
-                        request.user, IP))
+                    f"{datetime.now().strftime('%d/%m/%Y %H:%M')} --> User: {request.user.username} Logged In from IP Address {get_client_ip(request)}"
+                )
                 if user.is_checker:
                     user.is_totp_verified = False
                     user.save()
@@ -96,14 +93,15 @@ def login_view(request):
                     return HttpResponseRedirect(reverse('users:redirect'))
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
-                FAILED_LOGIN_LOGGER.debug(
-                    f"Failed Login Attempt from non active user with username {username} and IP Address {get_client_ip(request)}")
+                FAILED_LOGIN_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+                Failed Login Attempt from non active user with username: {username} and IP Address {get_client_ip(request)}
+                """)
                 return HttpResponse("Your account has been disabled")
         else:
             # Bad login details were provided. So we can't log the user in.
-            FAILED_LOGIN_LOGGER.debug(
-                'Failed Login Attempt %s at %s from IP Address %s' % (
-                    username, str(now), get_client_ip(request)))
+            FAILED_LOGIN_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            Failed Login Attempt from user with username: {username} and IP Address {get_client_ip(request)}
+            """)
             return render(request, 'data/login.html', {'error_invalid': 'Invalid login details supplied.'})
     else:
         return render(request, 'data/login.html')
@@ -578,11 +576,15 @@ def delete(request):
             else:
                 user = User.objects.get(id=int(data['user_id']))
                 user.delete()
-            DELETE_USER_VIEW_LOGGER.debug(f'user deleted with username {user.username}')
+            DELETE_USER_VIEW_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Deleted user with username: {user.username}
+            """)
             return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
         except User.DoesNotExist:
-            DELETE_USER_VIEW_LOGGER.debug(
-                f"user with id {data['user_id']} doesn't exist to be deleted")
+            DELETE_USER_VIEW_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User with id {data['user_id']} doesn't exist to be deleted
+            """)
             return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
     else:
         raise Http404()
@@ -737,8 +739,10 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
         EntitySetup.objects.create(**entity_dict)
         Client.objects.create(creator=self.request.user, client=self.object)
-        ROOT_CREATE_LOGGER.debug(
-            f'Root created with username {self.object.username} from IP Address {get_client_ip(self.request)}')
+        ROOT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+        User: {self.request.user.username}
+        Created new Root/Admin with username: {self.object.username} from IP Address {get_client_ip(self.request)}
+        """)
         return HttpResponseRedirect(self.get_success_url(is_collection))
 
 

@@ -62,9 +62,7 @@
                                 </td>
                                 <td>
                                     {% if doc.is_disbursed %}
-                                        {{doc.disbursed_by.username}}
-                                    {% else %}
-                                        <h4><span class="label label-info">{% trans 'Not disbursed yet' %}</span></h4>
+                                        <h6><strong>{{doc.disbursed_by.username}}</strong></h6>
                                     {% endif %}
                                 </td>
                                 <td class="project_progress">
@@ -74,38 +72,65 @@
                                     <small>{{doc.disbursement_ratio}}% {% trans 'Complete' %}</small>
                                 </td>
                                 <td>
-                                    {% if not doc.is_processed%}
-                                        <h4><span class="label label-danger">{% trans 'Failed' %}</span></h4>
-                                        {%if doc.processing_failure_reason%}
+                                    {% if not request.user.is_maker and not doc.can_be_disbursed %}
+                                        <h4><span class="label label-info">{% trans 'Not ready for disbursement yet' %}</span></h4>
+
+                                    {% elif not doc.is_processed %}
+                                        <h4><span class="label label-danger">{% trans 'Validation Failed' %}</span></h4>
+                                        {% if doc.processing_failure_reason %}
                                             {{ doc.processing_failure_reason}}
-                                        {%endif%}
-                                    {%elif doc.is_disbursed%}
-                                        <h4><span class="label label-success">{% trans 'Disbursed' %}</span></h4>
-                                    {%elif doc.can_be_disbursed %}
-                                        <h4><span class="label label-info">{% trans 'Waiting disbursement' %}</span></h4>
-                                    {%else%}
-                                        <h4><span class="label label-info">{% trans 'Proccessed' %}</span></h4>
-                                    {%endif%}
+                                        {% endif %}
+
+                                    {% elif doc.is_disbursed and doc.disbursement_ratio <= 0 %}
+                                        <h4><span class="label label-danger">{% trans 'Disbursement Failed' %}</span></h4>
+
+                                    {% elif doc.is_disbursed %}
+                                        <h4><span class="label label-success">{% trans 'Disbursed Successfully' %}</span></h4>
+
+                                    {% elif doc.can_be_disbursed %}
+                                        <h4><span class="label label-primary">{% trans 'Waiting Disbursement' %}</span></h4>
+
+                                    {% elif doc.is_processed %}
+                                        <h4><span class="label label-warning">{% trans 'Validated Successfully' %}</span></h4>
+                                    {% endif %}
                                 </td>
                                 <td>
-                                    {% if doc.can_be_disbursed %}
+                                    <!-- Document disbursed successfully -->
+                                    {% if doc.is_disbursed and doc.disbursement_ratio > 0 %}
+                                        <a href="{{doc.get_absolute_url}}" class="btn btn-success btn-md">{% trans 'View' %}</a>
+
+                                    <!-- Document disbursement failed -->
+                                    {% elif doc.is_disbursed and doc.disbursement_ratio <= 0 %}
+                                        <a href="{{doc.get_absolute_url}}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+
+                                    <!-- Document processed and Checkers notified -->
+                                    {% elif doc.can_be_disbursed %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md">{% trans 'View' %}</a>
-                                    {% elif doc.can_be_disbursed == False and doc.owner == request.user %}
+
+                                    <!-- Maker-Owner: Document validation error -->
+                                    {% elif doc.owner == request.user and not doc.is_processed %}
+                                        <a href="{{doc.get_absolute_url}}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+
+                                    <!-- Maker-Owner: Document validated successfully and no checkers notified -->
+                                    {% elif doc.owner == request.user and not doc.can_be_disbursed  %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-warning btn-md addMore"
-                                           title="{% trans 'No checkers notified yet' %}">{% trans 'View' %}</a>
-                                    {% else %}
+                                               title="{% trans 'No checkers notified yet' %}">{% trans 'View' %}</a>
+
+                                    <!-- Checker or Admin: Document validation error or owner has not notify checkers -->
+                                    {% elif not request.user.is_maker and not doc.can_be_disbursed %}
                                         <button disabled class="btn btn-info addMore"
-                                                title="{% trans 'Not ready for disbursement yet' %}">{% trans 'View' %}</button>
+                                                title="{% trans 'Not ready for disbursement yet' %}">{% trans 'Pending' %}</button>
                                     {% endif %}
                                 </td>
                                 {% if request.user.is_root %}
                                 <td>
-                                    <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
+                                    <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)">
+                                        {% trans 'Delete' %}
                                     </a>
                                 </td>
-                                {%endif%}
+                                {% endif %}
                             </tr>
-                        {%endfor%}
+                        {% endfor %}
                     </tbody>
                 </table>
                 <!-- end doc list -->

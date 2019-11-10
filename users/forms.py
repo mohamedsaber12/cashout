@@ -13,7 +13,7 @@ from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
@@ -612,9 +612,9 @@ class ForgotPasswordForm(forms.Form):
             self.user = user_qs.first()
 
     def send_email(self):
-        MESSAGE = 'Dear {0}\n' \
-            'Please follow <a href="{1}">this link</a> to reset password, \n' \
-            'Then login with your username: {2} and new password \n' \
+        MESSAGE = 'Dear <strong>{0}</strong><br><br>' \
+            'Please follow <a href="{1}" ><strong>this link</strong></a> to reset password, <br>' \
+            'Then login with your username: <strong>{2}</strong> and your new password <br><br>' \
             'Thanks, BR'
 
         # one time token
@@ -623,14 +623,14 @@ class ForgotPasswordForm(forms.Form):
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
-        subject = f'[{self.user.brand.mail_subject}]'
-
-        send_mail(
-            from_email=settings.SERVER_EMAIL,
-            recipient_list=[self.user.email],
-            subject="{}{}".format(subject, _(' Password Notification')),
-            message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
-        )
+        from_email      = settings.SERVER_EMAIL
+        sub_subject     = f'[{self.user.brand.mail_subject}]'
+        subject         = "{}{}".format(sub_subject, _(' Password Notification'))
+        recipient_list  = [self.user.email]
+        message         = MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
+        mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
+        mail_to_be_sent.attach_alternative(message, "text/html")
+        mail_to_be_sent.send()
 
 
 class ClientFeesForm(forms.ModelForm):

@@ -457,10 +457,10 @@ def notify_checkers(doc_id, level, **kwargs):
         Thanks, BR""")
     deliver_mail(None, _(' Disbursement Notification'), message, checkers)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""
-        {datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
-        checkers: {" and ".join([checker.username for checker in checkers])}
-        vmt(superadmin):{doc_obj.owner.root.client.creator}""")
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    checkers: {" and ".join([checker.username for checker in checkers])}
+    vmt(superadmin):{doc_obj.owner.root.client.creator}
+    """)
 
 
 @app.task()

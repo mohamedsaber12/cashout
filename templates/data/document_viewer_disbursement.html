@@ -34,7 +34,7 @@
         <!-- checker buttons -->
         {% if request.user.is_checker %}
             <div class="col-md-12 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                {% if can_user_disburse.can_disburse %}
+                {% if can_user_disburse.can_disburse and doc.total_amount <= request.user.level.max_amount_can_be_disbursed %}
                     <button id="disburse_button" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Disburse' %}</button>
                 {% else %}
                     <button disabled class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Disburse' %}</button>   

@@ -194,6 +194,8 @@ def document_view(request, doc_id):
     reviews = None
     # True if checker already reviewed this doc or reviews are completed
     hide_review_form = True
+    # True if checker have the level rights to review the doc
+    can_review = True
     can_user_disburse = {}
     if doc.owner.hierarchy == request.user.hierarchy:
         # doc already dibursed
@@ -223,7 +225,7 @@ def document_view(request, doc_id):
                     # user_review_exist: checks if checker already reviewed this doc
                     user_can_review, user_review_exist = doc.can_user_review(request.user)
                     if not user_can_review and not user_review_exist:
-                        raise Http404
+                        can_review = False
                     # user can review then user review doesn't exist then show review form
                     hide_review_form = user_review_exist
 
@@ -283,7 +285,8 @@ def document_view(request, doc_id):
         'reviews': reviews,
         'hide_review_form': hide_review_form,
         'can_user_disburse': can_user_disburse,
-        'doc_data': doc_data
+        'doc_data': doc_data,
+        'can_review': can_review
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'

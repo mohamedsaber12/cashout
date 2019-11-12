@@ -1,14 +1,11 @@
 from __future__ import unicode_literals
-
-import datetime
-
-import pytz
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
@@ -74,6 +71,8 @@ class User(AbstractUser):
         return str(self.username)
 
     def child(self):
+        if not self.user_type==3:
+            raise ValidationError('This user has no children')
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
 
     @property

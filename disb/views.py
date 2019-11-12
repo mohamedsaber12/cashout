@@ -140,20 +140,15 @@ def failed_disbursed_for_download(request, doc_id):
       
     file_path = "%s%s%s" % (settings.MEDIA_ROOT,
                         "/documents/disbursement/", filename)
-    if not os.path.exists(file_path):
+
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(),
+                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            return response
+    else:
         raise Http404
-
-    with open(file_path, 'rb') as fh:
-        response = HttpResponse(fh.read(), content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        response['X-Accel-Redirect'] = file_path
-        FAILED_DISBURSEMENT_DOWNLOAD.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
-        user: {request.user.username} 
-        downloaded failed disbursement file with doc_id: {doc_obj.id} 
-        """)
-
-        return response
-
 
 @setup_required
 @login_required
@@ -171,16 +166,14 @@ def download_failed_validation_file(request, doc_id):
 
     file_path = "%s%s%s" % (settings.MEDIA_ROOT,
                             "/documents/disbursement/", filename)
-    if not os.path.exists(file_path):
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(fh.read(),
+                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            return response
+    else:
         raise Http404
-
-    with open(file_path, 'rb') as fh:
-        response = HttpResponse(
-            fh.read(), content_type='application/vnd.ms-excel')
-        response['Content-Disposition'] = 'attachment; filename=%s' % filename
-        FAILED_VALIDATION_DOWNLOAD.debug(
-            f"user: {request.user.username} downloaded filename: {filename} at {datetime.now().strftime(' % d/%m/%Y % H: % M')}")
-        return response
 
 class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
     """

@@ -21,7 +21,7 @@ from .decorators import respects_language
 from disb.models import DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
-from users.models import User, MakerUser, CheckerUser
+from users.models import User, MakerUser, CheckerUser, Levels
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -111,6 +111,19 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         if item is not None:
             valid = False 
             break
+
+    max_amount_can_be_disbursed = max(
+        [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
+    )
+
+    if sum(amount) > max_amount_can_be_disbursed:
+        error_message = _("Disbursement file's total amount exceeds your maximum amount that can be disbursed,\
+                                    can you try again or contact your support team")
+        doc_obj.is_processed = False
+        doc_obj.processing_failure_reason = error_message
+        doc_obj.save()
+        notify_maker(doc_obj)
+        return False
 
     if not valid:
         filename = 'failed_disbursement_validation_%s.xlsx' % (

@@ -54,6 +54,8 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         for pos, item in enumerate(cell_obj):
             if pos == amount_position:
                 try:
+                    if float(item.value) < 0.01:
+                        row_dict['error'] = '\nInvalid amount'
                     row_dict['amount'] = float(item.value)
                     if not row_dict['error']:
                         row_dict['error']  = None

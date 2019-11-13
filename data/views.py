@@ -34,6 +34,7 @@ from data.utils import get_client_ip, paginator
 from users.decorators import (setup_required, root_or_maker_or_uploader, 
                               collection_users, disbursement_users, root_only)
 from users.models import User, CheckerUser
+from django.core.paginator import Paginator
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -51,6 +52,7 @@ def redirect_home(request):
         return redirect(reverse('admin:index'))
     status = request.user.get_status(request)
     return redirect(f'data:{status}_home')
+
 
 @login_required
 @setup_required
@@ -94,15 +96,22 @@ def disbursement_home(request):
     doc_list_disbursement = Doc.objects.filter(
         owner__hierarchy=request.user.hierarchy,
         type_of=Doc.DISBURSEMENT)
-    
+
+    paginator = Paginator(doc_list_disbursement, 10)
+    page = request.GET.get('page')
+    docs = paginator.get_page(page)
+
+
+
     context = {
-        'doc_list_disbursement': doc_list_disbursement,
+        'doc_list_disbursement': docs,
         'format_qs': format_qs,
         'can_upload': can_upload,
         'user_has_upload_perm': user_has_upload_perm,
     }
 
     return render(request, 'data/disbursement_home.html', context=context)
+
 
 @login_required
 @setup_required
@@ -147,7 +156,6 @@ def collection_home(request):
     doc_list_collection = Doc.objects.filter(
         owner__hierarchy=request.user.hierarchy,
         type_of=Doc.COLLECTION)
-
 
     context = {
         'doc_list_collection': doc_list_collection,
@@ -216,7 +224,7 @@ def document_view(request, doc_id):
                 Document with doc_id {doc_id} can not be disbursed, checker {request.user.username}
                 """)
                 raise Http404
-            
+
             if not doc.is_reviews_completed():
                 if doc.is_reviews_rejected():
                     hide_review_form = True
@@ -354,7 +362,6 @@ def doc_download(request, doc_id):
 
 @method_decorator([root_or_maker_or_uploader, setup_required, login_required], name='dispatch')
 class FormatListView(TemplateView):
-
     template_name = "data/formats.html"
 
     def get_queryset(self):
@@ -387,7 +394,6 @@ class FormatListView(TemplateView):
                 context['formatform'].can_delete = False
                 context['formatform'].extra = 0
 
-        
         return context
 
     def post(self, request, *args, **kwargs):
@@ -409,6 +415,7 @@ class FormatListView(TemplateView):
 
         return self.render_to_response(self.get_context_data(form=form))
 
+
 @method_decorator([collection_users, setup_required, login_required], name='dispatch')
 class RetrieveCollectionData(DetailView):
     http_method_names = ['get']
@@ -429,8 +436,6 @@ class RetrieveCollectionData(DetailView):
             for x, data in enumerate(row):
                 row_data.append(data.value)
             excl_data.append(row_data)
-        
-        
+
         context['excel_data'] = excl_data
         return context
-    

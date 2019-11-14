@@ -2,38 +2,37 @@
 from __future__ import print_function, unicode_literals
 
 from datetime import datetime
-import json
 import logging
 import xlrd
-from django.conf import settings
-from django.contrib import messages
-from django.contrib.auth.decorators import login_required, permission_required
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import EmailMultiAlternatives
-from django.db.models import Q
-from django.db.models.query import QuerySet
+from django.contrib.auth.decorators import login_required
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
                          JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import translation
 from django.utils.decorators import method_decorator
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.views.generic import ListView, DetailView, View, TemplateView
 from django.views.static import serve
 from django.views.decorators.http import require_safe
 
-from data.forms import DocReviewForm, DownloadFilterForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
+from data.forms import DocReviewForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
 from data.models import Doc, DocReview, FileCategory, Format,CollectionData
-from data.tasks import (handle_disbursement_file, handle_uploaded_file, notify_checkers, 
-doc_review_maker_mail)
-from data.utils import get_client_ip, paginator
-from users.decorators import (setup_required, root_or_maker_or_uploader, 
-                              collection_users, disbursement_users, root_only)
-from users.models import User, CheckerUser
+from data.tasks import (
+    handle_disbursement_file,
+    handle_uploaded_file,
+    notify_checkers,
+    notify_disbursers,
+    doc_review_maker_mail
+)
+from data.utils import get_client_ip
+from users.decorators import (
+    setup_required,
+    root_or_maker_or_uploader,
+    collection_users,
+    disbursement_users,
+    root_only
+)
+from users.models import CheckerUser, Levels
 from django.core.paginator import Paginator
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -248,12 +247,28 @@ def document_view(request, doc_id):
                     doc_review_obj.user_created = request.user
                     doc_review_obj.doc = doc
                     doc_review_obj.save()
-                    # notify checkers of next level if review is ok and
-                    # no checker of the same current level already notified them
-                    checkers_already_notified = reviews.filter(
-                        user_created__level=request.user.level).exclude(
-                        id=doc_review_obj.id).exists()
-                    if doc_review_obj.is_ok and not checkers_already_notified:
+
+                    ready_for_disbursement = doc.is_reviews_completed()
+                    if ready_for_disbursement:
+                        matched_levels_can_disburse = Levels.objects.filter(created=request.user.root). \
+                            filter(max_amount_can_be_disbursed__gte=doc.total_amount)
+                        levels_of_authority = [level.level_of_authority for level in matched_levels_can_disburse]
+                        notify_disbursers.delay(
+                            doc.id, min(levels_of_authority), language=translation.get_language())
+
+                    # notify checkers of next level if ?
+                    # 1 current checker review is ok, and
+                    # 2 doc is not ready for disbursement, and
+                    # 3 all of the current level of checkers has already reviewed the doc
+                    current_level_checkers_can_review = False
+                    current_level_checkers = CheckerUser.objects.filter(hierarchy=request.user.hierarchy).\
+                            filter(level__level_of_authority=request.user.level.level_of_authority)
+                    for checker in current_level_checkers:
+                        can_user_review, user_already_reviewed = doc.can_user_review(checker)
+                        if can_user_review:
+                            current_level_checkers_can_review = True
+
+                    if doc_review_obj.is_ok and not ready_for_disbursement and not current_level_checkers_can_review:
                         levels = CheckerUser.objects.filter(hierarchy=request.user.hierarchy).values_list(
                             'level__level_of_authority', flat=True)
                         levels = list(levels)

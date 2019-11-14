@@ -474,7 +474,7 @@ def notify_checkers(doc_id, level, **kwargs):
         Thanks, BR""")
     deliver_mail(None, _(' Review Notification'), message, checkers)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> REVIEWERS' NOTIFIED NOW
     checkers: {" and ".join([checker.username for checker in checkers])}
     vmt(superadmin):{doc_obj.owner.root.client.creator}
     """)
@@ -496,7 +496,7 @@ def notify_disbursers(doc_id, min_level, **kwargs):
         Thanks, BR""")
     deliver_mail(None, _(' Disbursement Notification'), message, disbursers_to_be_notified)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISBURSERS' NOTIFIED NOW
     disbursers: {" and ".join([checker.username for checker in disbursers_to_be_notified])}
     vmt(superadmin):{doc_obj.owner.root.client.creator}
     """)

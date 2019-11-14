@@ -102,13 +102,13 @@ class PinForm(forms.Form):
                 self.env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(f"""
-                {datetime.now().strftime('%d/%m/%Y %H:%M')}----> SET PIN ERROR<--
+                {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> SET PIN ERROR
                 Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
                 Error-> {e}""")
             return None, _("Set pin process stopped during an internal error,\
                  can you try again or contact you support team")
         WALLET_API_LOGGER.debug(f"""
-            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> SET PIN <--
+            {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> SET PIN
             Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
             Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:

@@ -93,13 +93,13 @@ def login_view(request):
                     return HttpResponseRedirect(reverse('users:redirect'))
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
-                FAILED_LOGIN_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+                FAILED_LOGIN_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> FAILED LOGIN
                 Failed Login Attempt from non active user with username: {username} and IP Address {get_client_ip(request)}
                 """)
                 return HttpResponse("Your account has been disabled")
         else:
             # Bad login details were provided. So we can't log the user in.
-            FAILED_LOGIN_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            FAILED_LOGIN_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> FAILED LOGIN
             Failed Login Attempt from user with username: {username} and IP Address {get_client_ip(request)}
             """)
             return render(request, 'data/login.html', {'error_invalid': 'Invalid login details supplied.'})
@@ -576,13 +576,13 @@ def delete(request):
             else:
                 user = User.objects.get(id=int(data['user_id']))
                 user.delete()
-            DELETE_USER_VIEW_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            DELETE_USER_VIEW_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> USER DELETED
             User: {request.user.username} 
             Deleted user with username: {user.username}
             """)
             return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
         except User.DoesNotExist:
-            DELETE_USER_VIEW_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            DELETE_USER_VIEW_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> USER DOES NOT EXIST
             User with id {data['user_id']} doesn't exist to be deleted
             """)
             return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
@@ -739,7 +739,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
         EntitySetup.objects.create(**entity_dict)
         Client.objects.create(creator=self.request.user, client=self.object)
-        ROOT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+        ROOT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> NEW ADMIN CREATED
         User: {self.request.user.username}
         Created new Root/Admin with username: {self.object.username} from IP Address {get_client_ip(self.request)}
         """)

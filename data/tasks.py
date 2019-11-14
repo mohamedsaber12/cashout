@@ -470,12 +470,34 @@ def notify_checkers(doc_id, level, **kwargs):
 
     doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
     message      = _(f"""Dear <strong>Checker</strong><br><br> 
-        The file named <a href="{doc_view_url}" >{doc_obj.filename()}</a> is ready for disbursement<br><br>
+        The file named <a href="{doc_view_url}" >{doc_obj.filename()}</a> is ready for review<br><br>
         Thanks, BR""")
-    deliver_mail(None, _(' Disbursement Notification'), message, checkers)
+    deliver_mail(None, _(' Review Notification'), message, checkers)
 
     CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
     checkers: {" and ".join([checker.username for checker in checkers])}
+    vmt(superadmin):{doc_obj.owner.root.client.creator}
+    """)
+
+
+@app.task()
+@respects_language
+def notify_disbursers(doc_id, min_level, **kwargs):
+    """related to disbursement"""
+    doc_obj = Doc.objects.get(id=doc_id)
+    disbursers_to_be_notified = CheckerUser.objects.filter(hierarchy=doc_obj.owner.hierarchy). \
+                                     filter(level__level_of_authority__gte=min_level)
+    if not disbursers_to_be_notified.exists():
+        return
+
+    doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
+    message      = _(f"""Dear <strong>Checker</strong><br><br>
+        The file named <a href="{doc_view_url}" >{doc_obj.filename()}</a> is ready for disbursement<br><br>
+        Thanks, BR""")
+    deliver_mail(None, _(' Disbursement Notification'), message, disbursers_to_be_notified)
+
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    disbursers: {" and ".join([checker.username for checker in disbursers_to_be_notified])}
     vmt(superadmin):{doc_obj.owner.root.client.creator}
     """)
 
@@ -500,7 +522,7 @@ def doc_review_maker_mail(doc_id, review_id, **kwargs):
                     the checker: {review.user_created.first_name} {review.user_created.last_name}
                     and the reason is: {review.comment}<br><br>
                     Thanks, BR""")
-    deliver_mail(maker, _(' File Upload Notification'), message)
+    deliver_mail(maker, _(' File Review Notification'), message)
 
 
 def notify_maker(doc, download_url=None):

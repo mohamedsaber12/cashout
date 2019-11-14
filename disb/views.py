@@ -57,7 +57,7 @@ def disburse(request, doc_id):
                 str(reverse_lazy("disbursement_api:disburse")),
                 json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username})
             DATA_LOGGER.debug(
-                datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE VIEW RESPONSE <-- \n' + str(response.text))
+                datetime.now().strftime('%d/%m/%Y %H:%M') + ' ----> DISBURSE VIEW RESPONSE\n\t' + str(response.text))
             if response.ok:
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id},
                                        params={'disburse': 1, 'utm_redirect': 'success'})
@@ -266,7 +266,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                                                    entity=root)
             entity_setup.agents_setup = True
             entity_setup.save()
-            AGENT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            AGENT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> AGENTS CREATED
             Agents created from IP Address {get_client_ip(self.request)}
             with msisdns {" - ".join(agents_msisdn)}
             """)
@@ -288,14 +288,14 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 self.env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(f"""
-                {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY ERROR<--
+                {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> USER INQUIRY ERROR
                 Users-> vmt(superadmin): {request.user.username}
                 Error-> {e}""")
             return None, _("Agents creation process stopped during an internal error,\
                 can you try again or contact you support team")
 
         WALLET_API_LOGGER.debug(f"""
-        {datetime.now().strftime('%d/%m/%Y %H:%M')}----> USER INQUIRY <--
+        {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> USER INQUIRY
         Users-> vmt(superadmin): {request.user.username}
         Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
@@ -409,14 +409,14 @@ class BalanceInquiry(RootRequiredMixin, View):
                 env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(f"""
-                {datetime.now().strftime('%d/%m/%Y %H:%M')}----> BALANCE INQUIRY ERROR<--
+                {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> BALANCE INQUIRY ERROR
                 Users-> vmt(superadmin):{superadmin.username}
                 Error-> {e}""")
             return False, _("Balance inquiry process stopped during an internal error,\
                 can you try again or contact you support team")
 
         WALLET_API_LOGGER.debug(f"""
-            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> BALANCE INQUIRY <--
+            {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> BALANCE INQUIRY
             Users-> vmt(superadmin):{superadmin.username}
             Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:

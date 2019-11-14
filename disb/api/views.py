@@ -83,13 +83,12 @@ class DisburseAPIView(APIView):
         try:
             response = requests.post(
                 env.str(vmt.vmt_environment), json=data, verify=False)
-            DATA_LOGGER.debug(datetime.now().strftime(
-                '%d/%m/%Y %H:%M') + '----> DISBURSE <-- \n' + str(response.json()))
+            DATA_LOGGER.debug(f"{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISBURSE BULK STATUS\n\t{str(response.json())}")
         except ValueError:
-            DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
+            DATA_LOGGER.debug('\n' + datetime.now().strftime('%d/%m/%Y %H:%M') + ' ----> DISBURSE ERROR\n\t' +
                                 str(response.status_code) + ' -- ' + str(response.reason))
         except Exception as e:
-            DATA_LOGGER.debug(datetime.now().strftime('%d/%m/%Y %H:%M') + '----> DISBURSE ERROR <-- \n' +
+            DATA_LOGGER.debug('\n' + datetime.now().strftime('%d/%m/%Y %H:%M') + ' ----> DISBURSE ERROR\n\t' +
                               str(e))
             return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
                 can you try again or contact you support team'),
@@ -141,7 +140,7 @@ class DisburseCallBack(UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         DATA_LOGGER.debug(datetime.now().strftime(
-            '%d/%m/%Y %H:%M') + '----> DISBURSE CALLBACK <-- \n' + str(request.data))
+            '%d/%m/%Y %H:%M') + ' ----> DISBURSE CALLBACK\n\t' + str(request.data))
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -166,8 +165,8 @@ class ChangeProfileCallBack(UpdateAPIView):
     renderer_classes = (JSONRenderer,)
 
     def update(self, request, *args, **kwargs):
-        DATA_LOGGER.debug(datetime.now().strftime(
-            '%d/%m/%Y %H:%M') + '----> CHANGE PROFILE CALLBACK <-- \n' + str(request.data))
+        DATA_LOGGER.debug('\n' + datetime.now().strftime(
+            '%d/%m/%Y %H:%M') + ' ----> CHANGE PROFILE CALLBACK\n\t' + str(request.data))
         transactions = request.data.get('transactions',None)
         if not transactions:
             return JsonResponse({'message': 'Transactions are not sent'}, status=status.HTTP_404_NOT_FOUND)

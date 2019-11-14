@@ -76,7 +76,7 @@ def disbursement_home(request):
 
         if form_doc.is_valid():
             file_doc = form_doc.save()
-            UPLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            UPLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISB FILE UPLOAD
             User: {request.user.username} from IP Address {get_client_ip(request)}
             Uploaded disbursement file with doc_id: {file_doc.id}
             """)
@@ -86,7 +86,7 @@ def disbursement_home(request):
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
         else:
-            UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISB FILE UPLOAD ERROR
             Disbursement UPLOAD ERROR: {form_doc.errors} 
             By User: {request.user.username} from IP Address {get_client_ip(request)}
             """)
@@ -136,7 +136,7 @@ def collection_home(request):
 
         if form_doc.is_valid():
             file_doc = form_doc.save()
-            UPLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            UPLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> COLL FILE UPLOAD
             User: {request.user.username} from IP Address {get_client_ip(request)}
             Uploaded collection file with doc_id: {file_doc.id}
             """)
@@ -146,7 +146,7 @@ def collection_home(request):
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
         else:
-            UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> COLL FILE UPLOAD ERROR
             Collection UPLOAD ERROR: {form_doc.errors} 
             By User: {request.user.username} from IP Address {get_client_ip(request)}
             """)
@@ -179,7 +179,7 @@ class FileDeleteView(View):
         file_obj = get_object_or_404(
             Doc, pk=pk, owner__hierarchy=request.user.hierarchy)
         file_obj.delete()
-        DELETED_FILES_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+        DELETED_FILES_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> FILE DELETED
         User: {request.user.username} from IP Address {get_client_ip(request)}
         Deleted a file with doc_id: {file_obj.id} and doc_name: {file_obj.filename()}
         """)
@@ -219,7 +219,7 @@ def document_view(request, doc_id):
             # makers must notify checkers and allow the document to be dibursed
             # checker should not have access to doc url or id before that
             if not doc.can_be_disbursed:
-                VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+                VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC CAN NOT BE DISB
                 Document with doc_id {doc_id} can not be disbursed, checker {request.user.username}
                 """)
                 raise Http404
@@ -292,7 +292,7 @@ def document_view(request, doc_id):
             }
 
     else:
-        VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+        VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ---->
         User viewing document from other hierarchy, 
         username: {request.user.username}, user hierarchy: {request.user.hierarchy}, 
         doc hierarchy: {doc.owner.hierarchy}, doc id: {doc.id}""")
@@ -317,7 +317,7 @@ def document_view(request, doc_id):
     else:
         context['redirect'] = 'false'
 
-    VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC VIEWED
     User: {request.user.username} from IP Address {get_client_ip(request)}
     Viewed document with doc_id: {doc_id}
     """)
@@ -327,7 +327,7 @@ def document_view(request, doc_id):
 @login_required
 @setup_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
-    DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+    DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ---->
     User: {request.user.username} from IP Address {get_client_ip(request)}
     Downloaded {path}
     """)
@@ -360,12 +360,12 @@ def doc_download(request, doc_id):
                 doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
-            DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC DOWNLOADED
             User: {request.user.username} from IP Address {get_client_ip(request)}
             Downloaded file with doc_id: {doc_id}
             """)
         except Exception:
-            DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC DOWNLOAD ERROR
             User: {request.user.username} from IP Address {get_client_ip(request)}
             Tried to download file with doc_id: {doc_id} but 404 was raised
             """)

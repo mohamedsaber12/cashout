@@ -38,6 +38,13 @@
             </div>
             {%if request.user.is_root%}
                 {% include "users/formset_form.html" with btn_title='Add format' step_1_index=6 formset=formatform action='data:list_format' %}
+
+                {% if request.user.file_category %}
+                    <button id='submit-with-confirmation' class='btn btn-success pull-right'
+                            data-toggle="modal" data-target="#delete-format">{% trans 'Submit' %}</button>
+                {% else %}
+                    <button id='submit-without-confirmation' class='btn btn-success pull-right'>{% trans 'Submit' %}</button>
+                {% endif %}
             {%else%}
             <div class="x_content">
 
@@ -82,8 +89,26 @@
 </div>
 
 
-
-
+<!--Modal-->
+<div class="modal fade" id="delete-format" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">File Format Changes</h4>
+      </div>
+      <div class="modal-body">
+        <p>Please make sure if you will delete any format all of its corresponding documents won't be accessible again for any further action.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="save-format-changes" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 
 
@@ -108,7 +133,7 @@
     $(document).ready(function () {
 
         $('#formats-datatable').DataTable();
-        $('#step-6').append("<button id='submit' class='btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}'>{% trans 'Submit' %}</button>")
+
         function increase_height() {
             let oldheight = $('.stepContainer').css('height');
             oldheight = parseInt(oldheight.replace("px", ""));
@@ -144,7 +169,7 @@
         
 
 
-        $('#submit').click(function () {
+        $('#save-format-changes').click(function () {
             $("form").submit();
         });
     });

@@ -95,8 +95,14 @@
                                     {% endif %}
                                 </td>
                                 <td>
+                                    <!-- File format deleted -->
+                                    {% if not doc.file_category %}
+                                        <button disabled class="btn btn-danger addMore"
+                                                title="{% trans 'Can not be viewed. File format has been deleted' %}">
+                                            {% trans 'Can not be viewed' %}
+                                        </button>
                                     <!-- Document disbursed successfully -->
-                                    {% if doc.is_disbursed and doc.disbursement_ratio > 0 %}
+                                    {% elif doc.is_disbursed and doc.disbursement_ratio > 0 %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-success btn-md">{% trans 'View' %}</a>
 
                                     <!-- Document disbursement failed -->

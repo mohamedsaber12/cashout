@@ -12,19 +12,23 @@
                     success: function (result, xhr, message) {
                         $('#doc-delete-submit').attr('disabled',true)
                         $('#message').hide();
-                        $('#succ-message').show();
+                        $('.modal-header').hide();
+                        $('.modal-footer').hide()
+                        $('#myModalLabel').hide();
+                        $('#succ-message').html("Document deleted Successfully  <br> <img src='https://image.flaticon.com/icons/svg/148/148767.svg' style='margin-left:35%;margin-top:6%' width = '30%'/>").show();
                         setTimeout(function () {
                             window.location = "{% url 'data:main_view' %}";
-                        }, 2000);
+                        }, 500);
 
                     },
                     error: function (xhr, error, reason) {    
                         $('#doc-delete-submit').attr('disabled', true)                
                         $('#message').hide();
+                        $('#myModalLabel').hide();
                         $('#fail-message').show();
                         setTimeout(function () {
                             window.location = "{% url 'data:main_view' %}";
-                        }, 2000);
+                        }, 1500);
                         
                     }
                 });
@@ -33,5 +37,4 @@
             });
         };
 
-    
 </script>

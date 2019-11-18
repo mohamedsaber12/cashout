@@ -40,6 +40,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     doc_obj = Doc.objects.get(id=doc_obj_id)
     
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
+    sheet_unique_field, sheet_amount_field = xl_workbook._sharedstrings[0], xl_workbook._sharedstrings[1]
     xl_sheet = xl_workbook.sheet_by_index(0)
     amount_position, msisdn_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
@@ -113,43 +114,47 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         if item is not None:
             valid = False 
             break
-    try:
-        max_amount_can_be_disbursed = max(
-            [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
-        )
 
-        if sum(amount) > max_amount_can_be_disbursed:
-            error_message = _("Disbursement file's total amount exceeds your maximum amount that can be disbursed,\
-                                        can you try again or contact your support team")
-            doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = error_message
-            doc_obj.save()
-            notify_maker(doc_obj)
-            return False
-    except:
+    # Levels of file validations
+    #1 Uploaded file's total amount exceeds the maximum amount that can be disbursed
+    #2 Uploaded file's format is not consistent with the one chosen from the defined formats
+
+    error_message = None
+    download_url  = False
+    max_amount_can_be_disbursed = max(
+        [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
+    )
+
+    if sum(amount) > max_amount_can_be_disbursed:
+        error_message = _("Disbursement file's total amount exceeds your maximum amount that can be disbursed,\
+                                    can you try again or contact your support team")
+        valid = False
+    elif sheet_unique_field != doc_obj.file_category.unique_field and sheet_amount_field != doc_obj.file_category.amount_field:
+
+        error_message = _("Disbursement file's field format is not consistent with your chosen one,\
+                                    can you try again or contact your support team")
         valid = False
 
     if not valid:
-        filename = 'failed_disbursement_validation_%s.xlsx' % (
+        filename  = 'failed_disbursement_validation_%s.xlsx' % (
              randomword(4))
-
         file_path = "%s%s%s" % (settings.MEDIA_ROOT,
                             "/documents/disbursement/", filename)
-
-        data = list(zip(amount, msisdn,errors))
-        headers = ['amount','mobile number', 'errors']
-        data.insert(0,headers)
-        export_excel(file_path, data)
-        download_url = settings.BASE_URL + \
-            str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
-            '?filename=' + filename
+        if error_message is None:
+            error_message = _("File validation error")
+            data = list(zip(amount, msisdn, errors))
+            headers = ['amount', 'mobile number', 'errors']
+            data.insert(0, headers)
+            export_excel(file_path, data)
+            download_url = settings.BASE_URL + \
+                str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
+                '?filename=' + filename
         doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = _("File validation error")
+        doc_obj.processing_failure_reason = error_message
         doc_obj.save()
-        notify_maker(doc_obj, download_url)
+        notify_maker(doc_obj, download_url) if download_url  else notify_maker(doc_obj)
         return False
     
-
     env = get_dot_env()
     reponse_dict = None
     if env.str('CALL_WALLETS', 'TRUE') == 'TRUE':      

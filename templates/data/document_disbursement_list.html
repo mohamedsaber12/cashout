@@ -75,6 +75,10 @@
                                     {% if not request.user.is_maker and not doc.can_be_disbursed %}
                                         <h4><span class="label label-info">{% trans 'Not ready for disbursement yet' %}</span></h4>
 
+                                    <!-- Document is being validated -->
+                                    {% elif not doc.is_processed and not doc.processing_failure_reason and doc.txn_id is Null %}
+                                        <h4><span class="label label-info">{% trans 'Validation Process Running' %}</span></h4>
+
                                     {% elif not doc.is_processed %}
                                         <h4><span class="label label-danger">{% trans 'Validation Failed' %}</span></h4>
                                         {% if doc.processing_failure_reason %}
@@ -104,6 +108,10 @@
                                     <!-- Document disbursed successfully -->
                                     {% elif doc.is_disbursed and doc.disbursement_ratio > 0 %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-success btn-md">{% trans 'View' %}</a>
+
+                                    <!-- Document is being validated -->
+                                    {% elif not doc.is_processed and not doc.processing_failure_reason and doc.txn_id is Null %}
+                                        <a href="{{doc.get_absolute_url}}" class="btn btn-info btn-md">{% trans 'View' %}</a>
 
                                     <!-- Document disbursement failed -->
                                     {% elif doc.is_disbursed and doc.disbursement_ratio <= 0 %}

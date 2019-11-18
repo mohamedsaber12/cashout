@@ -87,7 +87,13 @@
                                 {% endif %}
                 
                             </td>
-                            <td>{{data.reason}}</td>
+                            <td>
+                                {% if data.reason %}
+                                    {{ data.reason }}
+                                {% else %}
+                                    <p>Disbursement process is running</p>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>

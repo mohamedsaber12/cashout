@@ -81,11 +81,12 @@
                             <td>{{data.amount}}</td>
                             <td>
                                 {% if data.is_disbursed %}
-                                <span style="color: #2e6da4">&#10004;</span>
+                                    <span style="color: #2e6da4">&#10004;</span>
+                                {% elif not data.reason %}
+                                    <h3><span>⏳</span></h3>
                                 {% else %}
-                                <span style="color: #942a25">&#10006;</span>
+                                    <span style="color: #942a25">&#10006;</span>
                                 {% endif %}
-                
                             </td>
                             <td>
                                 {% if data.reason %}
@@ -121,7 +122,7 @@
 <script>
 
     $(document).ready(function () {
-        
+
         $('#transaction-table').DataTable();
         $('#export-failed').on('click',function(ev) {
             $.ajax({
@@ -131,7 +132,7 @@
                     $('#failed-alert-msg').show()
                 },
             })
-            
+
         });
         $('#export-success').on('click', function (ev) {
             $.ajax({

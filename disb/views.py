@@ -138,14 +138,18 @@ def failed_disbursed_for_download(request, doc_id):
     if not filename:
         raise Http404
       
-    file_path = "%s%s%s" % (settings.MEDIA_ROOT,
-                        "/documents/disbursement/", filename)
-
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
-            response = HttpResponse(fh.read(),
-                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response = HttpResponse(
+                fh.read(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            FAILED_DISBURSEMENT_DOWNLOAD.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOWNLOAD FAILED DISB
+            User: {request.user.username}
+            Downloaded failed disbursement file with doc_id: {doc_obj.id}
+            """)
             return response
     else:
         raise Http404
@@ -168,9 +172,15 @@ def download_failed_validation_file(request, doc_id):
                             "/documents/disbursement/", filename)
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
-            response = HttpResponse(fh.read(),
-                                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            response = HttpResponse(
+                fh.read(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            FAILED_VALIDATION_DOWNLOAD.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOWNLOAD FAILED VALIDATIONS DISB 
+            User: {request.user.username}
+            Downloaded failed disbursement's file validations with doc_id: {doc_obj.id}
+            """)
             return response
     else:
         raise Http404

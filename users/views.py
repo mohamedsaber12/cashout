@@ -210,6 +210,7 @@ class CollectionFormView(CollectionRootRequiredMixin, FormView):
             setup = self.get_setup()
             setup.collection_setup = True
             setup.save()
+            form.save()
             return self.form_valid(form)
         return self.form_invalid(form)
 
@@ -286,7 +287,7 @@ class UploaderFormView(CollectionRootRequiredMixin, BaseFormsetView):
 
         setup = self.get_setup()
         if setup.format_collection_setup == False:
-            return reverse('users:setting-collection-formats')
+            return redirect('users:setting-collection-formats')
         return self.render_to_response(self.get_context_data())
 
     def get_success_url(self):
@@ -309,7 +310,7 @@ class FormatFormView(CollectionRootRequiredMixin, BaseFormsetView):
     form_class = FormatFormSet
     model = Format
     prefix = 'format'
-    setup_key = 'format_collection_setup'
+    setup_key = 'format_collection'
     data_type = 'collection'
 
     def get(self, request, *args, **kwargs):

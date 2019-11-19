@@ -21,7 +21,7 @@ from .decorators import respects_language
 from disb.models import DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
 from disbursement.settings.celery import app
-from users.models import User, MakerUser, CheckerUser, Levels
+from users.models import User, MakerUser, CheckerUser, Levels, UploaderUser
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -558,7 +558,7 @@ def notify_maker(doc, download_url=None):
 
 
 def notify_makers_collection(doc):
-    makers       = MakerUser.objects.filter(hierarchy=doc.owner.hierarchy)
+    makers       = UploaderUser.objects.filter(hierarchy=doc.owner.hierarchy)
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
     message      = _(f"""Dear <strong>Maker</strong><br><br> 
         The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully<br><br>

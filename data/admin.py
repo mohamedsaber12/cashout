@@ -4,9 +4,6 @@ from .forms import FileCategoryForm
 from .models import Doc, DocReview, FileCategory
 from .models import CollectionData, Format, FileData
 
-# TODO: Add logs for deleting and adding any instance
-admin.site.register(DocReview)
-
 
 class FileCategoryAdmin(admin.ModelAdmin):
     form = FileCategoryForm
@@ -43,15 +40,32 @@ class FileCategoryAdmin(admin.ModelAdmin):
 class DocAdmin(admin.ModelAdmin):
     list_filter = (('created_at'),)
     readonly_fields = ('file',)
-    list_display = ('filename', 'owner', 'type_of', 'created_at', 'type_of')
+    list_display = ('filename', 'owner', 'type_of', 'created_at')
 
     def has_add_permission(self, request):
         return False
 
-  
 
+class FileDataAdmin(admin.ModelAdmin):
+    list_filter     = ('date', 'user')
+    list_display    = ('doc', 'user')
+    readonly_fields = ('doc', 'data')
+
+    def has_add_permission(self, request):
+        return False
+
+
+class FormatAdmin(admin.ModelAdmin):
+    list_filter  = ('hierarchy',)
+
+    def has_add_permission(self, request):
+        return False
+
+
+# TODO: Add logs for deleting and adding any instance
+admin.site.register(DocReview)
 admin.site.register(Doc, DocAdmin)
 admin.site.register(FileCategory, FileCategoryAdmin)
+admin.site.register(Format, FormatAdmin)
+admin.site.register(FileData, FileDataAdmin)
 admin.site.register(CollectionData)
-admin.site.register(Format)
-admin.site.register(FileData)

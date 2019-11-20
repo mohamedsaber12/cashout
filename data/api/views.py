@@ -7,6 +7,8 @@ from rest_framework.generics import GenericAPIView
 from data.api.serializers import BillInquiryRequestSerializer
 from data.models import FileData
 
+from datetime import datetime
+
 
 class BillInquiryAPIView(GenericAPIView):
     """
@@ -15,11 +17,12 @@ class BillInquiryAPIView(GenericAPIView):
     """
     serializer_class = BillInquiryRequestSerializer
 
-    def log(self, _type: str, _from: str, _to: str, data: dict):
+    def log(self, _flag: str, _type: str, _from: str, _to: str, data: dict):
         """
         Log whatever is response or request, traceback the error
         in case of exception not handled
-        :param type: Request or response or error
+        :param _flag: all caps operation indicator flag
+        :param _type: Request or response or error
         :param _from: from who
         :param _to: to who
         :param data: dictionary of post data or response data
@@ -31,12 +34,12 @@ class BillInquiryAPIView(GenericAPIView):
             DATA_LOGGER = logging.getLogger("bill_inquiry_res")
         else:
             DATA_LOGGER = logging.getLogger("bill_inquiry_req")
-            DATA_LOGGER.exception(f'Data to {_to} from { _from }')
+            DATA_LOGGER.debug(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> UNHANDLED_EXCEPTION\n\tData to SUPER: {_to}, from ADMIN: {_from}")
             return
-        DATA_LOGGER.debug(f'Data to {_to} from { _from }<-- \n {str(data)}')
+        DATA_LOGGER.debug(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> {_flag}\n\tData to SUPER: {_to}, from ADMIN: {_from}\n\t{str(data)}")
 
     def post(self, request, *args, **kwargs):
-        self.log("req", request.user.username, request.data.get("aggregator", "N/A"), request.data)
+        self.log("BILL_INQUIRY_REQUEST", "req", request.user.username, request.data.get("aggregator", "N/A"), request.data)
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         self.biller = request.user
@@ -44,9 +47,9 @@ class BillInquiryAPIView(GenericAPIView):
         try:
             response = self.serialize_response_data(serializer.validated_data)
         except Exception as e:
-            self.log("err", request.user.username, request.data("aggregator", "N/A"), {})
+            self.log("BILL_INQUIRY_ERROR", "err", request.user.username, request.data("aggregator", "N/A"), {})
             return JsonResponse({"msg": "Error Occurred"}, status=status.HTTP_417_EXPECTATION_FAILED)
-        self.log("res", request.user.username, serializer.validated_data["aggregator"], response.content)
+        self.log("BILL_INQUIRY_RESPONSE", "res", request.user.username, serializer.validated_data["aggregator"], response.content)
         return response
 
     def get_bill(self, data: dict):

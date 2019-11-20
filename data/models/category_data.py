@@ -2,40 +2,28 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
-
+from users.models import RootUser
 
 
 class Format(models.Model):
     """
     For Collection only
     """
-    identifier1 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
-    identifier2 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 2'))
-    identifier3 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 3'))
-    identifier4 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 4'))
-    identifier5 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 5'))
-    identifier6 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 6'))
-    identifier7 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 7'))
-    identifier8 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 8'))
-    identifier9 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 9'))
-    identifier10 = models.CharField(
-        max_length=128, null=True, blank=True, verbose_name=_('Header 10'))
+    identifier1  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 1'))
+    identifier2  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 2'))
+    identifier3  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 3'))
+    identifier4  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 4'))
+    identifier5  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 5'))
+    identifier6  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 6'))
+    identifier7  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 7'))
+    identifier8  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 8'))
+    identifier9  = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 9'))
+    identifier10 = models.CharField(max_length=128, null=True, blank=True, verbose_name=_('Header 10'))
     num_of_identifiers = models.IntegerField(default=0, validators=[MinValueValidator(0), MaxValueValidator(10)],
                                              verbose_name=_('Number of identifiers filled'))
 
+    name      = models.CharField(max_length=128, unique=False, verbose_name=_('Description'))
     hierarchy = models.PositiveSmallIntegerField()
-
-    name = models.CharField(max_length=128, unique=False,
-                            verbose_name=_('Description'))
 
     def identifiers(self):
         """return list of identifiers"""
@@ -45,7 +33,6 @@ class Format(models.Model):
                 fields.append(str(getattr(self, field.name)))
         return fields
 
- 
     def headers_match(self,headers):
         identifiers = self.identifiers()
         return all(i in identifiers for i in headers if i)
@@ -62,8 +49,11 @@ class Format(models.Model):
             return False
         return True
 
+    def format_owner(self):
+        return RootUser.objects.get(hierarchy=self.hierarchy)
+
     def __str__(self):
-        return self.name
+        return f"{self.format_owner().username} {self.name}"
 
     # TODO : POSTPONED not now
     def save(self, *args, **kwargs):
@@ -96,3 +86,9 @@ class CollectionData(models.Model):
     mobile_field = models.CharField(max_length=128, null=True, blank=True,
                                     verbose_name='what is Phone number field?',
                                     help_text='For ex: mobile_no, it can be one of the unique fields')
+
+    class Meta:
+        verbose_name_plural = "Collections' Data"
+
+    def __str__(self):
+        return f"{self.user.username} collection-data"

@@ -1,8 +1,8 @@
-from daterange_filter.filter import DateRangeFilter
 from django.contrib import admin
 
-from data.forms import FileCategoryForm, FileDocumentForm
-from data.models import Doc, DocReview, FileCategory
+from .forms import FileCategoryForm
+from .models import Doc, DocReview, FileCategory
+from .models import CollectionData, Format, FileData
 
 # TODO: Add logs for deleting and adding any instance
 admin.site.register(DocReview)
@@ -43,7 +43,7 @@ class FileCategoryAdmin(admin.ModelAdmin):
 class DocAdmin(admin.ModelAdmin):
     list_filter = (('created_at'),)
     readonly_fields = ('file',)
-    list_display = ('filename', 'owner', 'type_of', 'created_at')
+    list_display = ('filename', 'owner', 'type_of', 'created_at', 'type_of')
 
     def has_add_permission(self, request):
         return False
@@ -52,3 +52,6 @@ class DocAdmin(admin.ModelAdmin):
 
 admin.site.register(Doc, DocAdmin)
 admin.site.register(FileCategory, FileCategoryAdmin)
+admin.site.register(CollectionData)
+admin.site.register(Format)
+admin.site.register(FileData)

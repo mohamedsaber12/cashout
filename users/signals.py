@@ -115,7 +115,7 @@ def notify_user(instance, created):
         from_email = settings.SERVER_EMAIL
         subject = f'[{instance.brand.mail_subject}]'
         subject = subject + _(' Password Notification')
-        message = MESSAGE.format(instance.first_name, url, instance.email, instance.username)
+        message = MESSAGE.format(instance.username, url, instance.email, instance.username)
         recipient_list = [instance.email]
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")

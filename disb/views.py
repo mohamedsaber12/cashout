@@ -277,7 +277,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             entity_setup.agents_setup = True
             entity_setup.save()
             AGENT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> AGENTS CREATED
-            Agents created from IP Address {get_client_ip(self.request)}
+            Agents created for ADMIN: {root.username} from IP Address {get_client_ip(self.request)}
             with msisdns {" - ".join(agents_msisdn)}
             """)
             return HttpResponseRedirect(self.get_success_url(root))

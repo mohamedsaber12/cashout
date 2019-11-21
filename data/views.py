@@ -87,7 +87,7 @@ def disbursement_home(request):
             return HttpResponseRedirect(request.path)
         else:
             UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISB FILE UPLOAD ERROR
-            Disbursement UPLOAD ERROR: {form_doc.errors} 
+            Disbursement upload error: {form_doc.errors['file'][0]}
             By User: {request.user.username} from IP Address {get_client_ip(request)}
             """)
             return JsonResponse(form_doc.errors, status=400)
@@ -147,7 +147,7 @@ def collection_home(request):
             return HttpResponseRedirect(request.path)
         else:
             UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> COLL FILE UPLOAD ERROR
-            Collection UPLOAD ERROR: {form_doc.errors} 
+            Collection upload error: {form_doc.errors['file'][0]}
             By User: {request.user.username} from IP Address {get_client_ip(request)}
             """)
             return JsonResponse(form_doc.errors, status=400)
@@ -181,7 +181,7 @@ class FileDeleteView(View):
         file_obj.delete()
         DELETED_FILES_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> FILE DELETED
         User: {request.user.username} from IP Address {get_client_ip(request)}
-        Deleted a file with doc_id: {file_obj.id} and doc_name: {file_obj.filename()}
+        Deleted a file with doc_name: {file_obj.filename()}
         """)
         return JsonResponse(data={},status=200)
 

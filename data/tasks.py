@@ -178,9 +178,9 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
             return False
 
         WALLET_API_LOGGER.debug(f"""
-        {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE <--
-        Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
-        Response-> {str(response.status_code)} -- {str(response.text)}""")
+        {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> CHANGE PROFILE
+        Users: maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
+        Response: {str(response.status_code)} -- {str(response.text)}""")
         error_message = None
         if response.ok:
             reponse_dict = response.json()

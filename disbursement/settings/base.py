@@ -28,7 +28,7 @@ env.read_env(os.path.join(BASE_DIR,'.env'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
 
@@ -63,7 +63,6 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    'log_request_id.middleware.RequestIDMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'users.middleware.PreventConcurrentLoginsMiddleware',
@@ -78,6 +77,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',
+
+    # https://github.com/dabapps/django-log-request-id
+    'log_request_id.middleware.RequestIDMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -163,12 +165,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 STATIC_PATH = os.path.join(BASE_DIR, 'static')
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_ROOT = env.str('MEDIA_ROOT')
 MEDIA_URL = '/media/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
 ]
-STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
+STATIC_ROOT = env.str('STATIC_ROOT')
 STATIC_URL = '/static/'
 LOCALE_PATHS = (
     os.path.join(BASE_DIR, 'conf/locale'),

@@ -40,7 +40,7 @@ class DisburseAPIView(APIView):
         "REQUEST_GATEWAY_CODE": "",
         "REQUEST_GATEWAY_TYPE": "",
         "SERVICETYPE": "P2P",
-        "TYPE": "BPREQ",
+        "TYPE": "PPREQ",
         "WALLETISSUER": "",
         "SENDERS": [
             {'MSISDN': "",'PIN': ""},

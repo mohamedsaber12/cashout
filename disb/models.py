@@ -59,7 +59,7 @@ class VMTData(models.Model):
             data.update({
                 "SERVICETYPE": "P2P",
                 "SOURCE": "DISB",
-                "TYPE": "BPREQ",
+                "TYPE": "PPREQ",
             })
         elif purpose == self.USER_INQUIRY:
             data.update({

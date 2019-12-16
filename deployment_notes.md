@@ -1,23 +1,110 @@
 # Depolyment Notes
 
 # Table Of Contents
-1. [Installing RabbitMQ Server](#installing-rabbitmq-server)
-2. [Installing Nginx](#installing-nginx)
-3. [Create Payroll user](#create-payroll-user)
-4. [Set up the database](#set-up-the-database)
-5. [Clone the portal and set it up](#clone-the-portal-and-set-it-up)
-6. [Make the migrations](#make-the-migrations)
-7. [Change server's host name to meaningful name (Optional)](#change-servers-host-name-to-meaningful-name-optional)
-8. [Configure Nginx](#configure-nginx)
-9. [Install uwsgi to run the portal](#install-uwsgi-to-run-the-portal)
-10. [Handle the static files](#handle-the-static-files)
-11. [Install Certbot](#install-certbot)
-12. [License](#license)
+1. [Deployment Preparation](#deployment-preparation)
+2. [Python Installation](#python-installation)
+3. [Postgres Installation](#postgres-installation)
+4. [Database Set up](#database-set-up)
+5. [RabbitMQ Server Installation](#installing-rabbitmq-server)
+6. [Nginx Installation](#installing-nginx)
+7. [Create Payroll user](#create-payroll-user)
+8. [Clone the portal and set it up](#clone-the-portal-and-set-it-up)
+9. [Make the migrations](#make-the-migrations)
+10. [Change server's host name to meaningful name (Optional)](#change-servers-host-name-to-meaningful-name-optional)
+11. [Configure Nginx](#configure-nginx)
+12. [Install uwsgi to run the portal](#install-uwsgi-to-run-the-portal)
+13. [Handle the static files](#handle-the-static-files)
+14. [Encrypt SSL Certificates using Certbot](#install-certbot)
+15. [License](#license)
 
 
-## Installing RabbitMQ Server
+## Deployment Preparation
+
+### Update CentOS
+
+> It is always best to start with an updated operating system.
+> use the following command to update CentOS and reboot:
+
+```
+$ yum update -y
+$ reboot
+```
+
+
+## Python Installation
+
+> Use below set of commands to Download Python source code on your system.
+
+```
+$ cd /usr/src
+
+$ wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+
+$ tar xzf Python-3.7.4.tgz
+```
+
+> It is necessary to install the gcc compiler if is not in your $PATH. > 
+
+```
+$ yum groupinstall "Development Tools"
+```
+
+> Use altinstall command to compile Python source code on your system.
+
+```
+$ make altinstall
+
+$ reboot
+```
+
+
+## Postgres Installation
+
+```
+$ sudo yum install postgresql11.4-server postgresql11.4-contrib
+```
+
+
+## Database Set up
+
+> At ec2-user
+
+```
+sudo su - postgres
+
+psql
+
+CREATE DATABASE payroll_database;
+
+CREATE USER payroll_user WITH PASSWORD 'PayrollPortalPassword';
+
+ALTER ROLE payroll_user SET client_encoding TO 'utf8';
+
+ALTER ROLE payroll_user SET default_transaction_isolation TO 'read committed';
+
+ALTER ROLE payroll_user SET timezone TO 'UTC';
+
+GRANT ALL PRIVILEGES ON DATABASE payroll_database TO payroll_user;
+
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to payroll_user;
+
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public to payroll_user;
+
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public to payroll_user;
+
+\q
+
+exit          , Exit from psql to ec2-user
+```
+
+
+
+
+## RabbitMQ Server Installation
+
 
 [Installation Notes](http://stevenonofaro.com/rabbitmq-installation-on-centos-7/)
+
 
 ```
 sudo systemctl daemon-reload
@@ -41,7 +128,7 @@ sudo rabbitmqctl set_user_tags rabbit_user administrator
 sudo rabbitmqctl set_permissions -p / rabbit_user “.*”  “.*”  “.*”
 ```
 
-## Installing Nginx
+## Nginx Installation
 
 ```
 sudo yum install nginx
@@ -80,37 +167,7 @@ systemctl restart nginx
 passwd payroll-user         0a4c401e91524e5988078f9839aa76c4
 ```
 
-## Set up the database
 
-> At ec2-user
-
-```
-sudo su - postgres
-
-psql
-
-CREATE DATABASE payroll_database;
-
-CREATE USER payroll_user WITH PASSWORD 'PayrollPortalPassword';
-
-ALTER ROLE payroll_user SET client_encoding TO 'utf8';
-
-ALTER ROLE payroll_user SET default_transaction_isolation TO 'read committed';
-
-ALTER ROLE payroll_user SET timezone TO 'UTC';
-
-GRANT ALL PRIVILEGES ON DATABASE payroll_database TO payroll_user;
-
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to payroll_user;
-
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public to payroll_user;
-
-GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public to payroll_user;
-
-\q
-
-exit          , Exit from psql to ec2-user
-```
 
 ## Clone the portal and set it up
 
@@ -174,11 +231,14 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+
 ## Make the migrations
+
 
 > $ python manage.py makemigrations       , make migrations for each app on its own
 
 > $ python manage.py migrate              , migrate each app on its own
+
 
 ```
 python manage.py makemigrations users
@@ -197,6 +257,7 @@ python manage.py makemigrations
 python manage.py migrate            migrate third party packages
 ```
 
+
 ## Change server's host name to meaningful name (Optional)
 
 ```
@@ -214,9 +275,13 @@ vi /etc/hosts
 
 ```exit              Exit from payroll-user to ec2-user```
 
+
+
 ## Configure Nginx
 
+
 > Switch to ec2-user
+
 
 ```
 cd
@@ -326,6 +391,7 @@ http {
 
 2. Paste the following
 
+
 ```
 iupstream django {
     server 127.0.0.1:8000;
@@ -358,9 +424,13 @@ server {
 
 ```sudo systemctl restart nginx```
 
+
+
 ## Install uwsgi to run the portal
 
+
 > Switch to payroll-user
+
 
 ```
 sudo su - payroll-user
@@ -379,6 +449,7 @@ uwsgi -i uwsgi.ini
 ```
 ```exit             Exit to ec2-user```
 
+
 > At ec2-user
 
 > Test if it's running ok?
@@ -391,58 +462,85 @@ curl -v http://127.0.0.1/admin/
 
 ```exit           Exit from payroll-user to ec2-user```
 
+
+
 ## Handle the static files
+
 
 > At ec2-user
 
+
 ```
-cd
+$ cd
 
-mkdir /var/www/
+$ mkdir /var/www/
 
-mkdir /var/www/static/
+$ mkdir /var/www/static/
 
-mkdir /var/www/media/
+$ mkdir /var/www/media/
 ```
+
 
 > At payroll-user
 
+
 ```
-sudo su - payroll-user
+$ sudo su - payroll-user
 
-source ~/disbursement-staging/venv/bin/activate
+$ source ~/disbursement-staging/venv/bin/activate
 
-cd ~/disbursement-staging/disbursment_tool/
+$ cd ~/disbursement-staging/disbursment_tool/
 
-python manage.py collectstatic
+$ python manage.py collectstatic
 
-exit                            , Exit from payroll-user to ec2-user
+$ exit                            , Exit from payroll-user to ec2-user
 ```
+
 
 > At payroll-user
 
-```
-sudo chown -R payroll-user:payroll-user /var/www/
-
-sudo chmod -Rv 755 /var/www/ 
-```
-
-
-## Install Certbot
 
 ```
-sudo yum -y install yum-utils
+$ sudo chown -R payroll-user:payroll-user /var/www/
 
-sudo yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional
-
-sudo yum install certbot python2-certbot-nginx
-
-sudo certbot --nginx
-
-sudo certbot certonly --nginx
-
-sudo systemctl restart nginx
+$ sudo chmod -Rv 755 /var/www/ 
 ```
+
+
+
+## Encrypt SSL Certificates using Certbot
+
+
+> If you're using RHEL or Oracle Linux, you'll also need to enable the optional channel
+
+
+```
+$ sudo yum -y install yum-utils
+
+$ sudo yum-config-manager --enable rhui-REGION-rhel-server-extras rhui-REGION-rhel-server-optional
+
+```
+
+
+> Run this command on the command line on the machine to install Certbot.
+
+
+```
+$ sudo yum install certbot python2-certbot-nginx
+```
+
+
+> Run this command to get a certificate and have Certbot edit your Nginx configuration automatically
+
+
+```
+$ sudo certbot --nginx
+
+$ sudo certbot certonly --nginx
+
+$ sudo systemctl restart nginx
+```
+
 
 > Remove the previous -temporary- Nginx configurations and replace it with the auto-generated one from certbot
 
@@ -457,6 +555,22 @@ sudo systemctl restart nginx
 > Test if it's running ok?
 
 ```curl -vk https://0.0.0.0:443/```
+
+
+### Set up automatic renewal
+
+
+> We recommend running the following line, which will add a cron job to the default crontab.
+
+
+```
+$ sudo certbot --nginx
+
+$ sudo certbot certonly --nginx
+
+$ sudo systemctl restart nginx
+```
+
 
 ## License
 

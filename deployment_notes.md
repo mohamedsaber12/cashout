@@ -1,12 +1,14 @@
 # Depolyment Notes
 
 # Table Of Contents
-1. [Deployment Preparation](#deployment-preparation)
+1. [Update CentOS](#update-centos)
 2. [Python Installation](#python-installation)
 3. [Postgres Installation](#postgres-installation)
 4. [Database Set up](#database-set-up)
-5. [RabbitMQ Server Installation](#installing-rabbitmq-server)
-6. [Nginx Installation](#installing-nginx)
+5. [RabbitMQ Server Installation](#rabbitmq-server-installation)
+    * [Setup erlang](#setup-erlang)
+    * [Setup rabbitmq-server itself](#setup-rabbitmq-server-itself)
+6. [Nginx Installation](#nginx-installation)
 7. [Create Payroll user](#create-payroll-user)
 8. [Clone the portal and set it up](#clone-the-portal-and-set-it-up)
 9. [Make the migrations](#make-the-migrations)
@@ -14,26 +16,25 @@
 11. [Configure Nginx](#configure-nginx)
 12. [Install uwsgi to run the portal](#install-uwsgi-to-run-the-portal)
 13. [Handle the static files](#handle-the-static-files)
-14. [Encrypt SSL Certificates using Certbot](#install-certbot)
+14. [Encrypt SSL Certificates using Certbot](#encrypt-ssl-certificates-using-certbot)
+    * [Set up automatic renewal](#set-up-automatic-renewal)
 15. [License](#license)
 
 
-## Deployment Preparation
+## Update CentOS
 
-### Update CentOS
+> It's preferred to start with updating the operating system
 
-> It is always best to start with an updated operating system.
-> use the following command to update CentOS and reboot:
+> use the following command to update CentOS and after finishing reboot the system:
 
 ```
 $ yum update -y
 $ reboot
 ```
 
-
 ## Python Installation
 
-> Use below set of commands to Download Python source code on your system.
+> Use below set of commands to Download Python source code on your system
 
 ```
 $ cd /usr/src
@@ -43,13 +44,13 @@ $ wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
 $ tar xzf Python-3.7.4.tgz
 ```
 
-> It is necessary to install the gcc compiler if is not in your $PATH. > 
+> It is necessary to install the gcc compiler if is not in your $PATH
 
 ```
 $ yum groupinstall "Development Tools"
 ```
 
-> Use altinstall command to compile Python source code on your system.
+> Use altinstall command to compile Python source code on your system
 
 ```
 $ make altinstall
@@ -98,13 +99,28 @@ exit          , Exit from psql to ec2-user
 ```
 
 
-
-
 ## RabbitMQ Server Installation
 
 
 [Installation Notes](http://stevenonofaro.com/rabbitmq-installation-on-centos-7/)
 
+#### Setup erlang
+
+```
+sudo amazon-linux-extras install epel
+
+yum -y install epel-release
+
+yum -y update
+
+yum -y install erlang socat
+```
+
+> Test if it's installed correctly
+
+```$ erl -version```
+
+#### Setup rabbitmq-server itself
 
 ```
 sudo systemctl daemon-reload
@@ -164,7 +180,7 @@ usermod www-data --login /sbin/nologin
 
 systemctl restart nginx
 
-passwd payroll-user         0a4c401e91524e5988078f9839aa76c4
+passwd payroll-user             Add a strong password
 ```
 
 
@@ -267,13 +283,15 @@ vi /etc/hosts
 ```
 1. Press i
 
-2. Copy&Paste the following       ```18.220.141.7    payroll-staging```
+2. Copy&Paste the following       
+
+```$ 127.0.0.1    payroll-staging```
 
 3. Press :wq
 
-```systemctl reload```
+```$ systemctl reload```
 
-```exit              Exit from payroll-user to ec2-user```
+```$ exit              Exit from payroll-user to ec2-user```
 
 
 
@@ -385,7 +403,7 @@ http {
 }
 ```
 
-```sudo vim /etc/nginx/conf.d/default.conf```
+```$ sudo vim /etc/nginx/conf.d/default.conf```
 
 1. Press i
 
@@ -400,7 +418,7 @@ iupstream django {
 
 server {
    listen 80;
-   server_name localhost 127.0.0.1;
+   server_name localhost 127.0.0.1 payroll.paymobsolutions.com;
 
         location /media/  {
                 root /var/www/media/;
@@ -422,7 +440,7 @@ server {
 
 3. Press :wq
 
-```sudo systemctl restart nginx```
+```$ sudo systemctl restart nginx```
 
 
 
@@ -443,8 +461,6 @@ pip install uwsgi
 
 cd disbursment_tool/
 
-uwsgi -s :8000 -M --env DJANGO_SETTINGS_MODULE=disbursement.settings --chdir"$PWD" -w django.core.wsgi:get_wsgi_application() --chmod-socket=666 --enable-threads --thunder-lock --daemonize /tmp/uwsgi.log --workers 5 -b 32768
-
 uwsgi -i uwsgi.ini
 ```
 ```exit             Exit to ec2-user```
@@ -455,7 +471,7 @@ uwsgi -i uwsgi.ini
 > Test if it's running ok?
 
 ```
-curl localhost:80
+curl -v localhost:80
 
 curl -v http://127.0.0.1/admin/
 ```
@@ -554,22 +570,19 @@ sudo systemctl restart nginx
 
 > Test if it's running ok?
 
-```curl -vk https://0.0.0.0:443/```
+```curl -vk https://payroll.paymobsolutions.com/```
 
 
-### Set up automatic renewal
+## Set up automatic renewal
 
 
-> We recommend running the following line, which will add a cron job to the default crontab.
+> Add the auto-renewal command as a cronjob
 
+```crontab -e```
 
-```
-$ sudo certbot --nginx
+Copy&Paste the following
 
-$ sudo certbot certonly --nginx
-
-$ sudo systemctl restart nginx
-```
+```0 0 * * * sudo certbot renew --dry-run --nginx```
 
 
 ## License

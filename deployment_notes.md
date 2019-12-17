@@ -478,7 +478,21 @@ curl -v http://127.0.0.1/admin/
 
 ```exit           Exit from payroll-user to ec2-user```
 
+> At payroll-user
 
+> Run celery
+
+```
+cd ~/disbursement-staging/
+
+source venv/bin/activate
+
+cd disbursment_tool/
+
+mkdir -p /var/run/celery/		, Create this dir at the first time only 
+
+celery multi restart worker1 -A disbursement.settings --pidfile="$PWD/var/run/celery/%n.pid" --logfile="$PWD/logs/celery_%n%I_last.log"
+```
 
 ## Handle the static files
 

@@ -53,7 +53,7 @@ def disburse(request, doc_id):
         # request.user.is_verified = False  #TODO
         if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and not doc_obj.is_disbursed:
             response = requests.post(
-                request.scheme + "://" + request.get_host() +
+                "https" + "://" + request.get_host() +
                 str(reverse_lazy("disbursement_api:disburse")),
                 json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username})
             DATA_LOGGER.debug(

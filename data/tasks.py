@@ -40,9 +40,9 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
     doc_obj = Doc.objects.get(id=doc_obj_id)
     
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
-    sheet_unique_field, sheet_amount_field = xl_workbook._sharedstrings[0], xl_workbook._sharedstrings[1]
-    xl_sheet = xl_workbook.sheet_by_index(0)
     amount_position, msisdn_position = doc_obj.file_category.fields_cols()
+    #sheet_unique_field, sheet_amount_field = xl_workbook._sharedstrings[int(msisdn_position)], xl_workbook._sharedstrings[int(amount_position)]
+    xl_sheet = xl_workbook.sheet_by_index(0)
     start_index = doc_obj.file_category.starting_row()
     rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
     list_of_dicts = []
@@ -50,14 +50,18 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         row_dict = {
             'amount':'',
             'error':'',
-            'msisdn':''
+            'msisdn':'',
+            'status':''
         }
         for pos, item in enumerate(cell_obj):
             if pos == amount_position:
                 try:
-                    if float(item.value) < 0.01:
+                    if item.value == '':
+                        row_dict['error'] = '\nEmpty amount'
+                    elif float(item.value) < 0.01:
                         row_dict['error'] = '\nInvalid amount'
-                    row_dict['amount'] = float(item.value)
+                    else:
+                        row_dict['amount'] = float(item.value)
                     if not row_dict['error']:
                         row_dict['error']  = None
                     
@@ -100,40 +104,57 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
                     if not row_dict['error']:
                         row_dict['error'] = None
                     row_dict['msisdn'] = str_value.replace(" ", "")
-        
+        if row_dict['error'] == None:
+            row_dict['status'] = 'valid'
+        else:
+            row_dict['status'] = 'invalid'
         list_of_dicts.append(row_dict)
     
-    msisdn,amount,errors = [],[],[]
+    msisdn,amount,errors,status,partial_msisdn,partial_amount = [],[],[],[],[],[]
     for dict in list_of_dicts:
         msisdn.append(dict['msisdn'])
         amount.append(dict['amount'])
         errors.append(dict['error'])
+        status.append(dict['status'])
+        if status[-1] == 'valid':
+            partial_msisdn.append(dict['msisdn'])
+            partial_amount.append(dict['amount'])
 
     valid = True
+    partial_valid = False
     for item in errors:
         if item is not None:
-            valid = False 
+            valid = False
+            break
+
+    for item in status:
+        if item == 'valid':
+            partial_valid = True
             break
 
     # Levels of file validations
     #1 Uploaded file's total amount exceeds the maximum amount that can be disbursed
     #2 Uploaded file's format is not consistent with the one chosen from the defined formats
-
-    error_message = None
+    if errors[0] != None:
+        error_message = errors[0]
+    else:
+        error_message = None
     download_url  = False
-    max_amount_can_be_disbursed = max(
-        [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
-    )
 
-    if sum(amount) > max_amount_can_be_disbursed:
-        error_message = _("Disbursement file's total amount exceeds your maximum amount that can be disbursed,\
-                                    can you try again or contact your support team")
-        valid = False
-    elif sheet_unique_field != doc_obj.file_category.unique_field and sheet_amount_field != doc_obj.file_category.amount_field:
-
-        error_message = _("Disbursement file's field format is not consistent with your chosen one,\
-                                    can you try again or contact your support team")
-        valid = False
+    if valid or partial_valid:
+        max_amount_can_be_disbursed = max(
+            [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
+        )
+        try:
+            if sum(partial_amount) > max_amount_can_be_disbursed:
+                error_message = _("Disbursement file's amounts exceeds your maximum amount that can be disbursed,\
+                                            can you try again or contact your support team")
+                valid = False
+                partial_valid = False
+        except:
+            error_message = _("Empty or Invalid Amount Numbers")
+            valid = False
+            partial_valid = False
 
     if not valid:
         filename  = 'failed_disbursement_validation_%s.xlsx' % (
@@ -153,15 +174,16 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         doc_obj.processing_failure_reason = error_message
         doc_obj.save()
         notify_maker(doc_obj, download_url) if download_url  else notify_maker(doc_obj)
-        return False
-    
+        if not partial_valid:
+            return False
+
     env = get_dot_env()
     reponse_dict = None
     if env.str('CALL_WALLETS', 'TRUE') == 'TRUE':      
         superadmin = doc_obj.owner.root.client.creator
         vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
-        data["USERS"] = msisdn
+        data["USERS"] = partial_msisdn
         data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
         try:
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
@@ -209,13 +231,13 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         notify_maker(doc_obj)
         return False
 
-    data = zip(amount, msisdn)        
+    data = zip(partial_amount, partial_msisdn)
     DisbursementData.objects.bulk_create(
         [DisbursementData(doc=doc_obj, amount=float(
             i[0]), msisdn=i[1]) for i in data]
     )
-    doc_obj.total_amount = sum(amount)
-    doc_obj.total_count = len(amount)
+    doc_obj.total_amount = sum(partial_amount)
+    doc_obj.total_count = len(partial_amount)
     doc_obj.txn_id = reponse_dict['BATCH_ID'] if reponse_dict else None
     doc_obj.save()
     return True

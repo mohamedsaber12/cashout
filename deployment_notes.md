@@ -2,14 +2,14 @@
 
 # Table Of Contents
 1. [Update CentOS](#update-centos)
-2. [Python Installation](#python-installation)
-3. [Postgres Installation](#postgres-installation)
-4. [Database Set up](#database-set-up)
-5. [RabbitMQ Server Installation](#rabbitmq-server-installation)
+2. [Postgres Installation](#postgres-installation)
+3. [Database Set up](#database-set-up)
+4. [RabbitMQ Server Installation](#rabbitmq-server-installation)
     * [Setup erlang](#setup-erlang)
     * [Setup rabbitmq-server itself](#setup-rabbitmq-server-itself)
-6. [Nginx Installation](#nginx-installation)
-7. [Create Payroll user](#create-payroll-user)
+5. [Nginx Installation](#nginx-installation)
+6. [Create Payroll user](#create-payroll-user)
+7. [Python Installation](#python-installation)
 8. [Clone the portal and set it up](#clone-the-portal-and-set-it-up)
 9. [Make the migrations](#make-the-migrations)
 10. [Change server's host name to meaningful name (Optional)](#change-servers-host-name-to-meaningful-name-optional)
@@ -28,41 +28,41 @@
 > use the following command to update CentOS and after finishing reboot the system:
 
 ```
-$ yum update -y
-$ reboot
-```
+sudo yum update -y
 
-## Python Installation
-
-> Use below set of commands to Download Python source code on your system
-
-```
-$ cd /usr/src
-
-$ wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
-
-$ tar xzf Python-3.7.4.tgz
-```
-
-> It is necessary to install the gcc compiler if is not in your $PATH
-
-```
-$ yum groupinstall "Development Tools"
-```
-
-> Use altinstall command to compile Python source code on your system
-
-```
-$ make altinstall
-
-$ reboot
+sudo reboot
 ```
 
 
 ## Postgres Installation
 
 ```
-$ sudo yum install postgresql11.4-server postgresql11.4-contrib
+sudo vi /etc/yum.repos.d/pgdg.repo
+
+# Press i and paste the following
+[pgdg11]
+name=PostgreSQL 11 $releasever - $basearch
+baseurl=https://download.postgresql.org/pub/repos/yum/11/redhat/rhel-7.5-x86_64
+enabled=1
+gpgcheck=0
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-PGDG-
+
+# Press :wq
+```
+
+```
+sudo yum install postgresql11
+
+sudo yum install postgresql11-server
+
+sudo /usr/pgsql-11/bin/postgresql-11-setup initdb
+
+sudo systemctl enable postgresql-11
+
+sudo systemctl start postgresql-11
+
+# Check it's working fine
+sudo systemctl status postgresql-11
 ```
 
 
@@ -96,6 +96,17 @@ GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public to payroll_user;
 \q
 
 exit          , Exit from psql to ec2-user
+
+sudo vi /var/lib/pgsql/11/data/pg_hba.conf
+
+# Just edit the last word of these lines respectively (80, 82, 84) as (ident, md5, md5)
+#     80 local   all             all                                     ident
+#     81 # IPv4 local connections:
+#     82 host    all             all             127.0.0.1/32            md5
+#     83 # IPv6 local connections:
+#     84 host    all             all             ::1/128                 md5
+
+sudo systemctl restart postgresql-11
 ```
 
 
@@ -104,16 +115,20 @@ exit          , Exit from psql to ec2-user
 
 [Installation Notes](http://stevenonofaro.com/rabbitmq-installation-on-centos-7/)
 
+> At ec2-user
+
 #### Setup erlang
 
 ```
 sudo amazon-linux-extras install epel
 
-yum -y install epel-release
+sudo yum -y install epel-release
 
-yum -y update
+sudo yum -y update
 
-yum -y install erlang socat
+sudo yum -y install erlang socat
+
+sudo systemctl daemon-reload
 ```
 
 > Test if it's installed correctly
@@ -122,16 +137,29 @@ yum -y install erlang socat
 
 #### Setup rabbitmq-server itself
 
+> At ec2-user
+
 ```
+cd /usr/src
+
+sudo yum install wget
+
+sudo wget https://www.rabbitmq.com/releases/rabbitmq-server/v3.6.15/rabbitmq-server-3.6.15-1.el6.noarch.rpm
+
+sudo yum install rabbitmq-server-3.6.15-1.el6.noarch.rpm
+
 sudo systemctl daemon-reload
 
-sudo systemctl start rabbitmq-server
-
 sudo systemctl enable rabbitmq-server
+
+sudo systemctl start rabbitmq-server
 
 sudo rabbitmq-plugins enable rabbitmq_management
 
 sudo chown -R rabbitmq:rabbitmq /var/lib/rabbitmq/
+
+# Check it's installed and working ok
+sudo systemctl status rabbitmq-server.service
 ```
 
 > The following three commands can be skipped and instead use the GUEST User
@@ -146,10 +174,10 @@ sudo rabbitmqctl set_permissions -p / rabbit_user “.*”  “.*”  “.*”
 
 ## Nginx Installation
 
+> At ec2-user
+
 ```
 sudo yum install nginx
-
-ps aux | grep nginx
 
 sudo service nginx start
 
@@ -161,33 +189,86 @@ sudo systemctl restart nginx
 
 ## Create Payroll user
 
+> At ec2-user
+
 ```
-yum install -y git
+sudo yum install -y git
 
-useradd payroll-user
+sudo useradd payroll-user
 
-useradd www-data
+sudo useradd www-data
 
-usermod -aG www-data payroll-user
+sudo usermod -aG www-data payroll-user
 
-usermod -aG ec2-user payroll-user
+sudo usermod -aG ec2-user payroll-user
 
-ls -l /sbin/nologin           Should be no nologin file
+sudo ls -l /sbin/nologin
 
-usermod --login /sbin/nologin www-data
+sudo usermod --shell /sbin/nologin www-data
 
-usermod www-data --login /sbin/nologin
+sudo systemctl restart nginx
 
-systemctl restart nginx
-
-passwd payroll-user             Add a strong password
+sudo passwd payroll-user             Add a strong password
 ```
 
+
+## Python Installation
+
+> We'll install python3.7 only on the payroll user
+
+> At ec2-user
+
+```
+sudo yum install bzip2-devel.x86_64
+
+sudo yum install sqlite sqlite-devel
+
+sudo yum install readline-devel.x86_64 readline
+
+sudo yum install zlib-devel
+
+sudo yum install gcc openssl-devel bzip2-devel libffi-devel
+```
+
+> At payroll-user
+
+```
+sudo su - payroll-user
+
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.bashrc
+
+echo 'export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.bashrc
+
+echo -e 'if command -v pyenv 1>/dev/null 2>&1; then\n  eval "$(pyenv init -)"\nfi' >> ~/.bashrc
+
+exec "$SHELL"
+
+source ~/.bashrc
+
+# If you want to see all of the possible list of packages you can install
+# pyenv install -l
+
+# Install python version 3.7.5
+pyenv install 3.7.5
+
+pyenv local 3.7.5
+
+pyenv rehash
+
+# Install Pip
+easy_install-3.7 pip
+
+pip3 install --user --upgrade pip
+
+pip3 install --user virtualenv
+```
 
 
 ## Clone the portal and set it up
 
-> Switch to Payroll user
+> Switch to the payroll-user
 
 ```
 su - payroll-user
@@ -238,7 +319,7 @@ MEDIA_ROOT=/var/www/media/
 ```
 cd ..
 
-pip3.7 install --user virtualenv
+pip3 install --user virtualenv
 
 virtualenv venv
 
@@ -276,6 +357,8 @@ python manage.py migrate            migrate third party packages
 
 ## Change server's host name to meaningful name (Optional)
 
+> At ec2-user
+
 ```
 hostnamectl set-hostname payroll-staging
 
@@ -298,7 +381,7 @@ vi /etc/hosts
 ## Configure Nginx
 
 
-> Switch to ec2-user
+> At ec2-user
 
 
 ```
@@ -310,6 +393,8 @@ sudo vi /etc/nginx/nginx.conf
 1. Press i
 
 2. Copy&Paste the following
+
+> Just comment server { settings but leave only this line "include /etc/nginx/default.d/*.conf;"
 
 ```
 # For more information on configuration, see:
@@ -461,6 +546,12 @@ pip install uwsgi
 
 cd disbursment_tool/
 
+mkdir uwsgi-logs
+
+touch uwsgi-logs/reqlog.log
+
+touch uwsgi-logs/errlog.log
+
 uwsgi -i uwsgi.ini
 ```
 ```exit             Exit to ec2-user```
@@ -527,7 +618,7 @@ $ exit                            , Exit from payroll-user to ec2-user
 ```
 
 
-> At payroll-user
+> At ec2-user
 
 
 ```

@@ -3,7 +3,7 @@ from .base import *
 DEBUG = False
 
 ALLOWED_HOSTS += (
-    'payroll.paymobsolutions.com',
+    'stagingpayouts.paymobsolutions.com',
     '18.220.141.7',
 )
 
@@ -47,7 +47,7 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
 # base url
-BASE_URL = 'https://payroll.paymobsolutions.com'
+BASE_URL = 'https://stagingpayouts.paymobsolutions.com'
 
 # session expiration
 SESSION_EXPIRE_SECONDS = 300

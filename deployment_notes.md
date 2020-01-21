@@ -8,7 +8,7 @@
     * [Setup erlang](#setup-erlang)
     * [Setup rabbitmq-server itself](#setup-rabbitmq-server-itself)
 5. [Nginx Installation](#nginx-installation)
-6. [Create Payroll user](#create-payroll-user)
+6. [Create Payouts user](#create-payouts-user)
 7. [Python Installation](#python-installation)
 8. [Clone the portal and set it up](#clone-the-portal-and-set-it-up)
 9. [Make the migrations](#make-the-migrations)
@@ -75,23 +75,23 @@ sudo su - postgres
 
 psql
 
-CREATE DATABASE payroll_database;
+CREATE DATABASE payouts_database;
 
-CREATE USER payroll_user WITH PASSWORD 'PayrollPortalPassword';
+CREATE USER payouts_user WITH PASSWORD 'PayoutsPortalPassword';
 
-ALTER ROLE payroll_user SET client_encoding TO 'utf8';
+ALTER ROLE payouts_user SET client_encoding TO 'utf8';
 
-ALTER ROLE payroll_user SET default_transaction_isolation TO 'read committed';
+ALTER ROLE payouts_user SET default_transaction_isolation TO 'read committed';
 
-ALTER ROLE payroll_user SET timezone TO 'UTC';
+ALTER ROLE payouts_user SET timezone TO 'UTC';
 
-GRANT ALL PRIVILEGES ON DATABASE payroll_database TO payroll_user;
+GRANT ALL PRIVILEGES ON DATABASE payouts_database TO payouts_user;
 
-GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to payroll_user;
+GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public to payouts_user;
 
-GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public to payroll_user;
+GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public to payouts_user;
 
-GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public to payroll_user;
+GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public to payouts_user;
 
 \q
 
@@ -187,20 +187,20 @@ sudo systemctl restart nginx
 ```
 
 
-## Create Payroll user
+## Create Payouts user
 
 > At ec2-user
 
 ```
 sudo yum install -y git
 
-sudo useradd payroll-user
+sudo useradd payouts-user
 
 sudo useradd www-data
 
-sudo usermod -aG www-data payroll-user
+sudo usermod -aG www-data payouts-user
 
-sudo usermod -aG ec2-user payroll-user
+sudo usermod -aG ec2-user payouts-user
 
 sudo ls -l /sbin/nologin
 
@@ -208,13 +208,13 @@ sudo usermod --shell /sbin/nologin www-data
 
 sudo systemctl restart nginx
 
-sudo passwd payroll-user             Add a strong password
+sudo passwd payouts-user             Add a strong password
 ```
 
 
 ## Python Installation
 
-> We'll install python3.7 only on the payroll user
+> We'll install python3.7 only on the payouts user
 
 > At ec2-user
 
@@ -230,10 +230,10 @@ sudo yum install zlib-devel
 sudo yum install gcc openssl-devel bzip2-devel libffi-devel
 ```
 
-> At payroll-user
+> At payouts-user
 
 ```
-sudo su - payroll-user
+sudo su - payouts-user
 
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv
 
@@ -268,10 +268,10 @@ pip3 install --user virtualenv
 
 ## Clone the portal and set it up
 
-> Switch to the payroll-user
+> Switch to the payouts-user
 
 ```
-su - payroll-user
+su - payouts-user
 
 ssh-keygen
 
@@ -304,9 +304,9 @@ EMAIL_HOST_USER=AKIAIBBG4EPQMH72VCEA
 EMAIL_HOST_PASSWORD=AmwPtRx02knXLgv+ERiFIE4vAJlA7Gy1oxUbAosUDBLr
 CALL_WALLETS=TRUE
 
-DB_NAME=payroll_database
-DB_USER=payroll_user
-DB_PASSWORD=PayrollPortalPassword
+DB_NAME=payouts_database
+DB_USER=payouts_user
+DB_PASSWORD=PayoutsPortalPassword
 
 CELERY_BROKER_URL=amqp://guest:guest@localhost:5672/
 
@@ -360,7 +360,7 @@ python manage.py migrate            migrate third party packages
 > At ec2-user
 
 ```
-hostnamectl set-hostname payroll-staging
+hostnamectl set-hostname payouts-staging
 
 vi /etc/hosts
 ```
@@ -368,13 +368,13 @@ vi /etc/hosts
 
 2. Copy&Paste the following       
 
-```$ 127.0.0.1    payroll-staging```
+```$ 127.0.0.1    payouts-staging```
 
 3. Press :wq
 
 ```$ systemctl reload```
 
-```$ exit              Exit from payroll-user to ec2-user```
+```$ exit              Exit from payouts-user to ec2-user```
 
 
 
@@ -503,7 +503,7 @@ iupstream django {
 
 server {
    listen 80;
-   server_name localhost 127.0.0.1 payroll.paymobsolutions.com;
+   server_name localhost 127.0.0.1 payouts.paymobsolutions.com;
 
         location /media/  {
                 root /var/www/media/;
@@ -532,11 +532,11 @@ server {
 ## Install uwsgi to run the portal
 
 
-> Switch to payroll-user
+> Switch to payouts-user
 
 
 ```
-sudo su - payroll-user
+sudo su - payouts-user
 
 cd disbursement-staging/
 
@@ -567,9 +567,9 @@ curl -v localhost:80
 curl -v http://127.0.0.1/admin/
 ```
 
-```exit           Exit from payroll-user to ec2-user```
+```exit           Exit from payouts-user to ec2-user```
 
-> At payroll-user
+> At payouts-user
 
 > Run celery
 
@@ -602,11 +602,11 @@ $ mkdir /var/www/media/
 ```
 
 
-> At payroll-user
+> At payouts-user
 
 
 ```
-$ sudo su - payroll-user
+$ sudo su - payouts-user
 
 $ source ~/disbursement-staging/venv/bin/activate
 
@@ -614,7 +614,7 @@ $ cd ~/disbursement-staging/disbursment_tool/
 
 $ python manage.py collectstatic
 
-$ exit                            , Exit from payroll-user to ec2-user
+$ exit                            , Exit from payouts-user to ec2-user
 ```
 
 
@@ -622,7 +622,9 @@ $ exit                            , Exit from payroll-user to ec2-user
 
 
 ```
-$ sudo chown -R payroll-user:payroll-user /var/www/
+# Copy the media files to the server
+
+$ sudo chown -R payouts-user:payouts-user /var/www/
 
 $ sudo chmod -Rv 755 /var/www/ 
 ```
@@ -668,14 +670,14 @@ $ sudo systemctl restart nginx
 ```
 sudo rm -rfv /etc/nginx/conf.d/default.conf
 
-sudo certbot --nginx --domain payroll.paymobsolutions.com
+sudo certbot --nginx --domain payouts.paymobsolutions.com
 
 sudo systemctl restart nginx
 ```
 
 > Test if it's running ok?
 
-```curl -vk https://payroll.paymobsolutions.com/```
+```curl -vk https://payouts.paymobsolutions.com/```
 
 
 ## Set up automatic renewal

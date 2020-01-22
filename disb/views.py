@@ -28,7 +28,7 @@ from disb.models import Agent, VMTData
 from users.decorators import setup_required
 from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin,RootRequiredMixin
 from users.models import EntitySetup
-from disbursement.utils import get_dot_env
+from payouts.utils import get_dot_env
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -406,7 +406,7 @@ class BalanceInquiry(RootRequiredMixin, View):
    
     def get_wallet_balance(self, request,pin):
         import requests
-        from disbursement.utils import get_dot_env
+        from payouts.utils import get_dot_env
         env = get_dot_env()
         superadmin = request.user.root.client.creator
         vmt = VMTData.objects.get(vmt=superadmin)

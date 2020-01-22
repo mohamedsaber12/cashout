@@ -5,7 +5,7 @@ from django.utils.translation import gettext as _
 from disb.models import Agent, VMTData
 from datetime import datetime
 from users.tasks import set_pin_error_mail
-from disbursement.utils import get_dot_env
+from payouts.utils import get_dot_env
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 

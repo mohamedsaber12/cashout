@@ -1,4 +1,4 @@
-"""disbursement URL Configuration
+"""payouts URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/2.0/topics/http/urls/
@@ -19,7 +19,7 @@ from django.contrib import admin
 from django.urls import include, path
 from two_factor.urls import urlpatterns as tf_urls
 from data.views import protected_serve
-from disbursement.decorators import protected_media_serve
+from .decorators import protected_media_serve
 
 if settings.DEBUG:
     import debug_toolbar

@@ -2,7 +2,7 @@
 from django.conf import settings
 from django.core.mail import send_mail
 from django.utils.translation import gettext as _
-from disbursement.settings.celery import app
+from payouts.settings.celery import app
 from users.models import RootUser
 from disb.models import Agent
 

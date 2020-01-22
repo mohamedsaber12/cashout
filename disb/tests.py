@@ -15,8 +15,8 @@ from test_plus import APITestCase
 from data.factories import DisbursementFileCategory
 from data.models import Doc
 from data.tasks import handle_disbursement_file
-from disbursement.factories import VMTDataFactory, AgentFactory
-from disbursement.models import Agent, DisbursementData
+from .factories import VMTDataFactory, AgentFactory
+from .models import Agent, DisbursementData
 from users.factories import DisbursementUserFactory
 
 fake = faker.Factory.create()

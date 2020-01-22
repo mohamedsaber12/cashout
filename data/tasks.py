@@ -9,7 +9,7 @@ import itertools
 import requests
 import logging
 from datetime import datetime
-from disbursement.utils import get_dot_env
+from payouts.utils import get_dot_env
 from dateutil.parser import parse
 from django.conf import settings
 from django.utils.translation import gettext as _
@@ -20,7 +20,7 @@ from .utils import export_excel, randomword, deliver_mail
 from .decorators import respects_language
 from disb.models import DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
-from disbursement.settings.celery import app
+from payouts.settings.celery import app
 from users.models import User, MakerUser, CheckerUser, Levels, UploaderUser
 
 

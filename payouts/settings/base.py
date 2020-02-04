@@ -21,7 +21,7 @@ BASE_DIR = os.path.dirname(
 )
 
 env = environ.Env()
-env.read_env(os.path.join(BASE_DIR,'.env'))
+env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -29,6 +29,30 @@ DEBUG = True
 ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 # Application definition
+THIRD_PARTY_APPS = [
+    'rest_framework',
+    'rest_framework.authtoken',
+    'rest_framework_expiring_authtoken',
+    'django_celery_beat',
+    'imagekit',
+    'django_extensions',
+]
+
+SECURITY_THIRD_PARTY_APPS = [
+    'django_otp',
+    'django_otp.plugins.otp_static',
+    'django_otp.plugins.otp_totp',
+    'two_factor',
+    'axes',
+]
+
+USER_DEFINED_APPS = [
+    'data',
+    'users',
+    'disb',
+    'payment',
+]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -36,30 +60,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
-    # 3rd-Party Apps
-    'rest_framework',
-    'rest_framework.authtoken',
-    'rest_framework_expiring_authtoken',
-    'django_celery_beat',
-    'imagekit',
-    'django_extensions',
-
-    # 3rd-Party Security Apps
-    'django_otp',
-    'django_otp.plugins.otp_static',
-    'django_otp.plugins.otp_totp',
-    'two_factor',
-    'axes',
-
-    # Our own apps
-    'data',
-    'users',
-    'disb',
-    'payment'
 ]
+INSTALLED_APPS += THIRD_PARTY_APPS
+INSTALLED_APPS += SECURITY_THIRD_PARTY_APPS
+INSTALLED_APPS += USER_DEFINED_APPS
 
 MIDDLEWARE = [
+    # https://github.com/dabapps/django-log-request-id
+    'log_request_id.middleware.RequestIDMiddleware',
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'users.middleware.PreventConcurrentLoginsMiddleware',
@@ -73,9 +82,6 @@ MIDDLEWARE = [
     'users.middleware.CheckerTwoFactorAuthMiddleWare',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
-    # https://github.com/dabapps/django-log-request-id
-    'log_request_id.middleware.RequestIDMiddleware',
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
@@ -113,14 +119,14 @@ WSGI_APPLICATION = 'payouts.wsgi.application'
 
 # Celery configs
 # Send results back as AMQP messages
-CELERY_RESULT_BACKEND        = 'rpc://'
-CELERY_BROKER_URL            = env.str('CELERY_BROKER_URL')
+CELERY_RESULT_BACKEND = 'rpc://'
+CELERY_BROKER_URL = env.str('CELERY_BROKER_URL')
 CELERY_RESULT_ACCEPT_CONTENT = ['json']
-CELERY_ACCEPT_CONTENT        = ['json']
-CELERY_TASK_SERIALIZER       = 'json'
-CELERY_RESULT_PERSISTENT     = False
-MAX_TASK_RETRIES             = 10
-CELERY_TIMEZONE              = 'Africa/Cairo'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_PERSISTENT = False
+MAX_TASK_RETRIES = 10
+CELERY_TIMEZONE = 'Africa/Cairo'
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
@@ -183,7 +189,7 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 # Rest-Framework
 REST_FRAMEWORK = {
     'PAGE_SIZE': 10,
-    'DEFAULT_PAGINATION_CLASS':'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
     ),
@@ -213,7 +219,7 @@ LOGIN_EXEMPT_URLS = (
     r'^api*',
     r'^docs/*'
 )
-EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(days=3)
+EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(minutes=60)
 ADMIN_SITE_HEADER = "PayMob Administration"
 
 LOGGING = {
@@ -383,7 +389,7 @@ LOGGING = {
         },
         'agent_create': {
             'level': 'DEBUG',
-            'filters'  : ['request_id'],
+            'filters': ['request_id'],
             'formatter': 'detail',
             'class': 'logging.FileHandler',
             'filename': 'logs/agents_created.log',
@@ -437,7 +443,7 @@ LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/response_trx.log',
         },
-        'checkers_notification':{
+        'checkers_notification': {
             'level': 'DEBUG',
             'filters': ['request_id'],
             'formatter': 'detail',
@@ -493,15 +499,15 @@ LOGGING = {
             'propagate': True,
         },
         'django.template': {
-            'handlers' : ['django.template'],
-            'level'    : 'INFO',
+            'handlers': ['django.template'],
+            'level': 'INFO',
             'propagate': True,
         },
-       'django.db.backends': {
-           'handlers' : ['database_queries'],
-           'level'    : 'WARNING',
-           'propagate': True,
-       },
+        'django.db.backends': {
+            'handlers': ['database_queries'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
         'deleted_files': {
             'handlers': ['delete_file'],
             'level': 'DEBUG',
@@ -617,7 +623,7 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'checkers_notification':{
+        'checkers_notification': {
             'handlers': ['checkers_notification'],
             'level': 'DEBUG',
             'propagate': True,

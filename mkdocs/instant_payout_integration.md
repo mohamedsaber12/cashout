@@ -129,8 +129,8 @@
     | unique_identifier |    M	    |   String   |
 
 #### Response
-**Usage:** 
-    * **{next_trial}** is the next time -in seconds- you can inquire for a user, it'll be time exponential and ratelimited per device
+    **Usage:** 
+        * **{next_trial}** is the next time -in seconds- you can inquire for a user, it'll be time exponential and ratelimited per device
 
 1. **Response Parameters**
 
@@ -164,8 +164,8 @@
 
 #### Request
 1. **Request Parameters**
-* **Usage:** 
-    * **{fees}** would be one of {Full}, {Half} or {No}
+    * **Usage:** 
+        * **{fees}** would be one of {Full}, {Half} or {No}
 
     |  Field   |   M/O  |    Type    |
     |---	   |---	    |---	     |
@@ -190,6 +190,7 @@
     "status_description": "",
 }
 ```
+
 
 ```
 {

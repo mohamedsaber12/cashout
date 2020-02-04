@@ -32,19 +32,15 @@ else:
         path('secure-portal/', admin.site.urls),
     ]
 
+    handler404 = 'payouts.views.page_not_found_view'
 
-    handler404 = 'disbursement.views.page_not_found_view'
+    handler500 = 'payouts.views.error_view'
 
+    handler403 = 'payouts.views.permission_denied_view'
 
-    handler500 = 'disbursement.views.error_view'
+    handler400 = 'payouts.views.bad_request_view'
 
-
-    handler403 = 'disbursement.views.permission_denied_view'
-
-
-    handler400 = 'disbursement.views.bad_request_view'
-
-    handler401 = 'disbursement.views.unauthorized_view'
+    handler401 = 'payouts.views.unauthorized_view'
 
 
 urlpatterns += [    

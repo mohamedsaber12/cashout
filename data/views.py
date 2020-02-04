@@ -1,39 +1,33 @@
 # Create your views here.
 from __future__ import print_function, unicode_literals
 
-from datetime import datetime
 import logging
+
 import xlrd
+
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
                          JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import translation
 from django.utils.decorators import method_decorator
-from django.views.generic import ListView, DetailView, View, TemplateView
-from django.views.static import serve
 from django.views.decorators.http import require_safe
+from django.views.generic import DetailView, TemplateView, View
+from django.views.static import serve
 
-from data.forms import DocReviewForm, FileDocumentForm,FormatFormSet,FileCategoryFormSet
-from data.models import Doc, DocReview, FileCategory, Format,CollectionData
-from data.tasks import (
-    handle_disbursement_file,
-    handle_uploaded_file,
-    notify_checkers,
-    notify_disbursers,
-    doc_review_maker_mail
-)
-from data.utils import get_client_ip
-from users.decorators import (
-    setup_required,
-    root_or_maker_or_uploader,
-    collection_users,
-    disbursement_users,
-    root_only
-)
+from users.decorators import (collection_users, disbursement_users, root_only,
+                              root_or_maker_or_uploader, setup_required)
 from users.models import CheckerUser, Levels
-from django.core.paginator import Paginator
+
+from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm,
+                    FormatFormSet)
+from .models import CollectionData, Doc, DocReview, FileCategory, Format
+from .tasks import (doc_review_maker_mail, handle_disbursement_file,
+                    handle_uploaded_file, notify_checkers, notify_disbursers)
+from .utils import get_client_ip
+
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -76,20 +70,18 @@ def disbursement_home(request):
 
         if form_doc.is_valid():
             file_doc = form_doc.save()
-            UPLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISB FILE UPLOAD
+            UPLOAD_LOGGER.debug(f"""[DISBURSEMENT FILE UPLOAD]
             User: {request.user.username} from IP Address {get_client_ip(request)}
-            Uploaded disbursement file with doc_id: {file_doc.id}
-            """)
+            Uploaded disbursement file with doc_id: {file_doc.id}""")
             handle_disbursement_file.delay(
                 file_doc.id, language=translation.get_language())
 
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
         else:
-            UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISB FILE UPLOAD ERROR
+            UPLOAD_ERROR_LOGGER.debug(f"""[DISBURSEMENT FILE UPLOAD ERROR]
             Disbursement upload error: {form_doc.errors['file'][0]}
-            By User: {request.user.username} from IP Address {get_client_ip(request)}
-            """)
+            By User: {request.user.username} from IP Address {get_client_ip(request)}""")
             return JsonResponse(form_doc.errors, status=400)
 
     doc_list_disbursement = Doc.objects.filter(
@@ -136,20 +128,18 @@ def collection_home(request):
 
         if form_doc.is_valid():
             file_doc = form_doc.save()
-            UPLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> COLL FILE UPLOAD
+            UPLOAD_LOGGER.debug(f"""[COLLECTION FILE UPLOAD]
             User: {request.user.username} from IP Address {get_client_ip(request)}
-            Uploaded collection file with doc_id: {file_doc.id}
-            """)
+            Uploaded collection file with doc_id: {file_doc.id}""")
             handle_uploaded_file.delay(
                 file_doc.id, language=translation.get_language())
 
             # Redirect to the document list after POST
             return HttpResponseRedirect(request.path)
         else:
-            UPLOAD_ERROR_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> COLL FILE UPLOAD ERROR
+            UPLOAD_ERROR_LOGGER.debug(f"""[COLLECTION FILE UPLOAD ERROR]
             Collection upload error: {form_doc.errors['file'][0]}
-            By User: {request.user.username} from IP Address {get_client_ip(request)}
-            """)
+            By User: {request.user.username} from IP Address {get_client_ip(request)}""")
             return JsonResponse(form_doc.errors, status=400)
 
     doc_list_collection = Doc.objects.filter(
@@ -179,10 +169,9 @@ class FileDeleteView(View):
         file_obj = get_object_or_404(
             Doc, pk=pk, owner__hierarchy=request.user.hierarchy)
         file_obj.delete()
-        DELETED_FILES_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> FILE DELETED
+        DELETED_FILES_LOGGER.debug(f"""[FILE DELETED]
         User: {request.user.username} from IP Address {get_client_ip(request)}
-        Deleted a file with doc_name: {file_obj.filename()}
-        """)
+        Deleted a file with doc_name: {file_obj.filename()}""")
         return JsonResponse(data={},status=200)
 
 
@@ -219,9 +208,8 @@ def document_view(request, doc_id):
             # makers must notify checkers and allow the document to be dibursed
             # checker should not have access to doc url or id before that
             if not doc.can_be_disbursed:
-                VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC CAN NOT BE DISB
-                Document with doc_id {doc_id} can not be disbursed, checker {request.user.username}
-                """)
+                VIEW_DOCUMENT_LOGGER.debug(f"""[DOC CAN NOT BE DISBURSED]
+                Document with doc_id {doc_id} can not be disbursed, checker {request.user.username}""")
                 raise Http404
 
             if not doc.is_reviews_completed():
@@ -292,7 +280,7 @@ def document_view(request, doc_id):
             }
 
     else:
-        VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ---->
+        VIEW_DOCUMENT_LOGGER.debug(f"""[HIERARCHY ERROR]
         User viewing document from other hierarchy, 
         username: {request.user.username}, user hierarchy: {request.user.hierarchy}, 
         doc hierarchy: {doc.owner.hierarchy}, doc id: {doc.id}""")
@@ -317,20 +305,18 @@ def document_view(request, doc_id):
     else:
         context['redirect'] = 'false'
 
-    VIEW_DOCUMENT_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC VIEWED
+    VIEW_DOCUMENT_LOGGER.debug(f"""[DOC VIEWED]
     User: {request.user.username} from IP Address {get_client_ip(request)}
-    Viewed document with doc_id: {doc_id}
-    """)
+    Viewed document with doc_id: {doc_id}""")
     return render(request, template_name=template_name, context=context)
 
 
 @login_required
 @setup_required
 def protected_serve(request, path, document_root=None, show_indexes=False):
-    DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ---->
+    DOWNLOAD_LOGGER.debug(f"""[DOC DOWNLOADED]
     User: {request.user.username} from IP Address {get_client_ip(request)}
-    Downloaded {path}
-    """)
+    Downloaded {path}""")
     path = 'documents/' + path
     try:
         doc = get_object_or_404(Doc, file=path)
@@ -360,15 +346,13 @@ def doc_download(request, doc_id):
                 doc.file, content_type='application/vnd.ms-excel')
             response['Content-Disposition'] = 'attachment; filename=%s' % doc.filename()
             response['X-Accel-Redirect'] = '/media/' + doc.file.name
-            DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC DOWNLOADED
+            DOWNLOAD_LOGGER.debug(f"""[DOC DOWNLOADED]
             User: {request.user.username} from IP Address {get_client_ip(request)}
-            Downloaded file with doc_id: {doc_id}
-            """)
+            Downloaded file with doc_id: {doc_id}""")
         except Exception:
-            DOWNLOAD_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOC DOWNLOAD ERROR
+            DOWNLOAD_LOGGER.debug(f"""[DOC DOWNLOAD ERROR]
             User: {request.user.username} from IP Address {get_client_ip(request)}
-            Tried to download file with doc_id: {doc_id} but 404 was raised
-            """)
+            Tried to download file with doc_id: {doc_id} but 404 was raised""")
             raise Http404
         return response
     else:

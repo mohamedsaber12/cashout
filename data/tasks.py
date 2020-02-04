@@ -1,27 +1,30 @@
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
 
+import itertools
 import json
+import logging
 import re
+from datetime import datetime
+
+import requests
 import tablib
 import xlrd
-import itertools
-import requests
-import logging
-from datetime import datetime
-from payouts.utils import get_dot_env
 from dateutil.parser import parse
+
 from django.conf import settings
-from django.utils.translation import gettext as _
 from django.urls import reverse
-from .models import Doc
-from .models import FileData
-from .utils import export_excel, randomword, deliver_mail
-from .decorators import respects_language
+from django.utils.translation import gettext as _
+
 from disb.models import DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
 from payouts.settings.celery import app
-from users.models import User, MakerUser, CheckerUser, Levels, UploaderUser
+from payouts.utils import get_dot_env
+from users.models import CheckerUser, Levels, UploaderUser, User
+
+from .decorators import respects_language
+from .models import Doc, FileData
+from .utils import deliver_mail, export_excel, randomword
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -188,8 +191,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
         try:
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""
-            {datetime.now().strftime('%d/%m/%Y %H:%M')}----> CHANGE PROFILE ERROR<--
+            WALLET_API_LOGGER.debug(f"""[CHANGE PROFILE ERROR]
             Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
             Error-> {e}""")
             doc_obj.is_processed = False
@@ -199,8 +201,7 @@ def handle_disbursement_file(doc_obj_id,**kwargs):
             notify_maker(doc_obj)
             return False
 
-        WALLET_API_LOGGER.debug(f"""
-        {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> CHANGE PROFILE
+        WALLET_API_LOGGER.debug(f"""[CHANGE PROFILE]
         Users: maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
         Response: {str(response.status_code)} -- {str(response.text)}""")
         error_message = None
@@ -501,10 +502,9 @@ def notify_checkers(doc_id, level, **kwargs):
         Thanks, BR""")
     deliver_mail(None, _(' Review Notification'), message, checkers)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> REVIEWERS' NOTIFIED NOW
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""[REVIEWERS' NOTIFIED NOW]
     checkers: {" and ".join([checker.username for checker in checkers])}
-    vmt(superadmin):{doc_obj.owner.root.client.creator}
-    """)
+    vmt(superadmin):{doc_obj.owner.root.client.creator}""")
 
 
 @app.task()
@@ -523,10 +523,9 @@ def notify_disbursers(doc_id, min_level, **kwargs):
         Thanks, BR""")
     deliver_mail(None, _(' Disbursement Notification'), message, disbursers_to_be_notified)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISBURSERS' NOTIFIED NOW
+    CHECKERS_NOTIFICATION_LOGGER.debug(f"""[DISBURSERS' NOTIFIED NOW]
     disbursers: {" and ".join([checker.username for checker in disbursers_to_be_notified])}
-    vmt(superadmin):{doc_obj.owner.root.client.creator}
-    """)
+    vmt(superadmin):{doc_obj.owner.root.client.creator}""")
 
 
 @app.task()

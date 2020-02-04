@@ -220,6 +220,7 @@ class CollectionDataForm(forms.ModelForm):
             instance.save()
         return instance
 
+
 class FileCategoryForm(forms.ModelForm):
     amount_field = forms.CharField(
         label=_('amount header position %s') % "(B-1)")

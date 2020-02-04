@@ -1,13 +1,13 @@
 import logging
+
 from django.db.models import Q
 from django.http import JsonResponse
+
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 
-from data.api.serializers import BillInquiryRequestSerializer
-from data.models import FileData
-
-from datetime import datetime
+from ..models import FileData
+from .serializers import BillInquiryRequestSerializer
 
 
 class BillInquiryAPIView(GenericAPIView):
@@ -34,9 +34,9 @@ class BillInquiryAPIView(GenericAPIView):
             DATA_LOGGER = logging.getLogger("bill_inquiry_res")
         else:
             DATA_LOGGER = logging.getLogger("bill_inquiry_req")
-            DATA_LOGGER.debug(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> UNHANDLED_EXCEPTION\n\tData to SUPER: {_to}, from ADMIN: {_from}")
+            DATA_LOGGER.debug(f"[UNHANDLED_EXCEPTION]\n\tData to SUPER: {_to}, from ADMIN: {_from}")
             return
-        DATA_LOGGER.debug(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> {_flag}\n\tData to SUPER: {_to}, from ADMIN: {_from}\n\t{str(data)}")
+        DATA_LOGGER.debug(f"[{_flag}]\n\tData to SUPER: {_to}, from ADMIN: {_from}\n\t{str(data)}")
 
     def post(self, request, *args, **kwargs):
         self.log("BILL_INQUIRY_REQUEST", "req", request.user.username, request.data.get("aggregator", "N/A"), request.data)

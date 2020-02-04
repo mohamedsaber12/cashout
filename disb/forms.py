@@ -1,14 +1,16 @@
 import logging
+
 from django import forms
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
-from disb.models import Agent, VMTData
-from datetime import datetime
-from users.tasks import set_pin_error_mail
+
 from payouts.utils import get_dot_env
+from users.tasks import set_pin_error_mail
+
+from .models import Agent, VMTData
+
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
-
 
 
 class VMTDataForm(forms.ModelForm):
@@ -101,16 +103,14 @@ class PinForm(forms.Form):
             response = requests.post(
                 self.env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""
-                {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> SET PIN ERROR
-                Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
-                Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"""[SET PIN ERROR]
+            Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
+            Error-> {e}""")
             return None, _("Set pin process stopped during an internal error,\
                  can you try again or contact you support team")
-        WALLET_API_LOGGER.debug(f"""
-            {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> SET PIN
-            Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
-            Response-> {str(response.status_code)} -- {str(response.text)}""")
+        WALLET_API_LOGGER.debug(f"""[SET PIN]
+        Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
+        Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)

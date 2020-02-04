@@ -1,17 +1,17 @@
 import json
 import logging
-from datetime import datetime
 
 import environ
 import requests
 import xlrd
+
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils.translation import gettext as _
 from django.utils import translation
+from django.utils.translation import gettext as _
 
 from rest_framework import status
-from rest_framework.authentication import TokenAuthentication,SessionAuthentication
+from rest_framework.authentication import (SessionAuthentication, TokenAuthentication)
 from rest_framework.generics import UpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
@@ -20,12 +20,13 @@ from rest_framework.views import APIView
 from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthentication
 
 from data.models import Doc
-from data.tasks import notify_checkers,handle_change_profile_callback
-from disb.api.permission_classes import BlacklistPermission
-from disb.api.serializers import (DisbursementCallBackSerializer,
-                                  DisbursementSerializer)
-from disb.models import Agent, DisbursementData, DisbursementDocData, VMTData
-from users.models import User,CheckerUser
+from data.tasks import handle_change_profile_callback, notify_checkers
+from users.models import CheckerUser, User
+
+from ..models import Agent, DisbursementData, DisbursementDocData, VMTData
+from .permission_classes import BlacklistPermission
+from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
+
 
 DATA_LOGGER = logging.getLogger("disburse")
 
@@ -83,13 +84,11 @@ class DisburseAPIView(APIView):
         try:
             response = requests.post(
                 env.str(vmt.vmt_environment), json=data, verify=False)
-            DATA_LOGGER.debug(f"{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DISBURSE BULK STATUS\n\t{str(response.json())}")
+            DATA_LOGGER.debug(f"[DISBURSE BULK STATUS]\n\t{str(response.json())}")
         except ValueError:
-            DATA_LOGGER.debug('\n' + datetime.now().strftime('%d/%m/%Y %H:%M') + ' ----> DISBURSE ERROR\n\t' +
-                                str(response.status_code) + ' -- ' + str(response.reason))
+            DATA_LOGGER.debug('[DISBURSE ERROR]\n\t' + str(response.status_code) + ' -- ' + str(response.reason))
         except Exception as e:
-            DATA_LOGGER.debug('\n' + datetime.now().strftime('%d/%m/%Y %H:%M') + ' ----> DISBURSE ERROR\n\t' +
-                              str(e))
+            DATA_LOGGER.debug('[DISBURSE ERROR]\n\t' + str(e))
             return HttpResponse(json.dumps({'message': _('Disbursement process stopped during an internal error,\
                 can you try again or contact you support team'),
                                             'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
@@ -139,8 +138,7 @@ class DisburseCallBack(UpdateAPIView):
     renderer_classes = (JSONRenderer,)
 
     def update(self, request, *args, **kwargs):
-        DATA_LOGGER.debug(datetime.now().strftime(
-            '%d/%m/%Y %H:%M') + ' ----> DISBURSE CALLBACK\n\t' + str(request.data))
+        DATA_LOGGER.debug('[DISBURSE CALLBACK]\n\t' + str(request.data))
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
 
@@ -165,8 +163,7 @@ class ChangeProfileCallBack(UpdateAPIView):
     renderer_classes = (JSONRenderer,)
 
     def update(self, request, *args, **kwargs):
-        DATA_LOGGER.debug('\n' + datetime.now().strftime(
-            '%d/%m/%Y %H:%M') + ' ----> CHANGE PROFILE CALLBACK\n\t' + str(request.data))
+        DATA_LOGGER.debug('[CHANGE PROFILE CALLBACK]\n\t' + str(request.data))
         transactions = request.data.get('transactions',None)
         if not transactions:
             return JsonResponse({'message': 'Transactions are not sent'}, status=status.HTTP_404_NOT_FOUND)

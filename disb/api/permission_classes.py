@@ -1,9 +1,10 @@
 import logging
 
-from datetime import datetime
 from django.conf import settings
-from django_otp import user_has_device, _user_is_authenticated
+from django_otp import _user_is_authenticated, user_has_device
+
 from rest_framework import permissions
+
 
 DATA_LOGGER = logging.getLogger("disburse")
 
@@ -29,7 +30,7 @@ class BlacklistPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         ip_addr = request.META['REMOTE_ADDR']
-        DATA_LOGGER.debug(f"\n{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> CAN DISBURSE\n\tIp Address: {str(ip_addr)}")
+        DATA_LOGGER.debug(f"[CAN DISBURSE]\n\tIp Address: {str(ip_addr)}")
         if ip_addr in settings.ALLOWED_HOSTS:
             return True
         else:

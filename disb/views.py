@@ -1,42 +1,45 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import os
-import json
+
 import logging
-from datetime import datetime
+import os
 
 import requests
-from django.utils.translation import gettext as _
-from django.utils import translation
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect, Http404
-from django.shortcuts import redirect, render, render_to_response,get_object_or_404
-from django.urls import reverse
-from django.urls import reverse_lazy
+from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.utils import translation
 from django.utils.decorators import method_decorator
-from django.views.generic import CreateView,View
+from django.utils.translation import gettext as _
+from django.views.generic import View
+
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (generate_failed_disbursed_data, generate_success_disbursed_data, 
-generate_all_disbursed_data)
-from data.utils import redirect_params,get_client_ip
-from disb.forms import VMTDataForm, AgentFormSet, AgentForm,BalanceInquiryPinForm
-from disb.models import Agent, VMTData
-from users.decorators import setup_required
-from users.mixins import SuperRequiredMixin, SuperFinishedSetupMixin,RootRequiredMixin
-from users.models import EntitySetup
+from data.tasks import (generate_all_disbursed_data,
+                        generate_failed_disbursed_data,
+                        generate_success_disbursed_data)
+from data.utils import get_client_ip, redirect_params
 from payouts.utils import get_dot_env
+from users.decorators import setup_required
+from users.mixins import (RootRequiredMixin, SuperFinishedSetupMixin,
+                          SuperRequiredMixin)
+from users.models import EntitySetup
+
+from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
+from .models import Agent, VMTData
+
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
-FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger(
-    "failed_disbursement_download")
-FAILED_VALIDATION_DOWNLOAD = logging.getLogger(
-    "failed_validation_download")
+FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger("failed_disbursement_download")
+FAILED_VALIDATION_DOWNLOAD = logging.getLogger("failed_validation_download")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
+
 
 @setup_required
 @otp_required
@@ -56,8 +59,7 @@ def disburse(request, doc_id):
                 "https" + "://" + request.get_host() +
                 str(reverse_lazy("disbursement_api:disburse")),
                 json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username})
-            DATA_LOGGER.debug(
-                datetime.now().strftime('%d/%m/%Y %H:%M') + ' ----> DISBURSE VIEW RESPONSE\n\t' + str(response.text))
+            DATA_LOGGER.debug('[DISBURSE VIEW RESPONSE]\n\t' + str(response.text))
             if response.ok:
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id},
                                        params={'disburse': 1, 'utm_redirect': 'success'})
@@ -146,10 +148,9 @@ def failed_disbursed_for_download(request, doc_id):
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            FAILED_DISBURSEMENT_DOWNLOAD.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOWNLOAD FAILED DISB
+            FAILED_DISBURSEMENT_DOWNLOAD.debug(f"""[DOWNLOAD FAILED DISBURSEMENT]
             User: {request.user.username}
-            Downloaded failed disbursement file with doc_id: {doc_obj.id}
-            """)
+            Downloaded failed disbursement file with doc_id: {doc_obj.id}""")
             return response
     else:
         raise Http404
@@ -177,10 +178,9 @@ def download_failed_validation_file(request, doc_id):
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            FAILED_VALIDATION_DOWNLOAD.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> DOWNLOAD FAILED VALIDATIONS DISB 
+            FAILED_VALIDATION_DOWNLOAD.debug(f"""[DOWNLOAD FAILED VALIDATIONS DISBURSEMENT] 
             User: {request.user.username}
-            Downloaded failed disbursement's file validations with doc_id: {doc_obj.id}
-            """)
+            Downloaded failed disbursement's file validations with doc_id: {doc_obj.id}""")
             return response
     else:
         raise Http404
@@ -276,10 +276,9 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                                                    entity=root)
             entity_setup.agents_setup = True
             entity_setup.save()
-            AGENT_CREATE_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')} ----> AGENTS CREATED
+            AGENT_CREATE_LOGGER.debug(f"""[AGENTS CREATED]
             Agents created for ADMIN: {root.username} from IP Address {get_client_ip(self.request)}
-            with msisdns {" - ".join(agents_msisdn)}
-            """)
+            with msisdns {" - ".join(agents_msisdn)}""")
             return HttpResponseRedirect(self.get_success_url(root))
         else:
             context = {
@@ -297,15 +296,13 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             response = requests.post(
                 self.env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""
-                {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> USER INQUIRY ERROR
-                Users-> vmt(superadmin): {request.user.username}
-                Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"""[USER INQUIRY ERROR]
+            Users-> vmt(superadmin): {request.user.username}
+            Error-> {e}""")
             return None, _("Agents creation process stopped during an internal error,\
                 can you try again or contact you support team")
 
-        WALLET_API_LOGGER.debug(f"""
-        {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> USER INQUIRY
+        WALLET_API_LOGGER.debug(f"""[USER INQUIRY]
         Users-> vmt(superadmin): {request.user.username}
         Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
@@ -418,17 +415,15 @@ class BalanceInquiry(RootRequiredMixin, View):
             response = requests.post(
                 env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""
-                {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> BALANCE INQUIRY ERROR
-                Users-> vmt(superadmin):{superadmin.username}
-                Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY ERROR]
+            Users-> vmt(superadmin):{superadmin.username}
+            Error-> {e}""")
             return False, _("Balance inquiry process stopped during an internal error,\
                 can you try again or contact you support team")
 
-        WALLET_API_LOGGER.debug(f"""
-            {datetime.now().strftime('%d/%m/%Y %H:%M')} ----> BALANCE INQUIRY
-            Users-> vmt(superadmin):{superadmin.username}
-            Response-> {str(response.status_code)} -- {str(response.text)}""")
+        WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY]
+        Users-> vmt(superadmin):{superadmin.username}
+        Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             resp_json = response.json()
             if resp_json["TXNSTATUS"] == '200':
@@ -438,4 +433,3 @@ class BalanceInquiry(RootRequiredMixin, View):
             return False, error_message
         return False, _("Balance inquiry process stopped during an internal error,\
                 can you try again or contact you support team")
-

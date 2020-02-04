@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework_expiring_authtoken',
     'django_celery_beat',
     'imagekit',
+    'django_extensions',
 
     # security
     'django_otp',
@@ -158,8 +159,9 @@ USE_L10N = True
 
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.0/howto/static-files/
+# MKDocs Configs
+DOCS_DIR = env.str('MKDOCS_ROOT')
+DOCS_STATIC_NAMESPACE = os.path.basename(DOCS_DIR)
 
 # Static files (CSS, JavaScript, Images)
 STATIC_PATH = os.path.join(BASE_DIR, 'static')
@@ -168,9 +170,11 @@ MEDIA_ROOT = env.str('MEDIA_ROOT')
 MEDIA_URL = '/media/'
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "static"),
+    env.str('DOCS_STATIC_ROOT')
 ]
 STATIC_ROOT = env.str('STATIC_ROOT')
 STATIC_URL = '/static/'
+
 LOCALE_PATHS = (
     os.path.join(BASE_DIR, 'conf/locale'),
 )
@@ -208,7 +212,8 @@ LOGIN_EXEMPT_URLS = (
     r'^password/reset/done/$',
     r'^password/reset/(?P<uidb64>[0-9A-Za-z]+)/(?P<token>.+)/$',
     r'^password/done/$',
-    r'^api*'
+    r'^api*',
+    r'^docs/*'
 )
 
 LOGGING = {

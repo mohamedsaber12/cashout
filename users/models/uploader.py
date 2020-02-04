@@ -1,5 +1,6 @@
-from users.models.base_user import UserManager, User
 from django.db.models import Q
+
+from .base_user import User, UserManager
 
 
 class UploaderManager(UserManager):

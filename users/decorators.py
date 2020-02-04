@@ -1,23 +1,23 @@
-from django.shortcuts import resolve_url
-from django.core.exceptions import PermissionDenied
-from django.conf import settings
-from urllib.parse import urlparse
 from functools import wraps
+from urllib.parse import urlparse
+
+from django.conf import settings
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.decorators import user_passes_test
+from django.shortcuts import resolve_url
 from django.urls import reverse
 
 
-def user_passes_test_with_request(test_func, login_url=None, 
-        redirect_field_name=REDIRECT_FIELD_NAME, handle_login_url=None):
+def user_passes_test_with_request(test_func, login_url=None,
+                                  redirect_field_name=REDIRECT_FIELD_NAME, handle_login_url=None):
     """
     Decorator for views that checks that the user passes the given test,
     redirecting to the log-in page if necessary. The test should be a callable
     that takes the user object and returns True if the user passes.'
 
-    @param handle_login_url:function that takes request as param and return login_url.
+    :param redirect_field_name:
+    :param handle_login_url:function that takes request as param and return login_url.
     """
-    
     def decorator(view_func):
         @wraps(view_func)
         def _wrapped_view(request, *args, **kwargs):
@@ -26,8 +26,8 @@ def user_passes_test_with_request(test_func, login_url=None,
             path = request.build_absolute_uri()
             new_login_url = None
             if handle_login_url:
-                new_login_url  = handle_login_url(request)
-            
+                new_login_url = handle_login_url(request)
+
             resolved_login_url = resolve_url(new_login_url or login_url or settings.LOGIN_URL)
             # If the login url is the same scheme and net location then just
             # use the path as the "next" url.
@@ -37,8 +37,7 @@ def user_passes_test_with_request(test_func, login_url=None,
                     (not login_netloc or login_netloc == current_netloc)):
                 path = request.get_full_path()
             from django.contrib.auth.views import redirect_to_login
-            return redirect_to_login(
-                path, resolved_login_url, redirect_field_name)
+            return redirect_to_login(path, resolved_login_url, redirect_field_name)
         return _wrapped_view
     return decorator
 
@@ -67,7 +66,7 @@ def setup_required(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login
             login_url = reverse('users:setting-disbursement-pin')
         else:
             login_url = reverse('users:redirect')
-        return login_url    
+        return login_url
 
     actual_decorator = user_passes_test_with_request(
         root_can_pass,
@@ -87,7 +86,7 @@ def collection_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, log
     def can_pass(request):
         user = request.user
         status = request.user.get_status(request)
-        return user.is_uploader or ( (user.is_root or user.is_upmaker) and status == 'collection')
+        return user.is_uploader or ((user.is_root or user.is_upmaker) and status == 'collection')
 
     actual_decorator = user_passes_test_with_request(
         can_pass,
@@ -112,6 +111,7 @@ def root_or_maker_or_uploader(function=None, redirect_field_name=REDIRECT_FIELD_
         return actual_decorator(function)
     return actual_decorator
 
+
 def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
     """
     disbursement_users only allowed
@@ -120,7 +120,7 @@ def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, l
         user = request.user
         status = request.user.get_status(request)
         return user.is_maker or user.is_checker or ((user.is_root or user.is_upmaker) and status == 'disbursement')
-    
+
     actual_decorator = user_passes_test_with_request(
         can_pass,
         login_url=login_url,
@@ -166,7 +166,7 @@ def maker_only(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url
     def can_pass(request):
         user = request.user
         status = request.user.get_status(request)
-        return user.is_maker or ( user.is_upmaker and status == 'disbursement')
+        return user.is_maker or (user.is_upmaker and status == 'disbursement')
 
     actual_decorator = user_passes_test_with_request(
         can_pass,

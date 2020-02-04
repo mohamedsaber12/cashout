@@ -4,6 +4,8 @@ from django.contrib.auth.decorators import user_passes_test
 
 from django_otp import user_has_device, _user_is_authenticated
 from django_otp.conf import settings
+from django.utils import translation
+from django.utils.functional import wraps
 
 #http://django-otp.readthedocs.io/en/latest/auth/
 def otp_required(view=None, redirect_field_name='next', login_url=None, if_configured=False):
@@ -27,3 +29,36 @@ def otp_required(view=None, redirect_field_name='next', login_url=None, if_confi
     decorator = user_passes_test(test, login_url=login_url, redirect_field_name=redirect_field_name)
 
     return decorator if (view is None) else decorator(view)
+
+
+
+def respects_language(func):
+    '''
+    Decorator for tasks with respect to site's current language.
+    You can use in tasks.py 
+    Be sure that task method have kwargs argument:
+
+        @task
+        @respects_language
+        def my_task(**kwargs):
+            pass
+
+    You can call this task this way:
+
+        from django.utils import translation
+        tasks.my_task.delay(language=translation.get_language())
+    '''
+    def wrapper(*args, **kwargs):
+        language = kwargs.pop('language', None)
+        prev_language = translation.get_language()
+        language and translation.activate(language)
+        try:
+            return func(*args, **kwargs)
+        finally:
+            translation.activate(prev_language)
+
+    wrapper.__doc__ = func.__doc__
+    wrapper.__name__ = func.__name__
+    wrapper.__module__ = func.__module__
+    
+    return wraps(func)(wrapper)

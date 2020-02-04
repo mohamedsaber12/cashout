@@ -24,7 +24,23 @@ urlpatterns = [
     path('password/done/', PasswordResetCompleteView.as_view(),
          {'extra_context': {'login_url': '/user/login'}},
          name='password_reset_complete'),
-    path('settings/up/', views.SettingsUpView.as_view(), name='settings'),
+   
+    path('setting-up/disbursement-pin', views.PinFormView.as_view(),
+         name='setting-disbursement-pin'),
+    path('setting-up/disbursement-makers', views.MakerFormView.as_view(),
+         name='setting-disbursement-makers'),
+    path('setting-up/disbursement-levels', views.LevelsFormView.as_view(),
+         name='setting-disbursement-levels'),
+    path('setting-up/disbursement-checkers', views.CheckerFormView.as_view(),
+         name='setting-disbursement-checkers'),
+    path('setting-up/disbursement-formats', views.CategoryFormView.as_view(),
+         name='setting-disbursement-formats'),
+    path('setting-up/collection-collectiondata', views.CollectionFormView.as_view(),
+         name='setting-collection-collectiondata'),
+    path('setting-up/collection-formats', views.FormatFormView.as_view(),
+         name='setting-collection-formats'),
+    path('setting-up/collection-uploader', views.UploaderFormView.as_view(),
+         name='setting-collection-uploader'),
     path('levels/', views.LevelsView.as_view(), name='levels'),
     path('profile/<username>/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/<username>/', views.ProfileUpdateView.as_view(), name='edit_profile'),
@@ -34,8 +50,12 @@ urlpatterns = [
     path('user/delete/', views.delete, name='delete'),
     path('client/toggle/', views.toggle_client, name='toggle'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
+    path('client/fees-setup/<token>/',
+         views.ClientFeesSetup.as_view(), name='add_fees'),
     path('clients/', views.Clients.as_view(), name='clients'),
     path('settings/branding/', views.EntityBranding.as_view(), name='entity_branding'),
-    path('account/token/', views.OTPLoginView.as_view(), name='otp_login')
+    path('account/token/', views.OTPLoginView.as_view(), name='otp_login'),
+    path('redirect/', views.RedirectPageView.as_view(), name='redirect')
+    
 
 ]

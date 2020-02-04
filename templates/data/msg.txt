@@ -1,6 +1,0 @@
-Dear Valuable Customer, 
-Kindly note that  your installment EGP {{due_amount}} is due on {{due_date}}. Please open your mWallet App and enter Merchant Code 20183843 and the due amount {{paid_amount}} including convenience fees.
-
-
-Dear Customer,
-You installment is due (Due date). Open application, enter code 210394 and (Due Amount+4) including convenience fees

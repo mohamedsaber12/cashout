@@ -1,0 +1,180 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% load static %}
+{% load custom_tags %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block title %} {% trans 'Document details' %} {% endblock %}
+{% block customcss %}
+<!-- Datatables -->
+<link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+<style>
+    .errorlist {
+        color: red;
+    }
+</style>
+{% endblock %}
+
+{% block body %}
+
+
+<!-- data table -->
+<div class="row">
+    <span id='non_form_errors' class="error_span"></span>
+
+    <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+            <div class="x_title">
+                <h2>{% trans 'Formats' %} </h2>
+                <ul class="nav navbar-right panel_toolbox">
+                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                    </li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            {%if request.user.is_root%}
+                {% include "users/formset_form.html" with btn_title='Add format' step_1_index=6 formset=formatform action='data:list_format' %}
+
+                {% if request.user.file_category %}
+                    <button id='submit-with-confirmation' class='btn btn-success pull-right'
+                            data-toggle="modal" data-target="#delete-format">{% trans 'Submit' %}</button>
+                {% else %}
+                    <button id='submit-without-confirmation' class='btn btn-success pull-right'>{% trans 'Submit' %}</button>
+                {% endif %}
+            {%else%}
+            <div class="x_content">
+
+                <table id="formats-datatable" class="table table-striped table-bordered">
+                    {{ formatform.management_form }}
+                    {% for form in formatform.forms %}
+                    {% if forloop.first %}
+                    <thead>
+                        <tr>
+                            {% for field in form.visible_fields %}
+                            <th>{{ field.label|capfirst }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+
+                    {% endif %}
+                    {% endfor %}
+                    <tbody>
+
+                        {% for form in formatform.forms %}
+                        {% if form.instance %}
+                        <tr class="format_formset_row">
+                            {% for field in form.visible_fields %}
+                            <td id="format_{{field.name}}">
+                                {% if field.value %}
+                                {{ field.value }}
+                                {%endif%}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {%endif%}
+                        {% endfor %}
+                    </tbody>
+
+
+                </table>
+            </div>
+            {%endif%}
+
+        </div>
+    </div>
+</div>
+
+
+<!--Modal-->
+<div class="modal fade" id="delete-format" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <h4 class="modal-title">File Format Changes</h4>
+      </div>
+      <div class="modal-body">
+        <p>Please make sure if you will delete any format all of its corresponding documents won't be accessible again for any further action.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="save-format-changes" class="btn btn-primary">Save changes</button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block script %}
+
+<!-- Datatables -->
+<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+<script>
+    $(document).ready(function () {
+
+        $('#formats-datatable').DataTable();
+
+        function increase_height() {
+            let oldheight = $('.stepContainer').css('height');
+            oldheight = parseInt(oldheight.replace("px", ""));
+            let newheight = oldheight + 50;
+            $('.stepContainer').height(newheight + "px");
+        }
+
+        let current_status = "{{current_status}}";
+        if(current_status == 'collection'){
+            $('#step-6 form').attr('style', 'overflow-x: scroll');
+            $('#add_btn').click(function () {
+                let form_idx = $('#id_format-TOTAL_FORMS').val();
+
+                $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+                $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+                increase_height()
+
+            });
+        }
+        else{
+            $('#add_btn').click(function () {
+                let form_idx = $('#id_category-TOTAL_FORMS').val();
+
+                $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+                $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+                increase_height()
+
+            });
+        }
+        
+        
+
+
+        $('#save-format-changes').click(function () {
+            $("form").submit();
+        });
+    });
+
+
+</script>
+
+{% endblock %}

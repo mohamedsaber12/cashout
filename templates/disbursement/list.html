@@ -14,12 +14,39 @@
 
 {% block body %}
 
-{% if has_failed %}
-<!-- button -->
+
 <div class="row">
-    <div class="col-md-12 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button  id="export-failed" data-url="{% url 'disbursement:export_failed' doc_id %}" 
-        class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
+    <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        {% trans 'You will receive an email shortly with the file to download' %}
+    </div>
+    <!-- button -->
+    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+        <button id="export-all"
+            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
+        </button>
+    </div>
+</div>
+{% if has_failed %}
+<div class="row">
+    <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        {% trans 'You will receive an email shortly with the failed data file to download' %}
+    </div>
+    <!-- button -->
+    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+        <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
+        </button>
+    </div>
+</div>
+{%endif%}
+{% if has_success %}
+<div class="row">
+    <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        {% trans 'You will receive an email shortly with the success data file to download' %}
+    </div>
+    <!-- button -->
+    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+        <button id="export-success"
+            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
         </button>
     </div>
 </div>
@@ -54,13 +81,20 @@
                             <td>{{data.amount}}</td>
                             <td>
                                 {% if data.is_disbursed %}
-                                <span style="color: #2e6da4">&#10004;</span>
+                                    <span style="color: #2e6da4">&#10004;</span>
+                                {% elif not data.reason %}
+                                    <h3><span>⏳</span></h3>
                                 {% else %}
-                                <span style="color: #942a25">&#10006;</span>
+                                    <span style="color: #942a25">&#10006;</span>
                                 {% endif %}
-                
                             </td>
-                            <td>{{data.reason}}</td>
+                            <td>
+                                {% if data.reason %}
+                                    {{ data.reason }}
+                                {% else %}
+                                    <p>Disbursement process is running</p>
+                                {% endif %}
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -91,8 +125,34 @@
 
         $('#transaction-table').DataTable();
         $('#export-failed').on('click',function(ev) {
-            let url = $(this).attr('data-url');
-            document.location = url
+            $.ajax({
+                type:'GET',
+                url: '{{request.path}}' + '?export_failed=true',
+                success: function (data, text, xhr) {
+                    $('#failed-alert-msg').show()
+                },
+            })
+
+        });
+        $('#export-success').on('click', function (ev) {
+            $.ajax({
+                type: 'GET',
+                url: '{{request.path}}' + '?export_success=true',
+                success: function (data, text, xhr) {
+                    $('#success-alert-msg').show()
+                },
+            })
+
+        });
+        $('#export-all').on('click', function (ev) {
+            $.ajax({
+                type: 'GET',
+                url: '{{request.path}}' + '?export_all=true',
+                success: function (data, text, xhr) {
+                    $('#all-alert-msg').show()
+                },
+            })
+
         });
     });
 

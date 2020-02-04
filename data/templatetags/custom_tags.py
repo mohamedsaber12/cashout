@@ -5,8 +5,8 @@ register = template.Library()
 
 
 @register.filter(name='get_file')
-def has_type(file, file_type):
-        if file.file_category == file_type:
+def has_type(file, name):
+        if file.file_category == name:
             return file
         else:
             pass

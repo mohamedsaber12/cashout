@@ -1,24 +1,26 @@
 # from users.validators import ComplexPasswordValidator
 
+import copy
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserChangeForm as AbstractUserChangeForm
 from django.contrib.auth.forms import UserCreationForm
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, Permission
 from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
-                          inlineformset_factory, modelformset_factory)
+                          inlineformset_factory, modelformset_factory, CheckboxInput)
 from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 
-from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand
+from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand, UploaderUser, Client, EntitySetup
 from users.signals import ALLOWED_CHARACTERS
+from django_otp.forms import OTPAuthenticationFormMixin
 
 
 class SetPasswordForm(forms.Form):
@@ -239,6 +241,12 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
 
 
 class RootCreationForm(forms.ModelForm):
+    business_type = forms.MultipleChoiceField(
+        widget=forms.CheckboxSelectMultiple(attrs={'class': 'flat', 'style': 'position: absolute;'}),
+        choices=(("c", "Collection"), ("d", "Disbursement")),
+
+    )
+
     class Meta:
         model = RootUser
         fields = ("username", "email")
@@ -256,6 +264,7 @@ class RootCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
+        business_type = self.cleaned_data['business_type']
         if self.request.user.is_superadmin:
             maximum = max(RootUser.objects.values_list(
                 'hierarchy', flat=True), default=False)
@@ -273,6 +282,10 @@ class RootCreationForm(forms.ModelForm):
             allowed_chars=ALLOWED_CHARACTERS, length=12)
         user.set_password(random_pass)
         user.save()
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement')) \
+            if 'd' in business_type else None
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_collection')) \
+            if 'c' in business_type else None
         return user
 
 
@@ -300,10 +313,41 @@ class ProfileEditForm(forms.ModelForm):
 
 
 class LevelForm(forms.ModelForm):
+    
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, ** kwargs)
+
     class Meta:
         model = Levels
         exclude = ('created', 'level_of_authority')
 
+    def clean_max_amount_can_be_disbursed(self):
+        amount = self.cleaned_data.get('max_amount_can_be_disbursed')
+        
+        if not amount and amount != 0:
+            return amount
+        
+        if amount <= 0:
+            raise forms.ValidationError(
+                _('Amount must be greater than 0'))
+
+        levels_qs = Levels.objects.filter(
+            created=self.request.user,
+            max_amount_can_be_disbursed=amount)
+        if self.instance and self.instance.id:
+            levels_qs = levels_qs.exclude(id=self.instance.id)    
+
+        if levels_qs.exists():    
+            raise forms.ValidationError(_('Level with this amount already exist'))
+        return amount
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        instance.created = self.request.user.root
+        if commit:
+            instance.save()
+        return instance
 
 
 class MakerCreationForm(forms.ModelForm):
@@ -315,7 +359,7 @@ class MakerCreationForm(forms.ModelForm):
         fields = ('first_name', 'last_name',
                   'mobile_no', 'email')
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args,request, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
             # get current classes from Meta
@@ -336,13 +380,31 @@ class MakerCreationForm(forms.ModelForm):
                 self.fields[field].widget.attrs.update({
                     'class': classes
                 })
+        self.request = request
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        uploader = UploaderUser.objects.filter(email=email).first()
+        if uploader and uploader.data_type() == 3:
+            uploader.user_type = 5
+            self.instance_copy = copy.copy(uploader)
+            self.instance = uploader
+
+        return email
+        
     def save(self, commit=True):
-
         user = super().save(commit=False)
-        user.user_type = 1
+        if user.user_type != 5:
+            user.user_type = 1
+        else:
+            user = self.instance_copy
+
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
 
@@ -354,7 +416,8 @@ class CheckerCreationForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         self.fields["level"].choices = [('', '------')] + [
-            (r.id, f'{r} {i+1}') for i, r in enumerate(Levels.objects.filter(created__hierarchy=request.user.hierarchy).order_by('max_amount_can_be_disbursed'))
+            (r.id, f'{r}') for r in Levels.objects.filter(
+                created__hierarchy=request.user.hierarchy).order_by('max_amount_can_be_disbursed')
         ]
 
         self.fields["level"].label = _('Level')
@@ -369,18 +432,75 @@ class CheckerCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
+        self.request = request    
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 2
+
+        user.hierarchy = self.request.user.hierarchy
+
         if commit:
             user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
         return user
 
     class Meta:
         model = CheckerUser
         fields = ['first_name', 'last_name',
                   'email', 'mobile_no', 'level']
+
+
+class UploaderCreationForm(forms.ModelForm):
+    first_name = forms.CharField(label=_('First name'))
+    last_name = forms.CharField(label=_('Last name'))
+
+    def __init__(self, *args, request, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in iter(self.fields):
+            # get current classes from Meta
+            classes = self.fields[field].widget.attrs.get("class")
+            if classes is not None:
+                classes += " form-control"
+            else:
+                classes = "form-control"
+            self.fields[field].widget.attrs.update({
+                'class': classes
+            })
+        self.request = request    
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        maker = MakerUser.objects.filter(email=email).first()
+        if maker and maker.data_type() == 3:
+            maker.user_type = 5
+            self.instance_copy = copy.copy(maker)
+            self.instance = maker
+            
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if user.user_type != 5:
+            user.user_type = 4
+        else:
+            user = self.instance_copy
+
+        user.hierarchy = self.request.user.hierarchy
+
+        if commit:
+            user.save()
+            user.user_permissions.add(
+                *Permission.objects.filter(user=self.request.user))
+        return user
+
+    class Meta:
+        model = UploaderUser
+        fields = ['first_name', 'last_name',
+                  'email', 'mobile_no']
+
 
 
 class BrandForm(forms.ModelForm):
@@ -391,7 +511,7 @@ class BrandForm(forms.ModelForm):
     color = forms.CharField(widget=forms.HiddenInput())
     class Meta:
         model = Brand
-        fields = ("color", "logo")
+        fields = "__all__"
 
     def save(self, commit=True):
         brand = super().save(commit=False)
@@ -414,7 +534,11 @@ CheckerMemberFormSet = modelformset_factory(
     model=CheckerUser, form=CheckerCreationForm, 
     min_num=1, validate_min=True, can_delete=True, extra=1)
 
-from django_otp.forms import OTPAuthenticationFormMixin
+UploaderMemberFormSet = modelformset_factory(
+    model=UploaderUser, form=UploaderCreationForm,
+    min_num=1, validate_min=True, can_delete=True, extra=1)
+
+
 class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
     """
     A form that verifies an authenticated user. It looks very much like
@@ -488,9 +612,9 @@ class ForgotPasswordForm(forms.Form):
             self.user = user_qs.first()
 
     def send_email(self):
-        MESSAGE = 'Dear {0}\n' \
-            'Please follow <a href="{1}">this link</a> to reset password, \n' \
-            'Then login with your username: {2} and new password \n' \
+        MESSAGE = 'Dear <strong>{0}</strong><br><br>' \
+            'Please follow <a href="{1}" ><strong>this link</strong></a> to reset password, <br>' \
+            'Then login with your username: <strong>{2}</strong> and your new password <br><br>' \
             'Thanks, BR'
 
         # one time token
@@ -499,9 +623,33 @@ class ForgotPasswordForm(forms.Form):
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
-        send_mail(
-            from_email=settings.SERVER_EMAIL,
-            recipient_list=[self.user.email],
-            subject=_('[Payroll] Password Notification'),
-            message=MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
-        )
+        from_email      = settings.SERVER_EMAIL
+        sub_subject     = f'[{self.user.brand.mail_subject}]'
+        subject         = "{}{}".format(sub_subject, _(' Password Notification'))
+        recipient_list  = [self.user.email]
+        message         = MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
+        mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
+        mail_to_be_sent.attach_alternative(message, "text/html")
+        mail_to_be_sent.send()
+
+
+class ClientFeesForm(forms.ModelForm):
+    CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'))
+    fees_percentage = forms.ChoiceField(label=_("Fees"),
+        widget=forms.Select, choices=CHOICES)
+
+    class Meta:
+        model = Client
+        fields = ('fees_percentage',)
+
+    def clean(self):
+        fees_percentage = self.cleaned_data.get('fees_percentage')
+    
+    def save(self,commit=True):
+        client = super().save(commit=False)
+        if commit:
+            client.save()
+            entity_setup = EntitySetup.objects.get(entity=client.client)
+            entity_setup.fees_setup = True
+            entity_setup.save()
+        return client

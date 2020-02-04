@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime
 import logging
 
 from django.contrib import admin
@@ -29,15 +29,14 @@ def delete_selected(modeladmin, request, queryset):
         raise PermissionDenied
     if request.POST.get('post'):
         for obj in queryset:
-            now = datetime.datetime.now()
+            user_deleted_log_msg = f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+                User: {request.user.username}
+                Deleted user with username: {obj.username} from IP Address {get_client_ip(request)}
+                """
             if 'MyUser' in modeladmin.__str__():
-                DELETED_USERS_LOGGER.debug(
-                    'User Deleted at %s by %s from IP Address %s' % (
-                        now, obj.username, get_client_ip(request)))
+                DELETED_USERS_LOGGER.debug(user_deleted_log_msg)
             else:
-                DELETED_GROUPS_LOGGER.debug(
-                    'User Deleted at %s by %s from IP Address %s' % (
-                        now, obj.username, get_client_ip(request)))
+                DELETED_GROUPS_LOGGER.debug(user_deleted_log_msg)
             obj.delete()
     else:
         return delete_selected_(modeladmin, request, queryset)
@@ -53,17 +52,16 @@ def deactivate_selected(modeladmin, request, queryset):
     if request.method == 'POST':
 
         for obj in queryset:
+            user_deactivated_log_msg = f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+                    User: {request.user.username}
+                    Deactivated user with username: {obj.username} from IP Address {get_client_ip(request)}
+                    """
             if not obj.is_active:
                 continue
-            now = datetime.datetime.now()
             if 'MyUser' in modeladmin.__str__():
-                DELETED_USERS_LOGGER.debug(
-                    'User Deactivated at %s by %s from IP Address %s' % (
-                        now, obj.username, get_client_ip(request)))
+                DELETED_USERS_LOGGER.debug(user_deactivated_log_msg)
             else:
-                DELETED_GROUPS_LOGGER.debug(
-                    'User Deactivated at %s by %s from IP Address %s' % (
-                        now, obj.name, get_client_ip(request)))
+                DELETED_GROUPS_LOGGER.debug(user_deactivated_log_msg)
             obj.is_active = False
             obj.save()
     else:
@@ -79,17 +77,16 @@ def activate_selected(modeladmin, request, queryset):
         raise PermissionDenied
     if request.method == 'POST':
         for obj in queryset:
+            user_activated_log_msg = f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+                User: {request.user.username}
+                Activated user with username: {obj.username} from IP Address {get_client_ip(request)}
+                """
             if obj.is_active:
                 continue
-            now = datetime.datetime.now()
             if 'MyUser' in modeladmin.__str__():
-                CREATED_USERS_LOGGER.debug(
-                    'User Activated at %s by %s from IP Address %s' % (
-                        now, obj.username, get_client_ip(request)))
+                CREATED_USERS_LOGGER.debug(user_activated_log_msg)
             else:
-                CREATED_USERS_LOGGER.debug(
-                    'User Activated at %s by %s from IP Address %s' % (
-                        now, obj.name, get_client_ip(request)))
+                CREATED_USERS_LOGGER.debug(user_activated_log_msg)
             obj.is_active = True
             obj.save()
 
@@ -185,14 +182,16 @@ class MakerAdmin(UserAccountAdmin):
             obj.hierarchy = request.user.hierarchy
 
         if obj.pk is not None:
-            CREATED_USERS_LOGGER.debug(
-                'User with id %d has modified at %s from IP Address %s' % (
-                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}
+            """)
 
         else:
-            now = datetime.datetime.now()
-            CREATED_USERS_LOGGER.debug(
-                'user created at %s %s' % (now, obj.username))
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Created new maker with username: {obj.username}
+            """)
         obj.save()
 
 
@@ -207,14 +206,15 @@ class CheckerAdmin(UserAccountAdmin):
             obj.hierarchy = request.user.hierarchy
 
         if obj.pk is not None:
-            CREATED_USERS_LOGGER.debug(
-                'User with id %d has modified at %s from IP Address %s' % (
-                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
-
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}
+            """)
         else:
-            now = datetime.datetime.now()
-            CREATED_USERS_LOGGER.debug(
-                'user created at %s %s' % (now, obj.username))
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Created new checker with username: {obj.username}
+            """)
         obj.save()
 
 
@@ -230,14 +230,15 @@ class RootAdmin(UserAccountAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
-            CREATED_USERS_LOGGER.debug(
-                'User with id %d has modified at %s from IP Address %s' % (
-                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
-
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}
+            """)
         else:
-            now = datetime.datetime.now()
-            CREATED_USERS_LOGGER.debug(
-                'user created at %s %s' % (now, obj.username))
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Created new root/admin with username: {obj.username}
+            """)
         super(RootAdmin, self).save_model(request, obj, form, change)
 
 
@@ -251,14 +252,17 @@ class SuperAdmin(UserAccountAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
-            CREATED_USERS_LOGGER.debug(
-                'User with id %d has modified at %s from IP Address %s' % (
-                    obj.pk, datetime.datetime.now(), get_client_ip(request)))
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}
+            """)
+
 
         else:
-            now = datetime.datetime.now()
-            CREATED_USERS_LOGGER.debug(
-                'user created at %s %s' % (now, obj.username))
+            CREATED_USERS_LOGGER.debug(f"""{datetime.now().strftime('%d/%m/%Y %H:%M')}----------->
+            User: {request.user.username} 
+            Created new super-user with username: {obj.username}
+            """)
         super(SuperAdmin, self).save_model(request, obj, form, change)
 
 

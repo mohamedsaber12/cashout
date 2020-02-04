@@ -25,8 +25,33 @@ class RootRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class CollectionRootRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_root and request.user.get_status(request) == 'collection'):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class DisbursementRootRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_root and request.user.get_status(request) == 'disbursement'):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class SuperRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         if not (request.user.is_authenticated and request.user.is_superadmin):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuperFinishedSetupMixin(LoginRequiredMixin):
+    """
+    Prevent superuser from accessing entity setup views if he already finshed it.
+    Must be used after SuperRequiredMixin.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.has_uncomplete_entity_creation():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)

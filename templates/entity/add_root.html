@@ -1,7 +1,11 @@
 {% extends 'base_form_singlepage.html' %}
 {% load i18n %}
+{% load static %}
 {% load custom_tags %}
 {% block title %} {% trans 'Root' %} {% endblock %}
+{% block gentellacss %}
+    <link href="{% static 'gentella/iCheck/skins/flat/green.css' %}" rel="stylesheet">
+{% endblock %}
 {% block form %}
     <form action="." method="post">
       <h1>{% trans 'Add Entity User' %}</h1>
@@ -9,7 +13,15 @@
         {% csrf_token %}
             <div>
                 {% for field in form.visible_fields %}
-                        <div class="form-group">
+                        {% ifequal field.name "business_type"  %}
+                            <div class="checkbox" style="position: relative; ">
+                                <div class="col-xs-12 ">
+                                    {{ field }}
+                                    {{ field.errors.as_ul }}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="form-group">
                             <div class="col-xs-12">
 
                                     <div class="">
@@ -20,12 +32,15 @@
 
                             </div>
                         </div>
-
+                        {% endifequal %}
                 {% endfor %}
+
             </div>
 
       <div>
-        <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
+          <a class="reset_pass" href="{% url 'users:clients' %}">{% trans 'Back' %}</a>
+          <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
+
       </div>
 
       <div class="clearfix"></div>
@@ -38,4 +53,8 @@
       </div>
     </form>
 
+{% endblock %}
+{% block script %}
+        <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
+        <script src="{% static 'gentella/icheck.min.js' %}"></script>
 {% endblock %}

@@ -1,11 +1,8 @@
-from daterange_filter.filter import DateRangeFilter
 from django.contrib import admin
 
-from data.forms import FileCategoryForm, FileDocumentForm
-from data.models import Doc, DocReview, FileCategory
-
-# TODO: Add logs for deleting and adding any instance
-admin.site.register(DocReview)
+from .forms import FileCategoryForm
+from .models import Doc, DocReview, FileCategory
+from .models import CollectionData, Format, FileData
 
 
 class FileCategoryAdmin(admin.ModelAdmin):
@@ -41,24 +38,34 @@ class FileCategoryAdmin(admin.ModelAdmin):
 
 
 class DocAdmin(admin.ModelAdmin):
-    form = FileDocumentForm
-    list_filter = (('created_at', DateRangeFilter),)
+    list_filter = (('created_at'),)
     readonly_fields = ('file',)
-    list_display = ('filename', 'owner', 'file_category', 'created_at')
+    list_display = ('filename', 'owner', 'type_of', 'created_at')
 
     def has_add_permission(self, request):
         return False
 
-    def get_queryset(self, request):
-        qs = super(DocAdmin, self).get_queryset(request)
-        return qs.filter(owner__hierarchy=request.user.hierarchy)
 
-    def get_form(self, request, obj=None, **kwargs):
-        DocumentForm = super(DocAdmin, self).get_form(
-            request, obj=obj, **kwargs)
-        DocumentForm.request = request
-        return DocumentForm
+class FileDataAdmin(admin.ModelAdmin):
+    list_filter     = ('date', 'user')
+    list_display    = ('doc', 'user')
+    readonly_fields = ('doc', 'data')
+
+    def has_add_permission(self, request):
+        return False
 
 
+class FormatAdmin(admin.ModelAdmin):
+    list_filter  = ('hierarchy',)
+
+    def has_add_permission(self, request):
+        return False
+
+
+# TODO: Add logs for deleting and adding any instance
+admin.site.register(DocReview)
 admin.site.register(Doc, DocAdmin)
 admin.site.register(FileCategory, FileCategoryAdmin)
+admin.site.register(Format, FormatAdmin)
+admin.site.register(FileData, FileDataAdmin)
+admin.site.register(CollectionData)

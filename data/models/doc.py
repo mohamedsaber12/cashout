@@ -7,14 +7,23 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 from data.utils import pkgen, update_filename
+from users.models import CheckerUser
 
 class Doc(models.Model):
+    DISBURSEMENT = 1
+    COLLECTION = 2
+    types = (
+        (DISBURSEMENT, 'DISBURSEMENT'),
+        (COLLECTION, 'COLLECTION')
+    )
     id = models.CharField(primary_key=True, editable=False,
                           unique=True, db_index=True, max_length=32, default=pkgen)
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE, related_name='doc')
     file_category = models.ForeignKey(
-        'data.FileCategory', null=True, on_delete=models.CASCADE)
+        'data.FileCategory', null=True, on_delete=models.SET_NULL, related_name='doc')
+    collection_data = models.ForeignKey(
+        'data.CollectionData', null=True, on_delete=models.CASCADE, related_name='collection_doc')
     file = models.FileField(upload_to=update_filename,
                             null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,6 +36,8 @@ class Doc(models.Model):
     processing_failure_reason = models.CharField(max_length=256, null=True)
     total_amount = models.FloatField(default=False)
     total_count = models.PositiveIntegerField(default=False)
+    type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
+    format = models.ForeignKey('data.Format', on_delete=models.DO_NOTHING, null=True)
 
     class Meta:
         permissions = (("upload_file", "upload file"),
@@ -39,7 +50,7 @@ class Doc(models.Model):
                        ("can_disburse", "Can disburse file data"),
                        )
         verbose_name_plural = 'Documents'
-        ordering = ('created_at', )
+        ordering = ('-created_at', )
 
     def delete(self, *args, **kwargs):
         try:
@@ -60,7 +71,14 @@ class Doc(models.Model):
 
     def get_absolute_url(self):
         from django.urls import reverse
-        return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+        if self.type_of == self.DISBURSEMENT:
+            return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
+        else:
+            return reverse("data:doc_collection_detail", kwargs={'pk': self.id})
+
+    def get_delete_url(self):
+        from django.urls import reverse
+        return reverse("data:file_delete", kwargs={'pk': self.id})
 
     def can_user_disburse(self, checker):
         """"
@@ -106,3 +124,34 @@ class Doc(models.Model):
         success_percentage = round(
             success_percentage, 2) if success_percentage != 0 else 0
         return success_percentage
+
+
+    def can_user_review(self,checker):
+        """
+        return tuple
+        (can_user_review, user_already_reviewed)
+        """
+        if self.reviews.filter(user_created=checker).exists():
+            return False, True
+        reviews = self.reviews.all()
+        
+        can_review = False
+        levels = CheckerUser.objects.filter(hierarchy=checker.hierarchy).values_list(
+            'level__level_of_authority', flat=True)
+        levels = list(set(levels))
+        checker_level = checker.level.level_of_authority
+        if min(levels) == checker_level:
+            can_review = True
+        else:
+            levels = [level for level in levels if level < checker_level]
+            levels = [max(levels,default=0), checker_level]
+            if reviews.filter(user_created__level__level_of_authority__in=levels):
+                can_review = True
+    
+        return (can_review , False)
+        
+    def is_reviews_completed(self):
+        return self.reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required
+
+    def is_reviews_rejected(self):
+        return self.reviews.filter(is_ok=False).count() != 0 

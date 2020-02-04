@@ -1,0 +1,150 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load l10n %}
+{% block gentellacss %}
+<link rel="stylesheet" href="{% static 'gentella/iCheck/skins/flat/green.css'%}">
+<link rel="stylesheet" href="{% static 'gentella/switchery.min.css'%}">
+<style>
+    .errorlist {
+        color: red;
+    }
+</style>
+{% endblock %}
+{% block title %}{% trans 'Settings' %}{% endblock %}
+{% block body %}
+
+
+<p>{% trans 'Please follow the steps to setup your payouts settings.' %}</p>
+<div id="disb_widget" class="form_wizard wizard_horizontal">
+    <ul class="wizard_steps">
+
+        <li>
+            <a href="#step-1">
+                <span class="step_no">{{1|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Add Pin' %}<br />
+                    <small>{% trans 'Add Pin' %}</small>
+                </span>
+            </a>
+        </li>
+
+        <li>
+            <a href="#step-2">
+                <span class="step_no">{{2|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Makers' %}<br />
+                    <small>{% trans 'Add Maker users' %}</small>
+                </span>
+            </a>
+        </li>
+
+
+
+        <li>
+            <a href="#step-3">
+                <span class="step_no">{{3|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Levels' %}<br />
+                    <small>{% trans 'Add levels for checkers' %}</small>
+                </span>
+            </a>
+        </li>
+
+        <li>
+            <a href="#step-4">
+                <span class="step_no">{{4|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Checkers' %}<br />
+                    <small>{% trans 'Add Checker users' %}</small>
+                </span>
+            </a>
+        </li>
+
+        <li>
+            <a href="#step-5">
+                <span class="step_no">{{5|localize}}</span>
+                <span class="step_descr">
+                    {% trans 'Format' %}<br />
+                    <small>{% trans 'Add File Formats' %}</small>
+                </span>
+            </a>
+        </li>
+
+    </ul>
+
+    {% include "users/formset_form.html" with btn_title='Add another level' step_1_index=3 formset=form action='users:setting-disbursement-levels' %}
+
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'gentella/jquery.smartWizard.js' %}"></script>
+<script src="{% static 'gentella/switchery.min.js' %}"></script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        let form_idx = $('#id_level-TOTAL_FORMS').val();
+        if (form_idx === '4') {
+            $('#add_btn').hide()
+        }
+
+        var wizard = $('#disb_widget').smartWizard({
+            selected: 2,//0 indexed
+            labelNext: ' {% trans "Next" %} ',
+            labelPrevious: ' {% trans "Previous" %} ',
+            labelFinish: ' {% trans "Finish" %} ',
+            keyNavigation: false,
+            onLeaveStep: leaveAStepCallback
+
+        });
+
+        let enabled_steps = "{{enabled_steps}}";
+
+        enabled_steps = enabled_steps.split('-');
+
+        enabled_steps.forEach(element => {
+            //1 indexed
+            $('#disb_widget').smartWizard('enableStep', parseInt(element));
+
+        });
+
+
+        function leaveAStepCallback(obj, context) {
+
+            let action = $("form").attr('action') + '?to_step=' + context.toStep;
+            $("form").attr('action', action)
+            $("form").submit();
+
+        }
+
+        function increase_height() {
+            let oldheight = $('.stepContainer').css('height');
+            oldheight = parseInt(oldheight.replace("px", ""));
+            let newheight = oldheight + 50;
+            $('.stepContainer').height(newheight + "px");
+        }
+
+        $('#add_btn').click(function () {
+            let form_idx = $('#id_level-TOTAL_FORMS').val();
+            if (form_idx === '3') {
+                $(this).hide()
+            }
+
+            $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+            $('#id_level-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
+            increase_height()
+
+
+        });
+
+
+
+    });
+
+</script>
+<script src="{% static 'js/submit_enter_btn.js' %}"></script>
+{% endblock %}

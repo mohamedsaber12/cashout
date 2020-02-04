@@ -36,19 +36,34 @@
                 <div class="x_panel">
                   <div class="x_content">
                     <div class="row">
+                      
+                      {%if current_status == 'disbursement' %}
                       <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                         <ul class="pagination pagination-split">
                           <li><a href="?q=maker">{% trans 'Makers' %}</a></li>
                           <li><a href="?q=checker">{% trans 'Checkers' %}</a></li>
                         </ul>
                       </div>
+                      {%endif%}
 
                       <div class="clearfix"></div>
                         {% for user in users %}
                           <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
                             <div class="well profile_view">
                               <div class="col-sm-12">
-                                <h4 class="brief"><i>{% ifequal user.user_type 1 %}{% trans 'Maker' %}{% else %}{% trans 'Checker' %}{% endifequal %}</i></h4>
+                                <h4 class="brief"><i>
+                                  {% if user.user_type == 1 %}
+                                    {% trans 'Maker' %}
+                                  {% elif user.user_type == 2 %}
+                                    {% trans 'Checker' %}
+                                  {% elif user.user_type == 4 %}
+                                    {% trans 'Uploader' %}
+                                  {% elif user.user_type == 5 and current_status == 'collection' %}
+                                    {% trans 'Uploader' %}
+                                  {% elif user.user_type == 5 and current_status == 'disbursement' %}
+                                    {% trans 'Maker' %}
+                                  {% endif %}
+                                </i></h4>
                                 <div class="left col-xs-7">
                                   <h2>{{ user.get_full_name }}</h2>
                                   <p><strong>{% trans 'About:' %} </strong> {{ user.title }} </p>

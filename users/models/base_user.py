@@ -1,23 +1,25 @@
 from __future__ import unicode_literals
-
-import datetime
-
-import pytz
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
+from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
 TYPES = (
+    # when creating super AN EMIAL MUST be created.
     (0, 'Super'),
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
+    # collection only
+    (4, 'Uploader'),
+    # maker and uploader
+    (5, 'UpMaker'),
 )
 
 
@@ -51,7 +53,7 @@ class User(AbstractUser):
     brand = models.ForeignKey(
         'users.Brand', on_delete=models.SET_NULL, null=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
-    
+
     objects = UserManager()
 
     class Meta:
@@ -61,14 +63,17 @@ class User(AbstractUser):
             ("can_disable_two_factor", "the user can disable two factor"),
             ("can_use_two_factor_backup", "the user can use two factor backup tokens"),
             ("can_use_two_factor", "the user can use two factor"),
+            ("has_disbursement", "the client has disbursement options"),
+            ("has_collection", "the client has collection options"),
         )
 
     def __str__(self):  # __unicode__ for Python 2
         return str(self.username)
 
     def child(self):
+        if not self.user_type==3:
+            raise ValidationError('This user has no children')
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
-
 
     @property
     def can_disburse(self):
@@ -98,9 +103,16 @@ class User(AbstractUser):
             return SuperAdminUser.objects.get(id=super_admin.id)
 
     @property
-    def can_pass(self):
+    def can_pass_disbursement(self):
         try:
-            return self.root.setup.can_pass()
+            return self.root.setup.can_pass_disbursement()
+        except:
+            return False
+
+    @property
+    def can_pass_collection(self):
+        try:
+            return self.root.setup.can_pass_collection()
         except:
             return False
 
@@ -117,6 +129,14 @@ class User(AbstractUser):
         return self.user_type == 2
 
     @cached_property
+    def is_uploader(self):
+        return self.user_type == 4
+
+    @cached_property
+    def is_upmaker(self):
+        return self.user_type == 5
+
+    @cached_property
     def is_superadmin(self):
         return self.user_type == 0
 
@@ -129,7 +149,31 @@ class User(AbstractUser):
         return reverse("users:profile", kwargs={'username': self.username})
 
     def has_uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False)).count() > 0
+        return self.entity_setups.uncomplete_entity_creations().count() > 0
 
     def uncomplete_entity_creation(self):
-        return self.entity_setups.filter(Q(agents_setup=False)).first()
+        return self.entity_setups.uncomplete_entity_creations().first()
+
+    def data_type(self):
+        DATA_TYPES = {
+            'Disbursement':1,
+            'Collection':2,
+            'Both':3
+        }
+        if self.has_perm('users.has_disbursement') and self.has_perm('users.has_collection'):
+            return DATA_TYPES['Both']
+        elif self.has_perm('users.has_disbursement'):
+            return DATA_TYPES['Disbursement']
+        elif self.has_perm('users.has_collection'):
+            return DATA_TYPES['Collection']
+
+    def get_status(self,request):
+        data_type = self.data_type()
+        if data_type == 3 and (self.is_upmaker or self.is_root):
+            return request.session.get('status')
+        if data_type == 1 or self.is_maker or self.is_checker or (self.is_root and data_type == 1):
+            return 'disbursement'
+        if data_type == 2 or self.is_uploader or (self.is_root and data_type == 2):
+            return 'collection'
+
+

@@ -1,7 +1,10 @@
 import os
 import random, string, datetime, urllib, logging
+import xlsxwriter
 from urllib.parse import urlencode
 
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 from django.core.paginator import PageNotAnInteger, EmptyPage
 from django.core.paginator import Paginator
 from django.utils.timezone import now
@@ -9,7 +12,9 @@ from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.auth.base_user import BaseUserManager
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from two_factor.views import SetupView as BaseSetupView
+
+from data.models.filecategory import FileCategory
+from data.models.category_data import Format
 
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 
@@ -51,20 +56,6 @@ def update_filename(instance, filename):
 
 def generate_pass():
     return BaseUserManager().make_random_password(length=6)
-
-
-class SetupView(BaseSetupView):
-    """
-    Disbursement checking
-    """
-    def get(self, request, *args, **kwargs):
-        """
-        Start the setup wizard. Redirect if already enabled.
-        """
-        if request.user.can_disburse:
-            return super(SetupView, self).get(request, *args, **kwargs)
-        else:
-            return redirect(reverse_lazy('data:main_view'))
 
 
 def redirect_params(url, kw, params=None):
@@ -155,14 +146,83 @@ def paginator(request, object):
     return docs
 
 
-# HINT: sql function to write
-"""
-CREATE OR REPLACE FUNCTION safe_cast_to_numeric(TEXT) RETURNS NUMERIC AS $$
-BEGIN
-    RETURN cast($1 AS NUMERIC);
-EXCEPTION
-    WHEN invalid_text_representation THEN
-        RETURN NULL;
-END;
-$$ LANGUAGE plpgsql IMMUTABLE;
-"""
+def combine_data():
+    categories = FileCategory.objects.all()
+    for category in categories:
+        Format.objects.create(
+            name=category.name,
+            identifier1=category.identifier1,
+            identifier2=category.identifier2,
+            identifier3=category.identifier3,
+            identifier4=category.identifier4,
+            identifier5=category.identifier5,
+            identifier6=category.identifier6,
+            identifier7=category.identifier7,
+            identifier8=category.identifier8,
+            identifier9=category.identifier9,
+            identifier10=category.identifier10,
+            category=category,
+            hierarchy=category.user_created.hierarchy
+        )
+
+
+def excell_letter_to_index(col_name):
+    """convert excell column name(string) ex: 'A' or 'AB' to its numeric position"""
+    num = 0
+    for c in col_name:
+        if c in string.ascii_letters:
+            num = num * 26 + (ord(c.upper()) - ord('A')) + 1
+    return num
+
+
+def excell_position(col_index,row_index):
+    """
+    @param col_index int: excel column index (zero indexed).
+    @param row_index int: excel row index (zero indexed).
+    return string: corresponding column row position, ex: 'A1'.
+    """
+    return xlsxwriter.utility.xl_col_to_name(col_index) + str(row_index+1)
+
+
+def export_excel(file_path, data):
+    # Create a workbook and add a worksheet.
+    workbook = xlsxwriter.Workbook(file_path)
+    worksheet = workbook.add_worksheet()
+
+    # Iterate over the data and write it out row by row.
+    for row, items in enumerate(data):
+        for col, item in enumerate(items):
+            worksheet.write(row, col, item)
+
+    workbook.close()
+
+
+def randomword(length):
+    letters = string.ascii_lowercase
+    return ''.join(random.choice(letters) for i in range(length))
+
+
+def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
+    """
+    Send a message to inform the user with disbursement/collection related action.
+    :param user_obj: Request's user instance that the mail will be sent to.
+    :param subject_tail: Tailed mail subject header after his/her chosen mail header brand.
+    :param message_body: Body of the message that will be sent.
+    :param recipients: If there are multiple makers/checkers to be notified.
+    :return: Action of sending the mail to the user.
+    """
+    from_email = settings.SERVER_EMAIL
+    if recipients is None:
+        subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+        recipient_list = [user_obj.email]
+    else:
+        subject = f'[{recipients[0].brand.mail_subject}]' + subject_tail
+        recipient_list = [recipient.email for recipient in recipients]
+        for mail in recipient_list:
+            mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
+            mail_to_be_sent.attach_alternative(message_body, "text/html")
+            mail_to_be_sent.send()
+        return
+    mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
+    mail_to_be_sent.attach_alternative(message_body, "text/html")
+    return mail_to_be_sent.send()

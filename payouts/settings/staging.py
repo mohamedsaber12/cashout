@@ -1,14 +1,11 @@
 from .base import *
 
+
 DEBUG = False
 
 ALLOWED_HOSTS += (
     'stagingpayouts.paymobsolutions.com',
     '18.220.141.7',
-)
-
-INSTALLED_APPS += (
-    'django_extensions',
 )
 
 # Database
@@ -53,6 +50,3 @@ BASE_URL = 'https://stagingpayouts.paymobsolutions.com'
 SESSION_EXPIRE_SECONDS = 300
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
-
-# Celery
-CELERY_BROKER_URL = env.str("CELERY_BROKER_URL")

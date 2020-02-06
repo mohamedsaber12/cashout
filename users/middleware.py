@@ -4,10 +4,11 @@ from importlib import import_module
 from django.conf import settings
 from django.urls import reverse
 from django.shortcuts import redirect
-from django.contrib.auth import logout
 from django_otp import user_has_device
 
-from users.models import Visitor
+from .models import Visitor
+from .views import ourlogout
+
 
 engine = import_module(settings.SESSION_ENGINE)
 
@@ -39,8 +40,8 @@ class EntitySetupCompletionMiddleWare:
         path = request.path_info.lstrip('/')
         url_is_exempt = any(url.match(path) for url in EXEMPT_URLS)
         url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)
-        # if path == reverse('users:logout').lstrip('/'):
-        #     logout(request)
+        if path == reverse('users:logout').lstrip('/'):
+            ourlogout(request)
         if request.user.is_authenticated:
             if request.user.is_superadmin and not request.user.is_superuser:
                 if request.user.has_uncomplete_entity_creation():

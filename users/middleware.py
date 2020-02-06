@@ -39,8 +39,8 @@ class EntitySetupCompletionMiddleWare:
         path = request.path_info.lstrip('/')
         url_is_exempt = any(url.match(path) for url in EXEMPT_URLS)
         url_is_allowed = any(url.match(path) for url in ALLOWED_URLS_FOR_ADMIN)
-        if path == reverse('users:logout').lstrip('/'):
-            logout(request)
+        # if path == reverse('users:logout').lstrip('/'):
+        #     logout(request)
         if request.user.is_authenticated:
             if request.user.is_superadmin and not request.user.is_superuser:
                 if request.user.has_uncomplete_entity_creation():

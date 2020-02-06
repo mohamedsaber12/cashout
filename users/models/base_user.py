@@ -37,11 +37,8 @@ class UserManager(AbstractUserManager):
 class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
-    hierarchy = models.PositiveSmallIntegerField(
-        null=True, db_index=True, default=0)
+    hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     verification_time = models.DateTimeField(null=True)
-    level = models.ForeignKey(
-        'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
@@ -50,9 +47,9 @@ class User(AbstractUser):
                                            format='JPEG',
                                            options={'quality': 60}, null=True, default='user.png')
     title = models.CharField(max_length=128, default='', null=True, blank=True)
-    brand = models.ForeignKey(
-        'users.Brand', on_delete=models.SET_NULL, null=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
+    level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
+    brand = models.ForeignKey('users.Brand', on_delete=models.SET_NULL, null=True)
 
     objects = UserManager()
 

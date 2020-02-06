@@ -1,6 +1,8 @@
+from django.core.validators import MaxValueValidator
 from django.db import models
-from users.models import User
-from django.core.validators import MaxValueValidator,MinValueValidator
+
+from ..models import User
+
 
 class ClientManager(models.Manager):
     def toggle(self, *args, **kwargs):
@@ -16,12 +18,14 @@ class Client(models.Model):
     creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)
     client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, null=True, related_name='client')
     is_active = models.BooleanField(default=True)
-    fees_percentage = models.PositiveSmallIntegerField(
-        validators=[MaxValueValidator(100)], default=100)
+    fees_percentage = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=100)
+
     objects = ClientManager()
 
+    class Meta:
+        ordering = ['-id']
+
     def __str__(self):
-        return ''
         return f'The client {self.client.username} by {self.creator}'
 
     def toggle_activation(self):

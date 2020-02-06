@@ -48,93 +48,6 @@ LEVELS_VIEW_LOGGER = logging.getLogger("levels_view")
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 
 
-def ourlogout(request):
-    """
-    Function that allows users to logout.
-    Remove otp verification from user.
-    """
-    print(f'Username: {request.user.username}')
-    print(f'Isinstance: {isinstance(request.user, AnonymousUser)}')
-    if isinstance(request.user, AnonymousUser):
-        print('At the isinstance')
-        return HttpResponseRedirect(reverse('users:user_login_view'))
-    LOGOUT_LOGGER.debug(f"User: {request.user.username} Logged Out from IP Address {get_client_ip(request)}")
-    print('logging out')
-    request.user.is_totp_verified = False
-    request.user.save()
-    logout(request)
-    response = HttpResponseRedirect(reverse('users:user_login_view'))
-    return response
-
-
-def login_view(request):
-    """
-    Function that allows users to login.
-    Checkers must do two factor authentication every login but makers don't.
-    Non active users can't login.
-    """
-    if request.user.is_authenticated:
-        if request.user.is_checker:
-            return HttpResponseRedirect(reverse('two_factor:profile'))
-        return redirect('data:main_view')
-    if request.method == 'POST':
-        username = request.POST['username']
-        password = request.POST['password']
-        user = authenticate(request=request, username=username, password=password)
-        if user:
-            if user.is_active:
-                login(request, user)
-                LOGIN_LOGGER.debug(f"User: {request.user.username} Logged In from IP Address {get_client_ip(request)}")
-                if user.is_checker:
-                    user.is_totp_verified = False
-                    user.save()
-                    return HttpResponseRedirect(reverse('two_factor:profile'))
-
-                if user.is_upmaker or (user.is_root and user.data_type() == 3):
-                    return HttpResponseRedirect(reverse('users:redirect'))
-                return HttpResponseRedirect(reverse('data:main_view'))
-            else:
-                FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
-                Failed Attempt from non active user with username: {username} and IP Addr {get_client_ip(request)}""")
-                return HttpResponse("Your account has been disabled")
-        else:
-            # Bad login details were provided. So we can't log the user in.
-            FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
-            Failed Login Attempt from user with username: {username} and IP Address {get_client_ip(request)}""")
-            return render(request, 'data/login.html', {'error_invalid': 'Invalid login details supplied.'})
-    else:
-        return render(request, 'data/login.html')
-
-
-@login_required
-def change_password(request, user):
-    """
-    View for changing or creating password.
-    If user already has password then he must enter old one.
-    Else enter new password.
-    """
-    context = {}
-    if request.method == 'GET':
-        if request.user.has_usable_password():
-            form = PasswordChangeForm(request)
-        else:
-            form = SetPasswordForm(request)
-        context['form'] = form
-        return render(request, 'data/change_password.html', context=context)
-
-    if request.user.has_usable_password():
-        form = PasswordChangeForm(request.user, request.POST)
-    else:
-        form = SetPasswordForm(request.user, request.POST)
-
-    if not form.is_valid():
-        context['form'] = form
-        return render(request, 'data/change_password.html', context=context)
-
-    form.save()
-    return HttpResponseRedirect(reverse('users:user_login_view'))
-
-
 class PinFormView(DisbursementRootRequiredMixin, FormView):
     template_name = 'users/setting-up-disbursement/pin.html'
     setup = None
@@ -198,8 +111,7 @@ class CollectionFormView(CollectionRootRequiredMixin, FormView):
     def get_context_data(self, **kwargs):
         """update context data"""
         data = super().get_context_data(**kwargs)
-        data['enabled_steps'] = '-'.join(
-            self.get_setup().disbursement_enabled_steps())
+        data['enabled_steps'] = '-'.join(self.get_setup().disbursement_enabled_steps())
         return data
 
     def post(self, request, *args, **kwargs):
@@ -214,8 +126,7 @@ class CollectionFormView(CollectionRootRequiredMixin, FormView):
 
     def get_setup(self):
         if self.setup is None:
-            self.setup = Setup.objects.get(
-                user__hierarchy=self.request.user.hierarchy)
+            self.setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
         return self.setup
 
     def get_success_url(self):
@@ -232,7 +143,6 @@ class BaseFormsetView(TemplateView):
 
     def get_context_data(self, **kwargs):
         """update context data"""
-
         data = super().get_context_data(**kwargs)
         form = kwargs.get('form', None)
         data['form'] = form or self.form_class(
@@ -240,9 +150,7 @@ class BaseFormsetView(TemplateView):
             prefix=self.prefix,
             form_kwargs={'request': self.request}
         )
-        data['enabled_steps'] = '-'.join(
-            getattr(self.get_setup(), f'{self.data_type}_enabled_steps')()
-            )
+        data['enabled_steps'] = '-'.join(getattr(self.get_setup(), f'{self.data_type}_enabled_steps')())
         return data
 
     def post(self, request, *args, **kwargs):
@@ -258,8 +166,7 @@ class BaseFormsetView(TemplateView):
 
     def get_setup(self):
         if self.setup is None:
-            self.setup = Setup.objects.get(
-                user__hierarchy=self.request.user.hierarchy)
+            self.setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
         return self.setup
 
     def form_valid(self, form):
@@ -280,7 +187,6 @@ class UploaderFormView(CollectionRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-
         setup = self.get_setup()
         if not setup.format_collection_setup:
             return redirect('users:setting-collection-formats')
@@ -296,9 +202,7 @@ class UploaderFormView(CollectionRootRequiredMixin, BaseFormsetView):
         return reverse('data:collection_home')
 
     def get_queryset(self):
-        return self.model.objects.filter(
-            hierarchy=self.request.user.hierarchy
-        )
+        return self.model.objects.filter(hierarchy=self.request.user.hierarchy)
 
 
 class FormatFormView(CollectionRootRequiredMixin, BaseFormsetView):
@@ -311,7 +215,6 @@ class FormatFormView(CollectionRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-
         setup = self.get_setup()
         if not setup.collection_setup:
             return reverse('users:setting-collection-collectiondata')
@@ -325,9 +228,7 @@ class FormatFormView(CollectionRootRequiredMixin, BaseFormsetView):
         return reverse('users:setting-collection-uploader')
 
     def get_queryset(self):
-        return self.model.objects.filter(
-            hierarchy=self.request.user.hierarchy
-        )
+        return self.model.objects.filter(hierarchy=self.request.user.hierarchy)
 
 
 class MakerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
@@ -357,9 +258,7 @@ class MakerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
         return reverse('users:setting-disbursement-levels')
 
     def get_queryset(self):
-        return self.model.objects.filter(
-            hierarchy=self.request.user.hierarchy
-        )
+        return self.model.objects.filter(hierarchy=self.request.user.hierarchy)
 
 
 class CheckerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
@@ -372,7 +271,6 @@ class CheckerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-
         setup = self.get_setup()
         if not setup.levels_setup:
             return reverse('users:setting-disbursement-levels')
@@ -390,9 +288,7 @@ class CheckerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
         return reverse('users:setting-disbursement-formats')
 
     def get_queryset(self):
-        return self.model.objects.filter(
-            hierarchy=self.request.user.hierarchy
-        )
+        return self.model.objects.filter(hierarchy=self.request.user.hierarchy)
 
 
 class LevelsFormView(DisbursementRootRequiredMixin, BaseFormsetView):
@@ -422,14 +318,11 @@ class LevelsFormView(DisbursementRootRequiredMixin, BaseFormsetView):
         return reverse('users:setting-disbursement-checkers')
 
     def get_queryset(self):
-        return self.model.objects.filter(
-            created__hierarchy=self.request.user.hierarchy
-        )
+        return self.model.objects.filter(created__hierarchy=self.request.user.hierarchy)
 
     def form_valid(self, form):
         form.save()
-        Levels.update_levels_authority(
-            self.request.user.root)
+        Levels.update_levels_authority(self.request.user.root)
         setup = self.get_setup()
         setup.levels_setup = True
         setup.save()
@@ -446,7 +339,6 @@ class CategoryFormView(DisbursementRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-
         setup = self.get_setup()
         if not setup.checker_setup:
             return reverse('users:setting-disbursement-checkers')
@@ -466,9 +358,7 @@ class CategoryFormView(DisbursementRootRequiredMixin, BaseFormsetView):
         return reverse('data:disbursement_home')
 
     def get_queryset(self):
-        return self.model.objects.filter(
-            user_created__hierarchy=self.request.user.hierarchy
-        )
+        return self.model.objects.filter(user_created__hierarchy=self.request.user.hierarchy)
 
 
 class Members(RootRequiredMixin, ListView):
@@ -484,7 +374,6 @@ class Members(RootRequiredMixin, ListView):
 
     def get_queryset(self):
         if 'disbursement' == self.request.user.get_status(self.request):
-
             qs = super().get_queryset()
             qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1, 2, 5])
             if self.request.GET.get("q"):
@@ -497,15 +386,13 @@ class Members(RootRequiredMixin, ListView):
                     return qs
                 return qs.filter(user_type=value)
         else:
-            qs = UploaderUser.objects.filter(
-                hierarchy=self.request.user.hierarchy)
+            qs = UploaderUser.objects.filter(hierarchy=self.request.user.hierarchy)
 
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
             return qs.filter(Q(username__icontains=search) |
                              Q(first_name__icontains=search) |
-                             Q(last_name__icontains=search)
-                             )
+                             Q(last_name__icontains=search))
         return qs
 
 
@@ -527,8 +414,7 @@ class Clients(SuperRequiredMixin, ListView):
             search = self.request.GET.get("search")
             return qs.filter(Q(client__username__icontains=search) |
                              Q(client__first_name__icontains=search) |
-                             Q(client__last_name__icontains=search)
-                             )
+                             Q(client__last_name__icontains=search))
         if self.request.GET.get("q"):
             type_of = self.request.GET.get("q")
             if type_of == 'active':
@@ -539,47 +425,6 @@ class Clients(SuperRequiredMixin, ListView):
                 return qs
             return qs.filter(is_active=value)
         return qs
-
-
-@login_required
-def toggle_client(request):
-    """
-    Activate or deactivate client
-    """
-    if request.is_ajax() and request.method == 'POST' and request.user.is_superadmin:
-        data = request.POST.copy()
-        is_toggled = Client.objects.toggle(id=int(data['user_id']))
-        return HttpResponse(content=json.dumps({"valid": is_toggled}), content_type="application/json")
-    else:
-        raise Http404()
-
-
-@login_required
-@root_or_superadmin
-def delete(request):
-    """
-    Delete any user by user_id
-    """
-    if request.is_ajax() and request.method == 'POST':
-        try:
-            data = request.POST.copy()
-            if data.get('client'):
-                client = Client.objects.get(id=int(data['user_id']))
-                user = client.client
-                client.delete_client()
-            else:
-                user = User.objects.get(id=int(data['user_id']))
-                user.delete()
-            DELETE_USER_VIEW_LOGGER.debug(f"""[USER DELETED]
-            User: {request.user.username}
-            Deleted user with username: {user.username}""")
-            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
-        except User.DoesNotExist:
-            DELETE_USER_VIEW_LOGGER.debug(f"""[USER DOES NOT EXIST]
-            User with id {data['user_id']} doesn't exist to be deleted""")
-            return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
-    else:
-        raise Http404()
 
 
 class LevelsView(LevelsFormView):
@@ -595,7 +440,6 @@ class LevelsView(LevelsFormView):
 
     def get_context_data(self, **kwargs):
         """update context data"""
-
         data = super().get_context_data(**kwargs)
         form = kwargs.get('form', None)
         data['levelform'] = form or self.form_class(
@@ -607,8 +451,7 @@ class LevelsView(LevelsFormView):
 
     def form_valid(self, form):
         form.save()
-        Levels.update_levels_authority(
-            self.request.user.root)
+        Levels.update_levels_authority(self.request.user.root)
         return redirect(self.get_success_url())
 
 
@@ -643,8 +486,7 @@ class AddCheckerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {'who': _('checker'), 'success_url': reverse_lazy("users:add_checker")})
+        context.update({'who': _('checker'), 'success_url': reverse_lazy("users:add_checker")})
         return context
 
 
@@ -665,8 +507,7 @@ class AddMakerView(BaseAddMemberView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(
-            {'who': _('maker'), 'success_url': reverse_lazy("users:add_maker")})
+        context.update({'who': _('maker'), 'success_url': reverse_lazy("users:add_maker")})
         return context
 
 
@@ -695,14 +536,13 @@ class ProfileUpdateView(UpdateView):
 
 class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     """
-    View for super admin for creating root user.
+    View for SuperAdmin for creating root user.
     """
     model = RootUser
     form_class = RootCreationForm
     template_name = 'entity/add_root.html'
 
     def get_success_url(self, is_collection=False):
-
         if is_collection:
             return reverse('users:clients')
 
@@ -734,12 +574,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         ROOT_CREATE_LOGGER.debug(f"""[NEW ADMIN CREATED]
         User: {self.request.user.username}
         Created new Root/Admin with username: {self.object.username} from IP Address {get_client_ip(self.request)}""")
+
         return HttpResponseRedirect(self.get_success_url(is_collection))
 
 
 class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
     """
-    View for superadmin to setup fees for the client
+    View for SuperAdmin to setup fees for the client
     """
     model = Client
     form_class = ClientFeesForm
@@ -810,8 +651,8 @@ class ForgotPasswordView(FormView):
         form = self.form_class(request.POST)
         if form.is_valid():
             return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
+
+        return self.form_invalid(form)
 
 
 class RedirectPageView(View):
@@ -829,24 +670,144 @@ class RedirectPageView(View):
 
 
 class ExpiringAuthToken(ObtainExpiringAuthToken):
+
     def post(self, request):
         """Respond to POSTed username/password with token."""
-        serializer = AuthTokenSerializer(
-            data=request.data, context={"request": request})
+        serializer = AuthTokenSerializer(data=request.data, context={"request": request})
 
         if serializer.is_valid():
-            token, _ = self.model.objects.get_or_create(
-                user=serializer.validated_data['user']
-            )
+            token, _ = self.model.objects.get_or_create(user=serializer.validated_data['user'])
 
             if token.expired():
                 # If the token is expired, generate a new one.
                 token.delete()
-                token = self.model.objects.create(
-                    user=serializer.validated_data['user']
-                )
+                token = self.model.objects.create(user=serializer.validated_data['user'])
 
             data = {'token': token.key}
             return Response(data)
 
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+
+
+def login_view(request):
+    """
+    Function that allows users to login.
+    Checkers must do two factor authentication every login but makers don't.
+    Non active users can't login.
+    """
+    if request.user.is_authenticated:
+        if request.user.is_checker:
+            return HttpResponseRedirect(reverse('two_factor:profile'))
+        return redirect('data:main_view')
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request=request, username=username, password=password)
+        if user:
+            if user.is_active:
+                login(request, user)
+                LOGIN_LOGGER.debug(f"User: {request.user.username} Logged In from IP Address {get_client_ip(request)}")
+                if user.is_checker:
+                    user.is_totp_verified = False
+                    user.save()
+                    return HttpResponseRedirect(reverse('two_factor:profile'))
+
+                if user.is_upmaker or (user.is_root and user.data_type() == 3):
+                    return HttpResponseRedirect(reverse('users:redirect'))
+                return HttpResponseRedirect(reverse('data:main_view'))
+            else:
+                FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
+                Failed Attempt from non active user with username: {username} and IP Addr {get_client_ip(request)}""")
+                return HttpResponse("Your account has been disabled")
+        else:
+            # Bad login details were provided. So we can't log the user in.
+            FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
+            Failed Login Attempt from user with username: {username} and IP Address {get_client_ip(request)}""")
+            return render(request, 'data/login.html', {'error_invalid': 'Invalid login details supplied.'})
+    else:
+        return render(request, 'data/login.html')
+
+
+def ourlogout(request):
+    """
+    Function that allows users to logout.
+    Remove otp verification from user.
+    """
+    if isinstance(request.user, AnonymousUser):
+        return HttpResponseRedirect(reverse('users:user_login_view'))
+    LOGOUT_LOGGER.debug(f"User: {request.user.username} Logged Out from IP Address {get_client_ip(request)}")
+    request.user.is_totp_verified = False
+    request.user.save()
+    logout(request)
+    response = HttpResponseRedirect(reverse('users:user_login_view'))
+    return response
+
+
+@login_required
+def change_password(request, user):
+    """
+    View for changing or creating password.
+    If user already has password then he must enter old one.
+    Else enter new password.
+    """
+    context = {}
+    if request.method == 'GET':
+        if request.user.has_usable_password():
+            form = PasswordChangeForm(request)
+        else:
+            form = SetPasswordForm(request)
+        context['form'] = form
+        return render(request, 'data/change_password.html', context=context)
+
+    if request.user.has_usable_password():
+        form = PasswordChangeForm(request.user, request.POST)
+    else:
+        form = SetPasswordForm(request.user, request.POST)
+
+    if not form.is_valid():
+        context['form'] = form
+        return render(request, 'data/change_password.html', context=context)
+
+    form.save()
+    return HttpResponseRedirect(reverse('users:user_login_view'))
+
+
+@login_required
+@root_or_superadmin
+def delete(request):
+    """
+    Delete any user by user_id
+    """
+    if request.is_ajax() and request.method == 'POST':
+        try:
+            data = request.POST.copy()
+            if data.get('client'):
+                client = Client.objects.get(id=int(data['user_id']))
+                user = client.client
+                client.delete_client()
+            else:
+                user = User.objects.get(id=int(data['user_id']))
+                user.delete()
+            DELETE_USER_VIEW_LOGGER.debug(f"""[USER DELETED]
+            User: {request.user.username}
+            Deleted user with username: {user.username}""")
+            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
+        except User.DoesNotExist:
+            DELETE_USER_VIEW_LOGGER.debug(f"""[USER DOES NOT EXIST]
+            User with id {data['user_id']} doesn't exist to be deleted""")
+            return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
+    else:
+        raise Http404()
+
+
+@login_required
+def toggle_client(request):
+    """
+    Activate or deactivate client
+    """
+    if request.is_ajax() and request.method == 'POST' and request.user.is_superadmin:
+        data = request.POST.copy()
+        is_toggled = Client.objects.toggle(id=int(data['user_id']))
+        return HttpResponse(content=json.dumps({"valid": is_toggled}), content_type="application/json")
+    else:
+        raise Http404()

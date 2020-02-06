@@ -1,8 +1,12 @@
-from users.models.base_user import UserManager, User
 from django.db.models import Q
+
+from .base_user import User, UserManager
 
 
 class MakerManager(UserManager):
+    """
+    Manager for the Maker user
+    """
     def get_queryset(self):
         return super(MakerManager, self).get_queryset().filter(
             Q(user_type=1) |
@@ -19,6 +23,9 @@ class MakerManager(UserManager):
 
 
 class MakerUser(User):
+    """
+    Maker user who uploads a file to be reviewed and disbursed by his same hierarchy levels of checkers
+    """
     objects = MakerManager()
 
     class Meta:

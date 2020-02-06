@@ -1,11 +1,12 @@
-
-from users.models.base_user import UserManager, User
+from .base_user import User, UserManager
 
 
 class RootManager(UserManager):
+    """
+    Manager for the Admin/Root user
+    """
     def get_queryset(self):
-        return super(RootManager, self).get_queryset().filter(
-            user_type=3)
+        return super(RootManager, self).get_queryset().filter(user_type=3)
 
     def create_user(self, username, email=None, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
@@ -15,8 +16,10 @@ class RootManager(UserManager):
 
 
 class RootUser(User):
+    """
+    Admin user is the parent who starts to create children (Maker, Checker, Instant, etc.)
+    """
     objects = RootManager()
 
     class Meta:
         proxy = True
-

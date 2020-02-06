@@ -1,26 +1,27 @@
 # from users.validators import ComplexPasswordValidator
 
 import copy
+
 from django import forms
+from django.conf import settings
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth import password_validation
 from django.contrib.auth.forms import UserChangeForm as AbstractUserChangeForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, Permission
-from django.forms import (BaseFormSet, BaseModelFormSet, formset_factory,
-                          inlineformset_factory, modelformset_factory, CheckboxInput)
-from django.utils.crypto import get_random_string
-from django.utils.translation import gettext_lazy as _
-from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
+from django.forms import modelformset_factory
 from django.urls import reverse
-from django.utils.http import urlsafe_base64_encode
+from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes
-
-from users.models import CheckerUser, Levels, MakerUser, RootUser, User, Brand, UploaderUser, Client, EntitySetup
-from users.signals import ALLOWED_CHARACTERS
+from django.utils.http import urlsafe_base64_encode
+from django.utils.translation import gettext_lazy as _
 from django_otp.forms import OTPAuthenticationFormMixin
+
+from .models import (Brand, CheckerUser, Client, EntitySetup, Levels,
+                     MakerUser, RootUser, UploaderUser, User)
+from .signals import ALLOWED_CHARACTERS
 
 
 class SetPasswordForm(forms.Form):
@@ -282,10 +283,12 @@ class RootCreationForm(forms.ModelForm):
             allowed_chars=ALLOWED_CHARACTERS, length=12)
         user.set_password(random_pass)
         user.save()
-        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement')) \
-            if 'd' in business_type else None
-        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_collection')) \
-            if 'c' in business_type else None
+        user.user_permissions.add(
+                Permission.objects.get(content_type__app_label='users',
+                                       codename='has_disbursement')) if 'd' in business_type else None
+        user.user_permissions.add(
+                Permission.objects.get(content_type__app_label='users',
+                                       codename='has_collection')) if 'c' in business_type else None
         return user
 
 
@@ -313,7 +316,7 @@ class ProfileEditForm(forms.ModelForm):
 
 
 class LevelForm(forms.ModelForm):
-    
+
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
         super().__init__(*args, ** kwargs)
@@ -324,10 +327,10 @@ class LevelForm(forms.ModelForm):
 
     def clean_max_amount_can_be_disbursed(self):
         amount = self.cleaned_data.get('max_amount_can_be_disbursed')
-        
+
         if not amount and amount != 0:
             return amount
-        
+
         if amount <= 0:
             raise forms.ValidationError(
                 _('Amount must be greater than 0'))
@@ -336,9 +339,9 @@ class LevelForm(forms.ModelForm):
             created=self.request.user,
             max_amount_can_be_disbursed=amount)
         if self.instance and self.instance.id:
-            levels_qs = levels_qs.exclude(id=self.instance.id)    
+            levels_qs = levels_qs.exclude(id=self.instance.id)
 
-        if levels_qs.exists():    
+        if levels_qs.exists():
             raise forms.ValidationError(_('Level with this amount already exist'))
         return amount
 
@@ -359,7 +362,7 @@ class MakerCreationForm(forms.ModelForm):
         fields = ('first_name', 'last_name',
                   'mobile_no', 'email')
 
-    def __init__(self, *args,request, **kwargs):
+    def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
         for field in iter(self.fields):
             # get current classes from Meta
@@ -391,7 +394,7 @@ class MakerCreationForm(forms.ModelForm):
             self.instance = uploader
 
         return email
-        
+
     def save(self, commit=True):
         user = super().save(commit=False)
         if user.user_type != 5:
@@ -432,7 +435,7 @@ class CheckerCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
-        self.request = request    
+        self.request = request
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -469,7 +472,7 @@ class UploaderCreationForm(forms.ModelForm):
             self.fields[field].widget.attrs.update({
                 'class': classes
             })
-        self.request = request    
+        self.request = request
 
     def clean_email(self):
         email = self.cleaned_data.get('email')
@@ -478,7 +481,7 @@ class UploaderCreationForm(forms.ModelForm):
             maker.user_type = 5
             self.instance_copy = copy.copy(maker)
             self.instance = maker
-            
+
         return email
 
     def save(self, commit=True):
@@ -502,13 +505,13 @@ class UploaderCreationForm(forms.ModelForm):
                   'email', 'mobile_no']
 
 
-
 class BrandForm(forms.ModelForm):
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
         self.request = request
 
     color = forms.CharField(widget=forms.HiddenInput())
+
     class Meta:
         model = Brand
         fields = "__all__"
@@ -521,18 +524,15 @@ class BrandForm(forms.ModelForm):
             self.request.user.save()
         return brand
 
-LevelFormSet = modelformset_factory(
-    model=Levels, form=LevelForm,  max_num=4,
-    min_num=1, can_delete=True, extra=1, validate_min=True, validate_max=True
-)
 
-MakerMemberFormSet = modelformset_factory(
-    model=MakerUser, form=MakerCreationForm, 
-    min_num=1, validate_min=True, can_delete=True, extra=1)
+LevelFormSet = modelformset_factory(model=Levels, form=LevelForm,  max_num=4,
+                                    min_num=1, can_delete=True, extra=1, validate_min=True, validate_max=True)
 
-CheckerMemberFormSet = modelformset_factory(
-    model=CheckerUser, form=CheckerCreationForm, 
-    min_num=1, validate_min=True, can_delete=True, extra=1)
+MakerMemberFormSet = modelformset_factory(model=MakerUser, form=MakerCreationForm,
+                                          min_num=1, validate_min=True, can_delete=True, extra=1)
+
+CheckerMemberFormSet = modelformset_factory(model=CheckerUser, form=CheckerCreationForm,
+                                            min_num=1, validate_min=True, can_delete=True, extra=1)
 
 UploaderMemberFormSet = modelformset_factory(
     model=UploaderUser, form=UploaderCreationForm,
@@ -571,15 +571,15 @@ class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
     :param request: The current request.
     :type request: :class:`~django.http.HttpRequest`
     """
-    #otp_device = forms.ChoiceField(choices=[])
+    # otp_device = forms.ChoiceField(choices=[])
     otp_token = forms.CharField(required=False)
-    #otp_challenge = forms.CharField(required=False)
+    # otp_challenge = forms.CharField(required=False)
 
     def __init__(self, user, request=None, *args, **kwargs):
         super(OTPTokenForm, self).__init__(*args, **kwargs)
 
         self.user = user
-        #self.fields['otp_device'].choices = self.device_choices(user)
+        # self.fields['otp_device'].choices = self.device_choices(user)
 
     def clean(self):
         super(OTPTokenForm, self).clean()
@@ -595,7 +595,7 @@ class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
 class ForgotPasswordForm(forms.Form):
     email = forms.EmailField(label='')
     email2 = forms.EmailField(label='')
-    email.widget.attrs.update({'class': 'form-control','placeholder':_('Email')})
+    email.widget.attrs.update({'class': 'form-control', 'placeholder': _('Email')})
     email2.widget.attrs.update({'class': 'form-control', 'placeholder': _('Confirm Email')})
 
     def clean(self):
@@ -605,7 +605,7 @@ class ForgotPasswordForm(forms.Form):
             return
         if email != email2:
             raise forms.ValidationError("Emails don't match")
-        else:    
+        else:
             user_qs = User.objects.filter(email=email)
             if not user_qs.exists():
                 raise forms.ValidationError("No user with this email exists")
@@ -623,11 +623,11 @@ class ForgotPasswordForm(forms.Form):
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
             'uidb64': uid, 'token': token})
 
-        from_email      = settings.SERVER_EMAIL
-        sub_subject     = f'[{self.user.brand.mail_subject}]'
-        subject         = "{}{}".format(sub_subject, _(' Password Notification'))
-        recipient_list  = [self.user.email]
-        message         = MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
+        from_email = settings.SERVER_EMAIL
+        sub_subject = f'[{self.user.brand.mail_subject}]'
+        subject = "{}{}".format(sub_subject, _(' Password Notification'))
+        recipient_list = [self.user.email]
+        message = MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
         mail_to_be_sent.send()
@@ -635,8 +635,7 @@ class ForgotPasswordForm(forms.Form):
 
 class ClientFeesForm(forms.ModelForm):
     CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'))
-    fees_percentage = forms.ChoiceField(label=_("Fees"),
-        widget=forms.Select, choices=CHOICES)
+    fees_percentage = forms.ChoiceField(label=_("Fees"), widget=forms.Select, choices=CHOICES)
 
     class Meta:
         model = Client
@@ -644,8 +643,8 @@ class ClientFeesForm(forms.ModelForm):
 
     def clean(self):
         fees_percentage = self.cleaned_data.get('fees_percentage')
-    
-    def save(self,commit=True):
+
+    def save(self, commit=True):
         client = super().save(commit=False)
         if commit:
             client.save()

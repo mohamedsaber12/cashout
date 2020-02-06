@@ -1,7 +1,8 @@
+from faker import Factory as fakeFactory
 import factory
 
-from users.models import User
-from faker import Factory as fakeFactory
+from .models import User
+
 
 fake = fakeFactory.create()
 

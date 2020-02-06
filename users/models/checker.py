@@ -1,7 +1,10 @@
-from users.models.base_user import UserManager, User
+from .base_user import User, UserManager
 
 
 class CheckerManager(UserManager):
+    """
+    Manager for the Checker user
+    """
     def get_queryset(self):
         return super(CheckerManager, self).get_queryset().filter(
             user_type=2)
@@ -16,8 +19,10 @@ class CheckerManager(UserManager):
 
 
 class CheckerUser(User):
+    """
+    Checker user who reviews and disburses files uploaded by his same hierarchy levels of makers
+    """
     objects = CheckerManager()
 
     class Meta:
         proxy = True
-

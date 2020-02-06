@@ -1,8 +1,10 @@
-
-from users.models.base_user import UserManager, User
+from .base_user import User, UserManager
 
 
 class AdminManager(UserManager):
+    """
+    Manager for the SuperAdmin user
+    """
     def get_queryset(self):
         return super(AdminManager, self).get_queryset().filter(user_type=0)
 
@@ -14,8 +16,10 @@ class AdminManager(UserManager):
 
 
 class SuperAdminUser(User):
+    """
+    SuperAdmin user who starts/manages the chain/process
+    """
     objects = AdminManager()
 
     class Meta:
         proxy = True
-

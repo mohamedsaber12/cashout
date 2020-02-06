@@ -1,25 +1,25 @@
 from __future__ import unicode_literals
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
-from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
+
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
+
 TYPES = (
-    # when creating super AN EMIAL MUST be created.
-    (0, 'Super'),
+    (0, 'Super'),           # when creating super AN EMAIL MUST be created.
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
-    # collection only
-    (4, 'Uploader'),
-    # maker and uploader
-    (5, 'UpMaker'),
+    (4, 'Uploader'),        # collection only
+    (5, 'UpMaker'),         # maker and uploader
 )
 
 
@@ -35,13 +35,10 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
-    mobile_no = models.CharField(max_length=16, verbose_name= _('Mobile Number'))
+    mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
-    hierarchy = models.PositiveSmallIntegerField(
-        null=True, db_index=True, default=0)
+    hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     verification_time = models.DateTimeField(null=True)
-    level = models.ForeignKey(
-        'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
@@ -50,9 +47,9 @@ class User(AbstractUser):
                                            format='JPEG',
                                            options={'quality': 60}, null=True, default='user.png')
     title = models.CharField(max_length=128, default='', null=True, blank=True)
-    brand = models.ForeignKey(
-        'users.Brand', on_delete=models.SET_NULL, null=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
+    level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
+    brand = models.ForeignKey('users.Brand', on_delete=models.SET_NULL, null=True)
 
     objects = UserManager()
 
@@ -65,15 +62,23 @@ class User(AbstractUser):
             ("can_use_two_factor", "the user can use two factor"),
             ("has_disbursement", "the client has disbursement options"),
             ("has_collection", "the client has collection options"),
+            ("can_view_api_docs", "the user can view the api documentation"),
         )
 
-    def __str__(self):  # __unicode__ for Python 2
+    def __str__(self):
         return str(self.username)
 
     def child(self):
-        if not self.user_type==3:
+        if not self.user_type == 3:
             raise ValidationError('This user has no children')
         return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
+
+    @property
+    def can_view_docs(self):
+        """Check if the user has the permission to view the API documentation"""
+        if self.has_perm('users.can_view_api_docs'):
+            return True
+        return False
 
     @property
     def can_disburse(self):
@@ -81,7 +86,6 @@ class User(AbstractUser):
             return True
         else:
             return False
-
 
     @property
     def root(self):
@@ -142,7 +146,7 @@ class User(AbstractUser):
 
     @cached_property
     def get_full_name(self):
-        full_name = '%s %s' % (self.first_name.capitalize(), self.last_name)
+        full_name = f"{self.first_name.capitalize()} {self.last_name}"
         return full_name.strip()
 
     def get_absolute_url(self):
@@ -156,9 +160,9 @@ class User(AbstractUser):
 
     def data_type(self):
         DATA_TYPES = {
-            'Disbursement':1,
-            'Collection':2,
-            'Both':3
+            'Disbursement': 1,
+            'Collection': 2,
+            'Both': 3
         }
         if self.has_perm('users.has_disbursement') and self.has_perm('users.has_collection'):
             return DATA_TYPES['Both']
@@ -167,7 +171,7 @@ class User(AbstractUser):
         elif self.has_perm('users.has_collection'):
             return DATA_TYPES['Collection']
 
-    def get_status(self,request):
+    def get_status(self, request):
         data_type = self.data_type()
         if data_type == 3 and (self.is_upmaker or self.is_root):
             return request.session.get('status')
@@ -175,5 +179,3 @@ class User(AbstractUser):
             return 'disbursement'
         if data_type == 2 or self.is_uploader or (self.is_root and data_type == 2):
             return 'collection'
-
-

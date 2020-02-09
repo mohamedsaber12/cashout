@@ -74,7 +74,10 @@ MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'users.middleware.PreventConcurrentLoginsMiddleware',
+
+    # Disabled for conflicts with OAuth2.0 provider Token Generation
+    # 'users.middleware.PreventConcurrentLoginsMiddleware',
+
     'django_session_timeout.middleware.SessionTimeoutMiddleware',
 
     # If you use SessionAuthenticationMiddleware, be sure it appears before OAuth2TokenMiddleware.

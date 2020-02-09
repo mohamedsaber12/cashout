@@ -45,6 +45,7 @@ SECURITY_THIRD_PARTY_APPS = [
     'django_otp.plugins.otp_totp',
     'two_factor',
     # 'axes',
+    'oauth2_provider',
 ]
 
 USER_DEFINED_APPS = [
@@ -75,6 +76,12 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'users.middleware.PreventConcurrentLoginsMiddleware',
     'django_session_timeout.middleware.SessionTimeoutMiddleware',
+
+    # If you use SessionAuthenticationMiddleware, be sure it appears before OAuth2TokenMiddleware.
+    # SessionAuthenticationMiddleware is NOT required for using django-oauth-toolkit.
+    # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
+    'oauth2_provider.middleware.OAuth2TokenMiddleware',
+
     'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -90,6 +97,9 @@ MIDDLEWARE = [
 ]
 
 AUTHENTICATION_BACKENDS = [
+    # OAuth2.0 Provider
+    'oauth2_provider.backends.OAuth2Backend',
+
     # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
     # 'axes.backends.AxesBackend',
 
@@ -196,6 +206,8 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.JSONRenderer',
     ),
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        # OAuth2.0 Provider
+        'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
         'rest_framework_expiring_authtoken.authentication.ExpiringTokenAuthentication',
     ),
     'DEFAULT_PARSER_CLASSES': (
@@ -235,3 +247,14 @@ LOGGING = CUSTOM_LOGGING
 # SILENCED_SYSTEM_CHECKS = ['axes.W003']
 # AXES_LOCKOUT_TEMPLATE = 'data/login.html'
 # AXES_LOGGER = 'axes_watcher'
+
+# OAuth2 provider configs
+OAUTH2_PROVIDER = {
+    # this is the list of available scopes
+    'SCOPES': {
+        'read': 'Read scope',
+        'write': 'Write scope',
+        'groups': 'Group scope'
+    },
+    'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60,
+}

@@ -230,6 +230,20 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/checkers_notification.log',
         },
+        'instant_cashin_success': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/instant_cashin_success.log',
+        },
+        'instant_cashin_failure': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/instant_cashin_failure.log',
+        },
         'django.template': {
             'level': 'INFO',
             'filters': ['request_id'],
@@ -405,6 +419,16 @@ CUSTOM_LOGGING = {
         },
         'checkers_notification': {
             'handlers': ['checkers_notification'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'instant_cashin_success': {
+            'handlers' : ['instant_cashin_success'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'instant_cashin_failure': {
+            'handlers' : ['instant_cashin_failure'],
             'level': 'DEBUG',
             'propagate': True,
         },

@@ -44,7 +44,8 @@ urlpatterns += [
     path('', include(tf_urls, namespace='two_factor')),
     path('api/secure/', include('disb.api.urls', namespace='disbursement_api')),
     path('api/secure/', include('data.api.urls', namespace='data_api')),
-    path('api/secure/', include('payment.api.urls', namespace='payment_api'))
+    path('api/secure/', include('payment.api.urls', namespace='payment_api')),
+    path('api/secure/', include('instant_cashin.api.urls', namespace='instant_api')),
 ]
 
 urlpatterns += oauth2_provider_urls

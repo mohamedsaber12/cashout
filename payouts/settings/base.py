@@ -44,7 +44,7 @@ SECURITY_THIRD_PARTY_APPS = [
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
-    'axes',
+    # 'axes',
 ]
 
 USER_DEFINED_APPS = [
@@ -86,12 +86,12 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Must be the last middleware in the list
-    'axes.middleware.AxesMiddleware',
+    # 'axes.middleware.AxesMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
     # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
-    'axes.backends.AxesBackend',
+    # 'axes.backends.AxesBackend',
 
     # Django ModelBackend is the default authentication backend.
     'django.contrib.auth.backends.ModelBackend',
@@ -226,11 +226,12 @@ ADMIN_SITE_HEADER = "PayMob Administration"
 
 LOGGING = CUSTOM_LOGGING
 
+# Axes has conflicts with OAuth2.0
 # Axes Custom Configurations
-AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
-AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
-AXES_ENABLE_ADMIN = True
-AXES_VERBOSE = False
-SILENCED_SYSTEM_CHECKS = ['axes.W003']
-AXES_LOCKOUT_TEMPLATE = 'data/login.html'
-AXES_LOGGER = 'axes_watcher'
+# AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
+# AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+# AXES_ENABLE_ADMIN = True
+# AXES_VERBOSE = False
+# SILENCED_SYSTEM_CHECKS = ['axes.W003']
+# AXES_LOCKOUT_TEMPLATE = 'data/login.html'
+# AXES_LOGGER = 'axes_watcher'

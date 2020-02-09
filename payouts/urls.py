@@ -4,9 +4,11 @@ from django.contrib import admin
 from django.urls import include, path
 
 from two_factor.urls import urlpatterns as tf_urls
+
 from data.views import protected_serve
 
 from .decorators import protected_media_serve
+
 
 if settings.DEBUG:
     import debug_toolbar
@@ -29,6 +31,9 @@ else:
 
     handler401 = 'payouts.views.unauthorized_view'
 
+oauth2_provider_urls = [
+    path('api/secure/o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
+]
 
 urlpatterns += [    
     path('i18n/', include('django.conf.urls.i18n')),
@@ -42,8 +47,6 @@ urlpatterns += [
     path('api/secure/', include('payment.api.urls', namespace='payment_api'))
 ]
 
-urlpatterns += static(settings.MEDIA_URL + 'documents/',
-                      document_root=settings.MEDIA_ROOT, view=protected_serve)
-
-urlpatterns += static(settings.MEDIA_URL,
-                      document_root=settings.MEDIA_ROOT, view=protected_media_serve)
+urlpatterns += oauth2_provider_urls
+urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)

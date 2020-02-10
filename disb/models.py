@@ -2,91 +2,21 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
-from django.contrib.auth.hashers import make_password
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from instant_cashin.models import AbstractVMTData
 
-class VMTData(models.Model):
-    """
-    VMT is the credentials needed by UIG to request disbursement
-    """
-    # disbursement at checker user
-    DISBURSEMENT = 1
-    # balance inquiry at root user
-    BALANCE_INQUIRY = 2
-    # bulk msisdns change profile at root user
-    CHANGE_PROFILE = 3
-    # bulk agents set pin at root user
-    SET_PIN = 4
-    # bulk agents validation at superadmin
-    USER_INQUIRY = 5
 
-    login_username = models.CharField(max_length=32)
-    login_password = models.CharField(max_length=32)
-    request_gateway_code = models.CharField(max_length=32)
-    request_gateway_type = models.CharField(max_length=32)
-    wallet_issuer = models.CharField(max_length=64)
+class VMTData(AbstractVMTData):
+    """VMT Data Credentials to make requests to UIG"""
+
     vmt = models.OneToOneField(
-        'users.SuperAdminUser',
-        related_name='vmt',
-        on_delete=models.CASCADE
+            'users.SuperAdminUser',
+            related_name="vmt",
+            on_delete=models.CASCADE,
+            verbose_name=_("VMT Credentials Owner")
     )
-    vmt_environment = models.CharField(
-        choices=[
-            ('STAGING', 'STAGING'),
-            ('PRODUCTION', 'PRODUCTION'),
-            ('DEVELOPMENT', 'DEVELOPMENT'),
-        ], max_length=16)
-
-    def __str__(self):
-        return "VMT for {} entities".format(self.vmt.username)
-
-    def return_vmt_data(self,purpose):
-        """
-        Return dict of vmt data represented by VMT attributes used
-        by the UIG
-        :return:
-        """
-        data = {
-            "LOGIN": self.login_password,
-            "PASSWORD": self.login_password,
-            "REQUEST_GATEWAY_CODE": self.request_gateway_code,
-            "REQUEST_GATEWAY_TYPE": self.request_gateway_type,
-            "WALLETISSUER": self.wallet_issuer,
-        }
-        if purpose == self.DISBURSEMENT:
-            data.update({
-                "SERVICETYPE": "P2P",
-                "SOURCE": "DISB",
-                "TYPE": "PPREQ",
-            })
-        elif purpose == self.USER_INQUIRY:
-            data.update({
-                "USERS": "",  # msisdn_list
-                "TYPE": "BUSRINQREQ"
-            })
-        elif purpose == self.CHANGE_PROFILE:
-            data.update({
-                "USERS": "",  # msisdn
-                "TYPE": "BCHGPREQ",
-                "NEWPROFILE":""
-            })
-        elif purpose == self.SET_PIN:
-            data.update({
-                "USERS": "",  # msisdn_list
-                "TYPE": "BPINSETREQ",
-                "PIN": "" # pin
-            })
-        elif purpose == self.BALANCE_INQUIRY:
-            data.update({
-                "MSISDN": "",
-                "PIN":"",
-                "TYPE": "PRBALINQREQ"
-            })
-        return data
-
-
 
 
 class Agent(models.Model):
@@ -97,7 +27,9 @@ class Agent(models.Model):
     super = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.msisdn
+        if self.super:
+            return f"SuperAgent {self.msisdn} for Root: {self.wallet_provider.username}"
+        return f"Agent {self.msisdn} for Root: {self.wallet_provider.username}"
 
 
 class DisbursementDocData(models.Model):

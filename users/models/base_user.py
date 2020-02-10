@@ -20,6 +20,7 @@ TYPES = (
     (3, 'Root'),
     (4, 'Uploader'),        # collection only
     (5, 'UpMaker'),         # maker and uploader
+    (6, 'InstantAPIChecker'),
 )
 
 
@@ -143,6 +144,10 @@ class User(AbstractUser):
     @cached_property
     def is_superadmin(self):
         return self.user_type == 0
+
+    @cached_property
+    def is_instantapichecker(self):
+        return self.user_type == 6
 
     @cached_property
     def get_full_name(self):

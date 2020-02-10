@@ -1,7 +1,9 @@
 import logging
 
+from django import forms
 from django.contrib import admin
 from django.contrib.admin.actions import delete_selected as delete_selected_
+from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
@@ -10,8 +12,8 @@ from django.utils.translation import ugettext_lazy
 
 from data.utils import get_client_ip
 
-from .forms import (CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm)
-from .models import (CheckerUser, Client, MakerUser, RootUser, SuperAdminUser, User)
+from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
+from .models import CheckerUser, Client, InstantAPICheckerUser, MakerUser, RootUser, SuperAdminUser, User
 
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -211,8 +213,46 @@ class CheckerAdmin(UserAccountAdmin):
         obj.save()
 
 
+class InstantAPICheckerAdmin(UserAccountAdmin):
+    add_form = MakerCreationAdminForm
+
+    def save_model(self, request, obj, form, change):
+        # TODO : FIX Parent hierarchy
+        if request.user.is_superuser:
+            obj.hierarchy = form.cleaned_data['parent'].hierarchy
+        else:
+            obj.hierarchy = request.user.hierarchy
+
+        if obj.pk is not None:
+            MODIFIED_USERS_LOGGER.debug(f"""[Instant Checker User Modified]
+            User: {request.user.username}
+            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
+
+        else:
+            CREATED_USERS_LOGGER.debug(f"""[Instant Checker User Created]
+            User: {request.user.username}
+            Created new maker with username: {obj.username}""")
+        obj.save()
+
+
+class RootCreationAdminForm(RootCreationForm):
+
+    password1 = forms.CharField(
+        label=_("Password"),
+        strip=False,
+        widget=forms.PasswordInput,
+        help_text=password_validation.password_validators_help_text_html(),
+    )
+    password2 = forms.CharField(
+        label=_("Password confirmation"),
+        widget=forms.PasswordInput,
+        strip=False,
+        help_text=_("Enter the same password as before, for verification."),
+    )
+
+
 class RootAdmin(UserAccountAdmin):
-    add_form = RootCreationForm
+    add_form = RootCreationAdminForm
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
@@ -260,3 +300,4 @@ admin.site.register(CheckerUser, CheckerAdmin)
 admin.site.register(SuperAdminUser, SuperAdmin)
 admin.site.register(User)
 admin.site.register(Client)
+admin.site.register(InstantAPICheckerUser, InstantAPICheckerAdmin)

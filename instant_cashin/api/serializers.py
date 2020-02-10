@@ -17,7 +17,6 @@ class InstantUserInquirySerializer(serializers.Serializer):
     def validate(self, attrs):
         """
         Validate the request attributes
-        :param attrs:
         :return:
         """
         msisdn = f"+2{attrs.get('msisdn')}"
@@ -33,7 +32,7 @@ class InstantUserInquirySerializer(serializers.Serializer):
         try:
             phonenumber_form_validate(msisdn)
         except ValidationError as e:
-            msg = _("Invalid default region")
+            msg = _("Invalid phone number")
             raise serializers.ValidationError(msg)
 
         # Validate unique issuer

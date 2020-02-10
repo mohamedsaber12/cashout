@@ -16,6 +16,7 @@ class AbstractVMTData(models.Model):
     CHANGE_PROFILE = 3          # For List/Bulk of MSISDNs
     SET_PIN = 4                 # For List/Bulk of Agents
     USER_INQUIRY = 5            # For List/Bulk of Agents/MSISDNs validation as valid wallets
+    INSTANT_DISBURSEMENT = 6    # For List/Bulk of Agents/MSISDNs validation as valid wallets
 
     login_username = models.CharField(_("UIG Login Username"), max_length=32)
     login_password = models.CharField(_("UIG Login Password"), max_length=32)
@@ -76,6 +77,15 @@ class AbstractVMTData(models.Model):
                 "SERVICETYPE": "P2P",
                 "SOURCE": "DISB",
                 "TYPE": "PPREQ"
+            })
+        elif purpose == self.INSTANT_DISBURSEMENT:
+            data.update({
+                "MSISDN": "",       # Agent - MUST be one of the agents list
+                "MSISDN2": "",      # Consumer
+                "AMOUNT": "",
+                "PIN": "",          # Raw pin
+                "IS_REVERSED": False,
+                "TYPE": "RCIREQ"
             })
         elif purpose == self.USER_INQUIRY:
             data.update({

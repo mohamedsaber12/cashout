@@ -46,6 +46,7 @@ class InstantUserInquiryAPIView(views.APIView):
         Handles POST HTTP requests to this inquire-user API endpoint
         """
         serializer = InstantUserInquirySerializer(data=request.data)
+        json_inquiry_response = "Request time out"      # If it's empty then log it as request timed out
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -69,14 +70,15 @@ class InstantUserInquiryAPIView(views.APIView):
         try:
             inquiry_response = requests.post(get_corresponding_env_url(vmt_credentials), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
-        except Exception:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR]", inquiry_response.content)
+        except (TimeoutError, Exception):
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR]", json_inquiry_response.content)
             return self.custom_response(
                head="External Error",
                head_message="Process stopped during an external error, can you try again or contact your support team.",
             )
 
-        log_msg = f"USER: {request.user.username} inquired for user with MSISDN {serializer.validated_data['msisdn']}"
+        log_msg = f"USER: {request.user.username} inquired for user with MSISDN {serializer.validated_data['msisdn']}" \
+                  f"\n\tResponse content: {json_inquiry_response}"
 
         if inquiry_response.ok and json_inquiry_response["TRANSACTIONS"][0]["WALLET_STATUS"] == "Active":
             logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[INSTANT USER INQUIRY]", log_msg)

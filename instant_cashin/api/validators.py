@@ -34,3 +34,31 @@ def issuer_validator(issuer):
         raise serializers.ValidationError(msg)
 
     return issuer
+
+
+def fees_validator(fees):
+    """
+    Validate that the fees -if any- is one of ['Full', 'Half', 'No fees']
+    :param fees: is the applied charge to use the this service
+    :return:
+    """
+    fees_values = ["Full", "Half", "No fees"]
+
+    if fees is not None and fees not in fees_values:
+        msg = _("The fee flag passed to be applied is incorrect, please pass on of ['Full', 'Half', 'No fees']")
+        raise serializers.ValidationError(msg)
+
+    return fees
+
+
+def user_budget_validator(amount):
+    """
+    Validate that the amount to be disbursed by this user doesn't exceed his/her account available budget
+    :param amount: the amount to be disbursed/cashed in
+    :return:
+    """
+    if amount > 1000:       # To be updated after creating the budget model
+        msg = _("Sorry, the amount to be disbursed is exceed you budget limit, please contact your service provider")
+        raise serializers.ValidationError(msg)
+
+    return amount

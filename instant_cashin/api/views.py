@@ -20,6 +20,7 @@ from .serializers import InstantUserInquirySerializer, InstantDisbursementSerial
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
+INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
 
 INTERNAL_ERROR_MSG = "Process stopped during an internal error, can you try again or contact your support team."
 EXTERNAL_ERROR_MSG = "Process stopped during an external error, can you try again or contact your support team."
@@ -70,6 +71,10 @@ class InstantUserInquiryAPIView(views.APIView):
             )
 
         try:
+            logging_message(
+                    INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - USER INQUIRY]",
+                    f"Data dictionary: {data_dict}, vmt_env used: {vmt_data.vmt_environment}"
+            )
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
         except (TimeoutError, ImproperlyConfigured, Exception) as e:
@@ -134,6 +139,10 @@ class InstantDisbursementAPIView(views.APIView):
             return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_424_FAILED_DEPENDENCY)
 
         try:
+            logging_message(
+                    INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
+                    f"Data dictionary: {data_dict}, vmt_env used: {vmt_data.vmt_environment}"
+            )
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
         except (TimeoutError, ImproperlyConfigured, Exception) as e:

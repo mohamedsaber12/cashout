@@ -85,7 +85,7 @@ class AbstractVMTData(models.Model):
                 "AMOUNT": "",
                 "PIN": "",          # Raw pin
                 "IS_REVERSED": False,
-                "TYPE": "RCIREQ"
+                "TYPE": "PORCIREQ"
             })
         elif purpose == self.USER_INQUIRY:
             data.update({
@@ -106,7 +106,7 @@ class AbstractVMTData(models.Model):
             })
         elif purpose == self.BALANCE_INQUIRY:
             data.update({
-                "MSISDN": "",       # Super agent ONLY
+                "MSISDN": "",       # Super agent ONLY, Not a list
                 "PIN": "",          # Raw pin
                 "TYPE": "PRBALINQREQ"
             })

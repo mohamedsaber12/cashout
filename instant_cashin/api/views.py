@@ -3,6 +3,7 @@ import logging
 import requests
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext_lazy as _
 
@@ -13,7 +14,7 @@ from rest_framework.response import Response
 
 from disb.models import VMTData
 
-from ..utils import get_corresponding_env_url, logging_message
+from ..utils import get_from_env, logging_message
 from .serializers import InstantUserInquirySerializer
 
 
@@ -51,16 +52,16 @@ class InstantUserInquiryAPIView(views.APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR]", serializer.errors)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR - USER INQUIRY]", serializer.errors)
             return Response({"Validation Error": e.args}, status.HTTP_400_BAD_REQUEST)
 
         try:
             instant_user = get_object_or_404(get_user_model(), username=request.user.username)
-            vmt_credentials = VMTData.objects.get(vmt=instant_user.root.client.creator)
-            data_dict = vmt_credentials.return_vmt_data(VMTData.USER_INQUIRY)
+            vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
+            data_dict = vmt_data.return_vmt_data(VMTData.USER_INQUIRY)
             data_dict['USERS'] = [serializer.validated_data["msisdn"]]       # It must be a list
         except Exception as e:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR]", e.args)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - USER INQUIRY]", e.args)
             return self.custom_response(
                head="Internal Error",
                head_message="Process stopped during an internal error, can you try again or contact your support team.",
@@ -68,10 +69,14 @@ class InstantUserInquiryAPIView(views.APIView):
             )
 
         try:
-            inquiry_response = requests.post(get_corresponding_env_url(vmt_credentials), json=data_dict, verify=False)
+            inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
-        except (TimeoutError, Exception):
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR]", json_inquiry_response.content)
+        except (TimeoutError, ImproperlyConfigured, Exception) as e:
+            log_msg = e.args
+            if json_inquiry_response != "Request time out":
+                log_msg = json_inquiry_response.content
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - USER INQUIRY]", log_msg)
+
             return self.custom_response(
                head="External Error",
                head_message="Process stopped during an external error, can you try again or contact your support team.",

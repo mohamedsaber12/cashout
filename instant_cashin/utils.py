@@ -1,4 +1,5 @@
 from django.utils.translation import gettext_lazy as _
+from environ import ImproperlyConfigured
 
 from payouts.utils import get_dot_env
 
@@ -14,10 +15,13 @@ def logging_message(logger, head, message):
     return logger.debug(_(f"{head}\n\t{message}"))
 
 
-def get_corresponding_env_url(vmt_obj):
+def get_from_env(key):
     """
-    This function will get the corresponding vmt environment url from the .env file
-    :param vmt_obj: vmt credentials of the user being hit the request
+    This function will get the corresponding key from the .env file
     """
-    environment_url = get_dot_env()
-    return environment_url.str(vmt_obj.vmt_environment)
+    environment_vars_dict = get_dot_env()
+
+    if not environment_vars_dict.str(key):
+        raise ImproperlyConfigured(f"{key} does not exist at your .env file")
+
+    return environment_vars_dict.str(key)

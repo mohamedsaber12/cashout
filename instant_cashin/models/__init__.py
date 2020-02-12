@@ -1,1 +1,2 @@
 from .abstract_integration import AbstractVMTData
+from .instant_transactions import InstantTransaction

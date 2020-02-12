@@ -16,6 +16,7 @@ from disb.models import VMTData
 
 from ..utils import get_from_env, logging_message
 from .serializers import InstantUserInquirySerializer, InstantDisbursementSerializer
+from ..models.instant_transactions import InstantTransaction
 
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
@@ -119,6 +120,7 @@ class InstantDisbursementAPIView(views.APIView):
         """
         serializer = InstantDisbursementSerializer(data=request.data)
         json_inquiry_response = "Request time out"      # If it's empty then log it as request timed out
+        transaction = None
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -143,12 +145,19 @@ class InstantDisbursementAPIView(views.APIView):
                     INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
                     f"Data dictionary: {data_dict}, vmt_env used: {vmt_data.vmt_environment}"
             )
+            transaction = InstantTransaction.objects.create(
+                    from_user=request.user, anon_sender=data_dict['MSISDN'], anon_recipient=data_dict['MSISDN2'],
+                    status="F", amount=data_dict['AMOUNT']
+            )
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
         except (TimeoutError, ImproperlyConfigured, Exception) as e:
             log_msg = e.args
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content
+            if transaction:
+                transaction.failure_reason = log_msg
+                transaction.save()
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", log_msg)
 
             return Response({
@@ -160,9 +169,13 @@ class InstantDisbursementAPIView(views.APIView):
 
         if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
             logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[INSTANT CASHIN]", log_msg)
+            transaction.mark_successful()
             return Response({"disbursement_status": "success"}, status=status.HTTP_200_OK)
 
         logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED INSTANT CASHIN]", log_msg)
+        if transaction:
+            transaction.failure_reason = json_inquiry_response["MESSAGE"]   # Pass the full failure reason
+            transaction.save()
         return Response({
             "disbursement_status": "failed",
             "status_description" : json_inquiry_response["MESSAGE"]

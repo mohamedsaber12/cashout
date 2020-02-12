@@ -1,5 +1,6 @@
 from django.contrib.auth import get_user_model
 from django.db import models
+from django.db.models.signals import pre_save
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractTimeStamp
@@ -24,7 +25,7 @@ class Budget(AbstractTimeStamp):
     class Meta:
         verbose_name = "Allowed Budget"
         verbose_name_plural = "Allowed Budgets"
-        get_latest_by = "-created_at"
+        get_latest_by = "-updated_at"
         ordering = ["-created_at"]
 
     def __str__(self):
@@ -41,3 +42,20 @@ class Budget(AbstractTimeStamp):
         if not new_amount <= self.max_amount:
             return False
         return True
+
+    def update_disbursed_amount(self, amount):
+        """
+        Update the total disbursement amount at each successful transaction
+        :param amount: the amount to be disbursed
+        :return: True/False
+        """
+        if not self.within_threshold(amount):
+            return False
+
+        self.disbursed_amount += amount
+        self.save()
+        return True
+
+
+def budget_pre_save_receiver(instance, *args, **kwargs):
+    pass

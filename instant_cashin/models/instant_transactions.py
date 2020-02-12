@@ -28,12 +28,9 @@ class InstantTransaction(AbstractBaseTransaction):
         verbose_name=_("Instant API Checker")
     )
     anon_sender = models.CharField(
-        _("Sender - Agent"), max_length=14, blank=True, null=True
-    )
-
+            _("Sender"), max_length=14, blank=True, null=True, help_text=_("Agent used from Root's agents list"))
     failure_reason = models.TextField(
-            _("Failure reason"), blank=True, null=True
-    )
+            _("Failure reason"), blank=True, null=True, help_text=_("Empty if transaction status is Successful"))
 
     # Not needed fields
     updated_at = None

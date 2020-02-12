@@ -21,6 +21,7 @@ class InstantTransaction(AbstractBaseTransaction):
     )
     from_user = models.ForeignKey(
         InstantAPICheckerUser,
+        db_index=True,
         null=True,
         on_delete=models.CASCADE,
         blank=True,
@@ -28,7 +29,13 @@ class InstantTransaction(AbstractBaseTransaction):
         verbose_name=_("Instant API Checker")
     )
     anon_sender = models.CharField(
-            _("Sender"), max_length=14, blank=True, null=True, help_text=_("Agent used from Root's agents list"))
+            _("Sender"),
+            db_index=True,
+            max_length=14,
+            blank=True,
+            null=True,
+            help_text=_("Agent used from Root's agents list")
+    )
     failure_reason = models.TextField(
             _("Failure reason"), blank=True, null=True, help_text=_("Empty if transaction status is Successful"))
 

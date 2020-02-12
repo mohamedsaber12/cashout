@@ -5,17 +5,17 @@ from .models.instant_transactions import InstantTransaction
 
 class InstantTransactionAdmin(admin.ModelAdmin):
 
-    list_display = ['uid', 'from_user', 'anon_sender', 'anon_recipient', 'status', 'created_at']
-    search_fields = ['uid', 'from_user', 'anon_sender', 'anon_recipient', 'status', 'created_at']
-    readonly_fields = ['uid', 'status', 'from_user', 'anon_sender', 'anon_recipient', 'amount', 'created_at', 'failure_reason']
+    default_fields = ['uid', 'from_user', 'anon_sender', 'anon_recipient', 'status']
+    fields =  default_fields + ['amount', 'failure_reason']
+    list_display = default_fields + ['created_at']
+    search_fields = list_display
+    readonly_fields = ['uid', 'created_at']
     ordering = ['-created_at']
 
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + self.fields
+        return self.readonly_fields
 
-    # ToDo - Adding last_success transactions, last_fail_transactions
-    # actions = ['last_success_transactions']
-    # def last_success_transactions(self, request, queryset):
-    #     queryset.filter(status="S")
-    #
-    # last_success_transactions.short_description = "Return the last succeeded transactions"
 
 admin.site.register(InstantTransaction, InstantTransactionAdmin)

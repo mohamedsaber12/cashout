@@ -1,6 +1,5 @@
-from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.db import models
-from django.db.models.signals import pre_save
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractTimeStamp
@@ -11,16 +10,30 @@ class Budget(AbstractTimeStamp):
     Model for checking budget before executing disbursement
     """
 
+    max_amount = models.IntegerField(_("Max Allowed Amount"), default=0, null=False, blank=False)
+    disbursed_amount = models.IntegerField(_("Disbursed Amount"), default=0, null=False, blank=False)
+    total_disbursed_amount = models.IntegerField(
+            _("Total Previously Disbursed Amount"),
+            default=0,
+            null=False,
+            blank=False
+    )
     disburser = models.OneToOneField(
-            get_user_model(),
+            settings.AUTH_USER_MODEL,
             on_delete=models.CASCADE,
             related_name='budget',
             verbose_name=_("Disburser"),
             help_text=_("Before every cashin transaction, "
                         "amount to be disbursed will be validated against this checker's budget limit")
     )
-    max_amount = models.IntegerField(_("Max Allowed Amount"), default=0, null=False, blank=False)
-    disbursed_amount = models.IntegerField(_("Disbursed Amount"), default=0, null=False, blank=False)
+    created_by = models.ForeignKey(
+            "users.SuperAdminUser",
+            on_delete=models.CASCADE,
+            null=True,
+            related_name='budget_creator',
+            verbose_name=_("Maintainer Admin"),
+            help_text=_("Admin who created/updated this budget values")
+    )
 
     class Meta:
         verbose_name = "Allowed Budget"
@@ -37,9 +50,9 @@ class Budget(AbstractTimeStamp):
         :param amount_to_be_disbursed: Amount to be disbursed at the currently running transaction
         :return: True/False
         """
-        new_amount = self.disbursed_amount + amount_to_be_disbursed
+        new_amount = int(self.disbursed_amount) + int(amount_to_be_disbursed)
 
-        if not new_amount <= self.max_amount:
+        if not int(new_amount) <= int(self.max_amount):
             return False
         return True
 
@@ -52,10 +65,7 @@ class Budget(AbstractTimeStamp):
         if not self.within_threshold(amount):
             return False
 
-        self.disbursed_amount += amount
+        self.total_disbursed_amount += int(amount)
+        self.disbursed_amount += int(amount)
         self.save()
         return True
-
-
-def budget_pre_save_receiver(instance, *args, **kwargs):
-    pass

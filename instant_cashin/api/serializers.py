@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .validators import fees_validator, issuer_validator, msisdn_validator, user_budget_validator
+from .validators import fees_validator, issuer_validator, msisdn_validator
 
 
 class InstantUserInquirySerializer(serializers.Serializer):
@@ -17,7 +17,7 @@ class InstantDisbursementSerializer(serializers.Serializer):
     Serializes instant disbursement requests
     """
     msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
-    amount = serializers.IntegerField(required=True, validators=[user_budget_validator])
+    amount = serializers.IntegerField(required=True)
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
     fees = serializers.CharField(
             max_length=4, required=False, allow_blank=True, allow_null=True, validators=[fees_validator]

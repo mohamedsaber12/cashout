@@ -10,16 +10,24 @@ class InstantTransactionAdmin(admin.ModelAdmin):
     """
 
     default_fields = ['uid', 'from_user', 'anon_sender', 'anon_recipient', 'status']
-    fields =  default_fields + ['amount', 'failure_reason']
     list_display = default_fields + ['created_at']
+    readonly_fields = default_fields + ['uid', 'created_at']
     search_fields = list_display
-    readonly_fields = ['uid', 'created_at']
     ordering = ['-created_at']
 
-    def get_readonly_fields(self, request, obj=None):
-        if obj:
-            return self.readonly_fields + self.fields
-        return self.readonly_fields
+    fieldsets = (
+        (None, {'fields': ('from_user', )}),
+        (_('Transaction Details'), {'fields': ('uid', 'status', 'anon_sender', 'anon_recipient', 'created_at')}),
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 class BudgetAdmin(admin.ModelAdmin):
@@ -29,12 +37,13 @@ class BudgetAdmin(admin.ModelAdmin):
 
     list_display = ['disburser', 'created_by', 'total_disbursed_amount', 'disbursed_amount', 'max_amount', 'updated_at']
     readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by']
+    search_fields = ['disburser', 'created_by']
     ordering = ['-updated_at']
 
     fieldsets = (
-        (_("Users Details"), {'fields': ('disburser', 'created_by')}),
-        (_("Budget Amount Details"), {'fields': ('total_disbursed_amount', 'max_amount', 'disbursed_amount')}),
-        (_("Important Dates"), {'fields': ('updated_at', 'created_at')})
+        (_('Users Details'), {'fields': ('disburser', 'created_by')}),
+        (_('Budget Amount Details'), {'fields': ('total_disbursed_amount', 'max_amount', 'disbursed_amount')}),
+        (_('Important Dates'), {'fields': ('updated_at', 'created_at')})
     )
 
     def get_readonly_fields(self, request, obj=None):

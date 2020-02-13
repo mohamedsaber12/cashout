@@ -149,9 +149,12 @@ class InstantDisbursementAPIView(views.APIView):
                     from_user=request.user, anon_sender=data_dict['MSISDN'], anon_recipient=data_dict['MSISDN2'],
                     status="F", amount=data_dict['AMOUNT']
             )
+            if not request.user.budget.within_threshold(serializer.validated_data['amount']):
+                msg = _("Sorry, the amount to be disbursed exceeds you budget limit.")
+                raise ValidationError(msg)
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
-        except (TimeoutError, ImproperlyConfigured, Exception) as e:
+        except (TimeoutError, ImproperlyConfigured, ValidationError, Exception) as e:
             log_msg = e.args
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content
@@ -170,11 +173,12 @@ class InstantDisbursementAPIView(views.APIView):
         if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
             logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[INSTANT CASHIN]", log_msg)
             transaction.mark_successful()
+            request.user.budget.update_disbursed_amount(data_dict['AMOUNT'])
             return Response({"disbursement_status": "success"}, status=status.HTTP_200_OK)
 
         logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED INSTANT CASHIN]", log_msg)
         if transaction:
-            transaction.failure_reason = json_inquiry_response["MESSAGE"]   # Pass the full failure reason
+            transaction.failure_reason = json_inquiry_response["MESSAGE"]   # Save the full failure reason
             transaction.save()
         return Response({
             "disbursement_status": "failed",

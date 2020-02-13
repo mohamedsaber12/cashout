@@ -49,16 +49,3 @@ def fees_validator(fees):
         raise serializers.ValidationError(msg)
 
     return fees
-
-
-def user_budget_validator(amount):
-    """
-    Validate that the amount to be disbursed by this user doesn't exceed his/her account available budget
-    :param amount: the amount to be disbursed/cashed in
-    :return:
-    """
-    if amount > 1000:       # To be updated after creating the budget model
-        msg = _("Sorry, the amount to be disbursed is exceed you budget limit, please contact your service provider")
-        raise serializers.ValidationError(msg)
-
-    return amount

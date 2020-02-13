@@ -17,7 +17,7 @@ class Budget(AbstractTimeStamp):
             related_name='budget',
             verbose_name=_("Disburser"),
             help_text=_("Before every cashin transaction, "
-                        "amount to be disbursed will be validated against checker's budget limit")
+                        "amount to be disbursed will be validated against this checker's budget limit")
     )
     max_amount = models.IntegerField(_("Max Allowed Amount"), default=0, null=False, blank=False)
     disbursed_amount = models.IntegerField(_("Disbursed Amount"), default=0, null=False, blank=False)

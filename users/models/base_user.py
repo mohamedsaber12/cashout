@@ -21,6 +21,7 @@ TYPES = (
     (4, 'Uploader'),        # collection only
     (5, 'UpMaker'),         # maker and uploader
     (6, 'InstantAPIChecker'),
+    (7, 'InstantAPIViewer'),
 )
 
 
@@ -77,7 +78,7 @@ class User(AbstractUser):
     @property
     def can_view_docs(self):
         """Check if the user has the permission to view the API documentation"""
-        if self.has_perm('users.can_view_api_docs'):
+        if self.is_instantapiviewer or self.has_perm('users.can_view_api_docs'):
             return True
         return False
 
@@ -148,6 +149,10 @@ class User(AbstractUser):
     @cached_property
     def is_instantapichecker(self):
         return self.user_type == 6
+
+    @cached_property
+    def is_instantapiviewer(self):
+        return self.user_type == 7
 
     @cached_property
     def get_full_name(self):

@@ -703,7 +703,7 @@ def login_view(request):
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request=request, username=username, password=password)
-        if user:
+        if user and not user.is_instantapichecker:
             if user.is_active:
                 login(request, user)
                 LOGIN_LOGGER.debug(f"User: {request.user.username} Logged In from IP Address {get_client_ip(request)}")
@@ -719,6 +719,10 @@ def login_view(request):
                 FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
                 Failed Attempt from non active user with username: {username} and IP Addr {get_client_ip(request)}""")
                 return HttpResponse("Your account has been disabled")
+        elif user.is_instantapichecker:
+            FAILED_LOGIN_LOGGER.debug(f"""[API USER LOGIN ATTEMPT]
+            Failed Attempt from instant API user with username: {username} and IP Addr {get_client_ip(request)}""")
+            return render(request, 'data/login.html', {'error_invalid': "You're not permitted to login."})
         else:
             # Bad login details were provided. So we can't log the user in.
             FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]

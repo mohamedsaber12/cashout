@@ -17,7 +17,9 @@ class InstantTransactionAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {'fields': ('from_user', )}),
-        (_('Transaction Details'), {'fields': ('uid', 'status', 'anon_sender', 'anon_recipient', 'created_at')}),
+        (_('Transaction Details'), {
+            'fields': ('uid', 'status', 'anon_sender', 'anon_recipient', 'created_at', 'failure_reason')
+        }),
     )
 
     def has_add_permission(self, request):

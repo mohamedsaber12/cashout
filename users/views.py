@@ -429,11 +429,12 @@ class Clients(SuperRequiredMixin, ListView):
 
 
 class InstantTransactionsView(InstantReviewerRequiredMixin, ListView):
-    """View for displaying instant transactions"""
-    # ToDo: Implement the pagination at the corresponding template
+    """
+    View for displaying instant transactions
+    """
     model = InstantTransaction
-    paginate_by = 15
     context_object_name = 'transactions'
+    paginate_by = 13
     template_name = 'users/instant_viewer.html'
     queryset = InstantTransaction.objects.all()
 

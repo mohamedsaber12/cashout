@@ -13,7 +13,8 @@ from django.utils.translation import ugettext_lazy
 from data.utils import get_client_ip
 
 from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
-from .models import CheckerUser, Client, InstantAPICheckerUser, MakerUser, RootUser, SuperAdminUser, User
+from .models import (CheckerUser, Client, InstantAPICheckerUser, InstantAPIViewerUser, MakerUser,
+                     RootUser, SuperAdminUser, User)
 
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -170,8 +171,11 @@ class UserAccountAdmin(UserAdmin):
             return request.user.brothers()
 
 
-class MakerAdmin(UserAccountAdmin):
-    add_form = MakerCreationAdminForm
+class BaseChildAdmin(UserAccountAdmin):
+    """
+    Base Child Admin Class to be inherited by all of children
+    """
+    logged_user_type = 'Child'
 
     def save_model(self, request, obj, form, change):
         # TODO : FIX Parent hierarchy
@@ -181,58 +185,47 @@ class MakerAdmin(UserAccountAdmin):
             obj.hierarchy = request.user.hierarchy
 
         if obj.pk is not None:
-            MODIFIED_USERS_LOGGER.debug(f"""[Maker User Modified]
+            MODIFIED_USERS_LOGGER.debug(f"""[{self.logged_user_type.capitalize()} User Modified]
             User: {request.user.username}
             Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
 
         else:
-            CREATED_USERS_LOGGER.debug(f"""[Maker User Created]
+            CREATED_USERS_LOGGER.debug(f"""[{self.logged_user_type} User Created]
             User: {request.user.username}
-            Created new maker with username: {obj.username}""")
+            Created new {self.logged_user_type.lower()} with username: {obj.username}""")
         obj.save()
 
 
-class CheckerAdmin(UserAccountAdmin):
+class MakerAdmin(BaseChildAdmin):
+    """
+    Manages makers from the admin panel
+    """
+    add_form = MakerCreationAdminForm
+    logged_user_type = 'Maker'
+
+
+class CheckerAdmin(BaseChildAdmin):
+    """
+    Manages checkers from the admin panel
+    """
     add_form = CheckerCreationAdminForm
-
-    def save_model(self, request, obj, form, change):
-        # TODO : FIX Parent hierarchy
-        if request.user.is_superuser:
-            obj.hierarchy = form.cleaned_data['parent'].hierarchy
-        else:
-            obj.hierarchy = request.user.hierarchy
-
-        if obj.pk is not None:
-            MODIFIED_USERS_LOGGER.debug(f"""[Checker User Modified]
-            User: {request.user.username}
-            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
-        else:
-            CREATED_USERS_LOGGER.debug(f"""[Checker User Created]
-            User: {request.user.username}
-            Created new checker with username: {obj.username}""")
-        obj.save()
+    logged_user_type = 'Checker'
 
 
-class InstantAPICheckerAdmin(UserAccountAdmin):
+class InstantAPICheckerAdmin(BaseChildAdmin):
+    """
+    Manages instant api checkers from the admin panel
+    """
     add_form = MakerCreationAdminForm
+    logged_user_type = 'Instant API Checker'
 
-    def save_model(self, request, obj, form, change):
-        # TODO : FIX Parent hierarchy
-        if request.user.is_superuser:
-            obj.hierarchy = form.cleaned_data['parent'].hierarchy
-        else:
-            obj.hierarchy = request.user.hierarchy
 
-        if obj.pk is not None:
-            MODIFIED_USERS_LOGGER.debug(f"""[Instant Checker User Modified]
-            User: {request.user.username}
-            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
-
-        else:
-            CREATED_USERS_LOGGER.debug(f"""[Instant Checker User Created]
-            User: {request.user.username}
-            Created new maker with username: {obj.username}""")
-        obj.save()
+class InstantAPIViewerAdmin(BaseChildAdmin):
+    """
+    Manages instant api viewers from the admin panel
+    """
+    add_form = MakerCreationAdminForm
+    logged_user_type = 'Instant API Viewer'
 
 
 class RootCreationAdminForm(RootCreationForm):
@@ -294,10 +287,11 @@ class SuperAdmin(UserAccountAdmin):
         super(SuperAdmin, self).save_model(request, obj, form, change)
 
 
+admin.site.register(SuperAdminUser, SuperAdmin)
 admin.site.register(RootUser, RootAdmin)
 admin.site.register(MakerUser, MakerAdmin)
 admin.site.register(CheckerUser, CheckerAdmin)
-admin.site.register(SuperAdminUser, SuperAdmin)
-admin.site.register(User)
-admin.site.register(Client)
 admin.site.register(InstantAPICheckerUser, InstantAPICheckerAdmin)
+admin.site.register(InstantAPIViewerUser, InstantAPIViewerAdmin)
+admin.site.register(Client)
+admin.site.register(User)

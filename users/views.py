@@ -34,7 +34,7 @@ from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
                     MakerCreationForm, MakerMemberFormSet, OTPTokenForm,
                     PasswordChangeForm, ProfileEditForm, RootCreationForm,
                     SetPasswordForm, UploaderMemberFormSet)
-from .mixins import (CollectionRootRequiredMixin,
+from .mixins import (CollectionRootRequiredMixin, InstantReviewerRequiredMixin,
                      DisbursementRootRequiredMixin, RootRequiredMixin,
                      SuperFinishedSetupMixin, SuperRequiredMixin)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup, UploaderUser, User)
@@ -428,7 +428,7 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
-class InstantTransactionsView(ListView):
+class InstantTransactionsView(InstantReviewerRequiredMixin, ListView):
     """View for displaying instant transactions"""
     # ToDo: Implement the pagination at the corresponding template
     model = InstantTransaction

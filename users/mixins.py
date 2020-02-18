@@ -55,3 +55,13 @@ class SuperFinishedSetupMixin(LoginRequiredMixin):
         if not request.user.has_uncomplete_entity_creation():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
+
+
+class InstantReviewerRequiredMixin(LoginRequiredMixin):
+    """
+    Prevent non logged-in or non instant-viewer users from accessing instant transactions.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_authenticated and request.user.is_instantapiviewer):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)

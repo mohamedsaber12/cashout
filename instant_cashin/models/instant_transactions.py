@@ -40,8 +40,6 @@ class InstantTransaction(AbstractBaseTransaction):
             _("Failure reason"), blank=True, null=True, help_text=_("Empty if transaction status is Successful"))
 
     # Not needed fields
-    updated_at = None
-    TRANSACTION_TYPE_CHOICES = None
     to_user = None
     external_reference_1 = None
     external_reference_2 = None

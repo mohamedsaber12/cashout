@@ -26,6 +26,7 @@ from data.forms import CollectionDataForm, FileCategoryFormSet, FormatFormSet
 from data.models import FileCategory, Format
 from data.utils import get_client_ip
 from disb.forms import PinForm
+from instant_cashin.models import InstantTransaction
 
 from .decorators import root_or_superadmin
 from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
@@ -427,6 +428,31 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
+class InstantTransactionsView(ListView):
+    """View for displaying instant transactions"""
+    # ToDo: Implement the pagination at the corresponding template
+    model = InstantTransaction
+    paginate_by = 15
+    context_object_name = 'transactions'
+    template_name = 'users/instant_viewer.html'
+    queryset = InstantTransaction.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        queryset.filter(from_user__hierarchy=self.request.user.hierarchy)
+
+        # Handle search keywords if any
+        if self.request.GET.get('search'):
+            search_keys = self.request.GET.get('search')
+            queryset.filter(
+                    Q(uid__iexact=search_keys)|
+                    Q(anon_recipient__iexact=search_keys)|
+                    Q(failure_reason__icontains=search_keys)
+            )
+
+        return queryset
+
+
 class LevelsView(LevelsFormView):
     """ View for adding levels """
     template_name = 'users/add_levels.html'
@@ -714,6 +740,10 @@ def login_view(request):
 
                 if user.is_upmaker or (user.is_root and user.data_type() == 3):
                     return HttpResponseRedirect(reverse('users:redirect'))
+
+                if user.is_instantapiviewer:
+                    return HttpResponseRedirect(reverse('users:instant_transactions'))
+
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
                 FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]

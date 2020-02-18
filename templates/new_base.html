@@ -12,8 +12,10 @@
             {% else %}
                 {% if current_status == 'collection' %}
                   {% include "collection-sidebar.html" %}
-                {%else%}
+                {% elif current_status == 'disbursement' %}
                   {% include "disbursement-sidebar.html" %}
+                {% else %}
+                  {% include "instant_api_sidebar.html" %}
                 {%endif%}  
             {% endif %}
         </div>

@@ -28,6 +28,10 @@ super_and_root_urls = [
     path('settings/branding/', views.EntityBranding.as_view(), name='entity_branding'),
 ]
 
+instant_api_urls = [
+    path('instant-transactions/', views.InstantTransactionsView.as_view(), name='instant_transactions'),
+]
+
 disbursement_setups_urls = [
     path('setting-up/disbursement-pin', views.PinFormView.as_view(), name='setting-disbursement-pin'),
     path('setting-up/disbursement-makers', views.MakerFormView.as_view(), name='setting-disbursement-makers'),
@@ -65,5 +69,6 @@ urlpatterns = [
 urlpatterns += collection_setups_urls
 urlpatterns += client_urls
 urlpatterns += super_and_root_urls
+urlpatterns += instant_api_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += password_handling_urls

@@ -5,7 +5,7 @@ import requests
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ImproperlyConfigured
 from django.shortcuts import get_object_or_404
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
 from rest_framework import status, views
@@ -23,8 +23,8 @@ INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
 
-INTERNAL_ERROR_MSG = "Process stopped during an internal error, can you try again or contact your support team."
-EXTERNAL_ERROR_MSG = "Process stopped during an external error, can you try again or contact your support team."
+INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team.")
+EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
 
 
 class InstantUserInquiryAPIView(views.APIView):
@@ -154,7 +154,15 @@ class InstantDisbursementAPIView(views.APIView):
                 raise ValidationError(msg)
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
-        except (TimeoutError, ImproperlyConfigured, ValidationError, Exception) as e:
+        except ValidationError as e:
+            if transaction:
+                transaction.failure_reason = e.args
+                transaction.save()
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", e.args)
+            return Response({
+                "disbursement_status": "failed", "status_description": e.args
+            }, status=status.HTTP_200_OK)
+        except (TimeoutError, ImproperlyConfigured, Exception) as e:
             log_msg = e.args
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content

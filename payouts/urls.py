@@ -31,9 +31,6 @@ else:
 
     handler401 = 'payouts.views.unauthorized_view'
 
-oauth2_provider_urls = [
-    path('api/secure/o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-]
 
 urlpatterns += [    
     path('i18n/', include('django.conf.urls.i18n')),
@@ -48,6 +45,5 @@ urlpatterns += [
     path('api/secure/', include('instant_cashin.api.urls', namespace='instant_api')),
 ]
 
-urlpatterns += oauth2_provider_urls
 urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)

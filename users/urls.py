@@ -1,7 +1,9 @@
 from django.contrib.auth import views as django_auth_views
 from django.urls import path
 
-from users import views
+from oauth2_provider import views as oauth2_views
+
+from . import views
 
 
 app_name = 'users'
@@ -56,6 +58,10 @@ password_handling_urls = [
          name='password_reset_complete'),
 ]
 
+oauth2_provider_urls = [
+    path("api/secure/o/token/", oauth2_views.TokenView.as_view(), name="oauth2_token"),
+]
+
 urlpatterns = [
     path('user/login/', views.login_view, name='user_login_view'),
     path('user/logout/', views.ourlogout, name='logout'),
@@ -72,3 +78,4 @@ urlpatterns += super_and_root_urls
 urlpatterns += instant_api_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += password_handling_urls
+urlpatterns += oauth2_provider_urls

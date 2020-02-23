@@ -7,6 +7,10 @@
 * [Generate and Refresh Token API Endpoint](#generate-and-refresh-token-api-endpoint)
     * [Request](#request)
     * [Response](#response)
+* [User Inquiry API Endpoint](#user-inquiry-api-endpoint)
+    * [Headers](#headers)
+    * [Request](#request)
+    * [Response](#response)
 * [Instant Cashin API Endpoint](#instant-cashin-api-endpoint)
     * [Headers](#headers)
     * [Request](#request)
@@ -72,7 +76,7 @@
     
     2.2 Using [HTTPie](https://httpie.org/) tool
     
-        http -v -f https://{CLIENT_ID}:{CLIENT_SECRET}@{ENV}/o/token/ grant_type=refresh_token refresh_token={REFRESH_TOKEN}
+        http -v -f https://{CLIENT_ID}:{CLIENT_SECRET}@{ENV}/o/token/ grant_type={refresh_token} refresh_token={REFRESH_TOKEN}
 
 #### Response
 1. **Response Parameters**
@@ -93,6 +97,53 @@
     "refresh_token": "Y23rwVNSRtLjhy2nIwslJdo3FbAS6d",
     "scope": "read write {OTHER_SCOPES}",
     "token_type": "Bearer"
+}
+```
+
+
+## User Inquiry API Endpoint
+
+|  Environment	| API location source  	|   HTTP Method	| Content Type	|
+|---	        |---	                |---	        |---	        |
+|     {ENV}     |   ^inquire-user/      |      POST     |     JSON      |
+
+#### Headers
+```
+{
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {ACCESS_TOKEN}"
+}
+```
+
+#### Request
+* **Usage:** 
+    * **{issuer}** must be sent as *"VodafoneCash"* till further update
+    * **{unique_identifier}** is any unique identifier for the device being hit the user inquiry request, like *IMEI*
+
+1. **Request Parameters**
+
+    |  Field	        |    M/O  	|    Type    |
+    |---	            |---	    |---	     |
+    | msisdn            |    M      |   String   |
+    | issuer            |    M	    |   String   |
+    | unique_identifier |    M	    |   String   |
+
+#### Response
+    **Usage:** 
+        * **{next_trial}** is the next time -in seconds- you can inquire for a user, it'll be time exponential and ratelimited per device
+
+1. **Response Parameters**
+
+    |  Field          |    Type    |
+    |---              |---	       |
+    |  wallet_status  |   String   |
+    |  next_trial     |   String   |
+
+2. **Sample**
+```
+{
+    "wallet_status": "valid vodafone-cash wallet",
+    "next_trial": "300"
 }
 ```
 
@@ -136,6 +187,7 @@
 ```
 {
     "disbursement_status": "success",
+    "status_description": "",
 }
 ```
 
@@ -143,14 +195,7 @@
 ```
 {
     "disbursement_status": "failed",
-    "status_description": "Sorry, the amount to be disbursed exceeds you budget limit."
-}
-```
-
-```
-{
-    "disbursement_status": "failed",
-    "status_description": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش"
+    "status_description": "the amound to be disbursed exceeds your budget, please contact your service provider",
 }
 ```
 

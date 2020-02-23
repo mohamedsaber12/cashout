@@ -17,6 +17,7 @@ from disb.models import VMTData
 from ..utils import get_from_env, logging_message
 from .serializers import InstantUserInquirySerializer, InstantDisbursementSerializer
 from ..models.instant_transactions import InstantTransaction
+from .mixins import IsInstantAPICheckerUser
 
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
@@ -98,11 +99,10 @@ class InstantUserInquiryAPIView(views.APIView):
 
 class InstantDisbursementAPIView(views.APIView):
     """
-
     Handles instant disbursement/cash_in POST requests
     """
 
-    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope]
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
 
     def root_corresponding_pin(self, instant_user, serializer):
         """

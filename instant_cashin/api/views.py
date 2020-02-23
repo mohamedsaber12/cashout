@@ -58,7 +58,7 @@ class InstantUserInquiryAPIView(views.APIView):
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR - USER INQUIRY]", serializer.errors)
-            return Response({"Validation Error": e.args}, status.HTTP_400_BAD_REQUEST)
+            return Response({"Validation Error": e.args[0]}, status.HTTP_400_BAD_REQUEST)
 
         try:
             instant_user = get_object_or_404(get_user_model(), username=request.user.username)
@@ -66,7 +66,7 @@ class InstantUserInquiryAPIView(views.APIView):
             data_dict = vmt_data.return_vmt_data(VMTData.USER_INQUIRY)
             data_dict['USERS'] = [serializer.validated_data["msisdn"]]       # It must be a list
         except Exception as e:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - USER INQUIRY]", e.args)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - USER INQUIRY]", e.args[0])
             return self.custom_response(
                head="Internal Error", head_message=INTERNAL_ERROR_MSG, status_code=status.HTTP_424_FAILED_DEPENDENCY
             )
@@ -79,7 +79,7 @@ class InstantUserInquiryAPIView(views.APIView):
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
         except (TimeoutError, ImproperlyConfigured, Exception) as e:
-            log_msg = e.args
+            log_msg = e.args[0]
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - USER INQUIRY]", log_msg)
@@ -126,7 +126,7 @@ class InstantDisbursementAPIView(views.APIView):
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR - INSTANT CASHIN]", serializer.errors)
-            return Response({"Validation Error": e.args}, status.HTTP_400_BAD_REQUEST)
+            return Response({"Validation Error": e.args[0]}, status.HTTP_400_BAD_REQUEST)
 
         try:
             instant_user = get_object_or_404(get_user_model(), username=request.user.username)
@@ -137,7 +137,7 @@ class InstantDisbursementAPIView(views.APIView):
             data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
             data_dict['PIN'] = self.root_corresponding_pin(instant_user, serializer)
         except Exception as e:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - INSTANT CASHIN]", e.args)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - INSTANT CASHIN]", e.args[0])
             return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_424_FAILED_DEPENDENCY)
 
         try:
@@ -156,14 +156,14 @@ class InstantDisbursementAPIView(views.APIView):
             json_inquiry_response = inquiry_response.json()
         except ValidationError as e:
             if transaction:
-                transaction.failure_reason = e.args
+                transaction.failure_reason = e.args[0]
                 transaction.save()
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", e.args)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[Validation Error - INSTANT CASHIN]", e.args[0])
             return Response({
-                "disbursement_status": "failed", "status_description": e.args
+                "disbursement_status": "failed", "status_description": e.args[0]
             }, status=status.HTTP_200_OK)
         except (TimeoutError, ImproperlyConfigured, Exception) as e:
-            log_msg = e.args
+            log_msg = e.args[0]
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content
             if transaction:

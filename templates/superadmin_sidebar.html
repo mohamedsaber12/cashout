@@ -39,7 +39,12 @@
         <div class="menu_section">
             
             <ul class="nav side-menu">
-                
+                {% if request.user.can_view_docs %}
+                    <li><a href="{% url 'docs:instant_docs' path='' %}">
+                        <i class="fa fa-book"></i>{% trans 'API Documentation'%}
+                    </a></li>
+                {% endif %}
+
                 <li><a href="#"><i class="fa fa-home"></i> {% trans 'Dashboard' %}</a>
                 </li>
                 

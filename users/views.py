@@ -722,6 +722,8 @@ def login_view(request):
     Checkers must do two factor authentication every login but makers don't.
     Non active users can't login.
     """
+    user = None
+
     if request.user.is_authenticated:
         if request.user.is_checker:
             return HttpResponseRedirect(reverse('two_factor:profile'))
@@ -750,7 +752,7 @@ def login_view(request):
                 FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
                 Failed Attempt from non active user with username: {username} and IP Addr {get_client_ip(request)}""")
                 return HttpResponse("Your account has been disabled")
-        elif user.is_instantapichecker:
+        elif user is not None and user.is_instantapichecker:
             FAILED_LOGIN_LOGGER.debug(f"""[API USER LOGIN ATTEMPT]
             Failed Attempt from instant API user with username: {username} and IP Addr {get_client_ip(request)}""")
             return render(request, 'data/login.html', {'error_invalid': "You're not permitted to login."})

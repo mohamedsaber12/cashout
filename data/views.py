@@ -43,6 +43,8 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 def redirect_home(request):
     if request.user.is_superuser:
         return redirect(reverse('admin:index'))
+    if request.user.is_instantapiviewer:
+        return redirect(reverse('users:instant_transactions'))
     status = request.user.get_status(request)
     return redirect(f'data:{status}_home')
 

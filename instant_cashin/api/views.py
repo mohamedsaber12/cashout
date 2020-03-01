@@ -12,6 +12,7 @@ from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
+from data.utils import get_client_ip
 from disb.models import VMTData
 
 from ..utils import get_from_env, logging_message
@@ -75,7 +76,8 @@ class InstantUserInquiryAPIView(views.APIView):
         try:
             logging_message(
                     INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - USER INQUIRY]",
-                    f"Data dictionary: {data_dict}, vmt_env used: {vmt_data.vmt_environment}"
+                    f"{request.method}: {request.path}, from Ip Address: {get_client_ip(request)}, "
+                    f"vmt_env used: {vmt_data.vmt_environment}\n\tData dictionary: {data_dict}"
             )
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
@@ -143,7 +145,8 @@ class InstantDisbursementAPIView(views.APIView):
         try:
             logging_message(
                     INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
-                    f"Data dictionary: {data_dict}, vmt_env used: {vmt_data.vmt_environment}"
+                    f"{request.method}: {request.path}, from Ip Address: {get_client_ip(request)}, "
+                    f"vmt_env used: {vmt_data.vmt_environment}\n\tData dictionary: {data_dict}"
             )
             transaction = InstantTransaction.objects.create(
                     from_user=request.user, anon_sender=data_dict['MSISDN'], anon_recipient=data_dict['MSISDN2'],

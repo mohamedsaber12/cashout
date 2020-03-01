@@ -87,26 +87,22 @@
 
 2. **Sample**
 
-> Generate or Refresh token response
+    * > Generate or Refresh token response
 
-```
-{
-    "access_token": "Df0Z0r74hxZmO47mo9QnRrncVJIGU6",
-    "expires_in": 3600,
-    "refresh_token": "Y23rwVNSRtLjhy2nIwslJdo3FbAS6d",
-    "scope": "read write {OTHER_SCOPES}",
-    "token_type": "Bearer"
-}
-```
+            {
+                "access_token": "Df0Z0r74hxZmO47mo9QnRrncVJIGU6",
+                "expires_in": 3600,
+                "refresh_token": "Y23rwVNSRtLjhy2nIwslJdo3FbAS6d",
+                "scope": "read write {OTHER_SCOPES}",
+                "token_type": "Bearer"
+            }
 
-> Parameters not passed properly
+    * > Parameters not passed properly
 
-```
-{
-    "error": "invalid_grant",
-    "error_description": "Invalid credentials given."
-}
-```
+            {
+                "error": "invalid_grant",
+                "error_description": "Invalid credentials given."
+            }
 
 ## Instant Cashin API Endpoint
 
@@ -144,60 +140,50 @@
 
 2. **Sample**
 
-> Success disbursement
+    * > Success disbursement
+    
+            {
+                "disbursement_status": "success",
+                "status_description": "",
+                "status_code": "200"
+            }
 
-```
-{
-    "disbursement_status": "success",
-    "status_description": "",
-    "status_code": "200"
-}
-```
+    * > Token is expired
+    
+            {
+                "disbursement_status": "failed",
+                "status_description": "Authentication credentials were not provided.",
+                "status_code": "401"
+            }
 
-> Token is expired
+    * > Parameters didn't pass validations
+    
+            {
+                "disbursement_status": "failed",
+                "status_description": {
+                    "amount": [
+                        "This field is required."
+                    ],
+                    "msisdn": [
+                        "This field is required."
+                    ]
+                },
+                "status_code": "400"
+            }
 
-```
-{
-    "disbursement_status": "failed",
-    "status_description": "Authentication credentials were not provided.",
-    "status_code": "401"
-}
-```
+    * > Sample of failure cases
+    
+            {
+                "disbursement_status": "failed",
+                "status_description": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش",
+                "status_code": "618"
+            }
 
-> Parameters didn't pass validations
-
-```
-{
-    "disbursement_status": "failed",
-    "status_description": {
-        "amount": [
-            "This field is required."
-        ],
-        "msisdn": [
-            "This field is required."
-        ]
-    },
-    "status_code": "400"
-}
-```
-
-> Sample of failure cases
-
-```
-{
-    "disbursement_status": "failed",
-    "status_description": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش",
-    "status_code": "618"
-}
-```
-
-```
-{
-    "disbursement_status": "failed",
-    "status_description": "Sorry, the amount to be disbursed exceeds you budget limit.",
-    "status_code": "6061"
-}
-```
+            {
+                "disbursement_status": "failed",
+                "status_description": "Sorry, the amount to be disbursed exceeds you budget limit.",
+                "status_code": "6061"
+            }
 
 
 ## General Responses

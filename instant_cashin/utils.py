@@ -1,5 +1,8 @@
-from django.utils.translation import gettext_lazy as _
 from environ import ImproperlyConfigured
+
+from django.utils.translation import gettext_lazy as _
+
+from rest_framework.response import Response
 
 from payouts.utils import get_dot_env
 
@@ -25,3 +28,31 @@ def get_from_env(key):
         raise ImproperlyConfigured(f"{key} does not exist at your .env file")
 
     return environment_vars_dict.str(key)
+
+
+def default_response_structure(disbursement_status="failed",
+                               status_description="",
+                               field_status_code=None,
+                               response_status_code=None):
+    """
+    This function uniforms the response's body structure
+    :param disbursement_status: failed or success, default is failed
+    :param status_description: failure reason if any
+    :param field_status_code: status code returned as a string field within the response body
+    :param response_status_code: the response's status code returned at the response header
+    :return:
+    """
+    if not field_status_code:
+        field_status_code = response_status_code
+
+    if not response_status_code:
+        response_status_code = field_status_code
+
+    return Response(
+            {
+                "disbursement_status": disbursement_status,
+                "status_description": status_description,
+                "status_code": str(field_status_code)
+            },
+            status=response_status_code
+    )

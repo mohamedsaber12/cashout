@@ -122,6 +122,7 @@
 1. **Request Parameters**
     * **Usage:** 
         * **{fees}** would be one of {Full}, {Half} or {No}
+        * **{issuer}** would be one of {AMAN}, {VODAFONE_CASH}, {ETISALAT_CASH} or {ORANGE_CASH}
 
     |  Field   |   M/O  |    Type    |
     |---	   |---	    |---	     |
@@ -129,6 +130,7 @@
     | amount   |   M    |   String   |
     | pin      |   O    |   String   |
     | fees     |   O    |   String   |
+    | issuer   |   O    |   String   |
 
 #### Response
 1. **Response Parameters**

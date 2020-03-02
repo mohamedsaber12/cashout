@@ -94,6 +94,9 @@ class User(AbstractUser):
         if self.is_root:
             return self
         else:
+            # ToDo
+            # return statement doesn't work properly at superadmin calls,
+            #   because superadmin hierarchy is always 0 so it won't match any other incremented root's hierarchy
             from users.models import RootUser
             return RootUser.objects.get(hierarchy=self.hierarchy)
 

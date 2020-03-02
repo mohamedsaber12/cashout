@@ -45,7 +45,23 @@ def fees_validator(fees):
     fees_values = ["Full", "Half", "No fees"]
 
     if fees is not None and fees not in fees_values:
-        msg = _("The fee flag passed to be applied is incorrect, please pass on of ['Full', 'Half', 'No fees']")
+        msg = _("The fee flag passed to be applied is incorrect, please pass one of ['Full', 'Half', 'No fees']")
         raise serializers.ValidationError(msg)
 
     return fees
+
+
+def cashin_issuer_validator(issuer):
+    """
+    Validate that the cashin issuer being used is one of the valid issuers
+    :param issuer: The way that the consumer will use
+    :return: If valid it just will return the passed issuer value if not it'll raise validation error
+    """
+    cashin_valid_issuers_list = ["VODAFONE_CASH", "ETISALAT_CASH", "ORANGE_CASH", "AMAN"]
+
+    if issuer is not None and issuer not in cashin_valid_issuers_list:
+        msg = _("The passed issuer is not valid, please make sure that the passed issuer value is from this list"
+                " ['VODAFONE_CASH', 'ETISALAT_CASH', 'ORANGE_CASH', 'AMAN'] and try again!")
+        raise serializers.ValidationError(msg)
+
+    return issuer

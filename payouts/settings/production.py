@@ -33,8 +33,7 @@ EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
 # Email Reporting
 ADMINS = [
     ('Mohamed Mamdouh', 'mohamedmamdouh@paymobsolutions.com'),
-    ('Omar Elraies', 'omarelraies@paymobsolutions.com'),
-    ('Hesham Sayed', 'heshamsayed@paymobsolutions.com'),
+    ('Omar Nawar', 'omarnawar@paymobsolutions.com')
 ]
 
 # ssl

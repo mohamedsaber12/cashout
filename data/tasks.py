@@ -100,6 +100,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                     if not row_dict['error']:
                         row_dict['error'] = None
                     row_dict['msisdn'] = str_value.replace(" ", "")
+
         if row_dict['error'] is None:
             row_dict['status'] = 'valid'
         else:

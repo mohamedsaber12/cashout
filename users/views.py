@@ -439,11 +439,9 @@ class InstantTransactionsView(InstantReviewerRequiredMixin, ListView):
     queryset = InstantTransaction.objects.all()
 
     def get_queryset(self):
-        queryset = super().get_queryset()
-        queryset.filter(from_user__hierarchy=self.request.user.hierarchy)
+        queryset = super().get_queryset().filter(from_user__hierarchy=self.request.user.hierarchy)
 
-        # Handle search keywords if any
-        if self.request.GET.get('search'):
+        if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
             queryset.filter(
                     Q(uid__iexact=search_keys)|

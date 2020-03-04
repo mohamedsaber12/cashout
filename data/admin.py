@@ -5,12 +5,18 @@ from .models import Doc, DocReview, FileCategory
 from .models import CollectionData, Format, FileData
 
 
+class DocReviewAdmin(admin.ModelAdmin):
+    """
+    Admin class for tweaking the DocReview model at the admin panel
+    """
+    readonly_fields = ["doc", "user_created", "comment", "timestamp"]
+
+
 class FileCategoryAdmin(admin.ModelAdmin):
     form = FileCategoryForm
 
     def get_form(self, request, obj=None, **kwargs):
-        FileCategoryForm = super(FileCategoryAdmin, self).get_form(
-            request, obj=obj, **kwargs)
+        FileCategoryForm = super(FileCategoryAdmin, self).get_form(request, obj=obj, **kwargs)
         FileCategoryForm.request = request
         if obj:
             FileCategoryForm.obj = obj
@@ -56,14 +62,14 @@ class FileDataAdmin(admin.ModelAdmin):
 
 
 class FormatAdmin(admin.ModelAdmin):
-    list_filter  = ('hierarchy',)
+    list_filter = ('hierarchy',)
 
     def has_add_permission(self, request):
         return False
 
 
 # TODO: Add logs for deleting and adding any instance
-admin.site.register(DocReview)
+admin.site.register(DocReview, DocReviewAdmin)
 admin.site.register(Doc, DocAdmin)
 admin.site.register(FileCategory, FileCategoryAdmin)
 admin.site.register(Format, FormatAdmin)

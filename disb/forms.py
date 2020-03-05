@@ -31,7 +31,11 @@ class VMTDataForm(forms.ModelForm):
 
 
 class AgentForm(forms.ModelForm):
-    msisdn = forms.CharField(max_length=11,min_length=11,label=_("Mobile number"))
+    """
+    Agent form for adding new agents for newly created Admins
+    """
+    msisdn = forms.CharField(max_length=11, min_length=11, label=_("Mobile number"))
+
     class Meta:
         model = Agent
         fields = ('msisdn',)
@@ -41,19 +45,29 @@ class AgentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
     def clean_msisdn(self):
-        msisdn = self.cleaned_data.get('msisdn',None)
+        """
+        :return: Validate the passed agent mobile number against r regex (EG, 010x, 011x, 012x)
+        """
+        msisdn = self.cleaned_data.get('msisdn', None)
         if not msisdn:
             return msisdn
         import re
         r = re.compile('(201|01)[0-2|5]\d{7}')
         if not r.match(msisdn):
             raise forms.ValidationError(_("Mobile number is not valid"))
-        return msisdn    
+        return msisdn
+
 
 class PinForm(forms.Form):
-
-    pin = forms.CharField(required=True,max_length=6,min_length=6, widget=forms.PasswordInput(
-        attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Add new pin')}))
+    """
+    Pin form used by Admin to set a new pin for his/her own superagent and agent(s)
+    """
+    pin = forms.CharField(
+            required=True,
+            max_length=6,
+            min_length=6,
+            widget=forms.PasswordInput(attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Add new pin')})
+    )
 
     def __init__(self, *args, root, **kwargs):
         self.root = root
@@ -65,10 +79,14 @@ class PinForm(forms.Form):
         agent = self.agents.first()
         if agent and agent.pin:
             return None
-        return self    
+        return self
 
     def clean_pin(self):
+        """
+        :return: Validate that pin is a valid number
+        """
         pin = self.cleaned_data.get('pin')
+
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
         return pin
@@ -78,21 +96,21 @@ class PinForm(forms.Form):
         if not raw_pin:
             return False
         msisdns = list(self.agents.values_list('msisdn', flat=True))
-        if self.env.str('CALL_WALLETS','TRUE') == 'TRUE':
-            transactions,error = self.call_wallet(raw_pin, msisdns)
-            if error:
-                self.add_error('pin',error)
-                return False
-            # handle transactions list 
-            error = self.get_transactions_error(transactions)
+        if self.env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
+            transactions, error = self.call_wallet(raw_pin, msisdns)
             if error:
                 self.add_error('pin', error)
                 return False
-            
+            error = self.get_transactions_error(transactions)       # handle transactions list
+            if error:
+                self.add_error('pin', error)
+                return False
+
         self.agents.update(pin=True)
         return True
 
-    def call_wallet(self,pin,msisdns):
+    # ToDo Move call wallets to dedicated VMTData class methods
+    def call_wallet(self, pin, msisdns):
         import requests
         superadmin = self.root.client.creator
         vmt = VMTData.objects.get(vmt=superadmin)
@@ -100,8 +118,7 @@ class PinForm(forms.Form):
         data["USERS"] = msisdns
         data["PIN"] = pin
         try:
-            response = requests.post(
-                self.env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(self.env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(f"""[SET PIN ERROR]
             Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
@@ -115,16 +132,14 @@ class PinForm(forms.Form):
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)
             if not transactions:
-                error_message = response_dict.get(
-                    'MESSAGE', None) or _("Failed to set pin")
+                error_message = response_dict.get('MESSAGE', None) or _("Failed to set pin")
                 return None, error_message
             return transactions, None
         return None, _("Set pin process stopped during an internal error,\
                  can you try again or contact you support team")
 
     def get_transactions_error(self, transactions):
-        failed_trx = list(filter(
-            lambda trx: trx['TXNSTATUS'] != "200", transactions))
+        failed_trx = list(filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
 
         if failed_trx:
             error_message = "Pin setting error, please try again later. For assistance call 7001"
@@ -148,16 +163,25 @@ class PinForm(forms.Form):
 
 
 class BalanceInquiryPinForm(forms.Form):
-    pin = forms.CharField(required=True, max_length=6, min_length=6, widget=forms.PasswordInput(
-        attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Enter pin')}))
+    """
+    Pin form for balance inquiry done by Admin users
+    """
+    pin = forms.CharField(
+            required=True,
+            min_length=6,
+            max_length=6,
+            widget=forms.PasswordInput(attrs={'size': 6, 'maxlength': 6, 'placeholder': _('Enter pin')})
+    )
 
     def clean_pin(self):
+        """
+        :return: Validate that pin is a valid number
+        """
         pin = self.cleaned_data.get('pin')
+
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
         return pin
 
-        
-AgentFormSet = modelformset_factory(
-    model=Agent, form=AgentForm, can_delete=True, 
-    min_num=1, validate_min=True)
+
+AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, can_delete=True, min_num=1, validate_min=True)

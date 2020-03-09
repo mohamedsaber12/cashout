@@ -28,7 +28,7 @@ from users.mixins import (RootRequiredMixin, SuperFinishedSetupMixin, SuperRequi
 from users.models import EntitySetup
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
-from .models import Agent, VMTData
+from .models import Agent, Budget, VMTData
 
 
 DATA_LOGGER = logging.getLogger("disburse")
@@ -354,7 +354,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 @method_decorator([setup_required], name='dispatch')
 class BalanceInquiry(RootRequiredMixin, View):
     """
-    View for super user to create Agents for the entity.
+    View for Admin user to inquiry for the balance of a certain entity.
+    ToDo: Adding new view for SuperAdmin users to inquiry for the balance of the whole corporation
     """
     template_name = 'disbursement/balance_inquiry.html'
 
@@ -408,7 +409,11 @@ class BalanceInquiry(RootRequiredMixin, View):
         if response.ok:
             resp_json = response.json()
             if resp_json["TXNSTATUS"] == '200':
-                return True, resp_json['BALANCE']
+                # ToDo: Won't work until change the behavior of RootRequiredMixin or add SuperAdminOrRootRequiredMixin
+                if request.user.is_superadmin:
+                    return True, resp_json['BALANCE']
+                if request.user.is_root:
+                    return True, Budget.objects.get(disburser=request.user).current_balance
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, _("Balance inquiry process stopped during an internal error,\

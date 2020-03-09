@@ -104,6 +104,13 @@ class Budget(AbstractTimeStamp):
     def __str__(self):
         return f"{self.disburser.username} Budget"
 
+    @property
+    def current_balance(self):
+        """
+        :return: int, current root/admin user's balance
+        """
+        return self.max_amount - self.disbursed_amount
+
     def within_threshold(self, amount_to_be_disbursed):
         """
         Check if the amount to be disbursed plus the previously disbursed amount won't exceed the max_amount

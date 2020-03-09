@@ -37,6 +37,10 @@ FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger("failed_disbursement_download")
 FAILED_VALIDATION_DOWNLOAD = logging.getLogger("failed_validation_download")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
+MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
+MSG_AGENT_CREATION_ERROR = _(f"Agents creation process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+MSG_BALANCE_INQUIRY_ERROR = _(f"Balance inquiry process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+
 
 @setup_required
 @otp_required
@@ -286,8 +290,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             WALLET_API_LOGGER.debug(f"""[USER INQUIRY ERROR]
             Users-> vmt(superadmin): {request.user.username}
             Error-> {e}""")
-            return None, _("Agents creation process stopped during an internal error,\
-                can you try again or contact you support team")
+            return None, MSG_AGENT_CREATION_ERROR
 
         WALLET_API_LOGGER.debug(f"""[USER INQUIRY]
         Users-> vmt(superadmin): {request.user.username}
@@ -307,8 +310,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                         error_message = "Agents you have entered are not registered, For assistance call 7001"
                         return None, error_message
             return transactions, None
-        return None, _("Agents creation process stopped during an internal error,\
-                can you try again or contact you support team")
+        return None, MSG_AGENT_CREATION_ERROR
 
     def handle_form_errors(self, agentform, super_agent_form, transactions):
         """
@@ -400,8 +402,7 @@ class BalanceInquiry(RootRequiredMixin, View):
             WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY ERROR]
             Users-> vmt(superadmin):{superadmin.username}
             Error-> {e}""")
-            return False, _("Balance inquiry process stopped during an internal error,\
-                can you try again or contact you support team")
+            return False, MSG_BALANCE_INQUIRY_ERROR
 
         WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY]
         Users-> vmt(superadmin): {superadmin.username}
@@ -416,5 +417,4 @@ class BalanceInquiry(RootRequiredMixin, View):
                     return True, Budget.objects.get(disburser=request.user).current_balance
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
-        return False, _("Balance inquiry process stopped during an internal error,\
-                can you try again or contact you support team")
+        return False, MSG_BALANCE_INQUIRY_ERROR

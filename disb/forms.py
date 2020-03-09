@@ -12,6 +12,9 @@ from .models import Agent, VMTData
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
+MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
+MSG_PIN_SETTING_ERROR = _(f"Set pin process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+
 
 class VMTDataForm(forms.ModelForm):
     class Meta:
@@ -123,8 +126,8 @@ class PinForm(forms.Form):
             WALLET_API_LOGGER.debug(f"""[SET PIN ERROR]
             Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
             Error-> {e}""")
-            return None, _("Set pin process stopped during an internal error,\
-                 can you try again or contact you support team")
+            return None, MSG_PIN_SETTING_ERROR
+
         WALLET_API_LOGGER.debug(f"""[SET PIN]
         Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
         Response-> {str(response.status_code)} -- {str(response.text)}""")
@@ -135,14 +138,13 @@ class PinForm(forms.Form):
                 error_message = response_dict.get('MESSAGE', None) or _("Failed to set pin")
                 return None, error_message
             return transactions, None
-        return None, _("Set pin process stopped during an internal error,\
-                 can you try again or contact you support team")
+        return None, MSG_PIN_SETTING_ERROR
 
     def get_transactions_error(self, transactions):
         failed_trx = list(filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
 
         if failed_trx:
-            error_message = "Pin setting error, please try again later. For assistance call 7001"
+            error_message = MSG_PIN_SETTING_ERROR
             for agent_index in range(len(failed_trx)):
                 if failed_trx[agent_index]['TXNSTATUS'] == "407":
                     error_message = failed_trx[agent_index]['MESSAGE']

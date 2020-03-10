@@ -10,7 +10,9 @@ from instant_cashin.models import AbstractVMTData
 
 
 class VMTData(AbstractVMTData):
-    """VMT Data Credentials to make requests to UIG"""
+    """
+    VMT Data Credentials to make requests to UIG
+    """
 
     vmt = models.OneToOneField(
             'users.SuperAdminUser',
@@ -21,13 +23,23 @@ class VMTData(AbstractVMTData):
 
 
 class Agent(models.Model):
-    # root user
-    wallet_provider = models.ForeignKey(settings.AUTH_USER_MODEL, related_name='agents',on_delete=models.CASCADE)
+    """
+    Model for representing every admin related super-agent and agents
+    """
     msisdn = models.CharField(max_length=14,verbose_name=_("Mobile number"))
     pin = models.BooleanField(default=False)
     super = models.BooleanField(default=False)
+    wallet_provider = models.ForeignKey(
+            "users.RootUser",
+            related_name="agents",
+            on_delete=models.CASCADE,
+            help_text=_("Each super-agent or agent MUST be related to specific Root user")
+    )
 
     def __str__(self):
+        """
+        :return: String representation of each agent object
+        """
         if self.super:
             return f"SuperAgent {self.msisdn} for Root: {self.wallet_provider.username}"
         return f"Agent {self.msisdn} for Root: {self.wallet_provider.username}"
@@ -84,7 +96,7 @@ class Budget(AbstractTimeStamp):
             related_name='budget',
             verbose_name=_("Disburser"),
             help_text=_("Before every cashin transaction, "
-                        "amount to be disbursed will be validated against this checker's budget limit")
+                        "amount to be disbursed will be validated against this checker's/admin's budget limit")
     )
     created_by = models.ForeignKey(
             "users.SuperAdminUser",

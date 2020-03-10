@@ -7,6 +7,14 @@ from django.utils.translation import gettext_lazy as _
 from .models import Agent, Budget, VMTData
 
 
+class AgentAdmin(admin.ModelAdmin):
+    """
+    Admin model for the tweaking the representation of the Agent model at the admin panel
+    """
+
+    list_display = ['msisdn', 'wallet_provider', 'super', 'pin']
+
+
 class VMTDataAdmin(admin.ModelAdmin):
     """
     Admin model for VMTData credentials
@@ -59,6 +67,6 @@ class BudgetAdmin(admin.ModelAdmin):
         obj.save()
 
 
-admin.site.register(Agent)
+admin.site.register(Agent, AgentAdmin)
 admin.site.register(Budget, BudgetAdmin)
 admin.site.register(VMTData, VMTDataAdmin)

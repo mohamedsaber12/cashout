@@ -162,6 +162,13 @@ class User(AbstractUser):
         full_name = f"{self.first_name.capitalize()} {self.last_name}"
         return full_name.strip()
 
+    @property
+    def has_vmt_setup(self):
+        """Check if this superadmin's vmt credentials setups is completed"""
+        if self.is_superadmin and self.vmt:
+            return True
+        return False
+
     def get_absolute_url(self):
         return reverse("users:profile", kwargs={'username': self.username})
 

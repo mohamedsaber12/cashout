@@ -67,21 +67,29 @@ class DisburseAPIView(APIView):
         import os
         from django.conf import settings
         environ.Env.read_env(env_file=os.path.join(settings.BASE_DIR, '.env'))
+
+        # 1. Validate the serializer's data
         serializer = DisbursementSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        # 2. Catch the corresponding vmt dictionary
         user = User.objects.get(username=serializer.validated_data['user'])
         vmt = VMTData.objects.get(vmt=user.root.client.creator)
         provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.root.id
+
+        # 3. Prepare the senders and recipients fields of the vmt dictionary
         pin = serializer.validated_data['pin']
-        agents = Agent.objects.select_related().filter(wallet_provider_id=provider_id)
+        agents = Agent.objects.select_related().filter(wallet_provider_id=provider_id, super=False)
         senders = agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
         senders = list(senders)
-        for d in senders:
-            d.update({'PIN': pin})
+        for internal_dict in senders:
+            internal_dict.update({'PIN': pin})
+
         recipients = DisbursementData.objects.select_related('doc').filter(
                 doc_id=serializer.validated_data['doc_id']
         ).extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
 
+        # 4. Combine all of the vmt dictionary fields into one dictionary > 'data'
         data = vmt.return_vmt_data(VMTData.DISBURSEMENT)
         data.update({
             "SENDERS": senders,

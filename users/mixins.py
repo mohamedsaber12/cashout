@@ -46,13 +46,31 @@ class SuperRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-class SuperOrRootRequiredMixin(LoginRequiredMixin):
+class SuperOrRootOwnsCustomizedBudgetClientRequiredMixin(LoginRequiredMixin):
     """
-    Give the access permission of a certain view to only Super or Root users
+    Give the access permission of a certain view to only Super or Root users,
+    Considering:
+        - If the user is a SuperAdmin:
+            1) SuperAdmin MUST owns the entity being balance inquired at.
+            2) And entity being balance inquired at MUST has custom budget.
     """
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.is_superadmin or request.user.is_root):
+        has_permission = False
+
+        if request.user.is_superadmin:
+            entity_admin_username = request.resolver_match.kwargs.get('username')
+
+            for client_obj in request.user.clients.all():
+                if client_obj.client.username == entity_admin_username:
+                    if client_obj.client.has_custom_budget:
+                        has_permission = True
+
+        if request.user.is_root:
+            has_permission = True
+
+        if not has_permission:
             return self.handle_no_permission()
+
         return super().dispatch(request, *args, **kwargs)
 
 

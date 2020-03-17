@@ -24,7 +24,8 @@ from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_d
 from data.utils import get_client_ip, redirect_params
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (SuperFinishedSetupMixin, SuperOrRootRequiredMixin, SuperRequiredMixin)
+from users.mixins import (SuperFinishedSetupMixin, SuperRequiredMixin,
+                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin)
 from users.models import EntitySetup
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
@@ -353,7 +354,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
 
 @method_decorator([setup_required], name='dispatch')
-class BalanceInquiry(SuperOrRootRequiredMixin, View):
+class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
     """
     View for SuperAdmin and Root user to inquire for the balance of a certain entity.
     Scenarios:

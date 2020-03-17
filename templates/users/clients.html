@@ -102,6 +102,13 @@
                                     data-target="#delete-user-modal" onclick="delete_modal({{ user.id }})">
                               <i class="fa fa-trash-o"></i>
                             </button>
+                            {% ifequal user.client.has_custom_budget True %}
+                              <p class="btn btn-toggle btn-xs">
+                                <a class="fa fa-money" href="" target="_blank"> </a>
+                              </p>
+
+                            <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=user.client.username %}" target="_blank"> </a>
+                            {% endifequal %}
                           </div>
                         </div>
 

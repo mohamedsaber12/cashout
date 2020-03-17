@@ -284,8 +284,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         data = vmt.return_vmt_data(VMTData.USER_INQUIRY)
         data["USERS"] = msisdns
         try:
-            response = requests.post(
-                self.env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(self.env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(f"""[USER INQUIRY ERROR]
             Users-> vmt(superadmin): {request.user.username}
@@ -358,7 +357,6 @@ class BalanceInquiry(SuperOrRootRequiredMixin, View):
     """
     View for SuperAdmin and Root user to inquire for the balance of a certain entity.
     Scenarios:
-        ToDo
         1. The Regular Way:
             - Root has not custom budget, so:
                 A) SuperAdmin user can't make balance inquiry at this Root user's balance.
@@ -396,7 +394,15 @@ class BalanceInquiry(SuperOrRootRequiredMixin, View):
             context = context
             return render(request, template_name=self.template_name, context=context)
 
-        ok, error_or_balance = self.get_wallet_balance(request, context["form"].data.get('pin'))
+        if request.user.is_root:
+            ok, error_or_balance = self.get_wallet_balance(request, context["form"].data.get('pin'))
+        else:
+            ok, error_or_balance = self.get_wallet_balance(
+                    request=request,
+                    pin=context["form"].data.get('pin'),
+                    entity_username=context["username"]
+            )
+
         if ok:
             context.update({"balance": error_or_balance})
         else:
@@ -408,28 +414,49 @@ class BalanceInquiry(SuperOrRootRequiredMixin, View):
         import requests
         from payouts.utils import get_dot_env
         env = get_dot_env()
-        superadmin = request.user.root.client.creator
+        custom_budget_amount = custom_budget_msg = ""
+
+        if request.user.is_root:
+            superadmin = request.user.root.client.creator
+            super_agent = Agent.objects.get(wallet_provider=request.user, super=True)
+            if request.user.has_custom_budget:
+                custom_budget_amount = f" -- Total remaining custom budget: " \
+                                       f"{Budget.objects.get(disburser=request.user).current_balance}"
+                custom_budget_msg = " - HAS CUSTOM BUDGET"
+        else:
+            superadmin = request.user
+            super_agent = Agent.objects.get(wallet_provider__username=entity_username, super=True)
+            if super_agent.wallet_provider.has_custom_budget:
+                custom_budget_amount = f" -- Total remaining custom budget: " \
+                                       f"{Budget.objects.get(disburser__username=entity_username).current_balance}"
+                custom_budget_msg = " - HAS CUSTOM BUDGET"
+
         vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.BALANCE_INQUIRY)
-        super_agent = Agent.objects.get(wallet_provider=request.user, super=True)
         data["MSISDN"] = super_agent.msisdn
         data["PIN"] = pin
         try:
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY ERROR]
-            Users-> vmt(superadmin):{superadmin.username}
-            Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY ERROR{custom_budget_msg}]
+            Users: {request.user.username}\n\tError: {e}""")
             return False, MSG_BALANCE_INQUIRY_ERROR
 
-        WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY]
-        Users-> vmt(superadmin): {superadmin.username}
-        Response-> {str(response.status_code)} -- {str(response.text)}""")
         if response.ok:
             resp_json = response.json()
+
             if resp_json["TXNSTATUS"] == '200':
-                # ToDo: Won't work until change the behavior of RootRequiredMixin or add SuperAdminOrRootRequiredMixin
-                return True, resp_json['BALANCE']
+                if request.user.is_root and request.user.has_custom_budget:
+                    WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY{custom_budget_msg}]
+                    User: {request.user.username}{custom_budget_amount}
+                    Response: {str(response.status_code)} -- {str(response.text)}""")
+                    return True, custom_budget_amount[35:]              # Remove the headed message
+                if request.user.is_superadmin or request.user.root:
+                    WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY{custom_budget_msg}]
+                    User: {request.user.username}{custom_budget_amount}
+                    Response: {str(response.status_code)} -- {str(response.text)}""")
+                    return True, resp_json['BALANCE']
+
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR

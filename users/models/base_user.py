@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.core.exceptions import ValidationError
@@ -8,9 +11,6 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-
-from imagekit.models import ProcessedImageField
-from imagekit.processors import ResizeToFill
 
 
 TYPES = (
@@ -37,6 +37,9 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
+    """
+    User model for all the different types of users
+    """
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
@@ -44,10 +47,12 @@ class User(AbstractUser):
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
-    avatar_thumbnail = ProcessedImageField(upload_to='avatars',
-                                           processors=[ResizeToFill(100, 100)],
-                                           format='JPEG',
-                                           options={'quality': 60}, null=True, default='user.png')
+    avatar_thumbnail = ProcessedImageField(
+            upload_to='avatars',
+            processors=[ResizeToFill(100, 100)],
+            format='JPEG',
+            options={'quality': 60}, null=True, default='user.png'
+    )
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
@@ -168,6 +173,16 @@ class User(AbstractUser):
         if self.is_superadmin and self.vmt:
             return True
         return False
+
+    @property
+    def has_custom_budget(self):
+        """Check if this user has custom budget"""
+        from disb.models import Budget
+        try:
+            budget = self.budget
+            return True
+        except Budget.DoesNotExist:
+            return False
 
     def get_absolute_url(self):
         return reverse("users:profile", kwargs={'username': self.username})

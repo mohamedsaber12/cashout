@@ -47,7 +47,9 @@
                     </ul>
                 </li>
                 {% if request.user.is_root %}
-                <li><a href="{% url 'disbursement:balance_inquiry' %}"><i class="fa fa-user"></i> {% trans 'Balance inquiry' %} </a>
+                <li>
+                    <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+                    <i class="fa fa-user"></i> {% trans 'Balance inquiry' %}</a>
                 </li>
                 <li><a><i class="fa fa-user"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">

@@ -24,7 +24,7 @@ from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_d
 from data.utils import get_client_ip, redirect_params
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (RootRequiredMixin, SuperFinishedSetupMixin, SuperRequiredMixin)
+from users.mixins import (SuperFinishedSetupMixin, SuperOrRootRequiredMixin, SuperRequiredMixin)
 from users.models import EntitySetup
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
@@ -354,10 +354,22 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
 
 @method_decorator([setup_required], name='dispatch')
-class BalanceInquiry(RootRequiredMixin, View):
+class BalanceInquiry(SuperOrRootRequiredMixin, View):
     """
-    View for Admin user to inquiry for the balance of a certain entity.
-    ToDo: Adding new view for SuperAdmin users to inquiry for the balance of the whole corporation
+    View for SuperAdmin and Root user to inquire for the balance of a certain entity.
+    Scenarios:
+        ToDo
+        1. The Regular Way:
+            - Root has not custom budget, so:
+                A) SuperAdmin user can't make balance inquiry at this Root user's balance.
+                B) Root user's balance inquiry will be made at the whole super agent balance.
+        2. The Customized Way:
+            - Root has custom budget, so:
+                A) Root user will have custom budget defined by the system administrator for the first time.
+                B) SuperAdmin user can add new budget to his/her own Root users' with customized budgets, using
+                    icons at the Root user's cards (Clients page).
+                C) SuperAdmin user can make balance inquiry at this specific Root user with the custom budget.
+                D) Root user's balance inquiry will be made at the customized budget only.
     """
     template_name = 'disbursement/balance_inquiry.html'
 
@@ -365,28 +377,34 @@ class BalanceInquiry(RootRequiredMixin, View):
         """
         Handles GET requests to the balance inquiry view
         """
-        context = {"form": BalanceInquiryPinForm()}
+        context = {
+            "form": BalanceInquiryPinForm(),
+            "username": self.kwargs.get("username")
+        }
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):
         """
         Handles POST requests to the balance inquiry view
         """
-        form = BalanceInquiryPinForm(request.POST)
-        if not form.is_valid():
-            context = {"form": form}
+        context = {
+            "form": BalanceInquiryPinForm(request.POST),
+            "username": self.kwargs.get("username")
+        }
+
+        if not context["form"].is_valid():
+            context = context
             return render(request, template_name=self.template_name, context=context)
 
-        ok, error_or_balance = self.get_wallet_balance(request, form.data.get('pin'))
+        ok, error_or_balance = self.get_wallet_balance(request, context["form"].data.get('pin'))
         if ok:
-            context = {"balance": error_or_balance}
+            context.update({"balance": error_or_balance})
         else:
-            context = {"error_message": error_or_balance}
-        form = BalanceInquiryPinForm()
-        context['form'] = form
+            context.update({"error_message": error_or_balance})
+        context.update({"form": BalanceInquiryPinForm()})
         return render(request, template_name=self.template_name, context=context)
 
-    def get_wallet_balance(self, request, pin):
+    def get_wallet_balance(self, request, pin, entity_username=None):
         import requests
         from payouts.utils import get_dot_env
         env = get_dot_env()
@@ -411,10 +429,7 @@ class BalanceInquiry(RootRequiredMixin, View):
             resp_json = response.json()
             if resp_json["TXNSTATUS"] == '200':
                 # ToDo: Won't work until change the behavior of RootRequiredMixin or add SuperAdminOrRootRequiredMixin
-                if request.user.is_superadmin:
-                    return True, resp_json['BALANCE']
-                if request.user.is_root:
-                    return True, Budget.objects.get(disburser=request.user).current_balance
+                return True, resp_json['BALANCE']
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR

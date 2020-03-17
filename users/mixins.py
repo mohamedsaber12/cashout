@@ -46,9 +46,19 @@ class SuperRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class SuperOrRootRequiredMixin(LoginRequiredMixin):
+    """
+    Give the access permission of a certain view to only Super or Root users
+    """
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_root):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class SuperFinishedSetupMixin(LoginRequiredMixin):
     """
-    Prevent superuser from accessing entity setup views if he already finshed it.
+    Prevent superuser from accessing entity setup views if he already finished it.
     Must be used after SuperRequiredMixin.
     """
     def dispatch(self, request, *args, **kwargs):

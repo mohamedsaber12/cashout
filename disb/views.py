@@ -14,7 +14,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import View
+from django.views.generic import View, UpdateView
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
@@ -25,7 +25,8 @@ from data.utils import get_client_ip, redirect_params
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
 from users.mixins import (SuperFinishedSetupMixin, SuperRequiredMixin,
-                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin)
+                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
+                          SuperOwnsCustomizedBudgetClientRequiredMixin)
 from users.models import EntitySetup
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
@@ -461,3 +462,20 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR
+
+
+class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView):
+    """
+    View for enabling SuperAdmin users to update and maintain custom Root budgets
+    """
+    model = Budget
+    # form_class = BudgetForm
+    template_name = 'disbursement/budget.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Budget, disburser__username=self.kwargs['username'])
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['entity_username'] = self.kwargs['username']
+        return context

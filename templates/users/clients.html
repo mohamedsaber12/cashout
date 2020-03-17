@@ -104,7 +104,7 @@
                             </button>
                             {% ifequal user.client.has_custom_budget True %}
                               <p class="btn btn-toggle btn-xs">
-                                <a class="fa fa-money" href="" target="_blank"> </a>
+                                <a class="fa fa-money" href="{% url 'disbursement:budget_update' username=user.client.username %}" target="_blank"> </a>
                               </p>
 
                             <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=user.client.username %}" target="_blank"> </a>

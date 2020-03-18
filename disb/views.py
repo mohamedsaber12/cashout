@@ -29,7 +29,7 @@ from users.mixins import (SuperFinishedSetupMixin, SuperRequiredMixin,
                           SuperOwnsCustomizedBudgetClientRequiredMixin)
 from users.models import EntitySetup
 
-from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
+from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, BudgetForm
 from .models import Agent, Budget, VMTData
 
 
@@ -469,13 +469,24 @@ class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView)
     View for enabling SuperAdmin users to update and maintain custom Root budgets
     """
     model = Budget
-    # form_class = BudgetForm
+    form_class = BudgetForm
     template_name = 'disbursement/budget.html'
 
     def get_object(self, queryset=None):
-        return get_object_or_404(Budget, disburser__username=self.kwargs['username'])
+        """Retrieve the budget object of the accessed disburser"""
+        return get_object_or_404(Budget, disburser__username=self.kwargs["username"])
 
     def get_context_data(self, **kwargs):
+        """Fields being passed through the context to the templates"""
         context = super().get_context_data(**kwargs)
-        context['entity_username'] = self.kwargs['username']
+        context["entity_username"] = self.kwargs["username"]
+
         return context
+
+    def get_form_kwargs(self):
+        """This method is what injects forms with keyword arguments"""
+        kwargs = super().get_form_kwargs()
+        kwargs["budget_object"] = self.get_object()
+        kwargs["superadmin_user"] = self.request.user
+
+        return kwargs

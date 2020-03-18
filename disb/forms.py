@@ -7,7 +7,7 @@ from django.utils.translation import gettext as _
 from payouts.utils import get_dot_env
 from users.tasks import set_pin_error_mail
 
-from .models import Agent, VMTData
+from .models import Agent, Budget, VMTData
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -184,6 +184,70 @@ class BalanceInquiryPinForm(forms.Form):
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
         return pin
+
+
+class BudgetForm(forms.ModelForm):
+    """
+    Budget form is for enabling SuperAdmin users to track and maintain Admin users budgets
+    """
+    new_amount = forms.CharField(
+            required=True,
+            min_length=3,
+            widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 1000')})
+    )
+    current_budget = forms.CharField(required=False)
+    readonly_fields = ['max_amount', 'current_budget', 'disburser', 'created_by']
+
+    class Meta:
+        model = Budget
+        fields = ['new_amount', 'max_amount', 'current_budget', 'disburser', 'created_by']
+
+        labels = {
+            'new_amount': _('New amount to be added'),
+            'max_amount': _('Current max amount'),
+            'disburser': _('Admin'),
+            'created_by': _('Last update done by'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Set any extra fields expected to passed from any BudgetView uses the BudgetForm"""
+        self.budget_object = kwargs.pop('budget_object', None)
+        self.superadmin_user = kwargs.pop('superadmin_user', None)
+
+        super().__init__(*args, **kwargs)
+        self.fields['current_budget'].widget.attrs['placeholder'] = self.budget_object.current_balance
+
+        # ToDo: Replace the return options list of [disburser, created_by] with only one item
+        # self.fields['disburser'].widget.attrs['value'] = self.budget_object.disburser
+        # self.fields['created_by'].widget.attrs['value'] = self.budget_object.created_by
+
+        # ToDo: Make all of the fields other than the new budget are readonly fields
+        # This doesn't work because of modelform saving issues
+        # for field in self.readonly_fields:
+        #     self.fields[field].widget.attrs['disabled'] = 'true'
+        #     self.fields[field].required = False
+
+    def clean(self):
+        """
+        1. Aggregate the final max amount = new_add_budget + current_max_amount
+        2. Assign created_by value to the current SuperAdmin who owns this Root/Disburser
+        """
+        cleaned_data = super().clean()
+
+        try:
+            cleaned_new_budget = int(cleaned_data.get('new_amount'))
+            current_max_amount = int(self.budget_object.max_amount)
+            cleaned_new_budget += current_max_amount
+            cleaned_data["max_amount"] = cleaned_new_budget
+
+            # ToDo: log all of the custom budget updates
+        except ValueError:
+            self.add_error('new_amount', _('New amount must be a valid integer, please check and try again.'))
+
+        cleaned_data["disburser"] = self.budget_object.disburser
+        cleaned_data["created_by"] = self.superadmin_user
+
+        return cleaned_data
 
 
 AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, can_delete=True, min_num=1, validate_min=True)

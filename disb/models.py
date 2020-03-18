@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractTimeStamp
@@ -122,6 +123,10 @@ class Budget(AbstractTimeStamp):
         :return: int, current root/admin user's balance
         """
         return self.max_amount - self.disbursed_amount
+
+    def get_absolute_url(self):
+        """Success form submit - object saving url"""
+        return reverse("disbursement:budget_update", kwargs={"username": self.disburser.username})
 
     def within_threshold(self, amount_to_be_disbursed):
         """

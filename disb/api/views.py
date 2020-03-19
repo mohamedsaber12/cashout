@@ -24,6 +24,7 @@ from data.tasks import handle_change_profile_callback, notify_checkers
 from users.models import CheckerUser, User
 
 from ..models import Agent, DisbursementData, DisbursementDocData, VMTData
+from ..utils import custom_budget_logger
 from .permission_classes import BlacklistPermission
 from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
 
@@ -157,8 +158,11 @@ class DisburseCallBack(UpdateAPIView):
     def update(self, request, *args, **kwargs):
         """
         Handles UPDATE requests coming from wallets as a callback to a disbursement request
+            and UPDATES the budget record of the disbursed document Owner/Admin it he/she has custom budget
         """
         DATA_LOGGER.debug('[DISBURSE CALLBACK]\n\t' + str(request.data))
+        total_disbursed_amount = 0
+        successfully_disbursed_obj = None
 
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
@@ -166,11 +170,24 @@ class DisburseCallBack(UpdateAPIView):
         for data in request.data['transactions']:
             try:
                 DisbursementData.objects.select_for_update().filter(id=int(data['id'])).update(
-                    is_disbursed=True if data['status'] == '0' else False,
-                    reason=data.get('description', 'No Description found')
+                        is_disbursed=True if data['status'] == '0' else False,
+                        reason=data.get('description', 'No Description found')
                 )
+
+                # If data['status'] = 0, it means this record amount is disbursed successfully
+                if data['status'] == '0':
+                    successfully_disbursed_obj = DisbursementData.objects.get(id=int(data['id']))
+                    total_disbursed_amount += int(successfully_disbursed_obj.amount)
             except DisbursementData.DoesNotExist:
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+
+        if successfully_disbursed_obj.doc.owner.root.has_custom_budget:
+            successfully_disbursed_obj.doc.owner.root.budget.update_disbursed_amount(total_disbursed_amount)
+            custom_budget_logger(
+                    successfully_disbursed_obj.doc.owner.root.username,
+                    f"Total disbursed amount: {total_disbursed_amount} LE",
+                    request.user.username, f" -- doc id: {successfully_disbursed_obj.doc_id}"
+            )
 
         return JsonResponse({}, status=status.HTTP_202_ACCEPTED)
 

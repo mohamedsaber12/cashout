@@ -59,6 +59,7 @@ def cashin_issuer_validator(issuer):
     """
     cashin_valid_issuers_list = ["VODAFONE_CASH", "ETISALAT_CASH", "ORANGE_CASH", "AMAN"]
 
+    # ToDo: After finalizing the integration with Etisalat cash issuer will be mandatory field
     if issuer is not None and issuer not in cashin_valid_issuers_list:
         msg = _("The passed issuer is not valid, please make sure that the passed issuer value is from this list"
                 " ['VODAFONE_CASH', 'ETISALAT_CASH', 'ORANGE_CASH', 'AMAN'] and try again!")

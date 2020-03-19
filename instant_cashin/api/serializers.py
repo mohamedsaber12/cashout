@@ -20,7 +20,7 @@ class InstantDisbursementSerializer(serializers.Serializer):
     amount = serializers.IntegerField(required=True)
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
     issuer = serializers.CharField(
-            max_length=12, required=False, allow_null=True, allow_blank=True, validators=[cashin_issuer_validator]
+            required=False, allow_null=True, allow_blank=True, validators=[cashin_issuer_validator]
     )
     fees = serializers.CharField(
             max_length=4, required=False, allow_blank=True, allow_null=True, validators=[fees_validator]

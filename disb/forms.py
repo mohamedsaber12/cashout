@@ -1,6 +1,7 @@
 import logging
 
 from django import forms
+from django.core.validators import MinValueValidator
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
 
@@ -190,9 +191,9 @@ class BudgetForm(forms.ModelForm):
     """
     Budget form is for enabling SuperAdmin users to track and maintain Admin users budgets
     """
-    new_amount = forms.CharField(
+    new_amount = forms.IntegerField(
             required=True,
-            min_length=3,
+            validators=[MinValueValidator(1000)],
             widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 1000')})
     )
     current_budget = forms.CharField(required=False)
@@ -201,7 +202,6 @@ class BudgetForm(forms.ModelForm):
     class Meta:
         model = Budget
         fields = ['new_amount', 'max_amount', 'current_budget', 'disburser', 'created_by']
-
         labels = {
             'new_amount': _('New amount to be added'),
             'max_amount': _('Current max amount'),
@@ -235,12 +235,11 @@ class BudgetForm(forms.ModelForm):
         cleaned_data = super().clean()
 
         try:
-            cleaned_new_budget = int(cleaned_data.get('new_amount'))
+            cleaned_new_budget = int(cleaned_data.get('new_amount', ''))
             current_max_amount = int(self.budget_object.max_amount)
             cleaned_new_budget += current_max_amount
             cleaned_data["max_amount"] = cleaned_new_budget
 
-            # ToDo: log all of the custom budget updates
         except ValueError:
             self.add_error('new_amount', _('New amount must be a valid integer, please check and try again.'))
 

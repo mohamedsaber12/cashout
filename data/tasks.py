@@ -47,6 +47,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     Category has no files
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
+    amount_to_be_disbursed_within_custom_budget_threshold = False
     amount_position, msisdn_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
@@ -145,7 +146,9 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         error_message = None
     download_url = False
 
-    amount_within_threshold = Budget.objects.get(disburser=doc_obj.owner.root).within_threshold(sum(partial_amount))
+    if doc_obj.owner.root.has_custom_budget:
+        amount_to_be_disbursed_within_custom_budget_threshold = Budget.objects.get(
+                disburser=doc_obj.owner.root).within_threshold(sum(partial_amount))
 
     if valid or partial_valid:
         max_amount_can_be_disbursed = max(
@@ -157,7 +160,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                 valid = False
                 partial_valid = False
 
-            if not amount_within_threshold:
+            if doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
                 error_message = MSG_NOT_WITHIN_THRESHOLD
                 valid = False
                 partial_valid = False

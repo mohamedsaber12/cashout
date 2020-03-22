@@ -1,3 +1,4 @@
+import copy
 import json
 import logging
 
@@ -97,9 +98,13 @@ class DisburseAPIView(APIView):
             "RECIPIENTS": list(recipients),
         })
 
+        request_data_dictionary_without_pins = copy.deepcopy(data)
+        for senders_dictionary in request_data_dictionary_without_pins['SENDERS']:
+            senders_dictionary['PIN'] = 'xxxxxx'
+
         try:
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
-            DATA_LOGGER.debug(f"[DISBURSE REQUEST DATA DICT]\n\t{str(data)}")
+            DATA_LOGGER.debug(f"[DISBURSE REQUEST DATA DICT]\n\t{str(request_data_dictionary_without_pins)}")
             DATA_LOGGER.debug(f"[DISBURSE BULK STATUS]\n\t{str(response.json())}")
         except ValueError:
             DATA_LOGGER.debug('[DISBURSE ERROR]\n\t' + str(response.status_code) + ' -- ' + str(response.reason))

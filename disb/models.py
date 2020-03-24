@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -27,7 +29,7 @@ class Agent(models.Model):
     """
     Model for representing every admin related super-agent and agents
     """
-    msisdn = models.CharField(max_length=14,verbose_name=_("Mobile number"))
+    msisdn = models.CharField(max_length=14, verbose_name=_("Mobile number"))
     pin = models.BooleanField(default=False)
     super = models.BooleanField(default=False)
     wallet_provider = models.ForeignKey(
@@ -83,10 +85,26 @@ class Budget(AbstractTimeStamp):
     Model for checking budget before executing disbursement
     """
 
-    max_amount = models.IntegerField(_("Max Allowed Amount"), default=0, null=False, blank=False)
-    disbursed_amount = models.IntegerField(_("Disbursed Amount"), default=0, null=False, blank=False)
-    total_disbursed_amount = models.IntegerField(
+    max_amount = models.DecimalField(
+            _("Max Allowed Amount"),
+            max_digits=10,
+            decimal_places=2,
+            default=0,
+            null=False,
+            blank=False
+    )
+    disbursed_amount = models.DecimalField(
+            _("Disbursed Amount"),
+            max_digits=10,
+            decimal_places=2,
+            default=0,
+            null=False,
+            blank=False
+    )
+    total_disbursed_amount = models.DecimalField(
             _("Total Previously Disbursed Amount"),
+            max_digits=15,
+            decimal_places=2,
             default=0,
             null=False,
             blank=False
@@ -120,9 +138,9 @@ class Budget(AbstractTimeStamp):
     @property
     def current_balance(self):
         """
-        :return: int, current root/admin user's balance
+        :return: decimal, current root/admin user's balance
         """
-        return self.max_amount - self.disbursed_amount
+        return round((self.max_amount - self.disbursed_amount), 2)
 
     def get_absolute_url(self):
         """Success form submit - object saving url"""
@@ -134,9 +152,9 @@ class Budget(AbstractTimeStamp):
         :param amount_to_be_disbursed: Amount to be disbursed at the currently running transaction
         :return: True/False
         """
-        new_amount = int(self.disbursed_amount) + int(amount_to_be_disbursed)
+        new_amount = round((self.disbursed_amount + Decimal(amount_to_be_disbursed)), 2)
 
-        if not int(new_amount) <= int(self.max_amount):
+        if not new_amount <= self.max_amount:
             return False
         return True
 
@@ -146,10 +164,12 @@ class Budget(AbstractTimeStamp):
         :param amount: the amount to be disbursed
         :return: True/False
         """
-        if not self.within_threshold(amount):
-            return False
+        try:
+            disbursed_amount = round(Decimal(amount), 2)
+            self.total_disbursed_amount += disbursed_amount
+            self.disbursed_amount += disbursed_amount
+            self.save()
+        except Exception as e:
+            raise ValueError(_(f"Error updating the total disbursed amount, please retry again later."))
 
-        self.total_disbursed_amount += int(amount)
-        self.disbursed_amount += int(amount)
-        self.save()
         return True

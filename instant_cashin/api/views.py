@@ -190,7 +190,10 @@ class InstantDisbursementAPIView(views.APIView):
             logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[INSTANT CASHIN]", log_msg)
             transaction.mark_successful()
             request.user.budget.update_disbursed_amount(data_dict['AMOUNT'])
-            return default_response_structure(disbursement_status=_("success"), response_status_code=status.HTTP_200_OK)
+            return default_response_structure(
+                    status_description=json_inquiry_response["MESSAGE"],
+                    disbursement_status=_("success"), response_status_code=status.HTTP_200_OK
+            )
 
         logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED INSTANT CASHIN]", log_msg)
         if transaction:

@@ -1,16 +1,20 @@
 import logging
 
 from django import forms
+from django.core.validators import MinValueValidator
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
 
 from payouts.utils import get_dot_env
 from users.tasks import set_pin_error_mail
 
-from .models import Agent, VMTData
+from .models import Agent, Budget, VMTData
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
+
+MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
+MSG_PIN_SETTING_ERROR = _(f"Set pin process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
 
 
 class VMTDataForm(forms.ModelForm):
@@ -123,8 +127,8 @@ class PinForm(forms.Form):
             WALLET_API_LOGGER.debug(f"""[SET PIN ERROR]
             Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
             Error-> {e}""")
-            return None, _("Set pin process stopped during an internal error,\
-                 can you try again or contact you support team")
+            return None, MSG_PIN_SETTING_ERROR
+
         WALLET_API_LOGGER.debug(f"""[SET PIN]
         Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
         Response-> {str(response.status_code)} -- {str(response.text)}""")
@@ -135,14 +139,13 @@ class PinForm(forms.Form):
                 error_message = response_dict.get('MESSAGE', None) or _("Failed to set pin")
                 return None, error_message
             return transactions, None
-        return None, _("Set pin process stopped during an internal error,\
-                 can you try again or contact you support team")
+        return None, MSG_PIN_SETTING_ERROR
 
     def get_transactions_error(self, transactions):
         failed_trx = list(filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
 
         if failed_trx:
-            error_message = "Pin setting error, please try again later. For assistance call 7001"
+            error_message = MSG_PIN_SETTING_ERROR
             for agent_index in range(len(failed_trx)):
                 if failed_trx[agent_index]['TXNSTATUS'] == "407":
                     error_message = failed_trx[agent_index]['MESSAGE']
@@ -182,6 +185,68 @@ class BalanceInquiryPinForm(forms.Form):
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
         return pin
+
+
+class BudgetForm(forms.ModelForm):
+    """
+    Budget form is for enabling SuperAdmin users to track and maintain Admin users budgets
+    """
+    new_amount = forms.IntegerField(
+            required=True,
+            validators=[MinValueValidator(1000)],
+            widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 1000')})
+    )
+    current_budget = forms.CharField(required=False)
+    readonly_fields = ['max_amount', 'current_budget', 'disburser', 'created_by']
+
+    class Meta:
+        model = Budget
+        fields = ['new_amount', 'max_amount', 'current_budget', 'disburser', 'created_by']
+        labels = {
+            'new_amount': _('New amount to be added'),
+            'max_amount': _('Current max amount'),
+            'disburser': _('Admin'),
+            'created_by': _('Last update done by'),
+        }
+
+    def __init__(self, *args, **kwargs):
+        """Set any extra fields expected to passed from any BudgetView uses the BudgetForm"""
+        self.budget_object = kwargs.pop('budget_object', None)
+        self.superadmin_user = kwargs.pop('superadmin_user', None)
+
+        super().__init__(*args, **kwargs)
+        self.fields['current_budget'].widget.attrs['placeholder'] = self.budget_object.current_balance
+
+        # ToDo: Replace the return options list of [disburser, created_by] with only one item
+        # self.fields['disburser'].widget.attrs['value'] = self.budget_object.disburser
+        # self.fields['created_by'].widget.attrs['value'] = self.budget_object.created_by
+
+        # ToDo: Make all of the fields other than the new budget are readonly fields
+        # This doesn't work because of modelform saving issues
+        # for field in self.readonly_fields:
+        #     self.fields[field].widget.attrs['disabled'] = 'true'
+        #     self.fields[field].required = False
+
+    def clean(self):
+        """
+        1. Aggregate the final max amount = new_add_budget + current_max_amount
+        2. Assign created_by value to the current SuperAdmin who owns this Root/Disburser
+        """
+        cleaned_data = super().clean()
+
+        try:
+            cleaned_new_budget = int(cleaned_data.get('new_amount', ''))
+            current_max_amount = int(self.budget_object.max_amount)
+            cleaned_new_budget += current_max_amount
+            cleaned_data["max_amount"] = cleaned_new_budget
+
+        except ValueError:
+            self.add_error('new_amount', _('New amount must be a valid integer, please check and try again.'))
+
+        cleaned_data["disburser"] = self.budget_object.disburser
+        cleaned_data["created_by"] = self.superadmin_user
+
+        return cleaned_data
 
 
 AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, can_delete=True, min_num=1, validate_min=True)

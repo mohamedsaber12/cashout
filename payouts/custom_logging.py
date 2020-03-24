@@ -245,11 +245,11 @@ CUSTOM_LOGGING = {
             'filename': 'logs/instant_cashin_failure.log',
         },
         'instant_cashin_requests': {
-            'level'    : 'DEBUG',
-            'filters'  : ['request_id'],
+            'level': 'DEBUG',
+            'filters': ['request_id'],
             'formatter': 'detail',
-            'class'    : 'logging.FileHandler',
-            'filename' : 'logs/instant_cashin_requests.log',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/instant_cashin_requests.log',
         },
         'django.template': {
             'level': 'INFO',
@@ -271,6 +271,13 @@ CUSTOM_LOGGING = {
             'formatter': 'detail',
             'class': 'logging.FileHandler',
             'filename': 'logs/database_queries.log',
+        },
+        'custom_budgets': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/custom_budgets.log',
         },
     },
 
@@ -446,6 +453,11 @@ CUSTOM_LOGGING = {
         },
         'axes_watcher': {
             'handlers': ['axes_watcher'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'custom_budgets': {
+            'handlers' : ['custom_budgets'],
             'level': 'DEBUG',
             'propagate': True,
         },

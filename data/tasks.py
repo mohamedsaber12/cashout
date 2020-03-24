@@ -16,7 +16,7 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from disb.models import DisbursementData, VMTData
+from disb.models import Budget, DisbursementData, VMTData
 from disb.resources import DisbursementDataResource
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
@@ -30,6 +30,12 @@ from .utils import deliver_mail, export_excel, randomword
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
+MSG_TRY_OR_CONTACT = "can you try again or contact your support team"
+MSG_NOT_WITHIN_THRESHOLD = _(f"Disbursement file's amounts exceeds your current balance, {MSG_TRY_OR_CONTACT}")
+MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(
+        f"Disbursement file's amounts exceeds your maximum amount that can be disbursed, {MSG_TRY_OR_CONTACT}")
+MSG_REGISTRATION_PROCESS_ERROR = _(f"Registration process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+
 
 @app.task(ignore_result=False)
 @respects_language
@@ -41,6 +47,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     Category has no files
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
+    amount_to_be_disbursed_within_custom_budget_threshold = False
     amount_position, msisdn_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
@@ -48,6 +55,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
     list_of_dicts = []
 
+    # ToDo: use Forms to validate excel sheet records instead of a lot of loops logic
     for row, cell_obj in enumerate(rows, start_index):
         row_dict = {'amount': '', 'error': '', 'msisdn': '', 'status': ''}
 
@@ -61,7 +69,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                     else:
                         row_dict['amount'] = float(item.value)
                     if not row_dict['error']:
-                        row_dict['error']  = None
+                        row_dict['error'] = None
                 except ValueError:
                     if row_dict['error']:
                         row_dict['error'] += '\nInvalid amount'
@@ -106,7 +114,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         else:
             row_dict['status'] = 'invalid'
         list_of_dicts.append(row_dict)
-    
+
     msisdn, amount, errors, status, partial_msisdn, partial_amount = [], [], [], [], [], []
     for dict in list_of_dicts:
         msisdn.append(dict['msisdn'])
@@ -130,13 +138,17 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             break
 
     # Levels of file validations
-    #1 Uploaded file's total amount exceeds the maximum amount that can be disbursed
-    #2 Uploaded file's format is not consistent with the one chosen from the defined formats
+    # 1, Uploaded file's total amount exceeds the maximum amount that can be disbursed
+    # 2, Uploaded file's format is not consistent with the one chosen from the defined formats
     if errors[0] is not None:
         error_message = errors[0]
     else:
         error_message = None
     download_url = False
+
+    if doc_obj.owner.root.has_custom_budget:
+        amount_to_be_disbursed_within_custom_budget_threshold = Budget.objects.get(
+                disburser=doc_obj.owner.root).within_threshold(sum(partial_amount))
 
     if valid or partial_valid:
         max_amount_can_be_disbursed = max(
@@ -144,8 +156,12 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         )
         try:
             if sum(partial_amount) > max_amount_can_be_disbursed:
-                error_message = _("Disbursement file's amounts exceeds your maximum amount that can be disbursed,\
-                                            can you try again or contact your support team")
+                error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
+                valid = False
+                partial_valid = False
+
+            if doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
+                error_message = MSG_NOT_WITHIN_THRESHOLD
                 valid = False
                 partial_valid = False
         except:
@@ -168,13 +184,13 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         doc_obj.is_processed = False
         doc_obj.processing_failure_reason = error_message
         doc_obj.save()
-        notify_maker(doc_obj, download_url) if download_url  else notify_maker(doc_obj)
+        notify_maker(doc_obj, download_url) if download_url else notify_maker(doc_obj)
         if not partial_valid:
             return False
 
     env = get_dot_env()
     response_dict = None
-    if env.str('CALL_WALLETS', 'TRUE') == 'TRUE':      
+    if env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
         superadmin = doc_obj.owner.root.client.creator
         vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
@@ -187,8 +203,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
             Error-> {e}""")
             doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = _("Registration process stopped during an internal error,\
-                    can you try again or contact your support team")
+            doc_obj.processing_failure_reason = MSG_REGISTRATION_PROCESS_ERROR
             doc_obj.save()
             notify_maker(doc_obj)
             return False
@@ -202,8 +217,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             if response_dict["TXNSTATUS"] != '200':
                 error_message = response_dict.get('MESSAGE', None) or _("Failed to make registration")
         else:
-            error_message = _("Registration process stopped during an internal error,\
-                    can you try again or contact your support team")
+            error_message = MSG_REGISTRATION_PROCESS_ERROR
         if error_message:
             doc_obj.is_processed = False
             doc_obj.processing_failure_reason = error_message
@@ -214,8 +228,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         doc_obj.is_processed = True
         notify_maker(doc_obj)
     else:
-        error_message = _("Registration process stopped during an internal error,\
-                            can you try again or contact your support team")
+        error_message = MSG_REGISTRATION_PROCESS_ERROR
         doc_obj.is_processed = False
         doc_obj.processing_failure_reason = error_message
         doc_obj.save()
@@ -250,7 +263,7 @@ def handle_change_profile_callback(doc_id, transactions):
         if status not in ["200", "629", "560"]:
             error = True
             errors.append('\n'.join(msg_list))
-        else: 
+        else:
             errors.append(None)
         msisdns.append(msisdn)
     if not error:
@@ -258,7 +271,7 @@ def handle_change_profile_callback(doc_id, transactions):
         doc_obj.save()
         notify_maker(doc_obj)
         return
-    
+
     doc_obj.disbursement_data.all().delete()
     filename = 'failed_disbursement_validation_%s.xlsx' % (randomword(4))
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
@@ -300,7 +313,7 @@ def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
         f.write(dataset.xlsx)
 
     user = User.objects.get(id=user_id)
-    disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id':doc_id}))
+    disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
 
     download_url = settings.BASE_URL + \
         str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + '?filename=' + filename
@@ -472,7 +485,7 @@ def handle_uploaded_file(doc_obj_id, **kwargs):
         except (KeyError, ValueError):
             file_data.date = datetime.now()
         file_data.save()
-        
+
     doc_obj.is_processed = True
     doc_obj.save()
     notify_makers_collection(doc_obj)

@@ -18,12 +18,15 @@ def logging_message(logger, head, user, message):
     return logger.debug(_(f"{head}\n\tUser: {user}\n\t{message}"))
 
 
-def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", another_message=""):
+def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", another_message="", head=""):
     """
     logger function to be used at any custom budget logging
     """
+    if not head:
+        head = "[CUSTOM BUDGET - MANUAL PATCH]"
+
     return logging_message(
-            logger=BUDGET_LOGGER, head="[CUSTOM BUDGET - MANUAL PATCH]",
+            logger=BUDGET_LOGGER, head=head,
             user=f"{user} -- Root/Disburser: {disburser}",
             message=f"{total_disbursed_amount}{another_message}"
     )

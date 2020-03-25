@@ -5,6 +5,7 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from .models import Agent, Budget, VMTData
+from .utils import custom_budget_logger
 
 
 class AgentAdmin(admin.ModelAdmin):
@@ -65,6 +66,12 @@ class BudgetAdmin(admin.ModelAdmin):
             raise PermissionError(_("Only super users allowed to create/update at this table."))
         obj.created_by = request.user
         obj.save()
+
+        newly_added_amount = abs(obj.max_amount - form.initial['max_amount'])
+        custom_budget_logger(
+                obj.disburser, f"New added amount: {newly_added_amount} LE",
+                obj.created_by, head="[CUSTOM BUDGET - ADMIN PANEL]"
+        )
 
 
 admin.site.register(Agent, AgentAdmin)

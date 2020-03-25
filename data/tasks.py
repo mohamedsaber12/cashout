@@ -27,6 +27,7 @@ from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
 
+CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
@@ -199,17 +200,17 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         try:
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""[CHANGE PROFILE ERROR]
-            Users-> maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
-            Error-> {e}""")
+            CHANGE_PROFILE_LOGGER.debug(f"""[CHANGE PROFILE ERROR]
+            Users: {doc_obj.owner.username}, superadmin:{superadmin.username}
+            Error: {e}""")
             doc_obj.is_processed = False
             doc_obj.processing_failure_reason = MSG_REGISTRATION_PROCESS_ERROR
             doc_obj.save()
             notify_maker(doc_obj)
             return False
 
-        WALLET_API_LOGGER.debug(f"""[CHANGE PROFILE]
-        Users: maker:{doc_obj.owner.username}, vmt(superadmin):{superadmin.username}
+        CHANGE_PROFILE_LOGGER.debug(f"""[CHANGE PROFILE]
+        Users: {doc_obj.owner.username}, superadmin: {superadmin.username}
         Response: {str(response.status_code)} -- {str(response.text)}""")
         error_message = None
         if response.ok:

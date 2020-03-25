@@ -30,6 +30,7 @@ from .permission_classes import BlacklistPermission
 from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
 
 
+CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
 
 MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
@@ -209,7 +210,7 @@ class ChangeProfileCallBack(UpdateAPIView):
         """
         Handles UPDATE requests coming from wallets as a callback to a change profile request
         """
-        DATA_LOGGER.debug('[CHANGE PROFILE CALLBACK]\n\t' + str(request.data))
+        CHANGE_PROFILE_LOGGER.debug('[CHANGE PROFILE CALLBACK]\n\t' + f'Response: {str(request.data)}')
         transactions = request.data.get('transactions', None)
 
         if not transactions:

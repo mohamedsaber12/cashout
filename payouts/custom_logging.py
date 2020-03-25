@@ -279,6 +279,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/custom_budgets.log',
         },
+        'change_fees_profile': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/change_fees_profile.log',
+        },
     },
 
     'loggers': {
@@ -437,17 +444,17 @@ CUSTOM_LOGGING = {
             'propagate': True,
         },
         'instant_cashin_success': {
-            'handlers' : ['instant_cashin_success'],
+            'handlers': ['instant_cashin_success'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'instant_cashin_failure': {
-            'handlers' : ['instant_cashin_failure'],
+            'handlers': ['instant_cashin_failure'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'instant_cashin_requests': {
-            'handlers' : ['instant_cashin_requests'],
+            'handlers': ['instant_cashin_requests'],
             'level': 'DEBUG',
             'propagate': True,
         },
@@ -457,7 +464,12 @@ CUSTOM_LOGGING = {
             'propagate': True,
         },
         'custom_budgets': {
-            'handlers' : ['custom_budgets'],
+            'handlers': ['custom_budgets'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'change_fees_profile': {
+            'handlers': ['change_fees_profile'],
             'level': 'DEBUG',
             'propagate': True,
         },

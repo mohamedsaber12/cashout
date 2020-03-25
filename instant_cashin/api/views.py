@@ -180,7 +180,8 @@ class InstantDisbursementAPIView(views.APIView):
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", log_msg)
 
             return default_response_structure(
-                    status_description=EXTERNAL_ERROR_MSG, field_status_code=status.HTTP_200_OK
+                    status_description=EXTERNAL_ERROR_MSG, field_status_code=status.HTTP_424_FAILED_DEPENDENCY,
+                    response_status_code=status.HTTP_200_OK
             )
 
         log_msg = f"USER: {request.user.username} disbursed: {data_dict['AMOUNT']}EG for " \

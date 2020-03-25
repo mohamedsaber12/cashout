@@ -123,6 +123,7 @@
     * **Usage:** 
         * **{fees}** would be one of {Full}, {Half} or {No}
         * **{issuer}** would be one of {AMAN}, {VODAFONE_CASH}, {ETISALAT_CASH} or {ORANGE_CASH}
+        * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
 
     |  Field   |   M/O  |    Type    |
     |---	   |---	    |---	     |
@@ -146,7 +147,7 @@
     
             {
                 "disbursement_status": "success",
-                "status_description": "",
+                "status_description": "تم إيداع 23.56 جنيه إلى رقم 01010101010 بنجاح",
                 "status_code": "200"
             }
 

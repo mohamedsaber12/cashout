@@ -21,6 +21,7 @@ client_urls = [
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
     # 'Adding agents' -url- to the clients is at the disb. app urlpatterns
     path('client/fees-setup/<token>/', views.ClientFeesSetup.as_view(), name='add_fees'),
+    path('client/fees-setup/edit/<str:username>/', views.CustomClientFeesProfilesUpdateView.as_view(), name='update_fees'),
     path('client/toggle/', views.toggle_client, name='toggle'),
 ]
 

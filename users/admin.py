@@ -13,8 +13,8 @@ from django.utils.translation import ugettext_lazy
 from data.utils import get_client_ip
 
 from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
-from .models import (CheckerUser, Client, InstantAPICheckerUser, InstantAPIViewerUser, MakerUser,
-                     RootUser, SuperAdminUser, User)
+from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
+                     MakerUser, RootUser, SuperAdminUser, User)
 
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -44,8 +44,7 @@ def delete_selected(modeladmin, request, queryset):
         return delete_selected_(modeladmin, request, queryset)
 
 
-delete_selected.short_description = ugettext_lazy(
-    "Delete selected %(verbose_name_plural)s")
+delete_selected.short_description = ugettext_lazy("Delete selected %(verbose_name_plural)s")
 
 
 def deactivate_selected(modeladmin, request, queryset):
@@ -69,8 +68,7 @@ def deactivate_selected(modeladmin, request, queryset):
         return deactivate_selected(modeladmin, request, queryset)
 
 
-deactivate_selected.short_description = ugettext_lazy(
-    "Deactivate selected %(verbose_name_plural)s")
+deactivate_selected.short_description = ugettext_lazy("Deactivate selected %(verbose_name_plural)s")
 
 
 def activate_selected(modeladmin, request, queryset):
@@ -94,27 +92,23 @@ def activate_selected(modeladmin, request, queryset):
         return None
 
 
-activate_selected.short_description = ugettext_lazy(
-    "Activate selected %(verbose_name_plural)s")
+activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
 
 
 class UserAccountAdmin(UserAdmin):
     actions = (delete_selected, deactivate_selected, activate_selected)
-    list_display = ('username', 'first_name',
-                    'last_name', 'email', 'is_active')
+    list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
     filter_horizontal = ('groups',)
 
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
         if request.user.is_superuser:
-            list_display = ('username', 'first_name', 'last_name', 'email',
-                            'groups', 'is_active', 'user_type')
+            list_display = ('username', 'first_name', 'last_name', 'email', 'groups', 'is_active', 'user_type')
             return list_display
         return list_display
 
     def get_form(self, request, obj=None, **kwargs):
-        userform = super(UserAccountAdmin, self).get_form(
-            request, obj=obj, **kwargs)
+        userform = super(UserAccountAdmin, self).get_form(request, obj=obj, **kwargs)
         userform.request = request
         userform.request.obj = obj
         defaults = {}
@@ -129,8 +123,7 @@ class UserAccountAdmin(UserAdmin):
         perm_fields = ('is_active', 'is_staff')
         if not obj:
             if request.user.is_superuser:
-                perm_fields = ('is_active', 'is_staff',
-                               'is_superuser', 'parent')
+                perm_fields = ('is_active', 'is_staff', 'is_superuser', 'parent')
 
             self.add_fieldsets = (
                 (None, {
@@ -295,3 +288,4 @@ admin.site.register(InstantAPICheckerUser, InstantAPICheckerAdmin)
 admin.site.register(InstantAPIViewerUser, InstantAPIViewerAdmin)
 admin.site.register(Client)
 admin.site.register(User)
+admin.site.register(EntitySetup)

@@ -30,13 +30,13 @@ from instant_cashin.models import InstantTransaction
 
 from .decorators import root_or_superadmin
 from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
-                    ClientFeesForm, ForgotPasswordForm, LevelFormSet,
+                    ClientFeesForm, CustomClientProfilesForm, ForgotPasswordForm, LevelFormSet,
                     MakerCreationForm, MakerMemberFormSet, OTPTokenForm,
                     PasswordChangeForm, ProfileEditForm, RootCreationForm,
                     SetPasswordForm, UploaderMemberFormSet)
 from .mixins import (CollectionRootRequiredMixin, InstantReviewerRequiredMixin,
                      DisbursementRootRequiredMixin, RootRequiredMixin,
-                     SuperFinishedSetupMixin, SuperRequiredMixin)
+                     SuperFinishedSetupMixin, SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup, UploaderUser, User)
 
 
@@ -617,6 +617,19 @@ class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         kwargs.update({'instance': root.client})
         return kwargs
+
+
+class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView):
+    """
+    View for updating client's fees profile
+    """
+
+    model = Client
+    form_class = CustomClientProfilesForm
+    template_name = 'entity/update_fees.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Client, creator=self.request.user, client__username=self.kwargs.get('username'))
 
 
 class EntityBranding(SuperRequiredMixin, UpdateView):

@@ -634,15 +634,16 @@ class ForgotPasswordForm(forms.Form):
 
 
 class ClientFeesForm(forms.ModelForm):
+    """
+    Form for add client fees profile at the client on-boarding phase
+    """
+
     CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'))
     fees_percentage = forms.ChoiceField(label=_("Fees"), widget=forms.Select, choices=CHOICES)
 
     class Meta:
         model = Client
         fields = ('fees_percentage',)
-
-    def clean(self):
-        fees_percentage = self.cleaned_data.get('fees_percentage')
 
     def save(self, commit=True):
         client = super().save(commit=False)
@@ -652,3 +653,13 @@ class ClientFeesForm(forms.ModelForm):
             entity_setup.fees_setup = True
             entity_setup.save()
         return client
+
+
+class CustomClientProfilesForm(forms.ModelForm):
+    """
+    Form for updating client fees profile for those clients with custom budgets
+    """
+
+    class Meta:
+        model = Client
+        fields = ['custom_profile']

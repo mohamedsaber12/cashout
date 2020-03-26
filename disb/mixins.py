@@ -6,7 +6,7 @@ from disb.utils import custom_budget_logger
 
 class BudgetActionMixin:
     """
-    For handling BudgetForm at the used Views
+    For handling BudgetModelForm at the used Views
     """
 
     @property
@@ -28,7 +28,7 @@ class BudgetActionMixin:
         return kwargs
 
     def form_valid(self, form):
-        """Injects specific logic to the BudgetForm after form is validated successfully"""
+        """Injects specific logic to the BudgetModelForm after form is validated successfully"""
         messages.success(self.request, self.success_message)
         custom_budget_logger(
                 form.cleaned_data['disburser'].username,
@@ -39,7 +39,7 @@ class BudgetActionMixin:
         return super().form_valid(form)
 
     def form_invalid(self, form):
-        """Injects specific logic to the BudgetForm after form is not validated successfully"""
+        """Injects specific logic to the BudgetModelForm after form is not validated successfully"""
         messages.error(self.request, self.failure_message)
 
         return super().form_invalid(form)

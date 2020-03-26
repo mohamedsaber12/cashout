@@ -187,7 +187,7 @@ class BalanceInquiryPinForm(forms.Form):
         return pin
 
 
-class BudgetForm(forms.ModelForm):
+class BudgetModelForm(forms.ModelForm):
     """
     Budget form is for enabling SuperAdmin users to track and maintain Admin users budgets
     """
@@ -210,12 +210,12 @@ class BudgetForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        """Set any extra fields expected to passed from any BudgetView uses the BudgetForm"""
+        """Set any extra fields expected to passed from any BudgetView uses the BudgetModelForm"""
         self.budget_object = kwargs.pop('budget_object', None)
         self.superadmin_user = kwargs.pop('superadmin_user', None)
 
         super().__init__(*args, **kwargs)
-        self.fields['current_budget'].widget.attrs['placeholder'] = self.budget_object.current_balance
+        self.fields['current_budget'].initial = self.budget_object.current_balance
 
         # ToDo: Replace the return options list of [disburser, created_by] with only one item
         # self.fields['disburser'].widget.attrs['value'] = self.budget_object.disburser

@@ -122,16 +122,16 @@
 1. **Request Parameters**
     * **Usage:** 
         * **{fees}** would be one of {Full}, {Half} or {No}
-        * **{issuer}** would be one of {AMAN}, {VODAFONE_CASH}, {ETISALAT_CASH} or {ORANGE_CASH}
+        * **{issuer}** would be one of {AMAN}, {VODAFONE}, {ETISALAT} or {ORANGE}
         * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
 
     |  Field   |   M/O  |    Type    |
     |---	   |---	    |---	     |
     | msisdn   |   M    |   String   |
     | amount   |   M    |   String   |
+    | issuer   |   M    |   String   |
     | pin      |   O    |   String   |
     | fees     |   O    |   String   |
-    | issuer   |   O    |   String   |
 
 #### Response
 1. **Response Parameters**

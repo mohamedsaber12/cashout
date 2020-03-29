@@ -12,9 +12,11 @@ from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permi
 from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 
 from data.utils import get_client_ip
 from disb.models import VMTData
+from disb.utils import custom_budget_logger
 
 from ..utils import default_response_structure, get_from_env, logging_message
 from .serializers import InstantUserInquirySerializer, InstantDisbursementSerializer
@@ -106,6 +108,7 @@ class InstantDisbursementAPIView(views.APIView):
     """
 
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
+    throttle_classes = []
 
     def root_corresponding_pin(self, instant_user, wallet_issuer, serializer):
         """
@@ -210,3 +213,30 @@ class InstantDisbursementAPIView(views.APIView):
                 status_description=json_inquiry_response["MESSAGE"],
                 field_status_code=json_inquiry_response["TXNSTATUS"], response_status_code=status.HTTP_200_OK
         )
+
+
+class BudgetInquiryAPIView(views.APIView):
+    """
+    Handles custom budget inquiries from the disbursers
+    """
+
+    throttle_classes = [UserRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests of the budget inquiry api view"""
+        disburser = request.user
+
+        if not disburser.has_custom_budget:
+            custom_budget_logger(
+                    disburser, f"Internal Error: This user has no custom budget configurations",
+                    disburser, head="[CUSTOM BUDGET - API INQUIRY]"
+            )
+            return Response({'Internal Error': INTERNAL_ERROR_MSG}, status=status.HTTP_404_NOT_FOUND)
+
+        custom_budget_logger(
+                disburser, f"Current budget: {disburser.budget.current_balance} LE",
+                disburser, head="[CUSTOM BUDGET - API INQUIRY]"
+        )
+        return Response({
+            'current_budget': f"Your current budget is {disburser.budget.current_balance} LE"
+        }, status=status.HTTP_200_OK)

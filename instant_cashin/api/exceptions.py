@@ -25,18 +25,22 @@ def custom_exception_handler(exc, context):
     response = exception_handler(exc, context)
 
     if response is not None:
-        if response.data.get("detail"):
+        exception_code = exc.default_code
+
+        # Not Authenticated custom response field
+        if exception_code == "not_authenticated":
             response.data["disbursement_status"] = _("failed")
-            response.data["status_description"] = response.data.pop("detail")
 
         if response.data.get("status_code", None) is None:
             response.data["status_code"] = str(response.status_code)
 
-    logging_message(
-            INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - API EXCEPTION]",
-            f"{context['view'].request.method}: {context['view'].request.path}, "
-            f"from Ip Address: {get_client_ip(context['view'].request)}\n\t"
-            f"Data dictionary: {context['view'].request.data}"
-    )
+        response.data["status_description"] = response.data.pop("detail")
+
+        logging_message(
+                INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - API EXCEPTION]",
+                f"{context['view'].request.method}: {context['view'].request.path}, "
+                f"from Ip Address: {get_client_ip(context['view'].request)} -- exception reason: {exception_code}\n\t"
+                f"Data dictionary: {context['view'].request.data}"
+        )
 
     return response

@@ -2,9 +2,9 @@ site_name: Payouts Portal Documentation!
 
 docs_dir: 'mkdocs'
 site_dir: 'MKDOCS_ROOT'
-pages:
+nav:
   - Home: index.md
-  - 'instant_payout_integration.md'
+  - Instant Cashin Integration: instant_payout_integration.md
 
 theme:
     name: readthedocs

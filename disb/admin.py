@@ -67,7 +67,7 @@ class BudgetAdmin(admin.ModelAdmin):
         obj.created_by = request.user
         obj.save()
 
-        newly_added_amount = abs(obj.max_amount - form.initial['max_amount'])
+        newly_added_amount = abs(obj.max_amount - form.initial.get('max_amount', 0))
         custom_budget_logger(
                 obj.disburser, f"New added amount: {newly_added_amount} LE",
                 obj.created_by, head="[CUSTOM BUDGET - ADMIN PANEL]"

@@ -77,7 +77,7 @@ class DisbursementData(models.Model):
 
     @property
     def get_is_disbursed(self):
-        return 'Yes' if self.is_disbursed else 'No'
+        return 'Successful' if self.is_disbursed else 'Failed'
 
 
 class Budget(AbstractTimeStamp):

@@ -1,3 +1,4 @@
+import copy
 import logging
 
 import requests
@@ -106,14 +107,16 @@ class InstantDisbursementAPIView(views.APIView):
 
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
 
-    def root_corresponding_pin(self, instant_user, serializer):
+    def root_corresponding_pin(self, instant_user, wallet_issuer, serializer):
         """
+        Placed at the .env, formatted like {InstantRootUsername}_{issuer}_PIN=pin
         :param instant_user: the user who can initiate the instant cash in request
+        :param wallet_issuer: type of the passed wallet issuer
         :param serializer: the serializer which contains the data
         :return: It returns the PIN of the instant user's root from request's data or .env file
         """
         if not serializer.data['pin']:
-            return get_from_env(f"{instant_user.root.username}_PIN")
+            return get_from_env(f"{instant_user.root.username}_{wallet_issuer}_PIN")
         return serializer.validated_data['pin']
 
     def post(self, request, *args, **kwargs):
@@ -136,10 +139,11 @@ class InstantDisbursementAPIView(views.APIView):
             instant_user = get_object_or_404(get_user_model(), username=request.user.username)
             vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
             data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
-            data_dict['MSISDN'] = instant_user.root.first_non_super_agent()
+            data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
             data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
             data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
-            data_dict['PIN'] = self.root_corresponding_pin(instant_user, serializer)
+            data_dict['WALLETISSUER'] = serializer.validated_data["issuer"]
+            data_dict['PIN'] = self.root_corresponding_pin(instant_user, data_dict['WALLETISSUER'], serializer)
         except Exception as e:
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - INSTANT CASHIN]", e.args[0])
             return default_response_structure(
@@ -148,10 +152,12 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         try:
+            request_data_dictionary_without_pins = copy.deepcopy(data_dict)
+            request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
             logging_message(
                     INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
                     f"Ip Address: {get_client_ip(request)}, vmt_env used: {vmt_data.vmt_environment}\n\t"
-                    f"Data dictionary: {data_dict}"
+                    f"Data dictionary: {request_data_dictionary_without_pins}"
             )
             transaction = InstantTransaction.objects.create(
                     from_user=request.user, anon_sender=data_dict['MSISDN'], anon_recipient=data_dict['MSISDN2'],

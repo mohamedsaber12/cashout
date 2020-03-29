@@ -57,12 +57,11 @@ def cashin_issuer_validator(issuer):
     :param issuer: The way that the consumer will use
     :return: If valid it just will return the passed issuer value if not it'll raise validation error
     """
-    cashin_valid_issuers_list = ["VODAFONE_CASH", "ETISALAT_CASH", "ORANGE_CASH", "AMAN"]
+    cashin_valid_issuers_list = ["VODAFONE", "ETISALAT", "ORANGE", "AMAN"]
 
-    # ToDo: After finalizing the integration with Etisalat cash issuer will be mandatory field
-    if issuer is not None and issuer not in cashin_valid_issuers_list:
-        msg = _("The passed issuer is not valid, please make sure that the passed issuer value is from this list"
-                " ['VODAFONE_CASH', 'ETISALAT_CASH', 'ORANGE_CASH', 'AMAN'] and try again!")
+    if issuer not in cashin_valid_issuers_list:
+        msg = _("The passed issuer is not valid, please make sure that the passed issuer value is one of"
+                " ['VODAFONE', 'ETISALAT', 'ORANGE', 'AMAN'] and try again!")
         raise serializers.ValidationError(msg)
 
     return issuer

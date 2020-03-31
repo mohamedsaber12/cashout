@@ -211,7 +211,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
         CHANGE_PROFILE_LOGGER.debug(f"""[CHANGE PROFILE]
         Users: {doc_obj.owner.username}, superadmin: {superadmin.username}
-        Response: {str(response.status_code)} -- {str(response.text)}""")
+        Response: {str(response.status_code)} -- {str(response.text)}
+        Data Sent: {data}""")
         error_message = None
         if response.ok:
             response_dict = response.json()

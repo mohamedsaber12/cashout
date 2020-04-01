@@ -35,8 +35,8 @@ from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
                     PasswordChangeForm, ProfileEditForm, RootCreationForm,
                     SetPasswordForm, UploaderMemberFormSet)
 from .mixins import (CollectionRootRequiredMixin, InstantReviewerRequiredMixin,
-                     DisbursementRootRequiredMixin, RootRequiredMixin,
-                     SuperFinishedSetupMixin, SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
+                     DisbursementRootRequiredMixin, RootRequiredMixin, SuperFinishedSetupMixin,
+                     SuperOwnsClientRequiredMixin, SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup, UploaderUser, User)
 
 
@@ -601,6 +601,26 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         Created new Root/Admin with username: {self.object.username} from IP Address {get_client_ip(self.request)}""")
 
         return HttpResponseRedirect(self.get_success_url(is_collection))
+
+
+class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
+    """
+    View for canceling Root setups by deleting created entity setups.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to this View"""
+        username = self.kwargs.get('username')
+
+        try:
+            User.objects.get(username=username).delete()
+            DELETE_USER_VIEW_LOGGER.debug(f"[USER DELETED]\n"
+                f"User: {request.user.username}, Deleted user with username: {username}")
+            return redirect(reverse("data:disbursement_home"))
+        except User.DoesNotExist:
+            DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\n"
+                f"User: {request.user.username}, tried to delete user with username {username} which does not exist")
+            return redirect(reverse("data:disbursement_home"))
 
 
 class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):

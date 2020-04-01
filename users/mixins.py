@@ -46,6 +46,27 @@ class SuperRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class SuperOwnsClientRequiredMixin(LoginRequiredMixin):
+    """
+    Give the access permission of a certain view to only SuperAdmin users,
+    Considering: SuperAdmin MUST owns that entity we're trying to manage.
+    """
+    def dispatch(self, request, *args, **kwargs):
+        has_permission = False
+
+        if request.user.is_superadmin and request.user.is_authenticated:
+            entity_admin_username = request.resolver_match.kwargs.get('username')
+
+            for client_obj in request.user.clients.all():
+                if client_obj.client.username == entity_admin_username:
+                    has_permission = True
+
+        if not has_permission:
+            return self.handle_no_permission()
+
+        return super().dispatch(request, *args, **kwargs)
+
+
 class SuperOrRootOwnsCustomizedBudgetClientRequiredMixin(LoginRequiredMixin):
     """
     Give the access permission of a certain view to only Super or Root users,

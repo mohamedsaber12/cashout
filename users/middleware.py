@@ -46,6 +46,8 @@ class EntitySetupCompletionMiddleWare:
             ourlogout(request)
         if request.user.is_authenticated:
             if request.user.is_superadmin and not request.user.is_superuser:
+                if re.compile(r"client/delete/*").match(path) :
+                    return None
                 if request.user.has_uncomplete_entity_creation():
                     entity_creation = request.user.uncomplete_entity_creation()
                     path = entity_creation.get_reverse()

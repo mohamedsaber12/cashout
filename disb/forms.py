@@ -249,4 +249,4 @@ class BudgetModelForm(forms.ModelForm):
         return cleaned_data
 
 
-AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, can_delete=True, min_num=1, validate_min=True)
+AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, can_delete=True, validate_min=True)

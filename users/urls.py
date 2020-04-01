@@ -19,6 +19,7 @@ collection_setups_urls = [
 client_urls = [
     path('clients/', views.Clients.as_view(), name='clients'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
+    path('client/delete/<str:username>/', views.SuperAdminCancelsRootSetupView.as_view(), name='delete_client'),
     # 'Adding agents' -url- to the clients is at the disb. app urlpatterns
     path('client/fees-setup/<token>/', views.ClientFeesSetup.as_view(), name='add_fees'),
     path('client/fees-setup/edit/<str:username>/', views.CustomClientFeesProfilesUpdateView.as_view(), name='update_fees'),

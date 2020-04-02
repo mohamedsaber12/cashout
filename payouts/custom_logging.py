@@ -244,6 +244,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/instant_cashin_failure.log',
         },
+        'instant_cashin_pending': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/instant_cashin_pending.log',
+        },
         'instant_cashin_requests': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -450,6 +457,11 @@ CUSTOM_LOGGING = {
         },
         'instant_cashin_failure': {
             'handlers': ['instant_cashin_failure'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'instant_cashin_pending': {
+            'handlers': ['instant_cashin_pending'],
             'level': 'DEBUG',
             'propagate': True,
         },

@@ -7,7 +7,37 @@ from core.models import AbstractBaseTransaction
 from users.models import InstantAPICheckerUser
 
 
-class InstantTransaction(AbstractBaseTransaction):
+class AbstractBaseIssuer(models.Model):
+    """
+    Base Issuer model.
+    """
+
+    # Issuer choices
+    VODAFONE = "V"
+    ETISALAT = "E"
+    ORANGE = "O"
+    AMAN = "A"
+    ISSUER_TYPE_CHOICES = [
+        (VODAFONE, _("Vodafone")),
+        (ETISALAT, _("Etisalat")),
+        (ORANGE, _("Orange")),
+        (AMAN, _("Aman")),
+    ]
+
+    issuer_type = models.CharField(
+            _("Issuer Type"),
+            max_length=20,
+            choices=ISSUER_TYPE_CHOICES,
+            blank=True,
+            null=True,
+            db_index=True,
+    )
+
+    class Meta:
+        abstract = True
+
+
+class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     """
     Model for instant transactions
     """
@@ -37,7 +67,11 @@ class InstantTransaction(AbstractBaseTransaction):
             help_text=_("Agent used from Root's agents list")
     )
     failure_reason = models.TextField(
-            _("Failure reason"), blank=True, null=True, help_text=_("Empty if transaction status is Successful"))
+            _("Failure reason"),
+            blank=True,
+            null=True,
+            help_text=_("Empty if transaction status is Successful")
+    )
 
     # Not needed fields
     to_user = None
@@ -50,5 +84,10 @@ class InstantTransaction(AbstractBaseTransaction):
     class Meta:
         verbose_name = "Instant Transaction"
         verbose_name_plural = "Instant Transactions"
-        get_latest_by = "-created_at"
-        ordering = ["-created_at"]
+        get_latest_by = "-updated_at"
+        ordering = ["-created_at", "-updated_at"]
+
+    def mark_pending(self):
+        """Mark transaction status as pending"""
+        self.status = self.PENDING
+        self.save()

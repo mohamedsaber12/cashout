@@ -69,16 +69,31 @@ class User(AbstractUser):
             ("can_use_two_factor", "the user can use two factor"),
             ("has_disbursement", "the client has disbursement options"),
             ("has_collection", "the client has collection options"),
+            ("has_instant_disbursement", "the client/his children has instant disbursement capabilities"),
             ("can_view_api_docs", "the user can view the api documentation"),
         )
 
     def __str__(self):
         return str(self.username)
 
-    def child(self):
-        if not self.user_type == 3:
-            raise ValidationError('This user has no children')
-        return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
+    def children(self):
+        """
+        If the request is coming from Super user -> Children will be of types (3),
+        If the request is coming from Root user -> Children will be of types (1, 2, 6, 7)
+        :return: list of children users who belong to that parent
+        """
+        if self.user_type == 0:
+            from .client import Client
+            try:
+                return [root.client for root in Client.objects.filter(creator=self)]
+            except Client.DoesNotExist:
+                raise ValidationError("Related user does not exist")
+
+        if self.user_type == 3:
+            return User.objects.get_all_hierarchy_tree(self.hierarchy).filter(~Q(user_type=self.user_type))[::1]
+
+        raise ValidationError('This user has no children')
+
 
     @property
     def can_view_docs(self):
@@ -91,8 +106,7 @@ class User(AbstractUser):
     def can_disburse(self):
         if self.has_perm('data.can_disburse'):
             return True
-        else:
-            return False
+        return False
 
     @property
     def root(self):
@@ -163,6 +177,13 @@ class User(AbstractUser):
         return self.user_type == 7
 
     @cached_property
+    def is_instant_member(self):
+        """Check if current user belongs to instant cashin family"""
+        if self.is_instantapichecker or self.is_instantapiviewer or self.has_perm('users.has_instant_disbursement'):
+            return True
+        return False
+
+    @cached_property
     def get_full_name(self):
         full_name = f"{self.first_name.capitalize()} {self.last_name}"
         return full_name.strip()
@@ -183,6 +204,22 @@ class User(AbstractUser):
             return True
         except Budget.DoesNotExist:
             return False
+
+    def can_pass_instant_disbursement(self):
+        """Check if this user's family has any member who has instant disbursement capabilities"""
+        if self.is_instant_member:
+            return True
+        elif self.is_root:
+            for child in self.children():
+                if child.is_instant_member:
+                    return True
+        elif self.is_superadmin:
+            for root_child in self.children():
+                for child in root_child.children():
+                    if child.is_instant_member:
+                        return True
+
+        return False
 
     def get_absolute_url(self):
         return reverse("users:profile", kwargs={'username': self.username})

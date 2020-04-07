@@ -4,45 +4,32 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from .models import Agent, Budget, VMTData
+from .mixins import AdminNoPermissionMixin
+from .models import Agent, Budget, DisbursementData, DisbursementDocData, VMTData
 from .utils import custom_budget_logger
 
 
+@admin.register(Agent)
 class AgentAdmin(admin.ModelAdmin):
     """
     Admin model for the tweaking the representation of the Agent model at the admin panel
     """
 
     list_display = ['msisdn', 'wallet_provider', 'super', 'pin']
+    list_filter = ['pin', 'super', 'wallet_provider']
 
 
-class VMTDataAdmin(admin.ModelAdmin):
-    """
-    Admin model for VMTData credentials
-    """
-
-    def has_add_permission(self, request):
-        """
-        :return: Prevent non superuser from adding new instances of VMTData credentials
-        """
-        if request.user.is_superuser:
-            return True
-        try:
-            if request.user.root.vmt:
-                return False
-        except VMTData.DoesNotExist:
-            return super(VMTDataAdmin, self).has_add_permission(request)
-
-
+@admin.register(Budget)
 class BudgetAdmin(admin.ModelAdmin):
     """
     Budget Admin model for the Budget model
     """
 
+    list_filter = ['updated_at', 'created_at', 'disburser', 'created_by']
     list_display = ['disburser', 'created_by', 'total_disbursed_amount', 'disbursed_amount', 'max_amount', 'updated_at']
     readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by']
     search_fields = ['disburser', 'created_by']
-    ordering = ['-updated_at']
+    ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
         (_('Users Details'), {'fields': ('disburser', 'created_by')}),
@@ -74,6 +61,47 @@ class BudgetAdmin(admin.ModelAdmin):
         )
 
 
-admin.site.register(Agent, AgentAdmin)
-admin.site.register(Budget, BudgetAdmin)
-admin.site.register(VMTData, VMTDataAdmin)
+@admin.register(DisbursementData)
+class DisbursementDataAdmin(AdminNoPermissionMixin, admin.ModelAdmin):
+    """
+    Admin panel representation for DisbursementData model
+    """
+
+    list_display = ['msisdn', 'amount', 'doc', 'is_disbursed', 'reason']
+    list_filter = ['is_disbursed', 'updated_at', 'created_at']
+    ordering = ['-updated_at', '-created_at']
+
+    fieldsets = (
+        (None, {'fields': list_display}),
+        (_('Important Dates'), {'fields': ('created_at', 'updated_at')})
+    )
+
+
+@admin.register(DisbursementDocData)
+class DisbursementDocDataAdmin(AdminNoPermissionMixin, admin.ModelAdmin):
+    """
+    Admin panel representation for DisbursementDocData model
+    """
+
+    list_display = ['doc', 'txn_id', 'txn_status']
+
+
+@admin.register(VMTData)
+class VMTDataAdmin(admin.ModelAdmin):
+    """
+    Admin model for VMTData credentials
+    """
+
+    list_filter = ['vmt']
+
+    def has_add_permission(self, request):
+        """
+        :return: Prevent non superuser from adding new instances of VMTData credentials
+        """
+        if request.user.is_superuser:
+            return True
+        try:
+            if request.user.root.vmt:
+                return False
+        except VMTData.DoesNotExist:
+            return super(VMTDataAdmin, self).has_add_permission(request)

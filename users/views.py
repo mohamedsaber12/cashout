@@ -376,7 +376,7 @@ class Members(RootRequiredMixin, ListView):
     def get_queryset(self):
         if 'disbursement' == self.request.user.get_status(self.request):
             qs = super().get_queryset()
-            qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1, 2, 5])
+            qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1, 2, 5, 6, 7])
             if self.request.GET.get("q"):
                 type_of = self.request.GET.get("q")
                 if type_of == 'maker':

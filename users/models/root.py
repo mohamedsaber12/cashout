@@ -30,12 +30,7 @@ class RootUser(User):
         :param wallet_issuer: type of the passed wallet issuer
         :return: the first non super agent or None
         """
-        msisdn_issuer = '010'       # Defaulted to Vodafone
-
-        if wallet_issuer == 'ETISALAT':
-            msisdn_issuer = '011'
-        if wallet_issuer == 'ORANGE':
-            msisdn_issuer = '012'
+        msisdn_issuer = '011' if wallet_issuer == 'ETISALAT' else '010'
 
         if self.agents:
             qs = self.agents.filter(super=False, msisdn__startswith=msisdn_issuer)

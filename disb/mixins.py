@@ -4,6 +4,21 @@ from django.contrib import messages
 from disb.utils import custom_budget_logger
 
 
+class AdminNoPermissionMixin:
+    """
+    For handling add/change/delete permission at the admin panel
+    """
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
 class BudgetActionMixin:
     """
     For handling BudgetModelForm at the used Views

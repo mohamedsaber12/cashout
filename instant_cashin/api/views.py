@@ -26,10 +26,12 @@ from .mixins import IsInstantAPICheckerUser
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
+INSTANT_CASHIN_PENDING_LOGGER = logging.getLogger("instant_cashin_pending")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
 
 INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team.")
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
+ORANGE_PENDING_MSG = _("Your transaction will be process the soonest, wait for a response at the next 24 hours.")
 
 
 class InstantUserInquiryAPIView(views.APIView):
@@ -118,9 +120,21 @@ class InstantDisbursementAPIView(views.APIView):
         :param serializer: the serializer which contains the data
         :return: It returns the PIN of the instant user's root from request's data or .env file
         """
+        if wallet_issuer == "ORANGE": return True
         if not serializer.data['pin']:
             return get_from_env(f"{instant_user.root.username}_{wallet_issuer}_PIN")
         return serializer.validated_data['pin']
+
+    def match_issuer_type(self, issuer):
+        """
+        Match the wallet issuer used at the request with its corresponding one at the issuer choices
+        :param issuer: issuer passed from the serializer
+        :return: choice letter that match the issuer type at the model
+        """
+        for choice in InstantTransaction.ISSUER_TYPE_CHOICES:
+            if issuer.lower() == choice[1].lower():
+                return choice[0]
+        return 'V'
 
     def post(self, request, *args, **kwargs):
         """
@@ -139,7 +153,7 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         try:
-            instant_user = get_object_or_404(get_user_model(), username=request.user.username)
+            instant_user = request.user
             vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
             data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
             data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
@@ -163,31 +177,45 @@ class InstantDisbursementAPIView(views.APIView):
                     f"Data dictionary: {request_data_dictionary_without_pins}"
             )
             transaction = InstantTransaction.objects.create(
-                    from_user=request.user, anon_sender=data_dict['MSISDN'], anon_recipient=data_dict['MSISDN2'],
-                    status="F", amount=data_dict['AMOUNT']
+                    from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
+                    issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
             )
             if not request.user.budget.within_threshold(serializer.validated_data['amount']):
                 msg = _("Sorry, the amount to be disbursed exceeds you budget limit.")
                 raise ValidationError(msg)
+
+            if data_dict['WALLETISSUER'] == "ORANGE":
+                transaction.blank_anon_sender()
+                logging_message(
+                        INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
+                        f"User: {instant_user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
+                        f"for MSISDN: {data_dict['MSISDN2']}"
+                )
+                return default_response_structure(
+                        disbursement_status=_("pending"), status_description=ORANGE_PENDING_MSG,
+                        field_status_code=status.HTTP_202_ACCEPTED, response_status_code=status.HTTP_200_OK
+                )
+
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
+
         except ValidationError as e:
             if transaction:
-                transaction.failure_reason = e.args[0]
-                transaction.save()
+                transaction.failure_reason = INTERNAL_ERROR_MSG
+                transaction.mark_failed()
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[Validation Error - INSTANT CASHIN]", e.args[0])
             return default_response_structure(
                     status_description=e.args[0], field_status_code="6061", response_status_code=status.HTTP_200_OK
             )
+
         except (TimeoutError, ImproperlyConfigured, Exception) as e:
             log_msg = e.args[0]
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content
             if transaction:
                 transaction.failure_reason = log_msg
-                transaction.save()
+                transaction.mark_failed()
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", log_msg)
-
             return default_response_structure(
                     status_description=EXTERNAL_ERROR_MSG, field_status_code=status.HTTP_424_FAILED_DEPENDENCY,
                     response_status_code=status.HTTP_200_OK
@@ -197,7 +225,7 @@ class InstantDisbursementAPIView(views.APIView):
                   f"MSISDN: {data_dict['MSISDN2']}\n\tResponse content: {json_inquiry_response}"
 
         if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
-            logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[INSTANT CASHIN]", log_msg)
+            logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL - INSTANT CASHIN]", log_msg)
             transaction.mark_successful()
             request.user.budget.update_disbursed_amount(data_dict['AMOUNT'])
             return default_response_structure(
@@ -205,10 +233,10 @@ class InstantDisbursementAPIView(views.APIView):
                     disbursement_status=_("success"), response_status_code=status.HTTP_200_OK
             )
 
-        logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED INSTANT CASHIN]", log_msg)
+        logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED - INSTANT CASHIN]", log_msg)
         if transaction:
             transaction.failure_reason = json_inquiry_response["MESSAGE"]   # Save the full failure reason
-            transaction.save()
+            transaction.mark_failed()
         return default_response_structure(
                 status_description=json_inquiry_response["MESSAGE"],
                 field_status_code=json_inquiry_response["TXNSTATUS"], response_status_code=status.HTTP_200_OK
@@ -220,6 +248,7 @@ class BudgetInquiryAPIView(views.APIView):
     Handles custom budget inquiries from the disbursers
     """
 
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
     throttle_classes = [UserRateThrottle]
 
     def post(self, request, *args, **kwargs):
@@ -233,10 +262,9 @@ class BudgetInquiryAPIView(views.APIView):
             )
             return Response({'Internal Error': INTERNAL_ERROR_MSG}, status=status.HTTP_404_NOT_FOUND)
 
+        budget = disburser.budget.current_balance
         custom_budget_logger(
-                disburser, f"Current budget: {disburser.budget.current_balance} LE",
-                disburser, head="[CUSTOM BUDGET - API INQUIRY]"
+                disburser, f"Current budget: {budget} LE", disburser, head="[CUSTOM BUDGET - API INQUIRY]"
         )
-        return Response({
-            'current_budget': f"Your current budget is {disburser.budget.current_balance} LE"
-        }, status=status.HTTP_200_OK)
+
+        return Response({'current_budget': f"Your current budget is {budget} LE"}, status=status.HTTP_200_OK)

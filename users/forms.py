@@ -148,7 +148,7 @@ class GroupAdminForm(forms.ModelForm):
                 username=self.request.user.username)
 
         elif self.request.user.is_root:
-            self.fields["users"].queryset = self.request.user.child()
+            self.fields["users"].queryset = self.request.user.children()
             self.fields["name"].help_text = "Begin it with %s_ at first to avoid redundancy" % \
                                             self.request.user.username
             try:

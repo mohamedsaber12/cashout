@@ -20,8 +20,6 @@ def msisdn_validator(msisdn):
         msg = _("Invalid phone number")
         raise serializers.ValidationError(msg)
 
-    return msisdn
-
 
 def issuer_validator(issuer):
     """
@@ -32,8 +30,6 @@ def issuer_validator(issuer):
     if issuer != "VodafoneCash":
         msg = _("You are not permitted to inquire at an issuer other that 'VodafoneCash'")
         raise serializers.ValidationError(msg)
-
-    return issuer
 
 
 def fees_validator(fees):
@@ -48,8 +44,6 @@ def fees_validator(fees):
         msg = _("The fee flag passed to be applied is incorrect, please pass one of ['Full', 'Half', 'No fees']")
         raise serializers.ValidationError(msg)
 
-    return fees
-
 
 def cashin_issuer_validator(issuer):
     """
@@ -63,5 +57,3 @@ def cashin_issuer_validator(issuer):
         msg = _("The passed issuer is not valid, please make sure that the passed issuer value is one of"
                 " ['VODAFONE', 'ETISALAT', 'ORANGE', 'AMAN'] and try again!")
         raise serializers.ValidationError(msg)
-
-    return issuer

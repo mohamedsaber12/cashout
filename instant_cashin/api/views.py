@@ -153,7 +153,7 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         try:
-            instant_user = get_object_or_404(get_user_model(), username=request.user.username)
+            instant_user = request.user
             vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
             data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
             data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
@@ -248,6 +248,7 @@ class BudgetInquiryAPIView(views.APIView):
     Handles custom budget inquiries from the disbursers
     """
 
+    permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
     throttle_classes = [UserRateThrottle]
 
     def post(self, request, *args, **kwargs):
@@ -261,10 +262,9 @@ class BudgetInquiryAPIView(views.APIView):
             )
             return Response({'Internal Error': INTERNAL_ERROR_MSG}, status=status.HTTP_404_NOT_FOUND)
 
+        budget = disburser.budget.current_balance
         custom_budget_logger(
-                disburser, f"Current budget: {disburser.budget.current_balance} LE",
-                disburser, head="[CUSTOM BUDGET - API INQUIRY]"
+                disburser, f"Current budget: {budget} LE", disburser, head="[CUSTOM BUDGET - API INQUIRY]"
         )
-        return Response({
-            'current_budget': f"Your current budget is {disburser.budget.current_balance} LE"
-        }, status=status.HTTP_200_OK)
+
+        return Response({'current_budget': f"Your current budget is {budget} LE"}, status=status.HTTP_200_OK)

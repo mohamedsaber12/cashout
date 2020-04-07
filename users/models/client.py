@@ -66,7 +66,7 @@ class Client(models.Model):
         Used at the change profile request
         :return: String/Constant that will be used as a value of the NEWPROFILE key
         """
-        if self.custom_profile is not False:
+        if self.custom_profile != 'False':
             return self.custom_profile
         elif self.fees_percentage == 100:
             return "Full"

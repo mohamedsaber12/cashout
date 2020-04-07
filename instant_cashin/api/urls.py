@@ -1,7 +1,6 @@
 from django.urls import path
 
-from .base_views import BudgetInquiryAPIView
-from .views import InstantDisbursementAPIView
+from .base_views import BudgetInquiryAPIView, InstantDisbursementAPIView
 
 
 app_name = 'instant_api'

@@ -24,6 +24,10 @@ class VMTData(AbstractVMTData):
             verbose_name=_("VMT Credentials Owner")
     )
 
+    class Meta:
+        verbose_name = "VMT Credential"
+        verbose_name_plural = "VMT Credentials"
+
 
 class Agent(models.Model):
     """
@@ -56,19 +60,24 @@ class DisbursementDocData(models.Model):
     txn_id = models.CharField(max_length=16, null=True, blank=True)  #
     txn_status = models.CharField(max_length=16, null=True, blank=True)
 
+    class Meta:
+        verbose_name = "Disbursement Document"
+        verbose_name_plural = "Disbursement Documents"
 
-class DisbursementData(models.Model):
+
+class DisbursementData(AbstractTimeStamp):
     """
     This model to save data processed from the document like FileData yet for disbursement
     """
     doc = models.ForeignKey('data.Doc', null=True, related_name='disbursement_data', on_delete=models.CASCADE)
-    date = models.DateField(blank=True, null=True)
     is_disbursed = models.BooleanField(default=0)
     amount = models.FloatField(verbose_name=_('AMOUNT'))
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     reason = models.TextField()
 
     class Meta:
+        verbose_name = "Disbursement Data Record"
+        verbose_name_plural = "Disbursement Data Records"
         unique_together = ('doc', 'msisdn')
         index_together = ['doc', 'msisdn']
 

@@ -12,6 +12,7 @@ from django.utils.translation import gettext as _
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
 from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
+from rest_framework.response import Response
 
 from data.utils import get_client_ip
 from disb.models import VMTData
@@ -40,6 +41,10 @@ class InstantDisbursementAPIView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
     throttle_classes = []
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.specific_issuers = ['orange', 'aman']
+
     def root_corresponding_pin(self, instant_user, wallet_issuer, serializer):
         """
         Placed at the .env, formatted like {InstantRootUsername}_{issuer}_PIN=pin
@@ -64,6 +69,21 @@ class InstantDisbursementAPIView(views.APIView):
                 return choice[0]
         return 'V'
 
+    def handle_orange_issuer(self, instant_user, trx_object, data_dict):
+        """Handle orange operations/transactions separately"""
+
+        trx_object.blank_anon_sender()
+        logging_message(
+                INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
+                f"User: {instant_user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
+                f"for MSISDN: {data_dict['MSISDN2']}"
+        )
+
+        return default_response_structure(
+                disbursement_status=_("pending"), status_description=ORANGE_PENDING_MSG,
+                field_status_code=status.HTTP_202_ACCEPTED, response_status_code=status.HTTP_200_OK
+        )
+
     def post(self, request, *args, **kwargs):
         """
         Handles POST HTTP requests
@@ -87,7 +107,7 @@ class InstantDisbursementAPIView(views.APIView):
             data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
             data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
             data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
-            data_dict['WALLETISSUER'] = serializer.validated_data["issuer"]
+            issuer = data_dict['WALLETISSUER'] = serializer.validated_data["issuer"]
             data_dict['PIN'] = self.root_corresponding_pin(instant_user, data_dict['WALLETISSUER'], serializer)
         except Exception as e:
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - INSTANT CASHIN]", e.args[0])
@@ -96,14 +116,15 @@ class InstantDisbursementAPIView(views.APIView):
                     field_status_code=status.HTTP_424_FAILED_DEPENDENCY
             )
 
+        request_data_dictionary_without_pins = copy.deepcopy(data_dict)
+        request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
+        logging_message(
+                INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
+                f"Ip Address: {get_client_ip(request)}, vmt_env used: {vmt_data.vmt_environment}\n\t"
+                f"Data dictionary: {request_data_dictionary_without_pins}"
+        )
+
         try:
-            request_data_dictionary_without_pins = copy.deepcopy(data_dict)
-            request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
-            logging_message(
-                    INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
-                    f"Ip Address: {get_client_ip(request)}, vmt_env used: {vmt_data.vmt_environment}\n\t"
-                    f"Data dictionary: {request_data_dictionary_without_pins}"
-            )
             transaction = InstantTransaction.objects.create(
                     from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
                     issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
@@ -112,17 +133,13 @@ class InstantDisbursementAPIView(views.APIView):
                 msg = _("Sorry, the amount to be disbursed exceeds you budget limit.")
                 raise ValidationError(msg)
 
-            if data_dict['WALLETISSUER'] == "ORANGE":
-                transaction.blank_anon_sender()
-                logging_message(
-                        INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
-                        f"User: {instant_user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
-                        f"for MSISDN: {data_dict['MSISDN2']}"
-                )
-                return default_response_structure(
-                        disbursement_status=_("pending"), status_description=ORANGE_PENDING_MSG,
-                        field_status_code=status.HTTP_202_ACCEPTED, response_status_code=status.HTTP_200_OK
-                )
+            if issuer.lower() in self.specific_issuers:
+                handle_specific_issuer = getattr(self, f"handle_{issuer.lower()}_issuer")
+                response_data = handle_specific_issuer(instant_user, transaction, data_dict)
+
+                if isinstance(response_data, Response):
+                    # custom logging
+                    return response_data
 
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()

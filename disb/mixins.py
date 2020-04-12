@@ -4,7 +4,7 @@ from django.contrib import messages
 from disb.utils import custom_budget_logger
 
 
-class AdminNoPermissionMixin:
+class AdminSiteOwnerOnlyPermissionMixin:
     """
     For handling add/change/delete permission at the admin panel
     """
@@ -13,7 +13,10 @@ class AdminNoPermissionMixin:
         return False
 
     def has_delete_permission(self, request, obj=None):
-        return False
+        if request.user.is_superuser or request.user == obj.doc.owner.root.super_admin or \
+                request.user == obj.doc.owner.root:
+            return True
+        raise PermissionError(_("Only admin family member users allowed to delete records from this table."))
 
     def has_change_permission(self, request, obj=None):
         return False

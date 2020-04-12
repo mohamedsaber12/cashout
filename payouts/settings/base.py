@@ -37,6 +37,7 @@ THIRD_PARTY_APPS = [
     'django_celery_beat',
     'imagekit',
     'django_extensions',
+    'django.contrib.admindocs',
 ]
 
 SECURITY_THIRD_PARTY_APPS = [

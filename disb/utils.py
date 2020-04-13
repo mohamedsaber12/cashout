@@ -1,5 +1,6 @@
 import logging
 
+from django.contrib import admin
 from django.utils.translation import gettext as _
 
 
@@ -30,3 +31,16 @@ def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", an
             user=f"{user} -- Root/Disburser: {disburser}",
             message=f"{total_disbursed_amount}{another_message}"
     )
+
+
+def custom_titled_filter(title):
+    """
+    Function for changing field's filter title at the django admin
+    :param title: the new title to be viewed
+    """
+    class Wrapper(admin.FieldListFilter):
+        def __new__(cls, *args, **kwargs):
+            instance = admin.FieldListFilter.create(*args, **kwargs)
+            instance.title = title
+            return instance
+    return Wrapper

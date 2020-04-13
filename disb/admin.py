@@ -6,7 +6,7 @@ from django.utils.translation import gettext_lazy as _
 
 from .mixins import AdminSiteOwnerOnlyPermissionMixin
 from .models import Agent, Budget, DisbursementData, DisbursementDocData, VMTData
-from .utils import custom_budget_logger
+from .utils import custom_budget_logger, custom_titled_filter
 
 
 @admin.register(Agent)
@@ -75,7 +75,13 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     """
 
     list_display = ['msisdn', 'amount', 'doc', 'is_disbursed', 'reason']
-    list_filter = ['is_disbursed', 'updated_at', 'created_at']
+    list_filter = [
+        ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
+        ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
+        ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
+        ('is_disbursed', custom_titled_filter('Disbursement Status')),
+        'updated_at', 'created_at'
+    ]
     ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
@@ -91,6 +97,7 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     """
 
     list_display = ['doc', 'txn_id', 'txn_status']
+    list_filter = [('doc__owner', custom_titled_filter('Document Owner/Uploader'))]
 
 
 @admin.register(VMTData)

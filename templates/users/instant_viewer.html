@@ -54,8 +54,10 @@
                         <th>{% trans 'Consumer' %}</th>
                         <th>{% trans 'Amount' %}</th>
                         <th>{% trans 'Status' %}</th>
+                        <th>{% trans 'Channel' %}</th>
                         <th>{% trans 'Failure Reason' %}</th>
                         <th>{% trans 'Created At' %}</th>
+                        <th>{% trans 'Updated At' %}</th>
                       </tr>
                       </thead>
 
@@ -69,10 +71,23 @@
                             <td>{% trans 'Successful' %}</td>
                           {% elif trx.status == 'F' %}
                             <td>{% trans 'Failed' %}</td>
+                          {% elif trx.status == 'P' %}
+                            <td>{% trans 'Pending' %}</td>
+                          {% endif %}
+                          {% if trx.issuer_type == 'V' %}
+                          <td>{% trans 'Vodafone' %}</td>
+                          {% elif trx.issuer_type == 'E' %}
+                          <td>{% trans 'Etisalat' %}</td>
+                          {% elif trx.issuer_type == 'O' %}
+                          <td>{% trans 'Orange' %}</td>
+                          {% elif trx.issuer_type == 'A' %}
+                          <td>{% trans 'Aman' %}</td>
                           {% endif %}
                           <td>{{ trx.failure_reason }}</td>
                           <td>{{ trx.created_at }}</td>
+                          <td>{{ trx.updated_at }}</td>
                         </tr>
+
                       {% endfor %}
                       </tbody>
                     </table>

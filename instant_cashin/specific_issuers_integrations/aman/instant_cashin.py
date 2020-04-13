@@ -190,6 +190,7 @@ class AmanChannel:
                 return Response(
                         {
                             "disbursement_status": _("success"),
+                            "transaction_id": self.transaction.uid,
                             "status_description": msg,
                             "bill_reference": _(f"{bill_reference}"),
                             "status_code": status.HTTP_200_OK

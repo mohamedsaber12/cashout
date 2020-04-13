@@ -30,12 +30,14 @@ def get_from_env(key):
     return environment_vars_dict.str(key)
 
 
-def default_response_structure(disbursement_status="failed",
+def default_response_structure(transaction_id,
+                               disbursement_status="failed",
                                status_description="",
                                field_status_code=None,
                                response_status_code=None):
     """
     This function uniforms the response's body structure
+    :param transaction_id: id of the currently processed transaction
     :param disbursement_status: failed or success, default is failed
     :param status_description: failure reason if any
     :param field_status_code: status code returned as a string field within the response body
@@ -50,6 +52,7 @@ def default_response_structure(disbursement_status="failed",
 
     return Response(
             {
+                "transaction_id": transaction_id,
                 "disbursement_status": disbursement_status,
                 "status_description": status_description,
                 "status_code": str(field_status_code)

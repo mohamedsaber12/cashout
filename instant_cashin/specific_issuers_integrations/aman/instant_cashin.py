@@ -15,6 +15,7 @@ from rest_framework.response import Response
 
 from data.utils import get_client_ip
 
+from ...models import AmanTransaction
 from ...utils import get_from_env
 
 
@@ -27,6 +28,7 @@ class AmanChannel:
         """Instantiates Aman channel object by setting ACCEPT endpoints urls"""
         self.request = request
         self.transaction = transaction_object
+        self.aman_transaction = AmanTransaction.objects.create(transaction=transaction_object)
         self.amount = self.transaction.amount
         self.aman_logger = logging.getLogger('aman_channel')
         self.authentication_url = "https://accept.paymobsolutions.com/api/auth/tokens"
@@ -181,7 +183,7 @@ class AmanChannel:
 
             if response.ok and bill_reference and trx_status:
                 self.transaction.mark_successful()
-                # ToDo: DB - Mark transaction, paid = False
+                self.aman_transaction.update_bill_reference(bill_reference)
                 self.request.user.budget.update_disbursed_amount(self.amount)
                 msg = _(f"تم إيداع {self.transaction.amount} جنيه إلى رقم "
                         f"{self.transaction.anon_recipient} بنجاح ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمه المستحقه")

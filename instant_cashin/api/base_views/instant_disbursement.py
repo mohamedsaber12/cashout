@@ -17,11 +17,11 @@ from rest_framework.response import Response
 from data.utils import get_client_ip
 from disb.models import VMTData
 
-from ...utils import default_response_structure, get_from_env, logging_message
 from ..serializers import InstantDisbursementSerializer
 from ...specific_issuers_integrations import AmanChannel
-from ...models.instant_transactions import InstantTransaction
 from ..mixins import IsInstantAPICheckerUser
+from ...models import InstantTransaction
+from ...utils import default_response_structure, get_from_env, logging_message
 
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")

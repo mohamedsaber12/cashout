@@ -19,6 +19,7 @@ from disb.models import VMTData
 
 from ...utils import default_response_structure, get_from_env, logging_message
 from ..serializers import InstantDisbursementSerializer
+from ...specific_issuers_integrations import AmanChannel
 from ...models.instant_transactions import InstantTransaction
 from ..mixins import IsInstantAPICheckerUser
 
@@ -31,6 +32,7 @@ INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
 INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team.")
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
 ORANGE_PENDING_MSG = _("Your transaction will be process the soonest, wait for a response at the next 24 hours.")
+BUDGET_EXCEEDED_MSG = _("Sorry, the amount to be disbursed exceeds you budget limit. please contact your support team.")
 
 
 class InstantDisbursementAPIView(views.APIView):
@@ -53,7 +55,8 @@ class InstantDisbursementAPIView(views.APIView):
         :param serializer: the serializer which contains the data
         :return: It returns the PIN of the instant user's root from request's data or .env file
         """
-        if wallet_issuer == "ORANGE": return True
+        if wallet_issuer in self.specific_issuers: return True
+
         if not serializer.data['pin']:
             return get_from_env(f"{instant_user.root.username}_{wallet_issuer}_PIN")
         return serializer.validated_data['pin']
@@ -69,13 +72,56 @@ class InstantDisbursementAPIView(views.APIView):
                 return choice[0]
         return 'V'
 
-    def handle_orange_issuer(self, instant_user, trx_object, data_dict):
+    def aman_api_authentication_params(self, aman_channel_object):
+        """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
+        api_auth_response = aman_channel_object.api_authentication()
+
+        if api_auth_response.status_code == status.HTTP_201_CREATED:
+            api_auth_token = api_auth_response.data.get('api_auth_token', '')
+            merchant_id = str(api_auth_response.data.get('merchant_id', ''))
+
+            return api_auth_token, merchant_id
+
+    def handle_aman_issuer(self, request, transaction_object, data_dict):
+        """Handle aman operations/transactions separately"""
+
+        aman_object = AmanChannel(request, transaction_object)
+
+        try:
+            api_auth_token, merchant_id = self.aman_api_authentication_params(aman_object)
+            order_registration = aman_object.order_registration(api_auth_token, merchant_id, transaction_object.uid)
+
+            if order_registration.status_code == status.HTTP_201_CREATED:
+                api_auth_token, _ = self.aman_api_authentication_params(aman_object)
+                payment_key_params = {
+                    "api_auth_token": api_auth_token,
+                    "order_id": order_registration.data.get('order_id', ''),
+                    "first_name": "Mohamed",                # ToDo: Validate through the serializer at aman cases
+                    "last_name": "Mamdouh",                 # ToDo: Validate through the serializer at aman cases
+                    "email": "mahammad.mamdouh@gmail.com",  # ToDo: Validate through the serializer at aman cases
+                    "phone_number": f"+2{data_dict['MSISDN2']}"
+                }
+                payment_key_obtained = aman_object.obtain_payment_key(**payment_key_params)
+
+                if payment_key_obtained.status_code == status.HTTP_201_CREATED:
+                    payment_key = payment_key_obtained.data.get('payment_token', '')
+                    make_payment_request = aman_object.make_pay_request(payment_key)
+
+                    if make_payment_request.status_code == status.HTTP_200_OK:
+                        return make_payment_request
+
+        except Exception as err:
+            aman_object.log_message(request, f"[GENERAL FAILURE - AMAN CHANNEL]", f"Exception: {err.args[0]}")
+
+        raise Exception(EXTERNAL_ERROR_MSG)
+
+    def handle_orange_issuer(self, request, trx_object, data_dict):
         """Handle orange operations/transactions separately"""
 
         trx_object.blank_anon_sender()
         logging_message(
                 INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
-                f"User: {instant_user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
+                f"User: {request.user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
                 f"for MSISDN: {data_dict['MSISDN2']}"
         )
 
@@ -130,23 +176,24 @@ class InstantDisbursementAPIView(views.APIView):
                     issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
             )
             if not request.user.budget.within_threshold(serializer.validated_data['amount']):
-                msg = _("Sorry, the amount to be disbursed exceeds you budget limit.")
+                msg = BUDGET_EXCEEDED_MSG
                 raise ValidationError(msg)
 
             if issuer.lower() in self.specific_issuers:
                 handle_specific_issuer = getattr(self, f"handle_{issuer.lower()}_issuer")
-                response_data = handle_specific_issuer(instant_user, transaction, data_dict)
+                response_data = handle_specific_issuer(request, transaction, data_dict)
 
                 if isinstance(response_data, Response):
-                    # custom logging
+                    # ToDo: Logging for Custom channels
                     return response_data
 
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
 
         except ValidationError as e:
+            trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
             if transaction:
-                transaction.failure_reason = INTERNAL_ERROR_MSG
+                transaction.failure_reason = trx_failure_msg
                 transaction.mark_failed()
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[Validation Error - INSTANT CASHIN]", e.args[0])
             return default_response_structure(
@@ -158,7 +205,7 @@ class InstantDisbursementAPIView(views.APIView):
             if json_inquiry_response != "Request time out":
                 log_msg = json_inquiry_response.content
             if transaction:
-                transaction.failure_reason = log_msg
+                transaction.failure_reason = EXTERNAL_ERROR_MSG
                 transaction.mark_failed()
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", log_msg)
             return default_response_structure(

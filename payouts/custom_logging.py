@@ -293,6 +293,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/change_fees_profile.log',
         },
+        'aman_channel': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/aman_channel.log',
+        },
     },
 
     'loggers': {
@@ -482,6 +489,11 @@ CUSTOM_LOGGING = {
         },
         'change_fees_profile': {
             'handlers': ['change_fees_profile'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'aman_channel': {
+            'handlers': ['aman_channel'],
             'level': 'DEBUG',
             'propagate': True,
         },

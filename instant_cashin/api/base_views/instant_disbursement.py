@@ -55,7 +55,7 @@ class InstantDisbursementAPIView(views.APIView):
         :param serializer: the serializer which contains the data
         :return: It returns the PIN of the instant user's root from request's data or .env file
         """
-        if wallet_issuer in self.specific_issuers: return True
+        if wallet_issuer.lower() in self.specific_issuers: return True
 
         if not serializer.data['pin']:
             return get_from_env(f"{instant_user.root.username}_{wallet_issuer}_PIN")
@@ -118,7 +118,6 @@ class InstantDisbursementAPIView(views.APIView):
     def handle_orange_issuer(self, request, trx_object, data_dict):
         """Handle orange operations/transactions separately"""
 
-        trx_object.blank_anon_sender()
         logging_message(
                 INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
                 f"User: {request.user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
@@ -171,6 +170,9 @@ class InstantDisbursementAPIView(views.APIView):
         )
 
         try:
+            if issuer.lower() in self.specific_issuers:
+                data_dict.update({'MSISDN': ''})
+
             transaction = InstantTransaction.objects.create(
                     from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
                     issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']

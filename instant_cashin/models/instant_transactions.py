@@ -91,7 +91,3 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         """Mark transaction status as pending"""
         self.status = self.PENDING
         self.save()
-
-    def blank_anon_sender(self):
-        self.anon_sender = ''
-        self.save()

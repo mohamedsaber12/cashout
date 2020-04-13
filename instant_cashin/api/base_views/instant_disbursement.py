@@ -82,7 +82,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             return api_auth_token, merchant_id
 
-    def handle_aman_issuer(self, request, transaction_object, data_dict):
+    def handle_aman_issuer(self, request, transaction_object, serializer):
         """Handle aman operations/transactions separately"""
 
         aman_object = AmanChannel(request, transaction_object)
@@ -96,10 +96,10 @@ class InstantDisbursementAPIView(views.APIView):
                 payment_key_params = {
                     "api_auth_token": api_auth_token,
                     "order_id": order_registration.data.get('order_id', ''),
-                    "first_name": "Mohamed",                # ToDo: Validate through the serializer at aman cases
-                    "last_name": "Mamdouh",                 # ToDo: Validate through the serializer at aman cases
-                    "email": "mahammad.mamdouh@gmail.com",  # ToDo: Validate through the serializer at aman cases
-                    "phone_number": f"+2{data_dict['MSISDN2']}"
+                    "first_name": f"{serializer.validated_data['first_name']}",
+                    "last_name": f"{serializer.validated_data['last_name']}",
+                    "email": f"{serializer.validated_data['email']}",
+                    "phone_number": f"+2{serializer.validated_data['msisdn']}"
                 }
                 payment_key_obtained = aman_object.obtain_payment_key(**payment_key_params)
 
@@ -115,13 +115,13 @@ class InstantDisbursementAPIView(views.APIView):
 
         raise Exception(EXTERNAL_ERROR_MSG)
 
-    def handle_orange_issuer(self, request, trx_object, data_dict):
+    def handle_orange_issuer(self, request, transaction_object, serializer):
         """Handle orange operations/transactions separately"""
 
         logging_message(
                 INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
-                f"User: {request.user.username}, has pending trx with amount: {data_dict['AMOUNT']}EG "
-                f"for MSISDN: {data_dict['MSISDN2']}"
+                f"User: {request.user.username}, has pending trx with amount: {serializer.validated_data['amount']}EG "
+                f"for MSISDN: {serializer.validated_data['msisdn']}"
         )
 
         return default_response_structure(
@@ -183,7 +183,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             if issuer.lower() in self.specific_issuers:
                 handle_specific_issuer = getattr(self, f"handle_{issuer.lower()}_issuer")
-                response_data = handle_specific_issuer(request, transaction, data_dict)
+                response_data = handle_specific_issuer(request, transaction, serializer)
 
                 if isinstance(response_data, Response):
                     # ToDo: Logging for Custom channels

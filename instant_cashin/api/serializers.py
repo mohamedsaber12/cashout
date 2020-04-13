@@ -1,3 +1,5 @@
+from django.utils.translation import ugettext_lazy as _
+
 from rest_framework import serializers
 
 from .validators import cashin_issuer_validator, fees_validator, issuer_validator, msisdn_validator
@@ -35,3 +37,21 @@ class InstantDisbursementSerializer(serializers.Serializer):
             allow_null=True,
             validators=[fees_validator]
     )
+    first_name = serializers.CharField(max_length=254, required=False)
+    last_name = serializers.CharField(max_length=254, required=False)
+    email = serializers.EmailField(max_length=254, required=False)
+
+    def validate(self, attrs):
+        """Validate Aman issuer needed attributes"""
+        issuer = attrs.get('issuer', '')
+        first_name = attrs.get('first_name', '')
+        last_name = attrs.get('last_name', '')
+        email = attrs.get('email', '')
+
+        if issuer == 'AMAN':
+            if not first_name or not last_name or not email:
+                raise serializers.ValidationError(
+                        _("You must pass valid values for fields [first_name, last_name, email]")
+                )
+
+        return attrs

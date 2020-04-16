@@ -142,7 +142,7 @@ class InstantDisbursementAPIView(views.APIView):
         except ValidationError as e:
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR - INSTANT CASHIN]", serializer.errors)
             return default_response_structure(
-                    transaction.uid, status_description=e.args[0], field_status_code=status.HTTP_400_BAD_REQUEST
+                    status_description=e.args[0], field_status_code=status.HTTP_400_BAD_REQUEST
             )
 
         try:

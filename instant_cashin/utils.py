@@ -30,7 +30,7 @@ def get_from_env(key):
     return environment_vars_dict.str(key)
 
 
-def default_response_structure(transaction_id,
+def default_response_structure(transaction_id=0,
                                disbursement_status="failed",
                                status_description="",
                                field_status_code=None,

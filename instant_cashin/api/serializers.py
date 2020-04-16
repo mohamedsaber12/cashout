@@ -24,7 +24,7 @@ class InstantDisbursementSerializer(serializers.Serializer):
             - max number of digits allowed is 7 digits 10,000.00
     """
     msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
-    amount = serializers.DecimalField(required=True, max_value=10000, decimal_places=2, max_digits=7)
+    amount = serializers.DecimalField(required=True, decimal_places=2, max_digits=7)
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
     issuer = serializers.CharField(
             required=True,

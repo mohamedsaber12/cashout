@@ -59,6 +59,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         if not serializer.data['pin']:
             return get_from_env(f"{instant_user.root.username}_{wallet_issuer}_PIN")
+
         return serializer.validated_data['pin']
 
     def match_issuer_type(self, issuer):
@@ -82,7 +83,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             return api_auth_token, merchant_id
 
-    def handle_aman_issuer(self, request, transaction_object, serializer):
+    def aman_issuer_handler(self, request, transaction_object, serializer):
         """Handle aman operations/transactions separately"""
 
         aman_object = AmanChannel(request, transaction_object)
@@ -115,7 +116,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         raise Exception(EXTERNAL_ERROR_MSG)
 
-    def handle_orange_issuer(self, request, transaction_object, serializer):
+    def orange_issuer_handler(self, request, transaction_object, serializer):
         """Handle orange operations/transactions separately"""
 
         logging_message(
@@ -149,12 +150,21 @@ class InstantDisbursementAPIView(views.APIView):
             instant_user = request.user
             vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
             data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
-            data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
             data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
             data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
             issuer = data_dict['WALLETISSUER'] = serializer.validated_data["issuer"]
+
+            if issuer.lower() not in self.specific_issuers:
+                data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
+
+            transaction = InstantTransaction.objects.create(
+                    from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
+                    issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
+            )
             data_dict['PIN'] = self.root_corresponding_pin(instant_user, data_dict['WALLETISSUER'], serializer)
+
         except Exception as e:
+            if transaction: transaction.mark_failed(INTERNAL_ERROR_MSG)
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - INSTANT CASHIN]", e.args[0])
             return default_response_structure(
                     transaction_id=transaction.uid, status_description={"Internal Error": INTERNAL_ERROR_MSG},
@@ -170,33 +180,22 @@ class InstantDisbursementAPIView(views.APIView):
         )
 
         try:
-            if issuer.lower() in self.specific_issuers:
-                data_dict.update({'MSISDN': ''})
-
-            transaction = InstantTransaction.objects.create(
-                    from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
-                    issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
-            )
             if not request.user.budget.within_threshold(serializer.validated_data['amount']):
-                msg = BUDGET_EXCEEDED_MSG
-                raise ValidationError(msg)
+                raise ValidationError(BUDGET_EXCEEDED_MSG)
 
             if issuer.lower() in self.specific_issuers:
-                handle_specific_issuer = getattr(self, f"handle_{issuer.lower()}_issuer")
-                response_data = handle_specific_issuer(request, transaction, serializer)
+                specific_issuer_handler = getattr(self, f"{issuer.lower()}_issuer_handler")
+                specific_issuer_response = specific_issuer_handler(request, transaction, serializer)
 
-                if isinstance(response_data, Response):
-                    # ToDo: Logging for Custom channels
-                    return response_data
+                if isinstance(specific_issuer_response, Response):
+                    return specific_issuer_response
 
             inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
             json_inquiry_response = inquiry_response.json()
 
         except ValidationError as e:
             trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
-            if transaction:
-                transaction.failure_reason = trx_failure_msg
-                transaction.mark_failed()
+            if transaction: transaction.mark_failed(trx_failure_msg)
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[Validation Error - INSTANT CASHIN]", e.args[0])
             return default_response_structure(
                     transaction_id=transaction.uid, status_description=e.args[0],
@@ -205,11 +204,8 @@ class InstantDisbursementAPIView(views.APIView):
 
         except (TimeoutError, ImproperlyConfigured, Exception) as e:
             log_msg = e.args[0]
-            if json_inquiry_response != "Request time out":
-                log_msg = json_inquiry_response.content
-            if transaction:
-                transaction.failure_reason = EXTERNAL_ERROR_MSG
-                transaction.mark_failed()
+            if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
+            if transaction: transaction.mark_failed(EXTERNAL_ERROR_MSG)
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", log_msg)
             return default_response_structure(
                     transaction_id=transaction.uid, status_description=EXTERNAL_ERROR_MSG,
@@ -229,9 +225,7 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED - INSTANT CASHIN]", log_msg)
-        if transaction:
-            transaction.failure_reason = json_inquiry_response["MESSAGE"]   # Save the full failure reason
-            transaction.mark_failed()
+        if transaction: transaction.mark_failed(json_inquiry_response["MESSAGE"])
         return default_response_structure(
                 transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
                 field_status_code=json_inquiry_response["TXNSTATUS"], response_status_code=status.HTTP_200_OK

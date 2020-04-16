@@ -15,7 +15,7 @@ def logging_message(logger, head, message):
     :param message: the message that will be logged
     :return: The message will be logged into the specified logger
     """
-    return logger.debug(_(f"{head}\n\t{message}"))
+    return logger.debug(_(f"{head}\n{message}"))
 
 
 def get_from_env(key):
@@ -30,7 +30,7 @@ def get_from_env(key):
     return environment_vars_dict.str(key)
 
 
-def default_response_structure(transaction_id=0,
+def default_response_structure(transaction_id="0",
                                disbursement_status="failed",
                                status_description="",
                                field_status_code=None,

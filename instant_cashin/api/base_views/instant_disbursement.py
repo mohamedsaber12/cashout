@@ -175,7 +175,7 @@ class InstantDisbursementAPIView(views.APIView):
         request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
         logging_message(
                 INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
-                f"Ip Address: {get_client_ip(request)}, vmt_env used: {vmt_data.vmt_environment}\n\t"
+                f"Ip Address: {get_client_ip(request)}, vmt_env used: {vmt_data.vmt_environment}\n"
                 f"Data dictionary: {request_data_dictionary_without_pins}"
         )
 
@@ -213,7 +213,7 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         log_msg = f"USER: {request.user.username} disbursed: {data_dict['AMOUNT']}EG for " \
-                  f"MSISDN: {data_dict['MSISDN2']}\n\tResponse content: {json_inquiry_response}"
+                  f"MSISDN: {data_dict['MSISDN2']}\nResponse content: {json_inquiry_response}"
 
         if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
             logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL - INSTANT CASHIN]", log_msg)

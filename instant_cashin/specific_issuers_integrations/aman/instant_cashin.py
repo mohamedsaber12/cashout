@@ -28,7 +28,6 @@ class AmanChannel:
         """Instantiates Aman channel object by setting ACCEPT endpoints urls"""
         self.request = request
         self.transaction = transaction_object
-        self.aman_transaction = AmanTransaction.objects.create(transaction=transaction_object)
         self.amount = self.transaction.amount
         self.aman_logger = logging.getLogger('aman_channel')
         self.authentication_url = "https://accept.paymobsolutions.com/api/auth/tokens"
@@ -183,20 +182,21 @@ class AmanChannel:
 
             if response.ok and bill_reference and trx_status:
                 self.transaction.mark_successful()
-                self.aman_transaction.update_bill_reference(bill_reference)
+                AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
                 self.request.user.budget.update_disbursed_amount(self.amount)
                 msg = _(f"تم إيداع {self.transaction.amount} جنيه إلى رقم "
                         f"{self.transaction.anon_recipient} بنجاح ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمه المستحقه")
-                return Response(
-                        {
-                            "disbursement_status": _("success"),
-                            "transaction_id": self.transaction.uid,
-                            "status_description": msg,
-                            "bill_reference": _(f"{bill_reference}"),
-                            "status_code": status.HTTP_200_OK
-                        },
-                        status=status.HTTP_200_OK
-                )
+                return Response({
+                    "disbursement_status": _("success"),
+                    "transaction_id": self.transaction.uid,
+                    "status_description": msg,
+                    "status_code": str(status.HTTP_200_OK),
+                    "cashing_details": {
+                        "bill_reference": _(f"{bill_reference}"),
+                        "paid": False
+                    }
+                }, status=status.HTTP_200_OK)
+
         except (HTTPError, ConnectionError, Exception) as err:
             self.log_message(self.request, f"[EXCEPTION - MAKE PAY REQUEST]", f"Exception: {err.args[0]}")
             return Response({'message': f'Failed to make your pay request'}, status=status.HTTP_424_FAILED_DEPENDENCY)

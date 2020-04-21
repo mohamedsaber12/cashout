@@ -38,8 +38,3 @@ class AmanTransaction(models.Model):
     def __str__(self):
         """:return String representation of each client object"""
         return f"{self.transaction.uid}"
-
-    def update_bill_reference(self, bill_ref):
-        """Updates the transaction bill reference after each successful aman specific transaction"""
-        self.bill_reference = bill_ref
-        self.save()

@@ -128,22 +128,31 @@
         * **{fees}** would be one of {Full}, {Half} or {No}
         * **{issuer}** would be one of {AMAN}, {VODAFONE}, {ETISALAT} or {ORANGE}
         * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
+        * At **Aman channel** cases, after every successful disbursement user will be notified at his/her email with
+            the reference number of his/her transaction.
 
-    |  Field   |   M/O  |    Type    |
-    |---	   |---	    |---	     |
-    | msisdn   |   M    |   String   |
-    | amount   |   M    |   String   |
-    | issuer   |   M    |   String   |
-    | pin      |   O    |   String   |
-    | fees     |   O    |   String   |
+    |  Field     |   M/O  |    Type    |    Notes    |
+    |---	     |---	  |---	       |---	         |
+    | msisdn     |   M    |   String   |             |
+    | amount     |   M    |   String   |             |
+    | issuer     |   M    |   String   |             |
+    | first_name |   M    |   String   |  AMAN only  |
+    | last_name  |   M    |   String   |  AMAN only  |
+    | email      |   M    |   String   |  AMAN only  |
+    | pin        |   O    |   String   |             |
+    | fees       |   O    |   String   |             |
 
 #### Response
 1. **Response Parameters**
 
-    |  Field                |    Type    |
-    |---                    |---	     |
-    |  disbursement_status  |   String   |
-    |  status_description   |   String   |
+    |  Field                |    Type    |    Notes    |
+    |---                    |---	     |---	       |
+    |  disbursement_status  |   String   |             |
+    |  status_description   |   String   |             |
+    |  status_code          |   String   |             |
+    |  transaction_id       |   String   |             |
+    |  reference_number     |   String   |  AMAN only  |
+    |  paid                 |   Boolean  |  AMAN only  |
 
 2. **Sample**
 
@@ -152,7 +161,19 @@
             {
                 "disbursement_status": "success",
                 "status_description": "تم إيداع 23.56 جنيه إلى رقم 01010101010 بنجاح",
-                "status_code": "200"
+                "status_code": "200",
+                "transaction_id": "f3ec07ba-50a7-41cb-a1c3-674b2190dba4"
+            }
+            
+            {
+                "cashing_details": {
+                    "bill_reference": "2642119",
+                    "paid": false
+                },
+                "disbursement_status": "success",
+                "status_code": "200",
+                "status_description": "تم إيداع 87.99 جنيه إلى رقم 01020304050 بنجاح ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمه المستحقه",
+                "transaction_id": "536647a8-20e1-4e29-aa54-a8716944d04c"
             }
 
     * > Token is expired
@@ -183,13 +204,15 @@
             {
                 "disbursement_status": "failed",
                 "status_description": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش",
-                "status_code": "618"
+                "status_code": "618",
+                "transaction_id": "a8bcdb0f-8b49-4314-8a9d-368c607b665c"
             }
 
             {
                 "disbursement_status": "failed",
                 "status_description": "Sorry, the amount to be disbursed exceeds you budget limit.",
-                "status_code": "6061"
+                "status_code": "6061",
+                "transaction_id": "7fe6fee9-bae6-42c0-a8b1-525eae8af49f"
             }
 
 ## User Budget Inquiry API Endpoint

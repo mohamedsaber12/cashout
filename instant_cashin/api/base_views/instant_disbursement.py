@@ -142,9 +142,10 @@ class InstantDisbursementAPIView(views.APIView):
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR - INSTANT CASHIN]", serializer.errors)
-            return default_response_structure(
-                    status_description=e.args[0], field_status_code=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({
+                "disbursement_status": _("failed"), "status_description": e.args[0],
+                "status_code": str(status.HTTP_400_BAD_REQUEST)
+            }, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             instant_user = request.user

@@ -1,7 +1,16 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
+import uuid
+
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
 
+from core.models import AbstractBaseStatus
+
+from ..models import AbstractBaseIssuer, InstantTransaction
+from .fields import CustomChoicesField
 from .validators import cashin_issuer_validator, fees_validator, issuer_validator, msisdn_validator
 
 
@@ -55,3 +64,63 @@ class InstantDisbursementSerializer(serializers.Serializer):
                 )
 
         return attrs
+
+
+class InstantTransactionReadSerializer(serializers.Serializer):
+    """
+    """
+
+    transaction_id = serializers.UUIDField(default=uuid.uuid4())
+
+
+class BulkInstantTransactionReadSerializer(serializers.Serializer):
+    """
+    """
+
+    ids_list = serializers.ListSerializer(child=InstantTransactionReadSerializer())
+
+
+class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
+    """
+    """
+
+    transaction_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    channel = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
+    transaction_id = serializers.SerializerMethodField()
+    msisdn = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+    aman_cashing_details = serializers.SerializerMethodField()
+
+    def get_aman_cashing_details(self, transaction):
+        """"""
+        aman_cashing_details = transaction.aman_transaction.first()
+
+        if aman_cashing_details:
+            return {
+                'bill_reference': aman_cashing_details.bill_reference,
+                'is_paid': aman_cashing_details.is_paid
+            }
+
+    def get_transaction_id(self, transaction):
+        """"""
+        return transaction.uid
+
+    def get_msisdn(self, transaction):
+        """"""
+        return transaction.anon_recipient
+
+    def get_created_at(self, transaction):
+        """"""
+        return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    def get_updated_at(self, transaction):
+        """"""
+        return transaction.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    class Meta:
+        model = InstantTransaction
+        fields = [
+            'transaction_id', 'transaction_status', 'channel', 'msisdn', 'amount', 'failure_reason',
+            'created_at', 'updated_at', 'aman_cashing_details'
+        ]

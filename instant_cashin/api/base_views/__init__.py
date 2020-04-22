@@ -1,3 +1,4 @@
 from .budget_inquiry import BudgetInquiryAPIView
+from .bulk_transaction_inquiry import BulkTransactionInquiryAPIView
 from .instant_disbursement import InstantDisbursementAPIView
 from .user_inquiry import InstantUserInquiryAPIView

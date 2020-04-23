@@ -14,7 +14,6 @@ from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from data.utils import get_client_ip
 from disb.models import VMTData
 
 from ..serializers import InstantDisbursementSerializer
@@ -120,9 +119,7 @@ class InstantDisbursementAPIView(views.APIView):
         """Handle orange operations/transactions separately"""
 
         logging_message(
-                INSTANT_CASHIN_PENDING_LOGGER, "[PENDING - INSTANT CASHIN]",
-                f"User: {request.user.username}, has pending trx with amount: {serializer.validated_data['amount']}EG "
-                f"for MSISDN: {serializer.validated_data['msisdn']}"
+                INSTANT_CASHIN_PENDING_LOGGER, "[PENDING TRX]", request, f"Data dict: {serializer.validated_data}"
         )
 
         return default_response_structure(
@@ -141,7 +138,7 @@ class InstantDisbursementAPIView(views.APIView):
         try:
             serializer.is_valid(raise_exception=True)
         except ValidationError as e:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR - INSTANT CASHIN]", serializer.errors)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[SERIALIZER VALIDATION ERROR]", request, serializer.errors)
             return Response({
                 "disbursement_status": _("failed"), "status_description": e.args[0],
                 "status_code": str(status.HTTP_400_BAD_REQUEST)
@@ -166,7 +163,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         except Exception as e:
             if transaction: transaction.mark_failed(INTERNAL_ERROR_MSG)
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL ERROR - INSTANT CASHIN]", e.args[0])
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
             return default_response_structure(
                     transaction_id=transaction.uid, status_description={"Internal Error": INTERNAL_ERROR_MSG},
                     field_status_code=status.HTTP_424_FAILED_DEPENDENCY
@@ -175,8 +172,7 @@ class InstantDisbursementAPIView(views.APIView):
         request_data_dictionary_without_pins = copy.deepcopy(data_dict)
         request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
         logging_message(
-                INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - INSTANT CASHIN]",
-                f"Ip Address: {get_client_ip(request)}, vmt_env used: {vmt_data.vmt_environment}\n"
+                INSTANT_CASHIN_REQUEST_LOGGER, "[REQUEST DATA DICT TO CENTRAL]", request,
                 f"Data dictionary: {request_data_dictionary_without_pins}"
         )
 
@@ -197,7 +193,7 @@ class InstantDisbursementAPIView(views.APIView):
         except ValidationError as e:
             trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
             if transaction: transaction.mark_failed(trx_failure_msg)
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[Validation Error - INSTANT CASHIN]", e.args[0])
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[DISBURSEMENT VALIDATION ERROR]", request, e.args)
             return default_response_structure(
                     transaction_id=transaction.uid, status_description=e.args[0],
                     field_status_code="6061", response_status_code=status.HTTP_200_OK
@@ -207,17 +203,14 @@ class InstantDisbursementAPIView(views.APIView):
             log_msg = e.args[0]
             if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
             if transaction: transaction.mark_failed(EXTERNAL_ERROR_MSG)
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[UIG ERROR - INSTANT CASHIN]", log_msg)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[ERROR FROM CENTRAL]", request, log_msg)
             return default_response_structure(
                     transaction_id=transaction.uid, status_description=EXTERNAL_ERROR_MSG,
                     field_status_code=status.HTTP_424_FAILED_DEPENDENCY, response_status_code=status.HTTP_200_OK
             )
 
-        log_msg = f"USER: {request.user.username} disbursed: {data_dict['AMOUNT']}EG for " \
-                  f"MSISDN: {data_dict['MSISDN2']}\nResponse content: {json_inquiry_response}"
-
         if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
-            logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL - INSTANT CASHIN]", log_msg)
+            logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL TRX]", request, f"{json_inquiry_response}")
             transaction.mark_successful()
             request.user.budget.update_disbursed_amount(data_dict['AMOUNT'])
             return default_response_structure(
@@ -225,7 +218,7 @@ class InstantDisbursementAPIView(views.APIView):
                     disbursement_status=_("success"), response_status_code=status.HTTP_200_OK
             )
 
-        logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED - INSTANT CASHIN]", log_msg)
+        logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED TRX]", request, f"{json_inquiry_response}")
         if transaction: transaction.mark_failed(json_inquiry_response["MESSAGE"])
         return default_response_structure(
                 transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],

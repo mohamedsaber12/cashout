@@ -59,14 +59,16 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
             serializer.is_valid(raise_exception=True)
             self.kwargs["trx_ids_list"] = [record for record in serializer.validated_data['transactions_ids_list']]
             logging_message(
-                    BULK_TRX_INQUIRY_LOGGER, "[PASSED UUIDS LIST]", f"uuids list: {self.kwargs['trx_ids_list']}"
+                    BULK_TRX_INQUIRY_LOGGER, "[PASSED UUIDS LIST]", request, f"List: {self.kwargs['trx_ids_list']}"
             )
             return self.list(request, *args, **kwargs)
 
         except ValidationError:
-            logging_message(BULK_TRX_INQUIRY_LOGGER, "[VALIDATION ERROR]", f"Validation error: {serializer.errors}")
+            logging_message(
+                    BULK_TRX_INQUIRY_LOGGER, "[VALIDATION ERROR]", request, f"Validation error: {serializer.errors}"
+            )
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as err:
-            logging_message(BULK_TRX_INQUIRY_LOGGER, "[GENERAL ERROR]", f"Exception: {err.args}")
+            logging_message(BULK_TRX_INQUIRY_LOGGER, "[GENERAL ERROR]", request, f"Exception: {err.args}")
             return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_424_FAILED_DEPENDENCY)

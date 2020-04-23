@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from collections import OrderedDict
+import uuid
 
 from rest_framework import serializers
 
@@ -26,3 +27,11 @@ class CustomChoicesField(serializers.Field):
             if self._choices[i] == data:
                 return i
         raise serializers.ValidationError("Acceptable values are {0}.".format(list(self._choices.values())))
+
+
+class UUIDListField(serializers.ListField):
+    """
+    UUID list serializer field
+    """
+
+    child = serializers.UUIDField(default=uuid.uuid4())

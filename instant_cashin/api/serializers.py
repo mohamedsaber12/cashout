@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import uuid
-
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
@@ -10,7 +8,7 @@ from rest_framework import serializers
 from core.models import AbstractBaseStatus
 
 from ..models import AbstractBaseIssuer, InstantTransaction
-from .fields import CustomChoicesField
+from .fields import CustomChoicesField, UUIDListField
 from .validators import cashin_issuer_validator, fees_validator, issuer_validator, msisdn_validator
 
 
@@ -66,22 +64,17 @@ class InstantDisbursementSerializer(serializers.Serializer):
         return attrs
 
 
-class InstantTransactionReadSerializer(serializers.Serializer):
-    """
-    """
-
-    transaction_id = serializers.UUIDField(default=uuid.uuid4())
-
-
 class BulkInstantTransactionReadSerializer(serializers.Serializer):
     """
+    Serializes the bulk transaction inquiry request, list of uuid4 inputs
     """
 
-    ids_list = serializers.ListSerializer(child=InstantTransactionReadSerializer())
+    transactions_ids_list = UUIDListField()
 
 
 class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
     """
+    Serializes the bulk transaction inquiry response, list of instant transaction objects
     """
 
     transaction_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
@@ -93,7 +86,7 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
     aman_cashing_details = serializers.SerializerMethodField()
 
     def get_aman_cashing_details(self, transaction):
-        """"""
+        """Retrieves aman cashing details of aman channel transaction"""
         aman_cashing_details = transaction.aman_transaction.first()
 
         if aman_cashing_details:
@@ -103,19 +96,19 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
             }
 
     def get_transaction_id(self, transaction):
-        """"""
+        """Retrieves transaction id"""
         return transaction.uid
 
     def get_msisdn(self, transaction):
-        """"""
+        """Retrieves transaction consumer"""
         return transaction.anon_recipient
 
     def get_created_at(self, transaction):
-        """"""
+        """Retrieves transaction created_at time formatted"""
         return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     def get_updated_at(self, transaction):
-        """"""
+        """Retrieves transaction updated_at time formatted"""
         return transaction.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     class Meta:

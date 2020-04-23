@@ -258,6 +258,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/instant_cashin_requests.log',
         },
+        'instant_bulk_trx_inquiry': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/instant_bulk_trx_inquiry.log',
+        },
         'django.template': {
             'level': 'INFO',
             'filters': ['request_id'],
@@ -474,6 +481,11 @@ CUSTOM_LOGGING = {
         },
         'instant_cashin_requests': {
             'handlers': ['instant_cashin_requests'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'instant_bulk_trx_inquiry': {
+            'handlers': ['instant_bulk_trx_inquiry'],
             'level': 'DEBUG',
             'propagate': True,
         },

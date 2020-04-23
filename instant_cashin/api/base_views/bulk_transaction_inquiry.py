@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
+
 from django.db.models import Q
 from django.utils.translation import ugettext as _
 
@@ -13,7 +15,10 @@ from rest_framework.throttling import UserRateThrottle
 from ...models import InstantTransaction
 from ..mixins import APIViewPaginatorMixin, IsInstantAPICheckerUser
 from ..serializers import BulkInstantTransactionReadSerializer, InstantTransactionWriteModelSerializer
+from ...utils import logging_message
 
+
+BULK_TRX_INQUIRY_LOGGER = logging.getLogger("instant_bulk_trx_inquiry")
 
 INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team.")
 
@@ -51,15 +56,17 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
         serializer = self.read_serializer(data=request.data)
 
         try:
-            # ToDo: Logging
             serializer.is_valid(raise_exception=True)
             self.kwargs["trx_ids_list"] = [record for record in serializer.validated_data['transactions_ids_list']]
+            logging_message(
+                    BULK_TRX_INQUIRY_LOGGER, "[PASSED UUIDS LIST]", f"uuids list: {self.kwargs['trx_ids_list']}"
+            )
             return self.list(request, *args, **kwargs)
 
-        except ValidationError as err:
-            # ToDo: Logging
+        except ValidationError:
+            logging_message(BULK_TRX_INQUIRY_LOGGER, "[VALIDATION ERROR]", f"Validation error: {serializer.errors}")
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as err:
-            # ToDo: Logging, using err.args[0]
+            logging_message(BULK_TRX_INQUIRY_LOGGER, "[GENERAL ERROR]", f"Exception: {err.args}")
             return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_424_FAILED_DEPENDENCY)

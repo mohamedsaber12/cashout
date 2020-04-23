@@ -204,7 +204,7 @@ FILE_UPLOAD_PERMISSIONS = 0o644
 
 # Rest-Framework
 REST_FRAMEWORK = {
-    'PAGE_SIZE': 10,
+    'PAGE_SIZE': 50,
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'EXCEPTION_HANDLER': 'instant_cashin.api.exceptions.custom_exception_handler',
     'DEFAULT_RENDERER_CLASSES': (

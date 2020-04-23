@@ -11,6 +11,10 @@
     * [Headers](#headers)
     * [Request](#request)
     * [Response](#response)
+* [Bulk Transaction Inquiry API Endpoint](#bulk-transaction-inquiry-api-endpoint)
+    * [Headers](#headers)
+    * [Request](#request)
+    * [Response](#response)
 * [User Budget Inquiry API Endpoint](#user-budget-inquiry-api-endpoint)
     * [Headers](#headers)
     * [Request](#request)
@@ -215,13 +219,114 @@
                 "transaction_id": "7fe6fee9-bae6-42c0-a8b1-525eae8af49f"
             }
 
+## Bulk Transaction Inquiry API Endpoint
+* **Usage:**
+    * This endpoint implements **throttling mechanism**, so you can ONLY make **5 transaction inquiry requests per minute**.
+    * Requests are **paginated**, **50 transaction** object returned per single request.
+
+|  Environment	|  API location source    |   HTTP Method	| Content Type	|
+|---	        |---   	                  |---	            |---	        |
+|     {ENV}     |  ^transaction/inquire/  |      GET        |     JSON      |
+
+#### Headers
+```
+{
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {ACCESS_TOKEN}"
+}
+```
+
+#### Request
+1. **Request Parameters**
+
+    |  Field                  |               Type                |
+    |---                      |---                                |
+    |  transactions_ids_list  |  List of transaction ids as uuid4 |
+
+#### Response
+1. **Response Parameters**
+
+    |    Field   |    Type    |                 Notes                  |
+    |---         |---	      |---	                                   |
+    |  count     |   Integer  |  Total count of returned transactions  |
+    |  next      |   String   |  Link to the next page of results      |
+    |  previous  |   String   |  Link to the previous page of results  |
+    |  results   |   List     |  List of dictionaries transactions     |
+
+2. **Sample**
+
+    * > Sample bulk transaction inquiry request dictionary
+
+            {
+            	"transactions_ids_list": [
+            		"607f2a5a-1109-43d2-a12c-9327ab2dca18",
+            		"2a08d70c-49a9-48ed-bcbf-734343065477",
+            		"1531eb29-199e-4487-96ab-72ef76564a42",
+            		...
+            	]
+            }
+
+    * > Sample bulk transaction inquiry response dictionary
+
+            {
+                "count": 120,
+                "next": "{ENV}/api/secure/transaction/inquire/?page=3",
+                "previous": "{ENV}/api/secure/transaction/inquire/",
+                "results": [
+                    {
+                        "transaction_id": "607f2a5a-1109-43d2-a12c-9327ab2dca18",
+                        "transaction_status": "Successful",
+                        "channel": "Aman",
+                        "msisdn": "01020304050",
+                        "amount": 3.99,
+                        "failure_reason": null,
+                        "created_at": "2020-04-21 13:05:02.233574",
+                        "updated_at": "2020-04-21 13:05:10.252393",
+                        "aman_cashing_details": {
+                            "bill_reference": 2654367,
+                            "is_paid": false
+                        }
+                    },
+                    {
+                        "transaction_id": "2a08d70c-49a9-48ed-bcbf-734343065477",
+                        "transaction_status": "Successful",
+                        "channel": "Vodafone",
+                        "msisdn": "01019706920",
+                        "amount": 5.91,
+                        "failure_reason": null,
+                        "created_at": "2020-04-21 09:14:01.884397",
+                        "updated_at": "2020-04-21 09:14:17.807927",
+                        "aman_cashing_details": null
+                    },
+                    {
+                        "transaction_id": "1531eb29-199e-4487-96ab-72ef76564a42",
+                        "transaction_status": "Failed",
+                        "channel": "Vodafone",
+                        "msisdn": "01019506911",
+                        "amount": 5.91,
+                        "failure_reason": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش",
+                        "created_at": "2020-04-16 17:55:57.761411",
+                        "updated_at": "2020-04-16 17:55:59.915782",
+                        "aman_cashing_details": null
+                    },
+                    ...
+                ]
+            }
+
+    * > Exceeded your limit of requests per minute
+
+            {
+                "status_description": "Request was throttled. Expected available in 55 seconds.",
+                "status_code": "429"
+            }
+
 ## User Budget Inquiry API Endpoint
 * **Usage:** 
     * This endpoint implements **throttling mechanism**, so you can ONLY make **5 budge inquiry requests per minute**.
 
-|  Environment	|  API location source |   HTTP Method	| Content Type	|
-|---	        |---   	               |---	            |---	        |
-|     {ENV}     |   ^budget-inquiry/   |      POST      |     JSON      |
+|  Environment	|  API location source |  HTTP Method  |  Content Type  |
+|---	        |---   	               |---            |---	            |
+|     {ENV}     |   ^budget/inquire/   |      GET      |      JSON      |
 
 #### Headers
 ```
@@ -234,7 +339,7 @@
 #### Request
 1. **Request Parameters**
     * **Usage:** 
-        * This endpoint takes no parameters just the authenticated user hits the POST request to this endpoint.
+        * This endpoint takes no parameters just the authenticated user hits the GET request to this endpoint.
 
 
 #### Response

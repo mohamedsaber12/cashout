@@ -4,8 +4,6 @@ from django.utils.translation import gettext as _
 
 from rest_framework.views import exception_handler
 
-from data.utils import get_client_ip
-
 from ..utils import logging_message
 
 
@@ -36,11 +34,18 @@ def custom_exception_handler(exc, context):
 
         response.data["status_description"] = response.data.pop("detail")
 
-        logging_message(
-                INSTANT_CASHIN_REQUEST_LOGGER, "[Request Data - API EXCEPTION]",
-                f"{context['view'].request.method}: {context['view'].request.path}, "
-                f"from Ip Address: {get_client_ip(context['view'].request)} -- exception reason: {exception_code}\n\t"
-                f"Data dictionary: {context['view'].request.data}"
-        )
+        common_logging_msg = f"{context['view'].request.method}: {context['view'].request.path}" \
+                             f" -- exception reason: {exception_code}\n"
+
+        try:
+            request_data = context['view'].request.data
+            logging_message(
+                    INSTANT_CASHIN_REQUEST_LOGGER, "[API EXCEPTION]", context['view'].request,
+                    f"{common_logging_msg}Data dictionary: {request_data}"
+            )
+        except Exception as error:
+            INSTANT_CASHIN_REQUEST_LOGGER.exception(
+                    f"[Request Data - API EXCEPTION]\n{common_logging_msg}Exception: {error}"
+            )
 
     return response

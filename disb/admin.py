@@ -4,9 +4,9 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
-from .mixins import AdminNoPermissionMixin
+from .mixins import AdminSiteOwnerOnlyPermissionMixin
 from .models import Agent, Budget, DisbursementData, DisbursementDocData, VMTData
-from .utils import custom_budget_logger
+from .utils import custom_budget_logger, custom_titled_filter
 
 
 @admin.register(Agent)
@@ -27,13 +27,16 @@ class BudgetAdmin(admin.ModelAdmin):
 
     list_filter = ['updated_at', 'created_at', 'disburser', 'created_by']
     list_display = ['disburser', 'created_by', 'total_disbursed_amount', 'disbursed_amount', 'max_amount', 'updated_at']
-    readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by']
+    readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by', 'current_balance']
     search_fields = ['disburser', 'created_by']
     ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
         (_('Users Details'), {'fields': ('disburser', 'created_by')}),
-        (_('Budget Amount Details'), {'fields': ('total_disbursed_amount', 'max_amount', 'disbursed_amount')}),
+        (
+            _('Budget Amount Details'),
+            {'fields': ('total_disbursed_amount', 'max_amount', 'disbursed_amount', 'current_balance')}
+         ),
         (_('Important Dates'), {'fields': ('updated_at', 'created_at')})
     )
 
@@ -42,6 +45,10 @@ class BudgetAdmin(admin.ModelAdmin):
         if not request.user.is_superuser or not request.user.is_superadmin:
             return readonly_fields + self.list_display
         return readonly_fields
+
+    def current_balance(self, instance):
+        """Show the final balance after all success cash-ins to the admin panel"""
+        return instance.current_balance
 
     def has_add_permission(self, request):
         if not request.user.is_superuser or not request.user.is_superadmin:
@@ -62,13 +69,19 @@ class BudgetAdmin(admin.ModelAdmin):
 
 
 @admin.register(DisbursementData)
-class DisbursementDataAdmin(AdminNoPermissionMixin, admin.ModelAdmin):
+class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin):
     """
     Admin panel representation for DisbursementData model
     """
 
     list_display = ['msisdn', 'amount', 'doc', 'is_disbursed', 'reason']
-    list_filter = ['is_disbursed', 'updated_at', 'created_at']
+    list_filter = [
+        ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
+        ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
+        ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
+        ('is_disbursed', custom_titled_filter('Disbursement Status')),
+        'updated_at', 'created_at'
+    ]
     ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
@@ -78,12 +91,13 @@ class DisbursementDataAdmin(AdminNoPermissionMixin, admin.ModelAdmin):
 
 
 @admin.register(DisbursementDocData)
-class DisbursementDocDataAdmin(AdminNoPermissionMixin, admin.ModelAdmin):
+class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin):
     """
     Admin panel representation for DisbursementDocData model
     """
 
     list_display = ['doc', 'txn_id', 'txn_status']
+    list_filter = [('doc__owner', custom_titled_filter('Document Owner/Uploader'))]
 
 
 @admin.register(VMTData)

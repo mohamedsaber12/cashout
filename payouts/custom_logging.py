@@ -258,6 +258,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/instant_cashin_requests.log',
         },
+        'instant_bulk_trx_inquiry': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/instant_bulk_trx_inquiry.log',
+        },
         'django.template': {
             'level': 'INFO',
             'filters': ['request_id'],
@@ -292,6 +299,13 @@ CUSTOM_LOGGING = {
             'formatter': 'detail',
             'class': 'logging.FileHandler',
             'filename': 'logs/change_fees_profile.log',
+        },
+        'aman_channel': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/aman_channel.log',
         },
     },
 
@@ -470,6 +484,11 @@ CUSTOM_LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'instant_bulk_trx_inquiry': {
+            'handlers': ['instant_bulk_trx_inquiry'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'axes_watcher': {
             'handlers': ['axes_watcher'],
             'level': 'DEBUG',
@@ -482,6 +501,11 @@ CUSTOM_LOGGING = {
         },
         'change_fees_profile': {
             'handlers': ['change_fees_profile'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'aman_channel': {
+            'handlers': ['aman_channel'],
             'level': 'DEBUG',
             'propagate': True,
         },

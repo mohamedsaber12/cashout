@@ -92,6 +92,11 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         self.status = self.PENDING
         self.save()
 
-    def blank_anon_sender(self):
-        self.anon_sender = ''
+    def mark_failed(self, failure_reason=""):
+        """
+        Mark transaction status as failed and add the failure reason if provided
+        :param failure_reason: if provided add failure reason
+        """
+        if failure_reason: self.failure_reason = failure_reason
+        self.status = self.FAILED
         self.save()

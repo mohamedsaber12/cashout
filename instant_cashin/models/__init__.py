@@ -1,2 +1,3 @@
 from .abstract_integration import AbstractVMTData
-from .instant_transactions import InstantTransaction
+from .instant_transactions import AbstractBaseIssuer, InstantTransaction
+from .specific_issuers import AmanTransaction

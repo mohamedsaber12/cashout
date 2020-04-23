@@ -25,8 +25,8 @@ class BudgetInquiryAPIView(views.APIView):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
     throttle_classes = [UserRateThrottle]
 
-    def post(self, request, *args, **kwargs):
-        """Handles POST requests of the budget inquiry api view"""
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests of the budget inquiry api view"""
         disburser = request.user
 
         if not disburser.has_custom_budget:

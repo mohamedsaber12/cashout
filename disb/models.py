@@ -57,8 +57,9 @@ class DisbursementDocData(models.Model):
     This model is just logs to the status of the doc disbursement action
     """
     doc = models.OneToOneField('data.Doc', null=True, related_name='disbursement_txn', on_delete=models.CASCADE)
-    txn_id = models.CharField(max_length=16, null=True, blank=True)  #
+    txn_id = models.CharField(max_length=16, null=True, blank=True)
     txn_status = models.CharField(max_length=16, null=True, blank=True)
+    # ToDo: Add choice field of doc disbursement status (Successful, Pending, Failed) ex: Pending means no callback yet
 
     class Meta:
         verbose_name = "Disbursement Document"

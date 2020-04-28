@@ -74,7 +74,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['msisdn', 'amount', 'doc', 'is_disbursed', 'reason']
+    list_display = ['_trx_id', 'msisdn', 'amount', 'doc', 'is_disbursed', 'reason']
     list_filter = [
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
@@ -88,6 +88,11 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
         (None, {'fields': list_display}),
         (_('Important Dates'), {'fields': ('created_at', 'updated_at')})
     )
+
+    def _trx_id(self, obj):
+        """Add transaction id field renamed to Trx ID"""
+        return obj.id
+    _trx_id.short_description = "Trx ID"
 
 
 @admin.register(DisbursementDocData)

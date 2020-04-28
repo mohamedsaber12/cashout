@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
 import os
@@ -33,7 +34,7 @@ class Doc(models.Model):
     total_count = models.PositiveIntegerField(default=False)
     type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
     created_at = models.DateTimeField(auto_now_add=True)
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='doc')
+    owner = models.ForeignKey("users.MakerUser", on_delete=models.CASCADE, related_name='doc')
     disbursed_by = models.ForeignKey("users.CheckerUser", on_delete=models.CASCADE, related_name='document', null=True)
     file_category = models.ForeignKey('data.FileCategory', on_delete=models.SET_NULL, related_name='doc', null=True)
     format = models.ForeignKey('data.Format', on_delete=models.DO_NOTHING, null=True)
@@ -145,8 +146,9 @@ class Doc(models.Model):
         reviews = self.reviews.all()
 
         can_review = False
-        levels = CheckerUser.objects.filter(hierarchy=checker.hierarchy).values_list(
-            'level__level_of_authority', flat=True)
+        levels = CheckerUser.objects.filter(
+                hierarchy=checker.hierarchy
+        ).values_list('level__level_of_authority', flat=True)
         levels = list(set(levels))
         checker_level = checker.level.level_of_authority
         if min(levels) == checker_level:

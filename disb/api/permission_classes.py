@@ -30,7 +30,7 @@ class BlacklistPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         ip_addr = request.META['REMOTE_ADDR']
-        DATA_LOGGER.debug(f"[CAN DISBURSE]\n\tIp Address: {str(ip_addr)}")
+        DATA_LOGGER.debug("[CAN DISBURSE]" + f" Ip Address: {str(ip_addr)}")
         if ip_addr in settings.ALLOWED_HOSTS:
             return True
         else:

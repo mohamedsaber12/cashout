@@ -29,7 +29,9 @@ class BudgetAdmin(admin.ModelAdmin):
     """
 
     list_filter = ['updated_at', 'created_at', 'disburser', 'created_by']
-    list_display = ['disburser', 'created_by', 'total_disbursed_amount', 'disbursed_amount', 'max_amount', 'updated_at']
+    list_display = [
+        'disburser', 'max_amount', 'current_balance', 'disbursed_amount', 'total_disbursed_amount', 'updated_at'
+    ]
     readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by', 'current_balance']
     search_fields = ['disburser', 'created_by']
     ordering = ['-updated_at', '-created_at']

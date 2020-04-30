@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
@@ -9,14 +12,13 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext as _
 
-from users.models import (CheckerUser, MakerUser, RootUser, Setup,
- Brand, SuperAdminUser,Client,UploaderUser)
+from users.models import Brand, CheckerUser, Client, MakerUser, RootUser, Setup, SuperAdminUser, UploaderUser
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
-MESSAGE = _('Dear <strong>{0}</strong><br><br>' \
-          'Your account is created on the panel with email: <strong>{2}</strong> and username: <strong>{3}</strong> <br>' \
-          'Please follow <a href="{1}" ><strong>this link</strong></a> to reset password as soon as possible, <br><br>' \
-          'Thanks, BR')
+MESSAGE = _("""Dear <strong>{0}</strong><br><br>
+Your account is created on the panel with email: <strong>{2}</strong> and username: <strong>{3}</strong> <br>
+Please follow <a href="{1}" ><strong>this link</strong></a> to reset password as soon as possible, <br><br>
+Thanks, BR""")
 
 
 @receiver(post_save, sender=RootUser)
@@ -45,6 +47,7 @@ def checker_pre_save(sender, instance, *args, **kwargs):
     generate_username(instance, sender)
     set_brand(instance)
 
+
 @receiver(pre_save, sender=MakerUser)
 def maker_pre_save(sender, instance, *args, **kwargs):
     generate_username(instance, sender)
@@ -64,13 +67,12 @@ def super_admin_pre_save(sender, instance, *args, **kwargs):
 
 
 @receiver(post_save, sender=Client)
-def client_post_save(sender, instance,created, **kwargs):
+def client_post_save(sender, instance, created, **kwargs):
     if created:
         root_user = instance.client
         root_user.brand = instance.creator.brand
         root_user.save()
-        notify_user(root_user , created)
-
+        notify_user(root_user, created)
 
 
 def set_brand(instance):
@@ -101,16 +103,14 @@ def generate_username(user, user_model):
 
 def notify_user(instance, created):
     if created:
-        random_pass = get_random_string(
-            allowed_chars=ALLOWED_CHARACTERS, length=12)
+        random_pass = get_random_string(allowed_chars=ALLOWED_CHARACTERS, length=12)
         instance.set_password(random_pass)
         instance.save()
 
         # one time token
         token = default_token_generator.make_token(instance)
-        uid = urlsafe_base64_encode(force_bytes(instance.pk)).decode("utf-8")
-        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={
-            'uidb64': uid, 'token': token})
+        uid = urlsafe_base64_encode(force_bytes(instance.pk))
+        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
 
         from_email = settings.SERVER_EMAIL
         subject = f'[{instance.brand.mail_subject}]'

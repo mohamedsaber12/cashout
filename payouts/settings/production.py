@@ -36,11 +36,17 @@ ADMINS = [
     ('Omar Nawar', 'omarnawar@paymobsolutions.com')
 ]
 
-# ssl
+# SSL
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE   = True
-CSRF_COOKIE_SECURE      = True
-# SECURE_SSL_REDIRECT   = True        # Handled by nginx
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+# SECURE_SSL_REDIRECT = True        # Handled by nginx
+
+# Enable HTTP Strict Transport Security (HSTS)
+SECURE_HSTS_SECONDS = 31536000
+SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# proxy_set_header X-Forwarded-Proto "https";  >>  Add to nginx
 
 # base url
 BASE_URL = 'https://payouts.paymobsolutions.com'

@@ -34,7 +34,7 @@ class Doc(models.Model):
     total_count = models.PositiveIntegerField(default=False)
     type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
     created_at = models.DateTimeField(auto_now_add=True)
-    owner = models.ForeignKey("users.MakerUser", on_delete=models.CASCADE, related_name='doc')
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='doc')
     disbursed_by = models.ForeignKey("users.CheckerUser", on_delete=models.CASCADE, related_name='document', null=True)
     file_category = models.ForeignKey('data.FileCategory', on_delete=models.SET_NULL, related_name='doc', null=True)
     format = models.ForeignKey('data.Format', on_delete=models.DO_NOTHING, null=True)

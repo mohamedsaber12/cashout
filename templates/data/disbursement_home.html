@@ -18,9 +18,12 @@
 
 {% if not request.user.root.super_admin.vmt %}
 <div class="well upload-nav col-xs-12">
-    <p style="padding: 25px 25px; font-size: 40px; text-align: center;">
-        {% trans 'Your SuperAdmin setup is not completed yet!' %}
-    </p>
+    <p style="font-size: 30px; text-align: center;">{% trans 'Your SuperAdmin setup is not completed yet!' %}</p>
+</div>
+
+{% elif not admin_is_active %}
+<div class="well upload-nav col-xs-12">
+    <p style="font-size: 30px; text-align: center;">{% trans 'Your Admin is not active!' %}</p>
 </div>
 
 {% elif can_upload and user_has_upload_perm %}

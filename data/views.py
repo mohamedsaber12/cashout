@@ -64,9 +64,10 @@ def disbursement_home(request):
     """
     format_qs = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
     can_upload = bool(format_qs)
+    admin_is_active = request.user.root.client.is_active
     user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
 
-    if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
+    if request.method == 'POST' and can_upload and user_has_upload_perm and admin_is_active:
         form_doc = FileDocumentForm(request.POST, request.FILES, request=request, is_disbursement=True)
 
         if form_doc.is_valid():
@@ -90,6 +91,7 @@ def disbursement_home(request):
         'doc_list_disbursement': docs,
         'format_qs': format_qs,
         'can_upload': can_upload,
+        'admin_is_active': admin_is_active,
         'user_has_upload_perm': user_has_upload_perm
     }
 

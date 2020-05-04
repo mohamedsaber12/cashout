@@ -16,24 +16,33 @@
 
 {% block body %}
 
-{% if not request.user.root.super_admin.vmt %}
+{% if not has_vmt_setup %}
 <div class="well upload-nav col-xs-12">
     <p style="font-size: 30px; text-align: center;">{% trans 'Your SuperAdmin setup is not completed yet!' %}</p>
 </div>
 
 {% elif not admin_is_active %}
 <div class="well upload-nav col-xs-12">
-    <p style="font-size: 30px; text-align: center;">{% trans 'Your Admin is not active!' %}</p>
+    {% if request.user.is_root %}
+        <p style="font-size: 30px; text-align: center;">{% trans "You're not active any more!" %}</p>
+    {% else %}
+        <p style="font-size: 30px; text-align: center;">{% trans 'Your Admin is not active!' %}</p>
+    {% endif %}
 </div>
 
-{% elif can_upload and user_has_upload_perm %}
+{% elif not has_any_file_category  %}
+<div class="well upload-nav col-xs-12">
+    <strong style="margin-top: 15px;">{% trans 'Please Add Disbursement first' %}</strong>
+</div>
+
+{% elif has_any_file_category and user_has_upload_perm %}
 <div class="well upload-nav col-xs-12">
     <h3 class="navbar-left col-xs-12">{% trans 'Upload Form' %}</h3>
     <div class="form-group col-xs-12">
         <label class="control-label col-md-1 col-sm-1 col-xs-1">Format</label>
         <div class="col-md-6 col-sm-6 col-xs-12">
             <select class="form-control" name="file_category" id="category">
-                {% for format in format_qs %}
+                {% for format in family_file_categories %}
                 <option value="{{format.id}}">{{format.name}}</option>
                 {%endfor%}
             </select>
@@ -46,11 +55,6 @@
 
     </div>
 
-</div>
-
-{% elif not can_upload  %}
-<div class="well upload-nav col-xs-12">
-    <strong style="margin-top: 15px;">{% trans 'Please Add Disbursement first' %}</strong>
 </div>
 {% endif %}
 

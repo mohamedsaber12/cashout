@@ -38,7 +38,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 # Sessions and Cookies
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
-CSRF_COOKIE_HTTPONLY = True
 
 # session expiration
 SESSION_EXPIRE_SECONDS = 300
@@ -46,7 +45,8 @@ SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 
 # Enable HTTP Strict Transport Security (HSTS)
+# proxy_set_header X-Forwarded-Proto $scheme;  >>  Add to nginx configs
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-# proxy_set_header X-Forwarded-Proto "https";  >>  Add to nginx
+SECURE_CONTENT_TYPE_NOSNIFF=True

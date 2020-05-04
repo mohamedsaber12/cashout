@@ -32,7 +32,8 @@ def custom_exception_handler(exc, context):
         if response.data.get("status_code", None) is None:
             response.data["status_code"] = str(response.status_code)
 
-        response.data["status_description"] = response.data.pop("detail")
+        if response.data.get("detail", None) is None:
+            response.data["status_description"] = response.data.pop("detail")
 
         common_logging_msg = f"{context['view'].request.method}: {context['view'].request.path}" \
                              f" -- exception reason: {exception_code}\n"

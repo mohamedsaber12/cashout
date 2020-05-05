@@ -1,0 +1,15 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}Orange Pending Transactions{% endblock title %}
+
+{% block body %}
+    {% if not orange_pending_transactions %}
+      <div class="well upload-nav col-xs-12">
+        <strong style="margin-top: 15px;">{% trans 'No pending Orange transactions' %}</strong>
+      </div>
+    {% else %}
+        {% include 'instant_cashin/pending_orange_trx_list.html' with orange_pending_transactions=orange_pending_transactions %}
+    {% endif %}
+{% endblock body %}

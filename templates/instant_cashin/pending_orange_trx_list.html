@@ -1,0 +1,62 @@
+{% load i18n %}
+
+<div class="page-title">
+  <div class="title_left">
+    <h3>{% trans 'Orange Pending Transactions' %}</h3>
+  </div>
+</div>
+
+<div class="clearfix"></div>
+
+<div class="row">
+  <div class="col-md-12">
+    <div class="x_panel">
+
+      <div class="x_title">
+        <h2>{% trans 'Transactions Per Days List' %}</h2>
+        <ul class="nav navbar-right panel_toolbox">
+          <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="x_content">
+        <!-- start doc list -->
+        <table class="table table-striped projects">
+          <thead>
+            <tr>
+                <th style="width: 20%">{% trans 'Day' %}</th>
+                <th style="width: 20%">{% trans 'Total Transactions Count' %}</th>
+                <th style="width: 20%">{% trans 'Status' %}</th>
+                <th style="width: 15%">{% trans 'Download' %}</th>
+                <th style="width: 15%">{% trans 'Upload Callback' %}</th>
+                <th style="width: 15%">{% trans 'Callback Status' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for day in orange_pending_transactions %}
+              <td><p>{{ day }}</p></td>
+              <td></td>
+              <td></td>
+              <td>
+                  <a href="" class="btn btn-primary btn-sm">{% trans 'Download' %}</a>
+              </td>
+              <td>
+                <form method="POST" enctype="multipart/form-data">
+                  {% csrf_token %}
+                  <input type="submit" name="submit" value="Upload" />
+                </form>
+              </td>
+              <td></td>
+
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+      </div>
+
+    </div>
+  </div>
+</div>

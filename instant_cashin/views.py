@@ -6,10 +6,11 @@ from django.views.generic import ListView
 
 from core.models import AbstractBaseStatus
 
+from .mixins import RootFromInstantFamilyRequiredMixin
 from .models import AbstractBaseIssuer, InstantTransaction
 
 
-class PendingOrangeInstantTransactionsListView(ListView):
+class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixin, ListView):
     """
     Home view for Admin users that belong to instant disbursement family, Lists all of the pending
     Orange instant transactions aggregated per every day.

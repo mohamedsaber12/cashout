@@ -43,6 +43,10 @@ def redirect_home(request):
         return redirect(reverse('admin:index'))
     if request.user.is_instantapiviewer:
         return redirect(reverse('users:instant_transactions'))
+    if request.user.is_root:
+        instant_checker_user_list = [True for user in request.user.children() if user.is_instantapichecker]
+        if any(instant_checker_user_list):
+            return redirect(reverse('instant_cashin:home'))
     status = request.user.get_status(request)
 
     return redirect(f'data:{status}_home')

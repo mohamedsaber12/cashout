@@ -25,7 +25,7 @@ def generate_pending_orange_instant_transactions(username, raw_date, **kwargs):
     suffix = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
     filename = _(f"173_{username}_{suffix}.csv")
     file_path = f"{settings.MEDIA_ROOT}/documents/instant_transactions/{filename}"
-    download_url = ""
+    download_url = settings.BASE_URL + str(reverse('instant_cashin:serve_download')) + f"?filename={filename}"
 
     dataset = PendingOrangeInstantTransactionsModelResource(user, raw_date)
     dataset = dataset.export()

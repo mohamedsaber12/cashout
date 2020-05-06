@@ -12,7 +12,7 @@ from django.views.generic import ListView
 
 from core.models import AbstractBaseStatus
 
-from .mixins import RootFromInstantFamilyRequiredMixin
+from .mixins import RootFromInstantFamilyRequiredMixin, RootOwnsRequestedFileTestMixin
 from .models import AbstractBaseIssuer, InstantTransaction
 from .tasks import generate_pending_orange_instant_transactions
 
@@ -60,7 +60,9 @@ class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequired
         raise Http404
 
 
-class ServeDownloadingInstantTransactionsView(RootFromInstantFamilyRequiredMixin, View):
+class ServeDownloadingInstantTransactionsView(RootFromInstantFamilyRequiredMixin,
+                                              RootOwnsRequestedFileTestMixin,
+                                              View):
     """
     Serve downloading instant transactions sheet
     """

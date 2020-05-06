@@ -13,3 +13,20 @@
         {% include 'instant_cashin/pending_orange_trx_list.html' with orange_pending_transactions=orange_pending_transactions %}
     {% endif %}
 {% endblock body %}
+
+{% block script %}
+<script>
+
+  function download_pending() {
+    var day_value = $("#day_value").text();
+    $.ajax({
+      type: 'GET',
+      url: "{% url 'instant_cashin:download' %}" + '?date=' + day_value,
+      success: function (data, text, xhr) {
+        $('#success-alert-msg').show()
+      },
+    });
+  }
+
+</script>
+{% endblock script %}

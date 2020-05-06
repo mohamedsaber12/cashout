@@ -3,10 +3,10 @@
 <div class="left_col scroll-view">
     <div class="navbar nav_title" style="text-align:center; padding-top: 12px;">
         {% if brand_logo %}
-            <a href="{% url 'data:disbursement_home' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"
+            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"
                         height="38px" id="paymob_logo"></span></a>
         {%else%}
-            <a href="{% url 'data:disbursement_home' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
+            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
                             height="38px" id="paymob_logo"></span></a>
         {%endif%}    
         

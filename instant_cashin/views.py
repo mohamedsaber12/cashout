@@ -5,7 +5,7 @@ import os
 
 from django.conf import settings
 from django.db.models import Count, Q
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.urls import reverse
 from django.views import View
 from django.views.generic import ListView
@@ -56,5 +56,31 @@ class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequired
             generate_pending_orange_instant_transactions.delay(request.user.username, raw_date)
             # ToDo: Logging
             return HttpResponseRedirect(reverse('instant_cashin:home'))
+
+        raise Http404
+
+
+class ServeDownloadingInstantTransactionsView(RootFromInstantFamilyRequiredMixin, View):
+    """
+    Serve downloading instant transactions sheet
+    """
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests to serve downloading of the file via the response"""
+        filename = request.GET.get('filename', None)
+        if not filename:
+            raise Http404
+
+        file_path = f"{settings.MEDIA_ROOT}/documents/instant_transactions/{filename}"
+
+        if os.path.exists(file_path):
+            with open(file_path, 'rb') as fh:
+                response = HttpResponse(
+                        fh.read(),
+                        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+                response['Content-Disposition'] = f"attachment; filename={filename}"
+                # ToDo: Logging
+                return response
 
         raise Http404

@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import os
+
+from django.conf import settings
 from django.db.models import Count, Q
+from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
+from django.views import View
 from django.views.generic import ListView
 
 from core.models import AbstractBaseStatus
 
 from .mixins import RootFromInstantFamilyRequiredMixin
 from .models import AbstractBaseIssuer, InstantTransaction
+from .tasks import generate_pending_orange_instant_transactions
 
 
 class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixin, ListView):
@@ -35,3 +42,19 @@ class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixi
         # total_trx_per_day = queryset.filter(created_at__date=ordered_dates_unique_list[0]).annotate(Count('uid'))
 
         return ordered_dates_unique_list
+
+
+class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequiredMixin, View):
+    """
+    Downloads sheet with the pending Orange Transactions of the provided date
+    """
+
+    def get(self, request, *args, **kwargs):
+        """Handles coming Ajax calls to download the sheet"""
+        if request.is_ajax() and request.GET.get('date'):
+            raw_date = request.GET.get('date')
+            generate_pending_orange_instant_transactions.delay(request.user.username, raw_date)
+            # ToDo: Logging
+            return HttpResponseRedirect(reverse('instant_cashin:home'))
+
+        raise Http404

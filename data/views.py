@@ -43,57 +43,80 @@ def redirect_home(request):
         return redirect(reverse('admin:index'))
     if request.user.is_instantapiviewer:
         return redirect(reverse('users:instant_transactions'))
+    if request.user.is_root:
+        instant_checker_user_list = [True for user in request.user.children() if user.is_instantapichecker]
+        if any(instant_checker_user_list):
+            return redirect(reverse('instant_cashin:home'))
     status = request.user.get_status(request)
 
     return redirect(f'data:{status}_home')
 
 
-@login_required
-@setup_required
-@disbursement_users
-def disbursement_home(request):
+@method_decorator([disbursement_users, setup_required, login_required], name='dispatch')
+class DisbursementHomeView(View):
     """
-    POST:
-    View that allows the maker with a file category to upload a disbursement file.
-    The file is later processed by the task 'handle_disbursement_file'.
-
-    GET:
-    View that list all documents related to logged in user hierarchy.
-    Documents can be filtered by date.
-    Documents are paginated ("docs_paginated") but not used in template.
+    Home view for disbursement related users ex. Admin/Maker/Checker
     """
-    format_qs = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
-    can_upload = bool(format_qs)
-    user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
 
-    if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
-        form_doc = FileDocumentForm(request.POST, request.FILES, request=request, is_disbursement=True)
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Common attributes between GET and POST methods
+        """
+        self.user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
+        self.admin_is_active = request.user.root.client.is_active
+        self.family_file_categories = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
+        self.has_any_file_category = bool(self.family_file_categories)
+        return super().dispatch(request, *args, **kwargs)
 
-        if form_doc.is_valid():
-            file_doc = form_doc.save()
-            UPLOAD_LOGGER.debug(f"""[DISBURSEMENT FILE UPLOAD]
-            User: {request.user.username} from IP Address {get_client_ip(request)}
-            Uploaded disbursement file with doc_id: {file_doc.id}""")
-            handle_disbursement_file.delay(file_doc.id, language=translation.get_language())
-            return HttpResponseRedirect(request.path)           # Redirect to the document list after POST
-        else:
-            UPLOAD_ERROR_LOGGER.debug(f"""[DISBURSEMENT FILE UPLOAD ERROR]
-            Disbursement upload error: {form_doc.errors['file'][0]}
-            By User: {request.user.username} from IP Address {get_client_ip(request)}""")
-            return JsonResponse(form_doc.errors, status=400)
+    def get(self, request, *args, **kwargs):
+        """
+        Lists all documents related to the currently logged in user hierarchy.
+        Users: Any Admin/Maker/Checker user can view his family list of disbursement documents.
+        Notes:
+            1. Documents can be filtered by date.
+            2. Documents are paginated but not used in template.
+        """
+        has_vmt_setup = request.user.root.super_admin.vmt
+        doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.DISBURSEMENT)
+        paginator = Paginator(doc_list_disbursement, 10)
+        page = request.GET.get('page')
+        docs = paginator.get_page(page)
 
-    doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.DISBURSEMENT)
-    paginator = Paginator(doc_list_disbursement, 10)
-    page = request.GET.get('page')
-    docs = paginator.get_page(page)
-    context = {
-        'doc_list_disbursement': docs,
-        'format_qs': format_qs,
-        'can_upload': can_upload,
-        'user_has_upload_perm': user_has_upload_perm
-    }
+        context = {
+            'has_vmt_setup': has_vmt_setup,
+            'admin_is_active': self.admin_is_active,
+            'family_file_categories': self.family_file_categories,
+            'has_any_file_category': self.has_any_file_category,
+            'user_has_upload_perm': self.user_has_upload_perm,
+            'doc_list_disbursement': docs
+        }
 
-    return render(request, 'data/disbursement_home.html', context=context)
+        return render(request, 'data/disbursement_home.html', context=context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Allows maker users to upload a disbursement file which complies with certain file category.
+        The file is later processed by the task 'handle_disbursement_file'.
+        """
+        if self.has_any_file_category and self.user_has_upload_perm and self.admin_is_active:
+            form_doc = FileDocumentForm(request.POST, request.FILES, request=request, is_disbursement=True)
+
+            if form_doc.is_valid():
+                file_doc = form_doc.save()
+                UPLOAD_LOGGER.debug(
+                        "[DISBURSEMENT FILE UPLOAD]" +
+                        f"\nUser: {request.user} -- Ip Address: {get_client_ip(request)}" +
+                        f"\nUploaded disbursement file with doc id: {file_doc.id}"
+                )
+                handle_disbursement_file(file_doc.id, language=translation.get_language())
+                return HttpResponseRedirect(request.path)       # Redirect to the document list after successful POST
+            else:
+                UPLOAD_ERROR_LOGGER.debug(
+                        "[DISBURSEMENT FILE UPLOAD ERROR]" +
+                        f"\nUser: {request.user} -- Ip Address: {get_client_ip(request)}" +
+                        f"\nDisbursement upload error: {form_doc.errors['file'][0]}"
+                )
+                return JsonResponse(form_doc.errors, status=400)
 
 
 @login_required
@@ -204,7 +227,7 @@ def document_view(request, doc_id):
 
             if request.method == "POST" and not hide_review_form:
                 doc_review_form = DocReviewForm(request.POST)
-                
+
                 if doc_review_form.is_valid():
                     doc_review_obj = doc_review_form.save(commit=False)
                     doc_review_obj.user_created = request.user
@@ -252,15 +275,15 @@ def document_view(request, doc_id):
 
     else:
         VIEW_DOCUMENT_LOGGER.debug(f"""[HIERARCHY ERROR]
-        User viewing document from other hierarchy, 
-        username: {request.user.username}, user hierarchy: {request.user.hierarchy}, 
+        User viewing document from other hierarchy,
+        username: {request.user.username}, user hierarchy: {request.user.hierarchy},
         doc hierarchy: {doc.owner.hierarchy}, doc id: {doc.id}""")
         return redirect(reverse("data:disbursement_home"))
 
     doc_data = None
     if doc.is_processed:
         doc_data = doc.disbursement_data.all()
-    
+
     context = {
         'doc': doc,
         'review_form_errors': review_form_errors,
@@ -360,7 +383,7 @@ class FormatListView(TemplateView):
                 queryset=self.get_queryset(),
                 prefix='category'
             )
-            
+
             if not self.request.user.is_root:
                 context['formatform'].can_delete = False
                 context['formatform'].extra = 0

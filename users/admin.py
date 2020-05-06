@@ -1,11 +1,12 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 import logging
 
 from django import forms
 from django.contrib import admin
-from django.contrib.admin.actions import delete_selected as delete_selected_
 from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
@@ -20,85 +21,53 @@ from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser, In
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 MODIFIED_USERS_LOGGER = logging.getLogger("modified_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
-DELETED_GROUPS_LOGGER = logging.getLogger("delete_groups")
-admin.site.unregister(Group)
-
-
 # TODO: I need to check querysets for all for children
 # TODO: Add logs for deleting and adding any instance
 
-def delete_selected(modeladmin, request, queryset):
-    if not modeladmin.has_delete_permission(request):
-        raise PermissionDenied
-    if request.POST.get('post'):
-        for obj in queryset:
-            user_deleted_log_msg = f"""[User Deleted]
-            User: {request.user.username}
-            Deleted user with username: {obj.username} from IP Address {get_client_ip(request)}"""
-            if 'MyUser' in modeladmin.__str__():
-                DELETED_USERS_LOGGER.debug(user_deleted_log_msg)
-            else:
-                DELETED_GROUPS_LOGGER.debug(user_deleted_log_msg)
-            obj.delete()
-    else:
-        return delete_selected_(modeladmin, request, queryset)
 
+class UserAccountAdmin(UserAdmin):
+    list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
+    filter_horizontal = ('groups',)
+    actions = ['activate_selected', 'deactivate_selected']
+    extended_actions = ['activate_selected', 'deactivate_selected']
 
-delete_selected.short_description = ugettext_lazy("Delete selected %(verbose_name_plural)s")
+    def deactivate_selected(self, request, queryset):
+        """Deactivate selected list of users"""
 
-
-def deactivate_selected(modeladmin, request, queryset):
-    if not modeladmin.has_change_permission(request):
-        raise PermissionDenied
-    if request.method == 'POST':
+        if not self.has_change_permission(request):
+            raise PermissionDenied
 
         for obj in queryset:
-            user_deactivated_log_msg = f"""[User Deactivated]
-            User: {request.user.username}
-            Deactivated user with username: {obj.username} from IP Address {get_client_ip(request)}"""
+            user_deactivated_log_msg = "[User Deactivated]" + \
+                    f"\nUser: {request.user} from IP Address: {get_client_ip(request)} deactivated user: {obj.username}"
             if not obj.is_active:
                 continue
-            if 'MyUser' in modeladmin.__str__():
-                DELETED_USERS_LOGGER.debug(user_deactivated_log_msg)
             else:
-                DELETED_GROUPS_LOGGER.debug(user_deactivated_log_msg)
+                MODIFIED_USERS_LOGGER.debug(user_deactivated_log_msg)
+
             obj.is_active = False
             obj.save()
-    else:
-        return deactivate_selected(modeladmin, request, queryset)
 
+    deactivate_selected.short_description = ugettext_lazy("Deactivate selected %(verbose_name_plural)s")
 
-deactivate_selected.short_description = ugettext_lazy("Deactivate selected %(verbose_name_plural)s")
+    def activate_selected(self, request, queryset):
+        """Activate selected list of users"""
 
+        if not self.has_change_permission(request):
+            raise PermissionDenied
 
-def activate_selected(modeladmin, request, queryset):
-    if not modeladmin.has_change_permission(request):
-        raise PermissionDenied
-    if request.method == 'POST':
         for obj in queryset:
-            user_activated_log_msg = f"""[User Activated]
-            User: {request.user.username}
-            Activated user with username: {obj.username} from IP Address {get_client_ip(request)}"""
+            user_activated_log_msg = "[User Activated]" + \
+                      f"\nUser: {request.user} from IP Address: {get_client_ip(request)} activated user: {obj.username}"
             if obj.is_active:
                 continue
-            if 'MyUser' in modeladmin.__str__():
-                CREATED_USERS_LOGGER.debug(user_activated_log_msg)
             else:
-                CREATED_USERS_LOGGER.debug(user_activated_log_msg)
+                MODIFIED_USERS_LOGGER.debug(user_activated_log_msg)
+
             obj.is_active = True
             obj.save()
 
-    else:
-        return None
-
-
-activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
-
-
-class UserAccountAdmin(UserAdmin):
-    actions = (delete_selected, deactivate_selected, activate_selected)
-    list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
-    filter_horizontal = ('groups',)
+    activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
 
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)

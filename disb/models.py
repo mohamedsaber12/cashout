@@ -8,7 +8,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import AbstractTimeStamp
+from core.models import AbstractBaseStatus, AbstractTimeStamp
 from instant_cashin.models import AbstractVMTData
 
 
@@ -33,6 +33,7 @@ class Agent(models.Model):
     """
     Model for representing every admin related super-agent and agents
     """
+
     msisdn = models.CharField(max_length=14, verbose_name=_("Mobile number"))
     pin = models.BooleanField(default=False)
     super = models.BooleanField(default=False)
@@ -52,23 +53,57 @@ class Agent(models.Model):
         return f"Agent {self.msisdn} for Root: {self.wallet_provider.username}"
 
 
-class DisbursementDocData(models.Model):
+class DisbursementDocData(AbstractBaseStatus):
     """
     This model is just logs to the status of the doc disbursement action
     """
+
     doc = models.OneToOneField('data.Doc', null=True, related_name='disbursement_txn', on_delete=models.CASCADE)
-    txn_id = models.CharField(max_length=16, null=True, blank=True)  #
+    txn_id = models.CharField(max_length=16, null=True, blank=True)
     txn_status = models.CharField(max_length=16, null=True, blank=True)
+    doc_status = models.CharField(
+            _("Document disbursement status"),
+            max_length=1,
+            choices=AbstractBaseStatus.STATUS_CHOICES,
+            default=AbstractBaseStatus.DEFAULT
+    )
+    status = None
 
     class Meta:
         verbose_name = "Disbursement Document"
         verbose_name_plural = "Disbursement Documents"
+
+    def mark_successful(self):
+        """
+        Mark document disbursement status as successful when
+        Document disbursed successfully and the callback has returned whether the disbursement ratio > 0 or not.
+        """
+        self.doc_status = self.SUCCESSFUL
+        self.save()
+
+    def mark_failed(self):
+        """
+        Mark document disbursement status as failed when:
+            1. Document didn't pass the validations at the uploading phase.
+            2. Error has occurred while disbursing this document.
+        """
+        self.doc_status = self.FAILED
+        self.save()
+
+    def mark_pending(self):
+        """
+        Mark document disbursement status as pending when the disbursement callback has not returned
+        Document disbursed successfully and the callback has not returned yet.
+        """
+        self.doc_status = self.PENDING
+        self.save()
 
 
 class DisbursementData(AbstractTimeStamp):
     """
     This model to save data processed from the document like FileData yet for disbursement
     """
+
     doc = models.ForeignKey('data.Doc', null=True, related_name='disbursement_data', on_delete=models.CASCADE)
     is_disbursed = models.BooleanField(default=0)
     amount = models.FloatField(verbose_name=_('AMOUNT'))

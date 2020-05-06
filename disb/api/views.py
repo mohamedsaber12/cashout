@@ -99,18 +99,20 @@ class DisburseAPIView(APIView):
             "RECIPIENTS": list(recipients),
         })
 
-        request_data_dictionary_without_pins = copy.deepcopy(data)
-        for senders_dictionary in request_data_dictionary_without_pins['SENDERS']:
+        payload_without_pins = copy.deepcopy(data)
+        for senders_dictionary in payload_without_pins['SENDERS']:
             senders_dictionary['PIN'] = 'xxxxxx'
 
         try:
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
-            DATA_LOGGER.debug(f"[DISBURSE REQUEST DATA DICT]\n\t{str(request_data_dictionary_without_pins)}")
-            DATA_LOGGER.debug(f"[DISBURSE BULK STATUS]\n\t{str(response.json())}")
+            DATA_LOGGER.debug(
+                    "[DISBURSE BULK - REQUEST PAYLOAD]" + f"\nUser: {user}\nPayload: {str(payload_without_pins)}"
+            )
+            DATA_LOGGER.debug("[DISBURSE BULK - STATUS RESPONSE]" + f"\nStatus: {str(response.json())}")
         except ValueError:
-            DATA_LOGGER.debug('[DISBURSE ERROR]\n\t' + str(response.status_code) + ' -- ' + str(response.reason))
+            DATA_LOGGER.debug('[DISBURSE VALUE ERROR]' + f"\n{str(response.status_code)} -- {str(response.reason)}")
         except Exception as e:
-            DATA_LOGGER.debug('[DISBURSE ERROR]\n\t' + str(e))
+            DATA_LOGGER.debug('[DISBURSE GENERAL ERROR]' + f"\nError{str(e)}")
             return HttpResponse(
                     json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
                     status=status.HTTP_424_FAILED_DEPENDENCY
@@ -166,7 +168,7 @@ class DisburseCallBack(UpdateAPIView):
         Handles UPDATE requests coming from wallets as a callback to a disbursement request
             and UPDATES the budget record of the disbursed document Owner/Admin it he/she has custom budget
         """
-        DATA_LOGGER.debug('[DISBURSE CALLBACK]\n\t' + str(request.data))
+        DATA_LOGGER.debug('[DISBURSE BULK - CALLBACK RESPONSE]' + f"\nCallback: {str(request.data)}")
         total_disbursed_amount = 0
         successfully_disbursed_obj = None
 
@@ -187,7 +189,7 @@ class DisburseCallBack(UpdateAPIView):
             except DisbursementData.DoesNotExist:
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
 
-        if successfully_disbursed_obj.doc.owner.root.has_custom_budget:
+        if successfully_disbursed_obj is not None and successfully_disbursed_obj.doc.owner.root.has_custom_budget:
             successfully_disbursed_obj.doc.owner.root.budget.update_disbursed_amount(total_disbursed_amount)
             custom_budget_logger(
                     successfully_disbursed_obj.doc.owner.root.username,

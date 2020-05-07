@@ -32,6 +32,7 @@ class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixi
     model = InstantTransaction
     context_object_name = 'orange_pending_transactions'
     template_name = 'instant_cashin/admin_home.html'
+    paginate_by = 10
 
     def get_queryset(self):
         queryset = InstantTransaction.objects.filter(

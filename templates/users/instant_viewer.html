@@ -50,7 +50,7 @@
                     <table class="table table-striped table-bordered" id="transaction-table">
                       <thead>
                       <tr>
-                        <th>{% trans 'Reference' %}</th>
+                        <th style="width: 22%">{% trans 'Reference' %}</th>
                         <th>{% trans 'Consumer' %}</th>
                         <th>{% trans 'Amount' %}</th>
                         <th>{% trans 'Status' %}</th>
@@ -92,27 +92,7 @@
                       </tbody>
                     </table>
 
-                    <ul class="pagination">
-                      {% if is_paginated %}
-                        {% if page_obj.has_previous %}
-                            <li><a class="btn btn-outline-info mb-4" href="?page=1">First</a></li>
-                            <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
-                        {% endif %}
-
-                        {% for num in page_obj.paginator.page_range %}
-                            {% if page_obj.number == num %}
-                                <li><a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
-                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                                <li><a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
-                            {% endif %}
-                        {% endfor %}
-
-                        {% if page_obj.has_next %}
-                            <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-                           <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
-                        {% endif %}
-                      {% endif %}
-                    </ul>
+                    {% include 'pagination.html' %}
                   </div>
                 </div>
               </div>

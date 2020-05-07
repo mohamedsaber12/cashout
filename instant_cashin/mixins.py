@@ -4,6 +4,17 @@ from __future__ import unicode_literals
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 
+class InstantReviewerRequiredMixin(LoginRequiredMixin):
+    """
+    Prevent non logged-in or non instant-viewer users from accessing instant transactions.
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_instantapiviewer:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class RootFromInstantFamilyRequiredMixin(LoginRequiredMixin):
     """
     Prevent non logged-in and admins who not belong to instant family accessing instant cashin home view.

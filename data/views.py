@@ -42,11 +42,11 @@ def redirect_home(request):
     if request.user.is_superuser:
         return redirect(reverse('admin:index'))
     if request.user.is_instantapiviewer:
-        return redirect(reverse('users:instant_transactions'))
+        return redirect(reverse('instant_cashin:transactions_list'))
     if request.user.is_root:
         instant_checker_user_list = [True for user in request.user.children() if user.is_instantapichecker]
         if any(instant_checker_user_list):
-            return redirect(reverse('instant_cashin:home'))
+            return redirect(reverse('instant_cashin:pending_list'))
     status = request.user.get_status(request)
 
     return redirect(f'data:{status}_home')

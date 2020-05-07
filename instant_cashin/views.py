@@ -13,7 +13,7 @@ from django.views.generic import ListView
 
 from core.models import AbstractBaseStatus
 
-from .mixins import RootFromInstantFamilyRequiredMixin, RootOwnsRequestedFileTestMixin
+from .mixins import InstantReviewerRequiredMixin, RootFromInstantFamilyRequiredMixin, RootOwnsRequestedFileTestMixin
 from .models import AbstractBaseIssuer, InstantTransaction
 from .tasks import generate_pending_orange_instant_transactions
 from .utils import logging_message, SPREADSHEET_CONTENT_TYPE_CONSTANT
@@ -23,16 +23,45 @@ GENERATE_SHEET_LOGGER = logging.getLogger("generate_sheet")
 DOWNLOAD_SERVE_LOGGER = logging.getLogger("download_serve")
 
 
-class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixin, ListView):
+class BaseInstantTransactionsListView(ListView):
+    """
+    Base list view for instant transactions
+    """
+
+    model = InstantTransaction
+    context_object_name = 'instant_transactions'
+    paginate_by = 10
+
+
+class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTransactionsListView):
+    """
+    View for displaying instant transactions
+    """
+
+    template_name = 'users/instant_viewer.html'
+    queryset = InstantTransaction.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(from_user__hierarchy=self.request.user.hierarchy)
+
+        if self.request.GET.get('search'):                      # Handle search keywords if any
+            search_keys = self.request.GET.get('search')
+            queryset.filter(
+                    Q(uid__iexact=search_keys)|
+                    Q(anon_recipient__iexact=search_keys)|
+                    Q(failure_reason__icontains=search_keys)
+            )
+
+        return queryset
+
+
+class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixin, BaseInstantTransactionsListView):
     """
     Home view for Admin users that belong to instant disbursement family, Lists all of the pending
     Orange instant transactions aggregated per every day.
     """
 
-    model = InstantTransaction
-    context_object_name = 'orange_pending_transactions'
     template_name = 'instant_cashin/admin_home.html'
-    paginate_by = 10
 
     def get_queryset(self):
         queryset = InstantTransaction.objects.filter(
@@ -65,7 +94,7 @@ class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequired
                     GENERATE_SHEET_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - GENERATED SUCCESSFULLY]", request,
                     f"Sheet generated with instant transactions occurred at: {raw_date}"
             )
-            return HttpResponseRedirect(reverse('instant_cashin:home'))
+            return HttpResponseRedirect(reverse('instant_cashin:pending_list'))
 
         logging_message(
                 GENERATE_SHEET_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - GENERATE ERROR]", request,

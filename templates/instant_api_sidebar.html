@@ -1,13 +1,13 @@
 {% load static %}
 {% load i18n %}
 <div class="left_col scroll-view">
-  <div class="navbar nav_title" style="text-align:center">
+  <div class="navbar nav_title" style="text-align:center; padding-top:12px;">
     {% if brand_logo %}
-        <a href="{% url 'users:instant_transactions' %}" class="site_title">
+        <a href="{% url 'instant_cashin:transactions_list' %}" class="site_title">
             <span><img class="center" src="{{ brand_logo }}" height="38px" id="paymob_logo"></span>
         </a>
     {%else%}
-        <a href="{% url 'users:instant_transactions' %}" class="site_title">
+        <a href="{% url 'instant_cashin:transactions_list' %}" class="site_title">
             <span><img class="center" src="{% static 'img/pm_name.png' %}" height="38px" id="paymob_logo"></span>
         </a>
     {%endif%}

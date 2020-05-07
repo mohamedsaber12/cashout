@@ -26,7 +26,6 @@ from data.forms import CollectionDataForm, FileCategoryFormSet, FormatFormSet
 from data.models import FileCategory, Format
 from data.utils import get_client_ip
 from disb.forms import PinForm
-from instant_cashin.models import InstantTransaction
 
 from .decorators import root_or_superadmin
 from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
@@ -34,9 +33,9 @@ from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
                     MakerCreationForm, MakerMemberFormSet, OTPTokenForm,
                     PasswordChangeForm, ProfileEditForm, RootCreationForm,
                     SetPasswordForm, UploaderMemberFormSet)
-from .mixins import (CollectionRootRequiredMixin, InstantReviewerRequiredMixin,
-                     DisbursementRootRequiredMixin, RootRequiredMixin, SuperFinishedSetupMixin,
-                     SuperOwnsClientRequiredMixin, SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
+from .mixins import (CollectionRootRequiredMixin, DisbursementRootRequiredMixin, RootRequiredMixin,
+                     SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
+                     SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup, UploaderUser, User)
 
 
@@ -428,30 +427,6 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
-class InstantTransactionsView(InstantReviewerRequiredMixin, ListView):
-    """
-    View for displaying instant transactions
-    """
-    model = InstantTransaction
-    context_object_name = 'transactions'
-    paginate_by = 13
-    template_name = 'users/instant_viewer.html'
-    queryset = InstantTransaction.objects.all()
-
-    def get_queryset(self):
-        queryset = super().get_queryset().filter(from_user__hierarchy=self.request.user.hierarchy)
-
-        if self.request.GET.get('search'):                      # Handle search keywords if any
-            search_keys = self.request.GET.get('search')
-            queryset.filter(
-                    Q(uid__iexact=search_keys)|
-                    Q(anon_recipient__iexact=search_keys)|
-                    Q(failure_reason__icontains=search_keys)
-            )
-
-        return queryset
-
-
 class LevelsView(LevelsFormView):
     """ View for adding levels """
     template_name = 'users/add_levels.html'
@@ -615,12 +590,12 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
         try:
             User.objects.get(username=username).delete()
             DELETE_USER_VIEW_LOGGER.debug(f"[USER DELETED]\n"
-                f"User: {request.user.username}, Deleted user with username: {username}")
-            return redirect(reverse("data:disbursement_home"))
+                                          f"User: {request.user.username}, Deleted user with username: {username}")
         except User.DoesNotExist:
             DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\n"
                 f"User: {request.user.username}, tried to delete user with username {username} which does not exist")
-            return redirect(reverse("data:disbursement_home"))
+
+        return redirect(reverse("data:disbursement_home"))
 
 
 class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
@@ -774,9 +749,6 @@ def login_view(request):
 
                 if user.is_upmaker or (user.is_root and user.data_type() == 3):
                     return HttpResponseRedirect(reverse('users:redirect'))
-
-                if user.is_instantapiviewer:
-                    return HttpResponseRedirect(reverse('users:instant_transactions'))
 
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:

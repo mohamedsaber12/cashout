@@ -14,9 +14,9 @@ from django.utils.translation import ugettext_lazy
 from data.utils import get_client_ip
 
 from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
-from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
-                     MakerUser, RootUser, SuperAdminUser, User)
-
+from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
+                     InstantAPIViewerUser, MakerUser, RootUser, Setup,
+                     SuperAdminUser, User)
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 MODIFIED_USERS_LOGGER = logging.getLogger("modified_users")
@@ -158,6 +158,7 @@ class BaseChildAdmin(UserAccountAdmin):
         obj.save()
 
 
+@admin.register(MakerUser)
 class MakerAdmin(BaseChildAdmin):
     """
     Manages makers from the admin panel
@@ -166,6 +167,7 @@ class MakerAdmin(BaseChildAdmin):
     logged_user_type = 'Maker'
 
 
+@admin.register(CheckerUser)
 class CheckerAdmin(BaseChildAdmin):
     """
     Manages checkers from the admin panel
@@ -174,6 +176,7 @@ class CheckerAdmin(BaseChildAdmin):
     logged_user_type = 'Checker'
 
 
+@admin.register(InstantAPICheckerUser)
 class InstantAPICheckerAdmin(BaseChildAdmin):
     """
     Manages instant api checkers from the admin panel
@@ -182,6 +185,7 @@ class InstantAPICheckerAdmin(BaseChildAdmin):
     logged_user_type = 'Instant API Checker'
 
 
+@admin.register(InstantAPIViewerUser)
 class InstantAPIViewerAdmin(BaseChildAdmin):
     """
     Manages instant api viewers from the admin panel
@@ -206,6 +210,7 @@ class RootCreationAdminForm(RootCreationForm):
     )
 
 
+@admin.register(RootUser)
 class RootAdmin(UserAccountAdmin):
     add_form = RootCreationAdminForm
 
@@ -228,6 +233,7 @@ class RootAdmin(UserAccountAdmin):
         super(RootAdmin, self).save_model(request, obj, form, change)
 
 
+@admin.register(SuperAdminUser)
 class SuperAdmin(UserAccountAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
@@ -249,12 +255,19 @@ class SuperAdmin(UserAccountAdmin):
         super(SuperAdmin, self).save_model(request, obj, form, change)
 
 
-admin.site.register(SuperAdminUser, SuperAdmin)
-admin.site.register(RootUser, RootAdmin)
-admin.site.register(MakerUser, MakerAdmin)
-admin.site.register(CheckerUser, CheckerAdmin)
-admin.site.register(InstantAPICheckerUser, InstantAPICheckerAdmin)
-admin.site.register(InstantAPIViewerUser, InstantAPIViewerAdmin)
-admin.site.register(Client)
+@admin.register(Setup)
+class SetupRootAdmin(admin.ModelAdmin):
+    """
+    Custom the setup model to check on-boarding step easily
+    """
+
+    list_display = [
+        'user', 'pin_setup', 'levels_setup', 'maker_setup', 'checker_setup', 'category_setup', 'collection_setup'
+    ]
+    readonly_fields = ['user']
+
+
+# ToDo: Custom general user model
 admin.site.register(User)
+admin.site.register(Client)
 admin.site.register(EntitySetup)

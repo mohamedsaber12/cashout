@@ -1,17 +1,16 @@
 {% load static %}
 {% load i18n %}
 <div class="left_col scroll-view">
-  <div class="navbar nav_title" style="text-align:center; padding-top:12px;">
+  <div class="navbar nav_title" style="text-align:center; padding-top: 12px;">
     {% if brand_logo %}
-        <a href="{% url 'instant_cashin:transactions_list' %}" class="site_title">
-            <span><img class="center" src="{{ brand_logo }}" height="38px" id="paymob_logo"></span>
-        </a>
+      <a href="{% url 'data:main_view' %}" class="site_title">
+        <span><img class="center" src="{{ brand_logo }}" height="38px" id="paymob_logo"></span>
+      </a>
     {%else%}
-        <a href="{% url 'instant_cashin:transactions_list' %}" class="site_title">
-            <span><img class="center" src="{% static 'img/pm_name.png' %}" height="38px" id="paymob_logo"></span>
-        </a>
+      <a href="{% url 'data:main_view' %}" class="site_title">
+        <span><img class="center" src="{% static 'img/pm_name.png' %}" height="38px" id="paymob_logo"></span>
+      </a>
     {%endif%}
-
   </div>
 
   <div class="clearfix"></div>
@@ -41,10 +40,20 @@
     <div class="menu_section">
 
       <ul class="nav side-menu">
-        {% if request.user.can_view_docs %}
-            <li><a href="{% url 'docs:instant_docs' path='' %}"><i class="fa fa-book"></i> {% trans 'API Documentation'%}</a></li>
-        {% endif %}
 
+        <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            <li><a href="{% url 'data:main_view' %}">{% trans 'Transactions' %}</a></li>
+          </ul>
+        </li>
+        <li><a href="{% url 'docs:instant_docs' path='' %}"><i class="fa fa-book"></i> {% trans 'API Documentation'%}</a></li>
+        {% if request.user.is_root %}
+          <li><a><i class="fa fa-user"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
+            </ul>
+          </li>
+        {% endif %}
         <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>

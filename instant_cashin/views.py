@@ -38,7 +38,7 @@ class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTrans
     View for displaying instant transactions
     """
 
-    template_name = 'users/instant_viewer.html'
+    template_name = 'instant_cashin/instant_viewer.html'
     queryset = InstantTransaction.objects.all()
 
     def get_queryset(self):

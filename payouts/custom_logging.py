@@ -62,6 +62,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/download_serve.log',
         },
+        'generate_sheet': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/generate_sheet.log',
+        },
         'delete_file': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -331,6 +338,11 @@ CUSTOM_LOGGING = {
         },
         'download_serve': {
             'handlers': ['download_serve'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'generate_sheet': {
+            'handlers': ['generate_sheet'],
             'level': 'DEBUG',
             'propagate': True,
         },

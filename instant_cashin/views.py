@@ -19,6 +19,7 @@ from .tasks import generate_pending_orange_instant_transactions
 from .utils import logging_message, SPREADSHEET_CONTENT_TYPE_CONSTANT
 
 
+GENERATE_SHEET_LOGGER = logging.getLogger("generate_sheet")
 DOWNLOAD_SERVE_LOGGER = logging.getLogger("download_serve")
 
 
@@ -59,9 +60,16 @@ class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequired
         if request.is_ajax() and request.GET.get('date'):
             raw_date = request.GET.get('date')
             generate_pending_orange_instant_transactions.delay(request.user.username, raw_date)
-            # ToDo: Logging
+            logging_message(
+                    GENERATE_SHEET_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - GENERATED SUCCESSFULLY]", request,
+                    f"Sheet generated with instant transactions occurred at: {raw_date}"
+            )
             return HttpResponseRedirect(reverse('instant_cashin:home'))
 
+        logging_message(
+                GENERATE_SHEET_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - GENERATE ERROR]", request,
+                f"Raw request: {vars(request)}"
+        )
         raise Http404
 
 

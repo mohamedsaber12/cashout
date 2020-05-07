@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
 import os
 
 from django.conf import settings
@@ -15,6 +16,10 @@ from core.models import AbstractBaseStatus
 from .mixins import RootFromInstantFamilyRequiredMixin, RootOwnsRequestedFileTestMixin
 from .models import AbstractBaseIssuer, InstantTransaction
 from .tasks import generate_pending_orange_instant_transactions
+from .utils import logging_message, SPREADSHEET_CONTENT_TYPE_CONSTANT
+
+
+DOWNLOAD_SERVE_LOGGER = logging.getLogger("download_serve")
 
 
 class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixin, ListView):
@@ -70,19 +75,23 @@ class ServeDownloadingInstantTransactionsView(RootFromInstantFamilyRequiredMixin
     def get(self, request, *args, **kwargs):
         """Handles GET requests to serve downloading of the file via the response"""
         filename = request.GET.get('filename', None)
-        if not filename:
-            raise Http404
 
-        file_path = f"{settings.MEDIA_ROOT}/documents/instant_transactions/{filename}"
+        if filename:
+            file_path = f"{settings.MEDIA_ROOT}/documents/instant_transactions/{filename}"
 
-        if os.path.exists(file_path):
-            with open(file_path, 'rb') as fh:
-                response = HttpResponse(
-                        fh.read(),
-                        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-                response['Content-Disposition'] = f"attachment; filename={filename}"
-                # ToDo: Logging
-                return response
+            if os.path.exists(file_path):
 
+                with open(file_path, 'rb') as fh:
+                    response = HttpResponse(fh.read(), content_type=SPREADSHEET_CONTENT_TYPE_CONSTANT)
+                    response['Content-Disposition'] = f"attachment; filename={filename}"
+                    logging_message(
+                            DOWNLOAD_SERVE_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - SHEET DOWNLOAD]", request,
+                            f"File name: {filename}"
+                    )
+                    return response
+
+        logging_message(
+                DOWNLOAD_SERVE_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - ERROR SHEET DOWNLOAD]", request,
+                f"Raw Request: {vars(request)}"
+        )
         raise Http404

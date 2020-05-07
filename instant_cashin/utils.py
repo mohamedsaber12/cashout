@@ -9,6 +9,9 @@ from data.utils import get_client_ip
 from payouts.utils import get_dot_env
 
 
+SPREADSHEET_CONTENT_TYPE_CONSTANT = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+
 def logging_message(logger, head, request, message):
     """
     Simple function that will take the logger and the message and log them in

@@ -39,23 +39,18 @@
           </thead>
           <tbody>
             {% for day in orange_pending_transactions %}
-              <td id="day_value"><p>{{ day }}</p></td>
-              <td></td>
-              <td></td>
-              <td>
-                  <button id="export-pending" class="btn btn-primary btn-sm"  onclick="download_pending();"
-                          {% if day.trx_count < 1 %} disabled="true" {% endif %}>
-                    {% trans 'Download' %}
-                  </button>
-              </td>
-              <td>
-                <form method="POST" enctype="multipart/form-data">
-                  {% csrf_token %}
-                  <input type="submit" name="submit" value="Upload" />
-                </form>
-              </td>
-              <td></td>
-
+              <tr class="table-row">
+                <td id="day_value"><p>{{ day }}</p></td>
+                <td></td>
+                <td></td>
+                <td><button class="export-pending btn btn-primary btn-sm">{% trans 'Download' %}</button></td>
+                <td>
+                  <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="submit" name="submit" value="Upload" />
+                  </form>
+                </td>
+                <td></td>
               </tr>
             {% endfor %}
           </tbody>

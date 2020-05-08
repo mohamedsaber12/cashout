@@ -17,16 +17,17 @@
 {% block script %}
 <script>
 
-  function download_pending() {
-    var day_value = $("#day_value").text();
-    $.ajax({
-      type: 'GET',
-      url: "{% url 'instant_cashin:download' %}" + '?date=' + day_value,
-      success: function (data, text, xhr) {
-        $('#success-alert-msg').show()
-      },
+    $(".export-pending").click(function () {
+      var $row = $(this).closest("tr");                   // Find the row
+      var $day_selected = $row.find("#day_value").text(); // Find the text
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'instant_cashin:download' %}" + '?date=' + $day_selected,
+        success: function (data, text, xhr) {
+          $('#success-alert-msg').show()
+        }
+      });
     });
-  }
 
 </script>
 {% endblock script %}

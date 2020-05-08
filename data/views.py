@@ -106,7 +106,7 @@ class DisbursementHomeView(View):
                         f"\nUser: {request.user} -- Ip Address: {get_client_ip(request)}" +
                         f"\nUploaded disbursement file with doc id: {file_doc.id}"
                 )
-                handle_disbursement_file(file_doc.id, language=translation.get_language())
+                handle_disbursement_file.delay(file_doc.id, language=translation.get_language())
                 return HttpResponseRedirect(request.path)       # Redirect to the document list after successful POST
             else:
                 UPLOAD_ERROR_LOGGER.debug(

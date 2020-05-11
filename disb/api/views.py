@@ -212,21 +212,21 @@ class ChangeProfileCallBack(UpdateAPIView):
         """
         Handles UPDATE requests coming from wallets as a callback to a change profile request
         """
-        CHANGE_PROFILE_LOGGER.debug('[CHANGE PROFILE CALLBACK]\n\t' + f'Response: {str(request.data)}')
+        CHANGE_PROFILE_LOGGER.debug('[CHANGE PROFILE CALLBACK]\n' + f'Callback: {str(request.data)}')
         transactions = request.data.get('transactions', None)
 
         if not transactions:
             return JsonResponse({'message': 'Transactions are not sent'}, status=status.HTTP_404_NOT_FOUND)
 
-        if len(request.data['transactions']) == 0:
+        if len(transactions) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
 
         doc_obj = Doc.objects.filter(txn_id=request.data['batch_id']).first()
 
         if not doc_obj:
-            return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
+            return JsonResponse({'message': 'Batch id sent is not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        handle_change_profile_callback.delay(doc_obj.id, request.data['transactions'])
+        handle_change_profile_callback.delay(doc_obj.id, transactions)
         return JsonResponse({}, status=status.HTTP_202_ACCEPTED)
 
 

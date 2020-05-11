@@ -166,3 +166,17 @@ class Doc(models.Model):
 
     def is_reviews_rejected(self):
         return self.reviews.filter(is_ok=False).count() != 0
+
+    def processed_successfully(self):
+        """Mark document as processed successfully if it passed tests"""
+        self.is_processed = True
+        self.save()
+
+    def processing_failure(self, failure_reason):
+        """
+        Mark document as not processed successfully as it didn't pass tests
+        :param failure_reason: Reason made this document didn't pass processing phase
+        """
+        self.is_processed = False
+        self.processing_failure_reason = _(failure_reason)
+        self.save()

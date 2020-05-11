@@ -72,6 +72,7 @@ class User(AbstractUser):
             ("has_instant_disbursement", "the client/his children has instant disbursement capabilities"),
             ("can_view_api_docs", "the user can view the api documentation"),
         )
+        ordering = ['-id', '-hierarchy']
 
     def __str__(self):
         return str(self.username)

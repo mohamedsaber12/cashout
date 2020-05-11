@@ -182,9 +182,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             download_url = settings.BASE_URL + \
                 str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
                 '?filename=' + filename
-        doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = error_message
-        doc_obj.save()
+        doc_obj.processing_failure(error_message)
         notify_maker(doc_obj, download_url) if download_url else notify_maker(doc_obj)
         if not partial_valid:
             return False
@@ -203,9 +201,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             CHANGE_PROFILE_LOGGER.debug(f"""[CHANGE PROFILE ERROR]
             Users: {doc_obj.owner.username}, superadmin:{superadmin.username}
             Error: {e}""")
-            doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = MSG_REGISTRATION_PROCESS_ERROR
-            doc_obj.save()
+            doc_obj.processing_failure(MSG_REGISTRATION_PROCESS_ERROR)
             notify_maker(doc_obj)
             return False
 
@@ -221,19 +217,14 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         else:
             error_message = MSG_REGISTRATION_PROCESS_ERROR
         if error_message:
-            doc_obj.is_processed = False
-            doc_obj.processing_failure_reason = error_message
-            doc_obj.save()
+            doc_obj.processing_failure(error_message)
             notify_maker(doc_obj)
             return False
 
-        doc_obj.is_processed = True
+        doc_obj.processed_successfully()
         notify_maker(doc_obj)
     else:
-        error_message = MSG_REGISTRATION_PROCESS_ERROR
-        doc_obj.is_processed = False
-        doc_obj.processing_failure_reason = error_message
-        doc_obj.save()
+        doc_obj.processing_failure(MSG_REGISTRATION_PROCESS_ERROR)
         notify_maker(doc_obj)
         return False
 
@@ -259,34 +250,33 @@ def handle_change_profile_callback(doc_id, transactions):
     """
     doc_obj = Doc.objects.get(id=doc_id)
     msisdns, errors = [], []
-    error = False
+    has_error = False
 
-    for msisdn, status, msg_list in transactions:
-        if status not in ["200", "629", "560"]:
-            error = True
+    for msisdn, status_code, msg_list in transactions:
+        if status_code not in ["200", "629", "560"]:
+            has_error = True
             errors.append('\n'.join(msg_list))
         else:
-            errors.append(None)
+            errors.append("Passed validations successfully")
         msisdns.append(msisdn)
-    if not error:
-        doc_obj.is_processed = True
-        doc_obj.save()
+
+    if not has_error:
+        doc_obj.processed_successfully()
         notify_maker(doc_obj)
         return
 
     doc_obj.disbursement_data.all().delete()
-    filename = 'failed_disbursement_validation_%s.xlsx' % (randomword(4))
-    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+    filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
 
     data = list(zip(msisdns, errors))
-    headers = ['mobile number', 'errors']
+    headers = ['Mobile Number', 'Error']
     data.insert(0, headers)
     export_excel(file_path, data)
     download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_id})) + '?filename=' + filename
-    doc_obj.is_processed = False
-    doc_obj.processing_failure_reason = _("Mobile numbers validation error")
-    doc_obj.save()
+        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
+
+    doc_obj.processing_failure("Mobile numbers validation error")
     notify_maker(doc_obj, download_url)
     return
 
@@ -302,15 +292,11 @@ def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
     :return:
     """
     doc_obj = Doc.objects.get(id=doc_id)
-    filename = _('failed_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
+    filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(4)}.xlsx")
 
-    dataset = DisbursementDataResource(
-        file_category=doc_obj.file_category,
-        doc=doc_obj,
-        is_disbursed=False
-    )
+    dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
     dataset = dataset.export()
-    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
     with open(file_path, "wb") as f:
         f.write(dataset.xlsx)
 
@@ -318,9 +304,9 @@ def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
     disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
 
     download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + '?filename=' + filename
+        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
 
-    message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br> 
+    message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
         You can download the failed disbursement data related to this document
         <a href="{disb_doc_view_url}" >{doc_obj.filename()}</a>
         from here <a href="{download_url}" >Download</a><br><br>
@@ -339,15 +325,11 @@ def generate_success_disbursed_data(doc_id, user_id, **kwargs):
     :return:
     """
     doc_obj = Doc.objects.get(id=doc_id)
-    filename = _('success_disbursed_%s_%s.xlsx') % (str(doc_id), randomword(4))
+    filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
 
-    dataset = DisbursementDataResource(
-        file_category=doc_obj.file_category,
-        doc=doc_obj,
-        is_disbursed=True
-    )
+    dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
     dataset = dataset.export()
-    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
     with open(file_path, "wb") as f:
         f.write(dataset.xlsx)
 
@@ -355,9 +337,9 @@ def generate_success_disbursed_data(doc_id, user_id, **kwargs):
     disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
 
     download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + '?filename=' + filename
+        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
 
-    message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br> 
+    message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
         You can download the success disbursement data related to this document
         <a href="{disb_doc_view_url}" >{doc_obj.filename()}</a>
         from here <a href="{download_url}" >Download</a><br><br>
@@ -488,8 +470,7 @@ def handle_uploaded_file(doc_obj_id, **kwargs):
             file_data.date = datetime.now()
         file_data.save()
 
-    doc_obj.is_processed = True
-    doc_obj.save()
+    doc_obj.processed_successfully()
     notify_makers_collection(doc_obj)
 
 
@@ -511,14 +492,14 @@ def notify_checkers(doc_id, level, **kwargs):
         return
 
     doc_view_url = settings.BASE_URL + doc_obj.get_absolute_url()
-    message = _(f"""Dear <strong>Checker</strong><br><br> 
+    message = _(f"""Dear <strong>Checker</strong><br><br>
         The file named <a href="{doc_view_url}" >{doc_obj.filename()}</a> is ready for review<br><br>
         Thanks, BR""")
     deliver_mail(None, _(' Review Notification'), message, checkers)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""[REVIEWERS' NOTIFIED NOW]
-    checkers: {" and ".join([checker.username for checker in checkers])}
-    vmt(superadmin):{doc_obj.owner.root.client.creator}""")
+    CHECKERS_NOTIFICATION_LOGGER.debug(
+            f"[REVIEWERS' NOTIFIED NOW]\n Checkers: {' and '.join([checker.username for checker in checkers])}"
+    )
 
 
 @app.task()
@@ -567,8 +548,8 @@ def doc_review_maker_mail(doc_id, review_id, **kwargs):
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
     if review.is_ok:
         message = _(f"""Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>
-            The file named <a href="{doc_view_url}" >{doc.filename()}</a> passed the review 
-            number {doc.reviews.filter(is_ok=True).count()} out of {doc.file_category.no_of_reviews_required} by
+            The file named <a href="{doc_view_url}" >{doc.filename()}</a> passed the review
+             number {doc.reviews.filter(is_ok=True).count()} out of {doc.file_category.no_of_reviews_required} by
             the checker: {review.user_created.first_name} {review.user_created.last_name}<br><br>
             Thanks, BR""")
     else:
@@ -589,25 +570,17 @@ def notify_maker(doc, download_url=None):
     """
     maker = doc.owner
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+    message_intro = f"Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>" + \
+                    f"The file named <a href='{doc_view_url}'>{doc.filename()}</a>"
 
-    message = ''
     if doc.is_processed:
-        message = _(f"""Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br> 
-            The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully 
-            You can now notify checkers,<br><br>
-            Thanks, BR""")
+        message = _(f"{message_intro} validated successfully. You can notify checkers now.<br><br>Thanks, BR")
     else:
-        MSG = _(f"""Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>
-                The file named <a href="{doc_view_url}" >{doc.filename()}</a> failed validation
-                The reason is: {doc.processing_failure_reason}""")
+        MSG = _(f"{message_intro} failed validation.<br><br>The reason is: {doc.processing_failure_reason}.<br><br>")
 
         if download_url:
-            message = _(f"""{MSG}
-                You can download the file containing errors from <a href="{download_url}" >here</a><br><br>
-                Thanks, BR""")
-        else:
-            message = _(f"""{MSG}<br><br>
-                Thanks, BR""")
+            MSG = _(f"{MSG}You can download the file containing errors from <a href='{download_url}'>here.</a><br><br>")
+        message = _(f"{MSG}Thanks, BR")
 
     deliver_mail(maker, _(' File Upload Notification'), message)
 
@@ -615,7 +588,7 @@ def notify_maker(doc, download_url=None):
 def notify_makers_collection(doc):
     makers = UploaderUser.objects.filter(hierarchy=doc.owner.hierarchy)
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
-    message = _(f"""Dear <strong>Maker</strong><br><br> 
+    message = _(f"""Dear <strong>Maker</strong><br><br>
         The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully<br><br>
         Thanks, BR""")
     deliver_mail(None, _(' Collection File Upload Notification'), message, makers)

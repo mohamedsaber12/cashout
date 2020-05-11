@@ -418,13 +418,20 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
         from payouts.utils import get_dot_env
         env = get_dot_env()
         custom_budget_amount = custom_budget_msg = ""
+        has_custom_budget = request.user.has_custom_budget
+        is_instant_family = request.user.can_pass_instant_disbursement()
 
         if request.user.is_root:
             superadmin = request.user.root.client.creator
             super_agent = Agent.objects.get(wallet_provider=request.user, super=True)
-            if request.user.has_custom_budget:
+
+            if has_custom_budget or is_instant_family:
+                if is_instant_family:
+                    disburser = [user for user in request.user.children() if user.user_type==6][0]
+                else:
+                    disburser = request.user
                 custom_budget_amount = f" -- Total remaining custom budget: " \
-                                       f"{Budget.objects.get(disburser=request.user).current_balance}"
+                                       f"{Budget.objects.get(disburser=disburser).current_balance}"
                 custom_budget_msg = " - HAS CUSTOM BUDGET"
         else:
             superadmin = request.user
@@ -442,14 +449,14 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
             response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY ERROR{custom_budget_msg}]
-            Users: {request.user.username}\n\tError: {e}""")
+            Users: {request.user.username}\nError: {e}""")
             return False, MSG_BALANCE_INQUIRY_ERROR
 
         if response.ok:
             resp_json = response.json()
 
             if resp_json["TXNSTATUS"] == '200':
-                if request.user.is_root and request.user.has_custom_budget:
+                if request.user.is_root and (has_custom_budget or is_instant_family):
                     WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY{custom_budget_msg}]
                     User: {request.user.username}{custom_budget_amount}
                     Response: {str(response.status_code)} -- {str(response.text)}""")

@@ -242,11 +242,15 @@ class CheckerCreationAdminForm(AbstractChildrenCreationForm):
 
 
 class RootCreationForm(forms.ModelForm):
-    business_type = forms.MultipleChoiceField(
-        widget=forms.CheckboxSelectMultiple(attrs={'class': 'flat', 'style': 'position: absolute;'}),
-        choices=(("c", "Collection"), ("d", "Disbursement")),
+    """
+    Admin/Root on-boarding form
+    """
 
-    )
+    # Disabled to make the business type always for disbursement
+    # business_type = forms.MultipleChoiceField(
+    #     widget=forms.CheckboxSelectMultiple(attrs={'class': 'flat', 'style': 'position: absolute;'}),
+    #     choices=(("c", "Collection"), ("d", "Disbursement"))
+    # )
 
     class Meta:
         model = RootUser
@@ -265,7 +269,7 @@ class RootCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        business_type = self.cleaned_data['business_type']
+
         if self.request.user.is_superadmin:
             maximum = max(RootUser.objects.values_list(
                 'hierarchy', flat=True), default=False)
@@ -283,12 +287,12 @@ class RootCreationForm(forms.ModelForm):
             allowed_chars=ALLOWED_CHARACTERS, length=12)
         user.set_password(random_pass)
         user.save()
-        user.user_permissions.add(
-                Permission.objects.get(content_type__app_label='users',
-                                       codename='has_disbursement')) if 'd' in business_type else None
-        user.user_permissions.add(
-                Permission.objects.get(content_type__app_label='users',
-                                       codename='has_collection')) if 'c' in business_type else None
+
+        # business_type = self.cleaned_data['business_type']
+        # if 'd' in business_type:
+        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
+        # if 'c' in business_type:
+        # user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_collection'))
         return user
 
 

@@ -37,7 +37,7 @@ class FileCategoryAdmin(admin.ModelAdmin):
     Customize admin panel view for FileCategory model
     """
 
-    list_display = ['name', 'user_created', 'unique_field', 'amount_field', 'no_of_reviews_required']
+    list_display = ['name', 'user_created', 'unique_field', 'amount_field', 'issuer_field', 'no_of_reviews_required']
     list_filter = ['user_created']
 
     form = FileCategoryForm

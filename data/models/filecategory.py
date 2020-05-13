@@ -37,6 +37,13 @@ class FileCategory(models.Model):
             verbose_name=_('amount header position'),
             help_text=_('For ex: loan_field')
     )
+    issuer_field = models.CharField(
+            max_length=128,
+            blank=True,
+            null=True,
+            verbose_name=_('issuer option header position'),
+            help_text=_('Only activated at sheets with multiple issuers')
+    )
     no_of_reviews_required = models.PositiveSmallIntegerField(
             default=3,
             verbose_name=_('number of reviews'),
@@ -47,12 +54,10 @@ class FileCategory(models.Model):
 
     class Meta:
         verbose_name_plural = 'File Categories'
-        unique_together = (('user_created', 'name'),)
+        unique_together = ['user_created', 'name']
 
     def __str__(self):
-        """
-        :return: String representation for FileCategory model objects
-        """
+        """String representation for FileCategory model objects"""
         return f"Format: {self.name} of user: {self.user_created.username}"
 
     def get_field_position(self, field):

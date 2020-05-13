@@ -175,18 +175,33 @@ class FileCategoryForm(forms.ModelForm):
     Form for FileCategory Model which define the format of uploaded disbursement documents
     """
 
-    unique_field = forms.CharField(label=_(f'Mobile number header position. ex: %s') % "(A-1)")
-    amount_field = forms.CharField(label=_(f'Amount header position. ex: %s') % "(B-1)")
-
     class Meta:
         model = FileCategory
-        fields = '__all__'
-        exclude = ['user_created']
+        fields = "__all__"
+        labels = {
+            'unique_field': _("Mobile number header position. ex: A-1"),
+            'amount_field': _("Amount header position. ex: B-1"),
+            'issuer_field': _("Issuers header position. ex: C-1")
+        }
+        exclude = ["user_created"]
 
     def __init__(self, *args, request=None, **kwargs):
+        """Handle initiating a file category form"""
+        self.col_row_format = "must be in the form col-row or letter-number ex: A-1"
+        self.three_headers = "Mobile number, Amount and Issuer option fields"
+        self.two_headers = "Mobile number and Amount fields"
+
         super().__init__(*args, **kwargs)
         self.request = request
-        # Check for specific value if True add issuers field to the fields list
+
+        # Handle updating existing file category
+        if self.request is None and self.instance.pk is not None:
+            if self.instance.user_created.root_entity_setups.is_normal_flow:
+                self.fields.pop('issuer_field')
+
+        # Handle creating new file category
+        if self.request is not None and self.request.user.root_entity_setups.is_normal_flow:
+            self.fields.pop('issuer_field')
 
     def clean_name(self):
         """Clean name field"""
@@ -225,22 +240,40 @@ class FileCategoryForm(forms.ModelForm):
         return self.cleaned_data['no_of_reviews_required']
 
     def clean(self):
+        """Clean file header fields"""
         unique_field = self.cleaned_data.get('unique_field')
         amount_field = self.cleaned_data.get('amount_field')
+        issuer_field = self.cleaned_data.get('issuer_field')
+
         if not (unique_field and amount_field):
             return super().clean()
-        if '-' not in unique_field or '-' not in amount_field:
-            raise forms.ValidationError(
-                    _("Mobile number and Amount fields must be in the following format col-row ex: A-1 ")
-            )
+
+        if issuer_field is not None and any('-' not in field for field in [issuer_field, unique_field, amount_field]):
+            raise forms.ValidationError(_(f"{self.three_headers} {self.col_row_format}"))
+        if any('-' not in field for field in [unique_field, amount_field]):
+            raise forms.ValidationError(_(f"{self.two_headers} {self.col_row_format}"))
+
         col1, row1 = unique_field.split('-')
         col2, row2 = amount_field.split('-')
-        if not col1.isalpha() or not col2.isalpha() or not row1.isnumeric() or not row2.isnumeric():
-            raise forms.ValidationError(_("Mobile number and Amount fields must be in the form letter-number "))
-        if row1 != row2:
-            raise forms.ValidationError(_("Mobile number and Amount fields must be on the same row"))
-        elif col1 == col2:
-            raise forms.ValidationError(_("Mobile number and Amount fields can not be on the same column"))
+        col3, row3 = issuer_field.split('-') if issuer_field else ('', '')
+
+        if not issuer_field:
+            if not all([col1.isalpha(), col2.isalpha(), row1.isnumeric(), row2.isnumeric()]):
+                raise forms.ValidationError(_(f"{self.two_headers} {self.col_row_format}"))
+
+            if row1 != row2:
+                raise forms.ValidationError(_(f"{self.two_headers} must be on the same row"))
+            elif col1 == col2:
+                raise forms.ValidationError(_(f"{self.two_headers} can not be on the same column"))
+        else:
+            if not all([
+                col1.isalpha(), col2.isalpha(), col3.isalpha(), row1.isnumeric(), row2.isnumeric(), row3.isnumeric()
+            ]):
+                raise forms.ValidationError(_(f"{self.three_headers} {self.col_row_format}"))
+            if not (row1 == row2 == row3):
+                raise forms.ValidationError(_(f"{self.three_headers} must be on the same row"))
+            if col1 == col2 or col1 == col3 or col2 == col3:
+                raise forms.ValidationError(_(f"{self.three_headers} can not be on the same column"))
 
         return self.cleaned_data
 
@@ -275,17 +308,18 @@ class DocReviewForm(forms.ModelForm):
 
 
 class OtpForm(forms.Form):
-    otp_widget = forms.TextInput(
-        attrs={'class': 'form-control', 'type': 'text', 'id': 'pin1'})
-    pin1 = forms.CharField(max_length=6,
-                           label="",
-                           help_text=_('You will recieve a message on your phone within 30 seconds'),
-                           widget=otp_widget,
-                           strip=False,
-                           )
+
+    otp_widget = forms.TextInput(attrs={'class': 'form-control', 'type': 'text', 'id': 'pin1'})
+    pin1 = forms.CharField(
+            max_length=6,
+            label="",
+            widget=otp_widget,
+            strip=False,
+            help_text=_('You will recieve a message on your phone within 30 seconds')
+    )
 
     class Meta:
-        fields = ('pin1',)
+        fields = ['pin1']
 
     def clean_pin1(self):
         password = self.cleaned_data['pin1']

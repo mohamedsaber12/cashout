@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractBaseStatus, AbstractTimeStamp
-from utils.models import AbstractBaseVMTData
+from utilities.models import AbstractBaseVMTData
 
 
 class VMTData(AbstractBaseVMTData):

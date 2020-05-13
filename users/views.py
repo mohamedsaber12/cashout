@@ -25,7 +25,7 @@ from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
 from data.forms import CollectionDataForm, FileCategoryFormSet, FormatFormSet
 from data.models import FileCategory, Format
 from data.utils import get_client_ip
-from disb.forms import PinForm
+from disbursement.forms import PinForm
 
 from .decorators import root_or_superadmin
 from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,

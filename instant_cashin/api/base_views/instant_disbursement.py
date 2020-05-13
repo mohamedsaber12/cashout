@@ -14,7 +14,7 @@ from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from disb.models import VMTData
+from disbursement.models import VMTData
 
 from ..serializers import InstantDisbursementSerializer
 from ...specific_issuers_integrations import AmanChannel

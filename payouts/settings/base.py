@@ -50,9 +50,9 @@ SECURITY_THIRD_PARTY_APPS = [
 ]
 
 USER_DEFINED_APPS = [
-    'data',
     'users',
-    'disb',
+    'data',
+    'disbursement',
     'payment',
     'instant_cashin',
     'utils',

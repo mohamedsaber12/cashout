@@ -4,7 +4,8 @@ from django.core.mail import send_mail
 from django.utils.translation import gettext as _
 from payouts.settings.celery import app
 from users.models import RootUser
-from disb.models import Agent
+from disbursement.models import Agent
+
 
 @app.task()
 def set_pin_error_mail(root_user_id):

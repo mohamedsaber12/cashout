@@ -16,8 +16,8 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from disb.models import Budget, DisbursementData, VMTData
-from disb.resources import DisbursementDataResource
+from disbursement.models import Budget, DisbursementData, VMTData
+from disbursement.resources import DisbursementDataResource
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User

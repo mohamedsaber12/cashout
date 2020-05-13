@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from disb.models import DisbursementData
+from ..models import DisbursementData
 
 
 class DisbursementSerializer(serializers.Serializer):

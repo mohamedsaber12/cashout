@@ -9,10 +9,10 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractBaseStatus, AbstractTimeStamp
-from instant_cashin.models import AbstractVMTData
+from utils.models import AbstractBaseVMTData
 
 
-class VMTData(AbstractVMTData):
+class VMTData(AbstractBaseVMTData):
     """
     VMT Data Credentials to make requests to UIG
     """

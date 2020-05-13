@@ -6,17 +6,17 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
-class AbstractVMTData(models.Model):
+class AbstractBaseVMTData(models.Model):
     """
     VMT is the credentials needed by UIG to make disbursement request
     """
 
-    DISBURSEMENT = 1            # To make cash in
-    BALANCE_INQUIRY = 2         # Inquire for Admin's Agents balance
-    CHANGE_PROFILE = 3          # For List/Bulk of MSISDNs
-    SET_PIN = 4                 # For List/Bulk of Agents
-    USER_INQUIRY = 5            # For List/Bulk of Agents/MSISDNs validation as valid wallets
-    INSTANT_DISBURSEMENT = 6    # For List/Bulk of Agents/MSISDNs validation as valid wallets
+    DISBURSEMENT = 1
+    INSTANT_DISBURSEMENT = 2
+    CHANGE_PROFILE = 3          # List/Bulk of consumers
+    SET_PIN = 4                 # List/Bulk of agents
+    USER_INQUIRY = 5            # List/Bulk of agents/consumers
+    BALANCE_INQUIRY = 6
 
     login_username = models.CharField(_("UIG Login Username"), max_length=32)
     login_password = models.CharField(_("UIG Login Password"), max_length=32)
@@ -43,24 +43,34 @@ class AbstractVMTData(models.Model):
         abstract = True
 
     def __str__(self):
-        return f"{self.vmt_environment} VMT credentials for {self.vmt.username}"
+        """String representation for a VMT data object"""
+        return f"{self.vmt.username} - {self.vmt_environment}"
 
     def return_vmt_data(self, purpose):
         """
-        :param SENDERS list of DISBURSEMENT request
-        'SENDERS': [
-            {'MSISDN': u'01001515153', 'PIN': u'112233'},
-            {'MSISDN': u'01001515152', 'PIN': u'112233'},
-            {'MSISDN': u'01173909090', 'PIN': u'112233'}
-        ]
-        :param RECIPIENTS list of DISBURSEMENT request
-        'RECIPIENTS': [
-            {'MSISDN': u'00201008005090', 'AMOUNT': 100.0, 'TXNID': 1},
-            {'MSISDN': u'00201111710800', 'AMOUNT': 200.0, 'TXNID': 2}
-        ]
+        Example:
+            {
+                'LOGIN'               : 'FUND_CONSTANT',
+                'PASSWORD'            : 'FUND_CONSTANT',
+                'REQUEST_GATEWAY_CODE': 'FUND_CONSTANT',
+                'REQUEST_GATEWAY_TYPE': 'FUND_CONSTANT',
+                'WALLETISSUER'        : 'VODAFONE',
+                'PIN'                 : '123456',
+                'SERVICETYPE'         : 'P2P',
+                'SOURCE'              : 'DISB',
+                'TYPE'                : 'PPREQ',
+                'SENDERS'             : [
+                    {'MSISDN': '01001515153', 'PIN': '112233'},
+                    {'MSISDN': '01001515152', 'PIN': '112233'},
+                    {'MSISDN': '01173909090', 'PIN': '112233'}
+                ],
+                'RECIPIENTS'          : [
+                    {'MSISDN': '00201008005090', 'AMOUNT': 100.0, 'TXNID': 1},
+                    {'MSISDN': '00201111710800', 'AMOUNT': 200.0, 'TXNID': 2}
+                ]
+            }
 
-        :return: Return dict of vmt data represented by VMT attributes used
-        by the UIG
+        :return: Return dict of vmt data represented by VMT attributes used by the UIG
         """
         data = {
             "LOGIN": self.login_username,
@@ -71,8 +81,8 @@ class AbstractVMTData(models.Model):
         }
         if purpose == self.DISBURSEMENT:
             data.update({
-                "SENDERS": "",      # List of dictionaries of Agents with their pins
-                "RECIPIENTS": "",   # List of MSISDNs to receive the amount of money being disbursed
+                "SENDERS": "",      # List of dicts of Agents with their pins
+                "RECIPIENTS": "",   # List of consumers
                 "PIN": "",          # Raw pin
                 "SERVICETYPE": "P2P",
                 "SOURCE": "DISB",
@@ -80,17 +90,12 @@ class AbstractVMTData(models.Model):
             })
         elif purpose == self.INSTANT_DISBURSEMENT:
             data.update({
-                "MSISDN": "",       # Agent - MUST be one of the agents list
+                "MSISDN": "",       # Agent
                 "MSISDN2": "",      # Consumer
                 "AMOUNT": "",
                 "PIN": "",          # Raw pin
                 "IS_REVERSED": False,
                 "TYPE": "PORCIREQ"
-            })
-        elif purpose == self.USER_INQUIRY:
-            data.update({
-                "USERS": "",        # MSISDNs List
-                "TYPE": "BUSRINQREQ"
             })
         elif purpose == self.CHANGE_PROFILE:
             data.update({
@@ -104,9 +109,14 @@ class AbstractVMTData(models.Model):
                 "PIN": "",          # Raw pin
                 "TYPE": "BPINSETREQ",
             })
+        elif purpose == self.USER_INQUIRY:
+            data.update({
+                "USERS": "",        # MSISDNs List
+                "TYPE": "BUSRINQREQ"
+            })
         elif purpose == self.BALANCE_INQUIRY:
             data.update({
-                "MSISDN": "",       # Super agent ONLY, Not a list
+                "MSISDN": "",       # Super agent ONLY, one msisdn Not list
                 "PIN": "",          # Raw pin
                 "TYPE": "PRBALINQREQ"
             })

@@ -124,7 +124,10 @@ class VMTDataAdmin(admin.ModelAdmin):
     Admin model for VMTData credentials
     """
 
-    list_filter = ['vmt']
+    list_filter = ['vmt', 'vmt_environment']
+    list_display = list_filter + [
+        'wallet_issuer', 'login_username', 'login_password', 'request_gateway_code', 'request_gateway_type'
+    ]
 
     def has_add_permission(self, request):
         """

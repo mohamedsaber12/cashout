@@ -55,6 +55,7 @@ USER_DEFINED_APPS = [
     'disb',
     'payment',
     'instant_cashin',
+    'utils',
 ]
 
 INSTALLED_APPS = [

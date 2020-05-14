@@ -213,12 +213,6 @@ class RootCreationForm(forms.ModelForm):
     Admin/Root on-boarding form
     """
 
-    # Disabled to make the business type always for disbursement
-    # business_type = forms.MultipleChoiceField(
-    #     widget=forms.CheckboxSelectMultiple(attrs={'class': 'flat', 'style': 'position: absolute;'}),
-    #     choices=(("c", "Collection"), ("d", "Disbursement"))
-    # )
-
     class Meta:
         model = RootUser
         fields = ['username', 'email']
@@ -235,30 +229,35 @@ class RootCreationForm(forms.ModelForm):
         name = self.cleaned_data['username']
         return name
 
+    def define_new_admin_hierarchy(self, new_user):
+        """
+        Generate/Define the hierarchy of the new admin user
+        :param new_user: the new admin user to be created
+        :return: the new admin user with its new hierarchy
+        """
+        maximum = max(RootUser.objects.values_list('hierarchy', flat=True), default=False)
+        maximum = 0 if not maximum else maximum
+
+        try:
+            new_user.hierarchy = maximum + 1
+        except TypeError:
+            new_user.hierarchy = 1
+
+        return new_user
+
     def save(self, commit=True):
         user = super().save(commit=False)
+        temporary_random_password = get_random_string(allowed_chars=ALLOWED_CHARACTERS, length=12)
+        user.set_password(temporary_random_password)
 
         if self.request.user.is_superadmin:
-            maximum = max(RootUser.objects.values_list('hierarchy', flat=True), default=False)
-            if not maximum:
-                maximum = 0
-            try:
-                user.hierarchy = maximum + 1
-            except TypeError:
-                user.hierarchy = 1
             user.user_type = 3
+            user = self.define_new_admin_hierarchy(user)
 
         if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy
-        random_pass = get_random_string(allowed_chars=ALLOWED_CHARACTERS, length=12)
-        user.set_password(random_pass)
-        user.save()
 
-        # business_type = self.cleaned_data['business_type']
-        # if 'd' in business_type:
-        user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
-        # if 'c' in business_type:
-        # user.user_permissions.add(Permission.objects.get(content_type__app_label='users', codename='has_collection'))
+        user.save()
         return user
 
 

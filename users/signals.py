@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
+from django.contrib.auth.models import Permission
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
 from django.db.models.signals import post_save, pre_save
@@ -12,7 +13,10 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext as _
 
-from users.models import Brand, CheckerUser, Client, MakerUser, RootUser, Setup, SuperAdminUser, UploaderUser
+from utilities.models import CallWalletsModerator
+
+from .models import Brand, CheckerUser, Client, MakerUser, RootUser, Setup, SuperAdminUser, UploaderUser
+
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
 MESSAGE = _("""Dear <strong>{0}</strong><br><br>
@@ -25,6 +29,10 @@ Thanks, BR""")
 def create_setup(sender, instance, created, **kwargs):
     if created:
         Setup.objects.create(user=instance)
+        CallWalletsModerator.objects.create(user_created=instance)
+        instance.user_permissions.add(
+                Permission.objects.get(content_type__app_label='users', codename='has_disbursement')
+        )
 
 
 @receiver(post_save, sender=UploaderUser)

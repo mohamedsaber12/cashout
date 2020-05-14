@@ -48,6 +48,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     Category has no files
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
+    callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
     amount_to_be_disbursed_within_custom_budget_threshold = False
     amount_position, msisdn_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
@@ -189,7 +190,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
     env = get_dot_env()
     response_dict = None
-    if env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
+
+    if callwallets_moderator.change_profile:
         superadmin = doc_obj.owner.root.client.creator
         vmt = VMTData.objects.get(vmt=superadmin)
         data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
@@ -221,6 +223,9 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             notify_maker(doc_obj)
             return False
 
+        doc_obj.processed_successfully()
+        notify_maker(doc_obj)
+    elif not callwallets_moderator.change_profile and callwallets_moderator.disbursement:
         doc_obj.processed_successfully()
         notify_maker(doc_obj)
     else:

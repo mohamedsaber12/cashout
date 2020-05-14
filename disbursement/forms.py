@@ -100,7 +100,7 @@ class PinForm(forms.Form):
         if not raw_pin:
             return False
         msisdns = list(self.agents.values_list('msisdn', flat=True))
-        if self.env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
+        if self.root.callwallets_moderator.first().set_pin:
             transactions, error = self.call_wallet(raw_pin, msisdns)
             if error:
                 self.add_error('pin', error)

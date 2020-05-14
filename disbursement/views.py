@@ -252,7 +252,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 obj.wallet_provider = root
                 agents_msisdn.append(obj.msisdn)
 
-            if self.env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
+            if root.callwallets_moderator.first().user_inquiry:
                 transactions, error = self.validate_agent_wallet(request, agents_msisdn)
                 if not transactions:                        # handle non form errors
                     context = {

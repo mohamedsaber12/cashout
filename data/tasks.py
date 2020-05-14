@@ -193,24 +193,19 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
     if callwallets_moderator.change_profile:
         superadmin = doc_obj.owner.root.client.creator
-        vmt = VMTData.objects.get(vmt=superadmin)
-        data = vmt.return_vmt_data(VMTData.CHANGE_PROFILE)
-        data["USERS"] = partial_msisdn
-        data["NEWPROFILE"] = doc_obj.owner.root.client.get_fees()
+        payload = superadmin.vmt.accumulate_change_profile_payload(partial_msisdn, doc_obj.owner.root.client.get_fees())
         try:
-            response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            CHANGE_PROFILE_LOGGER.debug(f"""[CHANGE PROFILE ERROR]
-            Users: {doc_obj.owner.username}, superadmin:{superadmin.username}
-            Error: {e}""")
+            CHANGE_PROFILE_LOGGER.debug(f"[CHANGE PROFILE ERROR]\nUser: {doc_obj.owner}\nPayload: {payload}\nErr: {e}")
             doc_obj.processing_failure(MSG_REGISTRATION_PROCESS_ERROR)
             notify_maker(doc_obj)
             return False
 
-        CHANGE_PROFILE_LOGGER.debug(f"""[CHANGE PROFILE]
-        Users: {doc_obj.owner.username}, superadmin: {superadmin.username}
-        Response: {str(response.status_code)} -- {str(response.text)}
-        Data Sent: {data}""")
+        CHANGE_PROFILE_LOGGER.debug(
+                f"[CHANGE PROFILE]\nUser: {doc_obj.owner.username}\n" +
+                f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
+        )
         error_message = None
         if response.ok:
             response_dict = response.json()

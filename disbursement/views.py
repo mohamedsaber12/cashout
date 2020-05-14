@@ -28,6 +28,7 @@ from users.mixins import (SuperFinishedSetupMixin, SuperRequiredMixin,
                           SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
                           SuperOwnsCustomizedBudgetClientRequiredMixin)
 from users.models import EntitySetup
+from utilities import messages
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, BudgetModelForm
 from .mixins import BudgetActionMixin
@@ -43,6 +44,8 @@ WALLET_API_LOGGER = logging.getLogger("wallet_api")
 MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
 MSG_AGENT_CREATION_ERROR = _(f"Agents creation process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
 MSG_BALANCE_INQUIRY_ERROR = _(f"Balance inquiry process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+
+env = get_dot_env()
 
 
 @setup_required
@@ -190,10 +193,6 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
     """
     template_name = 'entity/add_agent.html'
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.env = get_dot_env()
-
     def get_success_url(self, root):
         token, created = ExpiringToken.objects.get_or_create(user=root)
         if created:
@@ -270,9 +269,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             entity_setup = EntitySetup.objects.get(user=self.request.user, entity=root)
             entity_setup.agents_setup = True
             entity_setup.save()
-            AGENT_CREATE_LOGGER.debug(f"""[AGENTS CREATED]
-            Agents created for ADMIN: {root.username} from IP Address {get_client_ip(self.request)}
-            with msisdns {" - ".join(agents_msisdn)}""")
+            AGENT_CREATE_LOGGER.debug(
+                    f"[AGENTS CREATED]\nUser: {root.username} -- from IP Address {get_client_ip(self.request)}\n" +
+                    f"Agents: {' - '.join(agents_msisdn)}"
+            )
             return HttpResponseRedirect(self.get_success_url(root))
         else:
             context = {
@@ -282,21 +282,18 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             return render(request, template_name=self.template_name, context=context)
 
     def validate_agent_wallet(self, request, msisdns):
-        import requests
-        vmt = VMTData.objects.get(vmt=request.user)
-        data = vmt.return_vmt_data(VMTData.USER_INQUIRY)
-        data["USERS"] = msisdns
+        superadmin = request.user
+        payload = superadmin.vmt.accumulate_user_inquiry_payload(msisdns)
         try:
-            response = requests.post(self.env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""[USER INQUIRY ERROR]
-            Users-> vmt(superadmin): {request.user.username}
-            Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"[USER INQUIRY ERROR]\nUser: {request.user}\nPayload: {payload}\nError: {e}")
             return None, MSG_AGENT_CREATION_ERROR
 
-        WALLET_API_LOGGER.debug(f"""[USER INQUIRY]
-        Users-> vmt(superadmin): {request.user.username}
-        Response-> {str(response.status_code)} -- {str(response.text)}""")
+        WALLET_API_LOGGER.debug(
+                f"[USER INQUIRY]\nUser: {request.user}\n" +
+                f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
+        )
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)
@@ -306,10 +303,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             else:
                 for agent in transactions:
                     if agent.get('HAS_PIN', None):
-                        error_message = "Agents already have registered and have a pin, For assistance call 7001"
+                        error_message = f"Agents already have registered and have a pin, {messages.MSG_TRY_OR_CONTACT}"
                         return None, error_message
                     if agent.get("USER_TYPE") != "Super-Agent" and agent.get("USER_TYPE") != "Agent":
-                        error_message = "Agents you have entered are not registered, For assistance call 7001"
+                        error_message = f"Agents you have entered are not registered, {messages.MSG_TRY_OR_CONTACT}"
                         return None, error_message
             return transactions, None
         return None, MSG_AGENT_CREATION_ERROR
@@ -414,9 +411,6 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
         return render(request, template_name=self.template_name, context=context)
 
     def get_wallet_balance(self, request, pin, entity_username=None):
-        import requests
-        from payouts.utils import get_dot_env
-        env = get_dot_env()
         custom_budget_amount = custom_budget_msg = ""
         has_custom_budget = request.user.has_custom_budget
         is_instant_family = request.user.can_pass_instant_disbursement()
@@ -441,15 +435,13 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
                                        f"{Budget.objects.get(disburser__username=entity_username).current_balance}"
                 custom_budget_msg = " - HAS CUSTOM BUDGET"
 
-        vmt = VMTData.objects.get(vmt=superadmin)
-        data = vmt.return_vmt_data(VMTData.BALANCE_INQUIRY)
-        data["MSISDN"] = super_agent.msisdn
-        data["PIN"] = pin
+        payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
         try:
-            response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY ERROR{custom_budget_msg}]
-            Users: {request.user.username}\nError: {e}""")
+            WALLET_API_LOGGER.debug(
+                    f"[BALANCE INQUIRY ERROR{custom_budget_msg}]\nUser: {request.user}\nPayload: {payload}\nError: {e}"
+            )
             return False, MSG_BALANCE_INQUIRY_ERROR
 
         if response.ok:
@@ -457,16 +449,24 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
 
             if resp_json["TXNSTATUS"] == '200':
                 if request.user.is_root and (has_custom_budget or is_instant_family):
-                    WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY{custom_budget_msg}]
-                    User: {request.user.username}{custom_budget_amount}
-                    Response: {str(response.status_code)} -- {str(response.text)}""")
+                    WALLET_API_LOGGER.debug(
+                            f"[BALANCE INQUIRY{custom_budget_msg}]\n" +
+                            f"User: {request.user}{custom_budget_amount}\n" +
+                            f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
+                    )
                     return True, custom_budget_amount[35:]              # Remove the headed message
                 if request.user.is_superadmin or request.user.root:
-                    WALLET_API_LOGGER.debug(f"""[BALANCE INQUIRY{custom_budget_msg}]
-                    User: {request.user.username}{custom_budget_amount}
-                    Response: {str(response.status_code)} -- {str(response.text)}""")
+                    WALLET_API_LOGGER.debug(
+                            f"[BALANCE INQUIRY{custom_budget_msg}]\n" +
+                            f"User: {request.user}{custom_budget_amount}\n" +
+                            f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
+                    )
                     return True, resp_json['BALANCE']
 
+            WALLET_API_LOGGER.debug(
+                    f"[BALANCE INQUIRY{custom_budget_msg}]\nUser: {request.user}\n" +
+                    f"Payload: {payload}\nResponse: {response.content}"
+            )
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR

@@ -77,7 +77,7 @@ class DisburseAPIView(APIView):
 
         # 2. Catch the corresponding vmt dictionary
         user = User.objects.get(username=serializer.validated_data['user'])
-        vmt = VMTData.objects.get(vmt=user.root.client.creator)
+        superadmin = user.root.client.creator
         provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.root.id
 
         # 3. Prepare the senders and recipients fields of the vmt dictionary
@@ -92,19 +92,14 @@ class DisburseAPIView(APIView):
                 doc_id=serializer.validated_data['doc_id']
         ).extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
 
-        # 4. Combine all of the vmt dictionary fields into one dictionary > 'data'
-        data = vmt.return_vmt_data(VMTData.DISBURSEMENT)
-        data.update({
-            "SENDERS": senders,
-            "RECIPIENTS": list(recipients),
-        })
+        payload = superadmin.vmt.accumulate_bulk_disbursement_payload(senders, list(recipients))
 
-        payload_without_pins = copy.deepcopy(data)
+        payload_without_pins = copy.deepcopy(payload)
         for senders_dictionary in payload_without_pins['SENDERS']:
             senders_dictionary['PIN'] = 'xxxxxx'
 
         try:
-            response = requests.post(env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
             DATA_LOGGER.debug(
                     "[DISBURSE BULK - REQUEST PAYLOAD]" + f"\nUser: {user}\nPayload: {str(payload_without_pins)}"
             )

@@ -122,3 +122,79 @@ class AbstractBaseVMTData(models.Model):
             })
 
         return data
+
+    def accumulate_bulk_disbursement_payload(self, agents_attr, consumers_attr):
+        """
+        :param agents_attr: Agents list along with their pins that will make the disbursement action
+        :param consumers_attr: Consumers of the e-money
+        :return: bulk disbursement request payload
+        """
+        if not all([agents_attr, consumers_attr]):
+            raise ValueError(_("Agents and consumers are required parameters for the bulk disbursement dictionary"))
+
+        payload = self.return_vmt_data(self.DISBURSEMENT)
+        payload.update({
+            'SENDERS': agents_attr,
+            'RECIPIENTS': consumers_attr
+        })
+        return payload
+
+    def accumulate_change_profile_payload(self, users_attr, new_profile_attr):
+        """
+        :param users_attr: MSISDNs which we want to change their fees profiles
+        :param new_profile_attr: the new profile to be assigned to the MSISDNs
+        :return: change profile request payload
+        """
+        if not all([users_attr, new_profile_attr]):
+            raise ValueError(_("MSISDNS and a new profile are required parameters for the change profile dictionary"))
+
+        payload = self.return_vmt_data(self.CHANGE_PROFILE)
+        payload.update({
+            'USERS': users_attr,
+            'NEWPROFILE': new_profile_attr
+        })
+        return payload
+
+    def accumulate_set_pin_payload(self, users_attr, pin_attr):
+        """
+        :param users_attr: MSISDNs which we want to set their pins
+        :param pin_attr: the raw pin
+        :return: set pin request payload
+        """
+        if not all([users_attr, pin_attr]):
+            raise ValueError(_("MSISDNS and a pin are required parameters for the set pin dictionary"))
+
+        payload = self.return_vmt_data(self.SET_PIN)
+        payload.update({
+            'USERS': users_attr,
+            'PIN': pin_attr
+        })
+        return payload
+
+    def accumulate_user_inquiry_payload(self, users_attr):
+        """
+        :param users_attr: Agents/MSISDNs to be on-boarded so we have to make sure they're active and have no pins
+        :return: user inquiry request payload
+        """
+        if not users_attr:
+            raise ValueError(_("Agents are required parameter for the user inquiry dictionary"))
+
+        payload = self.return_vmt_data(self.USER_INQUIRY)
+        payload.update({'USERS': users_attr})
+        return payload
+
+    def accumulate_balance_inquiry_payload(self, super_agent_attr, pin_attr):
+        """
+        :param super_agent_attr: super agent user/msisdn
+        :param pin_attr: the raw pin
+        :return: balance inquiry request payload
+        """
+        if not super_agent_attr:
+            raise ValueError(_("Super agent and a pin are required parameters for the balance inquiry dictionary"))
+
+        payload = self.return_vmt_data(self.BALANCE_INQUIRY)
+        payload.update({
+            'MSISDN': super_agent_attr,
+            'PIN': pin_attr
+        })
+        return payload

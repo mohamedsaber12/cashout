@@ -1,5 +1,7 @@
 import logging
 
+import requests
+
 from django import forms
 from django.core.validators import MinValueValidator
 from django.forms import modelformset_factory
@@ -113,25 +115,19 @@ class PinForm(forms.Form):
         self.agents.update(pin=True)
         return True
 
-    # ToDo Move call wallets to dedicated VMTData class methods
     def call_wallet(self, pin, msisdns):
-        import requests
         superadmin = self.root.client.creator
-        vmt = VMTData.objects.get(vmt=superadmin)
-        data = vmt.return_vmt_data(VMTData.SET_PIN)
-        data["USERS"] = msisdns
-        data["PIN"] = pin
+        payload = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
         try:
-            response = requests.post(self.env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(self.env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""[SET PIN ERROR]
-            Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
-            Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"[SET PIN ERROR]\nUser: {self.root}\nPayload: {payload}\nError: {e}")
             return None, MSG_PIN_SETTING_ERROR
 
-        WALLET_API_LOGGER.debug(f"""[SET PIN]
-        Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
-        Response-> {str(response.status_code)} -- {str(response.text)}""")
+        WALLET_API_LOGGER.debug(
+                f"[SET PIN]\nUser: {self.root}\n" +
+                f"Payload: {payload['USERS']}\nResponse: {str(response.status_code)} -- {str(response.text)}"""
+        )
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)

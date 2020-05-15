@@ -15,12 +15,13 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from disbursement.models import VMTData
+from utilities.logging import logging_message
 
 from ..serializers import InstantDisbursementSerializer
 from ...specific_issuers_integrations import AmanChannel
 from ..mixins import IsInstantAPICheckerUser
 from ...models import InstantTransaction
-from ...utils import default_response_structure, get_from_env, logging_message
+from ...utils import default_response_structure, get_from_env
 
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")

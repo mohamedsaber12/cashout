@@ -16,7 +16,7 @@ def logging_message(logger, head, user, message):
     :param message: the message that will be logged
     :return: The message will be logged into the specified logger
     """
-    return logger.debug(_(f"{head}\n\tUser: {user}\n\t{message}"))
+    return logger.debug(_(f"{head}\nUser: {user}\n{message}"))
 
 
 def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", another_message="", head=""):

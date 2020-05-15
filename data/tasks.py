@@ -16,11 +16,12 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from disbursement.models import Budget, DisbursementData, VMTData
+from disbursement.models import Budget, DisbursementData
 from disbursement.resources import DisbursementDataResource
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
+from utilities.messages import MSG_TRY_OR_CONTACT
 
 from .decorators import respects_language
 from .models import Doc, FileData
@@ -31,7 +32,6 @@ CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
-MSG_TRY_OR_CONTACT = "can you try again or contact your support team"
 MSG_NOT_WITHIN_THRESHOLD = _(f"Disbursement file's amounts exceeds your current balance, {MSG_TRY_OR_CONTACT}")
 MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(
         f"Disbursement file's amounts exceeds your maximum amount that can be disbursed, {MSG_TRY_OR_CONTACT}")

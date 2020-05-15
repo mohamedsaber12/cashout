@@ -1,27 +1,8 @@
 from environ import ImproperlyConfigured
 
-from django.utils.translation import gettext_lazy as _
-
 from rest_framework.response import Response
 
-from data.utils import get_client_ip
-
 from payouts.utils import get_dot_env
-
-
-SPREADSHEET_CONTENT_TYPE_CONSTANT = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-
-
-def logging_message(logger, head, request, message):
-    """
-    Simple function that will take the logger and the message and log them in
-    :param logger: the logger itself that will handle the log message
-    :param head: the head/title of the log message
-    :param request: the pure http request object
-    :param message: the message that will be logged
-    :return: The message will be logged into the specified logger
-    """
-    return logger.debug(_(f"{head}\nUser: {request.user} -- Ip Address: {get_client_ip(request)}\n{message}"))
 
 
 def get_from_env(key):

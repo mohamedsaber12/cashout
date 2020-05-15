@@ -4,7 +4,7 @@ from django.utils.translation import gettext as _
 
 from rest_framework.views import exception_handler
 
-from ..utils import logging_message
+from utilities.logging import logging_message
 
 
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")

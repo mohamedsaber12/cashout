@@ -21,7 +21,6 @@ class FileCategory(models.Model):
     """
     Model for defining the format of the uploaded file for disbursement documents
     """
-    MIN_IDS_LENGTH = 2
 
     name = models.CharField(max_length=128, unique=False, verbose_name=_('Description'))
     user_created = models.ForeignKey(
@@ -59,6 +58,11 @@ class FileCategory(models.Model):
     def __str__(self):
         """String representation for FileCategory model objects"""
         return f"Format: {self.name} of user: {self.user_created.username}"
+
+    @property
+    def unique_identifiers_number(self):
+        """Return number of unique identifiers of the file category"""
+        return 3 if len(str(self.issuer_field)) == 3 else 2
 
     def get_field_position(self, field):
         """

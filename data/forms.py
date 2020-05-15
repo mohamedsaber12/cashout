@@ -13,9 +13,10 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from users.models import User
+from utilities.logging import logging_message
+from utilities.messages import MSG_WRONG_FILE_FORMAT
 
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
-from .utils import get_client_ip    # ToDo: TO BE SET IN settings.py
 
 
 UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
@@ -34,7 +35,6 @@ TASK_UPLOAD_FILE_TYPES = [
     'vnd.ms-excel',
 ]
 MIME_UPLOAD_FILE_TYPES = ['plain', 'octet-stream']
-
 TASK_UPLOAD_FILE_MAX_SIZE = 5242880
 UNICODE = set(';:></*%$.\\')
 
@@ -72,91 +72,119 @@ class FileDocumentForm(forms.ModelForm):
             self.type_of = 2
             del self.fields['file_category']
 
+    def extract_file_type(self, file):
+        """
+        :param file: uploaded file object
+        :return: file type/extension
+        """
+        file_type = file.content_type.split('/')[1]
+        number_of_dots = len(file.name.split('.'))
+
+        if number_of_dots != 2:
+            raise forms.ValidationError(_("File type is not supported"))
+        return file_type
+
+    def extract_file_name(self, file):
+        """
+        :param file: uploaded file object
+        :return: file name without the extension
+        """
+        try:
+            filename = "".join(file.name.split('.')[:-1])
+        except ValueError:
+            raise forms.ValidationError(_("File name is not proper"))
+
+        return filename
+
+    def validate_file_type_size_and_name(self, file):
+        """
+        :param file: uploaded file object
+        :return: Raise form validation error if there is any problem with file type, size or name else returns True
+        """
+        file_type = self.extract_file_type(file)
+        filename = self.extract_file_name(file)
+        error = False
+
+        if any((char in UNICODE) for char in filename):
+            error = "Filename should not include any unicode characters ex: >, <, /, $, * "
+
+        elif file_type not in TASK_UPLOAD_FILE_TYPES or 'openxml' not in file_type:
+            error = "File type is not supported"
+
+        elif file.size > TASK_UPLOAD_FILE_MAX_SIZE:
+            error = "Please keep file size under 5242880"
+
+        elif len(file.name.split('.')[0]) > 100:
+            error = "Filename must be less than 255 characters"
+
+        if error:
+            message = f"File name: {filename} - file type: {file_type} - file size: {file.size}\nError: {error}"
+            logging_message(UPLOAD_ERROR_LOGGER, "[UPLOAD ERROR - FORM VALIDATION]", self.request, message)
+            raise forms.ValidationError(_(error))
+
+        return True
+
+    def write_file_to_disk(self, file, format_type, file_category):
+        """
+        :param file: uploaded file object
+        :param format_type: format defined for the uploader user of a collection file
+        :param file_category: file category selected at uploading a disbursement file
+        :return: the file uploaded written to the disk
+        """
+        try:
+            fd, tmp = tempfile.mkstemp()
+            with os.fdopen(fd, 'wb') as out:
+                out.write(file.read())
+
+            if self.is_disbursement:
+                try:
+                    xl_workbook = xlrd.open_workbook(tmp)
+                except Exception:
+                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
+                xl_sheet = xl_workbook.sheet_by_index(0)
+
+                if file_category.unique_identifiers_number > xl_sheet.ncols:
+                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
+
+            elif format_type and format_type.num_of_identifiers != 0:
+                try:
+                    xl_workbook = xlrd.open_workbook(tmp)
+                except Exception:
+                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
+                xl_sheet = xl_workbook.sheet_by_index(0)
+
+                if len(format_type.identifiers()) != xl_sheet.ncols:
+                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
+
+                # validate headers
+                cell_obj = next(xl_sheet.get_rows())
+                headers = [data.value for data in cell_obj]
+                if not format_type.headers_match(headers):
+                    raise forms.ValidationError(_("File headers doesn't match the format identifiers"))
+
+        finally:
+            os.unlink(tmp)  # delete the temp file no matter what
+
+        return file
+
     def clean_file(self):
         """Function that validates the file type, name and size"""
         file = self.cleaned_data['file']
         format_type = None
-        category = None
+        file_category = None
 
-        if self.type_of == 2:
-            format_type = self.cleaned_data['format']
+        if self.is_disbursement:
+            file_category = self.cleaned_data['file_category']
         else:
-            category = self.cleaned_data['file_category']
+            format_type = self.cleaned_data['format']
 
         if file:
             # validate unique fields
             if format_type and not format_type.validate_collection_unique():
                 raise forms.ValidationError(_("This Format doesn't contain the Collection unique fields"))
 
-            file_type = file.content_type.split('/')[1]
-            number_of_dots = len(file.name.split('.'))
-            if number_of_dots != 2:
-                raise forms.ValidationError(_("File type is not supported"))
-
-            # Validate file name
-            try:
-                filename = "".join(file.name.split('.')[:-1])
-            except ValueError:
-                raise forms.ValidationError(_("File name is not proper"))
-
-            # Validate file type, size and name
-            if not any((c in UNICODE) for c in filename):
-                if file_type in TASK_UPLOAD_FILE_TYPES:
-                    if file.size > TASK_UPLOAD_FILE_MAX_SIZE:
-                        raise forms.ValidationError('%s' % _('Please keep file size under 5242880'))
-                    if len(file.name.split('.')[0]) > 100:
-                        raise forms.ValidationError(_("Filename must be less than 255 characters"))
-
-                    if 'openxml' not in file_type:
-                        UPLOAD_ERROR_LOGGER.debug(
-                                f"User: {self.request.user.username} -- Ip Address: {get_client_ip(self.request)}\n" +
-                                f"UPLOAD ERROR: file_type is not supported {str(file_type)}"
-                        )
-                        raise forms.ValidationError(_("File type is not supported"))
-                else:
-                    UPLOAD_ERROR_LOGGER.debug(
-                            f"User: {self.request.user.username} -- Ip Address: {get_client_ip(self.request)}\n" +
-                            f"UPLOAD ERROR: file_type is not supported {str(file_type)}"
-                    )
-                    raise forms.ValidationError(_("File type is not supported"))
-            else:
-                raise forms.ValidationError(_("Filename should not include any unicode characters ex: >, <, /, $, * "))
-
-            try:
-                fd, tmp = tempfile.mkstemp()
-                with os.fdopen(fd, 'wb') as out:
-                    out.write(file.read())
-
-                if format_type and format_type.num_of_identifiers != 0:
-                    try:
-                        xl_workbook = xlrd.open_workbook(tmp)
-                    except Exception:
-                        raise forms.ValidationError(_("File uploaded in not in proper form"))
-                    xl_sheet = xl_workbook.sheet_by_index(0)
-
-                    if len(format_type.identifiers()) != xl_sheet.ncols:
-                        raise forms.ValidationError(_("File uploaded in not in proper form"))
-
-                    # validate headers
-                    cell_obj = next(xl_sheet.get_rows())
-                    headers = [data.value for data in cell_obj]
-                    if not format_type.headers_match(headers):
-                        raise forms.ValidationError(_("File headers doesn't match the format identifiers"))
-
-                elif self.type_of == 1:
-                    try:
-                        xl_workbook = xlrd.open_workbook(tmp)
-                    except Exception:
-                        raise forms.ValidationError(_("File uploaded in not in proper form"))
-                    xl_sheet = xl_workbook.sheet_by_index(0)
-
-                    if category.MIN_IDS_LENGTH > xl_sheet.ncols:
-                        raise forms.ValidationError(_("File uploaded in not in proper form"))
-
-            finally:
-                os.unlink(tmp)  # delete the temp file no matter what
-
-        return file
+            self.validate_file_type_size_and_name(file)
+            return self.write_file_to_disk(file, format_type, file_category)
 
     def save(self, commit=True):
         """Assign values to specific attributes before saving the doc object"""

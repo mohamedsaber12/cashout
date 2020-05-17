@@ -7,11 +7,15 @@
 * [Generate and Refresh Token API Endpoint](#generate-and-refresh-token-api-endpoint)
     * [Request](#request)
     * [Response](#response)
-* [User Inquiry API Endpoint](#user-inquiry-api-endpoint)
+* [Instant Cashin API Endpoint](#instant-cashin-api-endpoint)
     * [Headers](#headers)
     * [Request](#request)
     * [Response](#response)
-* [Instant Cashin API Endpoint](#instant-cashin-api-endpoint)
+* [Bulk Transaction Inquiry API Endpoint](#bulk-transaction-inquiry-api-endpoint)
+    * [Headers](#headers)
+    * [Request](#request)
+    * [Response](#response)
+* [User Budget Inquiry API Endpoint](#user-budget-inquiry-api-endpoint)
     * [Headers](#headers)
     * [Request](#request)
     * [Response](#response)
@@ -76,7 +80,7 @@
     
     2.2 Using [HTTPie](https://httpie.org/) tool
     
-        http -v -f https://{CLIENT_ID}:{CLIENT_SECRET}@{ENV}/o/token/ grant_type={refresh_token} refresh_token={REFRESH_TOKEN}
+        http -v -f https://{CLIENT_ID}:{CLIENT_SECRET}@{ENV}/o/token/ grant_type=refresh_token refresh_token={REFRESH_TOKEN}
 
 #### Response
 1. **Response Parameters**
@@ -90,63 +94,23 @@
     |     token_type    |   String   |
 
 2. **Sample**
-```
-{
-    "access_token": "Df0Z0r74hxZmO47mo9QnRrncVJIGU6",
-    "expires_in": 3600,
-    "refresh_token": "Y23rwVNSRtLjhy2nIwslJdo3FbAS6d",
-    "scope": "read write {OTHER_SCOPES}",
-    "token_type": "Bearer"
-}
-```
 
+    * > Generate or Refresh token response
 
-## User Inquiry API Endpoint
+            {
+                "access_token": "Df0Z0r74hxZmO47mo9QnRrncVJIGU6",
+                "expires_in": 3600,
+                "refresh_token": "Y23rwVNSRtLjhy2nIwslJdo3FbAS6d",
+                "scope": "read write {OTHER_SCOPES}",
+                "token_type": "Bearer"
+            }
 
-|  Environment	| API location source  	|   HTTP Method	| Content Type	|
-|---	        |---	                |---	        |---	        |
-|     {ENV}     |   ^inquire-user/      |      POST     |     JSON      |
+    * > Parameters not passed properly
 
-#### Headers
-```
-{
-    "Content-Type": "application/json",
-    "Authorization": "Bearer {ACCESS_TOKEN}"
-}
-```
-
-#### Request
-* **Usage:** 
-    * **{issuer}** must be sent as *"VodafoneCash"* till further update
-    * **{unique_identifier}** is any unique identifier for the device being hit the user inquiry request, like *IMEI*
-
-1. **Request Parameters**
-
-    |  Field	        |    M/O  	|    Type    |
-    |---	            |---	    |---	     |
-    | msisdn            |    M      |   String   |
-    | issuer            |    M	    |   String   |
-    | unique_identifier |    M	    |   String   |
-
-#### Response
-    **Usage:** 
-        * **{next_trial}** is the next time -in seconds- you can inquire for a user, it'll be time exponential and ratelimited per device
-
-1. **Response Parameters**
-
-    |  Field          |    Type    |
-    |---              |---	       |
-    |  wallet_status  |   String   |
-    |  next_trial     |   String   |
-
-2. **Sample**
-```
-{
-    "wallet_status": "valid vodafone-cash wallet",
-    "next_trial": "300"
-}
-```
-
+            {
+                "error": "invalid_grant",
+                "error_description": "Invalid credentials given."
+            }
 
 ## Instant Cashin API Endpoint
 
@@ -166,38 +130,241 @@
 1. **Request Parameters**
     * **Usage:** 
         * **{fees}** would be one of {Full}, {Half} or {No}
+        * **{issuer}** would be one of {AMAN}, {VODAFONE}, {ETISALAT} or {ORANGE}
+        * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
+        * At **Aman channel** cases, after every successful disbursement user will be notified at his/her email with
+            the reference number of his/her transaction.
 
-    |  Field   |   M/O  |    Type    |
-    |---	   |---	    |---	     |
-    | msisdn   |   M    |   String   |
-    | amount   |   M    |   String   |
-    | pin      |   O    |   String   |
-    | fees     |   O    |   String   |
+    |  Field     |   M/O  |    Type    |    Notes    |
+    |---	     |---	  |---	       |---	         |
+    | msisdn     |   M    |   String   |             |
+    | amount     |   M    |   String   |             |
+    | issuer     |   M    |   String   |             |
+    | first_name |   M    |   String   |  AMAN only  |
+    | last_name  |   M    |   String   |  AMAN only  |
+    | email      |   M    |   String   |  AMAN only  |
+    | pin        |   O    |   String   |             |
+    | fees       |   O    |   String   |             |
 
 #### Response
 1. **Response Parameters**
 
-    |  Field                |    Type    |
-    |---                    |---	     |
-    |  disbursement_status  |   String   |
-    |  status_description   |   String   |
+    |  Field                |    Type    |    Notes    |
+    |---                    |---	     |---	       |
+    |  disbursement_status  |   String   |             |
+    |  status_description   |   String   |             |
+    |  status_code          |   String   |             |
+    |  transaction_id       |   String   |             |
+    |  reference_number     |   String   |  AMAN only  |
+    |  paid                 |   Boolean  |  AMAN only  |
 
 2. **Sample**
 
+    * > Success disbursement
+    
+            {
+                "disbursement_status": "success",
+                "status_description": "تم إيداع 23.56 جنيه إلى رقم 01010101010 بنجاح",
+                "status_code": "200",
+                "transaction_id": "f3ec07ba-50a7-41cb-a1c3-674b2190dba4"
+            }
+            
+            {
+                "cashing_details": {
+                    "bill_reference": "2642119",
+                    "paid": false
+                },
+                "disbursement_status": "success",
+                "status_code": "200",
+                "status_description": "تم إيداع 87.99 جنيه إلى رقم 01020304050 بنجاح ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمه المستحقه",
+                "transaction_id": "536647a8-20e1-4e29-aa54-a8716944d04c"
+            }
+
+    * > Token is expired
+    
+            {
+                "disbursement_status": "failed",
+                "status_description": "Authentication credentials were not provided.",
+                "status_code": "401"
+            }
+
+    * > Parameters didn't pass validations
+    
+            {
+                "disbursement_status": "failed",
+                "status_description": {
+                    "amount": [
+                        "This field is required."
+                    ],
+                    "msisdn": [
+                        "This field is required."
+                    ]
+                },
+                "status_code": "400"
+            }
+
+    * > Sample of failure cases
+    
+            {
+                "disbursement_status": "failed",
+                "status_description": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش",
+                "status_code": "618",
+                "transaction_id": "a8bcdb0f-8b49-4314-8a9d-368c607b665c"
+            }
+
+            {
+                "disbursement_status": "failed",
+                "status_description": "Sorry, the amount to be disbursed exceeds you budget limit.",
+                "status_code": "6061",
+                "transaction_id": "7fe6fee9-bae6-42c0-a8b1-525eae8af49f"
+            }
+
+## Bulk Transaction Inquiry API Endpoint
+* **Usage:**
+    * This endpoint implements **throttling mechanism**, so you can ONLY make **5 transaction inquiry requests per minute**.
+    * Requests are **paginated**, **50 transaction** object returned per single request.
+
+|  Environment	|  API location source    |   HTTP Method	| Content Type	|
+|---	        |---   	                  |---	            |---	        |
+|     {ENV}     |  ^transaction/inquire/  |      GET        |     JSON      |
+
+#### Headers
 ```
 {
-    "disbursement_status": "success",
-    "status_description": "",
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {ACCESS_TOKEN}"
 }
 ```
 
+#### Request
+1. **Request Parameters**
 
+    |  Field                  |               Type                |
+    |---                      |---                                |
+    |  transactions_ids_list  |  List of transaction ids as uuid4 |
+
+#### Response
+1. **Response Parameters**
+
+    |    Field   |    Type    |                 Notes                  |
+    |---         |---	      |---	                                   |
+    |  count     |   Integer  |  Total count of returned transactions  |
+    |  next      |   String   |  Link to the next page of results      |
+    |  previous  |   String   |  Link to the previous page of results  |
+    |  results   |   List     |  List of dictionaries transactions     |
+
+2. **Sample**
+
+    * > Sample bulk transaction inquiry request dictionary
+
+            {
+            	"transactions_ids_list": [
+            		"607f2a5a-1109-43d2-a12c-9327ab2dca18",
+            		"2a08d70c-49a9-48ed-bcbf-734343065477",
+            		"1531eb29-199e-4487-96ab-72ef76564a42",
+            		...
+            	]
+            }
+
+    * > Sample bulk transaction inquiry response dictionary
+
+            {
+                "count": 120,
+                "next": "{ENV}/api/secure/transaction/inquire/?page=3",
+                "previous": "{ENV}/api/secure/transaction/inquire/",
+                "results": [
+                    {
+                        "transaction_id": "607f2a5a-1109-43d2-a12c-9327ab2dca18",
+                        "transaction_status": "Successful",
+                        "channel": "Aman",
+                        "msisdn": "01020304050",
+                        "amount": 3.99,
+                        "failure_reason": null,
+                        "created_at": "2020-04-21 13:05:02.233574",
+                        "updated_at": "2020-04-21 13:05:10.252393",
+                        "aman_cashing_details": {
+                            "bill_reference": 2654367,
+                            "is_paid": false
+                        }
+                    },
+                    {
+                        "transaction_id": "2a08d70c-49a9-48ed-bcbf-734343065477",
+                        "transaction_status": "Successful",
+                        "channel": "Vodafone",
+                        "msisdn": "01019706920",
+                        "amount": 5.91,
+                        "failure_reason": null,
+                        "created_at": "2020-04-21 09:14:01.884397",
+                        "updated_at": "2020-04-21 09:14:17.807927",
+                        "aman_cashing_details": null
+                    },
+                    {
+                        "transaction_id": "1531eb29-199e-4487-96ab-72ef76564a42",
+                        "transaction_status": "Failed",
+                        "channel": "Vodafone",
+                        "msisdn": "01019506911",
+                        "amount": 5.91,
+                        "failure_reason": "لا يمكن إتمام العملية؛ برجاء العلم أن هذا العميل ليس غير مؤهل لخدمات فودافون كاش",
+                        "created_at": "2020-04-16 17:55:57.761411",
+                        "updated_at": "2020-04-16 17:55:59.915782",
+                        "aman_cashing_details": null
+                    },
+                    ...
+                ]
+            }
+
+    * > Exceeded your limit of requests per minute
+
+            {
+                "status_description": "Request was throttled. Expected available in 55 seconds.",
+                "status_code": "429"
+            }
+
+## User Budget Inquiry API Endpoint
+* **Usage:** 
+    * This endpoint implements **throttling mechanism**, so you can ONLY make **5 budge inquiry requests per minute**.
+
+|  Environment	|  API location source |  HTTP Method  |  Content Type  |
+|---	        |---   	               |---            |---	            |
+|     {ENV}     |   ^budget/inquire/   |      GET      |      JSON      |
+
+#### Headers
 ```
 {
-    "disbursement_status": "failed",
-    "status_description": "the amound to be disbursed exceeds your budget, please contact your service provider",
+    "Content-Type": "application/json",
+    "Authorization": "Bearer {ACCESS_TOKEN}"
 }
 ```
+
+#### Request
+1. **Request Parameters**
+    * **Usage:** 
+        * This endpoint takes no parameters just the authenticated user hits the GET request to this endpoint.
+
+
+#### Response
+1. **Response Parameters**
+
+    |  Field               |    Type    |
+    |---                   |---         |
+    |  current_budget      |   String   |
+    |  status_description  |   String   |
+    |  status_code         |   String   |
+
+2. **Sample**
+
+    * > Success user budget inquiry
+    
+            {
+                "current_budget": "Your current budget is 888.25 LE"
+            }
+
+    * > Exceeded your limit of requests per minute
+    
+            {
+                "status_description": "Request was throttled. Expected available in 55 seconds.",
+                "status_code": "429"
+            }
 
 
 ## General Responses

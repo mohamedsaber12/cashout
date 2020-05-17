@@ -4,18 +4,22 @@ from django.contrib import admin
 from django.urls import include, path
 
 from two_factor.urls import urlpatterns as tf_urls
+
 from data.views import protected_serve
 
 from .decorators import protected_media_serve
 
+
 if settings.DEBUG:
     import debug_toolbar
     urlpatterns = [
+        path('admin/doc/', include('django.contrib.admindocs.urls')),
         path('admin/', admin.site.urls),
         path('__debug__/', include(debug_toolbar.urls)),
     ]
 else:
     urlpatterns = [
+        path('secure-portal/doc/', include('django.contrib.admindocs.urls')),
         path('secure-portal/', admin.site.urls),
     ]
 
@@ -35,15 +39,14 @@ urlpatterns += [
     path('', include('data.urls', namespace='data')),
     path('', include('users.urls', namespace='users')),
     path('', include('disb.urls', namespace='disbursement')),
-    path('', include('docs.urls')),
+    path('', include('docs.urls', namespace='docs')),
+    path('instant-cashin/', include('instant_cashin.urls', namespace='instant_cashin')),
     path('', include(tf_urls, namespace='two_factor')),
     path('api/secure/', include('disb.api.urls', namespace='disbursement_api')),
     path('api/secure/', include('data.api.urls', namespace='data_api')),
-    path('api/secure/', include('payment.api.urls', namespace='payment_api'))
+    path('api/secure/', include('payment.api.urls', namespace='payment_api')),
+    path('api/secure/', include('instant_cashin.api.urls', namespace='instant_api')),
 ]
 
-urlpatterns += static(settings.MEDIA_URL + 'documents/',
-                      document_root=settings.MEDIA_ROOT, view=protected_serve)
-
-urlpatterns += static(settings.MEDIA_URL,
-                      document_root=settings.MEDIA_ROOT, view=protected_media_serve)
+urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)

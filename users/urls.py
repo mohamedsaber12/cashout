@@ -1,7 +1,9 @@
 from django.contrib.auth import views as django_auth_views
 from django.urls import path
 
-from users import views
+from oauth2_provider import views as oauth2_views
+
+from . import views
 
 
 app_name = 'users'
@@ -17,8 +19,10 @@ collection_setups_urls = [
 client_urls = [
     path('clients/', views.Clients.as_view(), name='clients'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
+    path('client/delete/<str:username>/', views.SuperAdminCancelsRootSetupView.as_view(), name='delete_client'),
     # 'Adding agents' -url- to the clients is at the disb. app urlpatterns
     path('client/fees-setup/<token>/', views.ClientFeesSetup.as_view(), name='add_fees'),
+    path('client/fees-setup/edit/<str:username>/', views.CustomClientFeesProfilesUpdateView.as_view(), name='update_fees'),
     path('client/toggle/', views.toggle_client, name='toggle'),
 ]
 
@@ -52,6 +56,10 @@ password_handling_urls = [
          name='password_reset_complete'),
 ]
 
+oauth2_provider_urls = [
+    path("api/secure/o/token/", oauth2_views.TokenView.as_view(), name="oauth2_token"),
+]
+
 urlpatterns = [
     path('user/login/', views.login_view, name='user_login_view'),
     path('user/logout/', views.ourlogout, name='logout'),
@@ -67,3 +75,4 @@ urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += password_handling_urls
+urlpatterns += oauth2_provider_urls

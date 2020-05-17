@@ -1,0 +1,33 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %}{% trans 'Orange Pending Transactions' %}{% endblock title %}
+
+{% block body %}
+    {% if not instant_transactions %}
+      <div class="well upload-nav col-xs-12">
+        <strong style="margin-top: 15px;">{% trans 'No pending Orange transactions' %}</strong>
+      </div>
+    {% else %}
+        {% include 'instant_cashin/pending_orange_trx_list.html' with orange_pending_transactions=instant_transactions %}
+    {% endif %}
+{% endblock body %}
+
+{% block script %}
+<script>
+
+    $(".export-pending").click(function () {
+      var $row = $(this).closest("tr");                   // Find the row
+      var $day_selected = $row.find("#day_value").text(); // Find the text
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'instant_cashin:download' %}" + '?date=' + $day_selected,
+        success: function (data, text, xhr) {
+          $('#success-alert-msg').show()
+        }
+      });
+    });
+
+</script>
+{% endblock script %}

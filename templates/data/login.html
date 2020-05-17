@@ -6,16 +6,14 @@
         {% csrf_token %}
       <h1>{% trans 'Login' %}</h1>
       <div>
-        <input type="text" class="form-control" placeholder="{% trans 'Username' %}" required name="username"/>
+        <input type="text" class="form-control" autocomplete="off" placeholder="{% trans 'Username' %}" required name="username"/>
       </div>
       <div>
-        <input type="password" class="form-control" placeholder="{% trans 'Password' %}" required name="password"/>
+        <input type="password" class="form-control" autocomplete="off" placeholder="{% trans 'Password' %}" required name="password"/>
       </div>
       <div>
         {% if error_invalid %}
            <span style="color: #761c19">{{ error_invalid }}</span>
-        {% elif failure_limit is not None %}
-           <span style="color: #761c19">{% trans 'Too many login attempts. Please try again after 1 minute' %}</span>
         {% endif %}
       </div>
       <div>

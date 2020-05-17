@@ -12,8 +12,10 @@
             {% else %}
                 {% if current_status == 'collection' %}
                   {% include "collection-sidebar.html" %}
-                {%else%}
+                {% elif current_status == 'disbursement' and not request.user.is_instant_member %}
                   {% include "disbursement-sidebar.html" %}
+                {% else %}
+                  {% include "instant_cashin_sidebar.html" %}
                 {%endif%}  
             {% endif %}
         </div>

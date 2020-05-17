@@ -1,5 +1,8 @@
 from __future__ import unicode_literals
 
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
+
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.core.exceptions import ValidationError
@@ -9,9 +12,6 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
-from imagekit.models import ProcessedImageField
-from imagekit.processors import ResizeToFill
-
 
 TYPES = (
     (0, 'Super'),           # when creating super AN EMAIL MUST be created.
@@ -20,6 +20,8 @@ TYPES = (
     (3, 'Root'),
     (4, 'Uploader'),        # collection only
     (5, 'UpMaker'),         # maker and uploader
+    (6, 'InstantAPIChecker'),
+    (7, 'InstantAPIViewer'),
 )
 
 
@@ -35,6 +37,9 @@ class UserManager(AbstractUserManager):
 
 
 class User(AbstractUser):
+    """
+    User model for all the different types of users
+    """
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
@@ -42,10 +47,12 @@ class User(AbstractUser):
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
-    avatar_thumbnail = ProcessedImageField(upload_to='avatars',
-                                           processors=[ResizeToFill(100, 100)],
-                                           format='JPEG',
-                                           options={'quality': 60}, null=True, default='user.png')
+    avatar_thumbnail = ProcessedImageField(
+            upload_to='avatars',
+            processors=[ResizeToFill(100, 100)],
+            format='JPEG',
+            options={'quality': 60}, null=True, default='user.png'
+    )
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
@@ -62,21 +69,36 @@ class User(AbstractUser):
             ("can_use_two_factor", "the user can use two factor"),
             ("has_disbursement", "the client has disbursement options"),
             ("has_collection", "the client has collection options"),
+            ("has_instant_disbursement", "the client/his children has instant disbursement capabilities"),
             ("can_view_api_docs", "the user can view the api documentation"),
         )
 
     def __str__(self):
         return str(self.username)
 
-    def child(self):
-        if not self.user_type == 3:
-            raise ValidationError('This user has no children')
-        return User.objects.filter(Q(hierarchy=self.hierarchy) & ~Q(user_type=3))
+    def children(self):
+        """
+        If the request is coming from Super user -> Children will be of types (3),
+        If the request is coming from Root user -> Children will be of types (1, 2, 6, 7)
+        :return: list of children users who belong to that parent
+        """
+        if self.user_type == 0:
+            from .client import Client
+            try:
+                return [root.client for root in Client.objects.filter(creator=self)]
+            except Client.DoesNotExist:
+                raise ValidationError("Related user does not exist")
+
+        if self.user_type == 3:
+            return User.objects.get_all_hierarchy_tree(self.hierarchy).filter(~Q(user_type=self.user_type))[::1]
+
+        raise ValidationError('This user has no children')
+
 
     @property
     def can_view_docs(self):
         """Check if the user has the permission to view the API documentation"""
-        if self.has_perm('users.can_view_api_docs'):
+        if self.is_instantapiviewer or self.has_perm('users.can_view_api_docs'):
             return True
         return False
 
@@ -84,14 +106,16 @@ class User(AbstractUser):
     def can_disburse(self):
         if self.has_perm('data.can_disburse'):
             return True
-        else:
-            return False
+        return False
 
     @property
     def root(self):
         if self.is_root:
             return self
         else:
+            # ToDo
+            # return statement doesn't work properly at superadmin calls,
+            #   because superadmin hierarchy is always 0 so it won't match any other incremented root's hierarchy
             from users.models import RootUser
             return RootUser.objects.get(hierarchy=self.hierarchy)
 
@@ -145,9 +169,57 @@ class User(AbstractUser):
         return self.user_type == 0
 
     @cached_property
+    def is_instantapichecker(self):
+        return self.user_type == 6
+
+    @cached_property
+    def is_instantapiviewer(self):
+        return self.user_type == 7
+
+    @cached_property
+    def is_instant_member(self):
+        """Check if current user belongs to instant cashin family"""
+        if self.is_instantapichecker or self.is_instantapiviewer or self.has_perm('users.has_instant_disbursement'):
+            return True
+        return False
+
+    @cached_property
     def get_full_name(self):
         full_name = f"{self.first_name.capitalize()} {self.last_name}"
         return full_name.strip()
+
+    @property
+    def has_vmt_setup(self):
+        """Check if this superadmin's vmt credentials setups is completed"""
+        if self.is_superadmin and self.vmt:
+            return True
+        return False
+
+    @property
+    def has_custom_budget(self):
+        """Check if this user has custom budget"""
+        from disb.models import Budget
+        try:
+            budget = self.budget
+            return True
+        except Budget.DoesNotExist:
+            return False
+
+    def can_pass_instant_disbursement(self):
+        """Check if this user's family has any member who has instant disbursement capabilities"""
+        if self.is_instant_member:
+            return True
+        elif self.is_root:
+            for child in self.children():
+                if child.is_instant_member:
+                    return True
+        elif self.is_superadmin:
+            for root_child in self.children():
+                for child in root_child.children():
+                    if child.is_instant_member:
+                        return True
+
+        return False
 
     def get_absolute_url(self):
         return reverse("users:profile", kwargs={'username': self.username})

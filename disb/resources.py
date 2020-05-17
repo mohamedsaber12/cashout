@@ -8,14 +8,15 @@ class DisbursementDataResource(resources.ModelResource):
 
     class Meta:
         model = DisbursementData
-        fields = ('amount', 'msisdn', 'disbursed', 'reason')
+        fields = ['amount', 'msisdn', 'disbursed', 'reason']
+        export_order = ['msisdn', 'amount', 'disbursed', 'reason']
 
     def __init__(self, doc, file_category, is_disbursed):
         self.doc = doc
         self.is_disbursed = is_disbursed
 
     def get_export_headers(self):
-        return ['disbursed','amount', 'msisdn', 'reason']
+        return ['Mobile Number', 'Amount', 'Disbursement Status', 'Failure Reason']
 
     def get_queryset(self):
         qs = super(DisbursementDataResource, self).get_queryset()

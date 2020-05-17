@@ -19,6 +19,8 @@ if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
 ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
     re.compile(r'^profile*'),
+    re.compile(r'^agent/budget/edit/*'),
+    re.compile(r'^agent/balance-inquiry/*'),
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
     re.compile(settings.MEDIA_URL.lstrip('/')),
@@ -44,6 +46,8 @@ class EntitySetupCompletionMiddleWare:
             ourlogout(request)
         if request.user.is_authenticated:
             if request.user.is_superadmin and not request.user.is_superuser:
+                if re.compile(r"client/delete/*").match(path) :
+                    return None
                 if request.user.has_uncomplete_entity_creation():
                     entity_creation = request.user.uncomplete_entity_creation()
                     path = entity_creation.get_reverse()

@@ -1,12 +1,12 @@
 {% load static %}
 {% load i18n %}
 <div class="left_col scroll-view">
-    <div class="navbar nav_title" style="text-align:center">
+    <div class="navbar nav_title" style="text-align:center; padding-top: 12px;">
         {% if brand_logo %}
-            <a href="{% url 'data:disbursement_home' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"
+            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"
                         height="38px" id="paymob_logo"></span></a>
         {%else%}
-            <a href="{% url 'data:disbursement_home' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
+            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
                             height="38px" id="paymob_logo"></span></a>
         {%endif%}    
         
@@ -47,7 +47,9 @@
                     </ul>
                 </li>
                 {% if request.user.is_root %}
-                <li><a href="{% url 'disbursement:balance_inquiry' %}"><i class="fa fa-user"></i> {% trans 'Balance inquiry' %} </a>
+                <li>
+                    <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+                    <i class="fa fa-user"></i> {% trans 'Balance inquiry' %}</a>
                 </li>
                 <li><a><i class="fa fa-user"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
                     <ul class="nav child_menu">

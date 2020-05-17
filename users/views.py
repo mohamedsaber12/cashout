@@ -29,13 +29,13 @@ from disb.forms import PinForm
 
 from .decorators import root_or_superadmin
 from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
-                    ClientFeesForm, ForgotPasswordForm, LevelFormSet,
+                    ClientFeesForm, CustomClientProfilesForm, ForgotPasswordForm, LevelFormSet,
                     MakerCreationForm, MakerMemberFormSet, OTPTokenForm,
                     PasswordChangeForm, ProfileEditForm, RootCreationForm,
                     SetPasswordForm, UploaderMemberFormSet)
-from .mixins import (CollectionRootRequiredMixin,
-                     DisbursementRootRequiredMixin, RootRequiredMixin,
-                     SuperFinishedSetupMixin, SuperRequiredMixin)
+from .mixins import (CollectionRootRequiredMixin, DisbursementRootRequiredMixin, RootRequiredMixin,
+                     SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
+                     SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup, UploaderUser, User)
 
 
@@ -50,13 +50,13 @@ ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 
 class PinFormView(DisbursementRootRequiredMixin, FormView):
     template_name = 'users/setting-up-disbursement/pin.html'
-    setup = None
+    manual_setup = None
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests: instantiate a blank version of the form."""
         if request.GET.get('q', None) == 'next':
-            setup = self.get_setup()
-            if setup.pin_setup:
+            manual_setup = self.get_setup()
+            if manual_setup.pin_setup:
                 return HttpResponseRedirect(self.get_success_url())
         return self.render_to_response(self.get_context_data())
 
@@ -77,16 +77,16 @@ class PinFormView(DisbursementRootRequiredMixin, FormView):
             ok = form.set_pin()
             if not ok:
                 return self.form_invalid(form)
-            setup = self.get_setup()
-            setup.pin_setup = True
-            setup.save()
+            manual_setup = self.get_setup()
+            manual_setup.pin_setup = True
+            manual_setup.save()
             return self.form_valid(form)
         return self.form_invalid(form)
 
     def get_setup(self):
-        if self.setup is None:
-            self.setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
-        return self.setup
+        if self.manual_setup is None:
+            self.manual_setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
+        return self.manual_setup
 
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
@@ -102,7 +102,7 @@ class PinFormView(DisbursementRootRequiredMixin, FormView):
 
 class CollectionFormView(CollectionRootRequiredMixin, FormView):
     template_name = 'users/setting-up-collection/collection.html'
-    setup = None
+    manual_setup = None
 
     def get_form(self, form_class=None):
         """Return an instance of the form to be used in this view."""
@@ -117,17 +117,17 @@ class CollectionFormView(CollectionRootRequiredMixin, FormView):
     def post(self, request, *args, **kwargs):
         form = CollectionDataForm(request.POST, request=self.request)
         if form and form.is_valid():
-            setup = self.get_setup()
-            setup.collection_setup = True
-            setup.save()
+            manual_setup = self.get_setup()
+            manual_setup.collection_setup = True
+            manual_setup.save()
             form.save()
             return self.form_valid(form)
         return self.form_invalid(form)
 
     def get_setup(self):
-        if self.setup is None:
-            self.setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
-        return self.setup
+        if self.manual_setup is None:
+            self.manual_setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
+        return self.manual_setup
 
     def get_success_url(self):
         to_step = self.request.GET.get('to_step', None)
@@ -139,7 +139,7 @@ class CollectionFormView(CollectionRootRequiredMixin, FormView):
 
 class BaseFormsetView(TemplateView):
     """BaseView for setup Formsets"""
-    setup = None
+    manual_setup = None
 
     def get_context_data(self, **kwargs):
         """update context data"""
@@ -165,15 +165,15 @@ class BaseFormsetView(TemplateView):
         return self.render_to_response(self.get_context_data(form=form))
 
     def get_setup(self):
-        if self.setup is None:
-            self.setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
-        return self.setup
+        if self.manual_setup is None:
+            self.manual_setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
+        return self.manual_setup
 
     def form_valid(self, form):
         form.save()
-        setup = self.get_setup()
-        setattr(setup, f'{self.setup_key}_setup', True)
-        setup.save()
+        manual_setup = self.get_setup()
+        setattr(manual_setup, f'{self.setup_key}_setup', True)
+        manual_setup.save()
         return redirect(self.get_success_url())
 
 
@@ -187,8 +187,8 @@ class UploaderFormView(CollectionRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-        setup = self.get_setup()
-        if not setup.format_collection_setup:
+        manual_setup = self.get_setup()
+        if not manual_setup.format_collection_setup:
             return redirect('users:setting-collection-formats')
         return self.render_to_response(self.get_context_data())
 
@@ -215,8 +215,8 @@ class FormatFormView(CollectionRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-        setup = self.get_setup()
-        if not setup.collection_setup:
+        manual_setup = self.get_setup()
+        if not manual_setup.collection_setup:
             return reverse('users:setting-collection-collectiondata')
         return self.render_to_response(self.get_context_data())
 
@@ -241,8 +241,8 @@ class MakerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-        setup = self.get_setup()
-        if not setup.pin_setup:
+        manual_setup = self.get_setup()
+        if not manual_setup.pin_setup:
             return reverse('users:setting-disbursement-pin')
         return self.render_to_response(self.get_context_data())
 
@@ -271,8 +271,8 @@ class CheckerFormView(DisbursementRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-        setup = self.get_setup()
-        if not setup.levels_setup:
+        manual_setup = self.get_setup()
+        if not manual_setup.levels_setup:
             return reverse('users:setting-disbursement-levels')
         return self.render_to_response(self.get_context_data())
 
@@ -301,8 +301,8 @@ class LevelsFormView(DisbursementRootRequiredMixin, BaseFormsetView):
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
 
-        setup = self.get_setup()
-        if not setup.maker_setup:
+        manual_setup = self.get_setup()
+        if not manual_setup.maker_setup:
             return reverse('users:setting-disbursement-makers')
         return self.render_to_response(self.get_context_data())
 
@@ -323,9 +323,9 @@ class LevelsFormView(DisbursementRootRequiredMixin, BaseFormsetView):
     def form_valid(self, form):
         form.save()
         Levels.update_levels_authority(self.request.user.root)
-        setup = self.get_setup()
-        setup.levels_setup = True
-        setup.save()
+        manual_setup = self.get_setup()
+        manual_setup.levels_setup = True
+        manual_setup.save()
         return redirect(self.get_success_url())
 
 
@@ -339,8 +339,8 @@ class CategoryFormView(DisbursementRootRequiredMixin, BaseFormsetView):
 
     def get(self, request, *args, **kwargs):
         """Handle GET requests"""
-        setup = self.get_setup()
-        if not setup.checker_setup:
+        manual_setup = self.get_setup()
+        if not manual_setup.checker_setup:
             return reverse('users:setting-disbursement-checkers')
         return self.render_to_response(self.get_context_data())
 
@@ -375,7 +375,7 @@ class Members(RootRequiredMixin, ListView):
     def get_queryset(self):
         if 'disbursement' == self.request.user.get_status(self.request):
             qs = super().get_queryset()
-            qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1, 2, 5])
+            qs = qs.filter(hierarchy=self.request.user.hierarchy, user_type__in=[1, 2, 5, 6, 7])
             if self.request.GET.get("q"):
                 type_of = self.request.GET.get("q")
                 if type_of == 'maker':
@@ -578,6 +578,26 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         return HttpResponseRedirect(self.get_success_url(is_collection))
 
 
+class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
+    """
+    View for canceling Root setups by deleting created entity setups.
+    """
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to this View"""
+        username = self.kwargs.get('username')
+
+        try:
+            User.objects.get(username=username).delete()
+            DELETE_USER_VIEW_LOGGER.debug(f"[USER DELETED]\n"
+                                          f"User: {request.user.username}, Deleted user with username: {username}")
+        except User.DoesNotExist:
+            DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\n"
+                f"User: {request.user.username}, tried to delete user with username {username} which does not exist")
+
+        return redirect(reverse("data:disbursement_home"))
+
+
 class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
     """
     View for SuperAdmin to setup fees for the client
@@ -592,6 +612,19 @@ class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         kwargs.update({'instance': root.client})
         return kwargs
+
+
+class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView):
+    """
+    View for updating client's fees profile
+    """
+
+    model = Client
+    form_class = CustomClientProfilesForm
+    template_name = 'entity/update_fees.html'
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Client, creator=self.request.user, client__username=self.kwargs.get('username'))
 
 
 class EntityBranding(SuperRequiredMixin, UpdateView):
@@ -695,6 +728,8 @@ def login_view(request):
     Checkers must do two factor authentication every login but makers don't.
     Non active users can't login.
     """
+    user = None
+
     if request.user.is_authenticated:
         if request.user.is_checker:
             return HttpResponseRedirect(reverse('two_factor:profile'))
@@ -703,7 +738,7 @@ def login_view(request):
         username = request.POST['username']
         password = request.POST['password']
         user = authenticate(request=request, username=username, password=password)
-        if user:
+        if user and not user.is_instantapichecker:
             if user.is_active:
                 login(request, user)
                 LOGIN_LOGGER.debug(f"User: {request.user.username} Logged In from IP Address {get_client_ip(request)}")
@@ -714,11 +749,16 @@ def login_view(request):
 
                 if user.is_upmaker or (user.is_root and user.data_type() == 3):
                     return HttpResponseRedirect(reverse('users:redirect'))
+
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
                 FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
                 Failed Attempt from non active user with username: {username} and IP Addr {get_client_ip(request)}""")
                 return HttpResponse("Your account has been disabled")
+        elif user is not None and user.is_instantapichecker:
+            FAILED_LOGIN_LOGGER.debug(f"""[API USER LOGIN ATTEMPT]
+            Failed Attempt from instant API user with username: {username} and IP Addr {get_client_ip(request)}""")
+            return render(request, 'data/login.html', {'error_invalid': "You're not permitted to login."})
         else:
             # Bad login details were provided. So we can't log the user in.
             FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]

@@ -73,6 +73,10 @@ class DisbursementDocData(AbstractBaseStatus):
         verbose_name = "Disbursement Document"
         verbose_name_plural = "Disbursement Documents"
 
+    def __str__(self):
+        """String representation for disbursement doc data model objects"""
+        return f"{self.txn_id} -- {self.doc.id}"
+
     def mark_successful(self):
         """
         Mark document disbursement status as successful when
@@ -108,6 +112,7 @@ class DisbursementData(AbstractTimeStamp):
     is_disbursed = models.BooleanField(default=0)
     amount = models.FloatField(verbose_name=_('AMOUNT'))
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
+    issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='vodafone')
     reason = models.TextField()
 
     class Meta:

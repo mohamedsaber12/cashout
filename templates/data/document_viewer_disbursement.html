@@ -190,12 +190,14 @@
                         <thead>
                             <th>{% trans 'Msisdn' %}</th>
                             <th>{% trans 'Amount' %}</th>
+                            {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
                         </thead>
                         <tbody>
                             {% for data  in doc_data%}
                                 <tr>
                                     <td>{{data.msisdn}}</td>
                                     <td>{{data.amount}}</td>
+                                    {% if not is_normal_flow %}<td>{{data.issuer}}</td>{% endif %}
                                 </tr>
                             {%endfor%}
                         </tbody>

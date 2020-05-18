@@ -289,7 +289,8 @@ def document_view(request, doc_id):
         'hide_review_form': hide_review_form,
         'can_user_disburse': can_user_disburse,
         'doc_data': doc_data,
-        'can_review': can_review
+        'can_review': can_review,
+        'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'

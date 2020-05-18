@@ -59,6 +59,10 @@ class Doc(models.Model):
         verbose_name_plural = 'Documents'
         ordering = ('-created_at', )
 
+    def __str__(self):
+        """String representation for doc model objects"""
+        return self.file.name
+
     def delete(self, *args, **kwargs):
         """
         :return: Delete document file if it exists at the file system specifically at the MEDIA ROOT directory

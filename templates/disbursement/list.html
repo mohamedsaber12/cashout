@@ -70,15 +70,17 @@
                         <tr>
                             <th>{% trans 'MSISDN' %}</th>
                             <th>{% trans 'Amount' %}</th>
+                            {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
                             <th>{% trans 'Disbursed' %}</th>
                             <th>{% trans 'Reason' %}</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for data in Ddata %}
+                        {% for data in disbursement_data %}
                         <tr>
                             <td>{{data.msisdn}}</td>
                             <td>{{data.amount}}</td>
+                            {% if not is_normal_flow %}<td>{{data.issuer}}</td>{% endif %}
                             <td>
                                 {% if data.is_disbursed %}
                                     <span style="color: #2e6da4">&#10004;</span>

@@ -55,7 +55,7 @@
                     <thead>
                         <tr>
                             {% for field in form.visible_fields %}
-                            <th>{{ field.label|capfirst }}</th>
+                              <th>{{ field.label|capfirst }}</th>
                             {% endfor %}
                         </tr>
                     </thead>
@@ -65,20 +65,19 @@
                     <tbody>
 
                         {% for form in formatform.forms %}
-                        {% if form.instance %}
-                        <tr class="format_formset_row">
-                            {% for field in form.visible_fields %}
-                            <td id="format_{{field.name}}">
-                                {% if field.value %}
-                                {{ field.value }}
-                                {%endif%}
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {%endif%}
+                          {% if form.instance %}
+                            <tr class="format_formset_row">
+                                {% for field in form.visible_fields %}
+                                  <td id="format_{{field.name}}">
+                                      {% if field.value %}
+                                        {{ field.value }}
+                                      {%endif%}
+                                  </td>
+                                {% endfor %}
+                            </tr>
+                          {% endif %}
                         {% endfor %}
                     </tbody>
-
 
                 </table>
             </div>

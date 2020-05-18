@@ -364,6 +364,7 @@ class FormatListView(TemplateView):
     def dispatch(self, request, *args, **kwargs):
         """Common attributes between GET and POST methods"""
         self.is_disbursement_admin = True if request.user.get_status(self.request) == 'disbursement' else False
+        self.flow_type = self.request.user.root_entity_setups.is_normal_flow if self.request.user.is_root else False
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -387,6 +388,7 @@ class FormatListView(TemplateView):
                 context['formatform'].can_delete = False
                 context['formatform'].extra = 0
         else:
+            context['is_normal_flow'] = self.flow_type
             context['formatform'] = form or FileCategoryFormSet(queryset=self.get_queryset(), prefix='category')
             if not self.request.user.is_root:
                 context['formatform'].can_delete = False

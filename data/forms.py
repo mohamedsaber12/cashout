@@ -218,18 +218,22 @@ class FileCategoryForm(forms.ModelForm):
         self.col_row_format = "must be in the form col-row or letter-number ex: A-1"
         self.three_headers = "Mobile number, Amount and Issuer option fields"
         self.two_headers = "Mobile number and Amount fields"
+        self.is_normal_flow = False
 
         super().__init__(*args, **kwargs)
+        self.fields['issuer_field'].required = True
         self.request = request
 
         # Handle updating existing file category
         if self.request is None and self.instance.pk is not None:
             if self.instance.user_created.root_entity_setups.is_normal_flow:
                 self.fields.pop('issuer_field')
+                self.is_normal_flow = True
 
         # Handle creating new file category
         if self.request is not None and self.request.user.root_entity_setups.is_normal_flow:
             self.fields.pop('issuer_field')
+            self.is_normal_flow = True
 
     def clean_name(self):
         """Clean name field"""
@@ -273,19 +277,23 @@ class FileCategoryForm(forms.ModelForm):
         amount_field = self.cleaned_data.get('amount_field')
         issuer_field = self.cleaned_data.get('issuer_field')
 
-        if not (unique_field and amount_field):
-            return super().clean()
+        if not self.is_normal_flow:
+            if not (unique_field and amount_field and issuer_field):
+                return super().clean()
+        elif self.is_normal_flow:
+            if not (unique_field and amount_field):
+                return super().clean()
 
-        if issuer_field is not None and any('-' not in field for field in [issuer_field, unique_field, amount_field]):
+        if not self.is_normal_flow and any('-' not in field for field in [unique_field, amount_field, issuer_field]):
             raise forms.ValidationError(_(f"{self.three_headers} {self.col_row_format}"))
-        if any('-' not in field for field in [unique_field, amount_field]):
+        if self.is_normal_flow and any('-' not in field for field in [unique_field, amount_field]):
             raise forms.ValidationError(_(f"{self.two_headers} {self.col_row_format}"))
 
         col1, row1 = unique_field.split('-')
         col2, row2 = amount_field.split('-')
         col3, row3 = issuer_field.split('-') if issuer_field else ('', '')
 
-        if not issuer_field:
+        if self.is_normal_flow:
             if not all([col1.isalpha(), col2.isalpha(), row1.isnumeric(), row2.isnumeric()]):
                 raise forms.ValidationError(_(f"{self.two_headers} {self.col_row_format}"))
 

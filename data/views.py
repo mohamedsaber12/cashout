@@ -101,6 +101,7 @@ class DisbursementHomeView(View):
 
             if form_doc.is_valid():
                 file_doc = form_doc.save()
+                file_doc.mark_uploaded_successfully()
                 UPLOAD_LOGGER.debug(
                         "[DISBURSEMENT FILE UPLOAD]" +
                         f"\nUser: {request.user} -- Ip Address: {get_client_ip(request)}" +

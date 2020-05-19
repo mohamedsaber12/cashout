@@ -24,7 +24,7 @@ from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
 from users.models import CheckerUser, User
 
-from ..models import Agent, DisbursementData, DisbursementDocData, VMTData
+from ..models import Agent, DisbursementData, DisbursementDocData
 from ..utils import custom_budget_logger
 from .permission_classes import BlacklistPermission
 from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
@@ -74,6 +74,7 @@ class DisburseAPIView(APIView):
         # 1. Validate the serializer's data
         serializer = DisbursementSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        doc_obj = Doc.objects.get(id=serializer.validated_data['doc_id'])
 
         # 2. Catch the corresponding vmt dictionary
         user = User.objects.get(username=serializer.validated_data['user'])
@@ -108,15 +109,13 @@ class DisburseAPIView(APIView):
             DATA_LOGGER.debug('[DISBURSE VALUE ERROR]' + f"\n{str(response.status_code)} -- {str(response.reason)}")
         except Exception as e:
             DATA_LOGGER.debug('[DISBURSE GENERAL ERROR]' + f"\nError{str(e)}")
+            doc_obj.mark_disbursement_failure()
             return HttpResponse(
                     json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
                     status=status.HTTP_424_FAILED_DEPENDENCY
             )
 
         if response.ok and response.json()["TXNSTATUS"] == '200':
-            doc_obj = Doc.objects.get(id=serializer.validated_data['doc_id'])
-            doc_obj.is_disbursed = True
-            doc_obj.disbursed_by = user
             try:
                 txn_status = response.json()["TXNSTATUS"]
                 try:
@@ -124,21 +123,19 @@ class DisburseAPIView(APIView):
                 except KeyError:
                     txn_id = response.json()["TXNID"]
             except KeyError:
+                doc_obj.mark_disbursement_failure()
                 return HttpResponse(
                         json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
                         status=status.HTTP_424_FAILED_DEPENDENCY
                 )
 
-            disb_data, create = DisbursementDocData.objects.get_or_create(doc=doc_obj)
-            disb_data.txn_id = txn_id
-            disb_data.txn_status = txn_status
-            disb_data.save()
-            doc_obj.save()
+            doc_obj.mark_disbursed_successfully(user, txn_id, txn_status)
             return HttpResponse(
                     json.dumps({'message': MSG_DISBURSEMENT_IS_RUNNING, 'header': _('Disbursed, Thanks')}),
                     status=status.HTTP_200_OK
             )
         else:
+            doc_obj.mark_disbursement_failure()
             return HttpResponse(
                     json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
                     status=status.HTTP_424_FAILED_DEPENDENCY
@@ -180,6 +177,9 @@ class DisburseCallBack(UpdateAPIView):
                 # If data['status'] = 0, it means this record amount is disbursed successfully
                 if data['status'] == '0':
                     successfully_disbursed_obj = DisbursementData.objects.get(id=int(data['id']))
+                    DisbursementDocData.objects.select_for_update().filter(
+                            doc=successfully_disbursed_obj.doc_id
+                    ).update(has_callback=True)
                     total_disbursed_amount += int(successfully_disbursed_obj.amount)
             except DisbursementData.DoesNotExist:
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)

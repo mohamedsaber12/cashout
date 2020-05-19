@@ -8,8 +8,8 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from core.models import AbstractBaseStatus, AbstractTimeStamp
-from utilities.models import AbstractBaseVMTData
+from core.models import AbstractTimeStamp
+from utilities.models import AbstractBaseDocStatus, AbstractBaseVMTData
 
 
 class VMTData(AbstractBaseVMTData):
@@ -53,7 +53,7 @@ class Agent(models.Model):
         return f"Agent {self.msisdn} for Root: {self.wallet_provider.username}"
 
 
-class DisbursementDocData(AbstractBaseStatus):
+class DisbursementDocData(AbstractBaseDocStatus):
     """
     This model is just logs to the status of the doc disbursement action
     """
@@ -61,11 +61,12 @@ class DisbursementDocData(AbstractBaseStatus):
     doc = models.OneToOneField('data.Doc', null=True, related_name='disbursement_txn', on_delete=models.CASCADE)
     txn_id = models.CharField(max_length=16, null=True, blank=True)
     txn_status = models.CharField(max_length=16, null=True, blank=True)
+    has_callback = models.BooleanField(default=False, verbose_name=_('Has Callback?'))
     doc_status = models.CharField(
             _("Document disbursement status"),
             max_length=1,
-            choices=AbstractBaseStatus.STATUS_CHOICES,
-            default=AbstractBaseStatus.DEFAULT
+            choices=AbstractBaseDocStatus.STATUS_CHOICES,
+            default=AbstractBaseDocStatus.DEFAULT
     )
     status = None
 

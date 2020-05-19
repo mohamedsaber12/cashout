@@ -113,7 +113,7 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     Admin panel representation for DisbursementDocData model
     """
 
-    list_display = ['doc', 'doc_status', 'txn_id', 'txn_status']
+    list_display = ['doc', 'doc_status', 'txn_id', 'txn_status', 'has_callback']
     list_filter = ['doc_status', ('doc__owner', custom_titled_filter('Document Owner/Uploader'))]
     search_fields = ['doc__id', 'txn_id']
 

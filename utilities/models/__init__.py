@@ -1,2 +1,2 @@
-from .abstract_models import AbstractBaseVMTData
+from .abstract_models import AbstractBaseDocStatus, AbstractBaseVMTData
 from .generic_models import CallWalletsModerator

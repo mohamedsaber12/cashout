@@ -6,6 +6,34 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 
 
+class AbstractBaseDocStatus(models.Model):
+    """
+    Base Document Status model.
+    """
+
+    # choices
+    DEFAULT = 'd'
+    UPLOADED_SUCCESSFULLY = '1'
+    PROCESSING_FAILURE = '2'
+    PROCESSED_SUCCESSFULLY = '3'
+    DISBURSEMENT_FAILURE = '4'
+    DISBURSED_SUCCESSFULLY = '5'
+    STATUS_CHOICES = [
+        (DEFAULT, _("Default")),
+        (UPLOADED_SUCCESSFULLY, _("Uploaded Successfully")),
+        (PROCESSING_FAILURE, _("Processing Failure")),
+        (PROCESSED_SUCCESSFULLY, _("Processed Successfully")),
+        (DISBURSEMENT_FAILURE, _("Disbursement Failure")),
+        (DISBURSED_SUCCESSFULLY, _("Disbursed Successfully")),
+    ]
+    status = models.CharField(
+            _("status"), max_length=1, choices=STATUS_CHOICES, default=DEFAULT
+    )
+
+    class Meta:
+        abstract = True
+
+
 class AbstractBaseVMTData(models.Model):
     """
     VMT is the credentials needed by UIG to make disbursement request

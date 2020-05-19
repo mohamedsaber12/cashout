@@ -32,8 +32,7 @@ from utilities import messages
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, BudgetModelForm
 from .mixins import BudgetActionMixin
-from .models import Agent, Budget, VMTData
-
+from .models import Agent, Budget
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")

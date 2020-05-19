@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from disbursement.models import DisbursementDocData
 from users.models import CheckerUser
 
 from ..utils import pkgen, update_filename
@@ -171,16 +172,73 @@ class Doc(models.Model):
     def is_reviews_rejected(self):
         return self.reviews.filter(is_ok=False).count() != 0
 
+    def mark_uploaded_successfully(self):
+        """Mark disbursement document status as uploaded successfully"""
+        DisbursementDocData.objects.create(doc=self, doc_status=DisbursementDocData.UPLOADED_SUCCESSFULLY)
+
     def processed_successfully(self):
-        """Mark document as processed successfully if it passed tests"""
+        """Mark disbursement document as processed successfully if it passed tests"""
+        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
+                doc_status=DisbursementDocData.PROCESSED_SUCCESSFULLY
+        )
         self.is_processed = True
         self.save()
 
     def processing_failure(self, failure_reason):
         """
-        Mark document as not processed successfully as it didn't pass tests
+        Mark disbursement document as not processed successfully as it didn't pass tests
         :param failure_reason: Reason made this document didn't pass processing phase
         """
+        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
+                doc_status=DisbursementDocData.PROCESSING_FAILURE
+        )
         self.is_processed = False
         self.processing_failure_reason = _(failure_reason)
         self.save()
+
+    def mark_disbursement_failure(self):
+        """Mark disbursement document disbursement status as failed"""
+        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
+                doc_status=DisbursementDocData.DISBURSEMENT_FAILURE
+        )
+
+    def mark_disbursed_successfully(self, disburser, transaction_id, transaction_status):
+        """
+        Mark disbursement document as disbursed successfully
+        :param disburser: Checker user who tried to disburse this document
+        :param transaction_id: transaction id from the disburse response
+        :param transaction_status: transaction status from the disburse response
+        """
+        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
+                doc_status=DisbursementDocData.DISBURSED_SUCCESSFULLY,
+                txn_id=transaction_id,
+                txn_status=transaction_status
+        )
+        self.is_disbursed = True
+        self.disbursed_by = disburser
+        self.save()
+
+    @property
+    def validation_process_is_running(self):
+        """:return True if doc is uploaded successfully"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.UPLOADED_SUCCESSFULLY
+
+    @property
+    def validated_successfully(self):
+        """:return True if doc is processed successfully"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.PROCESSED_SUCCESSFULLY
+
+    @property
+    def validation_failed(self):
+        """:return True if doc is processed failure is happened"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.PROCESSING_FAILURE
+
+    @property
+    def disbursed_successfully(self):
+        """:return True if doc is disbursed successfully"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.DISBURSED_SUCCESSFULLY
+
+    @property
+    def disbursement_failed(self):
+        """:return True if doc is disbursement failure happened"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.DISBURSEMENT_FAILURE

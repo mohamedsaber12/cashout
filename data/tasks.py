@@ -48,21 +48,33 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     Category has no files
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
+    issuers_valid_list = ['vodafone', 'etisalat', 'orange', 'aman']
     callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
+    is_normal_flow = doc_obj.owner.root.root_entity_setups.is_normal_flow
     amount_to_be_disbursed_within_custom_budget_threshold = False
-    amount_position, msisdn_position = doc_obj.file_category.fields_cols()
+    amount_position, msisdn_position, issuer_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
     xl_sheet = xl_workbook.sheet_by_index(0)
     rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
     list_of_dicts = []
+    env = get_dot_env()
+    response_dict = None
 
-    # ToDo: use Forms to validate excel sheet records instead of a lot of loops logic
-    for row, cell_obj in enumerate(rows, start_index):
-        row_dict = {'amount': '', 'error': '', 'msisdn': '', 'status': ''}
+    for counter, sheet_record in enumerate(rows, start_index):
+        row_dict = {'amount': '', 'error': '', 'msisdn': '', 'status': '', 'issuer': ''}
 
-        for pos, item in enumerate(cell_obj):
-            if pos == amount_position:
+        for sheet_record_position, item in enumerate(sheet_record):
+            if not is_normal_flow and sheet_record_position == issuer_position:
+                if str(item.value).lower() in issuers_valid_list:
+                    row_dict['issuer'] = str(item.value).lower()
+                else:
+                    if row_dict['error']:
+                        row_dict['error'] += '\nInvalid issuer option'
+                    else:
+                        row_dict['error'] = 'Invalid issuer option'
+
+            elif sheet_record_position == amount_position:
                 try:
                     if item.value == '':
                         row_dict['error'] = '\nEmpty amount'
@@ -79,7 +91,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                         row_dict['error'] = '\nInvalid amount'
                     row_dict['amount'] = item.value
 
-            elif pos == msisdn_position:
+            elif sheet_record_position == msisdn_position:
                 if item.ctype == 2:
                     str_value = str(int(item.value))
                 else:
@@ -117,7 +129,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             row_dict['status'] = 'invalid'
         list_of_dicts.append(row_dict)
 
-    msisdn, amount, errors, status, partial_msisdn, partial_amount = [], [], [], [], [], []
+    msisdn, amount, issuer, errors, status, partial_msisdn, partial_amount = [], [], [], [], [], [], []
     for dict in list_of_dicts:
         msisdn.append(dict['msisdn'])
         amount.append(dict['amount'])
@@ -126,6 +138,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         if status[-1] == 'valid':
             partial_msisdn.append(dict['msisdn'])
             partial_amount.append(dict['amount'])
+            issuer.append(dict['issuer']) if not is_normal_flow else False
 
     valid = True
     partial_valid = False
@@ -139,9 +152,6 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             partial_valid = True
             break
 
-    # Levels of file validations
-    # 1, Uploaded file's total amount exceeds the maximum amount that can be disbursed
-    # 2, Uploaded file's format is not consistent with the one chosen from the defined formats
     if errors[0] is not None:
         error_message = errors[0]
     else:
@@ -188,9 +198,6 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         if not partial_valid:
             return False
 
-    env = get_dot_env()
-    response_dict = None
-
     if callwallets_moderator.change_profile:
         superadmin = doc_obj.owner.root.client.creator
         payload = superadmin.vmt.accumulate_change_profile_payload(partial_msisdn, doc_obj.owner.root.client.get_fees())
@@ -228,9 +235,15 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         notify_maker(doc_obj)
         return False
 
-    data = zip(partial_amount, partial_msisdn)
+    if is_normal_flow:
+        data = zip(partial_amount, partial_msisdn)
+        DisbursementData.objects.bulk_create(
+                [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1]) for i in data]
+        )
+    else:
+        data = zip(partial_amount, partial_msisdn, issuer)
     DisbursementData.objects.bulk_create(
-            [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1]) for i in data]
+            [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1], issuer=i[2]) for i in data]
     )
     doc_obj.total_amount = sum(partial_amount)
     doc_obj.total_count = len(partial_amount)

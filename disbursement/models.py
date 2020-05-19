@@ -78,31 +78,6 @@ class DisbursementDocData(AbstractBaseDocStatus):
         """String representation for disbursement doc data model objects"""
         return f"{self.txn_id} -- {self.doc.id}"
 
-    def mark_successful(self):
-        """
-        Mark document disbursement status as successful when
-        Document disbursed successfully and the callback has returned whether the disbursement ratio > 0 or not.
-        """
-        self.doc_status = self.SUCCESSFUL
-        self.save()
-
-    def mark_failed(self):
-        """
-        Mark document disbursement status as failed when:
-            1. Document didn't pass the validations at the uploading phase.
-            2. Error has occurred while disbursing this document.
-        """
-        self.doc_status = self.FAILED
-        self.save()
-
-    def mark_pending(self):
-        """
-        Mark document disbursement status as pending when the disbursement callback has not returned
-        Document disbursed successfully and the callback has not returned yet.
-        """
-        self.doc_status = self.PENDING
-        self.save()
-
 
 class DisbursementData(AbstractTimeStamp):
     """
@@ -113,7 +88,7 @@ class DisbursementData(AbstractTimeStamp):
     is_disbursed = models.BooleanField(default=0)
     amount = models.FloatField(verbose_name=_('AMOUNT'))
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
-    issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='vodafone')
+    issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default')
     reason = models.TextField()
 
     class Meta:

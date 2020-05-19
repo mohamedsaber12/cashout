@@ -86,8 +86,13 @@ class FileCategory(models.Model):
         """
         # Imported here because of a circular import issue
         from ..utils import excell_letter_to_index
+        issuer_position = False
+
+        if self.unique_identifiers_number > 2:
+            issuer_position = excell_letter_to_index(self.get_field_position(self.issuer_field)[0]) - 1
 
         return (
             excell_letter_to_index(self.get_field_position(self.amount_field)[0]) - 1 ,
-            excell_letter_to_index(self.get_field_position(self.unique_field)[0]) - 1
+            excell_letter_to_index(self.get_field_position(self.unique_field)[0]) - 1 ,
+            issuer_position,
         )

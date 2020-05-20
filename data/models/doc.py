@@ -234,6 +234,16 @@ class Doc(models.Model):
         return self.disbursement_txn.doc_status == DisbursementDocData.DISBURSEMENT_FAILURE
 
     @property
+    def waiting_disbursement(self):
+        """:return True if doc ready for disbursement after notifying checkers"""
+        return self.can_be_disbursed and not self.disbursed_successfully and not self.disbursement_failed
+
+    @property
     def has_callback(self):
         """:return True if doc has disbursement callback"""
         return self.disbursement_txn.has_callback
+
+    @property
+    def waiting_disbursement_callback(self):
+        """:return True if doc disbursed successfully and the waits for the callback from the wallets side"""
+        return self.disbursed_successfully and not self.has_callback

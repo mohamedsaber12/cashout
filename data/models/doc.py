@@ -178,9 +178,7 @@ class Doc(models.Model):
 
     def processed_successfully(self):
         """Mark disbursement document as processed successfully if it passed tests"""
-        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
-                doc_status=DisbursementDocData.PROCESSED_SUCCESSFULLY
-        )
+        self.disbursement_txn.mark_doc_status_processed_successfully()
         self.is_processed = True
         self.save()
 
@@ -189,18 +187,14 @@ class Doc(models.Model):
         Mark disbursement document as not processed successfully as it didn't pass tests
         :param failure_reason: Reason made this document didn't pass processing phase
         """
-        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
-                doc_status=DisbursementDocData.PROCESSING_FAILURE
-        )
+        self.disbursement_txn.mark_doc_status_processing_failure()
         self.is_processed = False
         self.processing_failure_reason = _(failure_reason)
         self.save()
 
     def mark_disbursement_failure(self):
         """Mark disbursement document disbursement status as failed"""
-        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
-                doc_status=DisbursementDocData.DISBURSEMENT_FAILURE
-        )
+        self.disbursement_txn.mark_doc_status_disbursement_failure()
 
     def mark_disbursed_successfully(self, disburser, transaction_id, transaction_status):
         """
@@ -209,11 +203,7 @@ class Doc(models.Model):
         :param transaction_id: transaction id from the disburse response
         :param transaction_status: transaction status from the disburse response
         """
-        DisbursementDocData.objects.select_for_update().filter(doc=self).update(
-                doc_status=DisbursementDocData.DISBURSED_SUCCESSFULLY,
-                txn_id=transaction_id,
-                txn_status=transaction_status
-        )
+        self.disbursement_txn.mark_doc_status_disbursed_successfully(transaction_id, transaction_status)
         self.is_disbursed = True
         self.disbursed_by = disburser
         self.save()
@@ -242,3 +232,8 @@ class Doc(models.Model):
     def disbursement_failed(self):
         """:return True if doc is disbursement failure happened"""
         return self.disbursement_txn.doc_status == DisbursementDocData.DISBURSEMENT_FAILURE
+
+    @property
+    def has_callback(self):
+        """:return True if doc has disbursement callback"""
+        return self.disbursement_txn.has_callback

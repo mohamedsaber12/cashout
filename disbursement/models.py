@@ -78,6 +78,32 @@ class DisbursementDocData(AbstractBaseDocStatus):
         """String representation for disbursement doc data model objects"""
         return f"{self.txn_id} -- {self.doc.id}"
 
+    def mark_doc_status_processed_successfully(self):
+        """Mark disbursement doc status as processed successfully"""
+        self.doc_status = DisbursementDocData.PROCESSED_SUCCESSFULLY
+        self.save()
+
+    def mark_doc_status_processing_failure(self):
+        """Mark disbursement doc status as processing failure"""
+        self.doc_status = DisbursementDocData.PROCESSING_FAILURE
+        self.save()
+
+    def mark_doc_status_disbursed_successfully(self, transaction_id, transaction_status):
+        """
+        Mark disbursement doc status as disbursed successfully
+        :param transaction_id: transaction id from the disbursement response
+        :param transaction_status: transaction status from the disbursement response
+        """
+        self.txn_id = transaction_id
+        self.txn_status = transaction_status
+        self.doc_status = DisbursementDocData.DISBURSED_SUCCESSFULLY
+        self.save()
+
+    def mark_doc_status_disbursement_failure(self):
+        """Mark disbursement doc status as disbursement failure"""
+        self.doc_status = DisbursementDocData.DISBURSEMENT_FAILURE
+        self.save()
+
 
 class DisbursementData(AbstractTimeStamp):
     """

@@ -62,12 +62,13 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     response_dict = None
 
     for counter, sheet_record in enumerate(rows, start_index):
-        row_dict = {'amount': '', 'error': '', 'msisdn': '', 'status': '', 'issuer': ''}
+        row_dict = {'msisdn': '', 'amount': '', 'issuer': '', 'error': ''}
 
         for sheet_record_position, item in enumerate(sheet_record):
             if not is_normal_flow and sheet_record_position == issuer_position:
                 if str(item.value).lower() in issuers_valid_list:
                     row_dict['issuer'] = str(item.value).lower()
+                    row_dict['error'] = None
                 else:
                     if row_dict['error']:
                         row_dict['error'] += '\nInvalid issuer option'
@@ -76,9 +77,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
             elif sheet_record_position == amount_position:
                 try:
-                    if item.value == '':
-                        row_dict['error'] = '\nEmpty amount'
-                    elif float(item.value) < 0.01:
+                    if item.value == '' or float(item.value) < 1.0:
                         row_dict['error'] = '\nInvalid amount'
                     else:
                         row_dict['amount'] = float(item.value)
@@ -102,7 +101,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                     str_value = '0020' + str_value
                 elif str_value.startswith('2') and len(str_value) == 12:
                     str_value = '00' + str_value
-                elif str_value.startswith('01'):
+                elif str_value.startswith('01') and len(str_value) == 11:
                     str_value = '002' + str_value
                 else:
                     row_dict['msisdn'] = item.value
@@ -123,84 +122,59 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                         row_dict['error'] = None
                     row_dict['msisdn'] = str_value.replace(" ", "")
 
-        if row_dict['error'] is None:
-            row_dict['status'] = 'valid'
-        else:
-            row_dict['status'] = 'invalid'
         list_of_dicts.append(row_dict)
 
-    msisdn, amount, issuer, errors, status, partial_msisdn, partial_amount = [], [], [], [], [], [], []
+    msisdn, amount, issuer, errors = [], [], [], []
     for dict in list_of_dicts:
         msisdn.append(dict['msisdn'])
         amount.append(dict['amount'])
+        issuer.append(dict['issuer']) if not is_normal_flow else False
         errors.append(dict['error'])
-        status.append(dict['status'])
-        if status[-1] == 'valid':
-            partial_msisdn.append(dict['msisdn'])
-            partial_amount.append(dict['amount'])
-            issuer.append(dict['issuer']) if not is_normal_flow else False
 
     valid = True
-    partial_valid = False
     for item in errors:
         if item is not None:
             valid = False
             break
 
-    for item in status:
-        if item == 'valid':
-            partial_valid = True
-            break
-
-    if errors[0] is not None:
-        error_message = errors[0]
-    else:
-        error_message = None
+    error_message = None
     download_url = False
 
     if doc_obj.owner.root.has_custom_budget:
         amount_to_be_disbursed_within_custom_budget_threshold = Budget.objects.get(
-                disburser=doc_obj.owner.root).within_threshold(sum(partial_amount))
+                disburser=doc_obj.owner.root).within_threshold(sum([float(value) for value in amount if value]))
 
-    if valid or partial_valid:
-        max_amount_can_be_disbursed = max(
-            [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
-        )
-        try:
-            if sum(partial_amount) > max_amount_can_be_disbursed:
-                error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
-                valid = False
-                partial_valid = False
+    max_amount_can_be_disbursed = max(
+        [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
+    )
+    if sum([float(value) for value in amount if value]) > max_amount_can_be_disbursed:
+        error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
+        valid = False
 
-            if doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
-                error_message = MSG_NOT_WITHIN_THRESHOLD
-                valid = False
-                partial_valid = False
-        except:
-            error_message = _("Empty or Invalid Amount Numbers")
-            valid = False
-            partial_valid = False
+    if doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
+        error_message = MSG_NOT_WITHIN_THRESHOLD
+        valid = False
 
     if not valid:
-        filename = 'failed_disbursement_validation_%s.xlsx' % (randomword(4))
-        file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+        default_headers = ['Mobile Number', 'Amount']
+        filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         if error_message is None:
             error_message = _("File validation error")
-            data = list(zip(amount, msisdn, errors))
-            headers = ['amount', 'mobile number', 'errors']
+            data = list(zip(msisdn, amount, errors)) if is_normal_flow else list(zip(msisdn, amount, issuer, errors))
+            headers = default_headers + ['Errors'] if is_normal_flow else default_headers + ['Issuer', 'Errors']
             data.insert(0, headers)
             export_excel(file_path, data)
             download_url = settings.BASE_URL + \
                 str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
-                '?filename=' + filename
+                f"?filename={filename}"
         doc_obj.processing_failure(error_message)
         notify_maker(doc_obj, download_url) if download_url else notify_maker(doc_obj)
-        if not partial_valid:
-            return False
+        return False
 
     if callwallets_moderator.change_profile:
         superadmin = doc_obj.owner.root.client.creator
-        payload = superadmin.vmt.accumulate_change_profile_payload(partial_msisdn, doc_obj.owner.root.client.get_fees())
+        payload = superadmin.vmt.accumulate_change_profile_payload(msisdn, doc_obj.owner.root.client.get_fees())
         try:
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
@@ -236,17 +210,17 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         return False
 
     if is_normal_flow:
-        data = zip(partial_amount, partial_msisdn)
+        data = zip(amount, msisdn)
         DisbursementData.objects.bulk_create(
                 [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1]) for i in data]
         )
     else:
-        data = zip(partial_amount, partial_msisdn, issuer)
+        data = zip(amount, msisdn, issuer)
     DisbursementData.objects.bulk_create(
             [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1], issuer=i[2]) for i in data]
     )
-    doc_obj.total_amount = sum(partial_amount)
-    doc_obj.total_count = len(partial_amount)
+    doc_obj.total_amount = sum(amount)
+    doc_obj.total_count = len(amount)
     doc_obj.txn_id = response_dict['BATCH_ID'] if response_dict else None
     doc_obj.save()
     return True

@@ -76,7 +76,7 @@ class DisbursementHomeView(View):
         """
         has_vmt_setup = request.user.root.super_admin.vmt
         doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.DISBURSEMENT)
-        paginator = Paginator(doc_list_disbursement, 10)
+        paginator = Paginator(doc_list_disbursement, 7)
         page = request.GET.get('page')
         docs = paginator.get_page(page)
 

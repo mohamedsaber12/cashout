@@ -277,15 +277,14 @@
 <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
 <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 <script>
-    $(document).ready(function () {
+    $('#doc-datatable').DataTable();
 
-        
+    $(document).ready(function () {
 
         $("#disburse_button").on("click", function () {
             $('#AgentModal').removeClass('hide');
             $('#AgentModal').modal();
         });
-         $('#doc-datatable').DataTable();
 
         if ('{{redirect}}' == 'true') {
             if ('{{disburse}}' == 1) {

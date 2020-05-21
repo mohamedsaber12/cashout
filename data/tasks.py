@@ -124,12 +124,14 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
         list_of_dicts.append(row_dict)
 
-    msisdn, amount, issuer, errors = [], [], [], []
+    msisdn, amount, issuer,  vodafone_msisdn,errors = [], [], [], [], []
     for dict in list_of_dicts:
         msisdn.append(dict['msisdn'])
         amount.append(dict['amount'])
-        issuer.append(dict['issuer']) if not is_normal_flow else False
         errors.append(dict['error'])
+        if not is_normal_flow:
+            issuer.append(dict['issuer'])
+            vodafone_msisdn.append(dict['msisdn']) if str(dict['issuer']).lower() == 'vodafone' else None
 
     valid = True
     for item in errors:
@@ -139,6 +141,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
     error_message = None
     download_url = False
+    _msisdn = msisdn if is_normal_flow else vodafone_msisdn
 
     if doc_obj.owner.root.has_custom_budget:
         amount_to_be_disbursed_within_custom_budget_threshold = Budget.objects.get(
@@ -174,7 +177,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
     if callwallets_moderator.change_profile:
         superadmin = doc_obj.owner.root.client.creator
-        payload = superadmin.vmt.accumulate_change_profile_payload(msisdn, doc_obj.owner.root.client.get_fees())
+        payload = superadmin.vmt.accumulate_change_profile_payload(_msisdn, doc_obj.owner.root.client.get_fees())
         try:
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:

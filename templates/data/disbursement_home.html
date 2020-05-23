@@ -17,17 +17,17 @@
 {% endblock gentellacss %}
 
 {% block body %}
-    {% if not has_vmt_setup or not has_any_file_category %}
+    {% if not has_vmt_setup or not request.user.is_root and not has_any_file_category %}
         <div class="well upload-nav col-xs-12">
-            <p style="font-size: 30px; text-align: center;">{% trans 'Your Admin setup is not completed yet!' %}</p>
+            <strong style="margin-top: 15px;">{% trans 'Account is suspended due to uncompleted setups of your Admin!' %}</strong>
         </div>
 
     {% elif not admin_is_active %}
         <div class="well upload-nav col-xs-12">
             {% if request.user.is_root %}
-                <p style="font-size: 30px; text-align: center;">{% trans "You're not active any more!" %}</p>
+                <strong style="margin-top: 15px;">{% trans "You're not active any more!" %}</strong>
             {% else %}
-                <p style="font-size: 30px; text-align: center;">{% trans 'Your Admin is not active!' %}</p>
+                <strong style="margin-top: 15px;">{% trans 'Your Admin is no longer active!' %}</strong>
             {% endif %}
         </div>
 

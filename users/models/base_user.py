@@ -12,6 +12,8 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from disbursement.models import VMTData
+
 
 TYPES = (
     (0, 'Super'),           # when creating super AN EMAIL MUST be created.
@@ -194,6 +196,11 @@ class User(AbstractUser):
         """Check if this superadmin's vmt credentials setups is completed"""
         if self.is_superadmin and self.vmt:
             return True
+        elif self.is_root:
+            try:
+                return True if self.root.super_admin.vmt else None
+            except VMTData.DoesNotExist:
+                return False
         return False
 
     @property

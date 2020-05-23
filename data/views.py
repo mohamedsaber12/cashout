@@ -74,7 +74,7 @@ class DisbursementHomeView(View):
             1. Documents can be filtered by date.
             2. Documents are paginated but not used in template.
         """
-        has_vmt_setup = request.user.root.super_admin.vmt
+        has_vmt_setup = request.user.root.has_vmt_setup
         doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.DISBURSEMENT)
         paginator = Paginator(doc_list_disbursement, 7)
         page = request.GET.get('page')

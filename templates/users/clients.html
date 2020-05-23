@@ -8,11 +8,8 @@
 {% block body %}
   {% if not request.user.has_vmt_setup %}
     <div class="well upload-nav col-xs-12">
-      <p style="padding: 25px 25px; font-size: 40px; text-align: center;">
-        {% trans 'Your VMT data setup is not completed yet!' %}
-      </p>
+      <strong style="margin-top: 15px;">{% trans 'Account is suspended due to uncompleted setups!' %}</strong>
     </div>
-
   {% else %}
 
     <!-- page content -->

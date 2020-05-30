@@ -21,7 +21,7 @@ from disbursement.resources import DisbursementDataResource
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
-from utilities.messages import MSG_TRY_OR_CONTACT
+from utilities.messages import MSG_TRY_OR_CONTACT, MSG_WRONG_FILE_FORMAT
 
 from .decorators import respects_language
 from .models import Doc, FileData
@@ -124,7 +124,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
         list_of_dicts.append(row_dict)
 
-    msisdn, amount, issuer,  vodafone_msisdn,errors = [], [], [], [], []
+    msisdn, amount, issuer, vodafone_msisdn,errors = [], [], [], [], []
     for dict in list_of_dicts:
         msisdn.append(dict['msisdn'])
         amount.append(dict['amount'])
@@ -134,27 +134,32 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             vodafone_msisdn.append(dict['msisdn']) if str(dict['issuer']).lower() == 'vodafone' else None
 
     valid = True
-    for item in errors:
-        if item is not None:
-            valid = False
-            break
+    if len([value for value in errors if value]) > 0:
+        for item in errors:
+            if item is not None:
+                valid = False
+                break
 
     error_message = None
     download_url = False
     _msisdn = msisdn if is_normal_flow else vodafone_msisdn
 
-    if doc_obj.owner.root.has_custom_budget:
+    if valid and (len([value for value in msisdn if value]) == 0 or len([value for value in amount if value]) == 0):
+        valid = False
+        error_message = MSG_WRONG_FILE_FORMAT
+
+    if valid and doc_obj.owner.root.has_custom_budget:
         amount_to_be_disbursed_within_custom_budget_threshold = Budget.objects.get(
                 disburser=doc_obj.owner.root).within_threshold(sum([float(value) for value in amount if value]))
 
     max_amount_can_be_disbursed = max(
         [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
     )
-    if sum([float(value) for value in amount if value]) > max_amount_can_be_disbursed:
+    if valid and sum([float(value) for value in amount if value]) > max_amount_can_be_disbursed:
         error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
         valid = False
 
-    if doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
+    if valid and doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
         error_message = MSG_NOT_WITHIN_THRESHOLD
         valid = False
 

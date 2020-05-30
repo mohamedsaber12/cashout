@@ -219,9 +219,9 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         )
     else:
         data = zip(amount, msisdn, issuer)
-    DisbursementData.objects.bulk_create(
-            [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1], issuer=i[2]) for i in data]
-    )
+        DisbursementData.objects.bulk_create(
+                [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1], issuer=i[2]) for i in data]
+        )
     doc_obj.total_amount = sum(amount)
     doc_obj.total_count = len(amount)
     doc_obj.txn_id = response_dict['BATCH_ID'] if response_dict else None

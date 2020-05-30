@@ -31,7 +31,7 @@ class BaseInstantTransactionsListView(ListView):
 
     model = InstantTransaction
     context_object_name = 'instant_transactions'
-    paginate_by = 10
+    paginate_by = 11
 
 
 class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTransactionsListView):

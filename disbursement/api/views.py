@@ -83,17 +83,18 @@ class DisburseAPIView(APIView):
 
         # 3. Prepare the senders and recipients fields of the vmt dictionary
         pin = serializer.validated_data['pin']
-        agents = Agent.objects.select_related().filter(wallet_provider_id=provider_id, super=False)
-        senders = agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
-        senders = list(senders)
-        for internal_dict in senders:
+        agents = Agent.objects.select_related().\
+            filter(wallet_provider_id=provider_id, super=False).filter(msisdn__startswith='010')
+        vodafone_senders = agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
+        vodafone_senders = list(vodafone_senders)
+        for internal_dict in vodafone_senders:
             internal_dict.update({'PIN': pin})
 
-        recipients = DisbursementData.objects.select_related('doc').filter(
-                doc_id=serializer.validated_data['doc_id']
+        vodafone_recipients = DisbursementData.objects.select_related('doc').filter(
+                doc_id=serializer.validated_data['doc_id'], issuer__in=['vodafone', 'default']
         ).extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
 
-        payload = superadmin.vmt.accumulate_bulk_disbursement_payload(senders, list(recipients))
+        payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vodafone_senders, list(vodafone_recipients))
 
         payload_without_pins = copy.deepcopy(payload)
         for senders_dictionary in payload_without_pins['SENDERS']:

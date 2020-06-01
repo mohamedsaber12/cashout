@@ -34,9 +34,25 @@ class Agent(models.Model):
     Model for representing every admin related super-agent and agents
     """
 
+    VODAFONE = 'V'
+    ETISALAT = 'E'
+    ORANGE = 'O'
+    AGENT_TYPE_CHOICES = [
+        (VODAFONE, _('vodafone')),
+        (ETISALAT, _('etisalat')),
+        (ORANGE, _('orange'))
+    ]
+
     msisdn = models.CharField(max_length=14, verbose_name=_("Mobile number"))
     pin = models.BooleanField(default=False)
     super = models.BooleanField(default=False)
+    type = models.CharField(
+            _("agent type"),
+            max_length=1,
+            choices=AGENT_TYPE_CHOICES,
+            default=VODAFONE,
+            db_index=True,
+    )
     wallet_provider = models.ForeignKey(
             "users.RootUser",
             related_name="agents",

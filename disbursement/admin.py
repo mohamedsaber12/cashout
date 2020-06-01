@@ -18,8 +18,8 @@ class AgentAdmin(admin.ModelAdmin):
     Admin model for the tweaking the representation of the Agent model at the admin panel
     """
 
-    list_display = ['msisdn', 'wallet_provider', 'super', 'pin']
-    list_filter = ['pin', 'super', 'wallet_provider']
+    list_display = ['msisdn', 'wallet_provider', 'super', 'pin', 'type']
+    list_filter = ['pin', 'super', 'wallet_provider', 'type']
 
 
 @admin.register(Budget)

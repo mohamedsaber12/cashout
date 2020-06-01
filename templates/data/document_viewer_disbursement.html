@@ -297,15 +297,20 @@
                 $('#modal-message').append('<p>{% trans "Disbursement process stopped during an internal error, can you try again or contact you support team" %}</p><br>');
                 $('#myModal').removeClass('hide');
                 $('#myModal').modal();
+            } else if ('{{disburse}}' == 400) {
+                $('#modal-header').append('{% trans "Error occurred from your side!" %}');
+                $('#modal-message').append('<p>{% trans "Pin you entered is not correct, can you try again or contact you support team." %}</p>');
+                $('#myModal').removeClass('hide');
+                $('#myModal').modal();
             } else if ('{{disburse}}' == -1) {
                 $('#modal-header').append('{% trans "Error occurred from your side" %}');
                 if ('{{utm_validate}}' == 'false') {
                     $('#modal-message').append("<p>{% trans 'This document is disbursed before, if there is any error, please return back to the support team' %}</p><br>");
                 }
                 {% if utm_owner %}
-                if ('{{utm_owner}}' == 'false') {
-                    $('#modal-message').append('{% trans "You can not disburse this document" %}');
-                }
+                    if ('{{utm_owner}}' == 'false') {
+                        $('#modal-message').append('{% trans "You can not disburse this document" %}');
+                    }
                 {% endif %}
                 $('#myModal').removeClass('hide');
                 $('#myModal').modal();

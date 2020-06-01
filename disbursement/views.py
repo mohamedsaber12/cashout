@@ -70,6 +70,10 @@ def disburse(request, doc_id):
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 1,
                                                                                          'utm_redirect': 'success'})
             else:
+                if response.status_code == 400:
+                    return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 400,
+                                                                                             'utm_redirect': 'success'})
+
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 0,
                                                                                          'utm_redirect': 'success'})
 

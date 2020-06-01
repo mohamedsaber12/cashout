@@ -23,6 +23,7 @@ from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthen
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
 from users.models import CheckerUser, User
+from utilities.messages import MSG_DISBURSEMENT_ERROR, MSG_DISBURSEMENT_IS_RUNNING, MSG_PIN_INVALID
 
 from ..models import Agent, DisbursementData, DisbursementDocData
 from ..utils import custom_budget_logger
@@ -32,10 +33,6 @@ from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
-
-MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
-MSG_DISBURSEMENT_ERROR = _(f"Disbursement process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
-MSG_DISBURSEMENT_IS_RUNNING = _("Disbursement process is running, you can check reports later")
 
 
 class DisburseAPIView(APIView):
@@ -76,13 +73,19 @@ class DisburseAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         doc_obj = Doc.objects.get(id=serializer.validated_data['doc_id'])
 
+        pin = serializer.validated_data['pin']
+        if doc_obj.owner.root.pin != 'False' and not doc_obj.owner.root.check_pin(pin):
+            return HttpResponse(
+                    json.dumps({'message': _(MSG_PIN_INVALID), 'header': _('Error occurred from your side!')}),
+                    status=status.HTTP_400_BAD_REQUEST
+            )
+
         # 2. Catch the corresponding vmt dictionary
         user = User.objects.get(username=serializer.validated_data['user'])
         superadmin = user.root.client.creator
         provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.root.id
 
         # 3. Prepare the senders and recipients fields of the vmt dictionary
-        pin = serializer.validated_data['pin']
         agents = Agent.objects.select_related().\
             filter(wallet_provider_id=provider_id, super=False).filter(msisdn__startswith='010')
         vodafone_senders = agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
@@ -112,7 +115,7 @@ class DisburseAPIView(APIView):
             DATA_LOGGER.debug('[DISBURSE GENERAL ERROR]' + f"\nError{str(e)}")
             doc_obj.mark_disbursement_failure()
             return HttpResponse(
-                    json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
+                    json.dumps({'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}),
                     status=status.HTTP_424_FAILED_DEPENDENCY
             )
 
@@ -126,25 +129,21 @@ class DisburseAPIView(APIView):
             except KeyError:
                 doc_obj.mark_disbursement_failure()
                 return HttpResponse(
-                        json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
+                        json.dumps({'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}),
                         status=status.HTTP_424_FAILED_DEPENDENCY
                 )
 
             doc_obj.mark_disbursed_successfully(user, txn_id, txn_status)
             return HttpResponse(
-                    json.dumps({'message': MSG_DISBURSEMENT_IS_RUNNING, 'header': _('Disbursed, Thanks')}),
+                    json.dumps({'message': _(MSG_DISBURSEMENT_IS_RUNNING), 'header': _('Disbursed, Thanks')}),
                     status=status.HTTP_200_OK
             )
         else:
             doc_obj.mark_disbursement_failure()
             return HttpResponse(
-                    json.dumps({'message': MSG_DISBURSEMENT_ERROR, 'header': _('Error occurred, We are sorry')}),
+                    json.dumps({'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}),
                     status=status.HTTP_424_FAILED_DEPENDENCY
             )
-        #
-        #     return HttpResponse(
-        #         json.dumps({'message': _('Pin you entered is not correct'),
-        #                     'header': _('Error occurred, We are sorry')}), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 
 class DisburseCallBack(UpdateAPIView):

@@ -163,13 +163,14 @@ class DisburseCallBack(UpdateAPIView):
         """
         DATA_LOGGER.debug('[DISBURSE BULK - CALLBACK RESPONSE]' + f"\nCallback: {str(request.data)}")
         total_disbursed_amount = 0
-        successfully_disbursed_obj = None
+        last_doc_record_id = successfully_disbursed_obj = None
 
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
 
         for data in request.data['transactions']:
             try:
+                last_doc_record_id = int(data['id'])
                 DisbursementData.objects.select_for_update().filter(id=int(data['id'])).update(
                         is_disbursed=True if data['status'] == '0' else False,
                         reason=data.get('description', 'No Description found')
@@ -178,9 +179,6 @@ class DisburseCallBack(UpdateAPIView):
                 # If data['status'] = 0, it means this record amount is disbursed successfully
                 if data['status'] == '0':
                     successfully_disbursed_obj = DisbursementData.objects.get(id=int(data['id']))
-                    DisbursementDocData.objects.select_for_update().filter(
-                            doc=successfully_disbursed_obj.doc_id
-                    ).update(has_callback=True)
                     total_disbursed_amount += int(successfully_disbursed_obj.amount)
             except DisbursementData.DoesNotExist:
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
@@ -192,6 +190,9 @@ class DisburseCallBack(UpdateAPIView):
                     f"Total disbursed amount: {total_disbursed_amount} LE",
                     request.user.username, f" -- doc id: {successfully_disbursed_obj.doc_id}"
             )
+
+        if last_doc_record_id:
+            DisbursementDocData.objects.filter(doc__disbursement_data__id=last_doc_record_id).update(has_callback=True)
 
         return JsonResponse({}, status=status.HTTP_202_ACCEPTED)
 

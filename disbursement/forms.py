@@ -113,6 +113,7 @@ class PinForm(forms.Form):
                 return False
 
         self.agents.update(pin=True)
+        self.root.set_pin(raw_pin)
         return True
 
     def call_wallet(self, pin, msisdns):

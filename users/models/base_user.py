@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.core.exceptions import ValidationError
@@ -49,6 +50,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
+    pin = models.CharField(_('pin'), max_length=128, null=True, default=False)
     avatar_thumbnail = ProcessedImageField(
             upload_to='avatars',
             processors=[ResizeToFill(100, 100)],
@@ -78,6 +80,15 @@ class User(AbstractUser):
 
     def __str__(self):
         return str(self.username)
+
+    def set_pin(self, raw_pin):
+        """Sets pin for every Admin/Root user. Handles hashing formats"""
+        self.pin = make_password(raw_pin)
+        self.save()
+
+    def check_pin(self, raw_pin):
+        """Return a boolean of whether the raw_pin was correct. Handles hashing formats behind the scenes."""
+        return check_password(raw_pin, self.pin)
 
     def children(self):
         """

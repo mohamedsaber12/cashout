@@ -207,8 +207,6 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             notify_maker(doc_obj)
             return False
 
-        doc_obj.processed_successfully()
-        notify_maker(doc_obj)
     elif not callwallets_moderator.change_profile and callwallets_moderator.disbursement:
         doc_obj.processed_successfully()
         notify_maker(doc_obj)

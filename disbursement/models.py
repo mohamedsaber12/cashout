@@ -130,7 +130,7 @@ class DisbursementData(AbstractTimeStamp):
     is_disbursed = models.BooleanField(default=0)
     amount = models.FloatField(verbose_name=_('AMOUNT'))
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
-    issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default')
+    issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default', db_index=True)
     reason = models.TextField()
 
     class Meta:

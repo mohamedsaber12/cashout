@@ -34,6 +34,8 @@ from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
 
+DISBURSEMENT_ERR_RESP_DICT = {'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}
+
 
 class DisburseAPIView(APIView):
     """
@@ -57,7 +59,41 @@ class DisburseAPIView(APIView):
         ]
     }
     """
-    permission_classes = (BlacklistPermission,)
+    permission_classes = [BlacklistPermission]
+
+    @staticmethod
+    def prepare_agents_list(provider_id, raw_pin):
+        """
+        :param provider_id: wallet issuer/Root user id
+        :return: tuple of vodafone agent, etisalat agents lists
+        """
+        agents = Agent.objects.filter(wallet_provider_id=provider_id, super=False)
+        vodafone_agents = agents.filter(type=Agent.VODAFONE)
+        etisalat_agents = agents.filter(type=Agent.ETISALAT)
+
+        vodafone_agents = vodafone_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
+        etisalat_agents = etisalat_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
+
+        vodafone_agents = list(vodafone_agents)
+        for internal_dict in vodafone_agents:
+            internal_dict.update({'PIN': raw_pin})
+
+        return vodafone_agents, etisalat_agents
+
+    @staticmethod
+    def separate_recipients(doc_id):
+        """
+        :param doc_id: Id of the document being disbursed
+        :return: tuple of issuers' specific recipients
+        """
+        recipients = DisbursementData.objects.filter(doc_id=doc_id)
+
+        vodafone_recipients = recipients.filter(issuer__in=['vodafone', 'default']).\
+            extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
+        etisalat_recipients = recipients.filter(issuer='etisalat').\
+            extra(select={'MSISDN2': 'msisdn', 'AMOUNT': 'amount'}).values('MSISDN2', 'AMOUNT')
+
+        return vodafone_recipients, etisalat_recipients
 
     def post(self, request, *args, **kwargs):
         """
@@ -83,21 +119,12 @@ class DisburseAPIView(APIView):
         # 2. Catch the corresponding vmt dictionary
         user = User.objects.get(username=serializer.validated_data['user'])
         superadmin = user.root.client.creator
-        provider_id = Doc.objects.get(id=serializer.validated_data['doc_id']).owner.root.id
 
-        # 3. Prepare the senders and recipients fields of the vmt dictionary
-        agents = Agent.objects.select_related().\
-            filter(wallet_provider_id=provider_id, super=False).filter(msisdn__startswith='010')
-        vodafone_senders = agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
-        vodafone_senders = list(vodafone_senders)
-        for internal_dict in vodafone_senders:
-            internal_dict.update({'PIN': pin})
+        # 3. Prepare the senders and recipients list of dictionaries
+        vodafone_agents, etisalat_agents = self.prepare_agents_list(provider_id=doc_obj.owner.root.id, raw_pin=pin)
+        vodafone_recipients, etisalat_recipients = self.separate_recipients(doc_obj.id)
 
-        vodafone_recipients = DisbursementData.objects.select_related('doc').filter(
-                doc_id=serializer.validated_data['doc_id'], issuer__in=['vodafone', 'default']
-        ).extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
-
-        payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vodafone_senders, list(vodafone_recipients))
+        payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vodafone_agents, list(vodafone_recipients))
 
         payload_without_pins = copy.deepcopy(payload)
         for senders_dictionary in payload_without_pins['SENDERS']:
@@ -114,10 +141,7 @@ class DisburseAPIView(APIView):
         except Exception as e:
             DATA_LOGGER.debug('[DISBURSE GENERAL ERROR]' + f"\nError{str(e)}")
             doc_obj.mark_disbursement_failure()
-            return HttpResponse(
-                    json.dumps({'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}),
-                    status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
 
         if response.ok and response.json()["TXNSTATUS"] == '200':
             try:
@@ -128,10 +152,7 @@ class DisburseAPIView(APIView):
                     txn_id = response.json()["TXNID"]
             except KeyError:
                 doc_obj.mark_disbursement_failure()
-                return HttpResponse(
-                        json.dumps({'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}),
-                        status=status.HTTP_424_FAILED_DEPENDENCY
-                )
+                return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
 
             doc_obj.mark_disbursed_successfully(user, txn_id, txn_status)
             return HttpResponse(
@@ -140,10 +161,7 @@ class DisburseAPIView(APIView):
             )
         else:
             doc_obj.mark_disbursement_failure()
-            return HttpResponse(
-                    json.dumps({'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}),
-                    status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 
 class DisburseCallBack(UpdateAPIView):

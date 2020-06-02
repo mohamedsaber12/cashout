@@ -167,6 +167,35 @@ class AbstractBaseVMTData(models.Model):
         })
         return payload
 
+    def accumulate_instant_disbursement_payload(self,
+                                                agent_attr,
+                                                consumer_attr,
+                                                amount_attr,
+                                                raw_pin_attr,
+                                                issuer_attr):
+        """
+        :param agent_attr: Agent that will send/disburse the money
+        :param consumer_attr: Consumers of the e-money
+        :param amount_attr: Amount to be disbursed
+        :param issuer_attr: Wallet issuer channel that the e-money will be disbursed over
+        :return: instant disbursement request payload
+        """
+        valid_issuers_list = ['vodafone', 'etisalat']
+
+        if not all([agent_attr, consumer_attr, amount_attr, raw_pin_attr, issuer_attr]):
+            if str(issuer_attr).lower() not in valid_issuers_list:
+                raise ValueError(_("Parameters' values are not proper for the instant disbursement dictionary"))
+
+        payload = self.return_vmt_data(self.INSTANT_DISBURSEMENT)
+        payload.update({
+            'WALLETISSUER': issuer_attr.upper(),
+            'MSISDN': agent_attr,
+            'MSISDN2': consumer_attr,
+            'AMOUNT': amount_attr,
+            'PIN': raw_pin_attr
+        })
+        return payload
+
     def accumulate_change_profile_payload(self, users_attr, new_profile_attr):
         """
         :param users_attr: MSISDNs which we want to change their fees profiles

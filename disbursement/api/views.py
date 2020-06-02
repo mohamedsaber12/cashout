@@ -1,9 +1,7 @@
-import copy
 import json
 import logging
 
-import environ
-import requests
+from requests.exceptions import HTTPError
 import xlrd
 
 from django.http import HttpResponse, JsonResponse
@@ -23,6 +21,8 @@ from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthen
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
 from users.models import CheckerUser, User
+from utilities.custom_requests import CustomRequests
+from utilities.functions import get_value_from_env
 from utilities.messages import MSG_DISBURSEMENT_ERROR, MSG_DISBURSEMENT_IS_RUNNING, MSG_PIN_INVALID
 
 from ..models import Agent, DisbursementData, DisbursementDocData
@@ -35,6 +35,7 @@ CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
 
 DISBURSEMENT_ERR_RESP_DICT = {'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}
+DISBURSEMENT_RUNNING_RESP_DICT = {'message': _(MSG_DISBURSEMENT_IS_RUNNING), 'header': _('Disbursed, Thanks')}
 
 
 class DisburseAPIView(APIView):
@@ -72,13 +73,13 @@ class DisburseAPIView(APIView):
         etisalat_agents = agents.filter(type=Agent.ETISALAT)
 
         vodafone_agents = vodafone_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
-        etisalat_agents = etisalat_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
+        etisalat_agents = etisalat_agents.values_list('msisdn', flat=True)
 
         vodafone_agents = list(vodafone_agents)
         for internal_dict in vodafone_agents:
             internal_dict.update({'PIN': raw_pin})
 
-        return vodafone_agents, etisalat_agents
+        return vodafone_agents, list(etisalat_agents)
 
     @staticmethod
     def separate_recipients(doc_id):
@@ -91,18 +92,57 @@ class DisburseAPIView(APIView):
         vodafone_recipients = recipients.filter(issuer__in=['vodafone', 'default']).\
             extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
         etisalat_recipients = recipients.filter(issuer='etisalat').\
-            extra(select={'MSISDN2': 'msisdn', 'AMOUNT': 'amount'}).values('MSISDN2', 'AMOUNT')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount'}).values('msisdn', 'amount')
 
-        return vodafone_recipients, etisalat_recipients
+        return vodafone_recipients, list(etisalat_recipients)
+
+    def disburse_for_vodafone(self, url, payload, original_request_obj):
+        """
+        Disburse for vodafone recipients
+        :param url: wallets environment that will handle the disbursement request
+        :param payload: request payload to be sent
+        :param original_request_obj: original request object from the client
+        :return: response object if successful disbursement or False
+        """
+        http_request = CustomRequests(log_file="disburse", request_obj=original_request_obj)
+
+        try:
+            return http_request.post(url=url, payload=payload, sub_logging_head="VODAFONE BULK DISBURSEMENT")
+        except (HTTPError, ConnectionError, Exception):
+            return False
+
+    def determine_disbursement_status(self, checker_user, doc_obj, vf_response, ets_response):
+        """
+        Determine document disbursement disbursement status based on the disbursement response
+        :param checker_user: user who triggered the disbursement request
+        :param doc_obj: document object being disbursed
+        :param vf_response: disbursement response object for vodafone recipients
+        :param ets_response: disbursement response object for etisalat recipients
+        :return: True/False
+        """
+        for response in [vf_response, ets_response]:
+            if response and response.ok and response.json()["TXNSTATUS"] == '200':
+                try:
+                    txn_status = response.json()["TXNSTATUS"]
+                    try:
+                        txn_id = response.json()["BATCH_ID"]
+                    except KeyError:
+                        txn_id = response.json()["TXNID"]
+                except KeyError:
+                    doc_obj.mark_disbursement_failure()
+                    return False
+
+                # ToDo: Handle txn_id, txn_status for etisalat recipients task
+                doc_obj.mark_disbursed_successfully(checker_user, txn_id, txn_status)
+                return True
+
+        doc_obj.mark_disbursement_failure()
+        return False
 
     def post(self, request, *args, **kwargs):
         """
         Handles POST requests to make a disbursement for a bulk of MSISDNs
         """
-        env = environ.Env()
-        import os
-        from django.conf import settings
-        environ.Env.read_env(env_file=os.path.join(settings.BASE_DIR, '.env'))
 
         # 1. Validate the serializer's data
         serializer = DisbursementSerializer(data=request.data)
@@ -117,50 +157,30 @@ class DisburseAPIView(APIView):
             )
 
         # 2. Catch the corresponding vmt dictionary
-        user = User.objects.get(username=serializer.validated_data['user'])
-        superadmin = user.root.client.creator
+        checker = User.objects.get(username=serializer.validated_data['user'])
+        superadmin = checker.root.client.creator
+        admin = checker.root
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        vf_response = ets_response = False
 
         # 3. Prepare the senders and recipients list of dictionaries
-        vodafone_agents, etisalat_agents = self.prepare_agents_list(provider_id=doc_obj.owner.root.id, raw_pin=pin)
+        vodafone_agents, etisalat_agents = self.prepare_agents_list(provider_id=admin.id, raw_pin=pin)
         vodafone_recipients, etisalat_recipients = self.separate_recipients(doc_obj.id)
 
-        payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vodafone_agents, list(vodafone_recipients))
+        if etisalat_recipients:
+            pass
 
-        payload_without_pins = copy.deepcopy(payload)
-        for senders_dictionary in payload_without_pins['SENDERS']:
-            senders_dictionary['PIN'] = 'xxxxxx'
+        if vodafone_recipients:
+            vf_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vodafone_agents, list(vodafone_recipients))
+            vf_response = self.disburse_for_vodafone(wallets_env_url, vf_payload, original_request_obj=request)
 
-        try:
-            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
-            DATA_LOGGER.debug(
-                    "[DISBURSE BULK - REQUEST PAYLOAD]" + f"\nUser: {user}\nPayload: {str(payload_without_pins)}"
-            )
-            DATA_LOGGER.debug("[DISBURSE BULK - STATUS RESPONSE]" + f"\nStatus: {str(response.json())}")
-        except ValueError:
-            DATA_LOGGER.debug('[DISBURSE VALUE ERROR]' + f"\n{str(response.status_code)} -- {str(response.reason)}")
-        except Exception as e:
-            DATA_LOGGER.debug('[DISBURSE GENERAL ERROR]' + f"\nError{str(e)}")
-            doc_obj.mark_disbursement_failure()
-            return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
+        is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, ets_response)
 
-        if response.ok and response.json()["TXNSTATUS"] == '200':
-            try:
-                txn_status = response.json()["TXNSTATUS"]
-                try:
-                    txn_id = response.json()["BATCH_ID"]
-                except KeyError:
-                    txn_id = response.json()["TXNID"]
-            except KeyError:
-                doc_obj.mark_disbursement_failure()
-                return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
-
-            doc_obj.mark_disbursed_successfully(user, txn_id, txn_status)
-            return HttpResponse(
-                    json.dumps({'message': _(MSG_DISBURSEMENT_IS_RUNNING), 'header': _('Disbursed, Thanks')}),
-                    status=status.HTTP_200_OK
-            )
+        if is_success_disbursement:
+            # ToDo: Log using checker user
+            return HttpResponse(json.dumps(DISBURSEMENT_RUNNING_RESP_DICT), status=status.HTTP_200_OK)
         else:
-            doc_obj.mark_disbursement_failure()
+            # ToDo: Log using checker user
             return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 

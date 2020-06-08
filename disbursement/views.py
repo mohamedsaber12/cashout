@@ -439,38 +439,31 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
                                        f"{Budget.objects.get(disburser__username=entity_username).current_balance}"
                 custom_budget_msg = " - HAS CUSTOM BUDGET"
 
-        payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
+        payload, refined_payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
+
         try:
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
             WALLET_API_LOGGER.debug(
-                    f"[BALANCE INQUIRY ERROR{custom_budget_msg}]\nUser: {request.user}\nPayload: {payload}\nError: {e}"
+                    f"[BALANCE INQUIRY ERROR{custom_budget_msg}]\nUser: {request.user}" +
+                    f"\nPayload: {refined_payload}\nError: {e}"
             )
             return False, MSG_BALANCE_INQUIRY_ERROR
 
         if response.ok:
             resp_json = response.json()
+            logging_head_and_user = f"[BALANCE INQUIRY{custom_budget_msg}]\nUser: {request.user}"
+            logging_payload_resp = f"Payload: {refined_payload}\nResponse: {response.status_code} -- {response.text}"
 
             if resp_json["TXNSTATUS"] == '200':
+                WALLET_API_LOGGER.debug(logging_head_and_user + f"{custom_budget_amount}\n" + logging_payload_resp)
+
                 if request.user.is_root and (has_custom_budget or is_instant_family):
-                    WALLET_API_LOGGER.debug(
-                            f"[BALANCE INQUIRY{custom_budget_msg}]\n" +
-                            f"User: {request.user}{custom_budget_amount}\n" +
-                            f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
-                    )
-                    return True, custom_budget_amount[35:]              # Remove the headed message
+                    return True, custom_budget_amount[35:]
                 if request.user.is_superadmin or request.user.root:
-                    WALLET_API_LOGGER.debug(
-                            f"[BALANCE INQUIRY{custom_budget_msg}]\n" +
-                            f"User: {request.user}{custom_budget_amount}\n" +
-                            f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
-                    )
                     return True, resp_json['BALANCE']
 
-            WALLET_API_LOGGER.debug(
-                    f"[BALANCE INQUIRY{custom_budget_msg}]\nUser: {request.user}\n" +
-                    f"Payload: {payload}\nResponse: {response.content}"
-            )
+            WALLET_API_LOGGER.debug(logging_head_and_user + '\n' + logging_payload_resp)
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR

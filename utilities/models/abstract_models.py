@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import copy
+
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -244,7 +246,7 @@ class AbstractBaseVMTData(models.Model):
         """
         :param super_agent_attr: super agent user/msisdn
         :param pin_attr: the raw pin
-        :return: balance inquiry request payload
+        :return: balance inquiry request payload, refined payload without pin to be logged
         """
         if not super_agent_attr:
             raise ValueError(_("Super agent and a pin are required parameters for the balance inquiry dictionary"))
@@ -254,4 +256,8 @@ class AbstractBaseVMTData(models.Model):
             'MSISDN': super_agent_attr,
             'PIN': pin_attr
         })
-        return payload
+
+        payload_without_pin = copy.deepcopy(payload)
+        payload_without_pin['PIN'] = 'xxxxxx' if payload.get('PIN', False) else False
+
+        return payload, payload_without_pin

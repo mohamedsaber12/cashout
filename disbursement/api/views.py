@@ -92,23 +92,58 @@ class DisburseAPIView(APIView):
         vodafone_recipients = recipients.filter(issuer__in=['vodafone', 'default']).\
             extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
         etisalat_recipients = recipients.filter(issuer='etisalat').\
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount'}).values('msisdn', 'amount')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
 
-        return vodafone_recipients, list(etisalat_recipients)
+        return list(vodafone_recipients), list(etisalat_recipients)
 
-    def disburse_for_vodafone(self, url, payload, original_request_obj):
+    def disburse_for_recipients(self, url, payload, username, refined_payload, jsoned_response=False):
         """
-        Disburse for vodafone recipients
+        Disburse for issuer based recipients
         :param url: wallets environment that will handle the disbursement request
         :param payload: request payload to be sent
-        :param original_request_obj: original request object from the client
+        :param username: checker user who is disbursing the current document used at logging
+        :param refined_payload: payload without pins to be used at logging
+        :param jsoned_response: flag to check if the response needed as json of raw response object
         :return: response object if successful disbursement or False
         """
-        http_request = CustomRequests(log_file="disburse", request_obj=original_request_obj)
+        DATA_LOGGER.debug("[DISBURSE BULK - REQUEST PAYLOAD]" + f"\nUser: {username}\nPayload: {refined_payload}")
+        request_obj = CustomRequests()
 
         try:
-            return http_request.post(url=url, payload=payload, sub_logging_head="VODAFONE BULK DISBURSEMENT")
+            response = request_obj.post(url=url, payload=payload)
+            DATA_LOGGER.debug(f"[DISBURSE BULK - STATUS RESPONSE]\nUser: {username}\n{request_obj.resp_log_msg}")
+            return response.json() if jsoned_response else response
         except (HTTPError, ConnectionError, Exception):
+            DATA_LOGGER.debug(f"[DISBURSE BULK ERROR - STATUS RESPONSE]\nUser: {username}\n{request_obj.resp_log_msg}")
+            return False
+
+    @staticmethod
+    def handle_etisalat_disbursement_callback(txn_id, callback):
+        """
+        Handle etisalat issuer based recipients callback at the etisalat disbursement loop
+        """
+
+        try:
+            callback_json = callback.json()
+            disbursement_data_record = DisbursementData.objects.get(id=txn_id)
+            disbursement_data_record.is_disbursed = True if callback_json['TXNSTATUS'] == '200' else False
+            disbursement_data_record.reason = callback_json['TXNSTATUS']
+            doc_obj = disbursement_data_record.doc
+
+            # ToDo: Make it only one DB call by accumulating the amounts along the responses
+            if callback_json['TXNSTATUS'] == '200' and doc_obj.owner.root.has_custom_budget:
+                doc_obj.owner.root.budget.update_disbursed_amount(disbursement_data_record.amount)
+                custom_budget_logger(
+                        doc_obj.owner.root.username,
+                        f"Total disbursed amount: {disbursement_data_record.amount} LE",
+                        doc_obj.owner.user.username, f" -- doc id: {doc_obj.doc_id}"
+                )
+
+            disbursement_data_record.save()
+            return True
+        except DisbursementData.DoesNotExist:
+            return False
+        except Exception:
             return False
 
     def determine_disbursement_status(self, checker_user, doc_obj, vf_response, ets_response):
@@ -121,19 +156,22 @@ class DisburseAPIView(APIView):
         :return: True/False
         """
         for response in [vf_response, ets_response]:
-            if response and response.ok and response.json()["TXNSTATUS"] == '200':
+
+            if type(response) == dict and response["TXNSTATUS"] == '200':
                 try:
-                    txn_status = response.json()["TXNSTATUS"]
+                    txn_status = response["TXNSTATUS"]
                     try:
-                        txn_id = response.json()["BATCH_ID"]
+                        txn_id = response["BATCH_ID"]
                     except KeyError:
-                        txn_id = response.json()["TXNID"]
+                        txn_id = response["TXNID"]
                 except KeyError:
                     doc_obj.mark_disbursement_failure()
                     return False
 
-                # ToDo: Handle txn_id, txn_status for etisalat recipients task
                 doc_obj.mark_disbursed_successfully(checker_user, txn_id, txn_status)
+                if type(ets_response) == dict:
+                    DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+
                 return True
 
         doc_obj.mark_disbursement_failure()
@@ -164,23 +202,30 @@ class DisburseAPIView(APIView):
         vf_response = ets_response = False
 
         # 3. Prepare the senders and recipients list of dictionaries
-        vodafone_agents, etisalat_agents = self.prepare_agents_list(provider_id=admin.id, raw_pin=pin)
-        vodafone_recipients, etisalat_recipients = self.separate_recipients(doc_obj.id)
+        vf_agents, etisalat_agents = self.prepare_agents_list(provider_id=admin.id, raw_pin=pin)
+        vf_recipients, ets_recipients = self.separate_recipients(doc_obj.id)
 
-        if etisalat_recipients:
-            pass
+        if ets_recipients:
+            # ToDo: etisalat_bulk_disbursement.delay()
+            ets_pin = get_value_from_env(f"{superadmin.username}_ETISALAT_PIN")
+            for recipient in ets_recipients:
+                ets_payload, ets_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
+                        etisalat_agents[0], recipient['msisdn'], recipient['amount'], ets_pin, 'etisalat'
+                )
+                ets_callback = self.disburse_for_recipients(wallets_env_url, ets_payload, checker, ets_log_payload)
+                ets_response = self.handle_etisalat_disbursement_callback(recipient['txn_id'], ets_callback)
 
-        if vodafone_recipients:
-            vf_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vodafone_agents, list(vodafone_recipients))
-            vf_response = self.disburse_for_vodafone(wallets_env_url, vf_payload, original_request_obj=request)
+            ets_response = {'BATCH_ID': '0', 'TXNSTATUS': '200'} if ets_response else False
+
+        if vf_recipients:
+            vf_payload, vf_log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
+            vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, vf_log_payload, True)
 
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, ets_response)
 
         if is_success_disbursement:
-            # ToDo: Log using checker user
             return HttpResponse(json.dumps(DISBURSEMENT_RUNNING_RESP_DICT), status=status.HTTP_200_OK)
         else:
-            # ToDo: Log using checker user
             return HttpResponse(json.dumps(DISBURSEMENT_ERR_RESP_DICT), status=status.HTTP_424_FAILED_DEPENDENCY)
 
 

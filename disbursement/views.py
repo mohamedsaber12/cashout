@@ -65,7 +65,7 @@ def disburse(request, doc_id):
                 "https://" + request.get_host() +
                 str(reverse_lazy("disbursement_api:disburse")),
                 json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username})
-            DATA_LOGGER.debug('[DISBURSE BULK - VIEW RESPONSE]' + f"\nView response: {str(response.text)}")
+            DATA_LOGGER.debug(f"[DISBURSE BULK - VIEW RESPONSE]\nUser: {request.user}\nView response: {response.text}")
             if response.ok:
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 1,
                                                                                          'utm_redirect': 'success'})

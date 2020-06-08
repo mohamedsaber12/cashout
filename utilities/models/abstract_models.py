@@ -157,7 +157,7 @@ class AbstractBaseVMTData(models.Model):
         """
         :param agents_attr: Agents list along with their pins that will make the disbursement action
         :param consumers_attr: Consumers of the e-money
-        :return: bulk disbursement request payload
+        :return: bulk disbursement request payload, refined payload without pin to be logged
         """
         if not all([agents_attr, consumers_attr]):
             raise ValueError(_("Agents and consumers are required parameters for the bulk disbursement dictionary"))
@@ -167,7 +167,12 @@ class AbstractBaseVMTData(models.Model):
             'SENDERS': agents_attr,
             'RECIPIENTS': consumers_attr
         })
-        return payload
+
+        payload_without_pin = copy.deepcopy(payload)
+        for internal_agent_dictionary in payload_without_pin['SENDERS']:
+            internal_agent_dictionary['PIN'] = '******'
+
+        return payload, payload_without_pin
 
     def accumulate_instant_disbursement_payload(self,
                                                 agent_attr,
@@ -180,7 +185,7 @@ class AbstractBaseVMTData(models.Model):
         :param consumer_attr: Consumers of the e-money
         :param amount_attr: Amount to be disbursed
         :param issuer_attr: Wallet issuer channel that the e-money will be disbursed over
-        :return: instant disbursement request payload
+        :return: instant disbursement request payload, refined payload without pin to be logged
         """
         valid_issuers_list = ['vodafone', 'etisalat']
 
@@ -196,7 +201,11 @@ class AbstractBaseVMTData(models.Model):
             'AMOUNT': amount_attr,
             'PIN': raw_pin_attr
         })
-        return payload
+
+        payload_without_pin = copy.deepcopy(payload)
+        payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
+
+        return payload, payload_without_pin
 
     def accumulate_change_profile_payload(self, users_attr, new_profile_attr):
         """
@@ -258,6 +267,6 @@ class AbstractBaseVMTData(models.Model):
         })
 
         payload_without_pin = copy.deepcopy(payload)
-        payload_without_pin['PIN'] = 'xxxxxx' if payload.get('PIN', False) else False
+        payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
 
         return payload, payload_without_pin

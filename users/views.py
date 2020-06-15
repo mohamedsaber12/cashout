@@ -3,6 +3,8 @@ from __future__ import print_function, unicode_literals
 import json
 import logging
 
+from ratelimit.decorators import ratelimit
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, Permission
@@ -722,6 +724,7 @@ class ExpiringAuthToken(ObtainExpiringAuthToken):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
+@ratelimit(key=lambda g, r: get_client_ip(r), rate='3/5m', method=ratelimit.UNSAFE, block=True)
 def login_view(request):
     """
     Function that allows users to login.

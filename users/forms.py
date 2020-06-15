@@ -581,7 +581,7 @@ class ForgotPasswordForm(forms.Form):
 
         # one time token
         token = default_token_generator.make_token(self.user)
-        uid = urlsafe_base64_encode(force_bytes(self.user.pk)).decode("utf-8")
+        uid = urlsafe_base64_encode(force_bytes(self.user.pk))
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
 
         from_email = settings.SERVER_EMAIL

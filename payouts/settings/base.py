@@ -47,14 +47,16 @@ SECURITY_THIRD_PARTY_APPS = [
     'two_factor',
     # 'axes',
     'oauth2_provider',
+    'user_sessions',
 ]
 
 USER_DEFINED_APPS = [
-    'data',
     'users',
-    'disb',
+    'data',
+    'disbursement',
     'payment',
     'instant_cashin',
+    'utilities',
 ]
 
 INSTALLED_APPS = [
@@ -75,6 +77,9 @@ MIDDLEWARE = [
 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+
+    # Third party user sessions middleware
+    'user_sessions.middleware.SessionMiddleware',
 
     # Disabled for conflicts with OAuth2.0 provider Token Generation
     # 'users.middleware.PreventConcurrentLoginsMiddleware',
@@ -245,7 +250,6 @@ LOGIN_EXEMPT_URLS = (
     r'^docs/*'
 )
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(minutes=60)
-ADMIN_SITE_HEADER = "PayMob Administration"
 
 LOGGING = CUSTOM_LOGGING
 
@@ -269,3 +273,13 @@ OAUTH2_PROVIDER = {
     },
     'ACCESS_TOKEN_EXPIRE_SECONDS': 60*60,
 }
+
+# Session 3rd party package
+SESSION_ENGINE = 'user_sessions.backends.db'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+RATELIMIT_ENABLE=True
+
+# Admin Panel Typos
+ADMIN_SITE_HEADER = 'Payouts Admin Panel'
+ADMIN_SITE_TITLE = 'Paymob'
+ADMIN_INDEX_TITLE = 'Payouts Administration'

@@ -12,11 +12,12 @@ from django.views import View
 from django.views.generic import ListView
 
 from core.models import AbstractBaseStatus
+from utilities.constants import SPREADSHEET_CONTENT_TYPE_CONSTANT
+from utilities.logging import logging_message
 
 from .mixins import InstantReviewerRequiredMixin, RootFromInstantFamilyRequiredMixin, RootOwnsRequestedFileTestMixin
 from .models import AbstractBaseIssuer, InstantTransaction
 from .tasks import generate_pending_orange_instant_transactions
-from .utils import logging_message, SPREADSHEET_CONTENT_TYPE_CONSTANT
 
 
 GENERATE_SHEET_LOGGER = logging.getLogger("generate_sheet")
@@ -30,7 +31,7 @@ class BaseInstantTransactionsListView(ListView):
 
     model = InstantTransaction
     context_object_name = 'instant_transactions'
-    paginate_by = 10
+    paginate_by = 11
 
 
 class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTransactionsListView):

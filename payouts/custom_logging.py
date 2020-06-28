@@ -95,7 +95,7 @@ CUSTOM_LOGGING = {
             'filters': ['request_id'],
             'formatter': 'detail',
             'class': 'logging.FileHandler',
-            'filename': 'logs/disburse_logger.log',
+            'filename': 'logs/disbursement_actions.log',
         },
         'create_user': {
             'level': 'DEBUG',

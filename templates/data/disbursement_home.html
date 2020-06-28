@@ -1,7 +1,9 @@
 {% extends 'new_base.html' %}
 {% load static %}
 {% load i18n %}
-{% block title %}Disbursement Files {% endblock %}
+
+{% block title %}Disbursement Files{% endblock title %}
+
 {% block gentellacss %}
 <link rel="stylesheet" href="{% static 'gentella/vendors/dropzone/dist/min/dropzone.min.css' %}">
 <!-- Datatables -->
@@ -12,67 +14,57 @@
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}"
     rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
-{% endblock %}
+{% endblock gentellacss %}
 
 {% block body %}
-
-{% if not has_vmt_setup %}
-<div class="well upload-nav col-xs-12">
-    <p style="font-size: 30px; text-align: center;">{% trans 'Your SuperAdmin setup is not completed yet!' %}</p>
-</div>
-
-{% elif not admin_is_active %}
-<div class="well upload-nav col-xs-12">
-    {% if request.user.is_root %}
-        <p style="font-size: 30px; text-align: center;">{% trans "You're not active any more!" %}</p>
-    {% else %}
-        <p style="font-size: 30px; text-align: center;">{% trans 'Your Admin is not active!' %}</p>
-    {% endif %}
-</div>
-
-{% elif not has_any_file_category  %}
-<div class="well upload-nav col-xs-12">
-    <strong style="margin-top: 15px;">{% trans 'Please Add Disbursement first' %}</strong>
-</div>
-
-{% elif has_any_file_category and user_has_upload_perm %}
-<div class="well upload-nav col-xs-12">
-    <h3 class="navbar-left col-xs-12">{% trans 'Upload Form' %}</h3>
-    <div class="form-group col-xs-12">
-        <label class="control-label col-md-1 col-sm-1 col-xs-1">Format</label>
-        <div class="col-md-6 col-sm-6 col-xs-12">
-            <select class="form-control" name="file_category" id="category">
-                {% for format in family_file_categories %}
-                <option value="{{format.id}}">{{format.name}}</option>
-                {%endfor%}
-            </select>
+    {% if not has_vmt_setup or not request.user.is_root and not has_any_file_category %}
+        <div class="well upload-nav col-xs-12">
+            <strong style="margin-top: 15px;">{% trans 'Account is suspended due to uncompleted setups of your Admin!' %}</strong>
         </div>
-    </div>
-    <div class="x_content">
-        <form id="fileUpload" class="dropzone" action=" {% url 'data:disbursement_home' %}" method="post"
-            enctype="multipart/form-data">{% csrf_token %}
-        </form>
 
-    </div>
+    {% elif not admin_is_active %}
+        <div class="well upload-nav col-xs-12">
+            {% if request.user.is_root %}
+                <strong style="margin-top: 15px;">{% trans "You're not active any more!" %}</strong>
+            {% else %}
+                <strong style="margin-top: 15px;">{% trans 'Your Admin is no longer active!' %}</strong>
+            {% endif %}
+        </div>
 
-</div>
-{% endif %}
+    {% elif has_any_file_category and user_has_upload_perm %}
+        <div class="well upload-nav col-xs-12">
+            <h3 class="navbar-left col-xs-12">{% trans 'Upload Form' %}</h3>
+            <div class="form-group col-xs-12">
+                <label class="control-label col-md-1 col-sm-1 col-xs-1">Select Format</label>
+                <div class="col-md-6 col-sm-6 col-xs-12">
+                    <select class="form-control" name="file_category" id="category">
+                        {% for format in family_file_categories %}
+                            <option value="{{ format.id }}">{{ format.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="x_content">
+                <form id="fileUpload" class="dropzone" action=" {% url 'data:disbursement_home' %}" method="post"
+                    enctype="multipart/form-data">{% csrf_token %}
+                </form>
+            </div>
+        </div>
+    {% endif %}
 
-{% if doc_list_disbursement %}
-{% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement %}
-{%else%}
-<div class="x_content">
-    <h3>No Documents uploaded yet</h3>
-</div>
-{%endif%}
+    {% if doc_list_disbursement %}
+        {% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement %}
+    {%else%}
+        <div class="x_content">
+            <h3>No Documents uploaded yet!</h3>
+        </div>
+    {%endif%}
 
-<!-- modals -->
-
-{% include 'data/upload-response-modals.html' %}
-
-{% include 'data/document_delete_modal.html' %}
-
-{% endblock %}
+    {# Modals - uploading sheets and deleting documents #}
+    {% include 'data/upload-response-modals.html' %}
+    {% include 'data/document_delete_modal.html' %}
+    {# End of Modals - uploading sheets and deleting documents  #}
+{% endblock body %}
 
 
 {% block script %}
@@ -92,10 +84,9 @@
 <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
 <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
 <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+
 <script>
-
     $(function () {
-
         $('#fileTable').DataTable();
 
         Dropzone.options.fileUpload = {
@@ -127,7 +118,6 @@
                         fail_modal.find('.modal-body #p1').text(message);
 
                     fail_modal.modal('show');
-
                 });
                 this.on('sending', function (file, xhr, formData) {
                     // add format to upload form
@@ -137,9 +127,7 @@
                 });
             }
         }
-
     });
-
 </script>
 
 <script>
@@ -148,6 +136,5 @@
     })
 </script>
 
-{% include 'data/document_delete_script.html' %}
-
-{% endblock %}
+    {% include 'data/document_delete_script.html' %}
+{% endblock script %}

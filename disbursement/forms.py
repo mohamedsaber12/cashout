@@ -1,5 +1,7 @@
 import logging
 
+import requests
+
 from django import forms
 from django.core.validators import MinValueValidator
 from django.forms import modelformset_factory
@@ -100,7 +102,7 @@ class PinForm(forms.Form):
         if not raw_pin:
             return False
         msisdns = list(self.agents.values_list('msisdn', flat=True))
-        if self.env.str('CALL_WALLETS', 'TRUE') == 'TRUE':
+        if self.root.callwallets_moderator.first().set_pin:
             transactions, error = self.call_wallet(raw_pin, msisdns)
             if error:
                 self.add_error('pin', error)
@@ -111,27 +113,22 @@ class PinForm(forms.Form):
                 return False
 
         self.agents.update(pin=True)
+        self.root.set_pin(raw_pin)
         return True
 
-    # ToDo Move call wallets to dedicated VMTData class methods
     def call_wallet(self, pin, msisdns):
-        import requests
         superadmin = self.root.client.creator
-        vmt = VMTData.objects.get(vmt=superadmin)
-        data = vmt.return_vmt_data(VMTData.SET_PIN)
-        data["USERS"] = msisdns
-        data["PIN"] = pin
+        payload = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
         try:
-            response = requests.post(self.env.str(vmt.vmt_environment), json=data, verify=False)
+            response = requests.post(self.env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"""[SET PIN ERROR]
-            Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
-            Error-> {e}""")
+            WALLET_API_LOGGER.debug(f"[SET PIN ERROR]\nUser: {self.root}\nPayload: {payload}\nError: {e}")
             return None, MSG_PIN_SETTING_ERROR
 
-        WALLET_API_LOGGER.debug(f"""[SET PIN]
-        Users-> root(admin):{self.root.username}, vmt(superadmin):{superadmin.username}
-        Response-> {str(response.status_code)} -- {str(response.text)}""")
+        WALLET_API_LOGGER.debug(
+                f"[SET PIN]\nUser: {self.root}\n" +
+                f"Payload: {payload['USERS']}\nResponse: {str(response.status_code)} -- {str(response.text)}"""
+        )
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)
@@ -249,4 +246,4 @@ class BudgetModelForm(forms.ModelForm):
         return cleaned_data
 
 
-AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, can_delete=True, validate_min=True)
+AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)

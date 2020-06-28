@@ -12,10 +12,11 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
+from utilities.logging import logging_message
+
 from ...models import InstantTransaction
 from ..mixins import APIViewPaginatorMixin, IsInstantAPICheckerUser
 from ..serializers import BulkInstantTransactionReadSerializer, InstantTransactionWriteModelSerializer
-from ...utils import logging_message
 
 
 BULK_TRX_INQUIRY_LOGGER = logging.getLogger("instant_bulk_trx_inquiry")

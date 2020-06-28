@@ -1,7 +1,7 @@
 # -*- coding: UTF-8 -*-
 from django.contrib import messages
 
-from disb.utils import custom_budget_logger
+from .utils import custom_budget_logger
 
 
 class AdminSiteOwnerOnlyPermissionMixin:

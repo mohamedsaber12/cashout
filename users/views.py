@@ -3,6 +3,8 @@ from __future__ import print_function, unicode_literals
 import json
 import logging
 
+from ratelimit.decorators import ratelimit
+
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import AnonymousUser, Permission
@@ -25,7 +27,7 @@ from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
 from data.forms import CollectionDataForm, FileCategoryFormSet, FormatFormSet
 from data.models import FileCategory, Format
 from data.utils import get_client_ip
-from disb.forms import PinForm
+from disbursement.forms import PinForm
 
 from .decorators import root_or_superadmin
 from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
@@ -722,6 +724,7 @@ class ExpiringAuthToken(ObtainExpiringAuthToken):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
+@ratelimit(key=lambda g, r: get_client_ip(r), rate='3/5m', method=ratelimit.UNSAFE, block=True)
 def login_view(request):
     """
     Function that allows users to login.

@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -38,11 +41,11 @@ urlpatterns += [
     path('i18n/', include('django.conf.urls.i18n')),
     path('', include('data.urls', namespace='data')),
     path('', include('users.urls', namespace='users')),
-    path('', include('disb.urls', namespace='disbursement')),
+    path('', include('disbursement.urls', namespace='disbursement')),
     path('', include('docs.urls', namespace='docs')),
     path('instant-cashin/', include('instant_cashin.urls', namespace='instant_cashin')),
     path('', include(tf_urls, namespace='two_factor')),
-    path('api/secure/', include('disb.api.urls', namespace='disbursement_api')),
+    path('api/secure/', include('disbursement.api.urls', namespace='disbursement_api')),
     path('api/secure/', include('data.api.urls', namespace='data_api')),
     path('api/secure/', include('payment.api.urls', namespace='payment_api')),
     path('api/secure/', include('instant_cashin.api.urls', namespace='instant_api')),
@@ -50,3 +53,8 @@ urlpatterns += [
 
 urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)
+
+# Admin site settings
+admin.site.site_header = settings.ADMIN_SITE_HEADER
+admin.site.site_title = settings.ADMIN_SITE_TITLE
+admin.site.index_title = settings.ADMIN_INDEX_TITLE

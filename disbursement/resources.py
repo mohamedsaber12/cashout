@@ -1,7 +1,8 @@
 from import_export import resources
-
-from disb.models import DisbursementData
 from import_export.fields import Field
+
+from .models import DisbursementData
+
 
 class DisbursementDataResource(resources.ModelResource):
     disbursed = Field(attribute='get_is_disbursed')

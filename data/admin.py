@@ -1,18 +1,45 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.contrib import admin
 
 from .forms import FileCategoryForm
 from .models import Doc, DocReview, FileCategory
-from .models import CollectionData, Format, FileData
 
 
+@admin.register(Doc)
+class DocAdmin(admin.ModelAdmin):
+    """
+    Admin manager for the Doc model
+    """
+
+    list_display = ['filename', 'owner', 'type_of', 'is_processed', 'is_disbursed', 'created_at']
+    list_filter = ['created_at']
+    readonly_fields = ['file']
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(DocReview)
 class DocReviewAdmin(admin.ModelAdmin):
     """
     Admin class for tweaking the DocReview model at the admin panel
     """
-    readonly_fields = ["doc", "user_created", "comment", "timestamp"]
+
+    list_display = ['doc', 'user_created', 'is_ok', 'comment', 'timestamp']
+    readonly_fields = list_display
 
 
+@admin.register(FileCategory)
 class FileCategoryAdmin(admin.ModelAdmin):
+    """
+    Customize admin panel view for FileCategory model
+    """
+
+    list_display = ['name', 'user_created', 'unique_field', 'amount_field', 'issuer_field', 'no_of_reviews_required']
+    list_filter = ['user_created']
+
     form = FileCategoryForm
 
     def get_form(self, request, obj=None, **kwargs):
@@ -23,6 +50,7 @@ class FileCategoryAdmin(admin.ModelAdmin):
         return FileCategoryForm
 
     def save_model(self, request, obj, form, change):
+        # ToDo: Bug: Crash at editing record at admin panel
         instance = form.save(commit=False)
         user = request.user
 
@@ -43,35 +71,23 @@ class FileCategoryAdmin(admin.ModelAdmin):
         return FileCategory.objects.filter(user_created=request.user)
 
 
-class DocAdmin(admin.ModelAdmin):
-    list_filter = (('created_at'),)
-    readonly_fields = ('file',)
-    list_display = ('filename', 'owner', 'type_of', 'created_at')
-
-    def has_add_permission(self, request):
-        return False
-
-
+# @admin.register(FileData)
 class FileDataAdmin(admin.ModelAdmin):
-    list_filter     = ('date', 'user')
-    list_display    = ('doc', 'user')
-    readonly_fields = ('doc', 'data')
+    list_filter = ['date', 'user']
+    list_display = ['doc', 'user']
+    readonly_fields = ['doc', 'data']
 
     def has_add_permission(self, request):
         return False
 
 
+# @admin.register(Format)
 class FormatAdmin(admin.ModelAdmin):
-    list_filter = ('hierarchy',)
+    list_filter = ['hierarchy']
 
     def has_add_permission(self, request):
         return False
 
 
 # TODO: Add logs for deleting and adding any instance
-admin.site.register(DocReview, DocReviewAdmin)
-admin.site.register(Doc, DocAdmin)
-admin.site.register(FileCategory, FileCategoryAdmin)
-admin.site.register(Format, FormatAdmin)
-admin.site.register(FileData, FileDataAdmin)
-admin.site.register(CollectionData)
+# admin.site.register(CollectionData)

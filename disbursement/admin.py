@@ -18,8 +18,8 @@ class AgentAdmin(admin.ModelAdmin):
     Admin model for the tweaking the representation of the Agent model at the admin panel
     """
 
-    list_display = ['msisdn', 'wallet_provider', 'super', 'pin']
-    list_filter = ['pin', 'super', 'wallet_provider']
+    list_display = ['msisdn', 'wallet_provider', 'super', 'pin', 'type']
+    list_filter = ['pin', 'super', 'wallet_provider', 'type']
 
 
 @admin.register(Budget)
@@ -79,9 +79,9 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['_trx_id', 'msisdn', 'amount', 'doc', 'is_disbursed', 'reason']
+    list_display = ['_trx_id', 'msisdn', 'amount', 'issuer', 'doc', 'is_disbursed', 'reason']
     list_filter = [
-        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'created_at', 'updated_at',
+        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer', 'created_at', 'updated_at',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
         ('doc__owner', custom_titled_filter('Document Owner/Uploader'))
@@ -113,7 +113,7 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     Admin panel representation for DisbursementDocData model
     """
 
-    list_display = ['doc', 'doc_status', 'txn_id', 'txn_status']
+    list_display = ['doc', 'doc_status', 'txn_id', 'txn_status', 'has_callback']
     list_filter = ['doc_status', ('doc__owner', custom_titled_filter('Document Owner/Uploader'))]
     search_fields = ['doc__id', 'txn_id']
 
@@ -124,7 +124,10 @@ class VMTDataAdmin(admin.ModelAdmin):
     Admin model for VMTData credentials
     """
 
-    list_filter = ['vmt']
+    list_filter = ['vmt', 'vmt_environment']
+    list_display = list_filter + [
+        'wallet_issuer', 'login_username', 'login_password', 'request_gateway_code', 'request_gateway_type'
+    ]
 
     def has_add_permission(self, request):
         """

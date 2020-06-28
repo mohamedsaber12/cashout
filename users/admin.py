@@ -267,7 +267,16 @@ class SetupRootAdmin(admin.ModelAdmin):
     readonly_fields = ['user']
 
 
+@admin.register(EntitySetup)
+class EntitySetupAdmin(admin.ModelAdmin):
+    """
+    Customize entity_setup view at the admin panel
+    """
+
+    list_display = ['entity', 'user', 'is_normal_flow', 'agents_setup', 'fees_setup']
+    list_filter = ['user']
+
+
 # ToDo: Custom general user model
 admin.site.register(User)
 admin.site.register(Client)
-admin.site.register(EntitySetup)

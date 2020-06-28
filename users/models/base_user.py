@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill
 
+from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
 from django.core.exceptions import ValidationError
@@ -11,6 +12,8 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+
+from disbursement.models import VMTData
 
 
 TYPES = (
@@ -47,6 +50,7 @@ class User(AbstractUser):
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     is_email_sent = models.BooleanField(null=True, default=False)
     is_setup_password = models.BooleanField(null=True, default=False)
+    pin = models.CharField(_('pin'), max_length=128, null=True, default=False)
     avatar_thumbnail = ProcessedImageField(
             upload_to='avatars',
             processors=[ResizeToFill(100, 100)],
@@ -72,9 +76,19 @@ class User(AbstractUser):
             ("has_instant_disbursement", "the client/his children has instant disbursement capabilities"),
             ("can_view_api_docs", "the user can view the api documentation"),
         )
+        ordering = ['-id', '-hierarchy']
 
     def __str__(self):
         return str(self.username)
+
+    def set_pin(self, raw_pin):
+        """Sets pin for every Admin/Root user. Handles hashing formats"""
+        self.pin = make_password(raw_pin)
+        self.save()
+
+    def check_pin(self, raw_pin):
+        """Return a boolean of whether the raw_pin was correct. Handles hashing formats behind the scenes."""
+        return check_password(raw_pin, self.pin)
 
     def children(self):
         """
@@ -193,12 +207,17 @@ class User(AbstractUser):
         """Check if this superadmin's vmt credentials setups is completed"""
         if self.is_superadmin and self.vmt:
             return True
+        elif self.is_root:
+            try:
+                return True if self.root.super_admin.vmt else None
+            except VMTData.DoesNotExist:
+                return False
         return False
 
     @property
     def has_custom_budget(self):
         """Check if this user has custom budget"""
-        from disb.models import Budget
+        from disbursement.models import Budget
         try:
             budget = self.budget
             return True

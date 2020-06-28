@@ -74,9 +74,9 @@ class DisbursementHomeView(View):
             1. Documents can be filtered by date.
             2. Documents are paginated but not used in template.
         """
-        has_vmt_setup = request.user.root.super_admin.vmt
+        has_vmt_setup = request.user.root.has_vmt_setup
         doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.DISBURSEMENT)
-        paginator = Paginator(doc_list_disbursement, 10)
+        paginator = Paginator(doc_list_disbursement, 7)
         page = request.GET.get('page')
         docs = paginator.get_page(page)
 
@@ -101,6 +101,7 @@ class DisbursementHomeView(View):
 
             if form_doc.is_valid():
                 file_doc = form_doc.save()
+                file_doc.mark_uploaded_successfully()
                 UPLOAD_LOGGER.debug(
                         "[DISBURSEMENT FILE UPLOAD]" +
                         f"\nUser: {request.user} -- Ip Address: {get_client_ip(request)}" +
@@ -289,7 +290,8 @@ def document_view(request, doc_id):
         'hide_review_form': hide_review_form,
         'can_user_disburse': can_user_disburse,
         'doc_data': doc_data,
-        'can_review': can_review
+        'can_review': can_review,
+        'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
     }
     if bool(request.GET.dict()):
         context['redirect'] = 'true'
@@ -354,34 +356,41 @@ def doc_download(request, doc_id):
 
 @method_decorator([root_or_maker_or_uploader, setup_required, login_required], name='dispatch')
 class FormatListView(TemplateView):
+    """
+    List and update existing file formats of Admin users disbursement/collection
+    """
+
     template_name = "data/formats.html"
 
+    def dispatch(self, request, *args, **kwargs):
+        """Common attributes between GET and POST methods"""
+        self.is_disbursement_admin = True if request.user.get_status(self.request) == 'disbursement' else False
+        self.flow_type = self.request.user.root_entity_setups.is_normal_flow if self.request.user.is_root else False
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
-        if self.request.user.get_status(self.request) == 'collection':
-            return Format.objects.filter(hierarchy=self.request.user.hierarchy)
-        else:
+        """Based on the Admin status decide which type of file format will be used"""
+        if self.is_disbursement_admin:
             return FileCategory.objects.get_by_hierarchy(self.request.user.hierarchy)
+        return Format.objects.filter(hierarchy=self.request.user.hierarchy)
 
     def get_success_url(self):
-        return reverse('data:list_format')
+        """Redirect URL after saving edits successfully"""
+        return reverse("data:list_format")
 
     def get_context_data(self, *args, **kwargs):
+        """Inject Variables to the view based on the Admin user type"""
         context = super().get_context_data(*args, **kwargs)
         form = kwargs.get('form', None)
-        if self.request.user.get_status(self.request) == 'collection':
-            context['formatform'] = form or FormatFormSet(
-                queryset=self.get_queryset(),
-                prefix='format'
-            )
+
+        if not self.is_disbursement_admin:
+            context['formatform'] = form or FormatFormSet(queryset=self.get_queryset(), prefix='format')
             if not self.request.user.is_root:
                 context['formatform'].can_delete = False
                 context['formatform'].extra = 0
         else:
-            context['formatform'] = form or FileCategoryFormSet(
-                queryset=self.get_queryset(),
-                prefix='category'
-            )
-
+            context['is_normal_flow'] = self.flow_type
+            context['formatform'] = form or FileCategoryFormSet(queryset=self.get_queryset(), prefix='category')
             if not self.request.user.is_root:
                 context['formatform'].can_delete = False
                 context['formatform'].extra = 0
@@ -389,18 +398,12 @@ class FormatListView(TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        if self.request.user.get_status(self.request) == 'collection':
-            form = FormatFormSet(
-                request.POST,
-                prefix='format',
-                form_kwargs={'request': request}
-            )
+        """Handles POST requests to update file formats"""
+        if not self.is_disbursement_admin:
+            form = FormatFormSet(request.POST, prefix='format', form_kwargs={'request': request})
         else:
-            form = FileCategoryFormSet(
-                request.POST,
-                prefix='category',
-                form_kwargs={'request': request}
-            )
+            form = FileCategoryFormSet(request.POST, prefix='category', form_kwargs={'request': request})
+
         if form and form.is_valid():
             form.save()
             return redirect(self.get_success_url())

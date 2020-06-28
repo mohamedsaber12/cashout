@@ -8,7 +8,7 @@ from rest_framework import status, views
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
-from disb.utils import custom_budget_logger
+from disbursement.utils import custom_budget_logger
 
 from ..mixins import IsInstantAPICheckerUser
 

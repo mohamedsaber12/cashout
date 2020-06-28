@@ -73,7 +73,7 @@
 
     </ul>
 
-    {% include "users/formset_form.html" with btn_title='Add format' step_1_index=5 formset=form action='users:setting-disbursement-formats' %}
+    {% include "users/formset_form.html" with btn_title='Add format' step_1_index=5 formset=form action='users:setting-disbursement-formats' is_normal_flow=is_normal_flow %}
 
 </div>
 

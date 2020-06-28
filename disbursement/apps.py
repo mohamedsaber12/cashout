@@ -5,5 +5,6 @@ from django.apps import AppConfig
 
 
 class DisbursementConfig(AppConfig):
-    name = 'disb'
+    name = 'disbursement'
+    label = 'disbursement'
     verbose_name = "Disbursement"

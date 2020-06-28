@@ -25,9 +25,11 @@ class EntitySetup(models.Model):
     """
     agents_setup = models.BooleanField(default=False, verbose_name=_("Is agent setup completed for the entity?"))
     fees_setup = models.BooleanField(default=False, verbose_name=_("Is fees setup completed for the entity?"))
+    is_normal_flow = models.BooleanField(default=True, verbose_name=_("Is the regular Vodafone flow setup/disb?"))
     entity = models.OneToOneField(
             'users.RootUser',
             on_delete=models.CASCADE,
+            related_name='root_entity_setups',
             help_text=_("Root user, the admin of the entity")
     )
     user = models.ForeignKey(

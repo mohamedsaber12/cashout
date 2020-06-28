@@ -16,9 +16,10 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from data.utils import get_client_ip
-from disb.models import VMTData
+from disbursement.models import VMTData
+from utilities.logging import logging_message
 
-from ...utils import get_from_env, logging_message
+from ...utils import get_from_env
 from ..serializers import InstantUserInquirySerializer
 
 

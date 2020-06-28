@@ -50,16 +50,19 @@
     <table id="empty_form" style="display: none">
         <tr>
             {% for field in formset.empty_form.visible_fields %}
-            <td>
-                {# Include the hidden fields in the form #}
-                {% if forloop.first %}
-                {% for hidden in formset.empty_form.hidden_fields %}
-                {{ hidden }}
-                {% endfor %}
+                {% if is_normal_flow and field.name != 'issuer_field' or not is_normal_flow %}
+                    <td>
+                        {# Include the hidden fields in the form #}
+                        {% if forloop.first %}
+                            {% for hidden in formset.empty_form.hidden_fields %}
+                                {{ hidden }}
+                            {% endfor %}
+                        {% endif %}
+
+                        {{ field.errors.as_ul }}
+                        {{ field }}
+                    </td>
                 {% endif %}
-                {{ field.errors.as_ul }}
-                {{ field }}
-            </td>
             {% endfor %}
         </tr>
     </table>

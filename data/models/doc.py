@@ -7,6 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from disbursement.models import DisbursementDocData
 from users.models import CheckerUser
 
 from ..utils import pkgen, update_filename
@@ -58,6 +59,10 @@ class Doc(models.Model):
         )
         verbose_name_plural = 'Documents'
         ordering = ('-created_at', )
+
+    def __str__(self):
+        """String representation for doc model objects"""
+        return self.file.name
 
     def delete(self, *args, **kwargs):
         """
@@ -166,3 +171,79 @@ class Doc(models.Model):
 
     def is_reviews_rejected(self):
         return self.reviews.filter(is_ok=False).count() != 0
+
+    def mark_uploaded_successfully(self):
+        """Mark disbursement document status as uploaded successfully"""
+        DisbursementDocData.objects.create(doc=self, doc_status=DisbursementDocData.UPLOADED_SUCCESSFULLY)
+
+    def processed_successfully(self):
+        """Mark disbursement document as processed successfully if it passed tests"""
+        self.disbursement_txn.mark_doc_status_processed_successfully()
+        self.is_processed = True
+        self.save()
+
+    def processing_failure(self, failure_reason):
+        """
+        Mark disbursement document as not processed successfully as it didn't pass tests
+        :param failure_reason: Reason made this document didn't pass processing phase
+        """
+        self.disbursement_txn.mark_doc_status_processing_failure()
+        self.is_processed = False
+        self.processing_failure_reason = _(failure_reason)
+        self.save()
+
+    def mark_disbursement_failure(self):
+        """Mark disbursement document disbursement status as failed"""
+        self.disbursement_txn.mark_doc_status_disbursement_failure()
+
+    def mark_disbursed_successfully(self, disburser, transaction_id, transaction_status):
+        """
+        Mark disbursement document as disbursed successfully
+        :param disburser: Checker user who tried to disburse this document
+        :param transaction_id: transaction id from the disburse response
+        :param transaction_status: transaction status from the disburse response
+        """
+        self.disbursement_txn.mark_doc_status_disbursed_successfully(transaction_id, transaction_status)
+        self.is_disbursed = True
+        self.disbursed_by = disburser
+        self.save()
+
+    @property
+    def validation_process_is_running(self):
+        """:return True if doc is uploaded successfully"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.UPLOADED_SUCCESSFULLY
+
+    @property
+    def validated_successfully(self):
+        """:return True if doc is processed successfully"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.PROCESSED_SUCCESSFULLY
+
+    @property
+    def validation_failed(self):
+        """:return True if doc is processed failure is happened"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.PROCESSING_FAILURE
+
+    @property
+    def disbursed_successfully(self):
+        """:return True if doc is disbursed successfully"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.DISBURSED_SUCCESSFULLY
+
+    @property
+    def disbursement_failed(self):
+        """:return True if doc is disbursement failure happened"""
+        return self.disbursement_txn.doc_status == DisbursementDocData.DISBURSEMENT_FAILURE
+
+    @property
+    def waiting_disbursement(self):
+        """:return True if doc ready for disbursement after notifying checkers"""
+        return self.can_be_disbursed and not self.disbursed_successfully and not self.disbursement_failed
+
+    @property
+    def has_callback(self):
+        """:return True if doc has disbursement callback"""
+        return self.disbursement_txn.has_callback
+
+    @property
+    def waiting_disbursement_callback(self):
+        """:return True if doc disbursed successfully and the waits for the callback from the wallets side"""
+        return self.disbursed_successfully and not self.has_callback

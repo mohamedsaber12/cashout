@@ -15,7 +15,7 @@ from data.utils import get_client_ip
 
 from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
 from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
-                     InstantAPIViewerUser, MakerUser, RootUser, Setup,
+                     InstantAPIViewerUser, MakerUser, RootUser, Setup, SupportUser, SupportSetup,
                      SuperAdminUser, User)
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -275,6 +275,24 @@ class EntitySetupAdmin(admin.ModelAdmin):
 
     list_display = ['entity', 'user', 'is_normal_flow', 'agents_setup', 'fees_setup']
     list_filter = ['user']
+
+
+@admin.register(SupportUser)
+class SupportUserModelAdmin(admin.ModelAdmin):
+    """
+    Manages support user model at the admin panel
+    """
+
+    list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+
+
+@admin.register(SupportSetup)
+class SupportSetupModelAdmin(admin.ModelAdmin):
+    """
+    Manages support user setup model at the admin panel
+    """
+
+    list_display = ['user_created', 'support_user', 'can_onboard_entities']
 
 
 # ToDo: Custom general user model

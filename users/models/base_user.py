@@ -25,6 +25,7 @@ TYPES = (
     (5, 'UpMaker'),         # maker and uploader
     (6, 'InstantAPIChecker'),
     (7, 'InstantAPIViewer'),
+    (8, 'Support'),
 )
 
 
@@ -189,6 +190,10 @@ class User(AbstractUser):
     @cached_property
     def is_instantapiviewer(self):
         return self.user_type == 7
+
+    @cached_property
+    def is_support(self):
+        return self.user_type == 8
 
     @cached_property
     def is_instant_member(self):

@@ -38,7 +38,8 @@ from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
 from .mixins import (CollectionRootRequiredMixin, DisbursementRootRequiredMixin, RootRequiredMixin,
                      SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
                      SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
-from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup, UploaderUser, User)
+from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup,
+                     UploaderUser, User, SupportSetup)
 
 
 LOGIN_LOGGER = logging.getLogger("login")
@@ -405,7 +406,7 @@ class Clients(SuperRequiredMixin, ListView):
     Filter clients by type 'active' or 'inactive' by "q" query parameter.
     """
     model = Client
-    paginate_by = 20
+    paginate_by = 6
     context_object_name = 'users'
     template_name = 'users/clients.html'
 
@@ -426,6 +427,30 @@ class Clients(SuperRequiredMixin, ListView):
             else:
                 return qs
             return qs.filter(is_active=value)
+        return qs
+
+
+class SupportUsersListView(SuperRequiredMixin, ListView):
+    """
+    List support users related to the currently logged in super admin
+    Search for support users by username, email or mobile no by "search" query parameter.
+    """
+
+    model = SupportSetup
+    paginate_by = 6
+    context_object_name = 'supporters'
+    template_name = 'users/support.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(user_created=self.request.user)
+
+        if self.request.GET.get("search"):
+            search = self.request.GET.get("search")
+            return qs.filter(Q(support_user__username__icontains=search) |
+                             Q(support_user__email__icontains=search) |
+                             Q(support_user__mobile_no__icontains=search))
+
         return qs
 
 

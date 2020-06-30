@@ -293,6 +293,7 @@ class SupportSetupModelAdmin(admin.ModelAdmin):
     """
 
     list_display = ['user_created', 'support_user', 'can_onboard_entities']
+    list_filter = ['user_created']
 
 
 # ToDo: Custom general user model

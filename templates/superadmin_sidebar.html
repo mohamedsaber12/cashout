@@ -51,8 +51,10 @@
 
         <li><a><i class="fa fa-user"></i> {% trans 'Clients'%} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
-            <li><a href="{% url 'users:add_client' %}">{% trans 'Add' %}</a></li>
+            <li><a href="{% url 'users:add_client' %}">{% trans 'New Client' %}</a></li>
+            <li><a href="#">{% trans 'New Support Member' %}</a></li>
             <li><a href="{% url 'users:clients' %}">{% trans 'All Clients' %}</a></li>
+            <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
           </ul>
         </li>
 

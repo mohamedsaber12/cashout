@@ -52,6 +52,9 @@ class SupportSetup(models.Model):
     )
     can_onboard_entities = models.BooleanField(default=False, verbose_name=_('Can On-board Entities?'))
 
+    class Meta:
+        ordering = ['-id']
+
     def __str__(self):
         "String representation of each support setup object"
         return f'{self.user_created} setup for {self.support_user}'

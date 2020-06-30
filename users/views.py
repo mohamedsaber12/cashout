@@ -853,17 +853,20 @@ def delete(request):
                 client = Client.objects.get(id=int(data['user_id']))
                 user = client.client
                 client.delete_client()
+            elif data.get('support'):
+                support_setup = SupportSetup.objects.get(id=int(data['user_id']))
+                user = support_setup.support_user
+                User.objects.filter(id=support_setup.support_user.id).delete()
             else:
                 user = User.objects.get(id=int(data['user_id']))
                 user.delete()
-            DELETE_USER_VIEW_LOGGER.debug(f"""[USER DELETED]
-            User: {request.user.username}
-            Deleted user with username: {user.username}""")
-            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
-        except User.DoesNotExist:
-            DELETE_USER_VIEW_LOGGER.debug(f"""[USER DOES NOT EXIST]
-            User with id {data['user_id']} doesn't exist to be deleted""")
-            return HttpResponse(content=json.dumps({"valid": "false"}), content_type="application/json")
+            DELETE_USER_VIEW_LOGGER.debug(
+                    f"[USER DELETED]\nSuperAdmin: {request.user.username} deleted user with username: {user.username}"
+            )
+        except (User.DoesNotExist, Client.DoesNotExist, SupportSetup.DoesNotExist) as e:
+            DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\nPassed ID: {data['user_id']}\nError: {e.args[0]}")
+
+        return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
     else:
         raise Http404()
 

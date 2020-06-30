@@ -15,7 +15,7 @@ from django.utils.translation import gettext as _
 
 from utilities.models import CallWalletsModerator
 
-from .models import Brand, CheckerUser, Client, MakerUser, RootUser, Setup, SuperAdminUser, UploaderUser
+from .models import Brand, CheckerUser, Client, MakerUser, RootUser, Setup, SuperAdminUser, SupportSetup, UploaderUser
 
 
 ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
@@ -81,6 +81,16 @@ def client_post_save(sender, instance, created, **kwargs):
         root_user.brand = instance.creator.brand
         root_user.save()
         notify_user(root_user, created)
+
+
+@receiver(post_save, sender=SupportSetup)
+def support_post_save(sender, instance, created, **kwargs):
+    """Post save signal to send password setup email after creating any support user"""
+    if created:
+        support_user = instance.support_user
+        support_user.brand = instance.user_created.brand
+        support_user.save()
+        notify_user(support_user, created)
 
 
 def set_brand(instance):

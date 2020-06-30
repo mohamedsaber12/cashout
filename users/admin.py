@@ -278,7 +278,7 @@ class EntitySetupAdmin(admin.ModelAdmin):
 
 
 @admin.register(SupportUser)
-class SupportUserModelAdmin(admin.ModelAdmin):
+class SupportUserModelAdmin(UserAccountAdmin):
     """
     Manages support user model at the admin panel
     """

@@ -34,12 +34,12 @@ from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
                     ClientFeesForm, CustomClientProfilesForm, ForgotPasswordForm, LevelFormSet,
                     MakerCreationForm, MakerMemberFormSet, OTPTokenForm,
                     PasswordChangeForm, ProfileEditForm, RootCreationForm,
-                    SetPasswordForm, UploaderMemberFormSet)
+                    SetPasswordForm, UploaderMemberFormSet, SupportUserCreationForm,)
 from .mixins import (CollectionRootRequiredMixin, DisbursementRootRequiredMixin, RootRequiredMixin,
                      SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
                      SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup,
-                     UploaderUser, User, SupportSetup)
+                     UploaderUser, User, SupportSetup, SupportUser,)
 
 
 LOGIN_LOGGER = logging.getLogger("login")
@@ -439,7 +439,7 @@ class SupportUsersListView(SuperRequiredMixin, ListView):
     model = SupportSetup
     paginate_by = 6
     context_object_name = 'supporters'
-    template_name = 'users/support.html'
+    template_name = 'support/list.html'
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -453,6 +453,27 @@ class SupportUsersListView(SuperRequiredMixin, ListView):
 
         return qs
 
+
+class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
+    """
+    Create view for super admin users to create support users
+    """
+
+    model = SupportUser
+    form_class = SupportUserCreationForm
+    template_name = 'support/add_support.html'
+    success_url = reverse_lazy('users:support')
+
+    def form_valid(self, form):
+        self.support_user = form.save()
+        support_setup_dict = {
+            'support_user': self.support_user,
+            'user_created': self.request.user,
+            'can_onboard_entities': form.cleaned_data['can_onboard_entities']
+        }
+        SupportSetup.objects.create(**support_setup_dict)
+
+        return HttpResponseRedirect(self.success_url)
 
 class LevelsView(LevelsFormView):
     """ View for adding levels """

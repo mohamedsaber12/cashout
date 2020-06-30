@@ -20,7 +20,10 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 from django_otp.forms import OTPAuthenticationFormMixin
 
-from .models import Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, UploaderUser, User
+from .models import (
+    Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, UploaderUser, User,
+    SupportUser,
+)
 from .signals import ALLOWED_CHARACTERS
 
 
@@ -257,6 +260,30 @@ class RootCreationForm(forms.ModelForm):
         if self.request.user.is_root:
             user.hierarchy = self.request.user.hierarchy
 
+        user.save()
+        return user
+
+
+class SupportUserCreationForm(forms.ModelForm):
+    """
+    Support user creation form
+    """
+
+    can_onboard_entities = forms.BooleanField(label=_('Can On-board Entities?'))
+
+    class Meta:
+        model = SupportUser
+        fields = ['username', 'email', 'can_onboard_entities']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 8
         user.save()
         return user
 

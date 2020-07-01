@@ -37,6 +37,7 @@ support_urls = [
     path('support/home/', views.SupportHomeView.as_view(), name='support_home'),
     path('support/', views.SupportUsersListView.as_view(), name='support'),
     path('support/creation/', views.SuperAdminSupportSetupCreateView.as_view(), name='add_support'),
+    path('support/clients/', views.ClientsForSupportListView.as_view(), name='support_clients_list'),
 ]
 
 disbursement_setups_urls = [

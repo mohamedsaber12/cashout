@@ -8,7 +8,7 @@ from django.views.generic import CreateView, ListView, TemplateView
 
 from ..forms import SupportUserCreationForm
 from ..mixins import SuperRequiredMixin, SupportUserRequiredMixin
-from ..models import SupportSetup, SupportUser
+from ..models import Client, SupportSetup, SupportUser
 
 
 class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
@@ -63,3 +63,26 @@ class SupportHomeView(SupportUserRequiredMixin, TemplateView):
     """
 
     template_name = 'support/home.html'
+
+
+class ClientsForSupportListView(SupportUserRequiredMixin, ListView):
+    """
+    List view for retreiving all clients users to the support user
+    """
+
+    model = Client
+    paginate_by = 6
+    context_object_name = 'clients'
+    template_name = 'support/clients.html'
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        qs = qs.filter(creator=self.request.user.my_setups.user_created)
+
+        if self.request.GET.get('search'):
+            search_key = self.request.GET.get('search')
+            return qs.filter(Q(client__username__icontains=search_key) |
+                             Q(client__mobile_no__icontains=search_key) |
+                             Q(client__email__icontains=search_key))
+
+        return qs

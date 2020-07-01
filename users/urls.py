@@ -1,10 +1,11 @@
+# -*- coding: utf-8 -*-
+
 from django.contrib.auth import views as django_auth_views
 from django.urls import path
 
 from oauth2_provider import views as oauth2_views
 
 from . import views
-
 
 app_name = 'users'
 

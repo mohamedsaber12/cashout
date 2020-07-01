@@ -269,7 +269,7 @@ class SupportUserCreationForm(forms.ModelForm):
     Support user creation form
     """
 
-    can_onboard_entities = forms.BooleanField(label=_('Can On-board Entities?'))
+    can_onboard_entities = forms.BooleanField(initial=False, required=False, label=_('Can On-board Entities?'))
 
     class Meta:
         model = SupportUser

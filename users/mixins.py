@@ -53,6 +53,17 @@ class SuperRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class SupportUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only support users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_support:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
     Give the access permission of a certain view to only SuperAdmin users,

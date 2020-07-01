@@ -37,7 +37,7 @@ from .forms import (BrandForm, CheckerCreationForm, CheckerMemberFormSet,
                     SetPasswordForm, UploaderMemberFormSet, SupportUserCreationForm,)
 from .mixins import (CollectionRootRequiredMixin, DisbursementRootRequiredMixin, RootRequiredMixin,
                      SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
-                     SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin)
+                     SuperOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin, SupportUserRequiredMixin,)
 from .models import (Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, Setup,
                      UploaderUser, User, SupportSetup, SupportUser,)
 
@@ -452,6 +452,14 @@ class SupportUsersListView(SuperRequiredMixin, ListView):
                              Q(support_user__mobile_no__icontains=search))
 
         return qs
+
+
+class SupportHomeView(SupportUserRequiredMixin, TemplateView):
+    """
+    Template view for support users home page
+    """
+
+    template_name = 'support/home.html'
 
 
 class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):

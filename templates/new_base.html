@@ -9,13 +9,15 @@
         <div id="sidebar-div" class="col-md-3 left_col">
             {% if request.user.is_superadmin %}
                 {% include "superadmin_sidebar.html" %}
+            {% elif request.user.is_support %}
+                {% include 'support/sidebar.html' %}
             {% else %}
                 {% if current_status == 'collection' %}
                   {% include "collection-sidebar.html" %}
                 {% elif current_status == 'disbursement' and not request.user.is_instant_member %}
                   {% include "disbursement-sidebar.html" %}
                 {% else %}
-                  {% include "instant_cashin_sidebar.html" %}
+                  {% include "instant_cashin/sidebar.html" %}
                 {%endif%}  
             {% endif %}
         </div>

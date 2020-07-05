@@ -87,6 +87,9 @@
                         </div>
                         <div class="col-xs-12 bottom text-center">
                           <div class="col-xs-12 col-sm-offset-8 col-sm-4 emphasis">
+                            <a href="{% url 'users:profile' user.client.username %}" type="button" class="btn btn-primary btn-xs">
+                              <i class="fa fa-user"> </i>
+                            </a>
                             <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
                                     data-target="#activation-modal" onclick="update_modal({{ user.id }}, '{{ user.is_active }}')">
                               {% ifequal user.is_active True %}

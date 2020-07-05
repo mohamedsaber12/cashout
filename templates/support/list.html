@@ -60,7 +60,11 @@
                           </div>
                         </div>
                         <div class="col-xs-12 bottom text-center">
-                          <div class="col-xs-12 col-sm-offset-8 col-sm-4 emphasis">
+                          <div class="col-xs-12 col-sm-6 emphasis"></div>
+                          <div class="col-xs-12 col-sm-6 emphasis">
+                            <a href="{% url 'users:profile' user.support_user.username %}" type="button" class="btn btn-primary btn-xs">
+                              <i class="fa fa-user"> </i> {% trans 'View Profile' %}
+                            </a>
                             <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
                                     data-target="#delete-user-modal" onclick="delete_modal({{ user.id }})">
                               <i class="fa fa-trash-o" title="Delete User"></i>

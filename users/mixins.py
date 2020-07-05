@@ -3,6 +3,8 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
+from .models import SupportSetup, Client, User
+
 
 class ParentPermissionMixin(object):
     def has_add_permission(self, request):
@@ -134,3 +136,31 @@ class SuperFinishedSetupMixin(LoginRequiredMixin):
         if not request.user.has_uncomplete_entity_creation():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
+
+
+class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Give the access permission of a profile detail/edit view to only current user or member of the current user
+    """
+
+    def test_func(self):
+        profile_username = self.request.resolver_match.kwargs.get('username')
+        current_user = self.request.user
+
+        if profile_username:
+            if profile_username == current_user.username:
+                return True
+            elif current_user.is_superadmin:
+                client_setups = Client.objects.filter(creator=current_user).select_related('client')
+                support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
+                members_list = [obj.client.username for obj in client_setups]
+                members_list += [obj.support_user.username for obj in support_setups]
+                if profile_username in members_list:
+                    return True
+            elif current_user.is_root:
+                members_objects = User.objects.get_all_hierarchy_tree(current_user.hierarchy)
+                members_list = [user.username for user in members_objects]
+                if profile_username in members_list:
+                    return True
+
+        return False

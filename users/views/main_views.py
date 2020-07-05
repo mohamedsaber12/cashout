@@ -19,6 +19,7 @@ from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
 from data.utils import get_client_ip
 
 from ..forms import OTPTokenForm, ProfileEditForm
+from ..mixins import ProfileOwnerOrMemberRequiredMixin
 from ..models import User
 
 LOGIN_LOGGER = logging.getLogger("login")
@@ -26,7 +27,7 @@ LOGOUT_LOGGER = logging.getLogger("logout")
 FAILED_LOGIN_LOGGER = logging.getLogger("login_failed")
 
 
-class ProfileView(DetailView):
+class ProfileView(ProfileOwnerOrMemberRequiredMixin, DetailView):
     """
     User profile details view.
     """
@@ -38,7 +39,7 @@ class ProfileView(DetailView):
         return get_object_or_404(User, username=self.kwargs['username'])
 
 
-class ProfileUpdateView(UpdateView):
+class ProfileUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
     """
     User profile update view.
     """

@@ -22,6 +22,7 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^profile*'),
     re.compile(r'^agent/budget/edit/*'),
     re.compile(r'^agent/balance-inquiry/*'),
+    re.compile(r'^change_password/*'),
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
     re.compile(settings.MEDIA_URL.lstrip('/')),

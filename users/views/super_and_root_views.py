@@ -8,11 +8,12 @@ from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from django.urls import reverse_lazy
+from django.views import View
 from django.views.generic import ListView, UpdateView
 
 from ..decorators import root_or_superadmin
 from ..forms import BrandForm
-from ..mixins import RootRequiredMixin, SuperRequiredMixin
+from ..mixins import RootRequiredMixin, SuperRequiredMixin, UserOwnsMemberRequiredMixin
 from ..models import Brand, Client, SupportSetup, UploaderUser, User
 
 DELETE_USER_VIEW_LOGGER = logging.getLogger("delete_user_view")
@@ -73,33 +74,32 @@ class EntityBranding(SuperRequiredMixin, UpdateView):
         return kwargs
 
 
-@login_required
-@root_or_superadmin
-def delete(request):
+class UserDeleteView(UserOwnsMemberRequiredMixin, View):
     """
-    Delete any user by user_id
+    Delete client/support/entity(maker-checker) member from only its creator
     """
 
-    if request.is_ajax() and request.method == 'POST':
-        try:
-            data = request.POST.copy()
-            if data.get('client'):
-                client = Client.objects.get(id=int(data['user_id']))
-                user = client.client
-                client.delete_client()
-            elif data.get('support'):
-                support_setup = SupportSetup.objects.get(id=int(data['user_id']))
-                user = support_setup.support_user
-                User.objects.filter(id=support_setup.support_user.id).delete()
-            else:
-                user = User.objects.get(id=int(data['user_id']))
-                user.delete()
-            DELETE_USER_VIEW_LOGGER.debug(
-                    f"[USER DELETED]\nSuperAdmin: {request.user.username} deleted user with username: {user.username}"
-            )
-        except (User.DoesNotExist, Client.DoesNotExist, SupportSetup.DoesNotExist) as e:
-            DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\nPassed ID: {data['user_id']}\nError: {e.args[0]}")
+    def post(self, request, *args, **kwargs):
+        if request.is_ajax():
+            try:
+                data = request.POST.copy()
+                if data.get('client'):
+                    client = Client.objects.get(id=int(data['user_id']))
+                    user = client.client
+                    client.delete_client()
+                elif data.get('support'):
+                    support_setup = SupportSetup.objects.get(id=int(data['user_id']))
+                    user = support_setup.support_user
+                    User.objects.filter(id=support_setup.support_user.id).delete()
+                else:
+                    user = User.objects.get(id=int(data['user_id']))
+                    user.delete()
+                DELETE_USER_VIEW_LOGGER.debug(
+                        f"[USER DELETED]\nSuperAdmin: {request.user} deleted user with username: {user}"
+                )
+            except (User.DoesNotExist, Client.DoesNotExist, SupportSetup.DoesNotExist) as e:
+                DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\nPassed ID: {data['user_id']}\nErr: {e.args[0]}")
 
-        return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
-    else:
-        raise Http404()
+            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
+
+        raise Http404

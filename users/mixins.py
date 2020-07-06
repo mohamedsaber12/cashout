@@ -164,3 +164,31 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
                     return True
 
         return False
+
+
+class UserOwnsMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Give the access permission of a user to only the admin/creator of it.
+    """
+
+    def test_func(self):
+        target_is_client_member = self.request.POST.get('client', False)
+        target_is_support_member = self.request.POST.get('support', False)
+        target_is_entity_member = self.request.POST.get('entity', False)
+        target_id = int(self.request.POST.get('user_id', False))
+        current_user = self.request.user
+
+        if target_id:
+            if current_user.is_superadmin and (target_is_client_member or target_is_support_member):
+                client_setups = Client.objects.filter(creator=current_user).select_related('client')
+                support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
+                members_ids_list = [obj.id for obj in client_setups] + [obj.id for obj in support_setups]
+                if target_id in members_ids_list:
+                    return True
+            elif current_user.is_root and target_is_entity_member:
+                members_objects = User.objects.get_all_hierarchy_tree(current_user.hierarchy)
+                members_ids_list = [user.id for user in members_objects]
+                if target_id in members_ids_list:
+                    return True
+
+        return False

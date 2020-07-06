@@ -156,7 +156,7 @@
         $.ajax({
             url: "{% url 'users:delete' %}",
             type: "POST",
-            data: {user_id: id, action: 'delete'},
+            data: {user_id: id, entity: true, action: 'delete'},
             success: function(data, text, xhr) {
                 if (data["valid"]=="true"){
                     $(".delete-modal-sm").modal('hide');

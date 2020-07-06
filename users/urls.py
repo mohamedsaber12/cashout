@@ -29,7 +29,7 @@ client_urls = [
 
 super_and_root_urls = [
     path('members/', views.Members.as_view(), name='members'),
-    path('user/delete/', views.delete, name='delete'),
+    path('user/delete/', views.UserDeleteView.as_view(), name='delete'),
     path('settings/branding/', views.EntityBranding.as_view(), name='entity_branding'),
 ]
 

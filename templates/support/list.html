@@ -43,32 +43,34 @@
                   <div class="col-md-12 col-sm-12 col-xs-12 text-center"></div>
                   <div class="clearfix"></div>
 
-                  {% for user in supporters %}
-                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
+                  {% for support_setup in supporters %}
+                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ support_setup.id }}">
                       <div class="well profile_view" style="width: 100%;">
                         <div class="col-sm-12">
                           <div class="left col-xs-7">
-                            <h2><i class="fa fa-user"></i> {{ user.support_user.username }}</h2><br>
-                            <h5><strong>{% trans 'About:' %} </strong> {{ user.support_user.title }} </h5>
+                            <h2><i class="fa fa-user"></i> {{ support_setup.support_user.username }}</h2><br>
+                            <h5><strong>{% trans 'About:' %} </strong> {{ support_setup.support_user.title }} </h5>
                             <ul class="list-unstyled">
-                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}<ul><li></strong> {{ user.support_user.email }}</li></ul></li>
-                              <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}<ul><li></strong> {{ user.support_user.mobile_no }}</li></ul></li>
+                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}<ul><li></strong> {{ support_setup.support_user.email }}</li></ul></li>
+                              <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}<ul><li></strong> {{ support_setup.support_user.mobile_no }}</li></ul></li>
                             </ul>
                           </div>
                           <div class="right col-xs-5 text-center">
-                            <img src="{{ user.support_user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                            <img src="{{ support_setup.support_user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
                           </div>
                         </div>
                         <div class="col-xs-12 bottom text-center">
-                          <div class="col-xs-12 col-sm-6 emphasis"></div>
                           <div class="col-xs-12 col-sm-6 emphasis">
-                            <a href="{% url 'users:profile' user.support_user.username %}" type="button" class="btn btn-primary btn-xs">
+                            <p class="ratings">
+                            </p>
+                          </div>
+                          <div class="col-xs-12 col-sm-6 emphasis">
+                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target=".delete-modal-sm" onclick="delete_modal({{ support_setup.id }})">
+                              <i class="fa fa-user"></i> <i class="fa fa-trash-o"></i>
+                            </button>
+                            <a href="{% url 'users:profile' support_setup.support_user.username %}" type="button" class="btn btn-primary btn-xs">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                             </a>
-                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
-                                    data-target="#delete-user-modal" onclick="delete_modal({{ user.id }})">
-                              <i class="fa fa-trash-o" title="Delete User"></i>
-                            </button>
                           </div>
                         </div>
                       </div>
@@ -136,7 +138,7 @@
           $.ajax({
             url: "{% url 'users:delete' %}",
             type: "POST",
-            data: { user_id: id, support:true },
+            data: { user_id: id, support: true },
             success: function (data, text, xhr) {
               if (data["valid"] == "true") {
                 $("#delete-user-modal").modal('hide');

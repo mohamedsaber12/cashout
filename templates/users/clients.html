@@ -51,70 +51,74 @@
 
                   <div class="clearfix"></div>
                   
-                  {% for user in users %}
-                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
+                  {% for client_setup in users %}
+                    <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ client_setup.id }}">
                       <div class="well profile_view" style="width: 100%;">
                         <div class="col-sm-12">
                           <h4 class="brief">
                             <i>
-                              {% ifequal user.is_active True %}
+                              {% ifequal client_setup.is_active True %}
                                 {% trans 'Active' %}
                               {% else %}
                                 {% trans 'InActive' %}
                               {% endifequal %}
                             </i>
                             <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                              {% if user.client.data_type == 3 %}
+                              {% if client_setup.client.data_type == 3 %}
                                 Disbursement and Collection
-                              {% elif user.client.data_type == 2 %}
+                              {% elif client_setup.client.data_type == 2 %}
                                 Collection
-                              {% elif user.client.data_type == 1 %}
+                              {% elif client_setup.client.data_type == 1 %}
                                 Disbursement
                               {% endif %}
                             </i>
                           </h4>
                           <div class="left col-xs-7">
-                            <h2><i class="fa fa-user"></i> {{ user.client.username }}</h2><br>
-                            <h5><strong>{% trans 'About:' %} </strong> {{ user.client.title }} </h5>
+                            <h2><i class="fa fa-user"></i> {{ client_setup.client.username }}</h2><br>
+                            <h5><strong>{% trans 'About:' %} </strong> {{ client_setup.client.title }} </h5>
                             <ul class="list-unstyled">
-                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong> {{ user.client.email }}</li>
-                              <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong> {{ user.client.mobile_no }}</li>
+                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong> {{ client_setup.client.email }}</li>
+                              <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong> {{ client_setup.client.mobile_no }}</li>
                             </ul>
                           </div>
                           <div class="right col-xs-5 text-center">
-                            <img src="{{ user.client.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                            <img src="{{ client_setup.client.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
                           </div>
                         </div>
                         <div class="col-xs-12 bottom text-center">
-                          <div class="col-xs-12 col-sm-offset-8 col-sm-4 emphasis">
-                            <a href="{% url 'users:profile' user.client.username %}" type="button" class="btn btn-primary btn-xs">
-                              <i class="fa fa-user"> </i>
-                            </a>
+                          <div class="col-xs-12 col-sm-6 emphasis">
+                            <p class="ratings">
+                            </p>
+                          </div>
+                          <div class="col-xs-12 col-sm-6 emphasis">
                             <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
-                                    data-target="#activation-modal" onclick="update_modal({{ user.id }}, '{{ user.is_active }}')">
-                              {% ifequal user.is_active True %}
+                                    data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
+                              {% ifequal client_setup.is_active True %}
                               <i class="fa fa-times" title="Deactivate User"></i>
                               {% else %}
                               <i class="fa fa-check" title="Activate User"></i>
                               {% endifequal %}
                             </button>
                             <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
-                                    data-target="#delete-user-modal" onclick="delete_modal({{ user.id }})">
+                                    data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
                               <i class="fa fa-trash-o" title="Delete User"></i>
                             </button>
+                            <a href="{% url 'users:profile' client_setup.client.username %}" type="button" class="btn btn-primary btn-xs">
+                              <i class="fa fa-user"> </i> {% trans 'View Profile' %}
+                            </a>
                           </div>
 
                           <!--For custom budget clients-->
                           <div class="col-xs-12 col-sm-offset-8 col-sm-4 emphasis">
-                            {% if user.client.has_custom_budget %}
+                            {% if client_setup.client.has_custom_budget %}
                             <button class="btn btn-toggle btn-xs" title="Add to Custom Budget">
-                              <a class="fa fa-plus-square" href="{% url 'disbursement:budget_update' username=user.client.username %}" target="_blank"></a>
+                              <a class="fa fa-plus-square" href="{% url 'disbursement:budget_update' username=client_setup.client.username %}" target="_blank"></a>
                             </button>
                             <button class="btn btn-toggle btn-xs" title="Total Super Agent Balance Inquiry">
-                              <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=user.client.username %}" target="_blank"></a>
+                              <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=client_setup.client.username %}" target="_blank"></a>
                             </button>
                             <button class="btn btn-toggle btn-xs" title="Fees Profile Update">
-                              <a class="fa fa-cogs" href="{% url 'users:update_fees' username=user.client.username %}" target="_blank"></a>
+                              <a class="fa fa-cogs" href="{% url 'users:update_fees' username=client_setup.client.username %}" target="_blank"></a>
                             </button>
                             {% endif %}
                           </div>
@@ -238,7 +242,7 @@
           $.ajax({
             url: "{% url 'users:delete' %}",
             type: "POST",
-            data: { user_id: id,client:true },
+            data: { user_id: id, client: true },
             success: function (data, text, xhr) {
               if (data["valid"] == "true") {
                 $("#delete-user-modal").modal('hide');

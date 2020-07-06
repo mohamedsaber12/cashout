@@ -600,8 +600,9 @@ class ForgotPasswordForm(forms.Form):
         else:
             user_qs = User.objects.filter(email=email)
             if not user_qs.exists():
-                raise forms.ValidationError("No user with this email exists")
-            self.user = user_qs.first()
+                self.user = False
+            else:
+                self.user = user_qs.first()
 
     def send_email(self):
         MESSAGE = 'Dear <strong>{0}</strong><br><br>' \

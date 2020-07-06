@@ -21,11 +21,11 @@ class ForgotPasswordView(FormView):
 
     def form_valid(self, form):
         """called when form is valid"""
-        form.send_email()
+        if form.user:
+            form.send_email()
         context = self.get_context_data()
         context['success'] = True
         context['form'] = self.form_class()
-        # no success url redirect
         return render(self.request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):

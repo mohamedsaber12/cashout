@@ -18,7 +18,10 @@ from utilities.models import CallWalletsModerator
 from .models import Brand, CheckerUser, Client, MakerUser, RootUser, Setup, SuperAdminUser, SupportSetup, UploaderUser
 
 
-ALLOWED_CHARACTERS = '!#$%&*+-0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_abcdefghijklmnopqrstuvwxyz'
+ALLOWED_UPPER_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+ALLOWED_LOWER_CHARS = 'abcdefghijklmnopqrstuvwxyz'
+ALLOWED_SYMBOLS = '!#$%&*+-:;<=>?@^_'
+ALLOWED_NUMBERS = '0123456789'
 MESSAGE = _("""Dear <strong>{0}</strong><br><br>
 Your account is created on the panel with email: <strong>{2}</strong> and username: <strong>{3}</strong> <br>
 Please follow <a href="{1}" ><strong>this link</strong></a> to reset password as soon as possible, <br><br>
@@ -121,7 +124,10 @@ def generate_username(user, user_model):
 
 def notify_user(instance, created):
     if created:
-        random_pass = get_random_string(allowed_chars=ALLOWED_CHARACTERS, length=12)
+        random_pass = get_random_string(allowed_chars=ALLOWED_UPPER_CHARS, length=5)
+        random_pass += get_random_string(allowed_chars=ALLOWED_LOWER_CHARS, length=5)
+        random_pass += get_random_string(allowed_chars=ALLOWED_NUMBERS, length=4)
+        random_pass += get_random_string(allowed_chars=ALLOWED_SYMBOLS, length=4)
         instance.set_password(random_pass)
         instance.save()
 

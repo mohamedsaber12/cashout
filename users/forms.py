@@ -24,7 +24,7 @@ from .models import (
     Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, UploaderUser, User,
     SupportUser,
 )
-from .signals import ALLOWED_CHARACTERS
+from .signals import ALLOWED_UPPER_CHARS, ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS
 
 
 class SetPasswordForm(forms.Form):
@@ -250,8 +250,11 @@ class RootCreationForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        temporary_random_password = get_random_string(allowed_chars=ALLOWED_CHARACTERS, length=12)
-        user.set_password(temporary_random_password)
+        random_pass = get_random_string(allowed_chars=ALLOWED_UPPER_CHARS, length=5)
+        random_pass += get_random_string(allowed_chars=ALLOWED_LOWER_CHARS, length=5)
+        random_pass += get_random_string(allowed_chars=ALLOWED_NUMBERS, length=4)
+        random_pass += get_random_string(allowed_chars=ALLOWED_SYMBOLS, length=4)
+        user.set_password(random_pass)
 
         if self.request.user.is_superadmin:
             user.user_type = 3

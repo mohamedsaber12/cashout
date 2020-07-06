@@ -150,13 +150,39 @@ MAX_TASK_RETRIES = 10
 CELERY_TIMEZONE = 'Africa/Cairo'
 
 # Password validation
-# https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
+CUSTOM_PASSWORD_VALIDATOR = [
+    {
+        'NAME': 'users.validators.NumberValidator',
+        'OPTIONS': {
+            'min_digits': 2,
+        }
+    },
+    {
+        'NAME': 'users.validators.UppercaseValidator',
+        'OPTIONS': {
+            'min_chars': 2,
+        }
+    },
+    {
+        'NAME': 'users.validators.LowercaseValidator',
+        'OPTIONS': {
+            'min_chars': 2,
+        }
+    },
+    {
+        'NAME': 'users.validators.SymbolValidator',
+    },
+]
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
     },
     {
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {
+            'min_length': 12,
+        }
     },
     {
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
@@ -165,6 +191,8 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+AUTH_PASSWORD_VALIDATORS += CUSTOM_PASSWORD_VALIDATOR
 
 # Configure our custom user model to be the default auto user model
 AUTH_USER_MODEL = 'users.User'

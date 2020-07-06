@@ -351,8 +351,9 @@ class AllowDocDisburse(APIView):
         Handles POST requests to send notification mails to checkers that there's new doc ready for review&disbursement
         """
         doc_obj = get_object_or_404(Doc, id=self.kwargs['doc_id'])
+        current_user = request.user
 
-        if request.user.is_maker and doc_obj.is_processed:
+        if current_user.is_maker and doc_obj.is_processed and doc_obj.owner == current_user:
             if doc_obj.can_be_disbursed:
                 return JsonResponse({"message": _("Checkers already notified")}, status=status.HTTP_400_BAD_REQUEST)
 

@@ -45,7 +45,7 @@ SECURITY_THIRD_PARTY_APPS = [
     'django_otp.plugins.otp_static',
     'django_otp.plugins.otp_totp',
     'two_factor',
-    # 'axes',
+    'axes',
     'oauth2_provider',
     'user_sessions',
 ]
@@ -102,7 +102,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Must be the last middleware in the list
-    # 'axes.middleware.AxesMiddleware',
+    'axes.middleware.AxesMiddleware',
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -110,7 +110,7 @@ AUTHENTICATION_BACKENDS = [
     'oauth2_provider.backends.OAuth2Backend',
 
     # AxesBackend should be the first backend in the AUTHENTICATION_BACKENDS list.
-    # 'axes.backends.AxesBackend',
+    'axes.backends.AxesBackend',
 
     # Django ModelBackend is the default authentication backend.
     'django.contrib.auth.backends.ModelBackend',
@@ -281,19 +281,19 @@ EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(minutes=60)
 
 LOGGING = CUSTOM_LOGGING
 
-# Axes has conflicts with OAuth2.0
 # Axes Custom Configurations
-# AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
+AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
 # AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
-# AXES_ENABLE_ADMIN = True
-# AXES_VERBOSE = False
-# SILENCED_SYSTEM_CHECKS = ['axes.W003']
-# AXES_LOCKOUT_TEMPLATE = 'data/login.html'
-# AXES_LOGGER = 'axes_watcher'
+AXES_FAILURE_LIMIT = 5
+AXES_ENABLE_ADMIN = True
+AXES_VERBOSE = False
+AXES_LOCKOUT_TEMPLATE = 'data/login.html'
+AXES_LOGGER = 'axes_watcher'
 
 # OAuth2 provider configs
 OAUTH2_PROVIDER = {
     # this is the list of available scopes
+    'OAUTH2_VALIDATOR_CLASS': 'utilities.validators.AxesOAuth2Validator',
     'SCOPES': {
         'read': 'Read scope',
         'write': 'Write scope',
@@ -305,7 +305,6 @@ OAUTH2_PROVIDER = {
 # Session 3rd party package
 SESSION_ENGINE = 'user_sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-RATELIMIT_ENABLE=True
 
 # Admin Panel Typos
 ADMIN_SITE_HEADER = 'Payouts Admin Panel'

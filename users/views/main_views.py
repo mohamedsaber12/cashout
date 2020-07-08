@@ -10,7 +10,6 @@ from django.urls import reverse
 from django.views import View
 from django.views.generic import DetailView, UpdateView
 from django.views.generic.edit import FormView
-from ratelimit.decorators import ratelimit
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
@@ -114,7 +113,6 @@ class ExpiringAuthToken(ObtainExpiringAuthToken):
         return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
 
 
-# @ratelimit(key=lambda g, r: get_client_ip(r), rate='3/5m', method=ratelimit.UNSAFE, block=True)
 def login_view(request):
     """
     Function that allows users to login.

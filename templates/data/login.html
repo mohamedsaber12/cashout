@@ -14,6 +14,8 @@
       <div>
         {% if error_invalid %}
            <span style="color: #761c19">{{ error_invalid }}</span>
+        {% elif failure_limit is not None %}
+          <span style="color: #761c19">{% trans 'Too many login attempts. Please try again after 1 minute' %}</span>
         {% endif %}
       </div>
       <div>

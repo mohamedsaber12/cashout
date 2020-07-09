@@ -195,9 +195,11 @@ def document_view(request, doc_id):
     hide_review_form = True         # True if checker already reviewed this doc or reviews are completed
     can_review = True               # True if checker have the level rights to review the doc
     can_user_disburse = {}
+
     if doc.owner.hierarchy == request.user.hierarchy:
         # doc already disbursed
         if doc.is_disbursed and (doc.owner == request.user or request.user.is_checker or request.user.is_root):
+            logging_message(VIEW_DOCUMENT_LOGGER, '[DOC VIEWED]', request, f"Viewed document with ID: {doc_id}")
             return redirect(reverse("disbursement:disbursed_data", args=(doc_id, )))
         if request.user.is_checker:
             # makers must notify checkers and allow the document to be disbursed

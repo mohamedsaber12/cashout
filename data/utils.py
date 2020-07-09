@@ -30,15 +30,16 @@ def get_client_ip(request):
     :param request:
     :return:
     """
-    real_ip = request.META['HTTP_X_REAL_IP']
+
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if real_ip:
-        ip = real_ip
-    elif x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0]
-    else:
-        ip = request.META.get('REMOTE_ADDR')
-    return ip
+    remote_addr = request.META.get('REMOTE_ADDR')
+
+    if remote_addr:
+        return remote_addr
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0]
+
+    return None
 
 
 def update_filename(instance, filename):

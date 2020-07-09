@@ -72,6 +72,8 @@ INSTALLED_APPS += SECURITY_THIRD_PARTY_APPS
 INSTALLED_APPS += USER_DEFINED_APPS
 
 MIDDLEWARE = [
+    'utilities.middleware.SetRemoteAddrFromForwardedFor',
+
     # https://github.com/dabapps/django-log-request-id
     'log_request_id.middleware.RequestIDMiddleware',
 
@@ -302,7 +304,7 @@ OAUTH2_PROVIDER = {
 # Session 3rd party package
 SESSION_ENGINE = 'user_sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-GEOIP_PATH = os.path.join(os.path.dirname(BASE_DIR), 'GeoLite2-City.mmdb')
+GEOIP_PATH = os.path.join(MEDIA_ROOT, 'GeoLite2-City.mmdb')
 SILENCED_SYSTEM_CHECKS = ['admin.E410']
 
 # Admin Panel Typos

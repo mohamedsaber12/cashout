@@ -70,8 +70,8 @@ oauth2_provider_urls = [
 
 sessions_urls = [
     path('sessions/', views.SessionListView.as_view(), name='session_list'),
-    path('sessions/<str:pk>/delete/', views.SessionDeleteView.as_view(), name='session_delete'),
     path('sessions/other/delete/', views.SessionDeleteOtherView.as_view(), name='session_delete_other'),
+    path('sessions/<str:pk>/delete/', views.SessionDeleteView.as_view(), name='session_delete'),
 ]
 
 urlpatterns = [

@@ -91,6 +91,10 @@
                             </p>
                           </div>
                           <div class="col-xs-12 col-sm-6 emphasis">
+                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
+                                    data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
+                              <i class="fa fa-trash-o" title="Delete User"></i>
+                            </button>
                             <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
                                     data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
                               {% ifequal client_setup.is_active True %}
@@ -98,10 +102,6 @@
                               {% else %}
                               <i class="fa fa-check" title="Activate User"></i>
                               {% endifequal %}
-                            </button>
-                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
-                                    data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
-                              <i class="fa fa-trash-o" title="Delete User"></i>
                             </button>
                             <a href="{% url 'users:profile' client_setup.client.username %}" type="button" class="btn btn-primary btn-xs">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}

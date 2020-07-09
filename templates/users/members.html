@@ -65,11 +65,11 @@
                                   {% endif %}
                                 </i></h4>
                                 <div class="left col-xs-7">
-                                  <h2>{{ user.get_full_name }}</h2>
-                                  <p><strong>{% trans 'About:' %} </strong> {{ user.title }} </p>
+                                  <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.get_full_name }}</h2>
+                                  <p><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {% if user.title %}{{ user.title }}{% endif %} </p>
                                   <ul class="list-unstyled">
-                                    <li><i class="fa fa-mail-forward"></i> {% trans 'Email:' %} {{ user.email }}</li>
-                                    <li><i class="fa fa-phone"></i> {% trans 'Phone #:' %} {{ user.mobile_no }}</li>
+                                    <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ user.email }}</li></ul></li>
+                                    <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ user.mobile_no }}</li></ul></li>
                                   </ul>
                                 </div>
                                 <div class="right col-xs-5 text-center">
@@ -84,7 +84,7 @@
                                 </div>
                                 <div class="col-xs-12 col-sm-6 emphasis">
                                   <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target=".delete-modal-sm" onclick="update_modal({{ user.id }})">
-                                      <i class="fa fa-user"></i> <i class="fa fa-trash-o"></i>
+                                    <i class="fa fa-trash-o" title="Delete User"></i>
                                   </button>
                                   <a href="{% url 'users:profile' user.username %}" type="button" class="btn btn-primary btn-xs">
                                     <i class="fa fa-user"> </i> {% trans 'View Profile' %}

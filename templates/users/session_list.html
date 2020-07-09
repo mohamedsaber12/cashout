@@ -1,0 +1,101 @@
+{% extends 'new_base.html' %}
+
+{% load sessions_tags i18n %}
+{% load static %}
+
+{% block title %} {% trans 'Sessions Details' %} {% endblock %}
+{% block customcss %}
+<!-- Datatables -->
+    <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+    
+    <style>
+      .session-delete {
+        height: 30%;
+        margin-top: 0px;
+        margin-bottom: 0px;
+        padding-top: 2px;
+        padding-bottom: 2px;
+      }
+    </style>
+    {% endblock %}
+
+{% block body %}
+
+    <!-- data table -->
+    <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+            <div class="x_panel">
+                <div class="x_title">
+                    <h2>{% trans 'Current Sessions Details' %}</h2>
+                    <div class="clearfix"></div>
+                </div>
+                <div class="x_content">
+                    <table id="doc-datatable" class="table table-striped table-bordered">
+                        <thead>
+                        <tr>
+                          <th>{% trans "Location" %}</th>
+                          <th>{% trans "Device" %}</th>
+                          <th>{% trans "Last Activity" %}</th>
+                          <th>{% trans "End Sessions" %}</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                            {% for session  in sessions_list %}
+                              <tr {% if session.session_key == session_key %}class="active"{% endif %}>
+                                <td>{{ session.ip|location }} <small>({{ session.ip }})</small></td>
+                                <td>{{ session.user_agent|device }}</td>
+                                <td>
+                                  {% if session.session_key == session_key %}
+                                    {% blocktrans with time=session.last_activity|timesince %}{{ time }} ago (this session){% endblocktrans %}
+                                  {% else %}
+                                    {% blocktrans with time=session.last_activity|timesince %}{{ time }} ago{% endblocktrans %}
+                                  {% endif %}
+                                </td>
+                              <td>
+                                <form method="post" action="{% url 'users:session_delete' pk=session.session_key %}">
+                                  {% csrf_token %}
+                                  <button type="submit" class="btn btn-sm btn-warning session-delete">{% trans "End Session" %}</button>
+                                </form>
+                              </td>
+                              </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+          {% if sessions_list.count > 1 %}
+            <h5>{% blocktrans %}You can also end all other sessions but the current. This will log you out on all other devices.{% endblocktrans %}</h5>
+            <form method="post" action="{% url 'users:session_delete_other' %}">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-default btn-warning">{% trans "End All Other Sessions" %}</button>
+            </form>
+          {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+
+<!-- Datatables -->
+<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+<script>
+    $('#doc-datatable').DataTable();
+</script>
+{% endblock %}

@@ -6,7 +6,6 @@ from django.urls import reverse
 from django.shortcuts import redirect
 from django_otp import user_has_device
 
-from .models import Visitor
 from .views import ourlogout
 
 
@@ -23,6 +22,7 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^agent/budget/edit/*'),
     re.compile(r'^agent/balance-inquiry/*'),
     re.compile(r'^change_password/*'),
+    re.compile(r'^sessions/*'),
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
     re.compile(settings.MEDIA_URL.lstrip('/')),
@@ -97,33 +97,3 @@ class CheckerTwoFactorAuthMiddleWare:
                 return redirect(reverse("users:otp_login"))
             if not is_verified and not path in urls:
                 return redirect(reverse("two_factor:profile"))
-            
-
-class PreventConcurrentLoginsMiddleware:
-    """
-    Django middleware that prevents multiple concurrent logins..
-    Adapted from http://stackoverflow.com/a/1814797 and https://gist.github.com/peterdemin/5829440
-    """
-
-    def __init__(self, get_response):
-        self.get_response = get_response
-
-    def __call__(self, request):
-        response = self.get_response(request)
-        return response
-
-    def process_view(self, request, view_func, view_args, view_kwargs):
-        if request.user.is_authenticated:
-            key_from_cookie = request.session.session_key
-            if hasattr(request.user, 'visitor'):
-                session_key_in_visitor_db = request.user.visitor.session_key
-                if session_key_in_visitor_db != key_from_cookie:
-                    # Delete the Session object from database and cache
-                    engine.SessionStore(session_key_in_visitor_db).delete()
-                    request.user.visitor.session_key = key_from_cookie
-                    request.user.visitor.save()
-            else:
-                Visitor.objects.create(
-                    user=request.user,
-                    session_key=key_from_cookie
-                )

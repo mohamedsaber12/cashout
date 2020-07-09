@@ -43,11 +43,11 @@
                       <div class="col-sm-12">
                         <h4 class="brief"><i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">Disbursement</i></h4>
                         <div class="left col-xs-7">
-                          <h2><i class="fa fa-user"></i> {{ user.client.username }}</h2><br>
+                          <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.client.username }}</h2><br>
                           <h5><strong>{% trans 'About:' %} </strong> {% if user.client.title %}{{ user.client.title }}{% endif %} </h5>
                           <ul class="list-unstyled">
-                            <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}<ul><li></strong> {{ user.client.email }}</li></ul></li>
-                            <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}<ul><li></strong> {{ user.client.mobile_no }}</li></ul></li>
+                            <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ user.client.email }}</li></ul></li>
+                            <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ user.client.mobile_no }}</li></ul></li>
                           </ul>
                         </div>
                         <div class="right col-xs-5 text-center">

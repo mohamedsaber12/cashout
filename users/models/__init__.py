@@ -10,7 +10,6 @@ from .entity_setup import EntitySetup
 from .client import Client
 from .admin import SuperAdminUser
 from .brand import Brand
-from .visitor import Visitor
 from .instant_api_checker import InstantAPICheckerUser
 from .instant_api_viewer import InstantAPIViewerUser
 from .support import SupportUser, SupportSetup

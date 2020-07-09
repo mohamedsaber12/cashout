@@ -74,11 +74,11 @@
                             </i>
                           </h4>
                           <div class="left col-xs-7">
-                            <h2><i class="fa fa-user"></i> {{ client_setup.client.username }}</h2><br>
-                            <h5><strong>{% trans 'About:' %} </strong> {{ client_setup.client.title }} </h5>
+                            <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.username }}</h2>
+                            <h5><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {{ client_setup.client.title }}</h5>
                             <ul class="list-unstyled">
-                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong> {{ client_setup.client.email }}</li>
-                              <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong> {{ client_setup.client.mobile_no }}</li>
+                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ client_setup.client.email }}</li></ul></li>
+                              <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ client_setup.client.mobile_no }}</li></ul></li>
                             </ul>
                           </div>
                           <div class="right col-xs-5 text-center">

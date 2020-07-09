@@ -30,8 +30,11 @@ def get_client_ip(request):
     :param request:
     :return:
     """
+    real_ip = request.META['HTTP_X_REAL_IP']
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
+    if real_ip:
+        ip = real_ip
+    elif x_forwarded_for:
         ip = x_forwarded_for.split(',')[0]
     else:
         ip = request.META.get('REMOTE_ADDR')

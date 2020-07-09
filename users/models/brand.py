@@ -10,7 +10,6 @@ class Brand(models.Model):
     """
     color = models.CharField(max_length=20, null=True, blank=True)
     logo = ProcessedImageField(upload_to='entities-logo',
-                               processors=[ResizeToFill(100, 100)],
                                format='JPEG',
                                options={'quality': 60}, null=True, default='pm_name.png')
 

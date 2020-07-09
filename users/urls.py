@@ -68,6 +68,12 @@ oauth2_provider_urls = [
     path("api/secure/o/token/", oauth2_views.TokenView.as_view(), name="oauth2_token"),
 ]
 
+sessions_urls = [
+    path('sessions/', views.SessionListView.as_view(), name='session_list'),
+    path('sessions/<str:pk>/delete/', views.SessionDeleteView.as_view(), name='session_delete'),
+    path('sessions/other/delete/', views.SessionDeleteOtherView.as_view(), name='session_delete_other'),
+]
+
 urlpatterns = [
     path('user/login/', views.login_view, name='user_login_view'),
     path('user/logout/', views.ourlogout, name='logout'),
@@ -85,3 +91,4 @@ urlpatterns += support_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += password_handling_urls
 urlpatterns += oauth2_provider_urls
+urlpatterns += sessions_urls

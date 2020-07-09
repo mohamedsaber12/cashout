@@ -81,9 +81,6 @@ MIDDLEWARE = [
     # Third party user sessions middleware
     'user_sessions.middleware.SessionMiddleware',
 
-    # Disabled for conflicts with OAuth2.0 provider Token Generation
-    # 'users.middleware.PreventConcurrentLoginsMiddleware',
-
     'django_session_timeout.middleware.SessionTimeoutMiddleware',
 
     # If you use SessionAuthenticationMiddleware, be sure it appears before OAuth2TokenMiddleware.
@@ -305,6 +302,8 @@ OAUTH2_PROVIDER = {
 # Session 3rd party package
 SESSION_ENGINE = 'user_sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+GEOIP_PATH = os.path.join(os.path.dirname(BASE_DIR), 'GeoLite2-City.mmdb')
+SILENCED_SYSTEM_CHECKS = ['admin.E410']
 
 # Admin Panel Typos
 ADMIN_SITE_HEADER = 'Payouts Admin Panel'

@@ -18,8 +18,8 @@ from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, TemplateView, View
 from django.views.static import serve
 
-from users.decorators import (collection_users, disbursement_users, root_only,
-                              root_or_maker_or_uploader, setup_required)
+from users.decorators import collection_users, disbursement_users, root_only, setup_required
+from users.mixins import PrivilegedUserForFormViewRequiredMixin
 from users.models import CheckerUser, Levels
 from utilities.logging import logging_message
 
@@ -27,7 +27,6 @@ from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm, Format
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
 from .tasks import (doc_review_maker_mail, handle_disbursement_file,
                     handle_uploaded_file, notify_checkers, notify_disbursers)
-from .utils import get_client_ip
 
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -351,9 +350,11 @@ def doc_download(request, doc_id):
         raise Http404
 
 
-@method_decorator([root_or_maker_or_uploader, setup_required, login_required], name='dispatch')
-class FormatListView(TemplateView):
+@method_decorator([setup_required], name='dispatch')
+class FormatListView(PrivilegedUserForFormViewRequiredMixin, TemplateView):
     """
+    ToDo: Check for the used admin username if he/she has the right to access it and display list format on it.
+    ToDo: Handle admin username not passed cases.
     List and update existing file formats of Admin users disbursement/collection
     """
 
@@ -361,14 +362,18 @@ class FormatListView(TemplateView):
 
     def dispatch(self, request, *args, **kwargs):
         """Common attributes between GET and POST methods"""
-        self.is_disbursement_admin = True if request.user.get_status(self.request) == 'disbursement' else False
+        self.is_disbursement_model = True if request.user.get_status(self.request) == 'disbursement' else False
+        self.is_support_model = True if self.request.user.is_support else False
         self.flow_type = self.request.user.root_entity_setups.is_normal_flow if self.request.user.is_root else False
+        self.admin_username = self.request.GET.get('admin', None)
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
         """Based on the Admin status decide which type of file format will be used"""
-        if self.is_disbursement_admin:
+        if self.is_disbursement_model:
             return FileCategory.objects.get_by_hierarchy(self.request.user.hierarchy)
+        elif self.is_support_model:
+            return FileCategory.objects.filter(user_created__username=self.admin_username)
         return Format.objects.filter(hierarchy=self.request.user.hierarchy)
 
     def get_success_url(self):
@@ -380,26 +385,25 @@ class FormatListView(TemplateView):
         context = super().get_context_data(*args, **kwargs)
         form = kwargs.get('form', None)
 
-        if not self.is_disbursement_admin:
-            context['formatform'] = form or FormatFormSet(queryset=self.get_queryset(), prefix='format')
-            if not self.request.user.is_root:
-                context['formatform'].can_delete = False
-                context['formatform'].extra = 0
-        else:
+        if self.is_disbursement_model or self.is_support_model:
             context['is_normal_flow'] = self.flow_type
             context['formatform'] = form or FileCategoryFormSet(queryset=self.get_queryset(), prefix='category')
-            if not self.request.user.is_root:
-                context['formatform'].can_delete = False
-                context['formatform'].extra = 0
+        else:
+            context['formatform'] = form or FormatFormSet(queryset=self.get_queryset(), prefix='format')
+
+        if not self.request.user.is_root:
+            context['formatform'].can_delete = False
+            context['formatform'].extra = 0
+            context['empty_formatform'] = True if context['formatform'].queryset.count() == 0 else False
 
         return context
 
     def post(self, request, *args, **kwargs):
         """Handles POST requests to update file formats"""
-        if not self.is_disbursement_admin:
-            form = FormatFormSet(request.POST, prefix='format', form_kwargs={'request': request})
-        else:
+        if self.is_disbursement_model:
             form = FileCategoryFormSet(request.POST, prefix='category', form_kwargs={'request': request})
+        else:
+            form = FormatFormSet(request.POST, prefix='format', form_kwargs={'request': request})
 
         if form and form.is_valid():
             form.save()

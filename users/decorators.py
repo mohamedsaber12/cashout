@@ -98,20 +98,6 @@ def collection_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, log
     return actual_decorator
 
 
-def root_or_maker_or_uploader(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
-    """
-    root and maker and uploader only allowed
-    """
-    actual_decorator = user_passes_test(
-        lambda u: u.is_maker or u.is_root or u.is_uploader or u.is_upmaker,
-        login_url=login_url,
-        redirect_field_name=None
-    )
-    if function:
-        return actual_decorator(function)
-    return actual_decorator
-
-
 def disbursement_users(function=None, redirect_field_name=REDIRECT_FIELD_NAME, login_url='/'):
     """
     disbursement_users only allowed

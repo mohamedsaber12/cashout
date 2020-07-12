@@ -64,13 +64,7 @@
                               {% endifequal %}
                             </i>
                             <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                              {% if client_setup.client.data_type == 3 %}
-                                Disbursement and Collection
-                              {% elif client_setup.client.data_type == 2 %}
-                                Collection
-                              {% elif client_setup.client.data_type == 1 %}
                                 Disbursement
-                              {% endif %}
                             </i>
                           </h4>
                           <div class="left col-xs-7">

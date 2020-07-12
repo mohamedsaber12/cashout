@@ -35,23 +35,42 @@
           <div class="x_panel">
             <div class="x_content">
               <div class="row">
+                <div class="col-md-12 col-sm-12 col-xs-12 text-center">
+                  <ul class="pagination-split"></ul>
+                </div>
                 <div class="clearfix"></div>
 
                 {% for user in clients %}
                   <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
                     <div class="well profile_view" style="width: 100%;">
                       <div class="col-sm-12">
-                        <h4 class="brief"><i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">Disbursement</i></h4>
                         <div class="left col-xs-7">
                           <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.client.username }}</h2><br>
                           <h5><strong>{% trans 'About:' %} </strong> {% if user.client.title %}{{ user.client.title }}{% endif %} </h5>
                           <ul class="list-unstyled">
                             <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ user.client.email }}</li></ul></li>
                             <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ user.client.mobile_no }}</li></ul></li>
+                            <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Formats:' %}</strong><ul><li> <a href="{% url 'data:list_format' %}?admin={{ user.client.username }}">{% trans 'Formats' %}</a></li></ul></li>
                           </ul>
                         </div>
                         <div class="right col-xs-5 text-center">
                           <img src="{{ user.client.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                        </div>
+                      </div>
+                      <div class="bottom profile_view" style="width: 100%; margin-bottom: -5px;">
+                        <div class="col-xs-12">
+                            <h4 class="brief">
+                              <i>
+                                {% ifequal user.is_active True %}
+                                  {% trans 'Active' %}
+                                {% else %}
+                                  {% trans 'InActive' %}
+                                {% endifequal %}
+                              </i>
+                              <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">Disbursement</i>
+                            </h4>
+                        </div>
+                        <div class="col-xs-12 col-sm-6 emphasis">
                         </div>
                       </div>
                     </div>

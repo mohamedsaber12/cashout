@@ -192,3 +192,24 @@ class UserOwnsMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
                     return True
 
         return False
+
+
+class PrivilegedUserForFormViewRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Give the access permission of the format views to only privileged users.
+    """
+
+    def test_func(self):
+        admin_username = self.request.GET.get('admin', False)
+
+        if self.request.user.is_root or self.request.user.is_maker or self.request.user.is_uploader or \
+                self.request.user.is_upmaker:
+            return True
+        elif self.request.user.is_support and admin_username:
+            support_creator = self.request.user.my_setups.user_created
+            client_setups = Client.objects.filter(creator=support_creator).select_related('client')
+            members_list = [obj.client.username for obj in client_setups]
+            if admin_username in members_list:
+                return True
+
+        return False

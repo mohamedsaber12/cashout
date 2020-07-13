@@ -246,7 +246,7 @@ def handle_change_profile_callback(doc_id, transactions):
     has_error = False
 
     for msisdn, status_code, msg_list in transactions:
-        if status_code not in ["200", "629", "560"]:
+        if status_code not in ["200", "629", "560", "562"]:
             has_error = True
             errors.append('\n'.join(msg_list))
         else:

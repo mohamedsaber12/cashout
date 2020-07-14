@@ -2,10 +2,10 @@
 from .server import *
 
 
-ALLOWED_HOSTS += (
+ALLOWED_HOSTS += [
     'payouts.paymobsolutions.com',
-    '54.91.163.127',
-)
+    '52.8.5.130',
+]
 
 # Email Reporting
 ADMINS += [

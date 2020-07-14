@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+  <title>New Entities Weekly Report</title>
+  <style type="text/css">
+    body {
+      font-weight: 200;
+      font-size: 14px;
+    }
+
+    .header {
+      font-size: 20px;
+      font-weight: 100;
+      text-align: center;
+      color: #007cae;
+    }
+
+    .keys {
+      color: #ff3f2b
+    }
+
+    .title {
+      font-size: 22px;
+      font-weight: 100;
+      /* text-align: right;*/
+      padding: 10px 20px 0px 20px;
+    }
+
+    .title span {
+      color: #007cae;
+    }
+
+    .details {
+      padding: 10px 20px 0px 20px;
+      text-align: left !important;
+      /*margin-left: 40%;*/
+    }
+
+    .hrItem {
+      border: none;
+      height: 1px;
+      /* Set the hr color */
+      color: #333; /* old IE */
+      background-color: #fff; /* Modern Browsers */
+    }
+  </style>
+</head>
+<body>
+<div class='wrapper'>
+  <div class='header'>
+    <p class='title'>On-boarded Entities Weekly Report</p>
+  </div>
+  <div>
+    <div>
+      <h3>Total newly on-boarded entities over the last week: {{ entities_count }} entity(ies)</h3>
+      <hr class='hrItem'/>
+    </div>
+
+    {% for entity_admin in entities %}
+      <div class='details'>
+        <ul>
+          <li><span class="keys">Username:</span> {{ entity_admin.username }}</li>
+          <li><span class="keys">Email:</span> {{ entity_admin.email }}</li>
+          <li><span class="keys">Mobile Number:</span> {{ entity_admin.mobile_no }}</li>
+        </ul>
+        <hr class='hrItem'/>
+      </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

@@ -45,7 +45,6 @@ urlpatterns += [
     path('', include('docs.urls', namespace='docs')),
     path('instant-cashin/', include('instant_cashin.urls', namespace='instant_cashin')),
     path('', include(tf_urls, namespace='two_factor')),
-    path('utilities/', include('utilities.urls', namespace='utilities')),
     path('api/secure/', include('disbursement.api.urls', namespace='disbursement_api')),
     path('api/secure/', include('data.api.urls', namespace='data_api')),
     path('api/secure/', include('payment.api.urls', namespace='payment_api')),

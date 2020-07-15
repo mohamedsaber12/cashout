@@ -1,5 +1,5 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
-<html>
+<html xmlns="http://www.w3.org/1999/html">
 <head>
   <title>New Entities Weekly Report</title>
   <style type="text/css">
@@ -43,29 +43,84 @@
       color: #333; /* old IE */
       background-color: #fff; /* Modern Browsers */
     }
+    table {
+      font-family: arial, sans-serif;
+      border-collapse: collapse;
+      width: 100%;
+    }
+
+    td, th {
+      border: 1px solid #dddddd;
+      text-align: left;
+      margin-top: 3px;
+      padding-bottom: 4px;
+    }
+
+    .invert_header {
+      border: 1px solid #FFFFFF;
+    }
+
+    th {
+      background-color: #dddddd;
+    }
   </style>
 </head>
 <body>
 <div class='wrapper'>
   <div class='header'>
-    <p class='title'>On-boarded Entities Weekly Report</p>
+    <h1 class='title'>On-boarded Entities Weekly Report</h1>
   </div>
   <div>
     <div>
-      <h3>Total newly on-boarded entities over the last week: {{ entities_count }} entity(ies)</h3>
-      <hr class='hrItem'/>
+      <h3>Total newly on-boarded entities over the last week: {{ onboarded_entities_count }} entity(ies)</h3>
     </div>
 
-    {% for entity_admin in entities %}
+
       <div class='details'>
-        <ul>
-          <li><span class="keys">Username:</span> {{ entity_admin.username }}</li>
-          <li><span class="keys">Email:</span> {{ entity_admin.email }}</li>
-          <li><span class="keys">Mobile Number:</span> {{ entity_admin.mobile_no }}</li>
-        </ul>
-        <hr class='hrItem'/>
+        <table>
+          <tr>
+            <th class="invert_header">Admin Username</th>
+            <th class="invert_header">Email</th>
+            <th class="invert_header">Mobile Number</th>
+          </tr>
+          {% for entity_admin in onboarded_entities %}
+            <tr>
+              <td>{{ entity_admin.entity__username }}</td>
+              <td>{{ entity_admin.entity__email }}</td>
+              <td>{% if entity_admin.entity__mobile_no %}{{ entity_admin.entity__mobile_no }} {% else %} Not provided {% endif %}</td>
+            </tr>
+          {% empty %}
+
+          {% endfor %}
+        </table>
       </div>
-    {% endfor %}
+    <br>
+    <hr class='hrItem'/>
+
+    <div>
+      <br>
+      <h3>Entities disbursement records over the last week</h3>
+    </div>
+    <div class='details'>
+      <table>
+        <tr>
+          <th class="invert_header">Admin Username</th>
+          <th class="invert_header">Successful Records Number</th>
+          <th class="invert_header">Total Disbursed Amount</th>
+        </tr>
+        {% for record in records_result %}
+          <tr>
+            <td>{{ record.admin }}</td>
+            <td>{{ record.count }}</td>
+            <td>{{ record.amount }} EG</td>
+          </tr>
+        {% empty %}
+
+        {% endfor %}
+      </table>
+    </div>
+    <br>
+    <hr class='hrItem'/>
   </div>
 </body>
 </html>

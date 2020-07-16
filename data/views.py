@@ -19,7 +19,7 @@ from django.views.generic import DetailView, TemplateView, View
 from django.views.static import serve
 
 from users.decorators import collection_users, disbursement_users, root_only, setup_required
-from users.mixins import PrivilegedUserForFormViewRequiredMixin
+from users.mixins import SupportOrRootOrMakerUserPassesTestMixin
 from users.models import CheckerUser, Levels
 from utilities.logging import logging_message
 
@@ -351,10 +351,8 @@ def doc_download(request, doc_id):
 
 
 @method_decorator([setup_required], name='dispatch')
-class FormatListView(PrivilegedUserForFormViewRequiredMixin, TemplateView):
+class FormatListView(SupportOrRootOrMakerUserPassesTestMixin, TemplateView):
     """
-    ToDo: Check for the used admin username if he/she has the right to access it and display list format on it.
-    ToDo: Handle admin username not passed cases.
     List and update existing file formats of Admin users disbursement/collection
     """
 

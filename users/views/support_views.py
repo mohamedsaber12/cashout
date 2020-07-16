@@ -6,9 +6,11 @@ from django.http import HttpResponseRedirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, ListView, TemplateView
 
+from data.models import Doc
+
 from ..forms import SupportUserCreationForm
-from ..mixins import SuperRequiredMixin, SupportUserRequiredMixin
-from ..models import Client, SupportSetup, SupportUser
+from ..mixins import SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin
+from ..models import Client, SupportSetup, SupportUser, RootUser
 
 
 class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
@@ -84,5 +86,24 @@ class ClientsForSupportListView(SupportUserRequiredMixin, ListView):
             return qs.filter(Q(client__username__icontains=search_key) |
                              Q(client__mobile_no__icontains=search_key) |
                              Q(client__email__icontains=search_key))
+
+        return qs
+
+
+class DocumentsForSupportListView(SupportUserRequiredMixin,
+                                  SupportOrRootOrMakerUserPassesTestMixin,
+                                  ListView):
+    """
+    Lists disbursement documents uploaded by specific Admin's members.
+    """
+
+    model = Doc
+    paginate_by = 10
+    context_object_name = 'documents'
+    template_name = 'support/documents_list.html'
+
+    def get_queryset(self, queryset=None):
+        admin = RootUser.objects.get(username=self.kwargs['username'])
+        qs = Doc.objects.filter(owner__hierarchy=admin.hierarchy)
 
         return qs

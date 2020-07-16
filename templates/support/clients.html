@@ -52,6 +52,7 @@
                             <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ user.client.mobile_no }}</li></ul></li>
                             <li><i class="fa fa-file"></i> <strong>{% trans 'Formats:' %}</strong><ul><li> <a href="{% url 'data:list_format' %}?admin={{ user.client.username }}">{% trans 'Formats' %}</a></li></ul></li>
                             <li><i class="fa fa-money"></i> <strong>{% trans 'Balance Inquiry:' %}</strong><ul><li> {{ user.client.budget.current_balance }} EG </li></ul></li>
+                            <li><i class="fa fa-list"></i> <strong>{% trans 'Documents List:' %}</strong><ul><li> <a href="{% url 'users:documents_list' username=user.client.username %}">{% trans 'Documents' %}</a></li></ul></li>
                           </ul>
                         </div>
                         <div class="right col-xs-5 text-center">

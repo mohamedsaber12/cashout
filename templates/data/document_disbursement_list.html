@@ -24,7 +24,7 @@
                 <table class="table table-striped projects">
                     <thead>
                         <tr>
-                            <th style="width: 25%">{% trans 'Document Name' %}</th>
+                            <th style="width: 25%">{% trans 'Document ID' %}</th>
                             <th style="width: 15%">{% trans 'Reviews' %}</th>
                             <th>{% trans 'Disbursed By' %}</th>
                             <th>{% trans 'Disbursement Progress' %}</th>
@@ -39,7 +39,7 @@
                         {% for doc in object_list %}
                             <tr>
                                 <td>
-                                    <a>{{ doc.filename|truncatechars:30 }}...</a>
+                                    <a>{{ doc.id }}</a>
                                     <br />
                                     <small>{% trans 'Created' %} {{doc.created_at}}</small>
                                 </td>

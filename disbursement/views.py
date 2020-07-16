@@ -120,7 +120,7 @@ def disbursement_list(request, doc_id):
             'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
             'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
             'has_success': doc_obj.disbursement_data.filter(is_disbursed=True).count() != 0,
-            'doc_id': doc_id
+            'doc_obj': doc_obj
         }
         return render(request, template_name='disbursement/list.html', context=context)
 

@@ -194,13 +194,16 @@ class UserOwnsMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
         return False
 
 
-class PrivilegedUserForFormViewRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+class SupportOrRootOrMakerUserPassesTestMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
-    Give the access permission of the format views to only privileged users.
+    Give the access permission to the support user to specific admin if this admin is member of the support creator.
+    Or if the user is root or maker give him/her access immediately.
     """
 
     def test_func(self):
-        admin_username = self.request.GET.get('admin', False)
+        admin = self.request.GET.get('admin', False)
+        username = self.request.resolver_match.kwargs.get('username')
+        admin_username = admin if admin else username
 
         if self.request.user.is_root or self.request.user.is_maker or self.request.user.is_uploader or \
                 self.request.user.is_upmaker:

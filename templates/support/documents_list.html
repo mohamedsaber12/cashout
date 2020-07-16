@@ -1,0 +1,108 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+
+{% block title %} {% trans 'Documents List' %} {% endblock %}
+
+{% block customcss %}
+  <!-- Datatables -->
+  <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+  <!-- data table -->
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>{% trans 'Documents List' %}</h2>
+          <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+          <table id="doc-datatable" class="table table-striped table-bordered">
+            <thead>
+              <tr>
+                <th>{% trans 'Document ID' %}</th>
+                <th>{% trans 'Date Created' %}</th>
+                <th>{% trans 'Uploaded By' %}</th>
+                <th>{% trans 'Disbursed By' %}</th>
+                <th>{% trans 'Sheet Specs' %}</th>
+                <th>{% trans 'Status' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for document in documents %}
+                <tr>
+                  <td>{{ document.id }}</td>
+                  <td>{{ document.created_at }}</td>
+                  <td>{{ document.owner }}</td>
+                  <td>{{ document.disbursed_by }}</td>
+                  <td>{{ document.file_category.name }}</td>
+                  <td>
+                    {% if document.disbursement_txn.doc_status == '1' %}
+                      Uploaded successfully
+                    {% elif document.disbursement_txn.doc_status == '3' %}
+                      Processed successfully
+                    {% elif document.disbursement_txn.doc_status == '4' %}
+                      Disbursement failure
+                    {% elif document.disbursement_txn.doc_status == '5' %}
+                      Disbursed successfully
+                    {% else %}
+                      Processing failure
+                    {% endif %}
+                  </td>
+                </tr>
+              {% empty %}
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <!-- end doc list -->
+          <ul class="pagination">
+            {% if object_list.has_previous %}
+              <li><a class="btn btn-outline-info mb-4" href="?page=1">First</a></li>
+              <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.previous_page_number }}">Previous</a>
+              </li>
+            {% endif %}
+
+            {% for num in object_list.paginator.page_range %}
+              {% if object_list.number == num %}
+                <li><a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
+              {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+                <li><a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if object_list.has_next %}
+              <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.next_page_number }}">Next</a></li>
+              <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.paginator.num_pages }}">Last</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block script %}
+  <!-- Datatables -->
+  <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script>
+    $('#doc-datatable').DataTable();
+  </script>
+{% endblock %}

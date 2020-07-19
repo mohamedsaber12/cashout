@@ -109,4 +109,10 @@ class DocumentsForSupportListView(SupportUserRequiredMixin,
 
     def get_queryset(self, queryset=None):
         admin = RootUser.objects.get(username=self.kwargs['username'])
-        return Doc.objects.filter(owner__hierarchy=admin.hierarchy)
+        qs = Doc.objects.filter(owner__hierarchy=admin.hierarchy)
+
+        if self.request.GET.get('search'):
+            doc_id = self.request.GET.get('search')
+            qs = qs.filter(id__icontains=doc_id)
+
+        return qs

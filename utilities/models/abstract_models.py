@@ -7,8 +7,10 @@ from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from core.models import AbstractTimeStamp
 
-class AbstractBaseDocStatus(models.Model):
+
+class AbstractBaseDocStatus(AbstractTimeStamp):
     """
     Base Document Status model.
     """

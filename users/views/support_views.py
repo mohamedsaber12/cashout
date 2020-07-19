@@ -2,9 +2,11 @@
 from __future__ import unicode_literals
 
 from django.db.models import Q
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
+from django.shortcuts import render
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, ListView, TemplateView
+from django.views import View
+from django.views.generic import CreateView, ListView, TemplateView, DetailView
 
 from data.models import Doc
 
@@ -109,10 +111,60 @@ class DocumentsForSupportListView(SupportUserRequiredMixin,
 
     def get_queryset(self, queryset=None):
         admin = RootUser.objects.get(username=self.kwargs['username'])
-        qs = Doc.objects.filter(owner__hierarchy=admin.hierarchy)
+        qs = Doc.objects.filter(owner__hierarchy=admin.hierarchy).prefetch_related('disbursement_txn')
 
         if self.request.GET.get('search'):
             doc_id = self.request.GET.get('search')
             qs = qs.filter(id__icontains=doc_id)
 
         return qs
+
+
+class DocumentForSupportDetailView(View):
+    """
+    ToDo: Add mixin to check if the needed doc belongs to the members
+    """
+
+    def retrieve_doc_status(self, doc_obj):
+        if doc_obj.validation_process_is_running:
+            return 'Validation process is running'
+        elif doc_obj.validated_successfully:
+            return 'Validated successfully'
+        elif doc_obj.validation_failed:
+            return 'Validation failure'
+        elif doc_obj.disbursement_failed:
+            return 'Disbursement failure'
+        elif doc_obj.waiting_disbursement:
+            return 'Ready for disbursement'
+        elif doc_obj.waiting_disbursement_callback:
+            return 'Disbursed successfully and waiting for the disbursement callback'
+        elif doc_obj.disbursed_successfully:
+            return 'Disbursed successfully'
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Shared attributes between GET and POST methods
+        """
+        self.doc_id = self.kwargs['doc_id']
+        # self.admin_username = self.kwargs['username']
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            doc = Doc.objects.prefetch_related('disbursement_data', 'disbursement_txn', 'reviews').filter(
+                    id=self.doc_id
+            ).first()
+            # admin = RootUser.objects.get(username=self.admin_username)
+        except Doc.DoesNotExist:
+            raise Http404
+
+        context = {
+            'doc_obj': doc,
+            'reviews': doc.reviews.all() ,
+            'doc_status': self.retrieve_doc_status(doc),
+            'disbursement_ratio': doc.disbursement_ratio(),
+            'is_reviews_completed': doc.is_reviews_completed(),
+            'disbursement_records': doc.disbursement_data.all(),
+            'disbursement_doc_data': doc.disbursement_txn
+        }
+        return render(request, 'support/document_details.html', context=context)

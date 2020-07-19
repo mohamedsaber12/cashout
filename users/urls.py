@@ -36,6 +36,7 @@ super_and_root_urls = [
 support_urls = [
     path('support/home/', views.SupportHomeView.as_view(), name='support_home'),
     path('support/documents/<username>/', views.DocumentsForSupportListView.as_view(), name='documents_list'),
+    path('support/documents/<username>/<doc_id>/', views.DocumentForSupportDetailView.as_view(), name='doc_detail'),
     path('support/', views.SupportUsersListView.as_view(), name='support'),
     path('support/creation/', views.SuperAdminSupportSetupCreateView.as_view(), name='add_support'),
     path('support/clients/', views.ClientsForSupportListView.as_view(), name='support_clients_list'),

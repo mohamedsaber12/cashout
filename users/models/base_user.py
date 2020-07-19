@@ -56,7 +56,7 @@ class User(AbstractUser):
             upload_to='avatars',
             processors=[ResizeToFill(100, 100)],
             format='JPEG',
-            options={'quality': 60}, null=True, default='user.png'
+            options={'quality': 60}, null=True, default='avatars/user.png'
     )
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     is_totp_verified = models.BooleanField(null=True, default=False)

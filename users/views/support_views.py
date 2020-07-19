@@ -102,8 +102,11 @@ class DocumentsForSupportListView(SupportUserRequiredMixin,
     context_object_name = 'documents'
     template_name = 'support/documents_list.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['admin'] = self.kwargs['username']
+        return context
+
     def get_queryset(self, queryset=None):
         admin = RootUser.objects.get(username=self.kwargs['username'])
-        qs = Doc.objects.filter(owner__hierarchy=admin.hierarchy)
-
-        return qs
+        return Doc.objects.filter(owner__hierarchy=admin.hierarchy)

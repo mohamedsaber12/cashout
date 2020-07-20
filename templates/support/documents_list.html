@@ -60,7 +60,7 @@
             <tbody>
               {% for document in documents %}
                 <tr>
-                  <td>{{ document.id }}</td>
+                  <td><a href="{% url 'users:doc_detail' admin document.id %}">{{ document.id }}</a></td>
                   <td>{{ document.created_at }}</td>
                   <td>{{ document.owner }}</td>
                   <td>

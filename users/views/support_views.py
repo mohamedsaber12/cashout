@@ -5,8 +5,9 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.urls import reverse_lazy
+from django.utils.translation import ugettext as _
 from django.views import View
-from django.views.generic import CreateView, ListView, TemplateView, DetailView
+from django.views.generic import CreateView, ListView, TemplateView
 
 from data.models import Doc
 
@@ -120,12 +121,16 @@ class DocumentsForSupportListView(SupportUserRequiredMixin,
         return qs
 
 
-class DocumentForSupportDetailView(View):
+class DocumentForSupportDetailView(SupportUserRequiredMixin,
+                                   SupportOrRootOrMakerUserPassesTestMixin,
+                                   View):
     """
-    ToDo: Add mixin to check if the needed doc belongs to the members
+    Detail view to retrieve every little detail about every document
     """
 
     def retrieve_doc_status(self, doc_obj):
+        """Retrieve doc status given doc object"""
+
         if doc_obj.validation_process_is_running:
             return 'Validation process is running'
         elif doc_obj.validated_successfully:
@@ -142,22 +147,23 @@ class DocumentForSupportDetailView(View):
             return 'Disbursed successfully'
 
     def dispatch(self, request, *args, **kwargs):
-        """
-        Shared attributes between GET and POST methods
-        """
+        """Shared attributes between GET and POST methods"""
         self.doc_id = self.kwargs['doc_id']
-        # self.admin_username = self.kwargs['username']
+        self.admin_username = self.kwargs['username']
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        try:
-            doc = Doc.objects.prefetch_related('disbursement_data', 'disbursement_txn', 'reviews').filter(
-                    id=self.doc_id
-            ).first()
-            # admin = RootUser.objects.get(username=self.admin_username)
-        except Doc.DoesNotExist:
-            raise Http404
+        """Handle GET request to retrieve details for specific document with id"""
 
+        admin = RootUser.objects.get(username=self.admin_username)
+        doc = Doc.objects.prefetch_related('disbursement_data', 'disbursement_txn', 'reviews').filter(
+                id=self.doc_id, owner__hierarchy=admin.hierarchy
+        )
+
+        if not doc.exists():
+            raise Http404(_(f"Document with id: {self.doc_id} for {self.admin_username} entity members not found."))
+
+        doc = doc.first()
         context = {
             'doc_obj': doc,
             'reviews': doc.reviews.all() ,
@@ -167,4 +173,5 @@ class DocumentForSupportDetailView(View):
             'disbursement_records': doc.disbursement_data.all(),
             'disbursement_doc_data': doc.disbursement_txn
         }
+
         return render(request, 'support/document_details.html', context=context)

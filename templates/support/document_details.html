@@ -80,6 +80,7 @@
           <li>Processing Failure Reason: {{ doc_obj.processing_failure_reason }}</li>
           <li>Total Amount: {{ doc_obj.total_amount }}</li>
           <li>Total Records: {{ doc_obj.total_count }}</li>
+          <li>Disbursement Ratio: {{ disbursement_ratio }} %</li>
           <li>Specs Used: {{ doc_obj.file_category.name }}</li>
           <ul>
             <li>Number of reviews required? {{ doc_obj.file_category.no_of_reviews_required }}</li>
@@ -94,7 +95,6 @@
             {% empty %}
             {% endfor %}
           </ul>
-          <li>Disbursement Ratio: {{ disbursement_ratio }} %</li>
           <li>Created At: {{ disbursement_doc_data.created_at }}</li>
           <li>Updated At: {{ disbursement_doc_data.updated_at }}</li>
         </ul>

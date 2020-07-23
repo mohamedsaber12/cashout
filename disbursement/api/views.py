@@ -201,6 +201,10 @@ class DisburseAPIView(APIView):
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
         vf_response = ets_response = False
 
+        # 2.1 Pick the UIG pin from the .env if the root has custom budget
+        if admin.has_custom_budget:
+            pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
+
         # 3. Prepare the senders and recipients list of dictionaries
         vf_agents, etisalat_agents = self.prepare_agents_list(provider_id=admin.id, raw_pin=pin)
         vf_recipients, ets_recipients = self.separate_recipients(doc_obj.id)

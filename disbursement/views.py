@@ -359,6 +359,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 @method_decorator([setup_required], name='dispatch')
 class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
     """
+    ToDo: Remove the custom budget handling for manual patch and handle custom budget for instant admins
     View for SuperAdmin and Root user to inquire for the balance of a certain entity.
     Scenarios:
         1. The Regular Way:

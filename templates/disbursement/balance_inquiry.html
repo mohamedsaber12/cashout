@@ -17,6 +17,11 @@
 <div class="row">
     <div class="col-lg-12">
         <div class="panel panel-default">
+          {% if request.user.has_custom_budget %}
+            <div class="well col-xs-12">
+              <h4>{% trans 'Your current budget is: ' %} {{ request.user.budget.current_balance }} EG</h4>
+            </div>
+          {% else %}
             <div class="panel-body">
                 <form action="{% url 'disbursement:balance_inquiry' username=username %}" method="post"
                     class="form-horizontal form-label-left">
@@ -41,6 +46,7 @@
                         class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                 </form>
             </div>
+          {% endif %}
         </div>
         {% if balance %}
             <div class="well col-xs-12">
@@ -50,9 +56,9 @@
             </div>
             {% elif error_message %}
             <div class="well col-xs-12">
-                <p style="padding: 25px 25px; font-size: 20px; text-align: center; color:red">
+                <h4 style="text-align: center; color:red">
                     {{error_message}}
-                </p>
+                </h4>
             </div>
         {%endif%}
     </div>

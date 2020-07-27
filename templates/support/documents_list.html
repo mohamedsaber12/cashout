@@ -27,70 +27,75 @@
   </div>
 
   <div class="clearfix"></div>
-  <div hidden id="success-alert-msg" class="alert alert-success">
-    <p>{% trans 'You will receive an email shortly with Orange pending instant transaction file to download' %}</p>
-  </div>
 
   <div class="row">
     <div class="col-md-12">
-      <div class="x_panel">
+      {% if documents %}
+        <div class="x_panel">
 
-        <div class="x_title">
-          <h2>{% trans 'Documents List' %}</h2>
-          <ul class="nav navbar-right panel_toolbox">
-            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-            </li>
-          </ul>
-          <div class="clearfix"></div>
-        </div>
+          <div class="x_title">
+            <h2>{% trans 'Documents List' %}</h2>
+            <ul class="nav navbar-right panel_toolbox">
+              <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+              </li>
+            </ul>
+            <div class="clearfix"></div>
+          </div>
 
-        <div class="x_content">
-          <!-- start doc list -->
-          <table class="table table-striped projects">
-            <thead>
-              <tr>
-                <th>{% trans 'Document ID' %}</th>
-                <th>{% trans 'Date Created' %}</th>
-                <th>{% trans 'Uploaded By' %}</th>
-                <th>{% trans 'Disbursed By' %}</th>
-                <th>{% trans 'Sheet Specs' %}</th>
-                <th>{% trans 'Status' %}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for document in documents %}
+          <div class="x_content">
+            <!-- start doc list -->
+            <table class="table table-striped projects">
+              <thead>
                 <tr>
-                  <td><a href="{% url 'users:doc_detail' admin document.id %}">{{ document.id }}</a></td>
-                  <td>{{ document.created_at }}</td>
-                  <td>{{ document.owner }}</td>
-                  <td>
-                    {% if document.disbursed_by %}
-                      {{ document.disbursed_by }}
-                    {% endif %}
-                  </td>
-                  <td>{{ document.file_category.name }}</td>
-                  <td>
-                    {% if document.disbursement_txn.doc_status == '1' %}
-                      Uploaded successfully
-                    {% elif document.disbursement_txn.doc_status == '3' %}
-                      Processed successfully
-                    {% elif document.disbursement_txn.doc_status == '4' %}
-                      Disbursement failure
-                    {% elif document.disbursement_txn.doc_status == '5' %}
-                      Disbursed successfully
-                    {% else %}
-                      Processing failure
-                    {% endif %}
-                  </td>
+                  <th>{% trans 'Document ID' %}</th>
+                  <th>{% trans 'Date Created' %}</th>
+                  <th>{% trans 'Uploaded By' %}</th>
+                  <th>{% trans 'Disbursed By' %}</th>
+                  <th>{% trans 'Sheet Specs' %}</th>
+                  <th>{% trans 'Status' %}</th>
                 </tr>
-              {% empty %}
-              {% endfor %}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {% for document in documents %}
+                  <tr>
+                    <td><a href="{% url 'users:doc_detail' admin document.id %}">{{ document.id }}</a></td>
+                    <td>{{ document.created_at }}</td>
+                    <td>{{ document.owner }}</td>
+                    <td>
+                      {% if document.disbursed_by %}
+                        {{ document.disbursed_by }}
+                      {% endif %}
+                    </td>
+                    <td>{{ document.file_category.name }}</td>
+                    <td>
+                      {% if document.disbursement_txn.doc_status == '1' %}
+                        Uploaded successfully
+                      {% elif document.disbursement_txn.doc_status == '3' %}
+                        Processed successfully
+                      {% elif document.disbursement_txn.doc_status == '4' %}
+                        Disbursement failure
+                      {% elif document.disbursement_txn.doc_status == '5' %}
+                        Disbursed successfully
+                      {% else %}
+                        Processing failure
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% empty %}
+                {% endfor %}
+              </tbody>
+            </table>
 
-          {% include 'pagination.html' %}
+            {% include 'pagination.html' %}
+          </div>
         </div>
-      </div>
+      {% else %}
+        <div class="x_content">
+          <div class="well upload-nav col-xs-12">
+            <strong>{% trans "No documents uploaded by this entity members" %}</strong>
+          </div>
+        </div>
+      {% endif %}
     </div>
   </div>
 {% endblock %}

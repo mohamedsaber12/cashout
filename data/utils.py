@@ -50,7 +50,7 @@ def update_filename(instance, filename):
     :return:
     """
     now = datetime.datetime.now()
-    path = "documents/%d/%s/" %(now.year, now.month)
+    path = "documents/files_uploaded/%d/%s/" %(now.year, now.month)
     file, ext = filename.split('.')
     filename = file + '_' + instance.owner.username + '_' +\
                ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9)) + \

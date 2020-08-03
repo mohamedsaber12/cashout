@@ -1,7 +1,6 @@
 .idea
 *.pyc
 */migrations/
-media/*
 *.log
 db.sqlite3
 */local.py
@@ -65,12 +64,32 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
-#keep default imgs in media
-!media/user.png
-!media/pm_name.png
+# Ignore media files but keep the directories themselves
+/media/avatars/*
+!/media/avatars/.gitkeep
+!/media/avatars/user.png
 
-!/media/documents/
-/media/documents/*
-!/media/documents/disbursement/
+/media/entities_logo/*
+!/media/entities_logo/.gitkeep
+!/media/entities_logo/pm_name.png
+
+!/media/documents/.gitkeep
 /media/documents/disbursement/*
 !/media/documents/disbursement/.gitkeep
+
+/media/documents/files_uploaded/*
+!/media/documents/files_uploaded/.gitkeep
+
+/media/documents/instant_transactions/*
+!/media/documents/instant_transactions/.gitkeep
+
+/media/documents/weekly_reports/*
+!/media/documents/weekly_reports/.gitkeep
+
+# Ignore logging files but keep their directories
+/logs/*
+!/logs/.gitkeep
+/logs/celery_logs/*
+!/logs/celery_logs/.gitkeep
+/logs/uwsgi-logs/*
+!/logs/uwsgi-logs/.gitkeep

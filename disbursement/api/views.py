@@ -132,7 +132,7 @@ class DisburseAPIView(APIView):
 
             # ToDo: Make it only one DB call by accumulating the amounts along the responses
             if callback_json['TXNSTATUS'] == '200' and doc_obj.owner.root.has_custom_budget:
-                doc_obj.owner.root.budget.update_disbursed_amount(disbursement_data_record.amount)
+                doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(disbursement_data_record.amount)
                 custom_budget_logger(
                         doc_obj.owner.root.username,
                         f"Total disbursed amount: {disbursement_data_record.amount} LE",
@@ -270,7 +270,8 @@ class DisburseCallBack(UpdateAPIView):
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
 
         if successfully_disbursed_obj is not None and successfully_disbursed_obj.doc.owner.root.has_custom_budget:
-            successfully_disbursed_obj.doc.owner.root.budget.update_disbursed_amount(total_disbursed_amount)
+            successfully_disbursed_obj.doc.owner.root.budget.\
+                update_disbursed_amount_and_current_balance(total_disbursed_amount)
             custom_budget_logger(
                     successfully_disbursed_obj.doc.owner.root.username,
                     f"Total disbursed amount: {total_disbursed_amount} LE",

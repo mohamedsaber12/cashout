@@ -51,7 +51,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     issuers_valid_list = ['vodafone', 'etisalat', 'orange', 'aman']
     callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
     is_normal_flow = doc_obj.owner.root.root_entity_setups.is_normal_flow
-    amount_to_be_disbursed_within_custom_budget_threshold = False
+    is_total_amount_within_threshold = False
     amount_position, msisdn_position, issuer_position = doc_obj.file_category.fields_cols()
     start_index = doc_obj.file_category.starting_row()
     xl_workbook = xlrd.open_workbook(doc_obj.file.path)
@@ -149,8 +149,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         error_message = MSG_WRONG_FILE_FORMAT
 
     if valid and doc_obj.owner.root.has_custom_budget:
-        amount_to_be_disbursed_within_custom_budget_threshold = Budget.objects.get(
-                disburser=doc_obj.owner.root).within_threshold(sum([float(value) for value in amount if value]))
+        is_total_amount_within_threshold = Budget.objects.get(disburser=doc_obj.owner.root).\
+            within_threshold(sum([float(value) for value in amount if value]), "vodafone")
 
     max_amount_can_be_disbursed = max(
         [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
@@ -159,7 +159,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
         valid = False
 
-    if valid and doc_obj.owner.root.has_custom_budget and not amount_to_be_disbursed_within_custom_budget_threshold:
+    if valid and doc_obj.owner.root.has_custom_budget and not is_total_amount_within_threshold:
         error_message = MSG_NOT_WITHIN_THRESHOLD
         valid = False
 

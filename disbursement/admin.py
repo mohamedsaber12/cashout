@@ -7,6 +7,7 @@ from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from .forms import BudgetAdminModelForm
 from .mixins import AdminSiteOwnerOnlyPermissionMixin
 from .models import Agent, Budget, DisbursementData, DisbursementDocData, VMTData
 from .utils import custom_budget_logger, custom_titled_filter
@@ -28,10 +29,9 @@ class BudgetAdmin(admin.ModelAdmin):
     Budget Admin model for the Budget model
     """
 
+    form = BudgetAdminModelForm
     list_filter = ['updated_at', 'created_at', 'disburser', 'created_by']
-    list_display = [
-        'disburser', 'max_amount', 'current_balance', 'disbursed_amount', 'total_disbursed_amount', 'updated_at'
-    ]
+    list_display = ['disburser', 'current_balance', 'total_disbursed_amount', 'updated_at']
     readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by', 'current_balance']
     search_fields = ['disburser', 'created_by']
     ordering = ['-updated_at', '-created_at']
@@ -40,8 +40,14 @@ class BudgetAdmin(admin.ModelAdmin):
         (_('Users Details'), {'fields': ('disburser', 'created_by')}),
         (
             _('Budget Amount Details'),
-            {'fields': ('total_disbursed_amount', 'max_amount', 'disbursed_amount', 'current_balance')}
-         ),
+            {'fields': ('total_disbursed_amount', 'current_balance', 'add_new_amount')}
+        ),
+        (
+           _('Percentage Calculation'),
+           {'fields': (
+               'vodafone_percentage', 'etisalat_percentage', 'orange_percentage', 'aman_percentage', 'ach_percentage'
+           )}
+        ),
         (_('Important Dates'), {'fields': ('updated_at', 'created_at')})
     )
 
@@ -50,10 +56,6 @@ class BudgetAdmin(admin.ModelAdmin):
         if not request.user.is_superuser or not request.user.is_superadmin:
             return readonly_fields + self.list_display
         return readonly_fields
-
-    def current_balance(self, instance):
-        """Show the final balance after all success cash-ins to the admin panel"""
-        return instance.current_balance
 
     def has_add_permission(self, request):
         if not request.user.is_superuser or not request.user.is_superadmin:
@@ -65,10 +67,8 @@ class BudgetAdmin(admin.ModelAdmin):
             raise PermissionError(_("Only super users allowed to create/update at this table."))
         obj.created_by = request.user
         obj.save()
-
-        newly_added_amount = abs(obj.max_amount - form.initial.get('max_amount', 0))
         custom_budget_logger(
-                obj.disburser, f"New added amount: {newly_added_amount} LE",
+                obj.disburser, f"New added amount: {form.cleaned_data['add_new_amount']} LE",
                 obj.created_by, head="[CUSTOM BUDGET - ADMIN PANEL]"
         )
 

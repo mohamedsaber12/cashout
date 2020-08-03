@@ -183,7 +183,7 @@ class AmanChannel:
             if response.ok and bill_reference and trx_status:
                 self.transaction.mark_successful()
                 AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
-                self.request.user.budget.update_disbursed_amount(self.amount)
+                self.request.user.budget.update_disbursed_amount_and_current_balance(self.amount)
                 msg = _(f"تم إيداع {self.transaction.amount} جنيه إلى رقم "
                         f"{self.transaction.anon_recipient} بنجاح ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمه المستحقه")
                 return Response({

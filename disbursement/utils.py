@@ -28,7 +28,7 @@ def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", an
 
     return logging_message(
             logger=BUDGET_LOGGER, head=head,
-            user=f"{user} -- Root/Disburser: {disburser}",
+            user=f"{user} -- Disburser Owner/Root: {disburser}",
             message=f"{total_disbursed_amount}{another_message}"
     )
 

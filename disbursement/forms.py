@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 
 import requests
@@ -189,20 +190,17 @@ class BudgetModelForm(forms.ModelForm):
     Budget form is for enabling SuperAdmin users to track and maintain Admin users budgets
     """
     new_amount = forms.IntegerField(
+            label=_('Amount to be added'),
             required=True,
             validators=[MinValueValidator(1000)],
             widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 1000')})
     )
-    current_budget = forms.CharField(required=False)
-    readonly_fields = ['max_amount', 'current_budget', 'disburser', 'created_by']
+    readonly_fields = ['current_balance', 'disburser', 'created_by']
 
     class Meta:
         model = Budget
-        fields = ['new_amount', 'max_amount', 'current_budget', 'disburser', 'created_by']
+        fields = ['new_amount', 'current_balance', 'disburser', 'created_by']
         labels = {
-            'new_amount': _('New amount to be added'),
-            'max_amount': _('Current max amount'),
-            'disburser': _('Admin'),
             'created_by': _('Last update done by'),
         }
 
@@ -212,11 +210,6 @@ class BudgetModelForm(forms.ModelForm):
         self.superadmin_user = kwargs.pop('superadmin_user', None)
 
         super().__init__(*args, **kwargs)
-        self.fields['current_budget'].initial = self.budget_object.current_balance
-
-        # ToDo: Replace the return options list of [disburser, created_by] with only one item
-        # self.fields['disburser'].widget.attrs['value'] = self.budget_object.disburser
-        # self.fields['created_by'].widget.attrs['value'] = self.budget_object.created_by
 
         # ToDo: Make all of the fields other than the new budget are readonly fields
         # This doesn't work because of modelform saving issues
@@ -226,24 +219,50 @@ class BudgetModelForm(forms.ModelForm):
 
     def clean(self):
         """
-        1. Aggregate the final max amount = new_add_budget + current_max_amount
+        1. Validate and add the cleaned  value of the new_amount to the current balance
         2. Assign created_by value to the current SuperAdmin who owns this Root/Disburser
         """
         cleaned_data = super().clean()
 
         try:
-            cleaned_new_budget = int(cleaned_data.get('new_amount', ''))
-            current_max_amount = int(self.budget_object.max_amount)
-            cleaned_new_budget += current_max_amount
-            cleaned_data["max_amount"] = cleaned_new_budget
-
+            amount_being_added = cleaned_data.get('new_amount', None)
+            if amount_being_added:
+                amount_being_added = round(Decimal(amount_being_added), 2)
+                cleaned_data["current_balance"] = self.budget_object.current_balance + amount_being_added
+                cleaned_data["created_by"] = self.superadmin_user
         except ValueError:
             self.add_error('new_amount', _('New amount must be a valid integer, please check and try again.'))
 
-        cleaned_data["disburser"] = self.budget_object.disburser
-        cleaned_data["created_by"] = self.superadmin_user
-
         return cleaned_data
+
+
+class BudgetAdminModelForm(forms.ModelForm):
+    """
+    Admin model form for adding new amounts to the current balance of a budget record
+    """
+
+    add_new_amount = forms.IntegerField(
+            required=False,
+            validators=[MinValueValidator(1000)],
+            widget=forms.TextInput(attrs={'placeholder': _('Add New budget, ex: 1000')})
+    )
+
+    def save(self, commit=True):
+        """Update the current balance using the newly added amount"""
+        try:
+            amount_being_added = self.cleaned_data.get('add_new_amount', None)
+            if amount_being_added:
+                amount_being_added = round(Decimal(amount_being_added), 2)
+                self.instance.current_balance += amount_being_added
+
+        except ValueError:
+            self.add_error('add_new_amount', _('New amount must be a valid integer, please check and try again.'))
+
+        return super().save(commit=commit)
+
+    class Meta:
+        model = Budget
+        fields = ['add_new_amount']
 
 
 AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)

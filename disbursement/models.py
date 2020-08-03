@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 
-from django.conf import settings
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -152,91 +152,166 @@ class Budget(AbstractTimeStamp):
     Model for checking budget before executing disbursement
     """
 
-    max_amount = models.DecimalField(
-            _("Max Allowed Amount"),
-            max_digits=10,
-            decimal_places=2,
-            default=0,
-            null=False,
-            blank=False
-    )
-    disbursed_amount = models.DecimalField(
-            _("Disbursed Amount"),
-            max_digits=10,
-            decimal_places=2,
-            default=0,
-            null=False,
-            blank=False
-    )
-    total_disbursed_amount = models.DecimalField(
-            _("Total Previously Disbursed Amount"),
-            max_digits=15,
-            decimal_places=2,
-            default=0,
-            null=False,
-            blank=False
-    )
     disburser = models.OneToOneField(
-            settings.AUTH_USER_MODEL,
+            "users.RootUser",
             on_delete=models.CASCADE,
-            related_name='budget',
-            verbose_name=_("Disburser"),
-            help_text=_("Before every cashin transaction, "
-                        "amount to be disbursed will be validated against this checker's/admin's budget limit")
+            related_name="budget",
+            verbose_name=_("Owner/Admin of the Disburser"),
+            help_text=_("Before every cashin transaction, the amount to be disbursed "
+                        "will be validated against the current balance of the (API)-Checker owner")
     )
     created_by = models.ForeignKey(
             "users.SuperAdminUser",
             on_delete=models.CASCADE,
-            null=True,
             related_name='budget_creator',
-            verbose_name=_("Maintainer Admin"),
-            help_text=_("Admin who created/updated this budget values")
+            verbose_name=_("Maintainer - Super Admin"),
+            null=True,
+            help_text=_("Super Admin who created/updated this budget values")
+    )
+    current_balance = models.DecimalField(
+            _("Current Balance"),
+            max_digits=10,
+            decimal_places=2,
+            default=0,
+            null=True,
+            blank=True,
+            help_text=_("Updated automatically after any disbursement callback or any addition from add_new_amount")
+    )
+    total_disbursed_amount = models.DecimalField(
+            _("Total Disbursed Amount"),
+            max_digits=15,
+            decimal_places=2,
+            default=0,
+            null=False,
+            blank=False,
+            help_text=_("Updated automatically after any disbursement callback")
+    )
+    vodafone_percentage = models.DecimalField(
+            _("Vodafone Trx Percentage"),
+            validators=[
+                MinValueValidator(round(Decimal(0.1), 1)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=1,
+            default=0,
+            null=False,
+            blank=False,
+            help_text=_("ONLY applied at Vodafone transactions")
+    )
+    etisalat_percentage = models.DecimalField(
+            _("Etisalat Trx Percentage"),
+            validators=[
+                MinValueValidator(round(Decimal(0.1), 1)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=1,
+            default=0,
+            null=False,
+            blank=False,
+            help_text=_("ONLY applied at Etisalat transactions")
+    )
+    orange_percentage = models.DecimalField(
+            _("Orange Trx Percentage"),
+            validators=[
+                MinValueValidator(round(Decimal(0.1), 1)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=1,
+            default=0,
+            null=False,
+            blank=False,
+            help_text=_("ONLY applied at Orange transactions")
+    )
+    aman_percentage = models.DecimalField(
+            _("Aman Trx Percentage"),
+            validators=[
+                MinValueValidator(round(Decimal(0.1), 1)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=1,
+            default=0,
+            null=False,
+            blank=False,
+            help_text=_("ONLY applied at Aman transactions")
+    )
+    ach_percentage = models.DecimalField(
+            _("ACH Trx Percentage"),
+            validators=[
+                MinValueValidator(round(Decimal(0.1), 1)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=1,
+            default=0,
+            null=False,
+            blank=False,
+            help_text=_("ONLY applied at ACH transactions")
     )
 
     class Meta:
-        verbose_name = "Allowed Budget"
-        verbose_name_plural = "Allowed Budgets"
+        verbose_name = "Custom Budget"
+        verbose_name_plural = "Custom Budgets"
         get_latest_by = "-updated_at"
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.disburser.username} Budget"
-
-    @property
-    def current_balance(self):
-        """
-        :return: decimal, current root/admin user's balance
-        """
-        return round((self.max_amount - self.disbursed_amount), 2)
+        """String representation for a custom budget object"""
+        return f"{self.disburser.username} Custom Budget"
 
     def get_absolute_url(self):
         """Success form submit - object saving url"""
         return reverse("disbursement:budget_update", kwargs={"username": self.disburser.username})
 
-    def within_threshold(self, amount_to_be_disbursed):
+    def within_threshold(self, amount_to_be_disbursed, issuer_type):
         """
-        Check if the amount to be disbursed plus the previously disbursed amount won't exceed the max_amount
+        Check if the amount to be disbursed won't exceed the current balance
         :param amount_to_be_disbursed: Amount to be disbursed at the currently running transaction
-        :return: True/False
-        """
-        new_amount = round((self.disbursed_amount + Decimal(amount_to_be_disbursed)), 2)
-
-        if not new_amount <= self.max_amount:
-            return False
-        return True
-
-    def update_disbursed_amount(self, amount):
-        """
-        Update the total disbursement amount at each successful transaction
-        :param amount: the amount to be disbursed
+        :param issuer_type: Channel/Issuer used to disburse the amount over
         :return: True/False
         """
         try:
-            disbursed_amount = round(Decimal(amount), 2)
-            self.total_disbursed_amount += disbursed_amount
-            self.disbursed_amount += disbursed_amount
+            actual_amount = round(Decimal(amount_to_be_disbursed), 2)
+
+            if issuer_type == "vodafone":
+                percentage = round(self.vodafone_percentage, 2)
+            elif issuer_type == "etisalat":
+                percentage = round(self.etisalat_percentage, 2)
+            elif issuer_type == "orange":
+                percentage = round(self.orange_percentage, 2)
+            elif issuer_type == "aman":
+                percentage = round(self.aman_percentage, 2)
+            else:
+                percentage = round(self.ach_percentage, 2)
+
+            fees_value = round(((actual_amount * percentage) / 100), 2)
+            vat_value = round(((fees_value * Decimal(14.00)) / 100), 2)
+            total_amount_with_fees_and_vat = round((actual_amount + fees_value + vat_value), 2)
+
+            if total_amount_with_fees_and_vat <= round(self.current_balance, 2):
+                return True
+
+            return False
+        except (ValueError, Exception) as e:
+            raise ValueError(_(f"Error while checking the amount to be disbursed if within threshold - {e.args}"))
+
+    def update_disbursed_amount_and_current_balance(self, amount):
+        """
+        Update the total disbursement amount and the current balance after each successful transaction
+        :param amount: the amount being disbursed
+        :return: True/False
+        """
+        try:
+            amount_being_disbursed = round(Decimal(amount), 2)
+            self.total_disbursed_amount += amount_being_disbursed
+            self.current_balance -= amount_being_disbursed
             self.save()
-        except Exception as e:
-            raise ValueError(_(f"Error updating the total disbursed amount, please retry again later."))
+        except Exception:
+            raise ValueError(
+                    _(f"Error updating the total disbursed amount and the current balance, please retry again later.")
+            )
 
         return True

@@ -178,7 +178,7 @@ class InstantDisbursementAPIView(views.APIView):
         )
 
         try:
-            if not request.user.budget.within_threshold(serializer.validated_data['amount']):
+            if not request.user.budget.within_threshold(serializer.validated_data['amount'], issuer.lower()):
                 raise ValidationError(BUDGET_EXCEEDED_MSG)
 
             if issuer.lower() in self.specific_issuers:
@@ -213,7 +213,7 @@ class InstantDisbursementAPIView(views.APIView):
         if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
             logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL TRX]", request, f"{json_inquiry_response}")
             transaction.mark_successful()
-            request.user.budget.update_disbursed_amount(data_dict['AMOUNT'])
+            request.user.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'])
             return default_response_structure(
                     transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
                     disbursement_status=_("success"), response_status_code=status.HTTP_200_OK

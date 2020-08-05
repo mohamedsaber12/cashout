@@ -41,6 +41,10 @@ class Members(RootRequiredMixin, ListView):
                     value = 1
                 elif type_of == 'checker':
                     value = 2
+                elif type_of == 'apichecker':
+                    value = 6
+                elif type_of == 'viewer':
+                    value = 7
                 else:
                     return qs
                 return qs.filter(user_type=value)

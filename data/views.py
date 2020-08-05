@@ -45,7 +45,7 @@ def redirect_home(request):
         return redirect(reverse('admin:index'))
     if request.user.is_instantapiviewer:
         return redirect(reverse('instant_cashin:transactions_list'))
-    if request.user.is_root and request.user.can_pass_instant_disbursement():
+    if request.user.is_root and request.user.is_instant_model_onboarding:
         return redirect(reverse('instant_cashin:pending_list'))
     if request.user.is_support:
         return redirect(reverse('users:support_home'))

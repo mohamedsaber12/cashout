@@ -115,7 +115,7 @@ class User(AbstractUser):
     @property
     def can_view_docs(self):
         """Check if the user has the permission to view the API documentation"""
-        if self.is_instantapiviewer or self.has_perm('users.can_view_api_docs'):
+        if self.is_instantapiviewer or self.has_perm('users.can_view_api_docs') or self.is_instant_model_onboarding:
             return True
         return False
 
@@ -200,7 +200,8 @@ class User(AbstractUser):
     @cached_property
     def is_instant_member(self):
         """Check if current user belongs to instant cashin family"""
-        if self.is_instantapichecker or self.is_instantapiviewer or self.has_perm('users.has_instant_disbursement'):
+        if self.is_instantapichecker or self.is_instantapiviewer \
+                or self.is_instant_model_onboarding or self.has_perm('users.has_instant_disbursement'):
             return True
         return False
 
@@ -230,22 +231,6 @@ class User(AbstractUser):
             return True
         except Budget.DoesNotExist:
             return False
-
-    def can_pass_instant_disbursement(self):
-        """Check if this user's family has any member who has instant disbursement capabilities"""
-        if self.is_instant_member:
-            return True
-        elif self.is_root:
-            for child in self.children():
-                if child.is_instant_member:
-                    return True
-        elif self.is_superadmin:
-            for root_child in self.children():
-                for child in root_child.children():
-                    if child.is_instant_member:
-                        return True
-
-        return False
 
     def get_absolute_url(self):
         return reverse("users:profile", kwargs={'username': self.username})

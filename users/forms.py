@@ -277,10 +277,11 @@ class RootCreationForm(forms.ModelForm):
 
         if not self.is_default_vf_setups:
             business_setups = self.cleaned_data['business_setups']
-
             if 'instant' in business_setups:
                 user.user_permissions.\
                     add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
+                user.user_permissions.\
+                    add(Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement'))
             elif 'accept' in business_setups:
                 user.user_permissions.\
                     add(Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'))

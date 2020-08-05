@@ -40,8 +40,13 @@
                       {%if current_status == 'disbursement' %}
                       <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                         <ul class="pagination pagination-split">
-                          <li><a href="?q=maker">{% trans 'Makers' %}</a></li>
-                          <li><a href="?q=checker">{% trans 'Checkers' %}</a></li>
+                          {% if request.user.is_instant_model_onboarding %}
+                            <li><a href="?q=viewer">{% trans 'Viewer Users' %}</a></li>
+                            <li><a href="?q=apichecker">{% trans 'API Checkers' %}</a></li>
+                          {% else %}
+                            <li><a href="?q=maker">{% trans 'Makers' %}</a></li>
+                            <li><a href="?q=checker">{% trans 'Checkers' %}</a></li>
+                          {% endif %}
                         </ul>
                       </div>
                       {%endif%}

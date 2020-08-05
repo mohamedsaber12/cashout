@@ -43,12 +43,11 @@
   <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
     <div class="menu_section">
       <ul class="nav side-menu">
+
+        <li><a href="{% url 'data:main_view' %}"><i class="fa fa-home"></i> {% trans 'Dashboard' %}</a></li>
         {% if request.user.can_view_docs %}
           <li><a href="{% url 'docs:instant_docs' path='' %}"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>
         {% endif %}
-
-        <li><a href="{% url 'data:main_view' %}"><i class="fa fa-home"></i> {% trans 'Dashboard' %}</a></li>
-
         <li><a><i class="fa fa-users"></i> {% trans 'Members'%} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="{% url 'users:add_client' %}">{% trans 'New Client' %}</a></li>

@@ -15,16 +15,13 @@ class InstantReviewerRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-class RootFromInstantFamilyRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+class RootWithInstantPermissionsPassesTestMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
     Prevent non logged-in and admins who not belong to instant family accessing instant cashin home view.
     """
 
     def test_func(self):
-        if (
-                self.request.user.is_root and
-                any([True for us in self.request.user.children() if us.is_instantapichecker or us.is_instantapiviewer])
-        ):
+        if self.request.user.is_root and self.request.user.is_instant_model_onboarding:
             return True
 
         return False

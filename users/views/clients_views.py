@@ -106,9 +106,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_created=self.object, disbursement=False, change_profile=False, set_pin=False,
                     user_inquiry=False, balance_inquiry=False
             )
+        elif self.object.is_accept_vodafone_onboarding:
+            Setup.objects.create(user=self.object)
+            CallWalletsModerator.objects.\
+                create(user_created=self.object, instant_disbursement=False, user_inquiry=False, balance_inquiry=False)
         else:
             Setup.objects.create(user=self.object)
-            CallWalletsModerator.objects.create(user_created=self.object)
+            CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
 
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))

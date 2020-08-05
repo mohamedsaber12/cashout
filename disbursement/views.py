@@ -418,7 +418,7 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
     def get_wallet_balance(self, request, pin, entity_username=None):
         custom_budget_amount = custom_budget_msg = ""
         has_custom_budget = request.user.has_custom_budget
-        is_instant_family = request.user.can_pass_instant_disbursement()
+        is_instant_family = request.user.is_instant_member
 
         if request.user.is_root:
             superadmin = request.user.root.client.creator

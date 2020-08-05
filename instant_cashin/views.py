@@ -15,7 +15,7 @@ from core.models import AbstractBaseStatus
 from utilities.constants import SPREADSHEET_CONTENT_TYPE_CONSTANT
 from utilities.logging import logging_message
 
-from .mixins import InstantReviewerRequiredMixin, RootFromInstantFamilyRequiredMixin, RootOwnsRequestedFileTestMixin
+from .mixins import InstantReviewerRequiredMixin, RootWithInstantPermissionsPassesTestMixin, RootOwnsRequestedFileTestMixin
 from .models import AbstractBaseIssuer, InstantTransaction
 from .tasks import generate_pending_orange_instant_transactions
 
@@ -56,7 +56,7 @@ class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTrans
         return queryset
 
 
-class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixin, BaseInstantTransactionsListView):
+class PendingOrangeInstantTransactionsListView(RootWithInstantPermissionsPassesTestMixin, BaseInstantTransactionsListView):
     """
     Home view for Admin users that belong to instant disbursement family, Lists all of the pending
     Orange instant transactions aggregated per every day.
@@ -81,7 +81,7 @@ class PendingOrangeInstantTransactionsListView(RootFromInstantFamilyRequiredMixi
         return ordered_dates_unique_list
 
 
-class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequiredMixin, View):
+class DownloadPendingOrangeInstantTransactionsView(RootWithInstantPermissionsPassesTestMixin, View):
     """
     Downloads sheet with the pending Orange Transactions of the provided date
     """
@@ -104,7 +104,7 @@ class DownloadPendingOrangeInstantTransactionsView(RootFromInstantFamilyRequired
         raise Http404
 
 
-class ServeDownloadingInstantTransactionsView(RootFromInstantFamilyRequiredMixin,
+class ServeDownloadingInstantTransactionsView(RootWithInstantPermissionsPassesTestMixin,
                                               RootOwnsRequestedFileTestMixin,
                                               View):
     """

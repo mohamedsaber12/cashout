@@ -12,11 +12,16 @@ from django.views.generic import CreateView, ListView, TemplateView
 from data.models import Doc
 
 from ..forms import SupportUserCreationForm
-from ..mixins import SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin
+from ..mixins import (
+    SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin,
+    UserWithAcceptVFOnboardingPermissionRequired,
+)
 from ..models import Client, SupportSetup, SupportUser, RootUser
 
 
-class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
+class SuperAdminSupportSetupCreateView(UserWithAcceptVFOnboardingPermissionRequired,
+                                       SuperRequiredMixin,
+                                       CreateView):
     """
     Create view for super admin users to create support users
     """
@@ -38,7 +43,9 @@ class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
         return HttpResponseRedirect(self.success_url)
 
 
-class SupportUsersListView(SuperRequiredMixin, ListView):
+class SupportUsersListView(UserWithAcceptVFOnboardingPermissionRequired,
+                           SuperRequiredMixin,
+                           ListView):
     """
     List support users related to the currently logged in super admin
     Search for support users by username, email or mobile no by "search" query parameter.
@@ -72,7 +79,7 @@ class SupportHomeView(SupportUserRequiredMixin, TemplateView):
 
 class ClientsForSupportListView(SupportUserRequiredMixin, ListView):
     """
-    List view for retreiving all clients users to the support user
+    List view for retrieving all clients users to the support user
     """
 
     model = Client

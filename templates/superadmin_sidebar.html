@@ -52,9 +52,13 @@
         <li><a><i class="fa fa-users"></i> {% trans 'Members'%} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
             <li><a href="{% url 'users:add_client' %}">{% trans 'New Client' %}</a></li>
-            <li><a href="{% url 'users:add_support' %}">{% trans 'New Support Member' %}</a></li>
+            {% if request.user.is_accept_vodafone_onboarding %}
+              <li><a href="{% url 'users:add_support' %}">{% trans 'New Support Member' %}</a></li>
+            {% endif %}
             <li><a href="{% url 'users:clients' %}">{% trans 'All Clients' %}</a></li>
-            <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
+            {% if request.user.is_accept_vodafone_onboarding %}
+              <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
+            {% endif %}
           </ul>
         </li>
 

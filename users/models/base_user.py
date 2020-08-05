@@ -76,6 +76,9 @@ class User(AbstractUser):
             ("has_collection", "the client has collection options"),
             ("has_instant_disbursement", "the client/his children has instant disbursement capabilities"),
             ("can_view_api_docs", "the user can view the api documentation"),
+            ("vodafone_default_onboarding", "the onboarding will be the old one at the super admin and the admin"),
+            ("instant_model_onboarding", "the onboarding of an instant entity will be only for the mandatory setups"),
+            ("accept_vodafone_onboarding", "the new vf & accept business model of no direct calls to the wallets"),
         )
         ordering = ['-id', '-hierarchy']
 
@@ -108,7 +111,6 @@ class User(AbstractUser):
             return User.objects.get_all_hierarchy_tree(self.hierarchy).filter(~Q(user_type=self.user_type))[::1]
 
         raise ValidationError('This user has no children')
-
 
     @property
     def can_view_docs(self):
@@ -275,3 +277,24 @@ class User(AbstractUser):
             return 'disbursement'
         if data_type == 2 or self.is_uploader or (self.is_root and data_type == 2):
             return 'collection'
+
+    @cached_property
+    def is_vodafone_default_onboarding(self):
+        """Check if the current user belongs the vodafone default onboarding setups"""
+        if self.has_perm('users.vodafone_default_onboarding'):
+            return True
+        return False
+
+    @cached_property
+    def is_instant_model_onboarding(self):
+        """Check if the current user belongs the instant model onboarding setups"""
+        if self.has_perm('users.instant_model_onboarding'):
+            return True
+        return False
+
+    @cached_property
+    def is_accept_vodafone_onboarding(self):
+        """Check if the current user belongs the accept vodafone onboarding setups"""
+        if self.has_perm('users.accept_vodafone_onboarding'):
+            return True
+        return False

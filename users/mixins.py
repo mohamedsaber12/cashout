@@ -55,6 +55,42 @@ class SuperRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class UserWithDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Check if the user has the default vodafone onboarding permission
+    """
+
+    def test_func(self):
+        if self.request.user.is_vodafone_default_onboarding:
+            return True
+
+        return False
+
+
+class UserWithInstantOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Check if the user has the instant model onboarding permission
+    """
+
+    def test_func(self):
+        if self.request.user.is_instant_model_onboarding:
+            return True
+
+        return False
+
+
+class UserWithAcceptVFOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Check if the user has the accept vodafone onboarding permission
+    """
+
+    def test_func(self):
+        if self.request.user.is_accept_vodafone_onboarding:
+            return True
+
+        return False
+
+
 class SupportUserRequiredMixin(LoginRequiredMixin):
     """
     Mixin to give access permission for only support users

@@ -5,6 +5,7 @@ import json
 import logging
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
@@ -13,13 +14,14 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
-from data.utils import get_client_ip
+from utilities.logging import logging_message
+from utilities.models import CallWalletsModerator
 
 from ..forms import ClientFeesForm, CustomClientProfilesForm, RootCreationForm
 from ..mixins import (SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
                       SuperOwnsCustomizedBudgetClientRequiredMixin,
                       SuperRequiredMixin)
-from ..models import Client, EntitySetup, RootUser, User
+from ..models import Client, EntitySetup, RootUser, User, Setup
 
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 DELETE_USER_VIEW_LOGGER = logging.getLogger("delete_user_view")
@@ -69,9 +71,10 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     form_class = RootCreationForm
     template_name = 'entity/add_root.html'
 
-    def get_success_url(self, is_collection=False):
-        if is_collection:
-            return reverse('users:clients')
+    def get_success_url(self):
+
+        if self.object.is_instant_model_onboarding:
+            return reverse('data:main_view')
 
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
         if created:
@@ -86,24 +89,38 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         kwargs.update({'request': self.request})
         return kwargs
 
-    def form_valid(self, form):
-        self.object = form.save()
+    def handle_entity_extra_setups(self):
         entity_dict = {
             "user": self.request.user,
             "entity": self.object
         }
-        is_collection = self.object.data_type() == 2
-        if is_collection:
-            entity_dict['agents_setup'] = True
 
+        if self.object.is_instant_model_onboarding:
+            entity_dict["agents_setup"] = True
+            entity_dict["fees_setup"] = True
+            Setup.objects.create(
+                    user=self.object, pin_setup=True, levels_setup=True, maker_setup=True, checker_setup=True,
+                    category_setup=True
+            )
+            CallWalletsModerator.objects.create(
+                    user_created=self.object, disbursement=False, change_profile=False, set_pin=False,
+                    user_inquiry=False, balance_inquiry=False
+            )
+        else:
+            Setup.objects.create(user=self.object)
+            CallWalletsModerator.objects.create(user_created=self.object)
+
+        self.object.user_permissions.\
+            add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
         EntitySetup.objects.create(**entity_dict)
         Client.objects.create(creator=self.request.user, client=self.object)
-        ROOT_CREATE_LOGGER.debug(
-                f"[NEW ADMIN CREATED]\nUser: {self.request.user.username} from IP Address {get_client_ip(self.request)}"
-                + f"\nCreated new Root/Admin with username: {self.object.username}"
-        )
 
-        return HttpResponseRedirect(self.get_success_url(is_collection))
+    def form_valid(self, form):
+        self.object = form.save()
+        self.handle_entity_extra_setups()
+        msg = f"New Root/Admin created with username: {self.object.username}"
+        logging_message(ROOT_CREATE_LOGGER, "[NEW ADMIN CREATED]", self.request, msg)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):

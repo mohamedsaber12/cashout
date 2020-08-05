@@ -13,9 +13,9 @@
         {% csrf_token %}
             <div>
                 {% for field in form.visible_fields %}
-                        {% ifequal field.name "business_type"  %}
-                            <div class="checkbox" style="position: relative; ">
-                                <div class="col-xs-12 ">
+                        {% ifequal field.name "business_setups"  %}
+                            <div class="checkbox" style="position: relative;">
+                                <div class="col-xs-12" style="text-align: left;">
                                     {{ field }}
                                     {{ field.errors.as_ul }}
                                 </div>

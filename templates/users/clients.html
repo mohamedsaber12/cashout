@@ -64,7 +64,13 @@
                               {% endifequal %}
                             </i>
                             <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                                Disbursement
+                              {% if client_setup.client.is_instant_model_onboarding %}
+                                Instant Patch
+                              {% elif client_setup.client.is_instant_model_onboarding %}
+                                Accept - Vodafone Model
+                              {% else %}
+                                Disbursement Model
+                              {% endif %}
                             </i>
                           </h4>
                           <div class="left col-xs-7">

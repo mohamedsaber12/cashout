@@ -14,6 +14,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
+from disbursement.models import Budget
 from utilities.logging import logging_message
 from utilities.models import CallWalletsModerator
 
@@ -106,6 +107,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_created=self.object, disbursement=False, change_profile=False, set_pin=False,
                     user_inquiry=False, balance_inquiry=False
             )
+            Budget.objects.create(disburser=self.object, created_by=self.request.user)
         elif self.object.is_accept_vodafone_onboarding:
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.\

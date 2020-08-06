@@ -90,7 +90,7 @@
                             <p class="ratings">
                             </p>
                           </div>
-                          <div class="col-xs-12 col-sm-6 emphasis">
+                          <div class="col-xs-12 emphasis text-right">
                             <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
                                     data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
                               <i class="fa fa-trash-o" title="Delete User"></i>
@@ -103,23 +103,28 @@
                               <i class="fa fa-check" title="Activate User"></i>
                               {% endifequal %}
                             </button>
+                            {% if request.user.is_instant_model_onboarding %}
+                              <button class="btn btn-default btn-xs" title="Update Budget">
+                                <a class="fa fa-money" href="{% url 'disbursement:budget_update' username=client_setup.client.username %}" target="_blank"></a>
+                              </button>
+                            {% endif %}
                             <a href="{% url 'users:profile' client_setup.client.username %}" type="button" class="btn btn-primary btn-xs">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                             </a>
                           </div>
 
                           <!--For custom budget clients-->
-                          <div class="col-xs-12 col-sm-offset-8 col-sm-4 emphasis">
-                            {% if client_setup.client.has_custom_budget %}
-                            <button class="btn btn-toggle btn-xs" title="Add to Custom Budget">
-                              <a class="fa fa-plus-square" href="{% url 'disbursement:budget_update' username=client_setup.client.username %}" target="_blank"></a>
-                            </button>
-                            <button class="btn btn-toggle btn-xs" title="Total Super Agent Balance Inquiry">
-                              <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=client_setup.client.username %}" target="_blank"></a>
-                            </button>
-                            <button class="btn btn-toggle btn-xs" title="Fees Profile Update">
-                              <a class="fa fa-cogs" href="{% url 'users:update_fees' username=client_setup.client.username %}" target="_blank"></a>
-                            </button>
+                          <div class="col-xs-12 emphasis text-right">
+                            {% if client_setup.client.has_custom_budget and not request.user.is_instant_model_onboarding %}
+                              <button class="btn btn-default btn-xs" title="Update Budget">
+                                <a class="fa fa-money" href="{% url 'disbursement:budget_update' username=client_setup.client.username %}" target="_blank"></a>
+                              </button>
+                              <button class="btn btn-default btn-xs" title="Total Super Agent Balance Inquiry">
+                                <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=client_setup.client.username %}" target="_blank"></a>
+                              </button>
+                              <button class="btn btn-default btn-xs" title="Fees Profile Update">
+                                <a class="fa fa-cogs" href="{% url 'users:update_fees' username=client_setup.client.username %}" target="_blank"></a>
+                              </button>
                             {% endif %}
                           </div>
                           <!--End For custom budget clients-->

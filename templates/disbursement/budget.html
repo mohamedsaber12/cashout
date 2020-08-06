@@ -9,7 +9,7 @@
 {% block body %}
   <div class="page-title">
     <div class="title_left">
-      <h3><i class="fa fa-institution"></i> {{ budget_object.disburser.username }}{% trans ' Budget' %}</h3><br>
+      <h3><i class="fa fa-institution"></i> {% trans 'Update ' %} {{ budget_object.disburser.username }}{% trans ' Entity Budget' %}</h3><br>
     </div>
 
       {% include 'flash_messages.html' %}

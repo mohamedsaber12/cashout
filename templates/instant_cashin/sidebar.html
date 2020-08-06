@@ -48,6 +48,10 @@
         </li>
         <li><a href="{% url 'docs:instant_docs' path='' %}"><i class="fa fa-book"></i> {% trans 'API Documentation'%}</a></li>
         {% if request.user.is_root %}
+          <li>
+            <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+              <i class="fa fa-user"></i> {% trans 'Balance inquiry' %}</a>
+          </li>
           <li><a><i class="fa fa-users"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>

@@ -191,15 +191,18 @@ class BudgetModelForm(forms.ModelForm):
     """
     new_amount = forms.IntegerField(
             label=_('Amount to be added'),
-            required=True,
-            validators=[MinValueValidator(1000)],
-            widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 1000')})
+            required=False,
+            validators=[MinValueValidator(round(Decimal(100), 2))],
+            widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 100')})
     )
     readonly_fields = ['current_balance', 'disburser', 'created_by']
 
     class Meta:
         model = Budget
-        fields = ['new_amount', 'current_balance', 'disburser', 'created_by']
+        fields = [
+            'new_amount', 'current_balance', 'vodafone_percentage', 'etisalat_percentage', 'orange_percentage',
+            'aman_percentage', 'ach_percentage', 'disburser', 'created_by'
+        ]
         labels = {
             'created_by': _('Last update done by'),
         }
@@ -243,8 +246,8 @@ class BudgetAdminModelForm(forms.ModelForm):
 
     add_new_amount = forms.IntegerField(
             required=False,
-            validators=[MinValueValidator(1000)],
-            widget=forms.TextInput(attrs={'placeholder': _('Add New budget, ex: 1000')})
+            validators=[MinValueValidator(round(Decimal(100), 2))],
+            widget=forms.TextInput(attrs={'placeholder': _('Add New budget, ex: 100')})
     )
 
     def save(self, commit=True):

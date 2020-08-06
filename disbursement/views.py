@@ -480,7 +480,7 @@ class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin,
     form_class = BudgetModelForm
     template_name = 'disbursement/budget.html'
     context_object_name = 'budget_object'
-    success_message = _("New budget add successfully!")
+    success_message = _("Budget updated successfully!")
     failure_message = _("Adding new budget failure, check below errors and try again!")
 
     def get_object(self, queryset=None):

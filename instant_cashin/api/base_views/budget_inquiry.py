@@ -27,7 +27,7 @@ class BudgetInquiryAPIView(views.APIView):
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests of the budget inquiry api view"""
-        disburser = request.user
+        disburser = request.user.root
 
         if not disburser.has_custom_budget:
             custom_budget_logger(

@@ -47,18 +47,18 @@ class InstantDisbursementAPIView(views.APIView):
         super().__init__(*args, **kwargs)
         self.specific_issuers = ['orange', 'aman']
 
-    def root_corresponding_pin(self, instant_user, wallet_issuer, serializer):
+    def superadmin_corresponding_pin(self, instant_user, wallet_issuer, serializer):
         """
-        Placed at the .env, formatted like {InstantRootUsername}_{issuer}_PIN=pin
+        Placed at the .env, formatted like {InstantSuperUsername}_{issuer}_PIN=pin
         :param instant_user: the user who can initiate the instant cash in request
         :param wallet_issuer: type of the passed wallet issuer
         :param serializer: the serializer which contains the data
-        :return: It returns the PIN of the instant user's root from request's data or .env file
+        :return: It returns the PIN of the instant user's superadmin from request's data or .env file
         """
         if wallet_issuer.lower() in self.specific_issuers: return True
 
         if not serializer.data['pin']:
-            return get_from_env(f"{instant_user.root.username}_{wallet_issuer}_PIN")
+            return get_from_env(f"{instant_user.root.super_admin.username}_{wallet_issuer}_PIN")
 
         return serializer.validated_data['pin']
 
@@ -160,7 +160,7 @@ class InstantDisbursementAPIView(views.APIView):
                     from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
                     issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
             )
-            data_dict['PIN'] = self.root_corresponding_pin(instant_user, data_dict['WALLETISSUER'], serializer)
+            data_dict['PIN'] = self.superadmin_corresponding_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
         except Exception as e:
             if transaction: transaction.mark_failed(INTERNAL_ERROR_MSG)

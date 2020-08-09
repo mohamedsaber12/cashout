@@ -73,6 +73,7 @@ password_handling_urls = [
 
 oauth2_provider_urls = [
     path("api/secure/o/token/", oauth2_views.TokenView.as_view(), name="oauth2_token"),
+    path("oauth2/keys/<username>/", views.OAuth2ApplicationDetailView.as_view(), name="oauth2_detail")
 ]
 
 sessions_urls = [

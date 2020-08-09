@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
-from django.views.generic import CreateView
+from django.views.generic import CreateView, DetailView
+from oauth2_provider.models import Application
 
 from users.forms import ViewerUserCreationModelForm, APICheckerUserCreationModelForm
 from users.mixins import UserWithInstantOnboardingPermissionRequired
@@ -52,3 +54,16 @@ class APICheckerCreateView(BaseInstantMemberCreateView):
         kwargs["page_title"] = "New API Checker"
         kwargs["form_title"] = "Add API Checker User"
         return super().get_context_data(**kwargs)
+
+
+class OAuth2ApplicationDetailView(DetailView):
+    """
+    View for Retrieving oauth2 application details for specific user
+    """
+
+    model = Application
+    template_name = "instant_cashin/auth_keys.html"
+    context_object_name = "oauth2_app"
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(Application, user__username=self.kwargs['username'])

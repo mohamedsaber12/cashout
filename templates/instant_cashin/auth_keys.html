@@ -1,0 +1,42 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %}{{ oauth2_app.user.username }} {% trans 'Auth Keys' %}{% endblock %}
+{% block body %}
+  <div class="page-title">
+    <div class="title_left">
+      <h3>{{ oauth2_app.user.username }} {% trans 'User Authorization Keys' %}</h3>
+    </div>
+    <div class="clearfix"></div>
+
+    <div class="row">
+      <div class="col-lg-12">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <ul>
+              <li>
+                <h4>{% trans 'Client ID:' %}</h4>
+                {% if oauth2_app %}
+                  {{ oauth2_app.client_id }}
+                {% else %}
+                  No client ID for this user
+                {% endif %}
+              </li>
+              <li>
+                <h4>{% trans 'Client Secret:' %}</h4>
+                {% if oauth2_app %}
+                  {{ oauth2_app.client_secret}}
+                {% else %}
+                  No client secret for this user
+                {% endif %}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

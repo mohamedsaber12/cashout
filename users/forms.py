@@ -20,6 +20,8 @@ from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext_lazy as _
 from django_otp.forms import OTPAuthenticationFormMixin
 
+from oauth2_provider.models import Application
+
 from .models import (
     Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, UploaderUser, User,
     SupportUser, InstantAPIViewerUser, InstantAPICheckerUser,
@@ -536,12 +538,25 @@ class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
         model = InstantAPICheckerUser
         fields = ["username", "first_name", "last_name", "email", "password1", "password2"]
 
+    def create_oauth2_provider_app(self, api_checker_user):
+        """
+        Create OAuth2 provider app for every api checker to handle token & session for instant disbursements
+        """
+        try:
+            Application.objects.create(
+                    client_type=Application.CLIENT_CONFIDENTIAL, authorization_grant_type=Application.GRANT_PASSWORD,
+                    name=f"{api_checker_user.username} OAuth App", user=api_checker_user
+            )
+        except Exception:
+            pass
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 6
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
         user.save()
+        self.create_oauth2_provider_app(user)
         return user
 
 

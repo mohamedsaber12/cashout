@@ -54,6 +54,12 @@
           </li>
           <li><a><i class="fa fa-users"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
+              <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                  <li><a href="{% url 'users:add_viewer' %}">{% trans 'Viewer' %}</a></li>
+                  <li><a href="">{% trans 'API Checker' %}</a></li>
+                </ul>
+              </li>
               <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
             </ul>
           </li>

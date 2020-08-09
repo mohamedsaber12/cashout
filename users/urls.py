@@ -53,6 +53,10 @@ disbursement_setups_urls = [
     path('levels/', views.LevelsView.as_view(), name='levels'),
 ]
 
+instant_urls = [
+    path('members/viewer/add/', views.ViewerCreateView.as_view(), name='add_viewer'),
+]
+
 password_handling_urls = [
     path('change_password/<user>/', views.change_password, name="change_password"),
     path('forgot-password/', views.ForgotPasswordView.as_view(), name="forgot_password"),
@@ -91,6 +95,7 @@ urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += support_urls
 urlpatterns += disbursement_setups_urls
+urlpatterns += instant_urls
 urlpatterns += password_handling_urls
 urlpatterns += oauth2_provider_urls
 urlpatterns += sessions_urls

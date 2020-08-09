@@ -1,0 +1,47 @@
+{% extends 'base_form_singlepage.html' %}
+{% load i18n %}
+{% load static %}
+{% load custom_tags %}
+
+{% block title %} {{ page_title }} {% endblock %}
+
+{% block gentellacss %}
+  <link href="{% static 'gentella/iCheck/skins/flat/green.css' %}" rel="stylesheet">
+{% endblock gentellacss %}
+
+{% block form %}
+  <form action="." method="POST">
+    {% csrf_token %}
+    <h1>{{ form_title }}</h1>
+    <div>
+      {% for field in form.visible_fields %}
+        <div class="form-group">
+          <div class="col-xs-12">
+            <div class="">
+              {{ field | add_class:'form-control'}}
+              {{ field.errors.as_ul }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    <div class="clearfix"></div>
+    <br/>
+
+    <div>
+      <a class="reset_pass" href="{% url 'data:main_view' %}">{% trans 'Back' %}</a>
+      <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
+    </div>
+
+    <div class="clearfix"></div>
+    <div class="separator">
+      <div class="clearfix"></div>
+      <br/>
+    </div>
+  </form>
+{% endblock form %}
+
+{% block script %}
+  <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/icheck.min.js' %}"></script>
+{% endblock script %}

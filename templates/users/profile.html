@@ -46,7 +46,23 @@
                           </tr>
                           <tr>
                             <td>{% trans 'Account Type:' %}</td>
-                            <td>{% if object.user_type == 3 %}{% trans 'Admin' %}{% elif object.user_type == 2 %}{% trans 'Checker' %}{% elif object.user_type == 1  %} {% trans 'Maker' %} {% endif %}</td>
+                            <td>
+                              {% if object.user_type == 0 %}
+                                {% trans 'Super' %}
+                              {% elif object.user_type == 1  %}
+                                {% trans 'Maker' %}
+                              {% elif object.user_type == 2 %}
+                                {% trans 'Checker' %}
+                              {% elif object.user_type == 3 %}
+                                {% trans 'Admin' %}
+                              {% elif object.user_type == 6 %}
+                                {% trans 'API Checker' %}
+                              {% elif object.user_type == 7 %}
+                                {% trans 'API Viewer' %}
+                              {% elif object.user_type == 8 %}
+                                {% trans 'Support' %}
+                              {% endif %}
+                            </td>
                           </tr>
                           <tr>
                             <td>{% trans 'Email' %}</td>

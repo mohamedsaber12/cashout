@@ -469,9 +469,9 @@ class CheckerCreationForm(forms.ModelForm):
         fields = ['first_name', 'last_name', 'email', 'mobile_no', 'level']
 
 
-class ViewerUserCreationModelForm(forms.ModelForm):
+class BaseInstantMemberCreationForm(forms.ModelForm):
     """
-    Form for validating and creating new viewer users
+    Base Form to validate the creation of any instant member
     """
 
     error_messages = {
@@ -490,10 +490,6 @@ class ViewerUserCreationModelForm(forms.ModelForm):
             help_text=_("Enter the same password as before, for verification."),
     )
 
-    class Meta:
-        model = InstantAPIViewerUser
-        fields = ["username", "first_name", "last_name", "email", "password1", "password2"]
-
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
@@ -509,6 +505,16 @@ class ViewerUserCreationModelForm(forms.ModelForm):
 
         password_validation.validate_password(password2)
         return password2
+
+
+class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
+    """
+    Form for validating and creating new viewer users
+    """
+
+    class Meta:
+        model = InstantAPIViewerUser
+        fields = ["username", "first_name", "last_name", "email", "password1", "password2"]
 
     def save(self, commit=True):
         user = super().save(commit=False)

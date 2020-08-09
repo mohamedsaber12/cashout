@@ -47,10 +47,7 @@ class User(AbstractUser):
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
-    verification_time = models.DateTimeField(null=True)
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
-    is_email_sent = models.BooleanField(null=True, default=False)
-    is_setup_password = models.BooleanField(null=True, default=False)
     pin = models.CharField(_('pin'), max_length=128, null=True, default=False)
     avatar_thumbnail = ProcessedImageField(
             upload_to='avatars',

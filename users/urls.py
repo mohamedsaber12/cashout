@@ -55,6 +55,7 @@ disbursement_setups_urls = [
 
 instant_urls = [
     path('members/viewer/add/', views.ViewerCreateView.as_view(), name='add_viewer'),
+    path('members/api-checker/add/', views.APICheckerCreateView.as_view(), name='add_api_checker'),
 ]
 
 password_handling_urls = [

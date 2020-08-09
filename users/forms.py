@@ -22,7 +22,7 @@ from django_otp.forms import OTPAuthenticationFormMixin
 
 from .models import (
     Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, UploaderUser, User,
-    SupportUser, InstantAPIViewerUser,
+    SupportUser, InstantAPIViewerUser, InstantAPICheckerUser,
 )
 from .signals import ALLOWED_UPPER_CHARS, ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS
 
@@ -524,6 +524,24 @@ class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.save()
         user.user_permissions. \
             add(Permission.objects.get(content_type__app_label='users', codename='can_view_api_docs'))
+        return user
+
+
+class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
+    """
+    Form for validating and creating new api checker users
+    """
+
+    class Meta:
+        model = InstantAPICheckerUser
+        fields = ["username", "first_name", "last_name", "email", "password1", "password2"]
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 6
+        user.hierarchy = self.request.user.hierarchy
+        user.set_password(self.cleaned_data["password1"])
+        user.save()
         return user
 
 

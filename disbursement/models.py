@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.urls import reverse
@@ -54,7 +55,7 @@ class Agent(models.Model):
             db_index=True,
     )
     wallet_provider = models.ForeignKey(
-            "users.RootUser",
+            settings.AUTH_USER_MODEL,
             related_name="agents",
             on_delete=models.CASCADE,
             help_text=_("Each super-agent or agent MUST be related to specific Root user")

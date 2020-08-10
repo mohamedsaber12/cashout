@@ -23,18 +23,3 @@ class RootUser(User):
 
     class Meta:
         proxy = True
-
-    def first_non_super_agent(self, wallet_issuer=None):
-        """
-        Return the first non super agent to be used at the instant disbursement
-        :param wallet_issuer: type of the passed wallet issuer
-        :return: the first non super agent or None
-        """
-        msisdn_issuer = '011' if wallet_issuer == 'ETISALAT' else '010'
-
-        if self.agents:
-            qs = self.agents.filter(super=False, msisdn__startswith=msisdn_issuer)
-            if qs.count() > 0:
-                return qs.first().msisdn
-
-        raise ValueError(f"{self.username} root/wallet_issuer has no agents setup.")

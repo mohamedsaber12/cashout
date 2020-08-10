@@ -154,7 +154,8 @@ class InstantDisbursementAPIView(views.APIView):
             issuer = data_dict['WALLETISSUER'] = serializer.validated_data["issuer"]
 
             if issuer.lower() not in self.specific_issuers:
-                data_dict['MSISDN'] = instant_user.root.first_non_super_agent(serializer.validated_data["issuer"])
+                data_dict['MSISDN'] = instant_user.root.super_admin.\
+                    first_non_super_agent(serializer.validated_data["issuer"])
 
             transaction = InstantTransaction.objects.create(
                     from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],

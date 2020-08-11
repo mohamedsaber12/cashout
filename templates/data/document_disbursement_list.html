@@ -112,10 +112,6 @@
                                     {% elif doc.has_callback %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-success btn-md">{% trans 'View' %}</a>
 
-                                    <!-- Document is being validated -->
-                                    {% elif doc.validation_process_is_running %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-info btn-md">{% trans 'View' %}</a>
-
                                     <!-- Document is ready for disbursement or waiting for disbursement callback -->
                                     {% elif doc.waiting_disbursement or doc.waiting_disbursement_callback %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md">{% trans 'View' %}</a>

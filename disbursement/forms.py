@@ -79,12 +79,15 @@ class PinForm(forms.Form):
     def __init__(self, *args, root, **kwargs):
         self.root = root
         super().__init__(*args, **kwargs)
-        self.agents = Agent.objects.filter(wallet_provider=root)
+        if self.root.is_vodafone_default_onboarding:
+            self.agents = Agent.objects.filter(wallet_provider=root)
+        else:
+            self.agents = Agent.objects.filter(wallet_provider=root.super_admin)
         self.env = get_dot_env()
 
     def get_form(self):
         agent = self.agents.first()
-        if agent and agent.pin:
+        if self.root.is_vodafone_default_onboarding and agent and agent.pin:
             return None
         return self
 
@@ -102,8 +105,8 @@ class PinForm(forms.Form):
         raw_pin = self.cleaned_data.get('pin')
         if not raw_pin:
             return False
-        msisdns = list(self.agents.values_list('msisdn', flat=True))
-        if self.root.callwallets_moderator.first().set_pin:
+        if self.root.is_vodafone_default_onboarding and self.root.callwallets_moderator.first().set_pin:
+            msisdns = list(self.agents.values_list('msisdn', flat=True))
             transactions, error = self.call_wallet(raw_pin, msisdns)
             if error:
                 self.add_error('pin', error)

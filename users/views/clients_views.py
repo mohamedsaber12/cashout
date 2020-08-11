@@ -109,9 +109,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             )
             Budget.objects.create(disburser=self.object, created_by=self.request.user)
         elif self.object.is_accept_vodafone_onboarding:
+            entity_dict["agents_setup"] = True
             Setup.objects.create(user=self.object)
-            CallWalletsModerator.objects.\
-                create(user_created=self.object, instant_disbursement=False, user_inquiry=False, balance_inquiry=False)
+            Budget.objects.create(disburser=self.object, created_by=self.request.user)
+            CallWalletsModerator.objects.create(
+                    user_created=self.object, instant_disbursement=False, set_pin=False,
+                    user_inquiry=False, balance_inquiry=False
+            )
         else:
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)

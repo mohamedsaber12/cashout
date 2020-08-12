@@ -63,12 +63,15 @@ class DisburseAPIView(APIView):
     permission_classes = [BlacklistPermission]
 
     @staticmethod
-    def prepare_agents_list(provider_id, raw_pin):
+    def prepare_agents_list(provider, raw_pin):
         """
-        :param provider_id: wallet issuer/Root user id
+        :param provider: wallet provider user
         :return: tuple of vodafone agent, etisalat agents lists
         """
-        agents = Agent.objects.filter(wallet_provider_id=provider_id, super=False)
+        if provider.is_accept_vodafone_onboarding:
+            agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
+        else:
+            agents = Agent.objects.filter(wallet_provider=provider, super=False)
         vodafone_agents = agents.filter(type=Agent.VODAFONE)
         etisalat_agents = agents.filter(type=Agent.ETISALAT)
 
@@ -207,7 +210,7 @@ class DisburseAPIView(APIView):
             pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
 
         # 3. Prepare the senders and recipients list of dictionaries
-        vf_agents, etisalat_agents = self.prepare_agents_list(provider_id=admin.id, raw_pin=pin)
+        vf_agents, etisalat_agents = self.prepare_agents_list(provider=admin, raw_pin=pin)
         vf_recipients, ets_recipients = self.separate_recipients(doc_obj.id)
 
         if ets_recipients:

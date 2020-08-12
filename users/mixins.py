@@ -79,6 +79,18 @@ class UserWithInstantOnboardingPermissionRequired(UserPassesTestMixin, LoginRequ
         return False
 
 
+class SuperWithoutDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Check if the user is superadmin and it has onboarding setup of accept-vodafone or instant model.
+    """
+
+    def test_func(self):
+        if self.request.user.is_superadmin and not self.request.user.is_vodafone_default_onboarding:
+            return True
+
+        return False
+
+
 class UserWithAcceptVFOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
     Check if the user has the accept vodafone onboarding permission

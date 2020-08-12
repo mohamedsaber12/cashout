@@ -1,12 +1,15 @@
 from django.urls import path
 
-from .views import (BalanceInquiry, BudgetUpdateView, SuperAdminAgentsSetup, disburse,
-                    disbursement_list, download_failed_validation_file, failed_disbursed_for_download)
+from .views import (AgentsListView, BalanceInquiry, BudgetUpdateView,
+                    SuperAdminAgentsSetup, disburse, disbursement_list,
+                    download_failed_validation_file,
+                    failed_disbursed_for_download)
 
 
 app_name = 'disbursement'
 
 client_urls = [
+    path('agents/', AgentsListView.as_view(), name='agents_list'),
     path('agent/balance-inquiry/<str:username>/', BalanceInquiry.as_view(), name='balance_inquiry'),
     path('agent/budget/edit/<str:username>/', BudgetUpdateView.as_view(), name='budget_update'),
     path('client/creation/agents/<token>/', SuperAdminAgentsSetup.as_view(), name='add_agents'),

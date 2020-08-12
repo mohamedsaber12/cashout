@@ -20,8 +20,6 @@
 {% endblock %}
 
 {% block body %}
-
-
 <!-- data table -->
 <div class="row">
     <span id='non_form_errors' class="error_span"></span>
@@ -88,7 +86,6 @@
     </div>
 </div>
 
-
 <!--Modal-->
 <div class="modal fade" id="delete-format" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
   <div class="modal-dialog" role="document">
@@ -109,13 +106,9 @@
     </div>
   </div>
 </div>
-
-
-
 {% endblock %}
 
 {% block script %}
-
 <!-- Datatables -->
 <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
@@ -165,16 +158,10 @@
 
             });
         }
-        
-        
-
 
         $('#save-format-changes').click(function () {
             $("form").submit();
         });
     });
-
-
 </script>
-
 {% endblock %}

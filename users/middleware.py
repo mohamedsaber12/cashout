@@ -19,6 +19,7 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
     re.compile(r'^support*'),
     re.compile(r'^profile*'),
+    re.compile(r'^agents/'),
     re.compile(r'^agent/budget/edit/*'),
     re.compile(r'^agent/balance-inquiry/*'),
     re.compile(r'^change_password/*'),

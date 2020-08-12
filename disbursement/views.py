@@ -14,7 +14,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import View, UpdateView
+from django.views.generic import View, UpdateView, ListView
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
@@ -24,9 +24,11 @@ from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_d
 from data.utils import get_client_ip, redirect_params
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (SuperFinishedSetupMixin, SuperRequiredMixin,
-                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-                          SuperOwnsCustomizedBudgetClientRequiredMixin)
+from users.mixins import (
+    SuperFinishedSetupMixin, SuperRequiredMixin,
+    SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
+    SuperOwnsCustomizedBudgetClientRequiredMixin, SuperWithoutDefaultOnboardingPermissionRequired,
+)
 from users.models import EntitySetup
 from utilities import messages
 
@@ -486,3 +488,16 @@ class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin,
     def get_object(self, queryset=None):
         """Retrieve the budget object of the accessed disburser"""
         return get_object_or_404(Budget, disburser__username=self.kwargs["username"])
+
+
+class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):
+    """
+    View for enabling superadmins to list their own agents
+    """
+
+    model = Agent
+    context_object_name = "agents_list"
+    template_name = "disbursement/agents.html"
+
+    def get_queryset(self):
+        return Agent.objects.filter(wallet_provider=self.request.user)

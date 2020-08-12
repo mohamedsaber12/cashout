@@ -103,7 +103,7 @@
                               <i class="fa fa-check" title="Activate User"></i>
                               {% endifequal %}
                             </button>
-                            {% if request.user.is_instant_model_onboarding %}
+                            {% if not request.user.is_vodafone_default_onboarding %}
                               <button class="btn btn-default btn-xs" title="Update Budget">
                                 <a class="fa fa-money" href="{% url 'disbursement:budget_update' username=client_setup.client.username %}" target="_blank"></a>
                               </button>
@@ -112,24 +112,6 @@
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                             </a>
                           </div>
-
-                          <!--For custom budget clients-->
-                          <div class="col-xs-12 emphasis text-right">
-                            {% if client_setup.client.has_custom_budget and not request.user.is_instant_model_onboarding %}
-                              <button class="btn btn-default btn-xs" title="Update Budget">
-                                <a class="fa fa-money" href="{% url 'disbursement:budget_update' username=client_setup.client.username %}" target="_blank"></a>
-                              </button>
-                              {% if client_setup.client.is_vodafone_default_onboarding %}
-                                <button class="btn btn-default btn-xs" title="Total Super Agent Balance Inquiry">
-                                  <a class="fa fa-question" href="{% url 'disbursement:balance_inquiry' username=client_setup.client.username %}" target="_blank"></a>
-                                </button>
-                              {% endif %}
-                              <button class="btn btn-default btn-xs" title="Fees Profile Update">
-                                <a class="fa fa-cogs" href="{% url 'users:update_fees' username=client_setup.client.username %}" target="_blank"></a>
-                              </button>
-                            {% endif %}
-                          </div>
-                          <!--End For custom budget clients-->
                         </div>
 
                       </div>

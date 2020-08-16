@@ -61,7 +61,7 @@
           <li><a><i class="fa fa-dashboard"></i> {% trans 'Dashboard' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="{% url 'disbursement:agents_list' %}">{% trans 'Agents List'%}</a></li>
-              <li><a href="#">{% trans 'Fees Profile'%}</a></li>
+              <li><a href="{% url 'users:super_fees_profile' %}">{% trans 'Fees Profile'%}</a></li>
             </ul>
           </li>
         {% endif %}

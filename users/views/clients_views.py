@@ -11,7 +11,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views import View
-from django.views.generic import CreateView, ListView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from disbursement.models import Budget
@@ -19,9 +19,11 @@ from utilities.logging import logging_message
 from utilities.models import CallWalletsModerator
 
 from ..forms import ClientFeesForm, CustomClientProfilesForm, RootCreationForm
-from ..mixins import (SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
-                      SuperOwnsCustomizedBudgetClientRequiredMixin,
-                      SuperRequiredMixin)
+from ..mixins import (
+    SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
+    SuperOwnsCustomizedBudgetClientRequiredMixin,
+    SuperRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired,
+)
 from ..models import Client, EntitySetup, RootUser, User, Setup
 
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
@@ -182,6 +184,14 @@ class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequired
 
     def get_object(self, queryset=None):
         return get_object_or_404(Client, creator=self.request.user, client__username=self.kwargs.get('username'))
+
+
+class SuperAdminFeesProfileTemplateView(UserWithAcceptVFOnboardingPermissionRequired, TemplateView):
+    """
+    Template view for viewing the fees profile of a certain super admin with accept-vf onboarding setups
+    """
+
+    template_name = "users/fees_profile.html"
 
 
 @login_required

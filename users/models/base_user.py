@@ -59,6 +59,7 @@ class User(AbstractUser):
     is_totp_verified = models.BooleanField(null=True, default=False)
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     brand = models.ForeignKey('users.Brand', on_delete=models.SET_NULL, null=True)
+    wallet_fees_profile = models.CharField(max_length=15, default='', null=True, blank=True)
 
     objects = UserManager()
 

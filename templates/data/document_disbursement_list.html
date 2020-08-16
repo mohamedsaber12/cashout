@@ -133,6 +133,11 @@
                                     {% elif request.user.is_checker and not doc.can_be_disbursed %}
                                         <button disabled class="btn btn-info addMore"
                                                 title="{% trans 'Not ready for disbursement yet' %}">{% trans 'Pending' %}</button>
+
+                                    <!-- Document is being validated -->
+                                    {% elif doc.validation_process_is_running %}
+                                      <a href="{{doc.get_absolute_url}}" class="btn btn-info btn-md">{% trans 'View' %}</a>
+
                                     {% else %}
                                         <a href="{{doc.get_absolute_url}}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
 

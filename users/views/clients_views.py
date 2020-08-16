@@ -74,7 +74,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def get_success_url(self):
 
-        if self.object.is_instant_model_onboarding:
+        if not self.object.is_vodafone_default_onboarding:
             return reverse('data:main_view')
 
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
@@ -96,9 +96,12 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             "entity": self.object
         }
 
-        if self.object.is_instant_model_onboarding:
+        if not self.object.is_vodafone_default_onboarding:
             entity_dict["agents_setup"] = True
             entity_dict["fees_setup"] = True
+            Budget.objects.create(disburser=self.object, created_by=self.request.user)
+
+        if self.object.is_instant_model_onboarding:
             Setup.objects.create(
                     user=self.object, pin_setup=True, levels_setup=True, maker_setup=True, checker_setup=True,
                     category_setup=True
@@ -107,11 +110,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_created=self.object, disbursement=False, change_profile=False, set_pin=False,
                     user_inquiry=False, balance_inquiry=False
             )
-            Budget.objects.create(disburser=self.object, created_by=self.request.user)
         elif self.object.is_accept_vodafone_onboarding:
-            entity_dict["agents_setup"] = True
             Setup.objects.create(user=self.object)
-            Budget.objects.create(disburser=self.object, created_by=self.request.user)
             CallWalletsModerator.objects.create(
                     user_created=self.object, instant_disbursement=False, set_pin=False,
                     user_inquiry=False, balance_inquiry=False

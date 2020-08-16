@@ -180,9 +180,14 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         notify_maker(doc_obj, download_url) if download_url else notify_maker(doc_obj)
         return False
 
+    if doc_obj.owner.root.super_admin.wallet_fees_profile:
+        fees_profile = doc_obj.owner.root.super_admin.wallet_fees_profile
+    else:
+        fees_profile = doc_obj.owner.root.client.get_fees()
+
     if callwallets_moderator.change_profile:
         superadmin = doc_obj.owner.root.client.creator
-        payload = superadmin.vmt.accumulate_change_profile_payload(_msisdn, doc_obj.owner.root.client.get_fees())
+        payload = superadmin.vmt.accumulate_change_profile_payload(_msisdn, fees_profile)
         try:
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:

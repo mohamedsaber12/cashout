@@ -56,7 +56,8 @@ class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTrans
         return queryset
 
 
-class PendingOrangeInstantTransactionsListView(RootWithInstantPermissionsPassesTestMixin, BaseInstantTransactionsListView):
+class PendingOrangeInstantTransactionsListView(RootWithInstantPermissionsPassesTestMixin,
+                                               BaseInstantTransactionsListView):
     """
     Home view for Admin users that belong to instant disbursement family, Lists all of the pending
     Orange instant transactions aggregated per every day.

@@ -28,7 +28,10 @@ class PendingOrangeInstantTransactionsModelResource(resources.ModelResource):
     def __init__(self, user, raw_date):
         """Instantiate resource along with request and raw_date provided"""
         self.user = user
-        self.from_date = dt.strptime(raw_date, '%B %d, %Y').date()
+        if len(str(raw_date).split('.')) == 2:
+            self.from_date = dt.strptime(raw_date, '%b. %d, %Y').date()
+        else:
+            self.from_date = dt.strptime(raw_date, '%b %d, %Y').date()
 
     def get_export_headers(self):
         """Headers of the final exported resource"""

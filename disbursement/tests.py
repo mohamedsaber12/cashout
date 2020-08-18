@@ -8,8 +8,7 @@ import mock
 import xlsxwriter
 from django.core.files import File
 from django.test import override_settings
-# from test_plus import APITestCase
-
+from django.test import TestCase
 from data.factories import DisbursementFileCategory
 from data.models import Doc
 from data.tasks import handle_disbursement_file
@@ -27,7 +26,9 @@ fake = faker.Factory.create()
             'rest_framework.authentication.BasicAuthentication',
     )
 )
-class DisbursementAPITest(APITestCase):
+
+
+class DisbursementAPITest(TestCase):
     """
     Test DisburseAPIView disbursement -> api -> views
     """

@@ -30,10 +30,10 @@ class SuperAdminUser(User):
         :param wallet_issuer: type of the passed wallet issuer
         :return: the first non super agent or None
         """
-        msisdn_issuer = '011' if wallet_issuer == 'ETISALAT' else '010'
+        msisdn_issuer_type = "E" if wallet_issuer == "ETISALAT" else "V"
 
         if self.agents:
-            qs = self.agents.filter(super=False, msisdn__startswith=msisdn_issuer)
+            qs = self.agents.filter(super=False, type=msisdn_issuer_type)
             if qs.count() > 0:
                 return qs.first().msisdn
 

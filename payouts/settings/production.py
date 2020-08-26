@@ -5,6 +5,7 @@ from .server import *
 ALLOWED_HOSTS += [
     'payouts.paymobsolutions.com',
     '52.8.5.130',
+    '172.30.1.74',
 ]
 
 # Email Reporting

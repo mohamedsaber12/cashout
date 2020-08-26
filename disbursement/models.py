@@ -194,7 +194,7 @@ class Budget(AbstractTimeStamp):
                 MaxValueValidator(round(Decimal(100.0), 1))
             ],
             max_digits=5,
-            decimal_places=1,
+            decimal_places=2,
             default=0,
             null=False,
             blank=False,
@@ -207,7 +207,7 @@ class Budget(AbstractTimeStamp):
                 MaxValueValidator(round(Decimal(100.0), 1))
             ],
             max_digits=5,
-            decimal_places=1,
+            decimal_places=2,
             default=0,
             null=False,
             blank=False,
@@ -220,7 +220,7 @@ class Budget(AbstractTimeStamp):
                 MaxValueValidator(round(Decimal(100.0), 1))
             ],
             max_digits=5,
-            decimal_places=1,
+            decimal_places=2,
             default=0,
             null=False,
             blank=False,
@@ -233,7 +233,7 @@ class Budget(AbstractTimeStamp):
                 MaxValueValidator(round(Decimal(100.0), 1))
             ],
             max_digits=5,
-            decimal_places=1,
+            decimal_places=2,
             default=0,
             null=False,
             blank=False,
@@ -246,7 +246,7 @@ class Budget(AbstractTimeStamp):
                 MaxValueValidator(round(Decimal(100.0), 1))
             ],
             max_digits=5,
-            decimal_places=1,
+            decimal_places=2,
             default=0,
             null=False,
             blank=False,

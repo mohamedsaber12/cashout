@@ -16,12 +16,13 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from disbursement.models import Budget, DisbursementData
+from disbursement.models import DisbursementData
 from disbursement.resources import DisbursementDataResource
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
 from utilities.messages import MSG_TRY_OR_CONTACT, MSG_WRONG_FILE_FORMAT
+from utilities.models import Budget
 
 from .decorators import respects_language
 from .models import Doc, FileData

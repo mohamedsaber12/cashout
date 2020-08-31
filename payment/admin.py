@@ -10,4 +10,4 @@ class TransactionsAdmin(admin.ModelAdmin):
         return False
 
 
-admin.site.register(Transactions, TransactionsAdmin)
+# admin.site.register(Transactions, TransactionsAdmin)

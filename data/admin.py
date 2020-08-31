@@ -31,7 +31,7 @@ class DocReviewAdmin(admin.ModelAdmin):
     readonly_fields = list_display
 
 
-@admin.register(FileCategory)
+# @admin.register(FileCategory)
 class FileCategoryAdmin(admin.ModelAdmin):
     """
     Customize admin panel view for FileCategory model

@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from io import BytesIO
+import logging
 
 from django.http import HttpResponse
 from django.template.loader import get_template
@@ -9,7 +10,11 @@ from django.template.loader import get_template
 from environ import ImproperlyConfigured
 from xhtml2pdf import pisa
 
+from disbursement.utils import logging_message
 from payouts.utils import get_dot_env
+
+
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
 
 def get_value_from_env(key):
@@ -41,3 +46,17 @@ def render_to_pdf(src_template, context_dict={}):
         return HttpResponse(result.getvalue(), content_type='application/pdf')
 
     return None
+
+
+def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", another_message="", head=""):
+    """
+    logger function to be used at any custom budget logging
+    """
+    if not head:
+        head = "[CUSTOM BUDGET - MANUAL PATCH]"
+
+    return logging_message(
+            logger=BUDGET_LOGGER, head=head,
+            user=f"{user} -- Disburser Owner/Root: {disburser}",
+            message=f"{total_disbursed_amount}{another_message}"
+    )

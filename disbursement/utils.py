@@ -1,10 +1,8 @@
-import logging
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
 
 from django.contrib import admin
 from django.utils.translation import gettext as _
-
-
-BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
 
 def logging_message(logger, head, user, message):
@@ -17,20 +15,6 @@ def logging_message(logger, head, user, message):
     :return: The message will be logged into the specified logger
     """
     return logger.debug(_(f"{head}\nUser: {user}\n{message}"))
-
-
-def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", another_message="", head=""):
-    """
-    logger function to be used at any custom budget logging
-    """
-    if not head:
-        head = "[CUSTOM BUDGET - MANUAL PATCH]"
-
-    return logging_message(
-            logger=BUDGET_LOGGER, head=head,
-            user=f"{user} -- Disburser Owner/Root: {disburser}",
-            message=f"{total_disbursed_amount}{another_message}"
-    )
 
 
 def custom_titled_filter(title):

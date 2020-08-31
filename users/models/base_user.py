@@ -223,7 +223,7 @@ class User(AbstractUser):
     @property
     def has_custom_budget(self):
         """Check if this user has custom budget"""
-        from disbursement.models import Budget
+        from utilities.models import Budget
         try:
             budget = self.budget
             return True

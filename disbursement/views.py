@@ -31,10 +31,11 @@ from users.mixins import (
 )
 from users.models import EntitySetup
 from utilities import messages
+from utilities.models import Budget
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, BudgetModelForm
 from .mixins import BudgetActionMixin
-from .models import Agent, Budget
+from .models import Agent
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")

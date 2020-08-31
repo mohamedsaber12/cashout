@@ -14,9 +14,8 @@ from django.views import View
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
-from disbursement.models import Budget
 from utilities.logging import logging_message
-from utilities.models import CallWalletsModerator
+from utilities.models import Budget, CallWalletsModerator
 
 from ..forms import ClientFeesForm, CustomClientProfilesForm, RootCreationForm
 from ..mixins import (

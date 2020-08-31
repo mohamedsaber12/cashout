@@ -4,7 +4,7 @@ from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.conf import settings
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
@@ -92,7 +92,7 @@ class Budget(AbstractTimeStamp):
 
     def get_absolute_url(self):
         """Success form submit - object saving url"""
-        return reverse("disbursement:budget_update", kwargs={"username": self.disburser.username})
+        return reverse("utilities:budget_update", kwargs={"username": self.disburser.username})
 
     # def accumulate_amount_with_fees_and_vat(self, amount_to_be_disbursed, issuer_type):
     #     """Accumulate amount being disbursed with fees percentage and 14 % VAT"""

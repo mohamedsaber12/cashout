@@ -14,7 +14,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import View, UpdateView, ListView
+from django.views.generic import View, ListView
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
@@ -27,14 +27,13 @@ from users.decorators import setup_required
 from users.mixins import (
     SuperFinishedSetupMixin, SuperRequiredMixin,
     SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-    SuperOwnsCustomizedBudgetClientRequiredMixin, SuperWithoutDefaultOnboardingPermissionRequired,
+    SuperWithoutDefaultOnboardingPermissionRequired,
 )
 from users.models import EntitySetup
 from utilities import messages
 from utilities.models import Budget
 
-from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, BudgetModelForm
-from .mixins import BudgetActionMixin
+from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
 from .models import Agent
 
 DATA_LOGGER = logging.getLogger("disburse")
@@ -471,24 +470,6 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR
-
-
-class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin,
-                       BudgetActionMixin,
-                       UpdateView):
-    """
-    View for enabling SuperAdmin users to update and maintain custom Root budgets
-    """
-    model = Budget
-    form_class = BudgetModelForm
-    template_name = 'disbursement/budget.html'
-    context_object_name = 'budget_object'
-    success_message = _("Budget updated successfully!")
-    failure_message = _("Adding new budget failure, check below errors and try again!")
-
-    def get_object(self, queryset=None):
-        """Retrieve the budget object of the accessed disburser"""
-        return get_object_or_404(Budget, disburser__username=self.kwargs["username"])
 
 
 class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):

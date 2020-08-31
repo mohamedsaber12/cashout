@@ -43,6 +43,9 @@ class LogEntryAdmin(admin.ModelAdmin):
 
 
 class FeeSetupAdmin(CustomInlineAdmin):
+    """
+    FeeSetup inline Admin model for handling fees for every entity budget
+    """
 
     model = FeeSetup
     extra = 0

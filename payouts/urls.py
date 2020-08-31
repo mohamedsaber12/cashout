@@ -43,6 +43,7 @@ urlpatterns += [
     path('', include('users.urls', namespace='users')),
     path('', include('disbursement.urls', namespace='disbursement')),
     path('', include('docs.urls', namespace='docs')),
+    path('', include('utilities.urls', namespace='utilities')),
     path('instant-cashin/', include('instant_cashin.urls', namespace='instant_cashin')),
     path('', include(tf_urls, namespace='two_factor')),
     path('api/secure/', include('disbursement.api.urls', namespace='disbursement_api')),

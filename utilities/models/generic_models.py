@@ -94,61 +94,74 @@ class Budget(AbstractTimeStamp):
         """Success form submit - object saving url"""
         return reverse("utilities:budget_update", kwargs={"username": self.disburser.username})
 
-    # def accumulate_amount_with_fees_and_vat(self, amount_to_be_disbursed, issuer_type):
-    #     """Accumulate amount being disbursed with fees percentage and 14 % VAT"""
-    #     actual_amount = round(Decimal(amount_to_be_disbursed), 2)
-    #
-    #     if issuer_type == "vodafone":
-    #         percentage = round(self.vodafone_percentage, 2)
-    #     elif issuer_type == "etisalat":
-    #         percentage = round(self.etisalat_percentage, 2)
-    #     elif issuer_type == "orange":
-    #         percentage = round(self.orange_percentage, 2)
-    #     elif issuer_type == "aman":
-    #         percentage = round(self.aman_percentage, 2)
-    #     else:
-    #         percentage = round(self.ach_percentage, 2)
-    #
-    #     fees_value = round(((actual_amount * percentage) / 100), 2)
-    #     vat_value = round(((fees_value * Decimal(14.00)) / 100), 2)
-    #     total_amount_with_fees_and_vat = round((actual_amount + fees_value + vat_value), 2)
-    #
-    #     return total_amount_with_fees_and_vat
+    def accumulate_amount_with_fees_and_vat(self, amount_to_be_disbursed, issuer_type):
+        """Accumulate amount being disbursed with fees percentage and 14 % VAT"""
+        actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
-    # def within_threshold(self, amount_to_be_disbursed, issuer_type):
-    #     """
-    #     Check if the amount to be disbursed won't exceed the current balance
-    #     :param amount_to_be_disbursed: Amount to be disbursed at the currently running transaction
-    #     :param issuer_type: Channel/Issuer used to disburse the amount over
-    #     :return: True/False
-    #     """
-    #     try:
-    #         amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, issuer_type)
-    #
-    #         if amount_plus_fees_vat <= round(self.current_balance, 2):
-    #             return True
-    #         return False
-    #     except (ValueError, Exception) as e:
-    #         raise ValueError(_(f"Error while checking the amount to be disbursed if within threshold - {e.args}"))
+        if issuer_type == "vodafone":
+            issuer_type_refined = FeeSetup.VODAFONE
+        elif issuer_type == "etisalat":
+            issuer_type_refined = FeeSetup.ETISALAT
+        elif issuer_type == "orange":
+            issuer_type_refined = FeeSetup.ORANGE
+        elif issuer_type == "aman":
+            issuer_type_refined = FeeSetup.AMAN
+        elif issuer_type == "bank":
+            issuer_type_refined = FeeSetup.BANK
 
-    # def update_disbursed_amount_and_current_balance(self, amount, issuer_type):
-    #     """
-    #     Update the total disbursement amount and the current balance after each successful transaction
-    #     :param amount: the amount being disbursed
-    #     :param issuer_type: Channel/Issuer used to disburse the amount over
-    #     :return: True/False
-    #     """
-    #     try:
-    #         amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type)
-    #         self.total_disbursed_amount += amount_plus_fees_vat
-    #         self.current_balance -= amount_plus_fees_vat
-    #         self.save()
-    #     except Exception:
-    #         raise ValueError(
-    #                 _(f"Error updating the total disbursed amount and the current balance, please retry again later.")
-    #         )
-    #
-    #     return True
+        fees_obj = self.fees.filter(issuer=issuer_type_refined)
+        fees_obj = fees_obj.first() if fees_obj.count() > 0 else None
+
+        if fees_obj.fee_type == FeeSetup.FIXED_FEE:
+            fixed_value = round(fees_obj.fixed_value, 2)
+            fees_aggregated_value = fixed_value
+        elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
+            percentage_value = round(fees_obj.percentage_value, 2)
+            fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2)
+        elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
+            fixed_value = round(fees_obj.fixed_value, 2)
+            percentage_value = round(fees_obj.percentage_value, 2)
+            fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2) + fixed_value
+
+        vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 2)
+        total_amount_with_fees_and_vat = round((actual_amount + fees_aggregated_value + vat_value), 2)
+
+        return total_amount_with_fees_and_vat
+
+    def within_threshold(self, amount_to_be_disbursed, issuer_type):
+        """
+        Check if the amount to be disbursed won't exceed the current balance
+        :param amount_to_be_disbursed: Amount to be disbursed at the currently running transaction
+        :param issuer_type: Channel/Issuer used to disburse the amount over
+        :return: True/False
+        """
+        try:
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, issuer_type)
+
+            if amount_plus_fees_vat <= round(self.current_balance, 2):
+                return True
+            return False
+        except (ValueError, Exception) as e:
+            raise ValueError(_(f"Error while checking the amount to be disbursed if within threshold - {e.args}"))
+
+    def update_disbursed_amount_and_current_balance(self, amount, issuer_type):
+        """
+        Update the total disbursement amount and the current balance after each successful transaction
+        :param amount: the amount being disbursed
+        :param issuer_type: Channel/Issuer used to disburse the amount over
+        :return: True/False
+        """
+        try:
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type)
+            self.total_disbursed_amount += amount_plus_fees_vat
+            self.current_balance -= amount_plus_fees_vat
+            self.save()
+        except Exception:
+            raise ValueError(
+                    _(f"Error updating the total disbursed amount and the current balance, please retry again later.")
+            )
+
+        return True
 
 
 class FeeSetup(models.Model):

@@ -304,6 +304,7 @@ OAUTH2_PROVIDER = {
 # Session 3rd party package
 SESSION_ENGINE = 'user_sessions.backends.db'
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 60 * 60
 GEOIP_PATH = os.path.join(MEDIA_ROOT, 'GeoLite2-City.mmdb')
 SILENCED_SYSTEM_CHECKS = ['admin.E410']
 

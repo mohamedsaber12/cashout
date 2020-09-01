@@ -87,9 +87,11 @@ docs/_build/
 !/media/documents/weekly_reports/.gitkeep
 
 # Ignore logging files but keep their directories
-/logs/*
-!/logs/.gitkeep
 /logs/celery_logs/*
 !/logs/celery_logs/.gitkeep
-/logs/uwsgi-logs/*
-!/logs/uwsgi-logs/.gitkeep
+
+/logs/uwsgi_logs/*
+!/logs/uwsgi_logs/.gitkeep
+
+!/logs/.gitkeep
+/logs/*

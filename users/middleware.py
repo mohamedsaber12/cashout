@@ -25,6 +25,8 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^agent/balance-inquiry/*'),
     re.compile(r'^change_password/*'),
     re.compile(r'^sessions/*'),
+    re.compile(r'^account/two_factor/*'),
+    re.compile(r'^account/token/*'),
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
     re.compile(settings.MEDIA_URL.lstrip('/')),
@@ -67,7 +69,7 @@ class EntitySetupCompletionMiddleWare:
             return redirect(settings.LOGIN_URL)
 
 
-class CheckerTwoFactorAuthMiddleWare:
+class AdministrativeTwoFactorAuthMiddleWare:
     """
     Force checkers to do two factor authentication once per device.
     """
@@ -91,11 +93,16 @@ class CheckerTwoFactorAuthMiddleWare:
             reverse("set_language")
         ]
         
-        if request.user.is_authenticated and request.user.is_checker and not is_media_path:
+        if request.user.is_authenticated and \
+                not is_media_path and \
+                not request.user.is_superuser and \
+                (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
             is_verified = request.user.is_verified() or request.user.is_totp_verified
             if two_factor_base_url in path and is_verified:
                 return redirect(reverse("data:main_view"))            
-            if not request.user.is_totp_verified and user_has_device(request.user) and (not path in urls or path == reverse("two_factor:profile")):
+            if not request.user.is_totp_verified and \
+                    user_has_device(request.user) and \
+                    (not path in urls or path == reverse("two_factor:profile")):
                 return redirect(reverse("users:otp_login"))
             if not is_verified and not path in urls:
                 return redirect(reverse("two_factor:profile"))

@@ -28,7 +28,7 @@ from utilities.messages import MSG_DISBURSEMENT_ERROR, MSG_DISBURSEMENT_IS_RUNNI
 from ..models import Agent, DisbursementData, DisbursementDocData
 from .permission_classes import BlacklistPermission
 from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
-# from ..tasks import BulkDisbursementThroughOneStepCashin
+from ..tasks import BulkDisbursementThroughOneStepCashin
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -63,23 +63,26 @@ class DisburseAPIView(APIView):
     permission_classes = [BlacklistPermission]
 
     @staticmethod
-    def prepare_vodafone_agents_list(provider, raw_pin):
+    def prepare_agents_list(provider, raw_pin):
         """
         :param provider: wallet provider user
-        :return: list of dicts of vodafone agent
+        :return: tuple of vodafone agent, etisalat agents lists
         """
         if provider.is_accept_vodafone_onboarding:
-            vf_agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False, type=Agent.VODAFONE)
+            agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
         else:
-            vf_agents = Agent.objects.filter(wallet_provider=provider, super=False, type=Agent.VODAFONE)
+            agents = Agent.objects.filter(wallet_provider=provider, super=False)
+        vodafone_agents = agents.filter(type=Agent.VODAFONE)
+        etisalat_agents = agents.filter(type=Agent.ETISALAT)
 
-        vf_agents_dict_qs = vf_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
-        vf_agents_list_of_dicts = list(vf_agents_dict_qs)
+        vodafone_agents = vodafone_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
+        etisalat_agents = etisalat_agents.values_list('msisdn', flat=True)
 
-        for internal_dict in vf_agents_list_of_dicts:
+        vodafone_agents = list(vodafone_agents)
+        for internal_dict in vodafone_agents:
             internal_dict.update({'PIN': raw_pin})
 
-        return vf_agents_list_of_dicts
+        return vodafone_agents, list(etisalat_agents)
 
     def prepare_vodafone_recipients(self, doc_id):
         """
@@ -91,7 +94,8 @@ class DisburseAPIView(APIView):
 
         return list(vf_recipients)
 
-    def disburse_for_recipients(self, url, payload, username, refined_payload, jsoned_response=False):
+    @staticmethod
+    def disburse_for_recipients(url, payload, username, refined_payload, jsoned_response=False):
         """
         Disburse for issuer based recipients
         :param url: wallets environment that will handle the disbursement request
@@ -153,14 +157,13 @@ class DisburseAPIView(APIView):
         pin = serializer.validated_data['pin']
         if doc_obj.owner.root.pin != 'False' and not doc_obj.owner.root.check_pin(pin):
             return HttpResponse(
-                    json.dumps({'message': _(MSG_PIN_INVALID), 'header': _('Error occurred from your side!')}),
+                    json.dumps({'message': MSG_PIN_INVALID, 'header': 'Error occurred from your side!'}),
                     status=status.HTTP_400_BAD_REQUEST
             )
 
         # 2. Catch the corresponding vmt dictionary
         checker = User.objects.get(username=serializer.validated_data['user'])
         superadmin = checker.root.client.creator
-        admin = checker.root
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
         vf_response = False
         temp_response = {'BATCH_ID': '0', 'TXNSTATUS': '200'}
@@ -169,15 +172,13 @@ class DisburseAPIView(APIView):
         vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
 
         if vf_recipients:
-            if admin.is_accept_vodafone_onboarding:
+            if checker.root.is_accept_vodafone_onboarding:
                 pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
-            vf_agents = self.prepare_vodafone_agents_list(provider=admin, raw_pin=pin)
+            vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
             vf_payload, vf_log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
             vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, vf_log_payload, True)
 
-        # ToDo: Add the other issuer separate task
-        # BulkDisbursementThroughOneStepCashin()
-
+        BulkDisbursementThroughOneStepCashin.delay(str(doc_obj.id), str(checker.username))
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, temp_response)
 
         if is_success_disbursement:

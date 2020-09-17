@@ -1,3 +1,7 @@
 [submodule "core"]
 	path = core
 	url = git@gitlab.com:paymob-nanolending/core.git
+[submodule "smpp"]
+	path = smpp
+	url = git@gitlab.com:MISC-PayMob/smpp.git
+	branch = python3-porting

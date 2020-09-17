@@ -4,11 +4,14 @@ from __future__ import unicode_literals
 import logging
 
 from celery import Task
+from rest_framework import status
 
 from data.models import Doc
+from instant_cashin.specific_issuers_integrations import AmanChannel
 from payouts.settings.celery import app
 from users.models import User
 from utilities.functions import custom_budget_logger, get_value_from_env
+from smpp.smpp_interface import send_sms
 
 from .models import DisbursementData, DisbursementDocData
 
@@ -33,34 +36,46 @@ class BulkDisbursementThroughOneStepCashin(Task):
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
         orange_recipients = recipients.filter(issuer='orange'). \
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
+        aman_recipients = recipients.filter(issuer='aman'). \
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
 
-        return list(etisalat_recipients), list(orange_recipients)
+        return list(etisalat_recipients), list(orange_recipients), list(aman_recipients)
 
-    def handle_etisalat_disbursement_callback(self, txn_id, callback):
-        """Handle etisalat issuer based recipients callback at the etisalat disbursement loop"""
+    def handle_disbursement_callback(self, recipient, callback, issuer):
+        """Handle disbursement callback depending on issuer based recipients"""
         try:
-            callback_json = callback.json()
-            disbursement_data_record = DisbursementData.objects.get(id=txn_id)
-            disbursement_data_record.is_disbursed = True if callback_json['TXNSTATUS'] == '200' else False
-            disbursement_data_record.reason = callback_json['TXNSTATUS']
-            doc_obj = disbursement_data_record.doc
+            trx_callback_status = False
+            if issuer == "etisalat":
+                callback_json = callback.json()
+                trx_callback_status = callback_json["TXNSTATUS"]
+            elif issuer == "aman":
+                if callback.status_code == status.HTTP_200_OK:
+                    send_sms(f"+{str(recipient['msisdn'])[2:]}", callback.data["status_description"], "PayMob")
+                    trx_callback_status = "200"
+                else:
+                    trx_callback_status = callback.status_code
 
-            if callback_json['TXNSTATUS'] == '200':
+            disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
+            disbursement_data_record.is_disbursed = True if trx_callback_status == "200" else False
+            disbursement_data_record.reason = trx_callback_status
+            doc_obj = disbursement_data_record.doc
+            disbursement_data_record.save()
+
+            if trx_callback_status == "200":
                 doc_obj.owner.root.budget. \
-                    update_disbursed_amount_and_current_balance(disbursement_data_record.amount, "etisalat")
+                    update_disbursed_amount_and_current_balance(disbursement_data_record.amount, issuer)
                 custom_budget_logger(
                         doc_obj.owner.root.username,
                         f"Total disbursed amount: {disbursement_data_record.amount} LE",
-                        doc_obj.owner.user.username, f" -- doc id: {doc_obj.doc_id}"
+                        doc_obj.owner.username, f" -- doc id: {doc_obj.id}"
                 )
 
-            disbursement_data_record.save()
             return True
         except (DisbursementData.DoesNotExist, Exception):
             return False
 
     def disburse_for_etisalat(self, checker, superadmin, ets_recipients):
-        """Disburse etisalat specific recipients"""
+        """Disburse for etisalat specific recipients"""
         from .api.views import DisburseAPIView          # Circular import
 
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
@@ -74,9 +89,56 @@ class BulkDisbursementThroughOneStepCashin(Task):
             ets_callback = DisburseAPIView.disburse_for_recipients(
                     wallets_env_url, ets_payload, checker.username, ets_log_payload
             )
-            self.handle_etisalat_disbursement_callback(recipient['txn_id'], ets_callback)
+            self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
 
-    def run(self, doc_id, checker_username, *args, **kwargs):
+    def aman_api_authentication_params(self, aman_channel_object):
+        """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
+        api_auth_response = aman_channel_object.api_authentication()
+
+        if api_auth_response.status_code == status.HTTP_201_CREATED:
+            api_auth_token = api_auth_response.data.get("api_auth_token", "")
+            merchant_id = str(api_auth_response.data.get("merchant_id", ""))
+
+            return api_auth_token, merchant_id
+
+    def disburse_for_aman(self, checker, ip_address, aman_recipients):
+        """Disburse for aman specific recipients"""
+        request = {
+            "user": checker,
+            "ip_address": ip_address
+        }
+
+        for recipient in aman_recipients:
+            aman_object = AmanChannel(request, amount=recipient["amount"])
+
+            try:
+                api_auth_token, merchant_id = self.aman_api_authentication_params(aman_object)
+                order_registration = aman_object.order_registration(api_auth_token, merchant_id, recipient["txn_id"])
+
+                if order_registration.status_code == status.HTTP_201_CREATED:
+                    api_auth_token, _ = self.aman_api_authentication_params(aman_object)
+                    payment_key_params = {
+                        "api_auth_token": api_auth_token,
+                        "order_id": order_registration.data.get("order_id", ""),
+                        "first_name": "Manual",
+                        "last_name": "Patch",
+                        "email": f"confirmrequest@paymob.com",
+                        "phone_number": f"+{str(recipient['msisdn'])[2:]}"
+                    }
+                    payment_key_obtained = aman_object.obtain_payment_key(**payment_key_params)
+
+                    if payment_key_obtained.status_code == status.HTTP_201_CREATED:
+                        payment_key = payment_key_obtained.data.get("payment_token", "")
+                        make_payment_request = aman_object.make_pay_request(payment_key)
+
+                        # ToDo: Add extra DB record about REFERENCE ID of AMAN transactions
+                        aman_callback = make_payment_request
+                        self.handle_disbursement_callback(recipient, aman_callback, issuer="aman")
+
+            except Exception as err:
+                aman_object.log_message(request, f"[GENERAL FAILURE - AMAN CHANNEL]", f"Exception: {err.args[0]}")
+
+    def run(self, doc_id, checker_username, ip_address, *args, **kwargs):
         """
         :param doc_id: id of the document being disbursed
         :param checker_username: username of the checker who is taking the disbursement action
@@ -86,12 +148,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
             doc_obj = Doc.objects.get(id=doc_id)
             checker = User.objects.get(username=checker_username)
             superadmin = checker.root.client.creator
-            ets_recipients, orange_recipients = self.separate_recipients(doc_obj.id)
+            ets_recipients, orange_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
 
             if ets_recipients:
                 self.disburse_for_etisalat(checker, superadmin, ets_recipients)
-            elif orange_recipients:
+            if orange_recipients:
                 pass
+            if aman_recipients:
+                self.disburse_for_aman(checker, ip_address, aman_recipients)
 
             DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 

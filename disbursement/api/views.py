@@ -20,6 +20,7 @@ from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthen
 
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
+from data.utils import get_client_ip
 from users.models import CheckerUser, User
 from utilities.custom_requests import CustomRequests
 from utilities.functions import custom_budget_logger, get_value_from_env
@@ -178,7 +179,9 @@ class DisburseAPIView(APIView):
             vf_payload, vf_log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
             vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, vf_log_payload, True)
 
-        BulkDisbursementThroughOneStepCashin.delay(str(doc_obj.id), str(checker.username))
+        BulkDisbursementThroughOneStepCashin.delay(
+                doc_id=str(doc_obj.id), checker_username=str(checker.username), ip_address=str(get_client_ip(request))
+        )
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, temp_response)
 
         if is_success_disbursement:

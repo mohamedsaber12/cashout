@@ -19,31 +19,35 @@ from ...models import AmanTransaction
 from ...utils import get_from_env
 
 
+EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
+
+
 class AmanChannel:
     """
     Handles AMAN one-step cashin request
     """
 
-    def __init__(self, request, transaction_object):
+    def __init__(self, request, transaction_object=False, amount=0.0):
         """Instantiates Aman channel object by setting ACCEPT endpoints urls"""
         self.request = request
         self.transaction = transaction_object
-        self.amount = self.transaction.amount
+        self.amount = self.transaction.amount if transaction_object else amount
         self.aman_logger = logging.getLogger('aman_channel')
         self.authentication_url = "https://accept.paymobsolutions.com/api/auth/tokens"
         self.order_registration_url = "https://accept.paymobsolutions.com/api/ecommerce/orders"
         self.payment_key_url = "https://accept.paymobsolutions.com/api/acceptance/payment_keys"
         self.pay_request_url = "https://accept.paymobsolutions.com/api/acceptance/payments/pay"
-        self.merchant_notification_url = f"{self.request.get_host()}/paymob_notification_callback?hmac="
+        # self.merchant_notification_url = f"{self.request.get_host()}/paymob_notification_callback?hmac="
 
     def log_message(self, request, head, message):
         """Custom logging for aman channel"""
 
-        self.aman_logger.debug(
-                _(f"{head}\n"
-                  f"User:{request.user.username}, from Ip Address: {get_client_ip(request)}\n"
-                  f"{message}")
-        )
+        if type(request) == dict:
+            user_portion = f"User: {request['user']}, from Ip Address: {request['ip_address']}\n"
+        else:
+            user_portion = f"User: {request.user.username}, from Ip Address: {get_client_ip(request)}\n"
+
+        self.aman_logger.debug(_(f"{head}\n" + user_portion + f"{message}"))
 
     def post(self, url, payload, sub_logging_head, headers=dict(), **kwargs):
         """Handles POST requests using requests package"""
@@ -179,16 +183,21 @@ class AmanChannel:
             json_response = response.json()
             bill_reference = json_response.get('id', '')
             trx_status = json_response.get('pending', '')
+            recipient = json_response.get('order', '').get('shipping_data', '').get('phone_number', '')
+            transaction_id = json_response.get('order', '').get('merchant_order_id', '')
 
             if response.ok and bill_reference and trx_status:
-                self.transaction.mark_successful()
-                AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
-                self.request.user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
-                msg = _(f"تم إيداع {self.transaction.amount} جنيه إلى رقم "
-                        f"{self.transaction.anon_recipient} بنجاح ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمه المستحقه")
+                if self.transaction:
+                    self.transaction.mark_successful()
+                    AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
+                    self.request.user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
+
+                msg = _(f"تم إيداع {self.amount} جنيه إلى رقم {recipient} بنجاح ، الرقم التعريفى "
+                        f"للصرف {bill_reference} ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمة المستحقة.")
+
                 return Response({
                     "disbursement_status": _("success"),
-                    "transaction_id": self.transaction.uid,
+                    "transaction_id": transaction_id,
                     "status_description": msg,
                     "status_code": str(status.HTTP_200_OK),
                     "cashing_details": {
@@ -196,6 +205,13 @@ class AmanChannel:
                         "paid": False
                     }
                 }, status=status.HTTP_200_OK)
+            else:
+                return Response({
+                    "disbursement_status": _("failed"),
+                    "transaction_id": transaction_id,
+                    "status_description": EXTERNAL_ERROR_MSG,
+                    "status_code": str(status.HTTP_504_GATEWAY_TIMEOUT),
+                }, status=status.HTTP_504_GATEWAY_TIMEOUT)
 
         except (HTTPError, ConnectionError, Exception) as err:
             self.log_message(self.request, f"[EXCEPTION - MAKE PAY REQUEST]", f"Exception: {err.args[0]}")

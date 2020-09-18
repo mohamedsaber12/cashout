@@ -1,24 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-
-from ..instant_transactions import InstantTransaction
 
 
 class AmanTransaction(models.Model):
     """
-    Model for instant transactions make to Aman channel
+    Model for transactions disbursed through Aman channel
     """
 
-    transaction = models.ForeignKey(
-            InstantTransaction,
-            db_index=True,
-            on_delete=models.CASCADE,
-            related_name=_("aman_transaction"),
-            verbose_name=_("Aman Transaction")
-    )
+    transaction_id = models.CharField(max_length=100, db_index=True, null=True)
+    transaction_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
+    transaction = GenericForeignKey('transaction_type', 'transaction_id')
     is_paid = models.BooleanField(
             default=False,
             verbose_name=_("Is Paid?"),
@@ -37,4 +33,4 @@ class AmanTransaction(models.Model):
 
     def __str__(self):
         """:return String representation of each client object"""
-        return f"{self.transaction.uid}"
+        return f"{self.transaction}"

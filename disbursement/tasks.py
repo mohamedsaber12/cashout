@@ -7,11 +7,12 @@ from celery import Task
 from rest_framework import status
 
 from data.models import Doc
+from instant_cashin.models import AmanTransaction
 from instant_cashin.specific_issuers_integrations import AmanChannel
 from payouts.settings.celery import app
+from smpp.smpp_interface import send_sms
 from users.models import User
 from utilities.functions import custom_budget_logger, get_value_from_env
-from smpp.smpp_interface import send_sms
 
 from .models import DisbursementData, DisbursementDocData
 
@@ -57,9 +58,15 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
             disbursement_data_record.is_disbursed = True if trx_callback_status == "200" else False
-            disbursement_data_record.reason = trx_callback_status
+            disbursement_data_record.reason = "SUCCESS" if trx_callback_status == "200" else trx_callback_status
             doc_obj = disbursement_data_record.doc
             disbursement_data_record.save()
+
+            if issuer == "aman":
+                AmanTransaction.objects.create(
+                        transaction=disbursement_data_record,
+                        bill_reference=callback.data["cashing_details"]["bill_reference"]
+                )
 
             if trx_callback_status == "200":
                 doc_obj.owner.root.budget. \
@@ -129,10 +136,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
                     if payment_key_obtained.status_code == status.HTTP_201_CREATED:
                         payment_key = payment_key_obtained.data.get("payment_token", "")
-                        make_payment_request = aman_object.make_pay_request(payment_key)
-
-                        # ToDo: Add extra DB record about REFERENCE ID of AMAN transactions
-                        aman_callback = make_payment_request
+                        aman_callback = aman_object.make_pay_request(payment_key)
                         self.handle_disbursement_callback(recipient, aman_callback, issuer="aman")
 
             except Exception as err:

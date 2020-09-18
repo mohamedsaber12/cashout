@@ -3,11 +3,31 @@ from __future__ import unicode_literals
 
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
+from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
+from disbursement.models import DisbursementData
+
 from .models import AmanTransaction, InstantTransaction
+
+
+class AmanTransactionTypeFilter(admin.SimpleListFilter):
+    title = "Transaction Type"
+    parameter_name = "transaction_type"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("manual_transaction", "Disbursement Data Record"),
+            ("instant_transaction", "Instant Transaction")
+        )
+
+    def queryset(self, request, queryset):
+        if self.value() == "manual_transaction":
+            return queryset.filter(transaction_type=ContentType.objects.get_for_model(DisbursementData))
+        if self.value() == 'instant_transaction':
+            return queryset.filter(transaction_type=ContentType.objects.get_for_model(InstantTransaction))
 
 
 @admin.register(AmanTransaction)
@@ -16,19 +36,28 @@ class AmanTransactionAdmin(admin.ModelAdmin):
     Admin model for Aman Instant Transaction model
     """
 
-    list_display = ['transaction', 'entity', 'bill_reference', 'is_paid']
+    list_display = ['transaction_id', 'transaction_type', 'disburser', 'bill_reference', 'is_paid']
     readonly_fields = list_display + ['original_transaction_url']
     search_fields = list_display
-    list_filter = ['is_paid', 'transaction__from_user']
+    list_filter = ['is_paid', AmanTransactionTypeFilter]
 
-    def entity(self, instance):
+    def disburser(self, instance):
         """Show the user who made the original transaction"""
-        return instance.transaction.from_user
+        if instance.transaction_type:
+            if instance.transaction_type.name == "Disbursement Data Record":
+                return instance.transaction.doc.disbursed_by
+            else:
+                return instance.transaction.from_user
 
     def original_transaction_url(self, instance):
         """Create link to the original transaction"""
-        url = resolve_url(admin_urlname(InstantTransaction._meta, 'change'), instance.transaction.uid)
-        return format_html(f"<a href='{url}'>{instance.transaction.uid}</a>")
+        if instance.transaction_type:
+            if instance.transaction_type.name == "Disbursement Data Record":
+                url = resolve_url(admin_urlname(DisbursementData._meta, 'change'), instance.transaction.id)
+                return format_html(f"<a href='{url}'>{instance.transaction.id}</a>")
+            else:
+                url = resolve_url(admin_urlname(InstantTransaction._meta, 'change'), instance.transaction.uid)
+                return format_html(f"<a href='{url}'>{instance.transaction.uid}</a>")
 
     original_transaction_url.short_description = "Go To Transaction Details"
 

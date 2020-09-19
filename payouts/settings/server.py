@@ -44,6 +44,27 @@ SESSION_EXPIRE_SECONDS = 300
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_EXPIRE_AFTER_LAST_ACTIVITY = True
 
+# Log request ID
+LOG_REQUEST_ID_HEADER = "HTTP_X_REQUEST_ID"
+GENERATE_REQUEST_ID_IF_NOT_IN_HEADER = True
+
+# To enable request ID from Nginx add this format to nginx.conf
+# log_format compo '$remote_addr [$time_local] "$request" '
+#                     '$status $body_bytes_sent "$http_referer" '
+#                     '"$http_user_agent" "$http_x_forwarded_for" '
+#                     '"$http_host" "$scheme" "$host" '
+#                     '"$server_port" "$server_protocol" '
+#                     '"$request_time" "$request_id" "$upstream_addr" "$upstream_response_time" '
+#                     '"$upstream_connect_time" '
+#                     '"$upstream_header_time" '
+#                     '"$upstream_status" "$msec" "$pipe" "$connection_requests"';
+
+# access_log  /var/log/nginx/access.log  compo;
+
+# location {
+#     proxy_set_header X-Request-Id $request_id;
+# }
+
 # Enable HTTP Strict Transport Security (HSTS)
 # proxy_set_header X-Forwarded-Proto $scheme;  >>  Add to nginx configs
 SECURE_HSTS_SECONDS = 31536000

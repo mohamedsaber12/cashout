@@ -12,11 +12,11 @@ CUSTOM_LOGGING = {
             'datefmt': "[%d-%m-%Y %H:%M:%S]"
         },
         'console_detail': {
-            'format': "\n%(asctime)s - %(levelname)-5s [%(name)s] [request_id=%(request_id)s] %(message)s",
+            'format': "%(asctime)s - %(levelname)-5s [%(name)s] [request_id=%(request_id)s] %(message)s",
             'datefmt': "[%d-%m-%Y %H:%M:%S]"
         },
         'detail': {
-            'format': "\n%(asctime)s [request_id=%(request_id)s] %(message)s",
+            'format': "%(asctime)s - [%(name)s] [%(request_id)s] %(message)s",
             'datefmt': "%d-%m-%Y %H:%M:%S",
         }
     },

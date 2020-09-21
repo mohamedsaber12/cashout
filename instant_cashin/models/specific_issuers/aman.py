@@ -14,7 +14,7 @@ class AmanTransaction(models.Model):
 
     transaction_id = models.CharField(max_length=100, db_index=True, null=True)
     transaction_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True)
-    transaction = GenericForeignKey('transaction_type', 'transaction_id')
+    transaction = GenericForeignKey(ct_field='transaction_type',  fk_field='transaction_id')
     is_paid = models.BooleanField(
             default=False,
             verbose_name=_("Is Paid?"),

@@ -67,6 +67,7 @@
                 <table class="table table-striped table-bordered" id="transaction-table">
                     <thead>
                         <tr>
+                            {% if not is_normal_flow %}<th>{% trans 'Transaction ID' %}</th>{% endif %}
                             <th>{% trans 'Wallet Number' %}</th>
                             <th>{% trans 'Amount' %}</th>
                             {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
@@ -77,6 +78,13 @@
                     <tbody>
                         {% for data in disbursement_data %}
                         <tr>
+                            {% if not is_normal_flow %}
+                              {% if data.issuer == "aman"  %}
+                                <td>{{ data.aman_transaction_bill_ref }}</td>
+                              {% else %}
+                                <td>{{ data.id }}</td>
+                              {% endif %}
+                            {% endif %}
                             <td>{{ data.msisdn }}</td>
                             <td>{{ data.amount }}</td>
                             {% if not is_normal_flow %}<td>{{ data.issuer }}</td>{% endif %}

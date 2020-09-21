@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractBaseTransaction
@@ -72,6 +73,12 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             null=True,
             help_text=_("Empty if transaction status is Successful")
     )
+    aman_obj = GenericRelation(
+            "instant_cashin.AmanTransaction",
+            object_id_field="transaction_id",
+            content_type_field="transaction_type",
+            related_query_name="aman_instant"
+    )
 
     # Not needed fields
     to_user = None
@@ -100,3 +107,11 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         if failure_reason: self.failure_reason = failure_reason
         self.status = self.FAILED
         self.save()
+
+    @property
+    def aman_transaction(self):
+        """Property for retrieving aman object details for transaction records made through Aman"""
+        try:
+            return self.aman_obj.first()
+        except AttributeError:
+            return None

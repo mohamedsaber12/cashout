@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -129,6 +130,12 @@ class DisbursementData(AbstractTimeStamp):
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default', db_index=True)
     reason = models.TextField()
+    aman_obj = GenericRelation(
+            "instant_cashin.AmanTransaction",
+            object_id_field="transaction_id",
+            content_type_field="transaction_type",
+            related_query_name="aman_manual"
+    )
 
     class Meta:
         verbose_name = "Disbursement Data Record"
@@ -142,3 +149,11 @@ class DisbursementData(AbstractTimeStamp):
     @property
     def get_is_disbursed(self):
         return 'Successful' if self.is_disbursed else 'Failed'
+
+    @property
+    def aman_transaction_bill_ref(self):
+        """Property for retrieving bill reference for disbursement records through Aman"""
+        try:
+            return self.aman_obj.first().bill_reference
+        except AttributeError:
+            return None

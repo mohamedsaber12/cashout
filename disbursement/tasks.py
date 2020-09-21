@@ -46,6 +46,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
         """Handle disbursement callback depending on issuer based recipients"""
         try:
             trx_callback_status = False
+            success_msg = "SUCCESS"
             if issuer == "etisalat":
                 callback_json = callback.json()
                 trx_callback_status = callback_json["TXNSTATUS"]
@@ -53,12 +54,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 if callback.status_code == status.HTTP_200_OK:
                     send_sms(f"+{str(recipient['msisdn'])[2:]}", callback.data["status_description"], "PayMob")
                     trx_callback_status = "200"
+                    success_msg = "SUCCESS and UNPAID"
                 else:
                     trx_callback_status = callback.status_code
 
             disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
             disbursement_data_record.is_disbursed = True if trx_callback_status == "200" else False
-            disbursement_data_record.reason = "SUCCESS" if trx_callback_status == "200" else trx_callback_status
+            disbursement_data_record.reason = success_msg if trx_callback_status == "200" else trx_callback_status
             doc_obj = disbursement_data_record.doc
             disbursement_data_record.save()
 
@@ -165,7 +167,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         except (Doc.DoesNotExist, User.DoesNotExist, Exception) as err:
             DATA_LOGGER.debug(f"[DISBURSE BULK ERROR - ONE STEP RECORDS TASK]\nUser: {checker_username}\n{err}")
-            return None
+            return False
 
+        return True
 
 BulkDisbursementThroughOneStepCashin = app.register_task(BulkDisbursementThroughOneStepCashin())

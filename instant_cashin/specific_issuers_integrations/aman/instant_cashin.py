@@ -192,8 +192,7 @@ class AmanChannel:
                     AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
                     self.request.user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
 
-                msg = _(f"تم إيداع {self.amount} جنيه إلى رقم {recipient} بنجاح ، الرقم التعريفى "
-                        f"للصرف {bill_reference} ، برجاء التوجه ﻷقرب مركز أمان لصرف القيمة المستحقة.")
+                msg = _(f"“برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference} . لصرف مبلغ {self.amount} جنيه . شكراً لاختيارك مدفوعات أكسبت.“")
 
                 return Response({
                     "disbursement_status": _("success"),

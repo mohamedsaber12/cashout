@@ -87,7 +87,7 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
 
     def get_aman_cashing_details(self, transaction):
         """Retrieves aman cashing details of aman channel transaction"""
-        aman_cashing_details = transaction.aman_transaction.first()
+        aman_cashing_details = transaction.aman_transaction
 
         if aman_cashing_details:
             return {

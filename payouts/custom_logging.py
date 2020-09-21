@@ -146,26 +146,12 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/failed_login.log',
         },
-        'setup_view': {
-            'level': 'DEBUG',
-            'filters': ['request_id'],
-            'formatter': 'detail',
-            'class': 'logging.FileHandler',
-            'filename': 'logs/setup_view.log',
-        },
         'delete_user_view': {
             'level': 'DEBUG',
             'filters': ['request_id'],
             'formatter': 'detail',
             'class': 'logging.FileHandler',
             'filename': 'logs/delete_user_view.log',
-        },
-        'levels_view': {
-            'level': 'DEBUG',
-            'filters': ['request_id'],
-            'formatter': 'detail',
-            'class': 'logging.FileHandler',
-            'filename': 'logs/levels_view.log',
         },
         'root_create': {
             'level': 'DEBUG',
@@ -286,13 +272,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/axes_watcher.log',
         },
-        'database_queries': {
-            'level': 'WARNING',
-            'filters': ['request_id'],
-            'formatter': 'detail',
-            'class': 'logging.FileHandler',
-            'filename': 'logs/database_queries.log',
-        },
+        # 'database_queries': {
+        #     'level': 'WARNING',
+        #     'filters': ['request_id'],
+        #     'formatter': 'detail',
+        #     'class': 'logging.FileHandler',
+        #     'filename': 'logs/database_queries.log',
+        # },
         'custom_budgets': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -351,11 +337,11 @@ CUSTOM_LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        'django.db.backends': {
-            'handlers': ['database_queries'],
-            'level': 'WARNING',
-            'propagate': True,
-        },
+        # 'django.db.backends': {
+        #     'handlers': ['database_queries'],
+        #     'level': 'WARNING',
+        #     'propagate': True,
+        # },
         'deleted_files': {
             'handlers': ['delete_file'],
             'level': 'DEBUG',
@@ -411,18 +397,8 @@ CUSTOM_LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'setup_view': {
-            'handlers': ['setup_view'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
         'delete_user_view': {
             'handlers': ['delete_user_view'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'levels_view': {
-            'handlers': ['levels_view'],
             'level': 'DEBUG',
             'propagate': True,
         },

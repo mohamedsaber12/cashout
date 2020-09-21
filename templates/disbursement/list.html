@@ -78,13 +78,7 @@
                     <tbody>
                         {% for data in disbursement_data %}
                         <tr>
-                            {% if not is_normal_flow %}
-                              {% if data.issuer == "aman"  %}
-                                <td>{{ data.aman_transaction_bill_ref }}</td>
-                              {% else %}
-                                <td>{{ data.id }}</td>
-                              {% endif %}
-                            {% endif %}
+                            {% if not is_normal_flow %}<td>{{ data.reference_id }}</td>{% endif %}
                             <td>{{ data.msisdn }}</td>
                             <td>{{ data.amount }}</td>
                             {% if not is_normal_flow %}<td>{{ data.issuer }}</td>{% endif %}
@@ -99,7 +93,7 @@
                             </td>
                             <td>
                                 {% if data.reason %}
-                                    {{ data.reason }}
+                                    {{ data.reason }} {% if data.issuer == "aman" %} and {% if data.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %} {% endif %}
                                 {% else %}
                                     {% trans 'Disbursement process is running' %}
                                 {% endif %}

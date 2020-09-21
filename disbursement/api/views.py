@@ -216,7 +216,8 @@ class DisburseCallBack(UpdateAPIView):
                 last_doc_record_id = int(data['id'])
                 DisbursementData.objects.select_for_update().filter(id=int(data['id'])).update(
                         is_disbursed=True if data['status'] == '0' else False,
-                        reason=data.get('description', 'No Description found')
+                        reason=data.get('description', 'No Description found'),
+                        reference_id=data.get('mpg_rrn', 'None')
                 )
 
                 # If data['status'] = 0, it means this record amount is disbursed successfully

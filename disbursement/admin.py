@@ -28,7 +28,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['_trx_id', 'msisdn', 'amount', 'issuer', 'doc', 'is_disbursed', 'reason']
+    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason']
     list_filter = [
         ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer', 'created_at', 'updated_at',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
@@ -39,7 +39,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
-        (None, {'fields': list_display + ["_disbursement_document"]}),
+        (None, {'fields': list_display + ["doc", "_disbursement_document"]}),
         (_('Important Dates'), {'fields': ('created_at', 'updated_at')})
     )
 

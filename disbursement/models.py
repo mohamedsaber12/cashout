@@ -130,6 +130,12 @@ class DisbursementData(AbstractTimeStamp):
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default', db_index=True)
     reason = models.TextField()
+    reference_id = models.CharField(
+            _('Reference ID'),
+            max_length=30,
+            default='None',
+            null=False
+    )
     aman_obj = GenericRelation(
             "instant_cashin.AmanTransaction",
             object_id_field="transaction_id",
@@ -142,6 +148,7 @@ class DisbursementData(AbstractTimeStamp):
         verbose_name_plural = "Disbursement Data Records"
         unique_together = ('doc', 'msisdn')
         index_together = ['doc', 'msisdn']
+        get_latest_by = ['id']
 
     def __str__(self):
         return self.msisdn
@@ -151,9 +158,9 @@ class DisbursementData(AbstractTimeStamp):
         return 'Successful' if self.is_disbursed else 'Failed'
 
     @property
-    def aman_transaction_bill_ref(self):
-        """Property for retrieving bill reference for disbursement records through Aman"""
+    def aman_transaction_is_paid(self):
+        """Property for retrieving is_paid status for disbursement records through Aman"""
         try:
-            return self.aman_obj.first().bill_reference
+            return self.aman_obj.first().is_paid
         except AttributeError:
             return None

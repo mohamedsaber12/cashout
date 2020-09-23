@@ -181,9 +181,8 @@ class AmanChannel:
         try:
             response = self.post(self.pay_request_url, payload, sub_logging_head="MAKE PAY REQUEST")
             json_response = response.json()
-            bill_reference = json_response.get('id', '')
+            bill_reference = json_response.get('data', '').get('bill_reference', '')
             trx_status = json_response.get('pending', '')
-            recipient = json_response.get('order', '').get('shipping_data', '').get('phone_number', '')
             transaction_id = json_response.get('order', '').get('merchant_order_id', '')
 
             if response.ok and bill_reference and trx_status:
@@ -216,10 +215,16 @@ class AmanChannel:
             self.log_message(self.request, f"[EXCEPTION - MAKE PAY REQUEST]", f"Exception: {err.args[0]}")
             return Response({'message': f'Failed to make your pay request'}, status=status.HTTP_424_FAILED_DEPENDENCY)
 
-    def notify_merchant(self, payload):
-        """
-        This endpoint will be invoked every time Accept server needs to notify your
-        server about a TRANSACTION, a TOKEN or an ORDER
-        """
-        # ToDo: DB - Mark transaction, if successful paid = True
-        pass
+    @staticmethod
+    def notify_merchant(payload):
+        """This endpoint will be invoked every time Accept server needs to notify us about a TRANSACTION"""
+        is_success = payload.get("obj", "").get("success", "")
+        bill_reference = payload.get("obj", "").get("id", "")
+
+        try:
+            if is_success == "true" and bill_reference:
+                AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
+                return True, ""
+            raise ValueError(_(f"Transaction payment failed! is_success: {is_success}, bill_ref: {bill_reference}"))
+        except (AmanTransaction.DoesNotExist, ValueError, Exception) as err:
+            return False, err.args[0]

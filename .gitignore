@@ -69,6 +69,9 @@ docs/_build/
 !/media/avatars/.gitkeep
 !/media/avatars/user.png
 
+/media/certificates/*
+!/media/certificates/.gitkeep
+
 /media/entities_logo/*
 !/media/entities_logo/.gitkeep
 !/media/entities_logo/pm_name.png

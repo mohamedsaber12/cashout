@@ -300,6 +300,27 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/aman_channel.log',
         },
+        'ach_send_transaction': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/ach_send_transaction.log',
+        },
+        'ach_get_transaction_status': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/ach_get_transaction_status.log',
+        },
+        'ssl_certificates': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/ssl_certificates.log',
+        },
     },
 
     'loggers': {
@@ -494,6 +515,21 @@ CUSTOM_LOGGING = {
         },
         'aman_channel': {
             'handlers': ['aman_channel'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'ach_send_transaction': {
+            'handlers': ['ach_send_transaction'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'ach_get_transaction_status': {
+            'handlers': ['ach_get_transaction_status'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'ssl_certificates': {
+            'handlers': ['ssl_certificates'],
             'level': 'DEBUG',
             'propagate': True,
         },

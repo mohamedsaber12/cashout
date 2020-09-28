@@ -1,13 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import uuid
+
+from phonenumber_field.modelfields import PhoneNumberField
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from core.models import AbstractTimeStamp
-from utilities.models import AbstractBaseDocStatus, AbstractBaseVMTData
+from core.models import AbstractTimeStamp, AbstractBaseStatus
+from utilities.models import (
+    AbstractBaseDocStatus, AbstractBaseVMTData, AbstractTransactionCategory,
+    AbstractTransactionCurrency, AbstractTransactionPurpose,
+)
 
 
 class VMTData(AbstractBaseVMTData):
@@ -164,3 +171,194 @@ class DisbursementData(AbstractTimeStamp):
             return self.aman_obj.first().is_paid
         except AttributeError:
             return None
+
+
+class BankTransaction(AbstractTimeStamp,
+                      AbstractBaseStatus,
+                      AbstractTransactionCategory,
+                      AbstractTransactionCurrency,
+                      AbstractTransactionPurpose):
+    """
+    Model for managing bank transactions.
+    """
+
+    # transaction_batch = models.ForeignKey(
+    #         self,
+    #         on_delete=models.CASCADE,
+    #         related_name=_('')
+    # )
+    user_created = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name=_('bank_transactions'),
+            verbose_name=_('Disburser')
+    )
+    id = models.UUIDField(
+            _('Bank Transaction ID'),
+            primary_key=True,
+            default=uuid.uuid4,
+            unique=True,
+            editable=False,
+            help_text=_("New one generated everytime send_trx request made to EBC")
+    )
+    message_id = models.UUIDField(
+            _('Message ID'),
+            db_index=True,
+            default=uuid.uuid4,
+            unique=True,
+            editable=False,
+            help_text=_("New one generated everytime send_trx or get_trx_status request made to EBC")
+    )
+    transaction_status_code = models.CharField(
+            _('Transaction Status Code'),
+            max_length=4,
+            blank=True,
+            null=True
+    )
+    transaction_status_description = models.CharField(
+            _('Transaction Status Description'),
+            max_length=255,
+            blank=True,
+            null=True
+    )
+    debtor_account = models.CharField(
+            _('Corporate Account Number'),
+            max_length=34,
+            help_text=_('The company/service provider account number')
+    )
+    amount = models.DecimalField(
+            _('Amount'),
+            max_digits=12,
+            decimal_places=2,
+    )
+    creditor_name = models.CharField(
+            _('Beneficiary Name'),
+            max_length=70,
+            help_text=_('The customer/receiver name')
+    )
+    creditor_account_number = models.CharField(
+            _('Beneficiary Account Number'),
+            max_length=34,
+            help_text=_('The customer/receiver bank account')
+    )
+    creditor_bank = models.CharField(
+            _('Beneficiary Bank'),
+            max_length=11,
+            help_text=_('The bank where the customer/receiver maintains its accounts')
+    )
+    creditor_bank_branch = models.CharField(
+            _('Beneficiary Bank Branch'),
+            max_length=35,
+            blank=True,
+            default='',
+    )
+    end_to_end = models.CharField(
+            _('Optional Transaction Identifier 1'),
+            max_length=35,
+            blank=True,
+            default=''
+    )
+    instruction_id = models.CharField(
+            _('Optional Transaction Identifier 2'),
+            max_length=35,
+            blank=True,
+            default=''
+    )
+    creditor_email = models.EmailField(
+            _('Beneficiary Email'),
+            max_length=70,
+            blank=True,
+            null=True
+    )
+    creditor_mobile_number = PhoneNumberField(
+            _('Beneficiary Mobile Number'),
+            region='EG',
+            blank=True,
+            null=True
+    )
+    corporate_code = models.CharField(
+            _('Corporate Code'),
+            max_length=50,
+            help_text=_('Corporate Code to identify corporate')
+    )
+    sender_id = models.CharField(
+            _('Sender ID'),
+            max_length=35,
+            blank=True,
+            default=''
+    )
+    creditor_id = models.CharField(
+            _('Creditor ID'),
+            max_length=35,
+            blank=True,
+            default=''
+    )
+    creditor_address_1 = models.CharField(
+            _('Creditor Address 1'),
+            max_length=70,
+            blank=True,
+            default=''
+    )
+    creditor_address_2 = models.CharField(
+            _('Creditor Address 2'),
+            max_length=70,
+            blank=True,
+            default=''
+    )
+    debtor_address_1 = models.CharField(
+            _('Debtor Address 1'),
+            max_length=70,
+            blank=True,
+            default=''
+    )
+    debtor_address_2 = models.CharField(
+            _('Debtor Address 2'),
+            max_length=70,
+            blank=True,
+            default=''
+    )
+    debtor_address_3 = models.CharField(
+            _('Debtor Address 3'),
+            max_length=70,
+            blank=True,
+            default=''
+    )
+    debtor_address_4 = models.CharField(
+            _('Debtor Address 4'),
+            max_length=70,
+            blank=True,
+            default=''
+    )
+    additional_info_1 = models.CharField(
+            _('Remittance Info 1'),
+            max_length=140,
+            blank=True,
+            default=''
+    )
+    additional_info_2 = models.CharField(
+            _('Remittance Info 2'),
+            max_length=140,
+            blank=True,
+            default=''
+    )
+
+    class Meta:
+        verbose_name = 'Bank Transaction'
+        verbose_name_plural = 'Bank Transactions'
+        get_latest_by = '-created_at'
+        ordering = ['-created_at', '-updated_at']
+
+    def mark_successful(self):
+        """Mark transaction status as successful"""
+        self.status = self.SUCCESSFUL
+        self.save()
+
+    def mark_failed(self):
+        """Mark transaction status as failed"""
+        self.status = self.FAILED
+        self.save()
+
+    def mark_pending(self):
+        """Mark transaction status as pending"""
+        self.status = self.PENDING
+        self.save()

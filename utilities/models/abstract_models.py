@@ -272,3 +272,99 @@ class AbstractBaseVMTData(models.Model):
         payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
 
         return payload, payload_without_pin
+
+
+class AbstractTransactionCurrency(models.Model):
+    """
+    Abstract class for handling different transaction currency.
+    """
+
+    EGYPTIAN_POUND = 'EGP'
+
+    CURRENCY_CHOICES = (
+        (EGYPTIAN_POUND, 'Egyptian Pound'),
+    )
+
+    currency = models.CharField(_('Currency'), max_length=3, choices=CURRENCY_CHOICES, default=EGYPTIAN_POUND)
+
+    class Meta:
+        abstract = True
+
+
+class AbstractTransactionCategory(models.Model):
+    """
+    Abstract base class for handling different transaction category codes.
+    """
+
+    GENERAL_CASH = 'CASH'
+    ONUS_DIRECT_DEBIT = 'LIMA'
+    LPRT = 'LPRT'
+    MOBILE_PAYMENT = 'MOBI'
+    PREPAID = 'PCRD'
+    PENSION = 'PENS'
+    SALARY = 'SALA'
+    USD = 'USD'
+
+    CATEGORY_CHOICES = (
+        (GENERAL_CASH, 'General cash'),
+        (ONUS_DIRECT_DEBIT, 'Onus direct debit'),
+        (LPRT, 'LPRT'),
+        (MOBILE_PAYMENT, 'Mobile payment'),
+        (PREPAID, 'PrePaid card'),
+        (PENSION, 'Payment of pension'),
+        (SALARY, 'Payment of salaries'),
+        (USD, 'USD transaction')
+    )
+
+    category_code = models.CharField(
+            _('Category Code'),
+            max_length=4,
+            choices=CATEGORY_CHOICES,
+            default=GENERAL_CASH,
+            help_text=_('Type of the sending remittance')
+    )
+
+    class Meta:
+        abstract = True
+
+
+class AbstractTransactionPurpose(models.Model):
+    """
+    Abstract base class for handling different transaction purpose codes.
+    """
+
+    CASH_TRANSFER = "CASH"
+    INSTALLMENT = "INST"
+    PAYROLL = "PAYR"
+    SUPPLIER = "SUPP"
+    COLLECTION = "COLL"
+    CREDIT_CARD = "CCRD"
+    COLT = "COLT"
+    PENSION = "PENS"
+    ACCT = "ACCT"
+    SALARY = "SALA"
+    OTHER = "OTHR"
+
+    PURPOSE_CHOICES = (
+        (CASH_TRANSFER, _("حوالات - Cash Transfer")),
+        (INSTALLMENT, _("أقساط - Installment")),
+        (PAYROLL, _("مرتبات - Payroll")),
+        (SUPPLIER, _("موردين - Supplier Payment")),
+        (COLLECTION, _("كمبيالات - Collection")),
+        (CREDIT_CARD, _("بطاقة إئتمان - Credit Card")),
+        (COLT, _("متحصلات - COLT")),
+        (PENSION, _("Transaction is the payment of pension - معاشات - Pension")),
+        (ACCT, _("Transaction moves funds between 2 accounts of same account holder")),
+        (SALARY, _("Transaction is the payment of salaries")),
+        (OTHER, _("Other payment purpose")),
+    )
+
+    purpose = models.CharField(
+            _('Purpose'),
+            max_length=4,
+            choices=PURPOSE_CHOICES,
+            default=CASH_TRANSFER,
+    )
+
+    class Meta:
+        abstract = True

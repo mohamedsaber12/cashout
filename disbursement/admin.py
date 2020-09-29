@@ -8,8 +8,58 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from .mixins import AdminSiteOwnerOnlyPermissionMixin
-from .models import Agent, DisbursementData, DisbursementDocData, VMTData
+from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData
 from .utils import custom_titled_filter
+
+
+@admin.register(BankTransaction)
+class BankTransactionAdminModel(admin.ModelAdmin):
+    """
+    Admin model for customizing BankTransaction model admin view
+    """
+
+    list_display = [
+        'id', 'user_created', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
+        'transaction_status_code', 'created_at'
+    ]
+    readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
+    list_filter = ['status', 'category_code', 'transaction_status_code']
+    ordering = ['-updated_at', '-created_at']
+    fieldsets = (
+        (None, {
+            'fields': (
+                'parent_transaction', 'id', 'message_id', 'user_created', 'status', 'amount', 'currency', 'purpose',
+                'category_code', 'transaction_status_code', 'transaction_status_description'
+            )
+        }),
+        (_('Creditor/Beneficiary Data'), {
+            'fields': (
+                'creditor_name', 'creditor_account_number', 'creditor_bank', 'creditor_bank_branch', 'creditor_email',
+                'creditor_mobile_number', 'creditor_id', 'creditor_address_1', 'creditor_address_2'
+            )
+        }),
+        (_('Debtor Data'), {
+            'fields': (
+                'debtor_account', 'corporate_code', 'sender_id', 'debtor_address_1', 'debtor_address_2',
+                'debtor_address_3', 'debtor_address_4'
+            )
+        }),
+        (_('Additional Transaction Info'), {
+            'fields': ('additional_info_1', 'additional_info_2', 'end_to_end', 'instruction_id')
+        }),
+        (_('Important Dates'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Agent)

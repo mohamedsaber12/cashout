@@ -10,10 +10,11 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from core.models import AbstractTimeStamp, AbstractBaseStatus
+from core.models import AbstractBaseStatus, AbstractTimeStamp
 from utilities.models import (
-    AbstractBaseDocStatus, AbstractBaseVMTData, AbstractTransactionCategory,
-    AbstractTransactionCurrency, AbstractTransactionPurpose,
+    AbstractBaseDocStatus, AbstractBaseVMTData,
+    AbstractTransactionCategory, AbstractTransactionCurrency,
+    AbstractTransactionPurpose
 )
 
 
@@ -182,11 +183,12 @@ class BankTransaction(AbstractTimeStamp,
     Model for managing bank transactions.
     """
 
-    # transaction_batch = models.ForeignKey(
-    #         self,
-    #         on_delete=models.CASCADE,
-    #         related_name=_('')
-    # )
+    parent_transaction = models.ForeignKey(
+            'self',
+            on_delete=models.CASCADE,
+            related_name=_('children_transactions'),
+            verbose_name=_('Parent Transaction')
+    )
     user_created = models.ForeignKey(
             settings.AUTH_USER_MODEL,
             on_delete=models.CASCADE,
@@ -194,7 +196,7 @@ class BankTransaction(AbstractTimeStamp,
             verbose_name=_('Disburser')
     )
     id = models.UUIDField(
-            _('Bank Transaction ID'),
+            _('Transaction ID'),
             primary_key=True,
             default=uuid.uuid4,
             unique=True,
@@ -217,7 +219,7 @@ class BankTransaction(AbstractTimeStamp,
     )
     transaction_status_description = models.CharField(
             _('Transaction Status Description'),
-            max_length=255,
+            max_length=500,
             blank=True,
             null=True
     )

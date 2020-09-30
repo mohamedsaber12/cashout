@@ -187,7 +187,8 @@ class BankTransaction(AbstractTimeStamp,
             'self',
             on_delete=models.CASCADE,
             related_name=_('children_transactions'),
-            verbose_name=_('Parent Transaction')
+            verbose_name=_('Parent Transaction'),
+            null=True
     )
     user_created = models.ForeignKey(
             settings.AUTH_USER_MODEL,
@@ -260,12 +261,6 @@ class BankTransaction(AbstractTimeStamp,
             blank=True,
             default=''
     )
-    instruction_id = models.CharField(
-            _('Optional Transaction Identifier 2'),
-            max_length=35,
-            blank=True,
-            default=''
-    )
     creditor_email = models.EmailField(
             _('Beneficiary Email'),
             max_length=70,
@@ -301,44 +296,14 @@ class BankTransaction(AbstractTimeStamp,
             blank=True,
             default=''
     )
-    creditor_address_2 = models.CharField(
-            _('Creditor Address 2'),
-            max_length=70,
-            blank=True,
-            default=''
-    )
     debtor_address_1 = models.CharField(
             _('Debtor Address 1'),
             max_length=70,
             blank=True,
             default=''
     )
-    debtor_address_2 = models.CharField(
-            _('Debtor Address 2'),
-            max_length=70,
-            blank=True,
-            default=''
-    )
-    debtor_address_3 = models.CharField(
-            _('Debtor Address 3'),
-            max_length=70,
-            blank=True,
-            default=''
-    )
-    debtor_address_4 = models.CharField(
-            _('Debtor Address 4'),
-            max_length=70,
-            blank=True,
-            default=''
-    )
     additional_info_1 = models.CharField(
             _('Remittance Info 1'),
-            max_length=140,
-            blank=True,
-            default=''
-    )
-    additional_info_2 = models.CharField(
-            _('Remittance Info 2'),
             max_length=140,
             blank=True,
             default=''

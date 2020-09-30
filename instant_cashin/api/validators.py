@@ -4,6 +4,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from core.utils.validations import phonenumber_form_validate
+from disbursement.utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
 
 
 def msisdn_validator(msisdn):
@@ -51,9 +52,29 @@ def cashin_issuer_validator(issuer):
     :param issuer: The way that the consumer will use
     :return: If valid it just will return the passed issuer value if not it'll raise validation error
     """
-    cashin_valid_issuers_list = ["VODAFONE", "ETISALAT", "ORANGE", "AMAN"]
+    cashin_valid_issuers_list = ["vodafone", "etisalat", "orange", "aman", "bank_wallet", "bank_card"]
 
-    if issuer not in cashin_valid_issuers_list:
-        msg = _("The passed issuer is not valid, please make sure that the passed issuer value is one of"
-                " ['VODAFONE', 'ETISALAT', 'ORANGE', 'AMAN'] and try again!")
+    if issuer.lower() not in cashin_valid_issuers_list:
+        msg = _(f"The passed issuer is not valid, please make sure that the passed issuer value is one of"
+                f" {cashin_valid_issuers_list} and try again!")
+        raise serializers.ValidationError(msg)
+
+
+def bank_code_validator(bank_code):
+    """
+    """
+
+    if str(bank_code).upper() not in VALID_BANK_CODES_LIST:
+        msg = _(f"The passed bank code is not valid, please make sure that the passed code value is one of"
+                f" {VALID_BANK_CODES_LIST} and try again!")
+        raise serializers.ValidationError(msg)
+
+
+def bank_transaction_type_validator(transaction_type):
+    """
+    """
+
+    if str(transaction_type).upper() not in VALID_BANK_TRANSACTION_TYPES_LIST:
+        msg = _(f"The passed bank transaction type is not valid, please make sure that the passed type value is one of"
+                f" {VALID_BANK_TRANSACTION_TYPES_LIST} and try again!")
         raise serializers.ValidationError(msg)

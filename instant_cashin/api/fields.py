@@ -4,7 +4,11 @@ from __future__ import unicode_literals
 from collections import OrderedDict
 import uuid
 
+from django.core.validators import MaxLengthValidator, MinLengthValidator
+
 from rest_framework import serializers
+
+from .. import utils
 
 
 class CustomChoicesField(serializers.Field):
@@ -35,3 +39,32 @@ class UUIDListField(serializers.ListField):
     """
 
     child = serializers.UUIDField(default=uuid.uuid4())
+
+
+class CustomMinLengthValidator(MinLengthValidator):
+    """
+
+    """
+
+    def clean(self, x):
+        return len(utils.get_digits(x))
+
+
+class CustomMaxLengthValidator(MaxLengthValidator):
+    """
+
+    """
+
+    def clean(self, x):
+        return len(utils.get_digits(x))
+
+
+class CardNumberField(serializers.CharField):
+    """
+
+    """
+
+    default_validators = [
+        CustomMinLengthValidator(16),
+        CustomMaxLengthValidator(16),
+    ]

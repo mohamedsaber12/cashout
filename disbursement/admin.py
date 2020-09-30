@@ -35,17 +35,16 @@ class BankTransactionAdminModel(admin.ModelAdmin):
         (_('Creditor/Beneficiary Data'), {
             'fields': (
                 'creditor_name', 'creditor_account_number', 'creditor_bank', 'creditor_bank_branch', 'creditor_email',
-                'creditor_mobile_number', 'creditor_id', 'creditor_address_1', 'creditor_address_2'
+                'creditor_mobile_number', 'creditor_id', 'creditor_address_1'
             )
         }),
         (_('Debtor Data'), {
             'fields': (
-                'debtor_account', 'corporate_code', 'sender_id', 'debtor_address_1', 'debtor_address_2',
-                'debtor_address_3', 'debtor_address_4'
+                'debtor_account', 'corporate_code', 'sender_id', 'debtor_address_1'
             )
         }),
         (_('Additional Transaction Info'), {
-            'fields': ('additional_info_1', 'additional_info_2', 'end_to_end', 'instruction_id')
+            'fields': ('additional_info_1', 'end_to_end')
         }),
         (_('Important Dates'), {
             'fields': ('created_at', 'updated_at')

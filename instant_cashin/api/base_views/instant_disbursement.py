@@ -14,7 +14,7 @@ from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
-from disbursement.models import VMTData
+from disbursement.models import BankTransaction, VMTData
 from utilities.logging import logging_message
 
 from ..serializers import InstantDisbursementSerializer
@@ -47,7 +47,7 @@ class InstantDisbursementAPIView(views.APIView):
         super().__init__(*args, **kwargs)
         self.specific_issuers = ['orange', 'aman']
 
-    def superadmin_corresponding_pin(self, instant_user, wallet_issuer, serializer):
+    def get_superadmin_pin(self, instant_user, wallet_issuer, serializer):
         """
         Placed at the .env, formatted like {InstantSuperUsername}_{issuer}_PIN=pin
         :param instant_user: the user who can initiate the instant cash in request
@@ -72,6 +72,60 @@ class InstantDisbursementAPIView(views.APIView):
             if issuer.lower() == choice[1].lower():
                 return choice[0]
         return 'V'
+
+    def determine_trx_category_and_purpose(self, transaction_type):
+        """"""
+        if transaction_type.upper() == "SALARY":
+            category_purpose_dict = {
+                "category_code": "SALA",
+                "purpose": "SALA"
+            }
+        elif transaction_type.upper() == "PENSION":
+            category_purpose_dict = {
+                "category_code": "PENS",
+                "purpose": "PENS"
+            }
+        elif transaction_type.upper() == "PREPAID":
+            category_purpose_dict = {
+                "category_code": "PCRD",
+                "purpose": "CASH"
+            }
+        elif transaction_type.upper() == "CREDIT_CARD":
+            category_purpose_dict = {
+                "category_code": "CASH",
+                "purpose": "CCRD"
+            }
+        else:
+            category_purpose_dict = {
+                "category_code": "CASH",
+                "purpose": "CASH"
+            }
+
+        return category_purpose_dict
+
+    def create_bank_transaction(self, disburser, serializer):
+        """"""
+        transaction_dict = {
+            "currency": "EGP",
+            "debtor_address_1": "EG , ",
+            "creditor_address_1": "EG , ",
+            "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
+            "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
+            "user_created": disburser,
+            "amount": serializer.validated_data["amount"],
+            "creditor_name": serializer.validated_data["full_name"],
+            "creditor_account_number": serializer.validated_data["bank_card_number"],
+            "creditor_bank": serializer.validated_data["bank_code"],
+        }
+        transaction_type = serializer.validated_data["bank_transaction_type"]
+        transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
+
+        # ToDo: Update after the transaction firing
+        # status
+        # transaction_status_code
+        # transaction_status_description
+
+        return BankTransaction.objects.create(**transaction_dict)
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -133,8 +187,6 @@ class InstantDisbursementAPIView(views.APIView):
         Handles POST HTTP requests
         """
         serializer = InstantDisbursementSerializer(data=request.data)
-        json_inquiry_response = "Request time out"      # If it's empty then log it as request timed out
-        transaction = None
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -145,84 +197,106 @@ class InstantDisbursementAPIView(views.APIView):
                 "status_code": str(status.HTTP_400_BAD_REQUEST)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            instant_user = request.user
-            vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
-            data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
-            data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
-            data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
-            issuer = data_dict['WALLETISSUER'] = serializer.validated_data["issuer"]
+        issuer = serializer.validated_data["issuer"].lower()
 
-            if issuer.lower() not in self.specific_issuers:
-                data_dict['MSISDN'] = instant_user.root.super_admin.\
-                    first_non_super_agent(serializer.validated_data["issuer"])
+        if issuer in ["vodafone", "etisalat", "orange", "aman"]:
+            json_inquiry_response = "Request time out"      # If it's empty then log it as request timed out
+            transaction = None
 
-            transaction = InstantTransaction.objects.create(
-                    from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P", amount=data_dict['AMOUNT'],
-                    issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']), anon_sender=data_dict['MSISDN']
-            )
-            data_dict['PIN'] = self.superadmin_corresponding_pin(instant_user, data_dict['WALLETISSUER'], serializer)
+            try:
+                instant_user = request.user
+                vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
+                data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
+                data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
+                data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
+                data_dict['WALLETISSUER'] = issuer.upper()
 
-        except Exception as e:
-            if transaction: transaction.mark_failed(INTERNAL_ERROR_MSG)
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
-            return default_response_structure(
-                    transaction_id=transaction.uid, status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                    field_status_code=status.HTTP_424_FAILED_DEPENDENCY
-            )
+                if issuer not in self.specific_issuers:
+                    data_dict['MSISDN'] = instant_user.root.super_admin.first_non_super_agent(issuer)
 
-        request_data_dictionary_without_pins = copy.deepcopy(data_dict)
-        request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
-        logging_message(
-                INSTANT_CASHIN_REQUEST_LOGGER, "[REQUEST DATA DICT TO CENTRAL]", request,
-                f"Data dictionary: {request_data_dictionary_without_pins}"
-        )
+                transaction = InstantTransaction.objects.create(
+                        from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P",
+                        amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
+                        anon_sender=data_dict['MSISDN']
+                )
+                data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
-        try:
-            if not request.user.root.budget.within_threshold(serializer.validated_data['amount'], issuer.lower()):
-                raise ValidationError(BUDGET_EXCEEDED_MSG)
+            except Exception as e:
+                if transaction:transaction.mark_failed(INTERNAL_ERROR_MSG)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
+                return default_response_structure(
+                        transaction_id=transaction.uid if transaction else None,
+                        status_description={"Internal Error": INTERNAL_ERROR_MSG},
+                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY
+                )
 
-            if issuer.lower() in self.specific_issuers:
-                specific_issuer_handler = getattr(self, f"{issuer.lower()}_issuer_handler")
-                specific_issuer_response = specific_issuer_handler(request, transaction, serializer)
-
-                if isinstance(specific_issuer_response, Response):
-                    return specific_issuer_response
-
-            inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
-            json_inquiry_response = inquiry_response.json()
-
-        except ValidationError as e:
-            trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
-            if transaction: transaction.mark_failed(trx_failure_msg)
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[DISBURSEMENT VALIDATION ERROR]", request, e.args)
-            return default_response_structure(
-                    transaction_id=transaction.uid, status_description=e.args[0],
-                    field_status_code="6061", response_status_code=status.HTTP_200_OK
+            request_data_dictionary_without_pins = copy.deepcopy(data_dict)
+            request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
+            logging_message(
+                    INSTANT_CASHIN_REQUEST_LOGGER, "[REQUEST DATA DICT TO CENTRAL]", request,
+                    f"Data dictionary: {request_data_dictionary_without_pins}"
             )
 
-        except (TimeoutError, ImproperlyConfigured, Exception) as e:
-            log_msg = e.args[0]
-            if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
-            if transaction: transaction.mark_failed(EXTERNAL_ERROR_MSG)
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[ERROR FROM CENTRAL]", request, log_msg)
-            return default_response_structure(
-                    transaction_id=transaction.uid, status_description=EXTERNAL_ERROR_MSG,
-                    field_status_code=status.HTTP_424_FAILED_DEPENDENCY, response_status_code=status.HTTP_200_OK
-            )
+            try:
+                if not request.user.root.budget.within_threshold(serializer.validated_data['amount'], issuer):
+                    raise ValidationError(BUDGET_EXCEEDED_MSG)
 
-        if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
-            logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL TRX]", request, f"{json_inquiry_response}")
-            transaction.mark_successful()
-            request.user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer.lower())
+                if issuer in ["aman", "orange"]:
+                    specific_issuer_handler = getattr(self, f"{issuer}_issuer_handler")
+                    specific_issuer_response = specific_issuer_handler(request, transaction, serializer)
+
+                    if isinstance(specific_issuer_response, Response):
+                        return specific_issuer_response
+
+                inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
+                json_inquiry_response = inquiry_response.json()
+
+            except ValidationError as e:
+                trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
+                if transaction: transaction.mark_failed(trx_failure_msg)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[DISBURSEMENT VALIDATION ERROR]", request, e.args)
+                return default_response_structure(
+                        transaction_id=transaction.uid, status_description=e.args[0],
+                        field_status_code="6061", response_status_code=status.HTTP_200_OK
+                )
+
+            except (TimeoutError, ImproperlyConfigured, Exception) as e:
+                log_msg = e.args[0]
+                if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
+                if transaction: transaction.mark_failed(EXTERNAL_ERROR_MSG)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[ERROR FROM CENTRAL]", request, log_msg)
+                return default_response_structure(
+                        transaction_id=transaction.uid, status_description=EXTERNAL_ERROR_MSG,
+                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY, response_status_code=status.HTTP_200_OK
+                )
+
+            if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
+                logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL TRX]", request, f"{json_inquiry_response}")
+                transaction.mark_successful()
+                request.user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                return default_response_structure(
+                        transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
+                        disbursement_status=_("success"), response_status_code=status.HTTP_200_OK
+                )
+
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED TRX]", request, f"{json_inquiry_response}")
+            if transaction: transaction.mark_failed(json_inquiry_response["MESSAGE"])
             return default_response_structure(
                     transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
-                    disbursement_status=_("success"), response_status_code=status.HTTP_200_OK
+                    field_status_code=json_inquiry_response["TXNSTATUS"], response_status_code=status.HTTP_200_OK
             )
 
-        logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED TRX]", request, f"{json_inquiry_response}")
-        if transaction: transaction.mark_failed(json_inquiry_response["MESSAGE"])
-        return default_response_structure(
-                transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
-                field_status_code=json_inquiry_response["TXNSTATUS"], response_status_code=status.HTTP_200_OK
-        )
+        elif issuer in ["bank_wallet", "bank_card"]:
+            bank_trx_obj = None
+            try:
+                bank_trx_obj = self.create_bank_transaction(request.user, serializer)
+            except (ImproperlyConfigured, Exception) as e:
+                # ToDo: Log > logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
+                if bank_trx_obj: bank_trx_obj.mark_failed()
+                return default_response_structure(
+                        transaction_id=bank_trx_obj.id if bank_trx_obj else None,
+                        status_description={"Internal Error": INTERNAL_ERROR_MSG},
+                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY
+                )
+
+            return Response({"Hello from the other side"}, status=status.HTTP_200_OK)

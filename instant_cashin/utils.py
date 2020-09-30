@@ -1,8 +1,12 @@
 from environ import ImproperlyConfigured
+import re
 
 from rest_framework.response import Response
 
 from payouts.utils import get_dot_env
+
+
+re_non_digits = re.compile(r'[^\d]+')
 
 
 def get_from_env(key):
@@ -46,3 +50,15 @@ def default_response_structure(transaction_id="0",
             },
             status=response_status_code
     )
+
+
+def get_digits(value):
+    """
+    Get all digits from input string.
+
+    :type value: str
+    :rtype: str
+    """
+    if not value:
+        return ''
+    return re_non_digits.sub('', str(value))

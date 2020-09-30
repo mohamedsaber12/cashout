@@ -8,8 +8,11 @@ from rest_framework import serializers
 from core.models import AbstractBaseStatus
 
 from ..models import AbstractBaseIssuer, InstantTransaction
-from .fields import CustomChoicesField, UUIDListField
-from .validators import cashin_issuer_validator, fees_validator, issuer_validator, msisdn_validator
+from .fields import CustomChoicesField, UUIDListField, CardNumberField
+from .validators import (
+    bank_code_validator, cashin_issuer_validator,
+    fees_validator, issuer_validator, msisdn_validator, bank_transaction_type_validator,
+)
 
 
 class InstantUserInquirySerializer(serializers.Serializer):
@@ -30,12 +33,17 @@ class InstantDisbursementSerializer(serializers.Serializer):
             - decimal places allowed at the cases of decimals is for only 2 digits ex: 356.98 EG
             - max number of digits allowed is 7 digits 10,000.00
     """
-    msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
     amount = serializers.DecimalField(required=True, decimal_places=2, max_digits=7)
-    pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
-    issuer = serializers.CharField(
-            required=True,
-            validators=[cashin_issuer_validator]
+    issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])
+    msisdn = serializers.CharField(max_length=11, required=False, allow_blank=False, validators=[msisdn_validator])
+    bank_code = serializers.CharField(max_length=4, required=False, allow_blank=False, validators=[bank_code_validator])
+    bank_card_number = CardNumberField(required=False, allow_blank=False)
+    bank_transaction_type = serializers.CharField(
+            min_length=6,
+            max_length=13,
+            required=False,
+            allow_blank=False,
+            validators=[bank_transaction_type_validator]
     )
     fees = serializers.CharField(
             max_length=4,
@@ -44,21 +52,45 @@ class InstantDisbursementSerializer(serializers.Serializer):
             allow_null=True,
             validators=[fees_validator]
     )
+    full_name = serializers.CharField(max_length=254, required=False, allow_blank=False)
     first_name = serializers.CharField(max_length=254, required=False)
     last_name = serializers.CharField(max_length=254, required=False)
     email = serializers.EmailField(max_length=254, required=False)
+    pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""
-        issuer = attrs.get('issuer', '')
+        issuer = str(attrs.get('issuer', '')).lower()
+        msisdn = attrs.get('msisdn', '')
         first_name = attrs.get('first_name', '')
         last_name = attrs.get('last_name', '')
         email = attrs.get('email', '')
+        bank_code = attrs.get('bank_code', '')
+        bank_card_number = attrs.get('bank_card_number', '')
+        bank_transaction_type = attrs.get('bank_transaction_type', '')
+        full_name = attrs.get('full_name', '')
 
-        if issuer == 'AMAN':
-            if not first_name or not last_name or not email:
+        if issuer in ['vodafone', 'etisalat', 'orange']:
+            if not msisdn:
+                raise serializers.ValidationError(
+                        _("You must pass valid msisdn")
+                )
+        elif issuer == 'aman':
+            if not msisdn or not first_name or not last_name or not email:
                 raise serializers.ValidationError(
                         _("You must pass valid values for fields [first_name, last_name, email]")
+                )
+        elif issuer == 'bank_card':
+            if not bank_code or not bank_card_number or not bank_transaction_type or not full_name:
+                raise serializers.ValidationError(
+                        _("You must pass valid values for fields [bank_code, bank_card_number, bank_transaction_type, "
+                          "full_name]")
+                )
+        elif issuer == 'bank_wallet':
+            if not bank_card_number or not bank_transaction_type or not full_name:
+                raise serializers.ValidationError(
+                        _("You must pass valid values for fields [bank_code, bank_card_number, bank_transaction_type, "
+                          "full_name]")
                 )
 
         return attrs

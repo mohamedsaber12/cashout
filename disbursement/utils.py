@@ -5,6 +5,61 @@ from django.contrib import admin
 from django.utils.translation import gettext as _
 
 
+VALID_BANK_CODES_LIST = [
+    "AUB",
+    "CITI",
+    "MIDB",
+    "BDC",
+    "HSBC",
+    "CAE",
+    "EGB",
+    "UB",
+    "QNB",
+    "BBE",
+    "ARAB",
+    "ENBD",
+    "ABK",
+    "NBK",
+    "ABC",
+    "FAB",
+    "ADIB",
+    "CIB",
+    "HDB",
+    "MISR",
+    "AAIB",
+    "EALB",
+    "EDBE",
+    "FAIB",
+    "BLOM",
+    "ADCB",
+    "BOA",
+    "SAIB",
+    "NBE",
+    "ABRK",
+    "POST",
+    "NSB",
+    "IDB",
+    "SCB",
+    "MASH",
+    "AIB",
+    "AUDI",
+    "GASC",
+    "EGPA",
+    "ARIB",
+    "PDAC",
+    "NBG",
+    "CBE"
+]
+
+VALID_BANK_TRANSACTION_TYPES_LIST = [
+    "CASH_TRANSFER",
+    "SALARY",
+    "PENSION",
+    "PREPAID",
+    "CREDIT_CARD"
+]
+
+
 def logging_message(logger, head, user, message):
     """
     Simple function that will take the logger and the message and log them in

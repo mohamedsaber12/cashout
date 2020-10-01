@@ -18,7 +18,7 @@ from disbursement.models import BankTransaction, VMTData
 from utilities.logging import logging_message
 
 from ..serializers import InstantDisbursementSerializer
-from ...specific_issuers_integrations import AmanChannel
+from ...specific_issuers_integrations import BankTransactionsChannel, AmanChannel
 from ..mixins import IsInstantAPICheckerUser
 from ...models import InstantTransaction
 from ...utils import default_response_structure, get_from_env
@@ -107,8 +107,8 @@ class InstantDisbursementAPIView(views.APIView):
         """"""
         transaction_dict = {
             "currency": "EGP",
-            "debtor_address_1": "EG , ",
-            "creditor_address_1": "EG , ",
+            "debtor_address_1": "EG",
+            "creditor_address_1": "EG",
             "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
             "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
             "user_created": disburser,
@@ -290,6 +290,7 @@ class InstantDisbursementAPIView(views.APIView):
             bank_trx_obj = None
             try:
                 bank_trx_obj = self.create_bank_transaction(request.user, serializer)
+                return BankTransactionsChannel.send_transaction(bank_trx_obj)
             except (ImproperlyConfigured, Exception) as e:
                 # ToDo: Log > logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
                 if bank_trx_obj: bank_trx_obj.mark_failed()
@@ -299,4 +300,3 @@ class InstantDisbursementAPIView(views.APIView):
                         field_status_code=status.HTTP_424_FAILED_DEPENDENCY
                 )
 
-            return Response({"Hello from the other side"}, status=status.HTTP_200_OK)

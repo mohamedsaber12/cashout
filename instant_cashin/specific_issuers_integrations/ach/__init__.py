@@ -1,0 +1,1 @@
+from .instant_cashin import BankTransactionsChannel

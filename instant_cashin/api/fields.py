@@ -23,7 +23,7 @@ class CustomChoicesField(serializers.Field):
 
     def to_representation(self, obj):
         """Used while retrieving value for the field."""
-        return self._choices[obj]
+        return self._choices[obj].lower()
 
     def to_internal_value(self, data):
         """Used while storing value for the field."""

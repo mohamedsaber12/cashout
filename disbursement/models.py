@@ -10,12 +10,17 @@ from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
+from rest_framework import status
+
 from core.models import AbstractBaseStatus, AbstractTimeStamp
 from utilities.models import (
     AbstractBaseDocStatus, AbstractBaseVMTData,
     AbstractTransactionCategory, AbstractTransactionCurrency,
     AbstractTransactionPurpose
 )
+
+
+INTERNAL_ERROR = _("Process stopped during an internal error, can you try again or contact your support team.")
 
 
 class VMTData(AbstractBaseVMTData):
@@ -322,6 +327,10 @@ class BankTransaction(AbstractTimeStamp,
 
     def mark_failed(self):
         """Mark transaction status as failed"""
+        if not self.transaction_status_code:
+            self.transaction_status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        if not self.transaction_status_description:
+            self.transaction_status_description = INTERNAL_ERROR
         self.status = self.FAILED
         self.save()
 

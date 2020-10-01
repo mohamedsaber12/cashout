@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from core.models import AbstractBaseStatus
+from disbursement.models import BankTransaction
 
 from ..models import AbstractBaseIssuer, InstantTransaction
 from .fields import CustomChoicesField, UUIDListField, CardNumberField
@@ -148,4 +149,64 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
         fields = [
             'transaction_id', 'transaction_status', 'channel', 'msisdn', 'amount', 'failure_reason',
             'created_at', 'updated_at', 'aman_cashing_details'
+        ]
+
+
+class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
+    """
+    Serializes the response of instant bank transaction objects
+    """
+
+    transaction_id = serializers.SerializerMethodField()
+    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    status_code = serializers.SerializerMethodField()
+    status_description = serializers.SerializerMethodField()
+    cashing_details = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
+    def get_transaction_id(self, transaction):
+        """Retrieves transaction id"""
+        return transaction.id
+
+    def get_status_code(self, transaction):
+        """Retrieves transaction status code"""
+        return transaction.transaction_status_code
+
+    def get_status_description(self, transaction):
+        """Retrieves transaction status description"""
+        return transaction.transaction_status_description
+
+    def get_cashing_details(self, transaction):
+        """Retrieves transaction cashing details"""
+        if transaction.purpose == "SALA":
+            bank_transaction_type = "salary"
+        elif transaction.purpose == "PENS":
+            bank_transaction_type = "pension"
+        elif transaction.purpose == "CCRD":
+            bank_transaction_type = "credit_card"
+        elif transaction.category_code == "PCRD":
+            bank_transaction_type = "prepaid"
+        else:
+            bank_transaction_type = "cash_transfer"
+
+        return {
+            "bank_code": transaction.creditor_bank,
+            "bank_card_number": transaction.creditor_account_number,
+            "bank_transaction_type": bank_transaction_type
+        }
+
+    def get_created_at(self, transaction):
+        """Retrieves transaction created_at time formatted"""
+        return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    def get_updated_at(self, transaction):
+        """Retrieves transaction updated_at time formatted"""
+        return transaction.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    class Meta:
+        model = BankTransaction
+        fields = [
+            'transaction_id', 'amount', 'disbursement_status', 'status_code', 'status_description', 'cashing_details',
+            'created_at', 'updated_at'
         ]

@@ -17,17 +17,17 @@ from rest_framework.response import Response
 from disbursement.models import BankTransaction, VMTData
 from utilities.logging import logging_message
 
-from ..serializers import InstantDisbursementSerializer
-from ...specific_issuers_integrations import BankTransactionsChannel, AmanChannel
-from ..mixins import IsInstantAPICheckerUser
 from ...models import InstantTransaction
+from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from ...utils import default_response_structure, get_from_env
-
+from ..mixins import IsInstantAPICheckerUser
+from ..serializers import InstantDisbursementSerializer
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
 INSTANT_CASHIN_PENDING_LOGGER = logging.getLogger("instant_cashin_pending")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
+ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 
 INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team.")
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
@@ -74,10 +74,10 @@ class InstantDisbursementAPIView(views.APIView):
         return 'V'
 
     def determine_trx_category_and_purpose(self, transaction_type):
-        """"""
+        """Determine transaction category code and purpose based on the passed transaction_type"""
         if transaction_type.upper() == "SALARY":
             category_purpose_dict = {
-                "category_code": "SALA",
+                "category_code": "CASH",
                 "purpose": "SALA"
             }
         elif transaction_type.upper() == "PENSION":
@@ -119,12 +119,6 @@ class InstantDisbursementAPIView(views.APIView):
         }
         transaction_type = serializer.validated_data["bank_transaction_type"]
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
-
-        # ToDo: Update after the transaction firing
-        # status
-        # transaction_status_code
-        # transaction_status_description
-
         return BankTransaction.objects.create(**transaction_dict)
 
     def aman_api_authentication_params(self, aman_channel_object):
@@ -287,16 +281,12 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         elif issuer in ["bank_wallet", "bank_card"]:
-            bank_trx_obj = None
             try:
                 bank_trx_obj = self.create_bank_transaction(request.user, serializer)
                 return BankTransactionsChannel.send_transaction(bank_trx_obj)
             except (ImproperlyConfigured, Exception) as e:
-                # ToDo: Log > logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
-                if bank_trx_obj: bank_trx_obj.mark_failed()
+                ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{request.user} - {e.args}"))
                 return default_response_structure(
-                        transaction_id=bank_trx_obj.id if bank_trx_obj else None,
-                        status_description={"Internal Error": INTERNAL_ERROR_MSG},
+                        transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
                         field_status_code=status.HTTP_424_FAILED_DEPENDENCY
                 )
-

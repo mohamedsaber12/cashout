@@ -19,7 +19,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
     """
 
     list_display = [
-        'id', 'user_created', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
+        'id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
         'transaction_status_code', 'created_at'
     ]
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]

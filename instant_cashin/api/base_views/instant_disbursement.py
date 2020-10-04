@@ -115,7 +115,7 @@ class InstantDisbursementAPIView(views.APIView):
         full_name = serializer.validated_data["full_name"]
         instant_transaction = False
 
-        if issuer == "bank_wallet":
+        if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
             creditor_bank = "THWL"      # ToDo: Change it to "MIDG" at the production environment
             transaction_type = "MOBILE"
@@ -187,18 +187,6 @@ class InstantDisbursementAPIView(views.APIView):
 
         raise Exception(EXTERNAL_ERROR_MSG)
 
-    def orange_issuer_handler(self, request, transaction_object, serializer):
-        """Handle orange operations/transactions separately"""
-
-        logging_message(
-                INSTANT_CASHIN_PENDING_LOGGER, "[PENDING TRX]", request, f"Data dict: {serializer.validated_data}"
-        )
-
-        return default_response_structure(
-                transaction_object.uid, disbursement_status=_("pending"), status_description=ORANGE_PENDING_MSG,
-                field_status_code=status.HTTP_202_ACCEPTED, response_status_code=status.HTTP_200_OK
-        )
-
     def post(self, request, *args, **kwargs):
         """
         Handles POST HTTP requests
@@ -221,7 +209,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         issuer = serializer.validated_data["issuer"].lower()
 
-        if issuer in ["vodafone", "etisalat", "orange", "aman"]:
+        if issuer in ["vodafone", "etisalat", "aman"]:
             json_inquiry_response = "Request time out"      # If it's empty then log it as request timed out
             transaction = None
 
@@ -260,7 +248,7 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
             try:
-                if issuer in ["aman", "orange"]:
+                if issuer == "aman":
                     specific_issuer_handler = getattr(self, f"{issuer}_issuer_handler")
                     specific_issuer_response = specific_issuer_handler(request, transaction, serializer)
 
@@ -292,7 +280,7 @@ class InstantDisbursementAPIView(views.APIView):
             transaction.mark_failed(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-        elif issuer in ["bank_wallet", "bank_card"]:
+        elif issuer in ["bank_wallet", "bank_card", "orange"]:
             instant_trx_obj = False
             try:
                 bank_trx_obj, instant_trx_obj = self.create_bank_transaction(request.user, serializer)

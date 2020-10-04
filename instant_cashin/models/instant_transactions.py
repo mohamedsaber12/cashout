@@ -107,8 +107,9 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR
         self.transaction_status_description = description if description else ""
 
-    def mark_pending(self):
+    def mark_pending(self, status_code="", failure_reason=""):
         """Mark transaction status as pending"""
+        self.update_status_code_and_description(str(status_code), failure_reason)
         self.status = self.PENDING
         self.save()
 

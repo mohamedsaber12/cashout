@@ -85,19 +85,20 @@ class BankTransactionsChannel:
         raise ValidationError(_(response_log_message))
 
     @staticmethod
-    def map_response_code_and_message(bank_trx_obj, json_response):
+    def map_response_code_and_message(bank_trx_obj, instant_trx_obj, json_response):
         """Map EBC response code and message"""
         response_code = json_response.get('ResponseCode', status.HTTP_424_FAILED_DEPENDENCY)
-        response_description = json_response.get('ResponseDescription', EXTERNAL_ERROR_MSG)
 
         if response_code == "8000":
             bank_trx_obj.transaction_status_code = response_code
             bank_trx_obj.transaction_status_description = TRX_RECEIVED
             bank_trx_obj.mark_pending()
+            instant_trx_obj.mark_pending() if instant_trx_obj else None
         elif response_code == "8111":
             bank_trx_obj.transaction_status_code = response_code
             bank_trx_obj.transaction_status_description = TRX_BEING_PROCESSED
             bank_trx_obj.mark_pending()
+            instant_trx_obj.mark_pending() if instant_trx_obj else None
         elif response_code == "8002":
             bank_trx_obj.transaction_status_code = response_code
             bank_trx_obj.transaction_status_description = _("Invalid bank code")
@@ -115,21 +116,26 @@ class BankTransactionsChannel:
             bank_trx_obj.transaction_status_description = EXTERNAL_ERROR_MSG
             bank_trx_obj.mark_failed()
 
-        return bank_trx_obj
+        if instant_trx_obj and response_code not in ["8000", "8111"]:
+            instant_trx_obj.mark_failed(EXTERNAL_ERROR_MSG)
+
+        return bank_trx_obj, instant_trx_obj
 
     @staticmethod
-    def send_transaction(trx_obj):
+    def send_transaction(bank_trx_obj, instant_trx_obj):
         """
         Make a new send transaction request to EBC
         """
         try:
-            payload = BankTransactionsChannel.accumulate_send_transaction_payload(trx_obj)
-            response = BankTransactionsChannel.post(get_from_env("EBC_API_URL"), payload, trx_obj)
-            trx_obj = BankTransactionsChannel.map_response_code_and_message(trx_obj, json.loads(response.json()))
-            output_serializer = BankTransactionResponseModelSerializer(trx_obj)
+            payload = BankTransactionsChannel.accumulate_send_transaction_payload(bank_trx_obj)
+            response = BankTransactionsChannel.post(get_from_env("EBC_API_URL"), payload, bank_trx_obj)
+            bank_trx_obj, instant_trx_obj = BankTransactionsChannel.\
+                map_response_code_and_message(bank_trx_obj, instant_trx_obj, json.loads(response.json()))
+            output_serializer = BankTransactionResponseModelSerializer(bank_trx_obj)
             return Response(output_serializer.data)
         except (HTTPError, ConnectionError, ValidationError, Exception) as e:
-            ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{trx_obj.user_created} - {e.args}"))
-            trx_obj.mark_failed()
-            output_serializer = BankTransactionResponseModelSerializer(trx_obj)
+            ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{bank_trx_obj.user_created} - {e.args}"))
+            bank_trx_obj.mark_failed()
+            instant_trx_obj.mark_failed(EXTERNAL_ERROR_MSG) if instant_trx_obj else None
+            output_serializer = BankTransactionResponseModelSerializer(bank_trx_obj)
             return Response(output_serializer.data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

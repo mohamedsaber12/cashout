@@ -25,7 +25,7 @@ class InstantUserInquirySerializer(serializers.Serializer):
     unique_identifier = serializers.CharField(max_length=255, required=True)    # Add validations/rate limit
 
 
-class InstantDisbursementSerializer(serializers.Serializer):
+class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
     Serializes instant disbursement requests
     Notes:
@@ -88,10 +88,9 @@ class InstantDisbursementSerializer(serializers.Serializer):
                           "full_name]")
                 )
         elif issuer == 'bank_wallet':
-            if not bank_card_number or not bank_transaction_type or not full_name:
+            if not msisdn or not full_name:
                 raise serializers.ValidationError(
-                        _("You must pass valid values for fields [bank_code, bank_card_number, bank_transaction_type, "
-                          "full_name]")
+                        _("You must pass valid values for fields [msisdn, full_name]")
                 )
 
         return attrs

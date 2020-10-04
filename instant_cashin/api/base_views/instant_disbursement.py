@@ -21,7 +21,7 @@ from ...models import InstantTransaction
 from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
-from ..serializers import InstantDisbursementSerializer
+from ..serializers import InstantDisbursementRequestSerializer
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -45,7 +45,7 @@ class InstantDisbursementAPIView(views.APIView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.specific_issuers = ['orange', 'aman']
+        self.specific_issuers = ['orange', 'aman', 'bank_wallet', 'bank_card']
 
     def get_superadmin_pin(self, instant_user, wallet_issuer, serializer):
         """
@@ -75,7 +75,12 @@ class InstantDisbursementAPIView(views.APIView):
 
     def determine_trx_category_and_purpose(self, transaction_type):
         """Determine transaction category code and purpose based on the passed transaction_type"""
-        if transaction_type.upper() == "SALARY":
+        if transaction_type.upper() == "MOBILE":
+            category_purpose_dict = {
+                "category_code": "MOBI",
+                "purpose": "CASH"
+            }
+        elif transaction_type.upper() == "SALARY":
             category_purpose_dict = {
                 "category_code": "CASH",
                 "purpose": "SALA"
@@ -104,7 +109,25 @@ class InstantDisbursementAPIView(views.APIView):
         return category_purpose_dict
 
     def create_bank_transaction(self, disburser, serializer):
-        """"""
+        """Create a bank transaction out of the passed serializer data"""
+        amount = serializer.validated_data["amount"]
+        issuer = serializer.validated_data["issuer"]
+        full_name = serializer.validated_data["full_name"]
+        instant_transaction = False
+
+        if issuer == "bank_wallet":
+            creditor_account_number = serializer.validated_data["msisdn"]
+            creditor_bank = "THWL"      # ToDo: Change it to "MIDG" at the production environment
+            transaction_type = "MOBILE"
+            instant_transaction = InstantTransaction.objects.create(
+                    from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
+                    issuer_type=self.match_issuer_type(issuer)
+            )
+        else:
+            creditor_account_number = serializer.validated_data["bank_card_number"]
+            creditor_bank = serializer.validated_data["bank_code"]
+            transaction_type = serializer.validated_data["bank_transaction_type"]
+
         transaction_dict = {
             "currency": "EGP",
             "debtor_address_1": "EG",
@@ -112,14 +135,14 @@ class InstantDisbursementAPIView(views.APIView):
             "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
             "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
             "user_created": disburser,
-            "amount": serializer.validated_data["amount"],
-            "creditor_name": serializer.validated_data["full_name"],
-            "creditor_account_number": serializer.validated_data["bank_card_number"],
-            "creditor_bank": serializer.validated_data["bank_code"],
+            "amount": amount,
+            "creditor_name": full_name,
+            "creditor_account_number": creditor_account_number,
+            "creditor_bank": creditor_bank,
+            "end_to_end": "" if issuer.lower() == "bank_card" else instant_transaction.uid
         }
-        transaction_type = serializer.validated_data["bank_transaction_type"]
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
-        return BankTransaction.objects.create(**transaction_dict)
+        return BankTransaction.objects.create(**transaction_dict), instant_transaction
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -180,7 +203,7 @@ class InstantDisbursementAPIView(views.APIView):
         """
         Handles POST HTTP requests
         """
-        serializer = InstantDisbursementSerializer(data=request.data)
+        serializer = InstantDisbursementRequestSerializer(data=request.data)
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -281,11 +304,13 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
         elif issuer in ["bank_wallet", "bank_card"]:
+            instant_trx_obj = False
             try:
-                bank_trx_obj = self.create_bank_transaction(request.user, serializer)
-                return BankTransactionsChannel.send_transaction(bank_trx_obj)
+                bank_trx_obj, instant_trx_obj = self.create_bank_transaction(request.user, serializer)
+                return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
             except (ImproperlyConfigured, Exception) as e:
                 ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{request.user} - {e.args}"))
+                instant_trx_obj.mark_failed(EXTERNAL_ERROR_MSG) if instant_trx_obj else None
                 return default_response_structure(
                         transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
                         field_status_code=status.HTTP_424_FAILED_DEPENDENCY

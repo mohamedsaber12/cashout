@@ -262,7 +262,7 @@ class BankTransaction(AbstractTimeStamp,
     )
     end_to_end = models.CharField(
             _('Optional Transaction Identifier 1'),
-            max_length=35,
+            max_length=36,
             blank=True,
             default=''
     )

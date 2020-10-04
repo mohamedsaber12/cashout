@@ -3,6 +3,7 @@ import uuid
 from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
+from rest_framework import status
 
 from core.models import AbstractBaseTransaction
 from users.models import InstantAPICheckerUser
@@ -69,11 +70,17 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             null=True,
             help_text=_("Agent used from Root's agents list")
     )
-    failure_reason = models.TextField(
-            _("Failure reason"),
+    transaction_status_code = models.CharField(
+            _('Status Code'),
+            max_length=6,
+            blank=True,
+            null=True
+    )
+    transaction_status_description = models.CharField(
+            _("Status Description"),
+            max_length=500,
             blank=True,
             null=True,
-            help_text=_("Empty if transaction status is Successful")
     )
     aman_obj = GenericRelation(
             "instant_cashin.AmanTransaction",
@@ -96,18 +103,28 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         get_latest_by = "-updated_at"
         ordering = ["-created_at", "-updated_at"]
 
+    def update_status_code_and_description(self, code=None, description=None):
+        self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR
+        self.transaction_status_description = description if description else ""
+
     def mark_pending(self):
         """Mark transaction status as pending"""
         self.status = self.PENDING
         self.save()
 
-    def mark_failed(self, failure_reason=""):
+    def mark_failed(self, status_code="", failure_reason=""):
         """
         Mark transaction status as failed and add the failure reason if provided
         :param failure_reason: if provided add failure reason
         """
-        if failure_reason: self.failure_reason = failure_reason
+        self.update_status_code_and_description(str(status_code), failure_reason)
         self.status = self.FAILED
+        self.save()
+
+    def mark_successful(self, status_code="", failure_reason=""):
+        """Mark transaction status as successful and add the status code and description if provided"""
+        self.update_status_code_and_description(str(status_code), failure_reason)
+        self.status = self.SUCCESSFUL
         self.save()
 
     @property

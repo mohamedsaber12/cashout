@@ -15,6 +15,7 @@ from rest_framework.response import Response
 
 from data.utils import get_client_ip
 
+from ...api.serializers import InstantTransactionResponseModelSerializer
 from ...models import AmanTransaction
 from ...utils import get_from_env
 
@@ -186,12 +187,13 @@ class AmanChannel:
             transaction_id = json_response.get('order', '').get('merchant_order_id', '')
 
             if response.ok and bill_reference and trx_status:
+                msg = _(f"“برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference} . لصرف مبلغ {self.amount} جنيه . شكراً لاختيارك مدفوعات أكسبت.“")
+
                 if self.transaction:
-                    self.transaction.mark_successful()
+                    self.transaction.mark_successful(status.HTTP_200_OK, msg)
                     AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
                     self.request.user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
-
-                msg = _(f"“برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference} . لصرف مبلغ {self.amount} جنيه . شكراً لاختيارك مدفوعات أكسبت.“")
+                    return Response(InstantTransactionResponseModelSerializer(self.transaction).data)
 
                 return Response({
                     "disbursement_status": _("success"),
@@ -204,12 +206,18 @@ class AmanChannel:
                     }
                 }, status=status.HTTP_200_OK)
             else:
+                if self.transaction:
+                    self.transaction.mark_failed(status.HTTP_504_GATEWAY_TIMEOUT, EXTERNAL_ERROR_MSG)
+                    return Response(
+                            InstantTransactionResponseModelSerializer(self.transaction).data,
+                            status=status.HTTP_200_OK
+                    )
                 return Response({
                     "disbursement_status": _("failed"),
                     "transaction_id": transaction_id,
                     "status_description": EXTERNAL_ERROR_MSG,
                     "status_code": str(status.HTTP_504_GATEWAY_TIMEOUT),
-                }, status=status.HTTP_504_GATEWAY_TIMEOUT)
+                }, status=status.HTTP_200_OK)
 
         except (HTTPError, ConnectionError, Exception) as err:
             self.log_message(self.request, f"[EXCEPTION - MAKE PAY REQUEST]", f"Exception: {err.args[0]}")

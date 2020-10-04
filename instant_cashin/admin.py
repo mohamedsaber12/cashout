@@ -79,8 +79,10 @@ class InstantTransactionAdmin(admin.ModelAdmin):
     Instant Transaction Admin model for the Instant Transaction model
     """
 
-    default_fields = ['uid', 'from_user', 'anon_sender', 'anon_recipient', 'status', 'amount', 'issuer_type']
-    list_display = default_fields + ['created_at', 'updated_at']
+    default_fields = [
+        'uid', 'from_user', 'anon_recipient', 'status', 'transaction_status_code', 'amount', 'issuer_type'
+    ]
+    list_display = default_fields + ['updated_at']
     readonly_fields = default_fields + ['uid', 'created_at']
     search_fields = list_display
     ordering = ['-updated_at', '-created_at']
@@ -89,7 +91,10 @@ class InstantTransactionAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {'fields': ('from_user', )}),
         (_('Transaction Details'), {
-            'fields': ('uid', 'status', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient', 'failure_reason')
+            'fields': (
+                'uid', 'status', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient',
+                'transaction_status_code', 'transaction_status_description'
+            )
         }),
         (_('Important Dates'), {
             'fields': ('created_at', 'updated_at')

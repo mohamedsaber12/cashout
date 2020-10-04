@@ -21,7 +21,7 @@ from ...models import InstantTransaction
 from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
-from ..serializers import InstantDisbursementRequestSerializer
+from ..serializers import InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -239,7 +239,7 @@ class InstantDisbursementAPIView(views.APIView):
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
             except Exception as e:
-                if transaction:transaction.mark_failed(INTERNAL_ERROR_MSG)
+                if transaction:transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, INTERNAL_ERROR_MSG)
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
                 return default_response_structure(
                         transaction_id=transaction.uid if transaction else None,
@@ -270,38 +270,26 @@ class InstantDisbursementAPIView(views.APIView):
 
             except ValidationError as e:
                 trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
-                if transaction: transaction.mark_failed(trx_failure_msg)
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[DISBURSEMENT VALIDATION ERROR]", request, e.args)
-                return default_response_structure(
-                        transaction_id=transaction.uid, status_description=e.args[0],
-                        field_status_code="6061", response_status_code=status.HTTP_200_OK
-                )
+                transaction.mark_failed("6061", trx_failure_msg)
+                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (TimeoutError, ImproperlyConfigured, Exception) as e:
                 log_msg = e.args[0]
                 if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
-                if transaction: transaction.mark_failed(EXTERNAL_ERROR_MSG)
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[ERROR FROM CENTRAL]", request, log_msg)
-                return default_response_structure(
-                        transaction_id=transaction.uid, status_description=EXTERNAL_ERROR_MSG,
-                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY, response_status_code=status.HTTP_200_OK
-                )
+                transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
                 logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL TRX]", request, f"{json_inquiry_response}")
-                transaction.mark_successful()
+                transaction.mark_successful(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
                 request.user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
-                return default_response_structure(
-                        transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
-                        disbursement_status=_("success"), response_status_code=status.HTTP_200_OK
-                )
+                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED TRX]", request, f"{json_inquiry_response}")
-            if transaction: transaction.mark_failed(json_inquiry_response["MESSAGE"])
-            return default_response_structure(
-                    transaction_id=transaction.uid, status_description=json_inquiry_response["MESSAGE"],
-                    field_status_code=json_inquiry_response["TXNSTATUS"], response_status_code=status.HTTP_200_OK
-            )
+            transaction.mark_failed(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
+            return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
         elif issuer in ["bank_wallet", "bank_card"]:
             instant_trx_obj = False
@@ -310,8 +298,8 @@ class InstantDisbursementAPIView(views.APIView):
                 return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
             except (ImproperlyConfigured, Exception) as e:
                 ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{request.user} - {e.args}"))
-                instant_trx_obj.mark_failed(EXTERNAL_ERROR_MSG) if instant_trx_obj else None
+                if instant_trx_obj: instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                 return default_response_structure(
                         transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY
+                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY, response_status_code=status.HTTP_200_OK
                 )

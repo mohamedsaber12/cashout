@@ -14,7 +14,7 @@ from rest_framework.response import Response
 
 from utilities.ssl_certificate import SSLCertificate
 
-from ...api.serializers import BankTransactionResponseModelSerializer
+from ...api.serializers import BankTransactionResponseModelSerializer, InstantTransactionResponseModelSerializer
 from ...utils import get_from_env
 
 
@@ -90,6 +90,7 @@ class BankTransactionsChannel:
         response_code = json_response.get('ResponseCode', status.HTTP_424_FAILED_DEPENDENCY)
 
         if response_code == "8000":
+            # ToDo: Update custom budget if pending/ and cancel it if failed
             bank_trx_obj.transaction_status_code = response_code
             bank_trx_obj.transaction_status_description = TRX_RECEIVED
             bank_trx_obj.mark_pending()
@@ -117,7 +118,7 @@ class BankTransactionsChannel:
             bank_trx_obj.mark_failed()
 
         if instant_trx_obj and response_code not in ["8000", "8111"]:
-            instant_trx_obj.mark_failed(EXTERNAL_ERROR_MSG)
+            instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, EXTERNAL_ERROR_MSG)
 
         return bank_trx_obj, instant_trx_obj
 
@@ -131,11 +132,15 @@ class BankTransactionsChannel:
             response = BankTransactionsChannel.post(get_from_env("EBC_API_URL"), payload, bank_trx_obj)
             bank_trx_obj, instant_trx_obj = BankTransactionsChannel.\
                 map_response_code_and_message(bank_trx_obj, instant_trx_obj, json.loads(response.json()))
-            output_serializer = BankTransactionResponseModelSerializer(bank_trx_obj)
-            return Response(output_serializer.data)
+            if instant_trx_obj:
+                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+            else:
+                return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
         except (HTTPError, ConnectionError, ValidationError, Exception) as e:
             ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{bank_trx_obj.user_created} - {e.args}"))
-            bank_trx_obj.mark_failed()
-            instant_trx_obj.mark_failed(EXTERNAL_ERROR_MSG) if instant_trx_obj else None
-            output_serializer = BankTransactionResponseModelSerializer(bank_trx_obj)
-            return Response(output_serializer.data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            if instant_trx_obj:
+                instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, EXTERNAL_ERROR_MSG)
+                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+            else:
+                bank_trx_obj.mark_failed()
+                return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)

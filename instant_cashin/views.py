@@ -50,7 +50,7 @@ class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTrans
             queryset.filter(
                     Q(uid__iexact=search_keys)|
                     Q(anon_recipient__iexact=search_keys)|
-                    Q(failure_reason__icontains=search_keys)
+                    Q(transaction_status_description__icontains=search_keys)
             )
 
         return queryset

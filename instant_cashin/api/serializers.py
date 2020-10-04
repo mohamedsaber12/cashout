@@ -112,6 +112,8 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
     transaction_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
     channel = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
     transaction_id = serializers.SerializerMethodField()
+    failure_reason = serializers.SerializerMethodField()
+    status_description = serializers.SerializerMethodField()
     msisdn = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
@@ -131,6 +133,14 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
         """Retrieves transaction id"""
         return transaction.uid
 
+    def get_failure_reason(self, transaction):
+        """Retrieves transaction failure reason"""
+        return transaction.transaction_status_description
+
+    def get_status_description(self, transaction):
+        """Retrieves transaction failure reason"""
+        return transaction.transaction_status_description
+
     def get_msisdn(self, transaction):
         """Retrieves transaction consumer"""
         return transaction.anon_recipient
@@ -146,8 +156,8 @@ class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstantTransaction
         fields = [
-            'transaction_id', 'transaction_status', 'channel', 'msisdn', 'amount', 'failure_reason',
-            'created_at', 'updated_at', 'aman_cashing_details'
+            'transaction_id', 'transaction_status', 'channel', 'msisdn', 'amount', 'status_description',
+            'failure_reason', 'created_at', 'updated_at', 'aman_cashing_details'
         ]
 
 
@@ -208,4 +218,61 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         fields = [
             'transaction_id', 'amount', 'disbursement_status', 'status_code', 'status_description', 'cashing_details',
             'created_at', 'updated_at'
+        ]
+
+
+class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
+    """
+    Serializes the response of instant transactions
+    """
+
+    transaction_id = serializers.SerializerMethodField()
+    msisdn = serializers.SerializerMethodField()
+    issuer = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
+    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    status_code = serializers.SerializerMethodField()
+    status_description = serializers.SerializerMethodField()
+    aman_cashing_details = serializers.SerializerMethodField()
+    created_at = serializers.SerializerMethodField()
+    updated_at = serializers.SerializerMethodField()
+
+    def get_transaction_id(self, transaction):
+        """Retrieves transaction id"""
+        return transaction.uid
+
+    def get_msisdn(self, transaction):
+        """Retrieves transaction recipient"""
+        return transaction.anon_recipient
+
+    def get_status_code(self, transaction):
+        """Retrieves transaction status code"""
+        return transaction.transaction_status_code
+
+    def get_status_description(self, transaction):
+        """Retrieves transaction status description"""
+        return transaction.transaction_status_description
+
+    def get_aman_cashing_details(self, transaction):
+        """Retrieves aman cashing details of aman channel transaction"""
+        aman_cashing_details = transaction.aman_transaction
+
+        if aman_cashing_details:
+            return {
+                'bill_reference': aman_cashing_details.bill_reference,
+                'is_paid': aman_cashing_details.is_paid
+            }
+
+    def get_created_at(self, transaction):
+        """Retrieves transaction created_at time formatted"""
+        return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    def get_updated_at(self, transaction):
+        """Retrieves transaction updated_at time formatted"""
+        return transaction.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+
+    class Meta:
+        model = InstantTransaction
+        fields = [
+            'transaction_id', 'msisdn', 'issuer', 'disbursement_status', 'status_code', 'status_description',
+            'aman_cashing_details', 'created_at', 'updated_at'
         ]

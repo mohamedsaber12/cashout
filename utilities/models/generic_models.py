@@ -136,7 +136,11 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, issuer_type)
+            if issuer_type in ["vodafone", "etisalat", "aman", "orange"]:
+                _issuer_type = issuer_type
+            else:
+                _issuer_type = "bank"
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, _issuer_type)
 
             if amount_plus_fees_vat <= round(self.current_balance, 2):
                 return True
@@ -152,6 +156,10 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
+            if issuer_type in ["vodafone", "etisalat", "aman", "orange"]:
+                _issuer_type = issuer_type
+            else:
+                _issuer_type = "bank"
             amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type)
             self.total_disbursed_amount += amount_plus_fees_vat
             self.current_balance -= amount_plus_fees_vat

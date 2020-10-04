@@ -29,10 +29,10 @@ INSTANT_CASHIN_PENDING_LOGGER = logging.getLogger("instant_cashin_pending")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
 ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 
-INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team.")
-EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
-ORANGE_PENDING_MSG = _("Your transaction will be process the soonest, wait for a response at the next 24 hours.")
-BUDGET_EXCEEDED_MSG = _("Sorry, the amount to be disbursed exceeds you budget limit. please contact your support team.")
+INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team")
+EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
+ORANGE_PENDING_MSG = _("Your transaction will be process the soonest, wait for a response at the next 24 hours")
+BUDGET_EXCEEDED_MSG = _("Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team")
 
 
 class InstantDisbursementAPIView(views.APIView):
@@ -207,10 +207,15 @@ class InstantDisbursementAPIView(views.APIView):
 
         try:
             serializer.is_valid(raise_exception=True)
+
+            if not request.user.root.\
+                    budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):
+                raise ValidationError(BUDGET_EXCEEDED_MSG)
         except ValidationError as e:
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[SERIALIZER VALIDATION ERROR]", request, serializer.errors)
+            failure_message = BUDGET_EXCEEDED_MSG if e.args[0] == BUDGET_EXCEEDED_MSG else serializer.errors
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR]", request, failure_message)
             return Response({
-                "disbursement_status": _("failed"), "status_description": e.args[0],
+                "disbursement_status": _("failed"), "status_description": failure_message,
                 "status_code": str(status.HTTP_400_BAD_REQUEST)
             }, status=status.HTTP_400_BAD_REQUEST)
 
@@ -255,9 +260,6 @@ class InstantDisbursementAPIView(views.APIView):
             )
 
             try:
-                if not request.user.root.budget.within_threshold(serializer.validated_data['amount'], issuer):
-                    raise ValidationError(BUDGET_EXCEEDED_MSG)
-
                 if issuer in ["aman", "orange"]:
                     specific_issuer_handler = getattr(self, f"{issuer}_issuer_handler")
                     specific_issuer_response = specific_issuer_handler(request, transaction, serializer)
@@ -269,9 +271,8 @@ class InstantDisbursementAPIView(views.APIView):
                 json_inquiry_response = inquiry_response.json()
 
             except ValidationError as e:
-                trx_failure_msg = INTERNAL_ERROR_MSG if e.args[0] != BUDGET_EXCEEDED_MSG else BUDGET_EXCEEDED_MSG
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[DISBURSEMENT VALIDATION ERROR]", request, e.args)
-                transaction.mark_failed("6061", trx_failure_msg)
+                transaction.mark_failed("6061", INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (TimeoutError, ImproperlyConfigured, Exception) as e:

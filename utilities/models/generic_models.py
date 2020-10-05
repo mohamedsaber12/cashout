@@ -160,7 +160,7 @@ class Budget(AbstractTimeStamp):
                 _issuer_type = issuer_type
             else:
                 _issuer_type = "bank"
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type)
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, _issuer_type)
             self.total_disbursed_amount += amount_plus_fees_vat
             self.current_balance -= amount_plus_fees_vat
             self.save()
@@ -168,6 +168,21 @@ class Budget(AbstractTimeStamp):
             raise ValueError(
                     _(f"Error updating the total disbursed amount and the current balance, please retry again later.")
             )
+
+        return True
+
+    def return_disbursed_amount_for_cancelled_trx(self, amount):
+        """
+        Update the total disbursement amount and the current balance after each pending -> failed transaction
+        :param amount: the pending amount for being disbursed
+        :return: True/False
+        """
+        try:
+            self.total_disbursed_amount -= Decimal(amount)
+            self.current_balance += Decimal(amount)
+            self.save()
+        except Exception:
+            raise ValueError(_(f"Error adding to the current balance and cutting from the total disbursed amount"))
 
         return True
 

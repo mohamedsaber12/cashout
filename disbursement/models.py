@@ -201,20 +201,22 @@ class BankTransaction(AbstractTimeStamp,
             related_name=_('bank_transactions'),
             verbose_name=_('Disburser')
     )
-    id = models.UUIDField(
+    transaction_id = models.UUIDField(
             _('Transaction ID'),
-            primary_key=True,
-            default=uuid.uuid4,
+            db_index=True,
             unique=True,
-            editable=False,
+            default=uuid.uuid4,
+            blank=False,
+            null=False,
             help_text=_("New one generated everytime send_trx request made to EBC")
     )
     message_id = models.UUIDField(
             _('Message ID'),
             db_index=True,
-            default=uuid.uuid4,
             unique=True,
-            editable=False,
+            default=uuid.uuid4,
+            blank=False,
+            null=False,
             help_text=_("New one generated everytime send_trx or get_trx_status request made to EBC")
     )
     transaction_status_code = models.CharField(
@@ -320,21 +322,27 @@ class BankTransaction(AbstractTimeStamp,
         get_latest_by = '-created_at'
         ordering = ['-created_at', '-updated_at']
 
-    def mark_successful(self):
+    def __str__(self):
+        return str(self.transaction_id)
+
+    def update_status_code_and_description(self, code=None, description=None):
+        self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR
+        self.transaction_status_description = description if description else ""
+
+    def mark_successful(self, status_code, status_description):
         """Mark transaction status as successful"""
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.SUCCESSFUL
         self.save()
 
-    def mark_failed(self):
+    def mark_failed(self, status_code, status_description):
         """Mark transaction status as failed"""
-        if not self.transaction_status_code:
-            self.transaction_status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
-        if not self.transaction_status_description:
-            self.transaction_status_description = INTERNAL_ERROR
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.FAILED
         self.save()
 
-    def mark_pending(self):
+    def mark_pending(self, status_code, status_description):
         """Mark transaction status as pending"""
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.PENDING
         self.save()

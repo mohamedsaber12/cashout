@@ -19,17 +19,17 @@ class BankTransactionAdminModel(admin.ModelAdmin):
     """
 
     list_display = [
-        'id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
+        'transaction_id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
         'transaction_status_code', 'created_at'
     ]
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
     list_filter = ['status', 'category_code', 'transaction_status_code']
-    ordering = ['-updated_at', '-created_at']
+    ordering = ['-id']
     fieldsets = (
         (None, {
             'fields': (
-                'parent_transaction', 'id', 'message_id', 'user_created', 'status', 'amount', 'currency', 'purpose',
-                'category_code', 'transaction_status_code', 'transaction_status_description'
+                'parent_transaction', 'transaction_id', 'message_id', 'user_created', 'status', 'amount', 'currency',
+                'purpose', 'category_code', 'transaction_status_code', 'transaction_status_description'
             )
         }),
         (_('Creditor/Beneficiary Data'), {

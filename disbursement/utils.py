@@ -59,6 +59,14 @@ VALID_BANK_TRANSACTION_TYPES_LIST = [
     "CREDIT_CARD"
 ]
 
+TRX_RETURNED_BY_BANK_CODES = [
+    "0100", "0101", "0102", "0103", "0104", "0105", "0106", "0107", "0108", "0109", "0110", "0111", "0112"
+]
+
+TRX_REJECTED_BY_BANK_CODES = [
+    "0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014"
+]
+
 
 def logging_message(logger, head, user, message):
     """

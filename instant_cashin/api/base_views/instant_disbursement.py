@@ -142,7 +142,10 @@ class InstantDisbursementAPIView(views.APIView):
             "end_to_end": "" if issuer.lower() == "bank_card" else instant_transaction.uid
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
-        return BankTransaction.objects.create(**transaction_dict), instant_transaction
+        bank_transaction = BankTransaction.objects.create(**transaction_dict)
+        bank_transaction.parent_transaction = bank_transaction
+        bank_transaction.save()
+        return bank_transaction, instant_transaction
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""

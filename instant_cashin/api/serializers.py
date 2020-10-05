@@ -166,17 +166,12 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     Serializes the response of instant bank transaction objects
     """
 
-    transaction_id = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     cashing_details = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
-
-    def get_transaction_id(self, transaction):
-        """Retrieves transaction id"""
-        return transaction.id
 
     def get_status_code(self, transaction):
         """Retrieves transaction status code"""

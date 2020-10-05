@@ -272,13 +272,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/axes_watcher.log',
         },
-        # 'database_queries': {
-        #     'level': 'WARNING',
-        #     'filters': ['request_id'],
-        #     'formatter': 'detail',
-        #     'class': 'logging.FileHandler',
-        #     'filename': 'logs/database_queries.log',
-        # },
+        'database_queries': {
+            'level': 'WARNING',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/database_queries.log',
+        },
         'custom_budgets': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -358,11 +358,11 @@ CUSTOM_LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
-        # 'django.db.backends': {
-        #     'handlers': ['database_queries'],
-        #     'level': 'WARNING',
-        #     'propagate': True,
-        # },
+        'django.db.backends': {
+            'handlers': ['database_queries'],
+            'level': 'WARNING',
+            'propagate': True,
+        },
         'deleted_files': {
             'handlers': ['delete_file'],
             'level': 'DEBUG',

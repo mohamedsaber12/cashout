@@ -172,4 +172,5 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         return True
 
+
 BulkDisbursementThroughOneStepCashin = app.register_task(BulkDisbursementThroughOneStepCashin())

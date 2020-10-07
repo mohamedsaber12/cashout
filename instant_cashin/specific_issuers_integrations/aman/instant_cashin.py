@@ -187,7 +187,7 @@ class AmanChannel:
             transaction_id = json_response.get('order', '').get('merchant_order_id', '')
 
             if response.ok and bill_reference and trx_status:
-                msg = _(f"“برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference} . لصرف مبلغ {self.amount} جنيه . شكراً لاختيارك مدفوعات أكسبت.“")
+                msg = _(f"برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference}. لصرف مبلغ {self.amount} جنيه. شكراً لاختيارك مدفوعات أكسبت.")
 
                 if self.transaction:
                     self.transaction.mark_successful(status.HTTP_200_OK, msg)

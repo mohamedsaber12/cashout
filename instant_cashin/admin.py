@@ -85,7 +85,7 @@ class InstantTransactionAdmin(admin.ModelAdmin):
     list_display = default_fields + ['updated_at']
     readonly_fields = default_fields + ['uid', 'created_at']
     search_fields = list_display
-    ordering = ['-updated_at', '-created_at']
+    ordering = ['-created_at']
     list_filter = ['from_user', 'status', 'issuer_type', 'anon_sender']
 
     fieldsets = (

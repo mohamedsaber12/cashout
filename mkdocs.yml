@@ -4,7 +4,13 @@ docs_dir: 'mkdocs'
 site_dir: 'MKDOCS_ROOT'
 nav:
   - Home: index.md
-  - Instant Cashin Integration: instant_payout_integration.md
+  - Table Of Contents: table_of_contents.md
+  - Definitions and Acronyms: definitions_and_acronyms.md
+  - Generate and Refresh Token API: generate_and_refresh_token_api.md
+  - Instant Cashin API: instant_cashin_api.md
+  - Bulk Transaction Inquiry API: bulk_transaction_inquiry_api.md
+  - Budget Inquiry API: budget_inquiry_api.md
+  - Response Codes To Be Expected: response_codes_to_be_expected.md
 
 theme:
     name: readthedocs
@@ -14,4 +20,4 @@ theme:
         - rust
 
 extra:
-    version: 1.1
+    version: 2.0

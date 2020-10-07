@@ -30,7 +30,6 @@ from .utils import deliver_mail, export_excel, randomword
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
-WALLET_API_LOGGER = logging.getLogger("wallet_api")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
 MSG_NOT_WITHIN_THRESHOLD = _(f"Disbursement file's amounts exceeds your current balance, {MSG_TRY_OR_CONTACT}")
@@ -190,17 +189,15 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         superadmin = doc_obj.owner.root.client.creator
         payload = superadmin.vmt.accumulate_change_profile_payload(_msisdn, fees_profile)
         try:
+            CHANGE_PROFILE_LOGGER.debug(f"[request] [CHANGE PROFILE] [{doc_obj.owner}] -- {payload}")
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            CHANGE_PROFILE_LOGGER.debug(f"[CHANGE PROFILE ERROR]\nUser: {doc_obj.owner}\nPayload: {payload}\nErr: {e}")
+            CHANGE_PROFILE_LOGGER.debug(f"[message] [CHANGE PROFILE ERROR] [{doc_obj.owner}] -- {e.args}")
             doc_obj.processing_failure(MSG_REGISTRATION_PROCESS_ERROR)
             notify_maker(doc_obj)
             return False
 
-        CHANGE_PROFILE_LOGGER.debug(
-                f"[CHANGE PROFILE]\nUser: {doc_obj.owner.username}\n" +
-                f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
-        )
+        CHANGE_PROFILE_LOGGER.debug(f"[response] [CHANGE PROFILE] [{doc_obj.owner}] -- {str(response.text)}")
         error_message = None
         if response.ok:
             response_dict = response.json()
@@ -497,7 +494,7 @@ def notify_checkers(doc_id, level, **kwargs):
     deliver_mail(None, _(' Review Notification'), message, checkers)
 
     CHECKERS_NOTIFICATION_LOGGER.debug(
-            f"[REVIEWERS' NOTIFIED NOW]\n Checkers: {' and '.join([checker.username for checker in checkers])}"
+            f"[message] [REVIEWERS NOTIFIED] [{doc_obj.owner}] -- {' and '.join([checker for checker in checkers])}"
     )
 
 
@@ -513,8 +510,8 @@ def notify_disbursers(doc_id, min_level, **kwargs):
     :return:
     """
     doc_obj = Doc.objects.get(id=doc_id)
-    disbursers_to_be_notified = CheckerUser.objects.filter(hierarchy=doc_obj.owner.hierarchy).filter(
-            level__level_of_authority__gte=min_level)
+    disbursers_to_be_notified = CheckerUser.objects.\
+        filter(hierarchy=doc_obj.owner.hierarchy).filter(level__level_of_authority__gte=min_level)
 
     if not disbursers_to_be_notified.exists():
         return
@@ -525,9 +522,10 @@ def notify_disbursers(doc_id, min_level, **kwargs):
         Thanks, BR""")
     deliver_mail(None, _(' Disbursement Notification'), message, disbursers_to_be_notified)
 
-    CHECKERS_NOTIFICATION_LOGGER.debug(f"""[DISBURSERS' NOTIFIED NOW]
-    disbursers: {" and ".join([checker.username for checker in disbursers_to_be_notified])}
-    vmt(superadmin):{doc_obj.owner.root.client.creator}""")
+    CHECKERS_NOTIFICATION_LOGGER.debug(
+            f"[message] [DISBURSERS NOTIFIED] [{doc_obj.owner}] -- "
+            f"{' and '.join([checker for checker in disbursers_to_be_notified])}"
+    )
 
 
 @app.task()

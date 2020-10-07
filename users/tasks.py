@@ -19,11 +19,8 @@ def set_pin_error_mail(root_user_id):
     super_admin = root.client.creator    
     agents_msisdns = Agent.objects.filter(
         wallet_provider=root).values_list('msisdn', flat=True)
-    agents_msisdns = '-'.join(agents_msisdns)    
-    message = _("""Dear {} 
-        Please ask your wallet provider to reset pin for these mobile numbers
-        {}
-        Thanks, BR""")
+    agents_msisdns = ' - '.join(agents_msisdns)
+    message = _("Dear {}\n\nPlease ask your wallet provider to reset pin for these mobile numbers: {}\n\nThanks, BR")
     
     subject = f'[{root.brand.mail_subject}]'
 

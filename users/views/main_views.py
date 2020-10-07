@@ -15,8 +15,6 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
 
-from data.utils import get_client_ip
-
 from ..forms import OTPTokenForm, ProfileEditForm
 from ..mixins import ProfileOwnerOrMemberRequiredMixin
 from ..models import User
@@ -132,7 +130,7 @@ def login_view(request):
         if user and not user.is_instantapichecker:
             if user.is_active:
                 login(request, user)
-                LOGIN_LOGGER.debug(f"User: {request.user.username} Logged In from IP Address {get_client_ip(request)}")
+                LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
                 if user.is_checker:
                     user.is_totp_verified = False
                     user.save()
@@ -143,17 +141,21 @@ def login_view(request):
 
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
-                FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
-                Failed Attempt from non active user with username: {username} and IP Addr {get_client_ip(request)}""")
+                FAILED_LOGIN_LOGGER.debug(
+                        f"[message] [FAILED LOGIN] [{username}] -- "
+                        f"Failed Attempt from non active user with username: {username}"
+                )
                 return HttpResponse("Your account has been disabled")
         elif user is not None and user.is_instantapichecker:
-            FAILED_LOGIN_LOGGER.debug(f"""[API USER LOGIN ATTEMPT]
-            Failed Attempt from instant API user with username: {username} and IP Addr {get_client_ip(request)}""")
+            FAILED_LOGIN_LOGGER.debug(
+                    f"[message] [API USER LOGIN ATTEMPT] [{username}] -- "
+                    f"Failed Attempt from instant API user with username: {username}")
             return render(request, 'data/login.html', {'error_invalid': "You're not permitted to login."})
         else:
             # Bad login details were provided. So we can't log the user in.
-            FAILED_LOGIN_LOGGER.debug(f"""[FAILED LOGIN]
-            Failed Login Attempt from user with username: {username} and IP Address {get_client_ip(request)}""")
+            FAILED_LOGIN_LOGGER.debug(
+                    f"[message] [FAILED LOGIN] [anonymous] -- Failed Login Attempt from user with username: {username}"
+            )
             return render(request, 'data/login.html', {'error_invalid': 'Invalid login details supplied.'})
     else:
         return render(request, 'data/login.html')
@@ -168,7 +170,7 @@ def ourlogout(request):
     if isinstance(request.user, AnonymousUser):
         return HttpResponseRedirect(reverse('users:user_login_view'))
 
-    LOGOUT_LOGGER.debug(f"User: {request.user.username} Logged Out from IP Address {get_client_ip(request)}")
+    LOGOUT_LOGGER.debug(f"[message] [LOGOUT] [{request.user}] -- ")
     request.user.is_totp_verified = False
     request.user.save()
     logout(request)

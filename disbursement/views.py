@@ -21,7 +21,7 @@ from rest_framework_expiring_authtoken.models import ExpiringToken
 from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_data, generate_success_disbursed_data)
-from data.utils import get_client_ip, redirect_params
+from data.utils import redirect_params
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
 from users.mixins import (
@@ -31,7 +31,6 @@ from users.mixins import (
 )
 from users.models import EntitySetup
 from utilities import messages
-from utilities.models import Budget
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
 from .models import Agent
@@ -63,11 +62,12 @@ def disburse(request, doc_id):
         can_disburse = doc_obj.can_user_disburse(request.user)[0]
         # request.user.is_verified = False  #TODO
         if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and not doc_obj.is_disbursed:
+            DATA_LOGGER.debug(f"[message] [BULK DISBURSEMENT TO INTERNAL API] [{request.user}] -- doc_id: {doc_id}")
             response = requests.post(
-                "https://" + request.get_host() +
-                str(reverse_lazy("disbursement_api:disburse")),
-                json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username})
-            DATA_LOGGER.debug(f"[DISBURSE BULK - VIEW RESPONSE]\nUser: {request.user}\nView response: {response.text}")
+                "https://" + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
+                json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username}
+            )
+            DATA_LOGGER.debug(f"[response] [BULK DISBURSEMENT VIEW RESPONSE] [{request.user}] -- {response.text}")
             if response.ok:
                 return redirect_params('data:doc_viewer', kw={'doc_id': doc_id}, params={'disburse': 1,
                                                                                          'utm_redirect': 'success'})
@@ -157,9 +157,9 @@ def failed_disbursed_for_download(request, doc_id):
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            FAILED_DISBURSEMENT_DOWNLOAD.debug(f"""[DOWNLOAD FAILED DISBURSEMENT]
-            User: {request.user.username}
-            Downloaded failed disbursement file with doc_id: {doc_obj.id}""")
+            FAILED_DISBURSEMENT_DOWNLOAD.debug(
+                    f"[message] [DOWNLOAD FAILED DISBURSEMENT DOC] [{request.user}] -- doc_id: {doc_obj.id}"
+            )
             return response
     else:
         raise Http404
@@ -185,9 +185,9 @@ def download_failed_validation_file(request, doc_id):
                 content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
-            FAILED_VALIDATION_DOWNLOAD.debug(f"""[DOWNLOAD FAILED VALIDATIONS DISBURSEMENT]
-            User: {request.user.username}
-            Downloaded failed disbursement's file validations with doc_id: {doc_obj.id}""")
+            FAILED_VALIDATION_DOWNLOAD.debug(
+                    f"[message] [DOWNLOAD FAILED VALIDATIONS DOC] [{request.user}] -- doc_id: {doc_obj.id}"
+            )
             return response
     else:
         raise Http404
@@ -276,8 +276,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             entity_setup.agents_setup = True
             entity_setup.save()
             AGENT_CREATE_LOGGER.debug(
-                    f"[AGENTS CREATED]\nUser: {root.username} -- from IP Address {get_client_ip(self.request)}\n" +
-                    f"Agents: {' - '.join(agents_msisdn)}"
+                    f"[message] [AGENTS CREATED] [{self.request.user}] -- agents: {' , '.join(agents_msisdn)}"
             )
             return HttpResponseRedirect(self.get_success_url(root))
         else:
@@ -291,15 +290,14 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         superadmin = request.user
         payload = superadmin.vmt.accumulate_user_inquiry_payload(msisdns)
         try:
+            WALLET_API_LOGGER.debug(f"[request] [USER INQUIRY] [{request.user}] -- {payload}")
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"[USER INQUIRY ERROR]\nUser: {request.user}\nPayload: {payload}\nError: {e}")
+            WALLET_API_LOGGER.debug(f"[message] [USER INQUIRY ERROR] [{request.user}] -- Error: {e.args}")
             return None, MSG_AGENT_CREATION_ERROR
+        else:
+            WALLET_API_LOGGER.debug(f"[response] [USER INQUIRY] [{request.user}] -- {str(response.text)}")
 
-        WALLET_API_LOGGER.debug(
-                f"[USER INQUIRY]\nUser: {request.user}\n" +
-                f"Payload: {payload}\nResponse: {str(response.status_code)} -- {str(response.text)}"
-        )
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)
@@ -418,55 +416,31 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
         return render(request, template_name=self.template_name, context=context)
 
     def get_wallet_balance(self, request, pin, entity_username=None):
-        custom_budget_amount = custom_budget_msg = ""
-        has_custom_budget = request.user.has_custom_budget
-        is_instant_family = request.user.is_instant_member
-
         if request.user.is_root:
             superadmin = request.user.root.client.creator
             super_agent = Agent.objects.get(wallet_provider=request.user, super=True)
-
-            if has_custom_budget or is_instant_family:
-                if is_instant_family:
-                    disburser = [user for user in request.user.children() if user.user_type==6][0]
-                else:
-                    disburser = request.user
-                custom_budget_amount = f" -- Total remaining custom budget: " \
-                                       f"{Budget.objects.get(disburser=disburser).current_balance}"
-                custom_budget_msg = " - HAS CUSTOM BUDGET"
         else:
             superadmin = request.user
             super_agent = Agent.objects.get(wallet_provider__username=entity_username, super=True)
-            if super_agent.wallet_provider.has_custom_budget:
-                custom_budget_amount = f" -- Total remaining custom budget: " \
-                                       f"{Budget.objects.get(disburser__username=entity_username).current_balance}"
-                custom_budget_msg = " - HAS CUSTOM BUDGET"
 
         payload, refined_payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
 
         try:
+            WALLET_API_LOGGER.debug(f"[request] [BALANCE INQUIRY] [{request.user}] -- {refined_payload}")
             response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(
-                    f"[BALANCE INQUIRY ERROR{custom_budget_msg}]\nUser: {request.user}" +
-                    f"\nPayload: {refined_payload}\nError: {e}"
-            )
+            WALLET_API_LOGGER.debug(f"[message] [BALANCE INQUIRY ERROR] [{request.user}] -- Error: {e.args}")
             return False, MSG_BALANCE_INQUIRY_ERROR
+        else:
+            WALLET_API_LOGGER.debug(f"[response] [BALANCE INQUIRY] [{request.user}] -- {response.text}")
 
         if response.ok:
             resp_json = response.json()
-            logging_head_and_user = f"[BALANCE INQUIRY{custom_budget_msg}]\nUser: {request.user}"
-            logging_payload_resp = f"Payload: {refined_payload}\nResponse: {response.status_code} -- {response.text}"
 
             if resp_json["TXNSTATUS"] == '200':
-                WALLET_API_LOGGER.debug(logging_head_and_user + f"{custom_budget_amount}\n" + logging_payload_resp)
-
-                if request.user.is_root and (has_custom_budget or is_instant_family):
-                    return True, custom_budget_amount[35:]
                 if request.user.is_superadmin or request.user.root:
                     return True, resp_json['BALANCE']
 
-            WALLET_API_LOGGER.debug(logging_head_and_user + '\n' + logging_payload_resp)
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR

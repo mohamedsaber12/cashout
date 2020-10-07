@@ -34,9 +34,9 @@ class BillInquiryAPIView(GenericAPIView):
             DATA_LOGGER = logging.getLogger("bill_inquiry_res")
         else:
             DATA_LOGGER = logging.getLogger("bill_inquiry_req")
-            DATA_LOGGER.debug(f"[UNHANDLED_EXCEPTION]\n\tData to SUPER: {_to}, from ADMIN: {_from}")
+            DATA_LOGGER.debug(f"[message] [UNHANDLED_EXCEPTION] [{_from}] -- data to super: {_to}")
             return
-        DATA_LOGGER.debug(f"[{_flag}]\n\tData to SUPER: {_to}, from ADMIN: {_from}\n\t{str(data)}")
+        DATA_LOGGER.debug(f"[message] [{_flag}] [{_from}] -- data to super: {_to}, {str(data)}")
 
     def post(self, request, *args, **kwargs):
         self.log("BILL_INQUIRY_REQUEST", "req", request.user.username, request.data.get("aggregator", "N/A"), request.data)

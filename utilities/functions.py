@@ -10,7 +10,6 @@ from django.template.loader import get_template
 from environ import ImproperlyConfigured
 from xhtml2pdf import pisa
 
-from disbursement.utils import logging_message
 from payouts.utils import get_dot_env
 
 
@@ -53,10 +52,8 @@ def custom_budget_logger(disburser, total_disbursed_amount, user="Anonymous", an
     logger function to be used at any custom budget logging
     """
     if not head:
-        head = "[CUSTOM BUDGET - MANUAL PATCH]"
+        head = "[message] [CUSTOM BUDGET UPDATE]"
 
-    return logging_message(
-            logger=BUDGET_LOGGER, head=head,
-            user=f"{user} -- Disburser Owner/Root: {disburser}",
-            message=f"{total_disbursed_amount}{another_message}"
+    return BUDGET_LOGGER.debug(
+            f"{head} [{user}] -- budget owner: {disburser}, {total_disbursed_amount}{another_message}"
     )

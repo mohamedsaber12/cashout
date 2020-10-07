@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 
 from django.utils.translation import gettext_lazy as _
 
-from data.utils import get_client_ip
-
 
 def logging_message(logger, head, request, message):
     """
@@ -15,4 +13,4 @@ def logging_message(logger, head, request, message):
     :param message: the message that will be logged
     :return: The message will be logged into the specified logger
     """
-    return logger.debug(_(f"{head}\nUser: {request.user} -- Ip Address: {get_client_ip(request)}\n{message}"))
+    return logger.debug(_(f"{head} [{request.user}] -- {message}"))

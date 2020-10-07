@@ -36,17 +36,17 @@ def custom_exception_handler(exc, context):
             response.data["status_description"] = response.data.pop("detail")
 
         common_logging_msg = f"{context['view'].request.method}: {context['view'].request.path}" \
-                             f" -- exception reason: {exception_code}\n"
+                             f" , exception reason: {exception_code}"
 
         try:
             request_data = context['view'].request.data
             logging_message(
-                    INSTANT_CASHIN_REQUEST_LOGGER, "[API EXCEPTION]", context['view'].request,
+                    INSTANT_CASHIN_REQUEST_LOGGER, "[message] [API EXCEPTION]", context['view'].request,
                     f"{common_logging_msg}Data dictionary: {request_data}"
             )
         except Exception as error:
             INSTANT_CASHIN_REQUEST_LOGGER.exception(
-                    f"[Request Data - API EXCEPTION]\n{common_logging_msg}Exception: {error}"
+                    f"[message] [Request Data - API EXCEPTION] [anonymous] -- {common_logging_msg}, Exception: {error}"
             )
 
     return response

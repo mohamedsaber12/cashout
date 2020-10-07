@@ -122,15 +122,14 @@ class PinForm(forms.Form):
         superadmin = self.root.client.creator
         payload = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
         try:
+            WALLET_API_LOGGER.debug(f"[request] [SET PIN] [{self.root}] -- {payload['USERS']}")
             response = requests.post(self.env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"[SET PIN ERROR]\nUser: {self.root}\nPayload: {payload}\nError: {e}")
+            WALLET_API_LOGGER.debug(f"[message] [SET PIN ERROR] [{self.root}] -- {e.args}")
             return None, MSG_PIN_SETTING_ERROR
+        else:
+            WALLET_API_LOGGER.debug(f"[response] [SET PIN] [{self.root}] -- {str(response.text)}")
 
-        WALLET_API_LOGGER.debug(
-                f"[SET PIN]\nUser: {self.root}\n" +
-                f"Payload: {payload['USERS']}\nResponse: {str(response.status_code)} -- {str(response.text)}"""
-        )
         if response.ok:
             response_dict = response.json()
             transactions = response_dict.get('TRANSACTIONS', None)

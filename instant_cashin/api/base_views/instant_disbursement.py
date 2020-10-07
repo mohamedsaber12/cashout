@@ -204,7 +204,7 @@ class InstantDisbursementAPIView(views.APIView):
                 raise ValidationError(BUDGET_EXCEEDED_MSG)
         except ValidationError as e:
             failure_message = BUDGET_EXCEEDED_MSG if e.args[0] == BUDGET_EXCEEDED_MSG else serializer.errors
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[VALIDATION ERROR]", request, failure_message)
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [VALIDATION ERROR]", request, failure_message)
             return Response({
                 "disbursement_status": _("failed"), "status_description": failure_message,
                 "status_code": str(status.HTTP_400_BAD_REQUEST)
@@ -236,7 +236,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             except Exception as e:
                 if transaction:transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, INTERNAL_ERROR_MSG)
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[INTERNAL SYSTEM ERROR]", request, e.args)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [INTERNAL SYSTEM ERROR]", request, e.args)
                 return default_response_structure(
                         transaction_id=transaction.uid if transaction else None,
                         status_description={"Internal Error": INTERNAL_ERROR_MSG},
@@ -246,8 +246,8 @@ class InstantDisbursementAPIView(views.APIView):
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
             request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
             logging_message(
-                    INSTANT_CASHIN_REQUEST_LOGGER, "[REQUEST DATA DICT TO CENTRAL]", request,
-                    f"Data dictionary: {request_data_dictionary_without_pins}"
+                    INSTANT_CASHIN_REQUEST_LOGGER, "[request] [DATA DICT TO CENTRAL]", request,
+                    f"{request_data_dictionary_without_pins}"
             )
 
             try:
@@ -262,24 +262,31 @@ class InstantDisbursementAPIView(views.APIView):
                 json_inquiry_response = inquiry_response.json()
 
             except ValidationError as e:
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[DISBURSEMENT VALIDATION ERROR]", request, e.args)
+                logging_message(
+                        INSTANT_CASHIN_FAILURE_LOGGER, "[message] [DISBURSEMENT VALIDATION ERROR]", request, e.args
+                )
                 transaction.mark_failed("6061", INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (TimeoutError, ImproperlyConfigured, Exception) as e:
                 log_msg = e.args[0]
                 if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[ERROR FROM CENTRAL]", request, log_msg)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, log_msg)
                 transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
-                logging_message(INSTANT_CASHIN_SUCCESS_LOGGER, "[SUCCESSFUL TRX]", request, f"{json_inquiry_response}")
+                logging_message(
+                        INSTANT_CASHIN_SUCCESS_LOGGER, "[response] [SUCCESSFUL TRX]",
+                        request, f"{json_inquiry_response}"
+                )
                 transaction.mark_successful(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
                 request.user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[FAILED TRX]", request, f"{json_inquiry_response}")
+            logging_message(
+                    INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_inquiry_response}"
+            )
             transaction.mark_failed(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 

@@ -32,13 +32,13 @@ class BudgetInquiryAPIView(views.APIView):
         if not disburser.has_custom_budget:
             custom_budget_logger(
                     disburser, f"Internal Error: This user has no custom budget configurations",
-                    disburser, head="[CUSTOM BUDGET - API INQUIRY]"
+                    disburser, head="[message] [CUSTOM BUDGET - API INQUIRY]"
             )
             return Response({'Internal Error': INTERNAL_ERROR_MSG}, status=status.HTTP_404_NOT_FOUND)
 
         budget = disburser.budget.current_balance
         custom_budget_logger(
-                disburser, f"Current budget: {budget} LE", disburser, head="[CUSTOM BUDGET - API INQUIRY]"
+                disburser, f"Current budget: {budget} LE", disburser, head="[message] [CUSTOM BUDGET - API INQUIRY]"
         )
 
         return Response({'current_budget': f"Your current budget is {budget} LE"}, status=status.HTTP_200_OK)

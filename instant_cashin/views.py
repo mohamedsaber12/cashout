@@ -93,13 +93,13 @@ class DownloadPendingOrangeInstantTransactionsView(RootWithInstantPermissionsPas
             raw_date = request.GET.get('date')
             generate_pending_orange_instant_transactions.delay(request.user.username, raw_date)
             logging_message(
-                    GENERATE_SHEET_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - GENERATED SUCCESSFULLY]", request,
-                    f"Sheet generated with instant transactions occurred at: {raw_date}"
+                    GENERATE_SHEET_LOGGER, "[message] [PENDING ORANGE INSTANT TRANSACTIONS - GENERATED SUCCESSFULLY]",
+                    request, f"Sheet generated with instant transactions occurred at: {raw_date}"
             )
             return HttpResponseRedirect(reverse('instant_cashin:pending_list'))
 
         logging_message(
-                GENERATE_SHEET_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - GENERATE ERROR]", request,
+                GENERATE_SHEET_LOGGER, "[message] [PENDING ORANGE INSTANT TRANSACTIONS - GENERATE ERROR]", request,
                 f"Raw request: {vars(request)}"
         )
         raise Http404
@@ -125,13 +125,13 @@ class ServeDownloadingInstantTransactionsView(RootWithInstantPermissionsPassesTe
                     response = HttpResponse(fh.read(), content_type=SPREADSHEET_CONTENT_TYPE_CONSTANT)
                     response['Content-Disposition'] = f"attachment; filename={filename}"
                     logging_message(
-                            DOWNLOAD_SERVE_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - SHEET DOWNLOAD]", request,
-                            f"File name: {filename}"
+                            DOWNLOAD_SERVE_LOGGER, "[message] [PENDING ORANGE INSTANT TRANSACTIONS - SHEET DOWNLOAD]",
+                            request, f"File name: {filename}"
                     )
                     return response
 
         logging_message(
-                DOWNLOAD_SERVE_LOGGER, "[PENDING ORANGE INSTANT TRANSACTIONS - ERROR SHEET DOWNLOAD]", request,
-                f"Raw Request: {vars(request)}"
+                DOWNLOAD_SERVE_LOGGER, "[message] [PENDING ORANGE INSTANT TRANSACTIONS - ERROR SHEET DOWNLOAD]",
+                request, f"Raw Request: {vars(request)}"
         )
         raise Http404

@@ -42,13 +42,8 @@ class AmanChannel:
 
     def log_message(self, request, head, message):
         """Custom logging for aman channel"""
-
-        if type(request) == dict:
-            user_portion = f"User: {request['user']}, from Ip Address: {request['ip_address']}\n"
-        else:
-            user_portion = f"User: {request.user.username}, from Ip Address: {get_client_ip(request)}\n"
-
-        self.aman_logger.debug(_(f"{head}\n" + user_portion + f"{message}"))
+        user_portion = f"[{request['user']}]" if type(request) == dict else f"[{request.user}]"
+        self.aman_logger.debug(_(f"{head} {user_portion} -- {message}"))
 
     def post(self, url, payload, sub_logging_head, headers=dict(), **kwargs):
         """Handles POST requests using requests package"""
@@ -56,14 +51,13 @@ class AmanChannel:
             headers.update({'Content-Type': 'application/json'})
 
         self.log_message(
-               request=self.request, head=f"[POST REQUEST - {sub_logging_head}]",
-               message=f"URL: {url}\nHeaders: {headers}\nKwargs: {kwargs}\nPayload: {payload}"
+               request=self.request, head=f"[request] [{sub_logging_head}]", message=f"Payload: {payload}, URL: {url}"
         )
 
         try:
             response = requests.post(url, data=json.dumps(payload), headers=headers, **kwargs)
             response.raise_for_status()
-            response_log_message = f"Response: {response.json()}"
+            response_log_message = f"{response.json()}"
         except HTTPError as http_err:
             response_log_message = f"HTTP error occurred: {http_err}"
         except ConnectionError as connect_err:
@@ -73,7 +67,7 @@ class AmanChannel:
         else:
             return response
         finally:
-            self.log_message(self.request, f"[POST RESPONSE - {sub_logging_head}]", response_log_message)
+            self.log_message(self.request, f"[response] [{sub_logging_head}]", response_log_message)
 
         raise ValidationError(_(response_log_message))
 

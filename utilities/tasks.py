@@ -68,8 +68,8 @@ def generate_onboarded_entities_report(recipients_list, superadmin_username, **k
     context =  retrieve_onboarded_entities_and_disbursement_records_over_week(superadmin_username)
     filepath = generate_pdf_report(context)
     GENERATE_REPORT = logging.getLogger('generate_sheet')
-    GENERATE_REPORT.debug(f"[WEEKLY REPORT GENERATED SUCCESSFULLY]\n"
-                          f"Superadmin: {superadmin_username} -- recipients: {recipients_list}\nReport: {filepath}")
+    GENERATE_REPORT.debug(f"[message] [WEEKLY REPORT GENERATED SUCCESSFULLY] [anonymous] -- "
+                          f"Superadmin: {superadmin_username}, recipients: {recipients_list}, Report: {filepath}")
 
     sender = settings.SERVER_EMAIL
     subject = _('Payouts Weekly Report')

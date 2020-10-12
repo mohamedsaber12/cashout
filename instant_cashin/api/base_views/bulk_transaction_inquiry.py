@@ -5,18 +5,20 @@ import logging
 
 from django.db.models import Q
 from django.utils.translation import ugettext as _
-
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
 from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 
+from disbursement.models import BankTransaction
 from utilities.logging import logging_message
 
 from ...models import InstantTransaction
 from ..mixins import APIViewPaginatorMixin, IsInstantAPICheckerUser
-from ..serializers import BulkInstantTransactionReadSerializer, InstantTransactionWriteModelSerializer
+from ..serializers import (BankTransactionResponseModelSerializer,
+                           BulkInstantTransactionReadSerializer,
+                           InstantTransactionResponseModelSerializer)
 
 
 BULK_TRX_INQUIRY_LOGGER = logging.getLogger("instant_bulk_trx_inquiry")
@@ -32,22 +34,28 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
     permission_classes = [permissions.IsAuthenticated, TokenHasReadWriteScope, IsInstantAPICheckerUser]
     throttle_classes = [UserRateThrottle]
     read_serializer = BulkInstantTransactionReadSerializer
-    write_serializer = InstantTransactionWriteModelSerializer
+    instant_trx_write_serializer = InstantTransactionResponseModelSerializer
+    bank_trx_write_serializer = BankTransactionResponseModelSerializer
 
-    def list(self, request, *args, **kwargs):
+    def list(self, request, serializer, *args, **kwargs):
         """
         Serializes response of instant transaction objects list
         """
-        queryset = InstantTransaction.objects.filter(from_user=request.user).filter(
-                Q(uid__in=self.kwargs["trx_ids_list"])
-        )
+        if serializer.validated_data["bank_transactions"]:
+            write_serializer = self.bank_trx_write_serializer
+            queryset = BankTransaction.objects.filter(user_created =request.user).\
+                filter(Q(transaction_id__in=self.kwargs["trx_ids_list"]))
+        else:
+            write_serializer = self.instant_trx_write_serializer
+            queryset = InstantTransaction.objects.filter(from_user=request.user).\
+                filter(Q(uid__in=self.kwargs["trx_ids_list"]))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
-            serializer = self.write_serializer(page, many=True)
+            serializer = write_serializer(page, many=True)
             return self.get_paginated_response(serializer.data)
 
-        serializer = self.write_serializer(queryset, many=True)
+        serializer = write_serializer(queryset, many=True)
         return Response(serializer.data)
 
     def get(self, request, *args, **kwargs):
@@ -58,11 +66,11 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
 
         try:
             serializer.is_valid(raise_exception=True)
-            self.kwargs["trx_ids_list"] = [record for record in serializer.validated_data['transactions_ids_list']]
+            self.kwargs["trx_ids_list"] = [record for record in serializer.validated_data["transactions_ids_list"]]
             logging_message(
-                    BULK_TRX_INQUIRY_LOGGER, "[message] [PASSED UUIDS LIST]", request, f"{self.kwargs['trx_ids_list']}"
+                    BULK_TRX_INQUIRY_LOGGER, "[request] [PASSED UUIDS LIST]", request, f"{serializer.validated_data}"
             )
-            return self.list(request, *args, **kwargs)
+            return self.list(request, serializer, *args, **kwargs)
 
         except ValidationError:
             logging_message(

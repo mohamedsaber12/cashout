@@ -16,15 +16,6 @@ from .validators import (
 )
 
 
-class InstantUserInquirySerializer(serializers.Serializer):
-    """
-    Serializes instant user/wallet inquiry requests
-    """
-    msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
-    issuer = serializers.CharField(max_length=12, required=True, validators=[issuer_validator])
-    unique_identifier = serializers.CharField(max_length=255, required=True)    # Add validations/rate limit
-
-
 class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
     Serializes instant disbursement requests
@@ -71,7 +62,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         bank_transaction_type = attrs.get('bank_transaction_type', '')
         full_name = attrs.get('full_name', '')
 
-        if issuer in ['vodafone', 'etisalat', 'orange']:
+        if issuer in ['vodafone', 'etisalat']:
             if not msisdn:
                 raise serializers.ValidationError(
                         _("You must pass valid msisdn")
@@ -87,7 +78,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                         _("You must pass valid values for fields [bank_code, bank_card_number, bank_transaction_type, "
                           "full_name]")
                 )
-        elif issuer == 'bank_wallet':
+        elif issuer in ['bank_wallet', 'orange']:
             if not msisdn or not full_name:
                 raise serializers.ValidationError(
                         _("You must pass valid values for fields [msisdn, full_name]")
@@ -96,82 +87,25 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         return attrs
 
 
-class BulkInstantTransactionReadSerializer(serializers.Serializer):
-    """
-    Serializes the bulk transaction inquiry request, list of uuid4 inputs
-    """
-
-    transactions_ids_list = UUIDListField()
-
-
-class InstantTransactionWriteModelSerializer(serializers.ModelSerializer):
-    """
-    Serializes the bulk transaction inquiry response, list of instant transaction objects
-    """
-
-    transaction_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
-    channel = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
-    transaction_id = serializers.SerializerMethodField()
-    failure_reason = serializers.SerializerMethodField()
-    status_description = serializers.SerializerMethodField()
-    msisdn = serializers.SerializerMethodField()
-    created_at = serializers.SerializerMethodField()
-    updated_at = serializers.SerializerMethodField()
-    aman_cashing_details = serializers.SerializerMethodField()
-
-    def get_aman_cashing_details(self, transaction):
-        """Retrieves aman cashing details of aman channel transaction"""
-        aman_cashing_details = transaction.aman_transaction
-
-        if aman_cashing_details:
-            return {
-                'bill_reference': aman_cashing_details.bill_reference,
-                'is_paid': aman_cashing_details.is_paid
-            }
-
-    def get_transaction_id(self, transaction):
-        """Retrieves transaction id"""
-        return transaction.uid
-
-    def get_failure_reason(self, transaction):
-        """Retrieves transaction failure reason"""
-        return transaction.transaction_status_description
-
-    def get_status_description(self, transaction):
-        """Retrieves transaction failure reason"""
-        return transaction.transaction_status_description
-
-    def get_msisdn(self, transaction):
-        """Retrieves transaction consumer"""
-        return transaction.anon_recipient
-
-    def get_created_at(self, transaction):
-        """Retrieves transaction created_at time formatted"""
-        return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
-
-    def get_updated_at(self, transaction):
-        """Retrieves transaction updated_at time formatted"""
-        return transaction.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
-
-    class Meta:
-        model = InstantTransaction
-        fields = [
-            'transaction_id', 'transaction_status', 'channel', 'msisdn', 'amount', 'status_description',
-            'failure_reason', 'created_at', 'updated_at', 'aman_cashing_details'
-        ]
-
-
 class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     """
     Serializes the response of instant bank transaction objects
     """
 
+    issuer = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
-    cashing_details = serializers.SerializerMethodField()
+    bank_card_number = serializers.SerializerMethodField()
+    bank_code = serializers.SerializerMethodField()
+    bank_transaction_type = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
+
+
+    def get_issuer(self, transaction):
+        """Retrieves transaction issuer"""
+        return "bank_card"
 
     def get_status_code(self, transaction):
         """Retrieves transaction status code"""
@@ -181,8 +115,16 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         """Retrieves transaction status description"""
         return transaction.transaction_status_description
 
-    def get_cashing_details(self, transaction):
+    def get_bank_card_number(self, transaction):
+        """Retrieves bank card number"""
+        return transaction.creditor_account_number
+
+    def get_bank_code(self, transaction):
         """Retrieves transaction cashing details"""
+        return transaction.creditor_bank
+
+    def get_bank_transaction_type(self, transaction):
+        """Retrieves transaction type"""
         if transaction.purpose == "SALA":
             bank_transaction_type = "salary"
         elif transaction.purpose == "PENS":
@@ -194,11 +136,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         else:
             bank_transaction_type = "cash_transfer"
 
-        return {
-            "bank_code": transaction.creditor_bank,
-            "bank_card_number": transaction.creditor_account_number,
-            "bank_transaction_type": bank_transaction_type
-        }
+        return bank_transaction_type
 
     def get_created_at(self, transaction):
         """Retrieves transaction created_at time formatted"""
@@ -211,8 +149,8 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankTransaction
         fields = [
-            'transaction_id', 'amount', 'disbursement_status', 'status_code', 'status_description', 'cashing_details',
-            'created_at', 'updated_at'
+            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'bank_code', 'bank_transaction_type',
+            'disbursement_status', 'status_code', 'status_description', 'created_at', 'updated_at'
         ]
 
 
@@ -222,8 +160,8 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     """
 
     transaction_id = serializers.SerializerMethodField()
-    msisdn = serializers.SerializerMethodField()
     issuer = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
+    msisdn = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
@@ -268,6 +206,24 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstantTransaction
         fields = [
-            'transaction_id', 'msisdn', 'issuer', 'disbursement_status', 'status_code', 'status_description',
+            'transaction_id', 'issuer', 'msisdn', 'amount', 'disbursement_status', 'status_code', 'status_description',
             'aman_cashing_details', 'created_at', 'updated_at'
         ]
+
+
+class BulkInstantTransactionReadSerializer(serializers.Serializer):
+    """
+    Serializes the bulk transaction inquiry request, list of uuid4 inputs
+    """
+
+    transactions_ids_list = UUIDListField()
+    bank_transactions = serializers.BooleanField(default=False)
+
+
+class InstantUserInquirySerializer(serializers.Serializer):
+    """
+    Serializes instant user/wallet inquiry requests
+    """
+    msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
+    issuer = serializers.CharField(max_length=12, required=True, validators=[issuer_validator])
+    unique_identifier = serializers.CharField(max_length=255, required=True)    # Add validations/rate limit

@@ -23,18 +23,18 @@
 ### Request
 1. **Request Parameters**
 
-    |  Field                  |   M/O  |    Type    |    Notes                                     |
-    |-------	              |------  |--------    |---------                                     |
-    | issuer                  |   M    |   String   |  the channel to disburse the e-money through |
-    | amount                  |   M    |   Float    |                                              |
-    | msisdn                  |   C    |   String   |  vodafone/etisalat/orange/aman/bank wallets  |
-    | bank_card_number        |   C    |   String   |  bank cards only                             |
-    | bank_transaction_type   |   C    |   String   |  bank cards only                             |
-    | bank_code               |   C    |   String   |  bank cards only                             |
-    | full_name               |   C    |   String   |  bank cards/bank wallets/Orange only         |
-    | first_name              |   C    |   String   |  aman only                                   |
-    | last_name               |   C    |   String   |  aman only                                   |
-    | email                   |   C    |   String   |  aman only                                   |
+    |  Field                  |   M/O/C  |    Type    |    Notes                                     |
+    |-------	              |------    |--------    |---------                                     |
+    | issuer                  |   M      |   String   |  the channel to disburse the e-money through |
+    | amount                  |   M      |   Float    |                                              |
+    | msisdn                  |   C      |   String   |  vodafone/etisalat/orange/aman/bank wallets  |
+    | bank_card_number        |   C      |   String   |  bank cards only                             |
+    | bank_transaction_type   |   C      |   String   |  bank cards only                             |
+    | bank_code               |   C      |   String   |  bank cards only                             |
+    | full_name               |   C      |   String   |  bank cards/bank wallets/Orange only         |
+    | first_name              |   C      |   String   |  aman only                                   |
+    | last_name               |   C      |   String   |  aman only                                   |
+    | email                   |   C      |   String   |  aman only                                   |
 
     * **Usage:** 
         * **{issuer}** options list: [vodafone, etisalat, orange, aman, bank_wallet, bank_card] -case insensitive-.
@@ -124,6 +124,7 @@
                 "transaction_id": "92134d2b-d1a5-4dde-859c-a1175e94582c",
                 "msisdn": "01092737975",
                 "issuer": "vodafone",
+                "amount": "90.56",
                 "disbursement_status": "success",
                 "status_code": "200",
                 "status_description": "تم إيداع 90.56 جنيه إلى رقم 01010101010 بنجاح",
@@ -149,6 +150,7 @@
                 "transaction_id": "4d8d2215-6b15-4cf0-8a5a-e62e3eb5fdb3",
                 "msisdn": "01112131415",
                 "issuer": "etisalat",
+                "amount": 100.0,
                 "disbursement_status": "failed",
                 "status_code": "90040",
                 "status_description": "عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778",
@@ -177,6 +179,7 @@
                 "transaction_id": "df1ee23f-c146-4c99-88ef-d6355c727d4b",
                 "msisdn": "01092737975",
                 "issuer": "aman",
+                "amount": 100.0,
                 "disbursement_status": "successful",
                 "status_code": "200",
                 "status_description": "“برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص 3988885. لصرف مبلغ 100.00 جنيه. شكراً لاختيارك مدفوعات أكسبت.“",
@@ -203,9 +206,10 @@
     * > response
 
             {
-                "transaction_id": "59343847-c78c-4a04-b141-e2018f92b714",
-                "msisdn": "01092737975",
+                "transaction_id": "7ce037de-a8d8-411c-be19-65ceb4e0dbd3",
                 "issuer": "orange",
+                "msisdn": "01092737975",
+                "amount": 100.0,
                 "disbursement_status": "pending",
                 "status_code": "8000",
                 "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
@@ -230,8 +234,9 @@
 
             {
                 "transaction_id": "d9707a55-16af-4d35-9c69-2bce5ecc6cfb",
-                "msisdn": "01092737975",
                 "issuer": "bank_wallet",
+                "msisdn": "01092737975",
+                "amount": 100.0,
                 "disbursement_status": "pending",
                 "status_code": "8000",
                 "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
@@ -258,15 +263,14 @@
 
             {
                 "transaction_id": "01ea2cd1-f01f-4857-b5ae-1e6359d1c779",
+                "issuer": "bank_card",
                 "amount": "100.00",
+                "bank_card_number": "1111 2222 3333 4444",
+                "bank_code": "MISR",
+                "bank_transaction_type": "salary",
                 "disbursement_status": "pending",
                 "status_code": "8000",
                 "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
-                "cashing_details": {
-                    "bank_code": "CIB",
-                    "bank_card_number": "1111-2222-3333-4444",
-                    "bank_transaction_type": "cash_transfer"
-                },
                 "created_at": "2020-10-12 07:25:51.631701",
                 "updated_at": "2020-10-12 07:25:52.263173"
             }

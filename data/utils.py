@@ -1,5 +1,5 @@
 import os
-import random, string, datetime, urllib, logging
+import random, string, datetime, logging
 import xlsxwriter
 from urllib.parse import urlencode
 
@@ -129,7 +129,9 @@ def update_user_last_seen(user, end_date=None, clients_data=None):
         user.save()
     except ValidationError:
         # Can't save user
-        DOWNLOAD_LOGGER.debug('User: {0} cannot be saved with new transaction seen dates.')
+        DOWNLOAD_LOGGER.debug(
+                f"[message] [DOWNLOAD VALIDATION ERROR] [{user}] -- cannot be saved with new transaction seen dates"
+        )
     return
 
 

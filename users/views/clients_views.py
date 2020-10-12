@@ -130,7 +130,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         self.object = form.save()
         self.handle_entity_extra_setups()
         msg = f"New Root/Admin created with username: {self.object.username}"
-        logging_message(ROOT_CREATE_LOGGER, "[NEW ADMIN CREATED]", self.request, msg)
+        logging_message(ROOT_CREATE_LOGGER, "[message] [NEW ADMIN CREATED]", self.request, msg)
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -145,12 +145,11 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
 
         try:
             User.objects.get(username=username).delete()
-            DELETE_USER_VIEW_LOGGER.debug(f"[USER DELETED]\n" +
-                                          f"User: {request.user.username}, Deleted user with username: {username}")
+            DELETE_USER_VIEW_LOGGER.debug(f"[message] [USER DELETED] [{request.user}] -- Deleted user: {username}")
         except User.DoesNotExist:
             DELETE_USER_VIEW_LOGGER.debug(
-                    f"[USER DOES NOT EXIST]\n" +
-                    f"User: {request.user.username}, tried to delete does not exist user with username {username}")
+                    f"[message] [USER DOES NOT EXIST] [{request.user}] -- "
+                    f"tried to delete does not exist user with username {username}")
 
         return redirect(reverse("data:disbursement_home"))
 

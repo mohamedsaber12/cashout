@@ -30,9 +30,12 @@ class BlacklistPermission(permissions.BasePermission):
 
     def has_permission(self, request, view):
         ip_addr = request.META['REMOTE_ADDR']
-        DATA_LOGGER.debug("[CAN DISBURSE]" + f" Ip Address: {str(ip_addr)}")
 
         if ip_addr in settings.ALLOWED_HOSTS:
+            message = f"this IP Address: {str(ip_addr)} is from the IPs white list"
+            DATA_LOGGER.debug(f"[message] [DISBURSEMENT ACTION ABILITY] [{request.user}] -- {message}")
             return True
 
+        message = f"this IP Address: {str(ip_addr)} is not from the IPs white list"
+        DATA_LOGGER.debug(f"[message] [DISBURSEMENT ACTION ABILITY] [{request.user}] -- {message}")
         return False

@@ -70,20 +70,20 @@ class AmanTransactionCallbackHandlerAPIView(views.APIView):
             if calculated_hmac != received_hmac:
                 raise ValueError(_("Hmac value mismatch!"))
         except ValueError as err:
-            logging_message(AMAN_LOGGER, "[TRX CALLBACK HANDLER - HMAC ERROR]", request, f"Msg: {err.args}")
+            logging_message(AMAN_LOGGER, "[message] [TRX CALLBACK HANDLER - HMAC ERROR]", request, f"{err.args}")
             return Response({"External Error": EXTERNAL_ERROR_MSG}, status=status.HTTP_400_BAD_REQUEST)
 
         updated_successfully, failure_reason = AmanChannel.notify_merchant(request.data)
 
         if updated_successfully:
             logging_message(
-                    AMAN_LOGGER, "[TRX CALLBACK HANDLER - RECEIVED SUCCESSFULLY]", request, f"Response: {request.data}"
+                    AMAN_LOGGER, "[response] [TRX CALLBACK HANDLER RECEIVED SUCCESSFULLY]", request, f"{request.data}"
             )
             return Response({
                 "Status": "Transaction status callback received successfully"
             }, status=status.HTTP_200_OK)
         else:
             logging_message(
-                    AMAN_LOGGER, "[TRX CALLBACK HANDLER - ERROR]", request, f"Response: {request.data}"
+                    AMAN_LOGGER, "[message] [TRX CALLBACK HANDLER - ERROR]", request, f"{request.data}"
             )
             return Response({"Status": "Transaction with this id is not found"}, status=status.HTTP_404_NOT_FOUND)

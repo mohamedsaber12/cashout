@@ -98,11 +98,12 @@ class UserDeleteView(UserOwnsMemberRequiredMixin, View):
                 else:
                     user = User.objects.get(id=int(data['user_id']))
                     user.delete()
-                DELETE_USER_VIEW_LOGGER.debug(
-                        f"[USER DELETED]\nSuperAdmin: {request.user} deleted user with username: {user}"
-                )
+                DELETE_USER_VIEW_LOGGER.debug(f"[message] [USER DELETED] [{request.user}] -- user deleted: {user}")
             except (User.DoesNotExist, Client.DoesNotExist, SupportSetup.DoesNotExist) as e:
-                DELETE_USER_VIEW_LOGGER.debug(f"[USER DOES NOT EXIST]\nPassed ID: {data['user_id']}\nErr: {e.args[0]}")
+                DELETE_USER_VIEW_LOGGER.debug(
+                        f"[message] [USER DOES NOT EXIST] [{request.user}] "
+                        f"-- Passed ID: {data['user_id']}, Err: {e.args[0]}"
+                )
 
             return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
 

@@ -52,11 +52,15 @@ class SSLCertificate:
                         encryption_algorithm=serialization.NoEncryption(),
                 ))
 
-            SSL_CERTIFICATE_LOGGER.debug(f'[PRIVATE KEY - GENERATED SUCCESSFULLY]\n{payload}\nSaved at: {key_path}')
+            SSL_CERTIFICATE_LOGGER.debug(
+                    f'[message] [PRIVATE KEY - GENERATED SUCCESSFULLY] [anonymous] -- {payload}, Saved at: {key_path}'
+            )
             return key_path
 
         except Exception as e:
-            SSL_CERTIFICATE_LOGGER.debug(f'[PRIVATE KEY - GENERATION FAILED]\n{payload}\nError: {e.args}')
+            SSL_CERTIFICATE_LOGGER.debug(
+                    f'[message] [PRIVATE KEY - GENERATION FAILED] [anonymous] -- {payload}, Error: {e.args}'
+            )
             raise ValueError(_(e.args[0]))
 
     @staticmethod
@@ -101,7 +105,9 @@ class SSLCertificate:
         try:
             private_key = SSLCertificate.load_private_key(private_key_name)
         except (ValueError, FileNotFoundError) as e:
-            SSL_CERTIFICATE_LOGGER.debug(f'[CERTIFICATE - GENERATION FAILED]\n{payload}Errors: {e.args}')
+            SSL_CERTIFICATE_LOGGER.debug(
+                    f'[message] [CERTIFICATE - GENERATION FAILED] [anonymous] -- {payload}, Errors: {e.args}'
+            )
             return False
 
         try:
@@ -137,11 +143,16 @@ class SSLCertificate:
             with open(cert_path, 'wb') as f:
                 f.write(ssl_cert.public_bytes(serialization.Encoding.PEM))
 
-            SSL_CERTIFICATE_LOGGER.debug(f'[SSL CERTIFICATE - GENERATED SUCCESSFULLY]\n{payload}Saved at: {cert_path}')
+            SSL_CERTIFICATE_LOGGER.debug(
+                    f'[message] [SSL CERTIFICATE - GENERATED SUCCESSFULLY] [anonymous] '
+                    f'-- {payload}, Saved at: {cert_path}'
+            )
             return cert_path
 
         except Exception as e:
-            SSL_CERTIFICATE_LOGGER.debug(f'[SSL CERTIFICATE - GENERATION FAILED]\n{payload}Errors: {e.args}')
+            SSL_CERTIFICATE_LOGGER.debug(
+                    f'[message] [SSL CERTIFICATE - GENERATION FAILED] [anonymous] -- {payload}, Errors: {e.args}'
+            )
             return False
 
     @staticmethod

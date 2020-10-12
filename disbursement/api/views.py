@@ -106,15 +106,16 @@ class DisburseAPIView(APIView):
         :param jsoned_response: flag to check if the response needed as json of raw response object
         :return: response object if successful disbursement or False
         """
-        DATA_LOGGER.debug("[DISBURSE BULK - REQUEST PAYLOAD]" + f"\nUser: {username}\nPayload: {refined_payload}")
+        logging_header = "BULK DISBURSEMENT TO CENTRAL UIG"
+        DATA_LOGGER.debug(f"[request] [{logging_header}] [{username}] -- {refined_payload}")
         request_obj = CustomRequests()
 
         try:
             response = request_obj.post(url=url, payload=payload)
-            DATA_LOGGER.debug(f"[DISBURSE BULK - STATUS RESPONSE]\nUser: {username}\n{request_obj.resp_log_msg}")
+            DATA_LOGGER.debug(f"[response] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
             return response.json() if jsoned_response else response
         except (HTTPError, ConnectionError, Exception):
-            DATA_LOGGER.debug(f"[DISBURSE BULK ERROR - STATUS RESPONSE]\nUser: {username}\n{request_obj.resp_log_msg}")
+            DATA_LOGGER.debug(f"[response] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
             return False
 
     def determine_disbursement_status(self, checker_user, doc_obj, vf_response, temp_response):
@@ -204,7 +205,7 @@ class DisburseCallBack(UpdateAPIView):
         Handles UPDATE requests coming from wallets as a callback to a disbursement request
             and UPDATES the budget record of the disbursed document Owner/Admin it he/she has custom budget
         """
-        DATA_LOGGER.debug('[DISBURSE BULK - CALLBACK RESPONSE]' + f"\nCallback: {str(request.data)}")
+        DATA_LOGGER.debug(f"[response] [BULK DISBURSEMENT CALLBACK] [{request.user}] -- {str(request.data)}")
         total_disbursed_amount = 0
         last_doc_record_id = successfully_disbursed_obj = None
 
@@ -254,7 +255,7 @@ class ChangeProfileCallBack(UpdateAPIView):
         """
         Handles UPDATE requests coming from wallets as a callback to a change profile request
         """
-        CHANGE_PROFILE_LOGGER.debug('[CHANGE PROFILE CALLBACK]\n' + f'Callback: {str(request.data)}')
+        CHANGE_PROFILE_LOGGER.debug(f"[response] [CHANGE PROFILE CALLBACK] [{request.user}] -- {str(request.data)}")
         transactions = request.data.get('transactions', None)
 
         if not transactions:

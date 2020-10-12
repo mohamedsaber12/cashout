@@ -77,7 +77,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 custom_budget_logger(
                         doc_obj.owner.root.username,
                         f"Total disbursed amount: {disbursement_data_record.amount} LE",
-                        doc_obj.owner.username, f" -- doc id: {doc_obj.id}"
+                        doc_obj.owner.username, f", doc id: {doc_obj.id}"
                 )
 
             return True
@@ -167,7 +167,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
         except (Doc.DoesNotExist, User.DoesNotExist, Exception) as err:
-            DATA_LOGGER.debug(f"[DISBURSE BULK ERROR - ONE STEP RECORDS TASK]\nUser: {checker_username}\n{err}")
+            DATA_LOGGER.debug(f"[message] [BULK DISBURSEMENT ERROR - ONE STEP TASK] [{checker_username}] -- {err.args}")
             return False
 
         return True

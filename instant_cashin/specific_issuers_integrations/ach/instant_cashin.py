@@ -108,7 +108,8 @@ class BankTransactionsChannel:
     @staticmethod
     def post(url, payload, bank_trx_obj):
         """Handles POST requests to EBC using requests package"""
-        ACH_SEND_TRX_LOGGER.debug(_(f"[POST REQUEST]\n{bank_trx_obj.user_created} - {payload}"))
+        log_header = "SEND ACH TRANSACTION TO EBC"
+        ACH_SEND_TRX_LOGGER.debug(_(f"[request] [{log_header}] [{bank_trx_obj.user_created}] -- {payload}"))
 
         try:
             response = requests.post(
@@ -126,14 +127,17 @@ class BankTransactionsChannel:
         else:
             return response
         finally:
-            ACH_SEND_TRX_LOGGER.debug(_(f"[POST RESPONSE]\n{bank_trx_obj.user_created} - {response_log_message}"))
+            ACH_SEND_TRX_LOGGER.debug(
+                    _(f"[response] [{log_header}] [{bank_trx_obj.user_created}] -- {response_log_message}")
+            )
 
         raise ValidationError(_(response_log_message))
 
     @staticmethod
     def get(url, payload, bank_trx_obj):
         """Handles GET requests to EBC via requests package"""
-        ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[GET REQUEST]\n{bank_trx_obj.user_created} - {payload}"))
+        log_header = "GET ACH TRANSACTION STATUS FROM EBC"
+        ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[request] [{log_header}] [{bank_trx_obj.user_created}] -- {payload}"))
 
         try:
             response = requests.get(
@@ -151,7 +155,9 @@ class BankTransactionsChannel:
         else:
             return response
         finally:
-            ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[GET RESPONSE]\n{bank_trx_obj.user_created} - {response_log_message}"))
+            ACH_GET_TRX_STATUS_LOGGER.debug(
+                    _(f"[response] [{log_header}] [{bank_trx_obj.user_created}] -- {response_log_message}")
+            )
 
         raise ValidationError(_(response_log_message))
 
@@ -243,7 +249,7 @@ class BankTransactionsChannel:
             else:
                 return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
         except (HTTPError, ConnectionError, ValidationError, Exception) as e:
-            ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{bank_trx_obj.user_created} - {e.args}"))
+            ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"))
 
             # ToDo: Cancel the trx with EBC
             if bank_trx_obj.status == AbstractBaseStatus.PENDING and instant_trx_obj:
@@ -267,5 +273,5 @@ class BankTransactionsChannel:
             new_bank_trx_obj = BankTransactionsChannel.update_bank_trx_status(bank_trx_obj, json.loads(response.json()))
             return Response(BankTransactionResponseModelSerializer(new_bank_trx_obj).data)
         except (HTTPError, ConnectionError, ValidationError, Exception) as e:
-            ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[EXCEPTION]\n{bank_trx_obj.user_created} - {e.args}"))
+            ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"))
             return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)

@@ -13,7 +13,6 @@ from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
 from users.models import User
-from utilities.logging import logging_message
 from utilities.messages import MSG_WRONG_FILE_FORMAT
 
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
@@ -118,8 +117,8 @@ class FileDocumentForm(forms.ModelForm):
             error = "Filename must be less than 255 characters"
 
         if error:
-            message = f"File name: {filename} - file type: {file_type} - file size: {file.size}\nError: {error}"
-            logging_message(UPLOAD_ERROR_LOGGER, "[UPLOAD ERROR - FORM VALIDATION]", self.request, message)
+            msg = f"file name: {filename}, file type: {file_type}, file size: {file.size}, error: {error}"
+            UPLOAD_ERROR_LOGGER.debug(f"[message] [UPLOAD ERROR AT FORM VALIDATION] [{self.request.user}] -- {msg}")
             raise forms.ValidationError(_(error))
 
         return True

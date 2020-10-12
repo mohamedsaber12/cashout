@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
-from django.utils.translation import gettext as _
 
 
 VALID_BANK_CODES_LIST = [
@@ -66,18 +65,6 @@ TRX_RETURNED_BY_BANK_CODES = [
 TRX_REJECTED_BY_BANK_CODES = [
     "0001", "0002", "0003", "0004", "0005", "0006", "0007", "0008", "0009", "0010", "0011", "0012", "0013", "0014"
 ]
-
-
-def logging_message(logger, head, user, message):
-    """
-    Simple function that will take the logger and the message and log them in
-    :param logger: the logger itself that will handle the log message
-    :param head: the head/title of the log message
-    :param user: the user being stored at the request
-    :param message: the message that will be logged
-    :return: The message will be logged into the specified logger
-    """
-    return logger.debug(_(f"{head}\nUser: {user}\n{message}"))
 
 
 def custom_titled_filter(title):

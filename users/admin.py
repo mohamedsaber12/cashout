@@ -38,8 +38,7 @@ class UserAccountAdmin(UserAdmin):
             raise PermissionDenied
 
         for obj in queryset:
-            user_deactivated_log_msg = "[User Deactivated]" + \
-                    f"\nUser: {request.user} from IP Address: {get_client_ip(request)} deactivated user: {obj.username}"
+            user_deactivated_log_msg = f"[message] [User Deactivated] [{request.user}] -- {obj.username}"
             if not obj.is_active:
                 continue
             else:
@@ -57,8 +56,7 @@ class UserAccountAdmin(UserAdmin):
             raise PermissionDenied
 
         for obj in queryset:
-            user_activated_log_msg = "[User Activated]" + \
-                      f"\nUser: {request.user} from IP Address: {get_client_ip(request)} activated user: {obj.username}"
+            user_activated_log_msg = f"[message] [User Activated] [{request.user}] -- activated user: {obj.username}"
             if obj.is_active:
                 continue
             else:
@@ -147,14 +145,16 @@ class BaseChildAdmin(UserAccountAdmin):
             obj.hierarchy = request.user.hierarchy
 
         if obj.pk is not None:
-            MODIFIED_USERS_LOGGER.debug(f"""[{self.logged_user_type.capitalize()} User Modified]
-            User: {request.user.username}
-            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
+            MODIFIED_USERS_LOGGER.debug(
+                    f"[message] [{self.logged_user_type.capitalize()} User Modified] [{request.user}] "
+                    f"-- Modified user with username: {obj.username}"
+            )
 
         else:
-            CREATED_USERS_LOGGER.debug(f"""[{self.logged_user_type} User Created]
-            User: {request.user.username}
-            Created new {self.logged_user_type.lower()} with username: {obj.username}""")
+            CREATED_USERS_LOGGER.debug(
+                    f"[message] [{self.logged_user_type} User Created] [{request.user}] "
+                    f"-- Created new {self.logged_user_type.lower()} with username: {obj.username}"
+            )
         obj.save()
 
 
@@ -223,13 +223,13 @@ class RootAdmin(UserAccountAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
-            MODIFIED_USERS_LOGGER.debug(f"""[Admin User Modified]
-            User: {request.user.username}
-            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
+            MODIFIED_USERS_LOGGER.debug(
+                    f"[message] [Admin User Modified] [{request.user}] -- Modified user: {obj.username}"
+            )
         else:
-            CREATED_USERS_LOGGER.debug(f"""[Admin User Created]
-            User: {request.user.username}
-            Created new root/admin with username: {obj.username}""")
+            CREATED_USERS_LOGGER.debug(
+                    f"[message] [Admin User Created] [{request.user}] -- Created new root/admin: {obj.username}"
+            )
         super(RootAdmin, self).save_model(request, obj, form, change)
 
 
@@ -244,14 +244,14 @@ class SuperAdmin(UserAccountAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
-            MODIFIED_USERS_LOGGER.debug(f"""[SuperAdmin User Modified]
-            User: {request.user.username}
-            Modified user with username: {obj.username} from IP Address {get_client_ip(request)}""")
+            MODIFIED_USERS_LOGGER.debug(
+                    f"[message] [SuperAdmin User Modified] [{request.user}] -- Modified user: {obj.username}"
+            )
 
         else:
-            CREATED_USERS_LOGGER.debug(f"""[SuperAdmin User Created]
-            User: {request.user.username}
-            Created new super-user with username: {obj.username}""")
+            CREATED_USERS_LOGGER.debug(
+                    f"[message] [SuperAdmin User Created] [{request.user}] -- Created new super-user: {obj.username}"
+            )
         super(SuperAdmin, self).save_model(request, obj, form, change)
 
 

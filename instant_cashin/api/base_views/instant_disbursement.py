@@ -121,7 +121,7 @@ class InstantDisbursementAPIView(views.APIView):
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
-                    issuer_type=self.match_issuer_type(issuer)
+                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name
             )
         else:
             creditor_account_number = serializer.validated_data["bank_card_number"]
@@ -227,10 +227,15 @@ class InstantDisbursementAPIView(views.APIView):
                 if issuer not in self.specific_issuers:
                     data_dict['MSISDN'] = instant_user.root.super_admin.first_non_super_agent(issuer)
 
+                if issuer.lower() == 'aman':
+                    full_name = f"{serializer.validated_data['first_name']} {serializer.validated_data['last_name']}"
+                else:
+                    full_name = ""
+
                 transaction = InstantTransaction.objects.create(
                         from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P",
                         amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
-                        anon_sender=data_dict['MSISDN']
+                        anon_sender=data_dict['MSISDN'], recipient_name=full_name
                 )
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 

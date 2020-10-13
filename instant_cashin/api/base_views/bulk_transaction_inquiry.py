@@ -43,8 +43,11 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
         """
         if serializer.validated_data["bank_transactions"]:
             write_serializer = self.bank_trx_write_serializer
-            queryset = BankTransaction.objects.filter(user_created =request.user).\
-                filter(Q(transaction_id__in=self.kwargs["trx_ids_list"]))
+            queryset = BankTransaction.objects.filter(user_created=request.user).\
+                filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
+                filter(Q(parent_transaction__transaction_id__in=self.kwargs["trx_ids_list"])).\
+                order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id")
+
         else:
             write_serializer = self.instant_trx_write_serializer
             queryset = InstantTransaction.objects.filter(from_user=request.user).\

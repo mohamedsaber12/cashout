@@ -97,6 +97,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     bank_card_number = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
     bank_code = serializers.SerializerMethodField()
     bank_transaction_type = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
@@ -118,6 +119,10 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     def get_bank_card_number(self, transaction):
         """Retrieves bank card number"""
         return transaction.creditor_account_number
+
+    def get_full_name(self, transaction):
+        """Retrieves transaction recipient name"""
+        return transaction.creditor_name
 
     def get_bank_code(self, transaction):
         """Retrieves transaction cashing details"""
@@ -149,7 +154,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankTransaction
         fields = [
-            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'bank_code', 'bank_transaction_type',
+            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_code', 'bank_transaction_type',
             'disbursement_status', 'status_code', 'status_description', 'created_at', 'updated_at'
         ]
 
@@ -165,6 +170,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
+    full_name = serializers.SerializerMethodField()
     aman_cashing_details = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
@@ -184,6 +190,10 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     def get_status_description(self, transaction):
         """Retrieves transaction status description"""
         return transaction.transaction_status_description
+
+    def get_full_name(self, transaction):
+        """Retrieves transaction recipient name"""
+        return transaction.recipient_name
 
     def get_aman_cashing_details(self, transaction):
         """Retrieves aman cashing details of aman channel transaction"""
@@ -206,8 +216,8 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstantTransaction
         fields = [
-            'transaction_id', 'issuer', 'msisdn', 'amount', 'disbursement_status', 'status_code', 'status_description',
-            'aman_cashing_details', 'created_at', 'updated_at'
+            'transaction_id', 'issuer', 'msisdn', 'amount', 'full_name', 'disbursement_status', 'status_code',
+            'status_description', 'aman_cashing_details', 'created_at', 'updated_at'
         ]
 
 
@@ -216,7 +226,7 @@ class BulkInstantTransactionReadSerializer(serializers.Serializer):
     Serializes the bulk transaction inquiry request, list of uuid4 inputs
     """
 
-    transactions_ids_list = UUIDListField()
+    transactions_ids_list = UUIDListField(required=True, allow_null=False, allow_empty=False)
     bank_transactions = serializers.BooleanField(default=False)
 
 

@@ -82,6 +82,13 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             blank=True,
             null=True,
     )
+    recipient_name = models.CharField(
+            _('Recipient Name'),
+            max_length=70,
+            help_text=_('The customer/recipient name'),
+            blank=True,
+            null=True
+    )
     aman_obj = GenericRelation(
             "instant_cashin.AmanTransaction",
             object_id_field="transaction_id",

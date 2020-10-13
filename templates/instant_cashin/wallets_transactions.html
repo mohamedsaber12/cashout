@@ -1,0 +1,51 @@
+{% load i18n %}
+
+<div class="x_content">
+  <table class="table table-striped table-bordered" id="transaction-table">
+    <thead>
+    <tr>
+      <th style="width: 22%">{% trans 'Transaction ID' %}</th>
+      <th>{% trans 'Recipient' %}</th>
+      <th>{% trans 'Amount' %}</th>
+      <th>{% trans 'Status' %}</th>
+      <th>{% trans 'Channel' %}</th>
+      <th>{% trans 'Created At' %}</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    {% for trx in transactions %}
+      <tr data-href="#">
+        <td>{{ trx.uid }}</td>
+        <td>{{ trx.anon_recipient }}</td>
+        <td>{{ trx.amount }}</td>
+
+        {% if trx.status == 'S' %}
+          <td>{% trans 'Successful' %}</td>
+          {% elif trx.status == 'P' %}
+          <td>{% trans 'Pending' %}</td>
+        {% else %}
+          <td>{% trans 'Failed' %}</td>
+        {% endif %}
+
+        {% if trx.issuer_type == 'V' %}
+          <td>{% trans 'Vodafone' %}</td>
+          {% elif trx.issuer_type == 'E' %}
+          <td>{% trans 'Etisalat' %}</td>
+          {% elif trx.issuer_type == 'O' %}
+          <td>{% trans 'Orange' %}</td>
+          {% elif trx.issuer_type == 'A' %}
+          <td>{% trans 'Aman' %}</td>
+          {% elif trx.issuer_type == 'B' %}
+          <td>{% trans 'Bank Wallet' %}</td>
+        {% endif %}
+
+        <td>{{ trx.created_at }}</td>
+      </tr>
+
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% include 'pagination.html' %}
+</div>

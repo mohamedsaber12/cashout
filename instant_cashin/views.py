@@ -12,6 +12,7 @@ from django.views import View
 from django.views.generic import ListView
 
 from core.models import AbstractBaseStatus
+from disbursement.models import BankTransaction
 from utilities.constants import SPREADSHEET_CONTENT_TYPE_CONSTANT
 from utilities.logging import logging_message
 
@@ -52,6 +53,33 @@ class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTrans
                     Q(anon_recipient__iexact=search_keys)|
                     Q(transaction_status_description__icontains=search_keys)
             )
+
+        return queryset
+
+
+class BankTransactionsListView(InstantReviewerRequiredMixin, ListView):
+    """
+    View for displaying bank transactions
+    """
+
+    model = BankTransaction
+    context_object_name = 'bank_transactions'
+    paginate_by = 11
+    template_name = 'instant_cashin/instant_viewer.html'
+    queryset = BankTransaction.objects.all()
+
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(user_created__hierarchy=self.request.user.hierarchy).\
+            filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
+            prefetch_related("children_transactions").distinct().order_by("-created_at")
+
+        if self.request.GET.get('search'):                      # Handle search keywords if any
+            search_keys = self.request.GET.get('search')
+            queryset.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).filter(
+                    Q(parent_transaction__transaction_id__in=search_keys)|
+                    Q(creditor_account_number__in=search_keys)|
+                    Q(creditor_bank__in=search_keys)
+            ).prefetch_related("children_transactions").distinct().order_by("-created_at")
 
         return queryset
 

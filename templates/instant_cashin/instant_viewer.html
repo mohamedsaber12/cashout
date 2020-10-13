@@ -6,7 +6,11 @@
 {% block title %} {% trans 'Transactions' %} {% endblock %}
 
 {% block body %}
-  {% if not instant_transactions %}
+  <div class="well upload-nav col-xs-12">
+    <h4><strong>{% trans 'IMPORTANT: DISBURSEMENT FOR BANK ACCOUNTS/WALLETS IS AVAILABLE NOW, CHECK THE UPDATED API DOCUMENTATION!' %}</strong></h4>
+  </div>
+
+  {% if not bank_transactions and not instant_transactions %}
     <div class="well upload-nav col-xs-12">
       <strong style="margin-top: 15px;">{% trans 'You do not have any transactions yet!' %}</strong>
     </div>
@@ -18,7 +22,7 @@
       <div class="">
         <div class="page-title">
           <div class="title_left">
-            <h3>{% trans 'Transactions' %}</h3>
+            <h3></h3>
           </div>
           <div class="title_right">
             <form action="." method="get">
@@ -38,7 +42,7 @@
           <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
               <div class="x_title">
-                <h2>{% trans 'Transactions' %}</h2>
+                <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
                 <ul class="nav navbar-right panel_toolbox">
                   <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                   </li>
@@ -46,55 +50,11 @@
                 <div class="clearfix"></div>
               </div>
 
-              <div class="x_content">
-                <table class="table table-striped table-bordered" id="transaction-table">
-                  <thead>
-                  <tr>
-                    <th style="width: 22%">{% trans 'Reference' %}</th>
-                    <th>{% trans 'Consumer' %}</th>
-                    <th>{% trans 'Amount' %}</th>
-                    <th>{% trans 'Status' %}</th>
-                    <th>{% trans 'Channel' %}</th>
-                    <th>{% trans 'Created At' %}</th>
-                    <th>{% trans 'Updated At' %}</th>
-                  </tr>
-                  </thead>
-
-                  <tbody>
-                  {% for trx in instant_transactions %}
-                    <tr data-href="#">
-                      <td>{{ trx.uid }}</td>
-                      <td>{{ trx.anon_recipient }}</td>
-                      <td>{{ trx.amount }}</td>
-
-                      {% if trx.status == 'S' %}
-                        <td>{% trans 'Successful' %}</td>
-                      {% elif trx.status == 'F' %}
-                        <td>{% trans 'Failed' %}</td>
-                      {% elif trx.status == 'P' %}
-                        <td>{% trans 'Pending' %}</td>
-                      {% endif %}
-
-                      {% if trx.issuer_type == 'V' %}
-                        <td>{% trans 'Vodafone' %}</td>
-                      {% elif trx.issuer_type == 'E' %}
-                        <td>{% trans 'Etisalat' %}</td>
-                      {% elif trx.issuer_type == 'O' %}
-                        <td>{% trans 'Orange' %}</td>
-                      {% elif trx.issuer_type == 'A' %}
-                        <td>{% trans 'Aman' %}</td>
-                      {% endif %}
-
-                      <td>{{ trx.created_at }}</td>
-                      <td>{{ trx.updated_at }}</td>
-                    </tr>
-
-                  {% endfor %}
-                  </tbody>
-                </table>
-
-                {% include 'pagination.html' %}
-              </div>
+              {% if bank_transactions %}
+                {% include 'instant_cashin/banks_transactions.html' with transactions=bank_transactions %}
+              {% else %}
+                {% include 'instant_cashin/wallets_transactions.html' with transactions=instant_transactions %}
+              {% endif %}
             </div>
           </div>
         </div>

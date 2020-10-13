@@ -43,7 +43,8 @@
 
         <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">
-            <li><a href="{% url 'data:main_view' %}">{% trans 'Transactions' %}</a></li>
+            <li><a href="{% url 'data:main_view' %}">{% trans 'E-Wallets Transactions' %}</a></li>
+            <li><a href="{% url 'instant_cashin:banks_trx_list' %}">{% trans 'Bank Transactions' %}</a></li>
           </ul>
         </li>
         <li><a href="{% url 'docs:instant_docs' path='' %}"><i class="fa fa-book"></i> {% trans 'API Documentation'%}</a></li>

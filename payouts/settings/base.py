@@ -84,8 +84,6 @@ MIDDLEWARE = [
     # Third party user sessions middleware
     'user_sessions.middleware.SessionMiddleware',
 
-    'django_session_timeout.middleware.SessionTimeoutMiddleware',
-
     # If you use SessionAuthenticationMiddleware, be sure it appears before OAuth2TokenMiddleware.
     # SessionAuthenticationMiddleware is NOT required for using django-oauth-toolkit.
     # 'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
@@ -103,6 +101,8 @@ MIDDLEWARE = [
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
+
+    # ToDo: Request/Response Time Delta Middleware
 ]
 
 AUTHENTICATION_BACKENDS = [
@@ -282,8 +282,8 @@ EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(minutes=60)
 LOGGING = CUSTOM_LOGGING
 
 # Axes Custom Configurations
-AXES_COOLOFF_TIME = datetime.timedelta(seconds=60)
-# AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
+AXES_COOLOFF_TIME = datetime.timedelta(minutes=15)
+AXES_LOCK_OUT_BY_COMBINATION_USER_AND_IP = True
 AXES_FAILURE_LIMIT = 5
 AXES_ENABLE_ADMIN = True
 AXES_VERBOSE = False

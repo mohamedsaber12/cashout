@@ -92,17 +92,17 @@ class AdministrativeTwoFactorAuthMiddleWare:
             '/account/two_factor/qrcode/',
             reverse("set_language")
         ]
-        
-        if request.user.is_authenticated and \
-                not is_media_path and \
-                not request.user.is_superuser and \
+
+        if request.user.is_authenticated and not is_media_path and not request.user.is_superuser and \
                 (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
             is_verified = request.user.is_verified() or request.user.is_totp_verified
+
             if two_factor_base_url in path and is_verified:
-                return redirect(reverse("data:main_view"))            
-            if not request.user.is_totp_verified and \
-                    user_has_device(request.user) and \
+                return redirect(reverse("data:main_view"))
+
+            if not request.user.is_totp_verified and user_has_device(request.user) and \
                     (not path in urls or path == reverse("two_factor:profile")):
                 return redirect(reverse("users:otp_login"))
+
             if not is_verified and not path in urls:
                 return redirect(reverse("two_factor:profile"))

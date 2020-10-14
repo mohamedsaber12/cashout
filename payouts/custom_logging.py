@@ -16,8 +16,7 @@ CUSTOM_LOGGING = {
             'datefmt': "[%d-%m-%Y %H:%M:%S]"
         },
         'detail': {
-            'format': "%(asctime)s - [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s",
-            'datefmt': "%d-%m-%Y %H:%M:%S",
+            'format': "%(asctime)s - [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s"
         }
     },
     'handlers': {

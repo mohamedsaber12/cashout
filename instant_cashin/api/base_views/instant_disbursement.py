@@ -301,7 +301,7 @@ class InstantDisbursementAPIView(views.APIView):
                 bank_trx_obj, instant_trx_obj = self.create_bank_transaction(request.user, serializer)
                 return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
             except (ImproperlyConfigured, Exception) as e:
-                ACH_SEND_TRX_LOGGER.debug(_(f"[EXCEPTION]\n{request.user} - {e.args}"))
+                ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{request.user}] -- {e.args}"))
                 if instant_trx_obj: instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                 return default_response_structure(
                         transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},

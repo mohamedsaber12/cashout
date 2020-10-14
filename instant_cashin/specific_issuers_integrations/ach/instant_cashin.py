@@ -145,7 +145,7 @@ class BankTransactionsChannel:
                     params={"request": json.dumps(payload, separators=(",", ":"))},
                     headers={'Content-Type': 'application/json'}
             )
-            response_log_message = f"Response: {response.json()}"
+            response_log_message = f"{response.json()}"
         except HTTPError as http_err:
             response_log_message = f"HTTP error occurred: {http_err}"
         except ConnectionError as connect_err:

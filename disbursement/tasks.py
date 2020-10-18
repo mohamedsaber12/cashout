@@ -1,11 +1,18 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import datetime
+import json
 import logging
+from decimal import Decimal
 
+import requests
 from celery import Task
+
+from django.utils import timezone
 from rest_framework import status
 
+from data.decorators import respects_language
 from data.models import Doc
 from instant_cashin.models import AmanTransaction
 from instant_cashin.specific_issuers_integrations import AmanChannel
@@ -17,7 +24,7 @@ from utilities.functions import custom_budget_logger, get_value_from_env
 from .models import DisbursementData, DisbursementDocData
 
 
-DATA_LOGGER = logging.getLogger("disburse")
+DISBURSE_LOGGER = logging.getLogger("disburse")
 
 
 class BulkDisbursementThroughOneStepCashin(Task):
@@ -164,13 +171,68 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if aman_recipients:
                 self.disburse_for_aman(checker, ip_address, aman_recipients)
 
-            DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+            if ets_recipients or orange_recipients or aman_recipients:
+                DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
         except (Doc.DoesNotExist, User.DoesNotExist, Exception) as err:
-            DATA_LOGGER.debug(f"[message] [BULK DISBURSEMENT ERROR - ONE STEP TASK] [{checker_username}] -- {err.args}")
+            DISBURSE_LOGGER.\
+                debug(f"[message] [BULK DISBURSEMENT ERROR - ONE STEP TASK] [{checker_username}] -- {err.args}")
             return False
 
         return True
 
 
 BulkDisbursementThroughOneStepCashin = app.register_task(BulkDisbursementThroughOneStepCashin())
+
+
+@app.task()
+@respects_language
+def check_for_late_disbursement_callback(**kwargs):
+    """Background task for getting the bulk disbursement callback"""
+    day_ago = timezone.now() - datetime.timedelta(int(1))
+    disbursement_doc_data = DisbursementDocData.objects.\
+        filter(updated_at__gte=day_ago, doc_status=DisbursementDocData.DISBURSED_SUCCESSFULLY, has_callback=False)
+
+    if disbursement_doc_data.count() < 1:
+        return False
+
+    for disbursement_doc in disbursement_doc_data:
+        try:
+            superadmin = disbursement_doc.doc.owner.root.super_admin
+            payload = superadmin.vmt.\
+                accumulate_disbursement_or_change_profile_callback_inquiry_payload(disbursement_doc.txn_id)
+            DISBURSE_LOGGER.debug(f"[request] [bulk disbursement callback inquiry] [celery_task] -- {payload}")
+            response = requests.post(get_value_from_env(superadmin.vmt.vmt_environment), json=payload, verify=False)
+        except Exception as e:
+            DISBURSE_LOGGER.debug(f"[message] [bulk disbursement callback inquiry error] [celery_task] -- {e.args}")
+            continue
+        else:
+            DISBURSE_LOGGER.debug(f"[response] [bulk disbursement callback inquiry] [celery_task] -- {response.text}")
+
+        doc_transactions = json.loads(response.text)["TRANSACTIONS"]
+        total_disbursed_amount = 0
+
+        if len(doc_transactions) == 0:
+            continue
+        else:
+            for disb_record in doc_transactions:
+                DisbursementData.objects.select_for_update().filter(id=int(disb_record['id'])).update(
+                        is_disbursed=True if disb_record['status'] == '0' else False,
+                        reason=disb_record.get('description', 'No Description found'),
+                        reference_id=disb_record.get('mpg_rrn', 'None')
+                )
+
+                # If disb_record['status'] = 0, it means this record amount is disbursed successfully
+                if disbursement_doc.doc.owner.root.has_custom_budget and disb_record['status'] == '0':
+                    total_disbursed_amount += Decimal(DisbursementData.objects.get(id=disb_record['id']).amount)
+
+            if disbursement_doc.doc.owner.root.has_custom_budget and total_disbursed_amount > 0:
+                disbursement_doc.doc.owner.root.budget.\
+                    update_disbursed_amount_and_current_balance(total_disbursed_amount, "vodafone")
+                custom_budget_logger(
+                        disbursement_doc.doc.owner.root, f"Total disbursed amount: {total_disbursed_amount} LE",
+                        "celery_task", f" -- doc id: {disbursement_doc.doc.id}"
+                )
+
+            disbursement_doc.has_callback = True
+            disbursement_doc.save()

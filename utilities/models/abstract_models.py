@@ -49,6 +49,7 @@ class AbstractBaseVMTData(models.Model):
     SET_PIN = 4                 # List/Bulk of agents
     USER_INQUIRY = 5            # List/Bulk of agents/consumers
     BALANCE_INQUIRY = 6
+    DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY = 7
 
     login_username = models.CharField(_("UIG Login Username"), max_length=32)
     login_password = models.CharField(_("UIG Login Password"), max_length=32)
@@ -151,6 +152,11 @@ class AbstractBaseVMTData(models.Model):
                 "MSISDN": "",       # Super agent ONLY, one msisdn Not list
                 "PIN": "",          # Raw pin
                 "TYPE": "PRBALINQREQ"
+            })
+        elif purpose == self.DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY:
+            data.update({
+                "BATCH_ID": "",
+                "TYPE": "DISBINQREQ"
             })
 
         return data
@@ -272,6 +278,18 @@ class AbstractBaseVMTData(models.Model):
         payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
 
         return payload, payload_without_pin
+
+    def accumulate_disbursement_or_change_profile_callback_inquiry_payload(self, batch_id):
+        """
+        :param batch_id: id returned from the central when making a bulk disbursement or change profile
+        :return: bulk disbursement/change profile callback inquiry request payload
+        """
+        if not batch_id:
+            raise ValueError(_("Batch ID parameter is required for the callback inquiry dictionary"))
+
+        payload = self.return_vmt_data(self.DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY)
+        payload.update({"BATCH_ID": str(batch_id)})
+        return payload
 
 
 class AbstractTransactionCurrency(models.Model):

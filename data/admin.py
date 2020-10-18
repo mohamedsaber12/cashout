@@ -13,7 +13,9 @@ class DocAdmin(admin.ModelAdmin):
     Admin manager for the Doc model
     """
 
-    list_display = ['filename', 'owner', 'type_of', 'is_processed', 'is_disbursed', 'created_at']
+    list_display = [
+        'filename', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at'
+    ]
     list_filter = ['created_at']
     readonly_fields = ['file']
 

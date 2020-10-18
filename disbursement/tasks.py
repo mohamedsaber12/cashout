@@ -14,6 +14,7 @@ from rest_framework import status
 
 from data.decorators import respects_language
 from data.models import Doc
+from data.tasks import handle_change_profile_callback
 from instant_cashin.models import AmanTransaction
 from instant_cashin.specific_issuers_integrations import AmanChannel
 from payouts.settings.celery import app
@@ -24,6 +25,7 @@ from utilities.functions import custom_budget_logger, get_value_from_env
 from .models import DisbursementData, DisbursementDocData
 
 
+CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
 
 
@@ -188,7 +190,7 @@ BulkDisbursementThroughOneStepCashin = app.register_task(BulkDisbursementThrough
 @app.task()
 @respects_language
 def check_for_late_disbursement_callback(**kwargs):
-    """Background task for getting the bulk disbursement callback"""
+    """Background task for asking for the late bulk disbursement callback"""
     day_ago = timezone.now() - datetime.timedelta(int(1))
     disbursement_doc_data = DisbursementDocData.objects.\
         filter(updated_at__gte=day_ago, doc_status=DisbursementDocData.DISBURSED_SUCCESSFULLY, has_callback=False)
@@ -209,7 +211,7 @@ def check_for_late_disbursement_callback(**kwargs):
         else:
             DISBURSE_LOGGER.debug(f"[response] [bulk disbursement callback inquiry] [celery_task] -- {response.text}")
 
-        doc_transactions = json.loads(response.text)["TRANSACTIONS"]
+        doc_transactions = response.json().get("TRANSACTIONS", '')
         total_disbursed_amount = 0
 
         if len(doc_transactions) == 0:
@@ -236,3 +238,45 @@ def check_for_late_disbursement_callback(**kwargs):
 
             disbursement_doc.has_callback = True
             disbursement_doc.save()
+
+    return True
+
+
+@app.task()
+@respects_language
+def check_for_late_change_profile_callback(**kwargs):
+    """Background task for asking for the late change profile callback"""
+    day_ago = timezone.now() - datetime.timedelta(int(1))
+    disbursement_doc_data = DisbursementDocData.objects.filter(
+            doc__created_at__gte=day_ago, doc__has_change_profile_callback=False,
+            doc_status=DisbursementDocData.UPLOADED_SUCCESSFULLY
+    )
+
+    if disbursement_doc_data.count() < 1:
+        return False
+
+    for disbursement_doc in disbursement_doc_data:
+        try:
+            superadmin = disbursement_doc.doc.owner.root.super_admin
+            payload = superadmin.vmt.\
+                accumulate_disbursement_or_change_profile_callback_inquiry_payload(disbursement_doc.doc.txn_id)
+            CH_PROFILE_LOGGER.debug(f"[request] [change profile callback inquiry] [celery_task] -- {payload}")
+            response = requests.post(get_value_from_env(superadmin.vmt.vmt_environment), json=payload, verify=False)
+        except Exception as e:
+            CH_PROFILE_LOGGER.debug(f"[message] [change profile callback inquiry error] [celery_task] -- {e.args}")
+            continue
+        else:
+            CH_PROFILE_LOGGER.debug(f"[response] [change profile callback inquiry] [celery_task] -- {response.text}")
+
+        transactions = response.json().get("TRANSACTIONS", '')
+
+        if len(transactions) == 0:
+            continue
+        else:
+            refined_transactions_list = []
+            for record in transactions:
+                record_as_list = [record['MSISDN'], record['TXNSTATUS'], record['MESSAGE']]
+                refined_transactions_list.append(record_as_list)
+            handle_change_profile_callback.delay(disbursement_doc.doc.id, refined_transactions_list)
+
+    return True

@@ -211,6 +211,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             return False
 
     elif not callwallets_moderator.change_profile and callwallets_moderator.disbursement:
+        doc_obj.has_change_profile_callback = True
         doc_obj.processed_successfully()
         notify_maker(doc_obj)
     else:
@@ -245,6 +246,7 @@ def handle_change_profile_callback(doc_id, transactions):
     :return:
     """
     doc_obj = Doc.objects.get(id=doc_id)
+    doc_obj.has_change_profile_callback = True
     msisdns, errors = [], []
     has_error = False
 

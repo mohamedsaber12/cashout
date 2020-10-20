@@ -92,8 +92,8 @@ class InstantTransactionAdmin(admin.ModelAdmin):
         (None, {'fields': ('from_user', )}),
         (_('Transaction Details'), {
             'fields': (
-                'uid', 'status', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient', 'recipient_name',
-                'transaction_status_code', 'transaction_status_description'
+                'uid', 'reference_id', 'status', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient',
+                'recipient_name', 'transaction_status_code', 'transaction_status_description'
             )
         }),
         (_('Important Dates'), {

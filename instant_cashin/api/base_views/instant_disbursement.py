@@ -213,7 +213,6 @@ class InstantDisbursementAPIView(views.APIView):
         issuer = serializer.validated_data["issuer"].lower()
 
         if issuer in ["vodafone", "etisalat", "aman"]:
-            json_inquiry_response = "Request time out"      # If it's empty then log it as request timed out
             transaction = None
 
             try:
@@ -264,7 +263,12 @@ class InstantDisbursementAPIView(views.APIView):
                         return specific_issuer_response
 
                 inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
-                json_inquiry_response = inquiry_response.json()
+
+                if inquiry_response.ok:
+                    json_inquiry_response = inquiry_response.json()
+                    transaction.reference_id = json_inquiry_response["TXNID"]
+                else:
+                    raise ImproperlyConfigured(inquiry_response.text)
 
             except ValidationError as e:
                 logging_message(
@@ -274,9 +278,7 @@ class InstantDisbursementAPIView(views.APIView):
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (TimeoutError, ImproperlyConfigured, Exception) as e:
-                log_msg = e.args[0]
-                if json_inquiry_response != "Request time out": log_msg = json_inquiry_response.content
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, log_msg)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, e.args)
                 transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 

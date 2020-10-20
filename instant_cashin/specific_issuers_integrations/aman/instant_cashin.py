@@ -184,6 +184,7 @@ class AmanChannel:
                 msg = _(f"برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference}. لصرف مبلغ {self.amount} جنيه. شكراً لاختيارك مدفوعات أكسبت.")
 
                 if self.transaction:
+                    self.transaction.reference_id = bill_reference
                     self.transaction.mark_successful(status.HTTP_200_OK, msg)
                     AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
                     self.request.user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")

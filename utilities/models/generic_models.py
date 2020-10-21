@@ -106,8 +106,10 @@ class Budget(AbstractTimeStamp):
             issuer_type_refined = FeeSetup.ORANGE
         elif issuer_type == "aman":
             issuer_type_refined = FeeSetup.AMAN
-        elif issuer_type == "bank":
-            issuer_type_refined = FeeSetup.BANK
+        elif issuer_type == "bank_card":
+            issuer_type_refined = FeeSetup.BANK_CARD
+        elif issuer_type == "bank_wallet":
+            issuer_type_refined = FeeSetup.BANK_WALLET
 
         fees_obj = self.fees.filter(issuer=issuer_type_refined)
         fees_obj = fees_obj.first() if fees_obj.count() > 0 else None
@@ -136,11 +138,7 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            if issuer_type in ["vodafone", "etisalat", "aman", "orange"]:
-                _issuer_type = issuer_type
-            else:
-                _issuer_type = "bank"
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, _issuer_type)
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, issuer_type.lower())
 
             if amount_plus_fees_vat <= round(self.current_balance, 2):
                 return True
@@ -156,11 +154,7 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            if issuer_type in ["vodafone", "etisalat", "aman", "orange"]:
-                _issuer_type = issuer_type
-            else:
-                _issuer_type = "bank"
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, _issuer_type)
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower())
             self.total_disbursed_amount += amount_plus_fees_vat
             self.current_balance -= amount_plus_fees_vat
             self.save()
@@ -196,14 +190,16 @@ class FeeSetup(models.Model):
     ETISALAT = "es"
     ORANGE = "og"
     AMAN = "am"
-    BANK = "bk"
+    BANK_CARD = "bc"
+    BANK_WALLET = "bw"
 
     ISSUER_CHOICES = [
         (VODAFONE, _("Vodafone")),
         (ETISALAT, _("Etisalat")),
         (ORANGE, _("Orange")),
         (AMAN, _("Aman")),
-        (BANK, _("Bank")),
+        (BANK_CARD, _("Bank Card")),
+        (BANK_WALLET, _("Bank Wallet")),
     ]
 
     FIXED_FEE = "f"

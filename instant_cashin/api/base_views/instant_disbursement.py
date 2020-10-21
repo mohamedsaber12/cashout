@@ -202,7 +202,7 @@ class InstantDisbursementAPIView(views.APIView):
             if not request.user.root.\
                     budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):
                 raise ValidationError(BUDGET_EXCEEDED_MSG)
-        except ValidationError as e:
+        except (ValidationError, ValueError) as e:
             failure_message = BUDGET_EXCEEDED_MSG if e.args[0] == BUDGET_EXCEEDED_MSG else serializer.errors
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [VALIDATION ERROR]", request, failure_message)
             return Response({

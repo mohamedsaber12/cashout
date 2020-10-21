@@ -169,7 +169,7 @@ class BankTransactionsChannel:
         if instant_trx_obj:
             issuer = "orange" if instant_trx_obj.issuer_type == AbstractBaseIssuer.ORANGE else "bank_wallet"
         else:
-            issuer = "bank"
+            issuer = "bank_card"
 
         if response_code == "8000":
             bank_trx_obj.mark_pending(response_code, TRX_RECEIVED)

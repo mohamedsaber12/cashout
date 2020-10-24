@@ -14,6 +14,7 @@ from django.utils.translation import gettext_lazy as _
 
 from users.models import User
 from utilities.messages import MSG_WRONG_FILE_FORMAT
+from utilities.models import AbstractBaseDocType
 
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
 
@@ -65,10 +66,10 @@ class FileDocumentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if self.is_disbursement:
-            self.type_of = 1
+            self.type_of = AbstractBaseDocType.E_WALLETS
             del self.fields['format']
         else:
-            self.type_of = 2
+            self.type_of = AbstractBaseDocType.COLLECTION
             del self.fields['file_category']
 
     def extract_file_type(self, file):

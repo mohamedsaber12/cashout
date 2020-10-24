@@ -22,6 +22,7 @@ class AbstractBaseDocStatus(AbstractTimeStamp):
     PROCESSED_SUCCESSFULLY = '3'
     DISBURSEMENT_FAILURE = '4'
     DISBURSED_SUCCESSFULLY = '5'
+
     STATUS_CHOICES = [
         (DEFAULT, _("Default")),
         (UPLOADED_SUCCESSFULLY, _("Uploaded Successfully")),
@@ -30,9 +31,34 @@ class AbstractBaseDocStatus(AbstractTimeStamp):
         (DISBURSEMENT_FAILURE, _("Disbursement Failure")),
         (DISBURSED_SUCCESSFULLY, _("Disbursed Successfully")),
     ]
+
     status = models.CharField(
             _("status"), max_length=1, choices=STATUS_CHOICES, default=DEFAULT
     )
+
+    class Meta:
+        abstract = True
+
+
+class AbstractBaseDocType(AbstractTimeStamp):
+    """
+    Base Document Type model.
+    """
+
+    # choices
+    E_WALLETS = 1
+    COLLECTION = 2
+    BANK_WALLETS = 3
+    BANK_CARDS = 4
+
+    TYPES_CHOICES = [
+        (E_WALLETS, _("E-wallets")),
+        (COLLECTION, _("Collection")),
+        (BANK_WALLETS, _("Bank wallets")),
+        (BANK_CARDS, _("Bank cards"))
+    ]
+
+    type_of = models.PositiveSmallIntegerField(_("Type"), choices=TYPES_CHOICES, default=E_WALLETS)
 
     class Meta:
         abstract = True

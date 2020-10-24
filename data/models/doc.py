@@ -9,20 +9,15 @@ from django.utils.translation import gettext_lazy as _
 
 from disbursement.models import DisbursementDocData
 from users.models import CheckerUser
+from utilities.models import AbstractBaseDocType
 
 from ..utils import pkgen, update_filename
 
 
-class Doc(models.Model):
+class Doc(AbstractBaseDocType):
     """
     Model for representing uploaded document object
     """
-    DISBURSEMENT = 1
-    COLLECTION = 2
-    types = (
-        (DISBURSEMENT, 'DISBURSEMENT'),
-        (COLLECTION, 'COLLECTION')
-    )
 
     id = models.CharField(primary_key=True, editable=False, unique=True, db_index=True, max_length=32, default=pkgen)
     file = models.FileField(upload_to=update_filename, null=True, blank=True)
@@ -33,11 +28,20 @@ class Doc(models.Model):
     processing_failure_reason = models.CharField(max_length=256, null=True)
     total_amount = models.FloatField(default=False)
     total_count = models.PositiveIntegerField(default=False)
-    type_of = models.PositiveSmallIntegerField(default=DISBURSEMENT, choices=types)
-    created_at = models.DateTimeField(auto_now_add=True)
     has_change_profile_callback = models.BooleanField(default=False, verbose_name=_('Has change profile callback?'))
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='doc')
-    disbursed_by = models.ForeignKey("users.CheckerUser", on_delete=models.CASCADE, related_name='document', null=True)
+    owner = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name='doc',
+            verbose_name=_("Owner/Maker")
+    )
+    disbursed_by = models.ForeignKey(
+            "users.CheckerUser",
+            on_delete=models.CASCADE,
+            related_name='document',
+            verbose_name=_("Disbursed by/Checker"),
+            null=True
+    )
     file_category = models.ForeignKey('data.FileCategory', on_delete=models.SET_NULL, related_name='doc', null=True)
     format = models.ForeignKey('data.Format', on_delete=models.DO_NOTHING, null=True)
     collection_data = models.ForeignKey(
@@ -87,7 +91,7 @@ class Doc(models.Model):
 
     def get_absolute_url(self):
         from django.urls import reverse
-        if self.type_of == self.DISBURSEMENT:
+        if self.type_of == AbstractBaseDocType.E_WALLETS:
             return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
         else:
             return reverse("data:doc_collection_detail", kwargs={'pk': self.id})

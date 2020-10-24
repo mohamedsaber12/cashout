@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from django.contrib import admin
+from django.utils.translation import gettext_lazy as _
 
 from .forms import FileCategoryForm
 from .models import Doc, DocReview, FileCategory
@@ -14,12 +15,30 @@ class DocAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        'filename', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at'
+        'id', 'type_of', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at'
     ]
     list_filter = ['created_at']
     readonly_fields = ['file']
+    fieldsets = (
+        (None, {
+            'fields': (
+                'id', 'file', 'type_of', 'file_category', 'owner', 'disbursed_by', 'txn_id',
+                'has_change_profile_callback', 'is_processed', 'processing_failure_reason', 'can_be_disbursed',
+                'is_disbursed', 'total_amount', 'total_count'
+            )
+        }),
+        (_('Important Dates'), {
+            'fields': ('created_at', 'updated_at')
+        }),
+    )
 
     def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
         return False
 
 

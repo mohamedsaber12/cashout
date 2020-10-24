@@ -21,6 +21,7 @@ from django.views.static import serve
 from users.decorators import collection_users, disbursement_users, root_only, setup_required
 from users.mixins import SupportOrRootOrMakerUserPassesTestMixin
 from users.models import CheckerUser, Levels
+from utilities.models import AbstractBaseDocType
 
 from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm, FormatFormSet)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
@@ -78,7 +79,8 @@ class DisbursementHomeView(View):
             2. Documents are paginated but not used in template.
         """
         has_vmt_setup = request.user.root.has_vmt_setup
-        doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.DISBURSEMENT)
+        doc_list_disbursement = Doc.objects.\
+            filter(owner__hierarchy=request.user.hierarchy, type_of=AbstractBaseDocType.E_WALLETS)
         paginator = Paginator(doc_list_disbursement, 7)
         page = request.GET.get('page')
         docs = paginator.get_page(page)

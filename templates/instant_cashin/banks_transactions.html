@@ -1,4 +1,5 @@
 {% load i18n %}
+{% load transactions_tags i18n %}
 
 <div class="x_content">
   <table class="table table-striped table-bordered" id="transaction-table">
@@ -23,15 +24,7 @@
         <td>{{ trx.creditor_account_number }}</td>
         <td>{{ trx.creditor_bank }}</td>
         <td>{{ trx.amount }}</td>
-
-        {% if trx.status == 'S' %}
-          <td>{% trans 'Successful' %}</td>
-          {% elif trx.status == 'P' %}
-          <td>{% trans 'Pending' %}</td>
-        {% else %}
-          <td>{% trans 'Failed' %}</td>
-        {% endif %}
-
+        <td>{{ trx.status|status }}</td>
         <td>{{ trx.transaction_status_code }}</td>
         <td>{{ trx.created_at }}</td>
       </tr>

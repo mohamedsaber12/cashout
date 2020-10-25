@@ -82,13 +82,6 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/unauthorized_file_delete.log',
         },
-        'upload_error': {
-            'level': 'DEBUG',
-            'filters': ['request_id'],
-            'formatter': 'detail',
-            'class': 'logging.FileHandler',
-            'filename': 'logs/upload_error.log',
-        },
         'disburse': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -369,11 +362,6 @@ CUSTOM_LOGGING = {
         },
         'unauthorized_file_delete': {
             'handlers': ['unauthorized_file_delete'],
-            'level': 'DEBUG',
-            'propagate': True,
-        },
-        'upload_error': {
-            'handlers': ['upload_error'],
             'level': 'DEBUG',
             'propagate': True,
         },

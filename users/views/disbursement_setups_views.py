@@ -229,7 +229,7 @@ class CategoryFormView(DisbursementRootRequiredMixin, BaseFormsetView):
         if to_step == '4':
             return reverse('users:setting-disbursement-checkers')
 
-        return reverse('data:disbursement_home')
+        return reverse('data:e_wallets_home')
 
     def get_queryset(self):
         return self.model.objects.filter(user_created__hierarchy=self.request.user.hierarchy)

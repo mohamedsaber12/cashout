@@ -19,7 +19,10 @@ from django.views.generic import DetailView, TemplateView, View
 from django.views.static import serve
 
 from users.decorators import collection_users, disbursement_users, root_only, setup_required
-from users.mixins import SupportOrRootOrMakerUserPassesTestMixin
+from users.mixins import (
+    SupportOrRootOrMakerUserPassesTestMixin, UserWithAcceptVFOnboardingPermissionRequired,
+    UserWithDisbursementPermissionRequired,
+)
 from users.models import CheckerUser, Levels
 from utilities.models import AbstractBaseDocType
 
@@ -30,7 +33,6 @@ from .tasks import (doc_review_maker_mail, handle_disbursement_file,
 
 
 UPLOAD_LOGGER = logging.getLogger("upload")
-UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
 UNAUTHORIZED_FILE_DELETE_LOGGER = logging.getLogger("unauthorized_file_delete")
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
@@ -49,13 +51,12 @@ def redirect_home(request):
         return redirect(reverse('instant_cashin:pending_list'))
     if request.user.is_support:
         return redirect(reverse('users:support_home'))
-    status = request.user.get_status(request)
 
-    return redirect(f'data:{status}_home')
+    return redirect(f'data:e_wallets_home')
 
 
-@method_decorator([disbursement_users, setup_required, login_required], name='dispatch')
-class DisbursementHomeView(View):
+@method_decorator([setup_required], name='dispatch')
+class DisbursementHomeView(UserWithDisbursementPermissionRequired, View):
     """
     Home view for disbursement related users ex. Admin/Maker/Checker
     """
@@ -64,6 +65,7 @@ class DisbursementHomeView(View):
         """
         Common attributes between GET and POST methods
         """
+        self.doc_type = AbstractBaseDocType.E_WALLETS
         self.user_has_upload_perm = request.user.is_maker or request.user.is_upmaker
         self.admin_is_active = request.user.root.client.is_active
         self.family_file_categories = FileCategory.objects.get_by_hierarchy(request.user.hierarchy)
@@ -79,8 +81,7 @@ class DisbursementHomeView(View):
             2. Documents are paginated but not used in template.
         """
         has_vmt_setup = request.user.root.has_vmt_setup
-        doc_list_disbursement = Doc.objects.\
-            filter(owner__hierarchy=request.user.hierarchy, type_of=AbstractBaseDocType.E_WALLETS)
+        doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=self.doc_type)
         paginator = Paginator(doc_list_disbursement, 7)
         page = request.GET.get('page')
         docs = paginator.get_page(page)
@@ -94,7 +95,7 @@ class DisbursementHomeView(View):
             'doc_list_disbursement': docs
         }
 
-        return render(request, 'data/disbursement_home.html', context=context)
+        return render(request, 'data/e_wallets_home.html', context=context)
 
     def post(self, request, *args, **kwargs):
         """
@@ -102,19 +103,95 @@ class DisbursementHomeView(View):
         The file is later processed by the task 'handle_disbursement_file'.
         """
         if self.has_any_file_category and self.user_has_upload_perm and self.admin_is_active:
-            form_doc = FileDocumentForm(request.POST, request.FILES, request=request, is_disbursement=True)
+            form_doc = FileDocumentForm(request.POST, request.FILES, request=request, doc_type=self.doc_type)
 
             if form_doc.is_valid():
                 file_doc = form_doc.save()
                 file_doc.mark_uploaded_successfully()
-                msg = f"uploaded disbursement file with doc id: {file_doc.id}"
-                UPLOAD_LOGGER.debug(f"[message] [DISBURSEMENT FILE UPLOAD] [{request.user}] -- {msg}")
+                msg = f"uploaded e-wallets file with doc id: {file_doc.id}"
+                UPLOAD_LOGGER.debug(f"[message] [e-wallets file upload] [{request.user}] -- {msg}")
                 handle_disbursement_file.delay(file_doc.id, language=translation.get_language())
                 return HttpResponseRedirect(request.path)       # Redirect to the document list after successful POST
             else:
-                msg = f"disbursement upload error: {form_doc.errors['file'][0]}"
-                UPLOAD_ERROR_LOGGER.debug(f"[message] [DISBURSEMENT FILE UPLOAD ERROR] [{request.user}] -- {msg}")
+                UPLOAD_LOGGER.\
+                    debug(f"[message] [e-wallets file upload error] [{request.user}] -- {form_doc.errors['file'][0]}")
                 return JsonResponse(form_doc.errors, status=400)
+        else:
+            return HttpResponseRedirect(request.path)
+
+
+@method_decorator([setup_required], name='dispatch')
+class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbursementPermissionRequired, View):
+    """
+    Home view for bank wallets/cards disbursements, users ex. Admin/Maker/Checker with accept-vf onboarding permissions
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Common attributes between GET and POST methods
+        """
+        if "bank-wallets" in request.path:
+            self.doc_type = AbstractBaseDocType.BANK_WALLETS
+            self.doc_list_header = "Bank wallets - Orange"
+        elif "bank-cards" in request.path:
+            self.doc_type = AbstractBaseDocType.BANK_CARDS
+            self.doc_list_header = "Bank Cards"
+        else:
+            return HttpResponseRedirect(request.path)
+        self.admin_is_active = request.user.root.client.is_active
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        """
+        Lists all documents related to the currently logged in user hierarchy.
+        Users: Any Admin/Maker/Checker user can view his family list of disbursement documents.
+        Notes:
+            1. Documents can be filtered by date.
+            2. Documents are paginated but not used in template.
+        """
+        has_vmt_setup = request.user.root.has_vmt_setup
+        banks_doc_list = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=self.doc_type)
+        paginator = Paginator(banks_doc_list, 7)
+        page = request.GET.get('page')
+        docs = paginator.get_page(page)
+
+        context = {
+            'has_vmt_setup': has_vmt_setup,
+            'admin_is_active': self.admin_is_active,
+            'banks_doc_list': docs,
+            'doc_list_header': self.doc_list_header
+        }
+
+        return render(request, 'data/bank_sheets_home.html', context=context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Allows maker users to upload bank wallets/cards disbursement files which complies with certain predefined format
+        The file is later processed by the task 'process_bank_wallets_sheet' or 'process_bank_cards_sheet'.
+        """
+        if self.admin_is_active:
+            form_doc = FileDocumentForm(request.POST, request.FILES, request=request, doc_type=self.doc_type)
+
+            if form_doc.is_valid():
+                file_doc = form_doc.save()
+                file_doc.mark_uploaded_successfully()
+                msg = f"uploaded {self.doc_list_header.lower()} file with doc id: {file_doc.id}"
+                UPLOAD_LOGGER.debug(f"[message] [{self.doc_list_header.lower()} file upload] [{request.user}] -- {msg}")
+                if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
+                    # process_bank_wallets_sheet.delay(file_doc.id, language=translation.get_language())
+                    pass
+                elif self.doc_type == AbstractBaseDocType.BANK_CARDS:
+                    # process_bank_cards_sheet.delay(file_doc.id, language=translation.get_language())
+                    pass
+                return HttpResponseRedirect(request.path)
+            else:
+                UPLOAD_LOGGER.debug(
+                        f"[message] [{self.doc_list_header.lower()} file upload error] [{request.user}] -- "
+                        f"{form_doc.errors['file'][0]}"
+                )
+                return JsonResponse(form_doc.errors, status=400)
+        else:
+            return HttpResponseRedirect(request.path)
 
 
 @login_required
@@ -147,7 +224,7 @@ def collection_home(request):
             return HttpResponseRedirect(request.path)               # Redirect to the document list after POST
         else:
             msg = f"collection upload error: {form_doc.errors['file'][0]}"
-            UPLOAD_ERROR_LOGGER.debug(f"[message] [COLLECTION FILE UPLOAD ERROR] [{request.user}] -- {msg}")
+            UPLOAD_LOGGER.debug(f"[message] [COLLECTION FILE UPLOAD ERROR] [{request.user}] -- {msg}")
             return JsonResponse(form_doc.errors, status=400)
 
     doc_list_collection = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.COLLECTION)
@@ -277,7 +354,7 @@ def document_view(request, doc_id):
     else:
         err_msg = f"doc id: {doc.id} with hierarchy: {doc.owner.hierarchy}, user hierarchy: {request.user.hierarchy}"
         VIEW_DOCUMENT_LOGGER.debug(f"[message] [HIERARCHY ERROR] [{request.user}] -- {err_msg}")
-        return redirect(reverse("data:disbursement_home"))
+        return redirect(reverse("data:e_wallets_home"))
 
     doc_data = None
     if doc.is_processed:

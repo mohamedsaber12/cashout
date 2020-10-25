@@ -1,93 +1,95 @@
 {% load static %}
 {% load i18n %}
+
 <div class="left_col scroll-view">
-    <div class="navbar nav_title" style="text-align:center; padding-top: 12px;">
-        {% if brand_logo %}
-            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"
-                        height="38px" id="paymob_logo"></span></a>
-        {%else%}
-            <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}"
-                            height="38px" id="paymob_logo"></span></a>
-        {%endif%}    
-        
+  <div class="navbar nav_title" style="text-align:center; padding-top: 12px;">
+    {% if brand_logo %}
+      <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{{ brand_logo }}"height="38px" id="paymob_logo"></span></a>
+    {% else %}
+      <a href="{% url 'data:main_view' %}" class="site_title"> <span><img class="center" src="{% static 'img/pm_name.png' %}" height="38px" id="paymob_logo"></span></a>
+    {% endif %}
+  </div>
+
+  <div class="clearfix"></div>
+
+  <!-- menu profile quick info -->
+  <div class="profile clearfix">
+    <div class="profile_pic">
+      <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
     </div>
-
-    <div class="clearfix"></div>
-
-    <!-- menu profile quick info -->
-    <div class="profile clearfix">
-        <div class="profile_pic">
-            <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
-        </div>
-        <div class="profile_info">
-            <span>{% trans 'Welcome,' %}</span>
-            <h2>
-                {% if request.user.get_full_name %}
-                    {{ request.user.get_full_name }}
-                {%else%}
-                    {{ request.user.username }}
-                {%endif%}    
-            </h2>
-        </div>
+    <div class="profile_info">
+      <span>{% trans 'Welcome,' %}</span>
+      <h2>
+        {% if request.user.get_full_name %}
+          {{ request.user.get_full_name }}
+        {% else %}
+          {{ request.user.username }}
+        {% endif %}
+      </h2>
     </div>
-    <!-- /menu profile quick info -->
+  </div>
+  <!-- /menu profile quick info -->
 
-    <br />
+  <br/>
 
-    <!-- sidebar menu -->
-    <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
-        <div class="menu_section">
-            
-            <ul class="nav side-menu">
-                
-                <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
-                    <ul class="nav child_menu">
-                        <!-- <li><a href="#">{% trans 'Dashboard' %}</a></li>-->
-                        <li><a href="{% url 'data:disbursement_home' %}">{% trans 'Files' %}</a></li>
-                    </ul>
-                </li>
-                {% if request.user.is_root %}
-                <li>
-                    <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
-                    <i class="fa fa-user"></i> {% trans 'Balance inquiry' %}</a>
-                </li>
-                <li><a><i class="fa fa-users"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
-                    <ul class="nav child_menu">
-                        
-                        <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
-                            <ul class="nav child_menu">
-                                <li><a href="{% url 'users:add_checker' %}">{% trans 'Checker' %}</a>
-                                </li>
-                                <li><a href="{% url 'users:add_maker' %}">{% trans 'Maker' %}</a>
-                                </li>
-                            </ul>
-                        </li>
-                        <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a>
-                        </li>
-                    </ul>
-                </li>
-                {% endif %}
+  <!-- sidebar menu -->
+  <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+    <div class="menu_section">
+      <ul class="nav side-menu">
 
-                <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o" ></i>{% trans 'Active Sessions' %}</a></li>
-                <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
-                    <ul class="nav child_menu">
-                        {% if request.user.is_root %}
-                            <li><a href="{% url 'users:setting-disbursement-pin' %}">{% trans 'Setup' %}</a></li>
-                            <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
-                        {% endif %}
-                        <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
-                        {% if request.user.is_root and request.user.setup.can_pass_disbursement or request.user.is_maker %}
-                            <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
-                        {%endif%}
-                    </ul>
-                </li>
-
- 
+        {% if request.user.is_vodafone_default_onboarding %}
+          <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              <li><a href="{% url 'data:e_wallets_home' %}">{% trans 'Files' %}</a></li>
             </ul>
-        </div>
-     
-    </div>
-    <!-- /sidebar menu -->
+          </li>
+        {% else %}
+          <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              <li><a href="{% url 'data:e_wallets_home' %}">{% trans 'E-Wallets Files' %}</a></li>
+              <li><a href="{% url 'data:bank_wallets_home' %}">{% trans 'Bank Wallets/Orange Files' %}</a></li>
+              <li><a href="{% url 'data:bank_cards_home' %}">{% trans 'Bank Cards Files' %}</a></li>
+            </ul>
+          </li>
+        {% endif %}
 
-    
+        {% if request.user.is_root %}
+          <li>
+            <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+              <i class="fa fa-user"></i> {% trans 'Balance inquiry' %}</a>
+          </li>
+          <li><a><i class="fa fa-users"></i> {% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+
+              <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                  <li><a href="{% url 'users:add_checker' %}">{% trans 'Checker' %}</a>
+                  </li>
+                  <li><a href="{% url 'users:add_maker' %}">{% trans 'Maker' %}</a>
+                  </li>
+                </ul>
+              </li>
+              <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a>
+              </li>
+            </ul>
+          </li>
+        {% endif %}
+
+        <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o"></i>{% trans 'Active Sessions' %}</a></li>
+        <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
+          <ul class="nav child_menu">
+            {% if request.user.is_root %}
+              <li><a href="{% url 'users:setting-disbursement-pin' %}">{% trans 'Setup' %}</a></li>
+              <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
+            {% endif %}
+            <li><a href="{% url 'users:profile' request.user.username %}">{% trans 'Profile' %}</a></li>
+            {% if request.user.is_root and request.user.setup.can_pass_disbursement or request.user.is_maker %}
+              <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+            {% endif %}
+          </ul>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <!-- /sidebar menu -->
 </div>

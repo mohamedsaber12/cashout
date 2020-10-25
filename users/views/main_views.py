@@ -83,7 +83,7 @@ class RedirectPageView(View):
         status = request.GET.get('status', None)
         if status is not None and status in ['disbursement', 'collection']:
             request.session['status'] = status
-            return redirect(reverse(f'data:{status}_home'))
+            return redirect(reverse(f'data:e_wallets_home'))
 
         return render(request, self.template_name, {})
 

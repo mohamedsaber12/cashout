@@ -5,6 +5,7 @@ import os
 
 from django.conf import settings
 from django.db import models
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from disbursement.models import DisbursementDocData
@@ -42,8 +43,14 @@ class Doc(AbstractBaseDocType):
             verbose_name=_("Disbursed by/Checker"),
             null=True
     )
-    file_category = models.ForeignKey('data.FileCategory', on_delete=models.SET_NULL, related_name='doc', null=True)
     format = models.ForeignKey('data.Format', on_delete=models.DO_NOTHING, null=True)
+    file_category = models.ForeignKey(
+            'data.FileCategory',
+            on_delete=models.SET_NULL,
+            related_name='doc',
+            null=True,
+            blank=True
+    )
     collection_data = models.ForeignKey(
             'data.CollectionData',
             on_delete=models.CASCADE,
@@ -91,10 +98,7 @@ class Doc(AbstractBaseDocType):
 
     def get_absolute_url(self):
         from django.urls import reverse
-        if self.type_of == AbstractBaseDocType.E_WALLETS:
-            return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
-        else:
-            return reverse("data:doc_collection_detail", kwargs={'pk': self.id})
+        return reverse("data:doc_viewer", kwargs={'doc_id': self.id})
 
     def get_delete_url(self):
         from django.urls import reverse
@@ -252,3 +256,15 @@ class Doc(AbstractBaseDocType):
     def waiting_disbursement_callback(self):
         """:return True if doc disbursed successfully and the waits for the callback from the wallets side"""
         return self.disbursed_successfully and not self.has_callback
+
+    @cached_property
+    def is_e_wallet(self):
+        return self.type_of == AbstractBaseDocType.E_WALLETS
+
+    @cached_property
+    def is_bank_wallet(self):
+        return self.type_of == AbstractBaseDocType.BANK_WALLETS
+
+    @cached_property
+    def is_bank_card(self):
+        return self.type_of == AbstractBaseDocType.BANK_CARDS

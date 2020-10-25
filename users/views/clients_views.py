@@ -151,7 +151,7 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
                     f"[message] [USER DOES NOT EXIST] [{request.user}] -- "
                     f"tried to delete does not exist user with username {username}")
 
-        return redirect(reverse("data:disbursement_home"))
+        return redirect(reverse("data:e_wallets_home"))
 
 
 class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):

@@ -6,6 +6,7 @@ import os
 import tempfile
 
 import xlrd
+import pandas as pd
 
 from django import forms
 from django.core.validators import FileExtensionValidator
@@ -19,7 +20,7 @@ from utilities.models import AbstractBaseDocType
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
 
 
-UPLOAD_ERROR_LOGGER = logging.getLogger("upload_error")
+UPLOAD_LOGGER = logging.getLogger("upload")
 
 TASK_UPLOAD_FILE_TYPES = [
     'application/msword',
@@ -47,120 +48,109 @@ class FileDocumentForm(forms.ModelForm):
     file = forms.FileField(
         label=_('Select a file'),
         help_text=_('max. 42 megabytes'),
-        validators=[FileExtensionValidator(allowed_extensions=['xls', 'xlsx', 'csv', 'txt', 'doc', 'docx'])]
+        validators=[FileExtensionValidator(allowed_extensions=['xls', 'xlsx'])]
     )
 
     class Meta:
         model = Doc
-        fields = ['file_category', 'format', 'file']
+        fields = ['file_category', 'file']
 
     def __init__(self, *args, **kwargs):
         """
         Initialize FileDocumentForm for uploading files.
-        :param kwargs: request and (is_disbursement or collection) only one of them
+        :param kwargs: request and doc_type
         """
         self.request = kwargs.pop('request')
-        self.is_disbursement = kwargs.pop('is_disbursement', False)
-        self.collection = kwargs.pop('collection', None)
+        self.doc_type = kwargs.pop('doc_type', False)
 
         super().__init__(*args, **kwargs)
 
-        if self.is_disbursement:
-            self.type_of = AbstractBaseDocType.E_WALLETS
-            del self.fields['format']
-        else:
-            self.type_of = AbstractBaseDocType.COLLECTION
-            del self.fields['file_category']
-
-    def extract_file_type(self, file):
+    def _validate_file_type(self, file):
         """
         :param file: uploaded file object
-        :return: file type/extension
+        :return: tuple of file type/extension and error if any
         """
+        error = False
         file_type = file.content_type.split('/')[1]
         number_of_dots = len(file.name.split('.'))
+        is_valid_sheet_extension = file.name.endswith(('.xls', '.xlsx'))
 
-        if number_of_dots != 2:
-            raise forms.ValidationError(_("File type is not supported"))
-        return file_type
+        if not is_valid_sheet_extension or file_type not in TASK_UPLOAD_FILE_TYPES or number_of_dots != 2:
+            error = "File type is not supported. Supported types are .xls or .xlsx"
 
-    def extract_file_name(self, file):
+        return file_type, error
+
+    def _validate_file_name(self, file):
         """
         :param file: uploaded file object
-        :return: file name without the extension
+        :return: tuple of file name without the extension and errors if any
         """
+        filename = error = False
+
         try:
             filename = "".join(file.name.split('.')[:-1])
+
+            if any((char in UNICODE) for char in filename):
+                error = "Filename should not include any unicode characters ex: >, <, /, $, * "
+            elif len(file.name.split('.')[0]) >= 100:
+                error = "Filename must be less than 100 characters"
         except ValueError:
-            raise forms.ValidationError(_("File name is not proper"))
+            error = "File name is not proper"
 
-        return filename
+        return filename, error
 
-    def validate_file_type_size_and_name(self, file):
+    def _validate_file_size(self, file):
         """
         :param file: uploaded file object
-        :return: Raise form validation error if there is any problem with file type, size or name else returns True
+        :return: tuple of file size and errors if any
         """
-        file_type = self.extract_file_type(file)
-        filename = self.extract_file_name(file)
-        error = False
+        error = "Please keep the file size under 5 MB" if file.size > TASK_UPLOAD_FILE_MAX_SIZE else False
 
-        if any((char in UNICODE) for char in filename):
-            error = "Filename should not include any unicode characters ex: >, <, /, $, * "
+        return file.size, error
 
-        elif file_type not in TASK_UPLOAD_FILE_TYPES or 'openxml' not in file_type:
-            error = "File type is not supported"
-
-        elif file.size > TASK_UPLOAD_FILE_MAX_SIZE:
-            error = "Please keep file size under 5242880"
-
-        elif len(file.name.split('.')[0]) > 100:
-            error = "Filename must be less than 255 characters"
-
-        if error:
-            msg = f"file name: {filename}, file type: {file_type}, file size: {file.size}, error: {error}"
-            UPLOAD_ERROR_LOGGER.debug(f"[message] [UPLOAD ERROR AT FORM VALIDATION] [{self.request.user}] -- {msg}")
-            raise forms.ValidationError(_(error))
-
-        return True
-
-    def write_file_to_disk(self, file, format_type, file_category):
+    def write_file_to_disk(self, file, file_category):
         """
         :param file: uploaded file object
-        :param format_type: format defined for the uploader user of a collection file
         :param file_category: file category selected at uploading a disbursement file
         :return: the file uploaded written to the disk
         """
+        log_msg = "[message] [upload doc form validation error] [{0}]".format(self.request.user)
+        error = False
+
         try:
             fd, tmp = tempfile.mkstemp()
             with os.fdopen(fd, 'wb') as out:
                 out.write(file.read())
 
-            if self.is_disbursement:
+            # Validate e-wallets sheet headers
+            if self.doc_type == AbstractBaseDocType.E_WALLETS:
                 try:
                     xl_workbook = xlrd.open_workbook(tmp)
                 except Exception:
-                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
-                xl_sheet = xl_workbook.sheet_by_index(0)
+                    error = MSG_WRONG_FILE_FORMAT
+                else:
+                    if file_category.unique_identifiers_number > xl_workbook.sheet_by_index(0).ncols:
+                        error = MSG_WRONG_FILE_FORMAT
 
-                if file_category.unique_identifiers_number > xl_sheet.ncols:
-                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
+            # Validate bank wallets sheet headers
+            elif self.doc_type == AbstractBaseDocType.BANK_WALLETS:
+                valid_headers = ['mobile number', 'amount', 'full name']
+                HEADERS_ERR_MSG = f"Sheet headers are not proper, the valid headers naming and order is {valid_headers}"
 
-            elif format_type and format_type.num_of_identifiers != 0:
                 try:
-                    xl_workbook = xlrd.open_workbook(tmp)
-                except Exception:
-                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
-                xl_sheet = xl_workbook.sheet_by_index(0)
+                    df = pd.read_excel(file)
+                    error = False if df.columns.tolist() == valid_headers else HEADERS_ERR_MSG
+                except:
+                    error = "File data is not proper, check it and upload it again."
 
-                if len(format_type.identifiers()) != xl_sheet.ncols:
-                    raise forms.ValidationError(_(MSG_WRONG_FILE_FORMAT))
+            # Validate bank cards sheet headers
+            elif self.doc_type == AbstractBaseDocType.BANK_CARDS:
+                pass
 
-                # validate headers
-                cell_obj = next(xl_sheet.get_rows())
-                headers = [data.value for data in cell_obj]
-                if not format_type.headers_match(headers):
-                    raise forms.ValidationError(_("File headers doesn't match the format identifiers"))
+            # Raise form validation error if any
+            if error:
+                UPLOAD_LOGGER.debug("{} -- {}".format(log_msg, error))
+                raise forms.ValidationError(_(error))
 
         finally:
             os.unlink(tmp)  # delete the temp file no matter what
@@ -170,28 +160,32 @@ class FileDocumentForm(forms.ModelForm):
     def clean_file(self):
         """Function that validates the file type, name and size"""
         file = self.cleaned_data['file']
-        format_type = None
-        file_category = None
-
-        if self.is_disbursement:
-            file_category = self.cleaned_data['file_category']
-        else:
-            format_type = self.cleaned_data['format']
+        file_category = self.cleaned_data['file_category'] if self.doc_type == AbstractBaseDocType.E_WALLETS else None
 
         if file:
-            # validate unique fields
-            if format_type and not format_type.validate_collection_unique():
-                raise forms.ValidationError(_("This Format doesn't contain the Collection unique fields"))
+            file_type, file_type_error = self._validate_file_type(file)
+            file_name, file_name_error = self._validate_file_name(file)
+            file_size, file_size_error = self._validate_file_size(file)
 
-            self.validate_file_type_size_and_name(file)
-            return self.write_file_to_disk(file, format_type, file_category)
+            if any([file_type_error, file_name_error, file_size_error]):
+                if file_type_error:
+                    error = file_type_error
+                elif file_name_error:
+                    error = file_name_error
+                else:
+                    error = file_size_error
+
+                msg = f"file name: {file_name}, file type: {file_type}, file size: {file.size}, error: {error}"
+                UPLOAD_LOGGER.debug(f"[message] [upload doc form validation error] [{self.request.user}] -- {msg}")
+                raise forms.ValidationError(_(error))
+
+            return self.write_file_to_disk(file, file_category)
 
     def save(self, commit=True):
         """Assign values to specific attributes before saving the doc object"""
         instance = super().save(commit=False)
         instance.owner = self.request.user
-        instance.type_of = self.type_of
-        instance.collection_data = self.collection
+        instance.type_of = self.doc_type
 
         if commit:
             instance.save()

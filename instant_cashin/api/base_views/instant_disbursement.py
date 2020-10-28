@@ -15,6 +15,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from disbursement.models import BankTransaction, VMTData
+from payouts.settings import TIMEOUT_CONSTANTS
 from utilities.logging import logging_message
 
 from ...models import InstantTransaction
@@ -262,13 +263,16 @@ class InstantDisbursementAPIView(views.APIView):
                     if isinstance(specific_issuer_response, Response):
                         return specific_issuer_response
 
-                inquiry_response = requests.post(get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False)
+                trx_response = requests.post(
+                        get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
+                        timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"]
+                )
 
-                if inquiry_response.ok:
-                    json_inquiry_response = inquiry_response.json()
-                    transaction.reference_id = json_inquiry_response["TXNID"]
+                if trx_response.ok:
+                    json_trx_response = trx_response.json()
+                    transaction.reference_id = json_trx_response["TXNID"]
                 else:
-                    raise ImproperlyConfigured(inquiry_response.text)
+                    raise ImproperlyConfigured(trx_response.text)
 
             except ValidationError as e:
                 logging_message(
@@ -277,24 +281,28 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_failed("6061", INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            except (TimeoutError, ImproperlyConfigured, Exception) as e:
+            except (requests.Timeout, TimeoutError) as e:
+                logging_message(
+                        INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
+                )
+                transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
+
+            except (ImproperlyConfigured, Exception) as e:
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, e.args)
                 transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            if inquiry_response.ok and json_inquiry_response["TXNSTATUS"] == "200":
+            if json_trx_response["TXNSTATUS"] == "200":
                 logging_message(
-                        INSTANT_CASHIN_SUCCESS_LOGGER, "[response] [SUCCESSFUL TRX]",
-                        request, f"{json_inquiry_response}"
+                        INSTANT_CASHIN_SUCCESS_LOGGER, "[response] [SUCCESSFUL TRX]", request, f"{json_trx_response}"
                 )
-                transaction.mark_successful(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
+                transaction.mark_successful(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
                 request.user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            logging_message(
-                    INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_inquiry_response}"
-            )
-            transaction.mark_failed(json_inquiry_response["TXNSTATUS"], json_inquiry_response["MESSAGE"])
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_trx_response}")
+            transaction.mark_failed(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
         elif issuer in ["bank_wallet", "bank_card", "orange"]:

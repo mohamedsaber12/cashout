@@ -313,3 +313,8 @@ SILENCED_SYSTEM_CHECKS = ['admin.E410']
 ADMIN_SITE_HEADER = 'Payouts Admin Panel'
 ADMIN_SITE_TITLE = 'Paymob'
 ADMIN_INDEX_TITLE = 'Payouts Administration'
+
+# Timeout dictionary
+TIMEOUT_CONSTANTS = {
+    'CENTRAL_UIG': 33
+}

@@ -12,7 +12,7 @@
       <th>{% trans 'Amount' %}</th>
       <th>{% trans 'Status' %}</th>
       <th>{% trans 'Code' %}</th>
-      <th>{% trans 'Created At' %}</th>
+      <th>{% trans 'Updated At' %}</th>
     </tr>
     </thead>
 
@@ -26,7 +26,7 @@
         <td>{{ trx.amount }}</td>
         <td>{{ trx.status|status }}</td>
         <td>{{ trx.transaction_status_code }}</td>
-        <td>{{ trx.created_at }}</td>
+        <td>{{ trx.updated_at }}</td>
       </tr>
 
     {% endfor %}

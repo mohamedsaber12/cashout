@@ -41,14 +41,32 @@ class BankTransactionsChannel:
 
     @staticmethod
     def create_new_trx_out_of_passed_one(bank_trx_obj):
-        new_trx_dict = bank_trx_obj.__dict__
-        new_trx_dict.pop("_state")
-        new_trx_dict.pop("id")
-        new_trx_dict.pop("transaction_id")
-        new_trx_dict.pop("message_id")
-        new_trx_dict.pop("created_at")
-        new_trx_dict.pop("updated_at")
-        return BankTransaction.objects.create(**new_trx_dict)
+        new_transaction_dict = {
+            'currency': bank_trx_obj.currency,
+            'status': bank_trx_obj.status,
+            'category_code': bank_trx_obj.category_code,
+            'purpose': bank_trx_obj.purpose,
+            'parent_transaction': bank_trx_obj.parent_transaction,
+            'user_created': bank_trx_obj.user_created,
+            'transaction_status_code': bank_trx_obj.transaction_status_code,
+            'transaction_status_description': bank_trx_obj.transaction_status_description,
+            'debtor_account': bank_trx_obj.debtor_account,
+            'amount': bank_trx_obj.amount,
+            'creditor_name': bank_trx_obj.creditor_name,
+            'creditor_account_number': bank_trx_obj.creditor_account_number,
+            'creditor_bank': bank_trx_obj.creditor_bank,
+            'creditor_bank_branch': bank_trx_obj.creditor_bank_branch,
+            'end_to_end': bank_trx_obj.end_to_end,
+            'creditor_email': bank_trx_obj.creditor_email,
+            'creditor_mobile_number': bank_trx_obj.creditor_mobile_number,
+            'corporate_code': bank_trx_obj.corporate_code,
+            'sender_id': bank_trx_obj.sender_id,
+            'creditor_id': bank_trx_obj.creditor_id,
+            'creditor_address_1': bank_trx_obj.creditor_address_1,
+            'debtor_address_1': bank_trx_obj.debtor_address_1,
+            'additional_info_1': bank_trx_obj.additional_info_1,
+        }
+        return BankTransaction.objects.create(**new_transaction_dict)
 
     @staticmethod
     def get_corresponding_instant_trx_if_any(bank_trx_obj):
@@ -136,7 +154,7 @@ class BankTransactionsChannel:
     @staticmethod
     def get(url, payload, bank_trx_obj):
         """Handles GET requests to EBC via requests package"""
-        log_header = "GET ACH TRANSACTION STATUS FROM EBC"
+        log_header = "get ach transaction status from EBC"
         ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[request] [{log_header}] [{bank_trx_obj.user_created}] -- {payload}"))
 
         try:

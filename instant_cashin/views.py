@@ -69,9 +69,11 @@ class BankTransactionsListView(InstantReviewerRequiredMixin, ListView):
     queryset = BankTransaction.objects.all()
 
     def get_queryset(self):
-        queryset = super().get_queryset().filter(user_created__hierarchy=self.request.user.hierarchy).\
+        bank_trx_ids = super().get_queryset().filter(user_created__hierarchy=self.request.user.hierarchy).\
             filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
-            prefetch_related("children_transactions").distinct().order_by("-created_at")
+            order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id").\
+            values_list("id", flat=True)
+        queryset = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
 
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')

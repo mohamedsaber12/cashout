@@ -92,6 +92,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     Serializes the response of instant bank transaction objects
     """
 
+    transaction_id = serializers.SerializerMethodField()
     issuer = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
@@ -103,6 +104,9 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
+    def get_transaction_id(self, transaction):
+        """Retrieves parent transaction transaction_id"""
+        return transaction.parent_transaction.transaction_id
 
     def get_issuer(self, transaction):
         """Retrieves transaction issuer"""
@@ -145,7 +149,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
 
     def get_created_at(self, transaction):
         """Retrieves transaction created_at time formatted"""
-        return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+        return transaction.parent_transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     def get_updated_at(self, transaction):
         """Retrieves transaction updated_at time formatted"""

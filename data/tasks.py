@@ -38,6 +38,11 @@ MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(
 MSG_REGISTRATION_PROCESS_ERROR = _(f"Registration process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
 
 
+def check_total_budget_regarding_issuer(doc, amount_list, issuer):
+     return Budget.objects.get(disburser=doc.owner.root).\
+        accumulate_amount_with_fees_and_vat(sum([float(value) for value in amount_list if value]), issuer)
+
+
 @app.task(ignore_result=False)
 @respects_language
 def handle_disbursement_file(doc_obj_id, **kwargs):
@@ -48,7 +53,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     Category has no files
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
-    issuers_valid_list = ['vodafone', 'etisalat', 'orange', 'aman']
+    issuers_valid_list = ['vodafone', 'etisalat', 'aman']
     callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
     is_normal_flow = doc_obj.owner.root.root_entity_setups.is_normal_flow
     is_total_amount_within_threshold = False
@@ -124,14 +129,22 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
 
         list_of_dicts.append(row_dict)
 
-    msisdn, amount, issuer, vodafone_msisdn,errors = [], [], [], [], []
-    for dict in list_of_dicts:
-        msisdn.append(dict['msisdn'])
-        amount.append(dict['amount'])
-        errors.append(dict['error'])
+    msisdn, amount, issuer, vodafone_msisdn, errors = [], [], [], [], []
+    vf_amount_list, ets_amount_list, aman_amount_list = [], [], []
+    for record_dict in list_of_dicts:
+        msisdn.append(record_dict['msisdn'])
+        amount.append(record_dict['amount'])
+        errors.append(record_dict['error'])
         if not is_normal_flow:
-            issuer.append(dict['issuer'])
-            vodafone_msisdn.append(dict['msisdn']) if str(dict['issuer']).lower() == 'vodafone' else None
+            issuer.append(record_dict['issuer'])
+
+            if str(record_dict['issuer']).lower() == 'vodafone':
+                vodafone_msisdn.append(record_dict['msisdn'])
+                vf_amount_list.append(record_dict['amount'])
+            if str(record_dict['issuer']).lower() == 'etisalat':
+                ets_amount_list.append(record_dict['amount'])
+            if str(record_dict['issuer']).lower() == 'aman':
+                aman_amount_list.append(record_dict['amount'])
 
     valid = True
     if len([value for value in errors if value]) > 0:
@@ -148,9 +161,19 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         valid = False
         error_message = MSG_WRONG_FILE_FORMAT
 
-    if valid and doc_obj.owner.root.has_custom_budget:
-        is_total_amount_within_threshold = Budget.objects.get(disburser=doc_obj.owner.root).\
-            within_threshold(sum([float(value) for value in amount if value]), "vodafone")
+    if doc_obj.owner.root.is_accept_vodafone_onboarding:
+        if valid and doc_obj.owner.root.has_custom_budget and (vf_amount_list or ets_amount_list or aman_amount_list):
+            vf_total_amount = ets_total_amount = aman_total_amount = 0
+            if vf_amount_list:
+                vf_total_amount = check_total_budget_regarding_issuer(doc_obj, vf_amount_list, "vodafone")
+            if ets_amount_list:
+                ets_total_amount = check_total_budget_regarding_issuer(doc_obj, ets_amount_list, "etisalat")
+            if aman_amount_list:
+                aman_total_amount = check_total_budget_regarding_issuer(doc_obj, aman_amount_list, "aman")
+
+            if sum([vf_total_amount, ets_total_amount, aman_total_amount]) <= \
+                    Budget.objects.get(disburser=doc_obj.owner.root).current_balance:
+                is_total_amount_within_threshold = True
 
     max_amount_can_be_disbursed = max(
         [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
@@ -185,7 +208,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
     else:
         fees_profile = doc_obj.owner.root.client.get_fees()
 
-    if callwallets_moderator.change_profile:
+    if callwallets_moderator.change_profile and _msisdn:
         superadmin = doc_obj.owner.root.client.creator
         payload = superadmin.vmt.accumulate_change_profile_payload(_msisdn, fees_profile)
         try:
@@ -210,7 +233,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             notify_maker(doc_obj)
             return False
 
-    elif not callwallets_moderator.change_profile and callwallets_moderator.disbursement:
+    elif callwallets_moderator.disbursement and \
+            (not callwallets_moderator.change_profile or (callwallets_moderator.change_profile and not _msisdn)):
         doc_obj.has_change_profile_callback = True
         doc_obj.processed_successfully()
         notify_maker(doc_obj)
@@ -390,8 +414,6 @@ def handle_uploaded_file(doc_obj_id, **kwargs):
     Category has no files
 
     :param doc_obj_id: uploaded file id.
-    :param category_id: category that contains this file.
-    :return: void.
     """
     doc_obj = Doc.objects.get(id=doc_obj_id)
     format = doc_obj.format
@@ -431,7 +453,7 @@ def handle_uploaded_file(doc_obj_id, **kwargs):
             row_index += 1
             continue
 
-        *map(data.append, [excl_data, ]),
+        # *map(data.append, [excl_data, ]),
 
         # Specify unique fields to search with.
         processed_data = json.loads(data.json)[0]
@@ -496,7 +518,8 @@ def notify_checkers(doc_id, level, **kwargs):
     deliver_mail(None, _(' Review Notification'), message, checkers)
 
     CHECKERS_NOTIFICATION_LOGGER.debug(
-            f"[message] [REVIEWERS NOTIFIED] [{doc_obj.owner}] -- {' and '.join([checker for checker in checkers])}"
+            f"[message] [REVIEWERS NOTIFIED] [{doc_obj.owner}] -- "
+            f"{' and '.join([checker.username for checker in checkers])}"
     )
 
 
@@ -526,7 +549,7 @@ def notify_disbursers(doc_id, min_level, **kwargs):
 
     CHECKERS_NOTIFICATION_LOGGER.debug(
             f"[message] [DISBURSERS NOTIFIED] [{doc_obj.owner}] -- "
-            f"{' and '.join([checker for checker in disbursers_to_be_notified])}"
+            f"{' and '.join([checker.username for checker in disbursers_to_be_notified])}"
     )
 
 

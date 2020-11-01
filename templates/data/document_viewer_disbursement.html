@@ -57,7 +57,7 @@
                     </div>
                 {% elif doc.processing_failure_reason %}
                     <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-                        {{doc.processing_failure_reason}}{% trans ', fix it and upload again! Thanks' %}
+                        {{doc.processing_failure_reason}}
                     </div>
                 {% else %}
                     <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">

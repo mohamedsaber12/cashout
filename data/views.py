@@ -28,8 +28,10 @@ from utilities.models import AbstractBaseDocType
 
 from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm, FormatFormSet)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
-from .tasks import (doc_review_maker_mail, handle_disbursement_file,
-                    handle_uploaded_file, notify_checkers, notify_disbursers)
+from .tasks import (
+    doc_review_maker_mail, handle_disbursement_file,
+    handle_uploaded_file, notify_checkers, notify_disbursers, BankWalletsSheetProcessor,
+)
 
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -178,8 +180,7 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
                 msg = f"uploaded {self.doc_list_header.lower()} file with doc id: {file_doc.id}"
                 UPLOAD_LOGGER.debug(f"[message] [{self.doc_list_header.lower()} file upload] [{request.user}] -- {msg}")
                 if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
-                    # process_bank_wallets_sheet.delay(file_doc.id, language=translation.get_language())
-                    pass
+                    BankWalletsSheetProcessor.delay(file_doc.id)
                 elif self.doc_type == AbstractBaseDocType.BANK_CARDS:
                     # process_bank_cards_sheet.delay(file_doc.id, language=translation.get_language())
                     pass

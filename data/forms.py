@@ -140,7 +140,8 @@ class FileDocumentForm(forms.ModelForm):
                 try:
                     df = pd.read_excel(file)
                     error = False if df.columns.tolist() == valid_headers else HEADERS_ERR_MSG
-                except:
+                    if min(df.count()) < 1: raise ValueError
+                except (ValueError, Exception):
                     error = "File data is not proper, check it and upload it again."
 
             # Validate bank cards sheet headers
@@ -150,7 +151,7 @@ class FileDocumentForm(forms.ModelForm):
             # Raise form validation error if any
             if error:
                 UPLOAD_LOGGER.debug("{} -- {}".format(log_msg, error))
-                raise forms.ValidationError(_(error))
+                raise forms.ValidationError(error)
 
         finally:
             os.unlink(tmp)  # delete the temp file no matter what

@@ -39,7 +39,7 @@ django-phonenumber-field==4.0.0
 django-ratelimit==2.0.0
 django-smtp-ssl==1.0
 django-timezone-field==4.0
-django-two-factor-auth==1.13
+django-two-factor-auth==1.12.1
 django-user-sessions==1.7.1
 django-werkzeug-debugger-runserver==0.3.1
 djangorestframework==3.9.2

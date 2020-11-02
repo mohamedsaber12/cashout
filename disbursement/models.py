@@ -16,7 +16,7 @@ from core.models import AbstractBaseStatus, AbstractTimeStamp
 from utilities.models import (
     AbstractBaseDocStatus, AbstractBaseVMTData,
     AbstractTransactionCategory, AbstractTransactionCurrency,
-    AbstractTransactionPurpose
+    AbstractTransactionPurpose,
 )
 
 
@@ -200,6 +200,13 @@ class BankTransaction(AbstractTimeStamp,
             on_delete=models.CASCADE,
             related_name=_('bank_transactions'),
             verbose_name=_('Disburser')
+    )
+    document = models.ForeignKey(
+            'data.Doc',
+            on_delete=models.CASCADE,
+            related_name=_('bank_transactions'),
+            verbose_name=_('Disbursement Document'),
+            null=True
     )
     transaction_id = models.UUIDField(
             _('Transaction ID'),

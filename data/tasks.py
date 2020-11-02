@@ -1,23 +1,28 @@
 # -*- coding: UTF-8 -*-
 from __future__ import print_function
 
+import csv
+from decimal import Decimal
 import itertools
 import json
 import logging
 import re
 from datetime import datetime
 
+from celery import Task
 import requests
 import tablib
 import xlrd
 from dateutil.parser import parse
+import pandas as pd
 
 from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from disbursement.models import DisbursementData
+from disbursement.models import DisbursementData, BankTransaction
 from disbursement.resources import DisbursementDataResource
+from instant_cashin.utils import get_from_env
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
@@ -32,10 +37,222 @@ from .utils import deliver_mail, export_excel, randomword
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
-MSG_NOT_WITHIN_THRESHOLD = _(f"Disbursement file's amounts exceeds your current balance, {MSG_TRY_OR_CONTACT}")
+MSG_NOT_WITHIN_THRESHOLD = _(f"File's total amount exceeds your current balance, {MSG_TRY_OR_CONTACT}")
 MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(
-        f"Disbursement file's amounts exceeds your maximum amount that can be disbursed, {MSG_TRY_OR_CONTACT}")
+        f"File's total amount exceeds your maximum amount that can be disbursed, {MSG_TRY_OR_CONTACT}")
 MSG_REGISTRATION_PROCESS_ERROR = _(f"Registration process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+
+
+UPLOAD_LOGGER = logging.getLogger("upload")
+
+
+class BankWalletsSheetProcessor(Task):
+    """
+    Task to process and validate bank wallets uploaded sheets.
+    https://medium.com/casual-inference/the-most-time-efficient-ways-to-import-csv-data-in-python-cc159b44063d
+    """
+
+    def amount_is_valid_digit(self, amount):
+        return str(amount).replace('.', '', 1).isdigit()
+
+    def determine_max_amount_can_be_disbursed(self, doc_obj):
+        """
+        :param doc_obj: document to be processed
+        :return: max_amount_can_be_disbursed
+        """
+        return max([level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)])
+
+    def determine_csv_delimiter(self, doc_obj):
+        """
+        :param doc_obj: csv document to be processed
+        :return: the delimiter used at the csv sheet or False if there is any problem
+        """
+        try:
+            as_string = doc_obj.file.read().decode("utf-8")
+            dialect = csv.Sniffer().sniff(as_string)
+            doc_obj.file.seek(0)
+            return dialect.delimiter
+        except:
+            return False
+
+    def accumulate_df(self, doc_obj):
+        """
+        :param doc_obj: document to be processed
+        :return: data frame using pandas package
+        """
+        doc_type = "csv" if doc_obj.file.name.endswith(".csv") else "excel"
+
+        if doc_type == "excel":
+            df = pd.read_excel(doc_obj.file)
+        else:
+            df = pd.read_csv(doc_obj.file, delimiter=self.determine_csv_delimiter(doc_obj))
+
+        return df
+
+    def end_with_failure(self, doc_obj, failure_message):
+        """
+        :param doc_obj: document to be processed
+        :param failure_message: the processing failure message to be recorded
+        :return: data frame using pandas package
+        """
+        doc_obj.processing_failure(failure_message)
+        notify_maker(doc_obj)
+        UPLOAD_LOGGER.debug(f"[message] [bank file processing error] [celery_task] -- {failure_message}")
+
+    def end_with_failure_sheet_details(self, doc_obj, msisdn_list, amount_list, names_list, errors_list):
+        filename = f"failed_validations_{randomword(4)}.xlsx"
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        error_message = _("File validation error")
+        sheet_data = list(zip(msisdn_list, amount_list, names_list, errors_list))
+        headers = ["mobile number", "amount", "full name", "errors"]
+        sheet_data.insert(0, headers)
+        export_excel(file_path, sheet_data)
+        download_url = settings.BASE_URL + \
+                       str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj.id})) + \
+                       f"?filename={filename}"
+        doc_obj.processing_failure(error_message)
+        notify_maker(doc_obj, download_url)
+
+    def process_and_validate_records(self, df):
+        """
+
+        """
+        total_amount = 0
+        msisdn_list, amount_list, names_list, errors_list = [], [], [], []
+
+        try:
+            for record in df.itertuples():
+                index = record[0]
+                errors_list.append(None)
+
+                # 1. Validate amounts
+                if self.amount_is_valid_digit(record[2]) and float(record[2]) >= 1.0:
+                    amount_list.append(round(Decimal(record[2]), 2))
+                    total_amount += round(Decimal(record[2]), 2)
+                else:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid amount"
+                    else:
+                        errors_list[index] = "\nInvalid amount"
+                    amount_list.append(record[2])
+
+                # 2. Validate for empty names
+                names_list.append(record[3])
+                if not record[3]:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid name"
+                    else:
+                        errors_list[index] = "\nInvalid name"
+
+                # 3. Validate msisdns
+                msisdn = str(record[1])
+                valid_msisdn = False
+                if msisdn.startswith("1") and len(msisdn) == 10:
+                    msisdn = f"0020{msisdn}"
+                    msisdn_list.append(msisdn)
+                    valid_msisdn = True
+                elif msisdn.startswith("01") and len(msisdn) == 11:
+                    msisdn = f"002{msisdn}"
+                    msisdn_list.append(msisdn)
+                    valid_msisdn = True
+                elif msisdn.startswith("2") and len(msisdn) == 12:
+                    msisdn = f"00{msisdn}"
+                    msisdn_list.append(msisdn)
+                    valid_msisdn = True
+                else:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid mobile number"
+                    else:
+                        errors_list[index] = "\nInvalid mobile number"
+                    msisdn_list.append(msisdn)
+
+                if valid_msisdn and len(list(filter(lambda ms: ms == msisdn, msisdn_list))) > 1:
+                    if errors_list[index]:
+                        errors_list[index] = "Duplicate mobile number"
+                    else:
+                        errors_list[index] = "\nDuplicate mobile number"
+                        msisdn_list.append(record[1])
+        except:
+            pass
+        finally:
+            return msisdn_list, amount_list, names_list, errors_list, total_amount
+
+    def run(self, doc_id, *args, **kwargs):
+        """
+        :param doc_id: id of the document being disbursed
+        :return
+        """
+        try:
+            doc_obj = Doc.objects.get(id=doc_id)
+            callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
+            max_amount_can_be_disbursed = self.determine_max_amount_can_be_disbursed(doc_obj)
+            df = self.accumulate_df(doc_obj)
+            rows_count = df.count()
+
+            # Check if all records has no empty values
+            if not (rows_count["mobile number"] == rows_count["amount"] == rows_count["full name"]):
+                self.end_with_failure(doc_obj, MSG_WRONG_FILE_FORMAT)
+                return False
+
+            msisdn_list, amount_list, names_list, errors_list, total_amount = self.process_and_validate_records(df)
+            doc_obj.total_amount = total_amount
+            doc_obj.total_count = max(rows_count)
+
+            # 1. Check if the entity admin is privileged to disburse sheets
+            if not callwallets_moderator.disbursement:
+                self.end_with_failure(doc_obj, f"Entity is suspended from disbursing sheets, {MSG_TRY_OR_CONTACT}")
+                return False
+            # 2. Check if there is any errors happened at sheet processing
+            elif len([value for value in errors_list if value]) > 0:
+                self.end_with_failure_sheet_details(doc_obj, msisdn_list, amount_list, names_list, errors_list)
+                return False
+            # 3. Check if the sheet's total amount doesn't exceed maximum amount that can be disbursed for this checker
+            elif total_amount > max_amount_can_be_disbursed:
+                self.end_with_failure(doc_obj, MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
+                return False
+            # 4. Check if the sheet's total amount doesn't exceed the current available budget of the entity
+            elif not Budget.objects.get(disburser=doc_obj.owner.root).within_threshold(total_amount, "bank_wallet"):
+                self.end_with_failure(doc_obj, MSG_NOT_WITHIN_THRESHOLD)
+                return False
+
+            processed_data = zip(amount_list, names_list, msisdn_list)
+            BankTransaction.objects.bulk_create(
+                    [
+                        BankTransaction(
+                                currency="EGP",
+                                debtor_address_1="EG",
+                                creditor_address_1="EG",
+                                creditor_bank="THWL",   # ToDo: Change it to "MIDG" at the production environment
+                                category_code="MOBI",
+                                purpose="CASH",
+                                corporate_code=get_from_env("ACH_CORPORATE_CODE"),
+                                debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
+                                document=doc_obj,
+                                user_created=doc_obj.owner,
+                                amount=i[0],
+                                creditor_name=i[1],
+                                creditor_account_number=i[2]
+                        ) for i in processed_data
+                    ]
+            )
+            # ToDo: Add signal to BankTransaction model to save the object to the parent_transaction field
+
+            # Change doc status to processed successfully and notify makers that doc passed validations
+            doc_obj.has_change_profile_callback = True
+            doc_obj.processed_successfully()
+            notify_maker(doc_obj)
+            UPLOAD_LOGGER.debug(f"[message] [bank file passed processing] [celery_task] -- Doc id: {doc_id}")
+            return True
+        except Doc.DoesNotExist:
+            UPLOAD_LOGGER.debug(f"[message] [bank file processing error] [celery_task] -- Doc id: {doc_id} not found")
+            return False
+        except Exception as err:
+            self.end_with_failure(doc_obj, MSG_REGISTRATION_PROCESS_ERROR)
+            UPLOAD_LOGGER.debug(f"[message] [bank file processing error] [celery_task] -- {err.args}")
+            return False
+
+
+BankWalletsSheetProcessor = app.register_task(BankWalletsSheetProcessor())
 
 
 def check_total_budget_regarding_issuer(doc, amount_list, issuer):
@@ -141,9 +358,9 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             if str(record_dict['issuer']).lower() == 'vodafone':
                 vodafone_msisdn.append(record_dict['msisdn'])
                 vf_amount_list.append(record_dict['amount'])
-            if str(record_dict['issuer']).lower() == 'etisalat':
+            elif str(record_dict['issuer']).lower() == 'etisalat':
                 ets_amount_list.append(record_dict['amount'])
-            if str(record_dict['issuer']).lower() == 'aman':
+            elif str(record_dict['issuer']).lower() == 'aman':
                 aman_amount_list.append(record_dict['amount'])
 
     valid = True
@@ -576,7 +793,7 @@ def doc_review_maker_mail(doc_id, review_id, **kwargs):
             Thanks, BR""")
     else:
         message = _(f"""Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>
-                    The file named <a href="{doc_view_url}" >{doc.filename()}</a> didn't pass the review by
+                    The file named <a href="{doc_view_url}" >{doc.filename()}</a> did not pass the review by
                     the checker: {review.user_created.first_name} {review.user_created.last_name}
                     and the reason is: {review.comment}<br><br>
                     Thanks, BR""")

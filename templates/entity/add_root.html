@@ -2,13 +2,13 @@
 {% load i18n %}
 {% load static %}
 {% load custom_tags %}
-{% block title %} {% trans 'Root' %} {% endblock %}
+{% block title %} {% trans 'New Client' %} {% endblock %}
 {% block gentellacss %}
     <link href="{% static 'gentella/iCheck/skins/flat/green.css' %}" rel="stylesheet">
 {% endblock %}
 {% block form %}
     <form action="." method="post">
-      <h1>{% trans 'Add Entity User' %}</h1>
+      <h1>{% trans 'Add Client User' %}</h1>
 
         {% csrf_token %}
             <div>

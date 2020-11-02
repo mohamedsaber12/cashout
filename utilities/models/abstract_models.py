@@ -58,7 +58,7 @@ class AbstractBaseDocType(AbstractTimeStamp):
         (BANK_CARDS, _("Bank cards"))
     ]
 
-    type_of = models.PositiveSmallIntegerField(_("Type"), choices=TYPES_CHOICES, default=E_WALLETS)
+    type_of = models.PositiveSmallIntegerField(_("Type"), db_index=True, choices=TYPES_CHOICES, default=E_WALLETS)
 
     class Meta:
         abstract = True

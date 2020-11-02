@@ -1,0 +1,86 @@
+version: "3.7"
+
+services:
+
+  payouts: &payouts
+    container_name: PayoutsPortal
+    build:
+      context: .
+    restart: always
+    env_file:
+      - ./.env
+    volumes:
+      - .:/app/payouts_portal
+      - static_volume:/app/staticfiles/static
+      - media_volume:/app/mediafiles/media
+    ports:
+      - 8000:8000
+    command: >
+      sh -c "
+             python manage.py makemigrations users &&
+             python manage.py migrate users &&
+             python manage.py makemigrations data &&
+             python manage.py migrate data &&
+             python manage.py makemigrations disbursement &&
+             python manage.py migrate disbursement &&
+             python manage.py makemigrations instant_cashin &&
+             python manage.py migrate instant_cashin &&
+             python manage.py makemigrations payment &&
+             python manage.py migrate payment &&
+             python manage.py makemigrations utilities &&
+             python manage.py migrate utilities &&
+             python manage.py makemigrations &&
+             python manage.py migrate &&
+             mkdocs build &&
+             python manage.py runserver_plus 0.0.0.0:8000"
+    networks:
+      - payouts_network
+    depends_on:
+      - postgres
+      - rabbitmq
+
+  postgres:
+    container_name: PostgreSQL
+    image: postgres:11
+    environment:
+      POSTGRES_USER: payouts_user
+      POSTGRES_DB: payouts_database
+      POSTGRES_PASSWORD: PayoutsPortalPassword
+    volumes:
+      - .:/var/lib/postgresql
+      - postgresql_volume:/var/lib/postgresql/data
+    networks:
+      - payouts_network
+
+  rabbitmq:
+    container_name: RabbitMQ
+    image: rabbitmq:3.8
+    volumes:
+      - rabbit_volume:/var/lib/rabbitmq
+    networks:
+      - payouts_network
+
+  celery_worker:
+    <<: *payouts
+    container_name: Celery_Worker
+    command: [ "celery", "worker", "--app", "payouts.settings", "--events", "--beat", "--scheduler", "django", "--loglevel", "info" ]
+    ports: [ ]
+    networks:
+      - payouts_network
+    depends_on:
+      - rabbitmq
+    links:
+      - payouts
+
+volumes:
+  static_volume:
+  media_volume:
+  postgresql_volume:
+  rabbit_volume:
+
+networks:
+  payouts_network:
+    driver: bridge
+
+# Use bind volumes for log files of every service
+# Use bind volumes for media & static & DB

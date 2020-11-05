@@ -228,7 +228,7 @@ class BankTransaction(AbstractTimeStamp,
     )
     transaction_status_code = models.CharField(
             _('Transaction Status Code'),
-            max_length=4,
+            max_length=6,
             blank=True,
             null=True
     )

@@ -39,7 +39,7 @@
                 {% else %}
                     <button disabled class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Disburse' %}</button>   
                     <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-                        {{can_user_disburse.reason}}
+                        {{ can_user_disburse.reason }}
                     </div>
                 {% endif %}
             </div>
@@ -47,8 +47,7 @@
         {% elif request.user.is_maker %}
             <div class="col-md-12 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                 {% if doc.is_processed and not doc.can_be_disbursed %}
-                    <button id="notify_button" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}" 
-                        data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
+                    <button id="notify_button" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
                         {% trans 'Notify Chekers' %}
                     </button>
                 {% elif doc.can_be_disbursed %}
@@ -57,7 +56,7 @@
                     </div>
                 {% elif doc.processing_failure_reason %}
                     <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-                        {{doc.processing_failure_reason}}
+                        {{ doc.processing_failure_reason }}
                     </div>
                 {% else %}
                     <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
@@ -85,9 +84,7 @@
                         <br />
                         <form class="form-horizontal form-label-left" method="post" id="reviewForm" action="{% url 'data:doc_viewer' doc.id %}">
                             {% csrf_token %}
-                            {%if review_form_errors %}
-                                <span class="error_span">{{review_form_errors}}</span>
-                            {%endif%}
+                            {% if review_form_errors %}<span class="error_span">{{ review_form_errors }}</span>{% endif %}
                             <div class="form-group">
                                 <label class="control-label col-md-3 col-sm-3 col-xs-12">{% trans 'Accept or Reject' %}</label>
                                 <div class="col-md-9 col-sm-9 col-xs-12">
@@ -117,7 +114,7 @@
                 </div>
             </div>
         </div>
-    {%endif%}
+    {% endif %}
 
     {% if reviews and reviews.exists %}
         <div class="row">
@@ -132,25 +129,25 @@
                     </div>
                     <div class="x_content">
                         <ul class="messages">
-                            {% for review in reviews%}
+                            {% for review in reviews %}
                             <li>
-                                <img src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
+                                <img src="{{ review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
                                 <div class="message_wrapper">
-                                    <h4 class="heading">{{review.user_created.username}}
+                                    <h4 class="heading">{{ review.user_created.username }}
                                         {% if review.user_created.first_name %}
-                                            <small >({{review.user_created.first_name}})</small>
+                                            <small >({{ review.user_created.first_name }})</small>
                                         {%endif%}
 
                                         {% if review.is_ok %}
                                             <span style="color:green" class="alignright glyphicon glyphicon-ok" aria-hidden="true"></span>
-                                        {%else%}
+                                        {% else %}
                                             <span style="color:red" class="alignright glyphicon glyphicon-remove" aria-hidden="true"></span>
-                                        {%endif%}
+                                        {% endif %}
                                     </h4>
 
                                     {% if review.comment %}
                                         <blockquote class="message">{{ review.comment }}</blockquote><br />
-                                    {%endif%}
+                                    {% endif %}
                                     <p class="url">{{review.timestamp|date}}</p>
                                 </div>
                             </li>
@@ -160,7 +157,7 @@
                 </div>
             </div>
         </div>
-    {%endif%}
+    {% endif %}
     {# End of Reviews Section #}
 
     <!-- data table -->
@@ -168,14 +165,14 @@
         <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>{% trans 'Disbursement Document data' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc.id %}">{{doc.filename}}</a></small></h2>
+                    <h2>{% trans 'Disbursement Document data' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc.id %}">{{ doc.filename }}</a></small></h2>
                     <ul class="nav navbar-right panel_toolbox">
                         {% if request.user.is_root %}
                             <li>
-                                <button data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
+                                <button data-uri="{{ doc.get_delete_url }}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
                             </button>
                             </li>
-                        {%endif%}    
+                        {% endif %}
                         <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                         </li>
                     </ul>
@@ -184,7 +181,7 @@
                 {% if doc.is_processed %}
                 <div class="x_content">
                     <h3 class="font-13 m-b-30" style="font-weight: bolder;">
-                        {% trans 'Count:' %} {{doc.total_count}} | {% trans 'Total Amount:' %} {{doc.total_amount}}
+                        {% trans 'Count:' %} {{ doc.total_count }} | {% trans 'Total Amount:' %} {{ doc.total_amount }}
                     </h3>
                     <table id="doc-datatable" class="table table-striped table-bordered">
                         <thead>
@@ -193,17 +190,17 @@
                             {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
                         </thead>
                         <tbody>
-                            {% for data  in doc_data%}
+                            {% for data  in doc_data %}
                                 <tr>
-                                    <td>{{data.msisdn}}</td>
-                                    <td>{{data.amount}}</td>
-                                    {% if not is_normal_flow %}<td>{{data.issuer}}</td>{% endif %}
+                                    <td>{{ data.msisdn }}</td>
+                                    <td>{{ data.amount }}</td>
+                                    {% if not is_normal_flow %}<td>{{ data.issuer }}</td>{% endif %}
                                 </tr>
-                            {%endfor%}
+                            {% endfor %}
                         </tbody>
                     </table>
                 </div>
-                {%endif%}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -286,29 +283,29 @@
             $('#AgentModal').modal();
         });
 
-        if ('{{redirect}}' == 'true') {
-            if ('{{disburse}}' == 1) {
+        if ('{{ redirect }}' == 'true') {
+            if ('{{ disburse }}' == 1) {
                 $('#modal-header').append("{% trans 'Disbursed, Thanks!' %}");
                 $('#modal-message').append('<p>{% trans "Disbursement process is running, you can check reports later" %}</p><br>');
                 $('#myModal').removeClass('hide');
                 $('#myModal').modal();
-            } else if ('{{disburse}}' == 0) {
+            } else if ('{{ disburse }}' == 0) {
                 $('#modal-header').append('{% trans "Error occurred, We are sorry!" %}');
                 $('#modal-message').append('<p>{% trans "Disbursement process stopped during an internal error, can you try again or contact you support team" %}</p><br>');
                 $('#myModal').removeClass('hide');
                 $('#myModal').modal();
-            } else if ('{{disburse}}' == 400) {
+            } else if ('{{ disburse }}' == 400) {
                 $('#modal-header').append('{% trans "Error occurred from your side!" %}');
                 $('#modal-message').append('<p>{% trans "Pin you entered is not correct, can you try again or contact you support team." %}</p>');
                 $('#myModal').removeClass('hide');
                 $('#myModal').modal();
-            } else if ('{{disburse}}' == -1) {
+            } else if ('{{ disburse }}' == -1) {
                 $('#modal-header').append('{% trans "Error occurred from your side" %}');
-                if ('{{utm_validate}}' == 'false') {
+                if ('{{ utm_validate }}' == 'false') {
                     $('#modal-message').append("<p>{% trans 'This document is disbursed before, if there is any error, please return back to the support team' %}</p><br>");
                 }
                 {% if utm_owner %}
-                    if ('{{utm_owner}}' == 'false') {
+                    if ('{{ utm_owner }}' == 'false') {
                         $('#modal-message').append('{% trans "You can not disburse this document" %}');
                     }
                 {% endif %}
@@ -319,7 +316,7 @@
             }
         }
 
-        if ("{{review_form_errors}}" !== 'None'){
+        if ("{{ review_form_errors }}" !== 'None'){
             $('#reviewComment').show();
             $('#reviewSelect').val(0)
         }

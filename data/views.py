@@ -358,8 +358,10 @@ def document_view(request, doc_id):
         return redirect(reverse("data:e_wallets_home"))
 
     doc_data = None
-    if doc.is_processed:
+    if doc.is_processed and doc.is_e_wallet:
         doc_data = doc.disbursement_data.all()
+    elif doc.is_processed and doc.is_bank_card or doc.is_bank_card:
+        doc_data = doc.bank_transactions.all()
 
     context = {
         'doc': doc,

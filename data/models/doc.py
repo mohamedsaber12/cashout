@@ -116,8 +116,14 @@ class Doc(AbstractBaseDocType):
         reason = ''
 
         if checker.root.client.is_active:
+            if self.is_e_wallet:
+                reviews_required = self.file_category.no_of_reviews_required
+            else:
+                all_categories = self.owner.root.file_category.all()
+                reviews_required = min([cat.no_of_reviews_required for cat in all_categories])
+
             if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
-                if reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required:
+                if reviews.filter(is_ok=True).count() >= reviews_required:
                     if checker.level.max_amount_can_be_disbursed >= self.total_amount:
                         return True, reason, 0
                     else:
@@ -176,7 +182,12 @@ class Doc(AbstractBaseDocType):
         return can_review, False
 
     def is_reviews_completed(self):
-        return self.reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required
+        if self.is_e_wallet:
+            return self.reviews.filter(is_ok=True).count() >= self.file_category.no_of_reviews_required
+        else:
+            all_categories = self.owner.root.file_category.all()
+            least_reviews_count = min([cat.no_of_reviews_required for cat in all_categories])
+            return self.reviews.filter(is_ok=True).count() >= least_reviews_count
 
     def is_reviews_rejected(self):
         return self.reviews.filter(is_ok=False).count() != 0

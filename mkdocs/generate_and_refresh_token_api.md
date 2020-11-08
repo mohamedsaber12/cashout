@@ -47,7 +47,7 @@
 
     1.2 Using [HTTPie](https://httpie.org/) tool
     
-        http -v -f https://{CLIENT_ID}:{CLIENT_SECRET}@{ENV}/o/token/ grant_type=password username={USERNAME}&password={PASSWORD}
+        http -v -f https://{CLIENT_ID}:{CLIENT_SECRET}@{ENV}/o/token/ grant_type=password username={USERNAME} password={PASSWORD}
 
 
 2. **Refresh token request**

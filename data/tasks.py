@@ -115,7 +115,8 @@ class BankWalletsSheetProcessor(Task):
 
     def process_and_validate_records(self, df):
         """
-
+        :param df: data frame read from the uploaded document
+        :return: msisdn_list, amount_list, names_list, errors_list, total_amount
         """
         total_amount = 0
         msisdn_list, amount_list, names_list, errors_list = [], [], [], []
@@ -215,27 +216,27 @@ class BankWalletsSheetProcessor(Task):
                 self.end_with_failure(doc_obj, MSG_NOT_WITHIN_THRESHOLD)
                 return False
 
-            processed_data = zip(amount_list, names_list, msisdn_list)
-            BankTransaction.objects.bulk_create(
-                    [
-                        BankTransaction(
-                                currency="EGP",
-                                debtor_address_1="EG",
-                                creditor_address_1="EG",
-                                creditor_bank="THWL",   # ToDo: Change it to "MIDG" at the production environment
-                                category_code="MOBI",
-                                purpose="CASH",
-                                corporate_code=get_from_env("ACH_CORPORATE_CODE"),
-                                debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
-                                document=doc_obj,
-                                user_created=doc_obj.owner,
-                                amount=i[0],
-                                creditor_name=i[1],
-                                creditor_account_number=i[2]
-                        ) for i in processed_data
-                    ]
-            )
+            # Save the refined data as bank transactions records
             # ToDo: Add signal to BankTransaction model to save the object to the parent_transaction field
+            processed_data = zip(amount_list, names_list, msisdn_list)
+            objs = [
+                BankTransaction(
+                        currency="EGP",
+                        debtor_address_1="EG",
+                        creditor_address_1="EG",
+                        creditor_bank="THWL",   # ToDo: Change it to "MIDG" at the production environment
+                        category_code="MOBI",
+                        purpose="CASH",
+                        corporate_code=get_from_env("ACH_CORPORATE_CODE"),
+                        debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
+                        document=doc_obj,
+                        user_created=doc_obj.owner,
+                        amount=i[0],
+                        creditor_name=i[1],
+                        creditor_account_number=i[2]
+                ) for i in processed_data
+            ]
+            BankTransaction.objects.bulk_create(objs=objs)
 
             # Change doc status to processed successfully and notify makers that doc passed validations
             doc_obj.has_change_profile_callback = True
@@ -785,10 +786,17 @@ def doc_review_maker_mail(doc_id, review_id, **kwargs):
     review = doc.reviews.get(id=review_id)
     maker = doc.owner
     doc_view_url = settings.BASE_URL + doc.get_absolute_url()
+
+    if doc.is_e_wallet:
+        reviews_required = doc.file_category.no_of_reviews_required
+    else:
+        all_categories = doc.owner.root.file_category.all()
+        reviews_required = min([cat.no_of_reviews_required for cat in all_categories])
+
     if review.is_ok:
         message = _(f"""Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>
             The file named <a href="{doc_view_url}" >{doc.filename()}</a> passed the review
-             number {doc.reviews.filter(is_ok=True).count()} out of {doc.file_category.no_of_reviews_required} by
+             number {doc.reviews.filter(is_ok=True).count()} out of {reviews_required} by
             the checker: {review.user_created.first_name} {review.user_created.last_name}<br><br>
             Thanks, BR""")
     else:

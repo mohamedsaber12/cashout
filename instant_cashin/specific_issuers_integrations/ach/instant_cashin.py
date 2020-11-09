@@ -15,7 +15,12 @@ from rest_framework.response import Response
 
 from core.models import AbstractBaseStatus
 from disbursement.models import BankTransaction
-from disbursement.utils import TRX_RETURNED_BY_BANK_CODES, TRX_REJECTED_BY_BANK_CODES
+from disbursement.utils import (BANK_TRX_BEING_PROCESSED, BANK_TRX_IS_ACCEPTED,
+                                BANK_TRX_RECEIVED, EXTERNAL_ERROR_MSG,
+                                INSTANT_TRX_BEING_PROCESSED, INSTANT_TRX_IS_ACCEPTED,
+                                INSTANT_TRX_IS_REJECTED, INSTANT_TRX_RECEIVED,
+                                INTERNAL_ERROR_MSG, TRX_REJECTED_BY_BANK_CODES,
+                                TRX_RETURNED_BY_BANK_CODES)
 from utilities.ssl_certificate import SSLCertificate
 
 from ...api.serializers import BankTransactionResponseModelSerializer, InstantTransactionResponseModelSerializer
@@ -25,13 +30,6 @@ from ...utils import get_from_env
 
 ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
-
-
-INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team")
-EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
-TRX_RECEIVED = _("Transaction is received and validated successfully, dispatched for being processed by the bank")
-TRX_BEING_PROCESSED = _("Transaction is received by the bank and being processed now")
-TRX_IS_ACCEPTED = _("Transaction is processed and accepted by the bank, and your transfer is ready for exchanging now")
 
 
 class BankTransactionsChannel:
@@ -190,8 +188,8 @@ class BankTransactionsChannel:
             issuer = "bank_card"
 
         if response_code == "8000":
-            bank_trx_obj.mark_pending(response_code, TRX_RECEIVED)
-            instant_trx_obj.mark_pending(response_code, TRX_RECEIVED) if instant_trx_obj else None
+            bank_trx_obj.mark_pending(response_code, BANK_TRX_RECEIVED)
+            instant_trx_obj.mark_pending(response_code, INSTANT_TRX_RECEIVED) if instant_trx_obj else None
             bank_trx_obj.user_created.root.\
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
             # ToDo: Log custom budget updates
@@ -199,8 +197,8 @@ class BankTransactionsChannel:
             #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
             # )
         elif response_code == "8111":
-            bank_trx_obj.mark_pending(response_code, TRX_BEING_PROCESSED)
-            instant_trx_obj.mark_pending(response_code, TRX_BEING_PROCESSED) if instant_trx_obj else None
+            bank_trx_obj.mark_pending(response_code, BANK_TRX_BEING_PROCESSED)
+            instant_trx_obj.mark_pending(response_code, INSTANT_TRX_BEING_PROCESSED) if instant_trx_obj else None
             bank_trx_obj.user_created.root.\
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
             # ToDo: Log custom budget updates
@@ -217,7 +215,7 @@ class BankTransactionsChannel:
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
 
         if instant_trx_obj and response_code not in ["8000", "8111"]:
-            instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, EXTERNAL_ERROR_MSG)
+            instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INSTANT_TRX_IS_REJECTED)
 
         return bank_trx_obj, instant_trx_obj
 
@@ -240,17 +238,17 @@ class BankTransactionsChannel:
             new_trx_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(bank_trx_obj)
 
             if response_code == "8111":
-                new_trx_obj.mark_pending(response_code, TRX_BEING_PROCESSED)
+                new_trx_obj.mark_pending(response_code, BANK_TRX_BEING_PROCESSED)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_pending(response_code, TRX_BEING_PROCESSED) if instant_trx else None
+                instant_trx.mark_pending(response_code, INSTANT_TRX_BEING_PROCESSED) if instant_trx else None
             elif response_code == "8222":
-                new_trx_obj.mark_successful(response_code, TRX_IS_ACCEPTED)
+                new_trx_obj.mark_successful(response_code, BANK_TRX_IS_ACCEPTED)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_successful(response_code, TRX_IS_ACCEPTED) if instant_trx else None
+                instant_trx.mark_successful(response_code, INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
             elif response_code in TRX_RETURNED_BY_BANK_CODES + TRX_REJECTED_BY_BANK_CODES:
                 new_trx_obj.mark_failed(response_code, response_description)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_failed(response_code, response_description) if instant_trx else None
+                instant_trx.mark_failed(response_code, INSTANT_TRX_IS_REJECTED) if instant_trx else None
                 new_trx_obj.user_created.root.budget.return_disbursed_amount_for_cancelled_trx(new_trx_obj.amount)
             return new_trx_obj
 

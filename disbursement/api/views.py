@@ -20,7 +20,6 @@ from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthen
 
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
-from data.utils import get_client_ip
 from users.models import CheckerUser, User
 from utilities.custom_requests import CustomRequests
 from utilities.functions import custom_budget_logger, get_value_from_env
@@ -67,6 +66,7 @@ class DisburseAPIView(APIView):
     def prepare_agents_list(provider, raw_pin):
         """
         :param provider: wallet provider user
+        :param raw_pin: the raw pin used at disbursement
         :return: tuple of vodafone agent, etisalat agents lists
         """
         if provider.is_accept_vodafone_onboarding:
@@ -156,33 +156,34 @@ class DisburseAPIView(APIView):
         serializer.is_valid(raise_exception=True)
         doc_obj = Doc.objects.get(id=serializer.validated_data['doc_id'])
 
+        # 2. Validate the used pin if it is stored
         pin = serializer.validated_data['pin']
-        if doc_obj.owner.root.pin != 'False' and not doc_obj.owner.root.check_pin(pin):
+        if doc_obj.owner.root.pin and not doc_obj.owner.root.check_pin(pin):
             return HttpResponse(
                     json.dumps({'message': MSG_PIN_INVALID, 'header': 'Error occurred from your side!'}),
                     status=status.HTTP_400_BAD_REQUEST
             )
 
-        # 2. Catch the corresponding vmt dictionary
+        # 3. Retrieve the disbursement action maker (checker user)
         checker = User.objects.get(username=serializer.validated_data['user'])
-        superadmin = checker.root.client.creator
-        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
-        vf_response = False
         temp_response = {'BATCH_ID': '0', 'TXNSTATUS': '200'}
+        vf_response = False
 
-        # 3. Prepare the senders and recipients list of dictionaries
-        vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
+        # 4. Check if the doc type is an E-Wallet so it might has vodafone records to be disbursed
+        if doc_obj.is_e_wallet:
+            superadmin = checker.root.client.creator
+            wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+            vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
 
-        if vf_recipients:
-            if checker.root.is_accept_vodafone_onboarding:
-                pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
-            vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
-            vf_payload, vf_log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
-            vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, vf_log_payload, True)
+            if vf_recipients:
+                if checker.root.is_accept_vodafone_onboarding:
+                    pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
+                vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
+                vf_payload, log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
+                vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, log_payload, True)
 
-        BulkDisbursementThroughOneStepCashin.delay(
-                doc_id=str(doc_obj.id), checker_username=str(checker.username), ip_address=str(get_client_ip(request))
-        )
+        # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)
+        BulkDisbursementThroughOneStepCashin.delay(doc_id=str(doc_obj.id), checker_username=str(checker.username))
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, temp_response)
 
         if is_success_disbursement:

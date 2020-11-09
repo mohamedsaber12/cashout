@@ -48,7 +48,7 @@ class User(AbstractUser):
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
-    pin = models.CharField(_('pin'), max_length=128, null=True, default=False)
+    pin = models.CharField(_('pin'), max_length=128, null=True, default='')
     avatar_thumbnail = ProcessedImageField(
             upload_to='avatars',
             processors=[ResizeToFill(100, 100)],

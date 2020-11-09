@@ -4,6 +4,17 @@ from __future__ import unicode_literals
 from django.contrib import admin
 
 
+INSTANT_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the carrier"
+INSTANT_TRX_BEING_PROCESSED = "Transaction received by the carrier and being processed now"
+INSTANT_TRX_IS_ACCEPTED = "Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now"
+INSTANT_TRX_IS_REJECTED = "Transaction rejected by the carrier. Please try again or contact your support team"
+BANK_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the bank"
+BANK_TRX_BEING_PROCESSED = "Transaction received by the bank and being processed now"
+BANK_TRX_IS_ACCEPTED = "Transaction processed and accepted by the bank. Your transfer is ready for exchanging now"
+INTERNAL_ERROR_MSG = "Process stopped during an internal error, can you try again or contact your support team"
+EXTERNAL_ERROR_MSG = "Process stopped during an external error, can you try again or contact your support team"
+
+
 VALID_BANK_CODES_LIST = [
     "AUB",
     "CITI",

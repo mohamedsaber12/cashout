@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 
 import datetime
-import json
 import logging
 from decimal import Decimal
 
@@ -16,14 +15,14 @@ from data.decorators import respects_language
 from data.models import Doc
 from data.tasks import handle_change_profile_callback
 from instant_cashin.models import AmanTransaction
-from instant_cashin.specific_issuers_integrations import AmanChannel
+from instant_cashin.specific_issuers_integrations import AmanChannel, BankTransactionsChannel
+from instant_cashin.utils import get_from_env
 from payouts.settings.celery import app
 from smpp.smpp_interface import send_sms
 from users.models import User
 from utilities.functions import custom_budget_logger, get_value_from_env
 
-from .models import DisbursementData, DisbursementDocData
-
+from .models import DisbursementData, DisbursementDocData, BankTransaction
 
 CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
@@ -44,12 +43,10 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         etisalat_recipients = recipients.filter(issuer='etisalat'). \
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
-        orange_recipients = recipients.filter(issuer='orange'). \
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
         aman_recipients = recipients.filter(issuer='aman'). \
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
 
-        return list(etisalat_recipients), list(orange_recipients), list(aman_recipients)
+        return list(etisalat_recipients), list(aman_recipients)
 
     def handle_disbursement_callback(self, recipient, callback, issuer):
         """Handle disbursement callback depending on issuer based recipients"""
@@ -120,12 +117,9 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             return api_auth_token, merchant_id
 
-    def disburse_for_aman(self, checker, ip_address, aman_recipients):
+    def disburse_for_aman(self, checker, aman_recipients):
         """Disburse for aman specific recipients"""
-        request = {
-            "user": checker,
-            "ip_address": ip_address
-        }
+        request = { "user": checker }
 
         for recipient in aman_recipients:
             aman_object = AmanChannel(request, amount=recipient["amount"])
@@ -154,7 +148,42 @@ class BulkDisbursementThroughOneStepCashin(Task):
             except Exception as err:
                 aman_object.log_message(request, f"[GENERAL FAILURE - AMAN CHANNEL]", f"Exception: {err.args[0]}")
 
-    def run(self, doc_id, checker_username, ip_address, *args, **kwargs):
+    def create_bank_transaction_from_instant_transaction(self, checker, record):
+        """Create a bank transaction out of the passed record data/instant transaction"""
+
+        transaction_dict = {
+            "currency": "EGP",
+            "debtor_address_1": "EG",
+            "creditor_address_1": "EG",
+            "creditor_bank": "THWL",      # ToDo: Change it to "MIDG" at the production environment
+            "category_code": "MOBI",
+            "purpose": "CASH",
+            "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
+            "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
+            "user_created": checker,
+            "creditor_account_number": record.anon_recipient,
+            "amount": record.amount,
+            "creditor_name": record.recipient_name,
+            "end_to_end": record.uid
+        }
+        return BankTransaction.objects.create(**transaction_dict)
+
+    def disburse_for_bank_wallets(self, doc, checker):
+        """
+        :param doc: the document being disbursed
+        :param checker: the checker user who have taken the disbursement action
+        :return
+        """
+        bank_wallets_transactions = doc.bank_wallets_transactions.all()
+
+        for instant_trx_obj in bank_wallets_transactions:
+            try:
+                bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
+                BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
+            except:
+                pass
+
+    def run(self, doc_id, checker_username, *args, **kwargs):
         """
         :param doc_id: id of the document being disbursed
         :param checker_username: username of the checker who is taking the disbursement action
@@ -164,17 +193,27 @@ class BulkDisbursementThroughOneStepCashin(Task):
             doc_obj = Doc.objects.get(id=doc_id)
             checker = User.objects.get(username=checker_username)
             superadmin = checker.root.client.creator
-            ets_recipients, orange_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
 
-            if ets_recipients:
-                self.disburse_for_etisalat(checker, superadmin, ets_recipients)
-            if orange_recipients:
-                pass
-            if aman_recipients:
-                self.disburse_for_aman(checker, ip_address, aman_recipients)
+            # 1. Handle doc of type E-wallets
+            if doc_obj.is_e_wallet:
+                ets_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
 
-            if ets_recipients or orange_recipients or aman_recipients:
+                if ets_recipients:
+                    self.disburse_for_etisalat(checker, superadmin, ets_recipients)
+                if aman_recipients:
+                    self.disburse_for_aman(checker, aman_recipients)
+
+                if ets_recipients or aman_recipients:
+                    DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+
+            # 2. Handle doc of type bank-wallets
+            elif doc_obj.is_bank_wallet:
+                self.disburse_for_bank_wallets(doc=doc_obj, checker=checker)
                 DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+
+            # 3. Handle doc of type bank-cards
+            elif doc_obj.is_bank_card:
+                pass
 
         except (Doc.DoesNotExist, User.DoesNotExist, Exception) as err:
             DISBURSE_LOGGER.\

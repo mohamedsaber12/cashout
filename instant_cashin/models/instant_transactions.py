@@ -6,7 +6,6 @@ from django.utils.translation import gettext_lazy as _
 from rest_framework import status
 
 from core.models import AbstractBaseTransaction
-from users.models import InstantAPICheckerUser
 
 
 class AbstractBaseIssuer(models.Model):
@@ -20,12 +19,14 @@ class AbstractBaseIssuer(models.Model):
     ORANGE = "O"
     AMAN = "A"
     BANK_WALLET = "B"
+    BANK_CARD = "C"
     ISSUER_TYPE_CHOICES = [
         (VODAFONE, _("Vodafone")),
         (ETISALAT, _("Etisalat")),
         (ORANGE, _("Orange")),
         (AMAN, _("Aman")),
         (BANK_WALLET, _("Bank_Wallet")),
+        (BANK_CARD, _("Bank_Card")),
     ]
 
     issuer_type = models.CharField(
@@ -46,6 +47,13 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     Model for instant transactions
     """
 
+    document = models.ForeignKey(
+            'data.Doc',
+            on_delete=models.CASCADE,
+            related_name=_('bank_wallets_transactions'),
+            verbose_name=_('Disbursement Document'),
+            null=True
+    )
     uid = models.UUIDField(
             default=uuid.uuid4,
             editable=False,
@@ -54,13 +62,13 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             verbose_name=_("Transaction Reference")
     )
     from_user = models.ForeignKey(
-        InstantAPICheckerUser,
-        db_index=True,
-        null=True,
-        on_delete=models.CASCADE,
-        blank=True,
-        related_name=_("instant_transaction"),
-        verbose_name=_("Instant API Checker")
+            "users.InstantAPICheckerUser",
+            db_index=True,
+            null=True,
+            on_delete=models.CASCADE,
+            blank=True,
+            related_name=_("instant_transaction"),
+            verbose_name=_("Instant API Checker")
     )
     anon_sender = models.CharField(
             _("Sender"),

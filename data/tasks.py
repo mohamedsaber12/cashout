@@ -20,9 +20,9 @@ from django.conf import settings
 from django.urls import reverse
 from django.utils.translation import gettext as _
 
-from disbursement.models import DisbursementData, BankTransaction
+from disbursement.models import DisbursementData
 from disbursement.resources import DisbursementDataResource
-from instant_cashin.utils import get_from_env
+from instant_cashin.models import InstantTransaction, AbstractBaseIssuer
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
@@ -217,26 +217,17 @@ class BankWalletsSheetProcessor(Task):
                 return False
 
             # Save the refined data as bank transactions records
-            # ToDo: Add signal to BankTransaction model to save the object to the parent_transaction field
             processed_data = zip(amount_list, names_list, msisdn_list)
             objs = [
-                BankTransaction(
-                        currency="EGP",
-                        debtor_address_1="EG",
-                        creditor_address_1="EG",
-                        creditor_bank="THWL",   # ToDo: Change it to "MIDG" at the production environment
-                        category_code="MOBI",
-                        purpose="CASH",
-                        corporate_code=get_from_env("ACH_CORPORATE_CODE"),
-                        debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
+                InstantTransaction(
                         document=doc_obj,
-                        user_created=doc_obj.owner,
-                        amount=i[0],
-                        creditor_name=i[1],
-                        creditor_account_number=i[2]
-                ) for i in processed_data
+                        issuer_type=AbstractBaseIssuer.BANK_WALLET,
+                        amount=record[0],
+                        recipient_name=record[1],
+                        anon_recipient=record[2]
+                ) for record in processed_data
             ]
-            BankTransaction.objects.bulk_create(objs=objs)
+            InstantTransaction.objects.bulk_create(objs=objs)
 
             # Change doc status to processed successfully and notify makers that doc passed validations
             doc_obj.has_change_profile_callback = True

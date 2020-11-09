@@ -8,6 +8,8 @@ from phonenumber_field.modelfields import PhoneNumberField
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
 
 from rest_framework import status
@@ -201,13 +203,6 @@ class BankTransaction(AbstractTimeStamp,
             related_name=_('bank_transactions'),
             verbose_name=_('Disburser')
     )
-    document = models.ForeignKey(
-            'data.Doc',
-            on_delete=models.CASCADE,
-            related_name=_('bank_transactions'),
-            verbose_name=_('Disbursement Document'),
-            null=True
-    )
     transaction_id = models.UUIDField(
             _('Transaction ID'),
             db_index=True,
@@ -353,3 +348,12 @@ class BankTransaction(AbstractTimeStamp,
         self.update_status_code_and_description(status_code, status_description)
         self.status = self.PENDING
         self.save()
+
+
+@receiver(post_save, sender=BankTransaction)
+def update_parent_transaction_if_its_empty(sender, instance, created, **kwargs):
+    """Add the bank transaction object to the parent transaction field if it's empty"""
+
+    if not instance.parent_transaction:
+        instance.parent_transaction = instance
+        instance.save()

@@ -144,8 +144,6 @@ class InstantDisbursementAPIView(views.APIView):
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
-        bank_transaction.parent_transaction = bank_transaction
-        bank_transaction.save()
         return bank_transaction, instant_transaction
 
     def aman_api_authentication_params(self, aman_channel_object):

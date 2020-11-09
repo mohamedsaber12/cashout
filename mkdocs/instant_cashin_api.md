@@ -216,7 +216,7 @@
                 "full_name": "Tom Bernard Ceisar",
                 "disbursement_status": "pending",
                 "status_code": "8000",
-                "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
+                "status_description": "Transaction received and validated successfully. Dispatched for being processed by the carrier",
                 "aman_cashing_details": null,
                 "created_at": "2020-10-12 07:19:46.121389",
                 "updated_at": "2020-10-12 07:19:47.550900"
@@ -244,7 +244,7 @@
                 "full_name": "Tom Bernard Ceisar",
                 "disbursement_status": "pending",
                 "status_code": "8000",
-                "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
+                "status_description": "Transaction received and validated successfully. Dispatched for being processed by the carrier",
                 "aman_cashing_details": null,
                 "created_at": "2020-10-12 07:23:17.540219",
                 "updated_at": "2020-10-12 07:23:18.113919"
@@ -276,7 +276,7 @@
                 "bank_transaction_type": "salary",
                 "disbursement_status": "pending",
                 "status_code": "8000",
-                "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
+                "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",
                 "created_at": "2020-10-12 07:25:51.631701",
                 "updated_at": "2020-10-12 07:25:52.263173"
             }

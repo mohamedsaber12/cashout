@@ -164,7 +164,7 @@
                         "bank_transaction_type": "pension",
                         "disbursement_status": "pending",
                         "status_code": "8000",
-                        "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
+                        "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",
                         "created_at": "2020-10-06 16:37:51.688459",
                         "updated_at": "2020-10-06 16:37:56.001660"
                     },
@@ -178,7 +178,7 @@
                         "bank_transaction_type": "prepaid",
                         "disbursement_status": "pending",
                         "status_code": "8000",
-                        "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
+                        "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",
                         "created_at": "2020-10-06 16:35:48.823069",
                         "updated_at": "2020-10-06 16:35:53.492712"
                     },
@@ -192,7 +192,7 @@
                         "bank_transaction_type": "credit_card",
                         "disbursement_status": "pending",
                         "status_code": "8000",
-                        "status_description": "Transaction is received and validated successfully, dispatched for being processed by the bank",
+                        "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",
                         "created_at": "2020-10-06 16:35:36.526330",
                         "updated_at": "2020-10-06 16:35:40.100927"
                     }

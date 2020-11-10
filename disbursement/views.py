@@ -18,6 +18,7 @@ from django.views.generic import View, ListView
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
+from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_data, generate_success_disbursed_data)
@@ -27,7 +28,7 @@ from users.decorators import setup_required
 from users.mixins import (
     SuperFinishedSetupMixin, SuperRequiredMixin,
     SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-    SuperWithoutDefaultOnboardingPermissionRequired,
+    SuperWithoutDefaultOnboardingPermissionRequired, UserWithDisbursementPermissionRequired,
 )
 from users.models import EntitySetup
 from utilities import messages
@@ -93,40 +94,67 @@ def disburse(request, doc_id):
         return redirect(response)
 
 
-@setup_required
-@login_required
-def disbursement_list(request, doc_id):
-    doc_obj = get_object_or_404(Doc, id=doc_id)
-    can_view = (
-        doc_obj.owner.hierarchy == request.user.hierarchy and
-        (
-            doc_obj.owner == request.user or
-            request.user.is_checker or
-            request.user.is_root
-        ) and
-        doc_obj.is_disbursed
-    )
-    if can_view:
-        if request.is_ajax():
-            if request.GET.get('export_failed') == 'true':
-                generate_failed_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
-                return HttpResponse(status=200)
-            elif request.GET.get('export_success') == 'true':
-                generate_success_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
-                return HttpResponse(status=200)
-            elif request.GET.get('export_all') == 'true':
-                generate_all_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
-                return HttpResponse(status=200)
-        context = {
-            'disbursement_data': doc_obj.disbursement_data.all(),
-            'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
-            'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
-            'has_success': doc_obj.disbursement_data.filter(is_disbursed=True).count() != 0,
-            'doc_obj': doc_obj
-        }
-        return render(request, template_name='disbursement/list.html', context=context)
+@method_decorator([setup_required], name='dispatch')
+class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, View):
+    """
+    View for handling disbursed doc transactions list
+    """
 
-    return HttpResponse(status=401)
+    def get(self, request, *args, **kwargs):
+        """"""
+        doc_id = self.kwargs.get("doc_id")
+        doc_obj = get_object_or_404(Doc, id=doc_id)
+
+        # 1. Is the user have the right to view this doc and the doc is disbursed
+        can_view = (
+                doc_obj.owner.hierarchy == request.user.hierarchy and
+                (
+                        doc_obj.owner == request.user or
+                        request.user.is_checker or
+                        request.user.is_root
+                ) and
+                doc_obj.is_disbursed
+        )
+
+        if can_view:
+            # 2.1 If the request is ajax then prepare the disbursement report
+            if request.is_ajax():
+                # ToDo: Change this to handle bank sheets
+                if request.GET.get('export_failed') == 'true':
+                    generate_failed_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
+                    return HttpResponse(status=200)
+                elif request.GET.get('export_success') == 'true':
+                    generate_success_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
+                    return HttpResponse(status=200)
+                elif request.GET.get('export_all') == 'true':
+                    generate_all_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
+                    return HttpResponse(status=200)
+
+            # 2.2 Prepare the context dict regarding the type of the doc
+            if doc_obj.is_e_wallet:
+                template_name = "disbursement/e_wallets_transactions_list.html"
+                context = {
+                    'doc_transactions': doc_obj.disbursement_data.all(),
+                    'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
+                    'has_success': doc_obj.disbursement_data.filter(is_disbursed=True).count() != 0,
+                    'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
+                }
+            elif doc_obj.is_bank_wallet or doc_obj.is_bank_card:
+                template_name = "disbursement/bank_transactions_list.html"
+                context = {
+                    'doc_transactions': doc_obj.bank_wallets_transactions.all(),
+                    'has_failed': doc_obj.bank_wallets_transactions.filter(
+                            status=AbstractBaseStatus.FAILED
+                    ).count() != 0,
+                    'has_success': doc_obj.bank_wallets_transactions.filter(
+                            status=AbstractBaseStatus.SUCCESSFUL
+                    ).count() != 0,
+                }
+
+            context.update({'doc_obj': doc_obj})
+            return render(request, template_name=template_name, context=context)
+
+        return HttpResponse(status=401)
 
 
 @setup_required

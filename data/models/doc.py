@@ -5,9 +5,11 @@ import os
 
 from django.conf import settings
 from django.db import models
+from django.db.models import Q
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
+from core.models import AbstractBaseStatus
 from disbursement.models import DisbursementDocData
 from users.models import CheckerUser
 from utilities.models import AbstractBaseDocType
@@ -146,15 +148,33 @@ class Doc(AbstractBaseDocType):
         """
         if not self.is_processed or not self.can_be_disbursed:
             return 0
-        disbursement_data_count = self.disbursement_data.count()
-        if disbursement_data_count == 0:
+
+        # 1. Calculate the success disbursement ratio of e-wallets docs
+        if self.is_e_wallet:
+            disbursement_data_count = self.disbursement_data.count()
+            if disbursement_data_count == 0:
+                return 0
+
+            failed_disbursement_count = self.disbursement_data.filter(is_disbursed=False).count()
+            success_percentage = ((disbursement_data_count-failed_disbursement_count) * 100) / disbursement_data_count
+            success_percentage = round(success_percentage, 2) if success_percentage != 0 else 0
+
+            return success_percentage
+
+        # 2. Calculate the success disbursement ratio of bank-wallets docs
+        elif self.is_bank_wallet:
+            doc_transactions = self.bank_wallets_transactions.all()
+            doc_transactions_count = doc_transactions.count()
+            if doc_transactions_count == 0:
+                return 0
+
+            failed_transactions_count = doc_transactions.filter(~Q(status=AbstractBaseStatus.SUCCESSFUL)).count()
+            success_percentage = ((doc_transactions_count-failed_transactions_count) * 100) / doc_transactions_count
+            success_percentage = round(success_percentage, 2) if success_percentage != 0 else 0
+
+            return success_percentage
+        else:
             return 0
-
-        failed_disbursement_count = self.disbursement_data.filter(is_disbursed=False).count()
-        success_percentage = ((disbursement_data_count-failed_disbursement_count) * 100) / disbursement_data_count
-        success_percentage = round(success_percentage, 2) if success_percentage != 0 else 0
-
-        return success_percentage
 
     def can_user_review(self, checker):
         """

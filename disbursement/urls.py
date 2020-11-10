@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (AgentsListView, BalanceInquiry,
-                    SuperAdminAgentsSetup, disburse, disbursement_list,
+                    SuperAdminAgentsSetup, disburse, DisbursementDocTransactionsView,
                     download_failed_validation_file,
                     failed_disbursed_for_download)
 
@@ -16,7 +16,7 @@ client_urls = [
 
 urlpatterns = [
     path('disburse_call/<doc_id>/', disburse, name='disburse'),
-    path('disburse/report/<doc_id>/', disbursement_list, name='disbursed_data'),
+    path('disburse/report/<doc_id>/', DisbursementDocTransactionsView.as_view(), name='disbursed_data'),
     path('disburse/export_failed_download/<doc_id>/', failed_disbursed_for_download, name='download_failed'),
     path('disburse/export_failed_validation_download/<doc_id>/',
          download_failed_validation_file, name='download_validation_failed'),

@@ -76,24 +76,24 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for data in disbursement_data %}
+                        {% for transaction in doc_transactions %}
                         <tr>
-                            {% if not is_normal_flow %}<td>{{ data.reference_id }}</td>{% endif %}
-                            <td>{{ data.msisdn }}</td>
-                            <td>{{ data.amount }}</td>
-                            {% if not is_normal_flow %}<td>{{ data.issuer }}</td>{% endif %}
+                            {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
+                            <td>{{ transaction.msisdn }}</td>
+                            <td>{{ transaction.amount }}</td>
+                            {% if not is_normal_flow %}<td>{{ transaction.issuer }}</td>{% endif %}
                             <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
-                                {% if data.is_disbursed %}
+                                {% if transaction.is_disbursed %}
                                     <span style="color: #2e6da4">&#10004;</span>
-                                {% elif not data.reason %}
+                                {% elif not transaction.reason %}
                                     <span>⏳</span>
                                 {% else %}
                                     <span style="color: #942a25">&#10006;</span>
                                 {% endif %}
                             </td>
                             <td>
-                                {% if data.reason %}
-                                    {{ data.reason }} {% if data.issuer == "aman" %} and {% if data.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %} {% endif %}
+                                {% if transaction.reason %}
+                                    {{ transaction.reason }} {% if transaction.issuer == "aman" %} and {% if transaction.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %} {% endif %}
                                 {% else %}
                                     {% trans 'Disbursement process is running' %}
                                 {% endif %}

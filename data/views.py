@@ -266,14 +266,15 @@ def document_view(request, doc_id):
     List checkers reviews.
     Checkers can review document.
     """
-    template_name = 'data/document_viewer_disbursement.html'
     doc = get_object_or_404(Doc, id=doc_id)
+    doc_transactions = None
     review_form_errors = None
     reviews = None
     hide_review_form = True         # True if checker already reviewed this doc or reviews are completed
     can_review = True               # True if checker have the level rights to review the doc
     can_user_disburse = {}
 
+    # 1. Check if the user who make the request is from the same hierarchy
     if doc.owner.hierarchy == request.user.hierarchy:
         # doc already disbursed
         if doc.is_disbursed and (doc.owner == request.user or request.user.is_checker or request.user.is_root):
@@ -352,27 +353,33 @@ def document_view(request, doc_id):
                 'code': can_user_disburse[2]
             }
 
+    # 2. The user who is trying to access the doc is NOT from the same hierarchy (NOT privileged)
     else:
         err_msg = f"doc id: {doc.id} with hierarchy: {doc.owner.hierarchy}, user hierarchy: {request.user.hierarchy}"
         VIEW_DOCUMENT_LOGGER.debug(f"[message] [HIERARCHY ERROR] [{request.user}] -- {err_msg}")
         return redirect(reverse("data:e_wallets_home"))
 
-    doc_data = None
+    # 3. Retrieve the document related transactions to be viewed
     if doc.is_processed and doc.is_e_wallet:
-        doc_data = doc.disbursement_data.all()
-    elif doc.is_processed and doc.is_bank_card or doc.is_bank_card:
-        doc_data = doc.bank_transactions.all()
+        doc_transactions = doc.disbursement_data.all()
+        template_name = 'data/e_wallets_document_viewer.html'
+    elif doc.is_processed and doc.is_bank_wallet or doc.is_bank_card:
+        doc_transactions = doc.bank_wallets_transactions.all()
+        template_name = 'data/banks_document_viewer.html'
 
+    # 4. Prepare the context dict to be passed to the template
     context = {
         'doc': doc,
         'review_form_errors': review_form_errors,
         'reviews': reviews,
         'hide_review_form': hide_review_form,
         'can_user_disburse': can_user_disburse,
-        'doc_data': doc_data,
+        'doc_transactions': doc_transactions,
         'can_review': can_review,
         'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
     }
+
+    # 5. Handle document auto-redirects after disbursement action related to different responses
     if bool(request.GET.dict()):
         context['redirect'] = 'true'
         context.update(request.GET.dict())

@@ -41,12 +41,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
         """
         recipients = DisbursementData.objects.filter(doc_id=doc_id)
 
+        vf_recipients = recipients.filter(issuer__in=['vodafone', 'default'])
         etisalat_recipients = recipients.filter(issuer='etisalat'). \
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
         aman_recipients = recipients.filter(issuer='aman'). \
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
 
-        return list(etisalat_recipients), list(aman_recipients)
+        return vf_recipients, list(etisalat_recipients), list(aman_recipients)
 
     def handle_disbursement_callback(self, recipient, callback, issuer):
         """Handle disbursement callback depending on issuer based recipients"""
@@ -196,14 +197,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             # 1. Handle doc of type E-wallets
             if doc_obj.is_e_wallet:
-                ets_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
-
+                vf_recipients, ets_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
                 if ets_recipients:
                     self.disburse_for_etisalat(checker, superadmin, ets_recipients)
                 if aman_recipients:
                     self.disburse_for_aman(checker, aman_recipients)
 
-                if ets_recipients or aman_recipients:
+                if vf_recipients.count() == 0 and (ets_recipients or aman_recipients):
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
             # 2. Handle doc of type bank-wallets

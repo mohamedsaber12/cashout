@@ -190,11 +190,11 @@
                             {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
                         </thead>
                         <tbody>
-                            {% for data  in doc_data %}
+                            {% for trx  in doc_transactions %}
                                 <tr>
-                                    <td>{{ data.msisdn }}</td>
-                                    <td>{{ data.amount }}</td>
-                                    {% if not is_normal_flow %}<td>{{ data.issuer }}</td>{% endif %}
+                                    <td>{{ trx.msisdn }}</td>
+                                    <td>{{ trx.amount }}</td>
+                                    {% if not is_normal_flow %}<td>{{ trx.issuer }}</td>{% endif %}
                                 </tr>
                             {% endfor %}
                         </tbody>

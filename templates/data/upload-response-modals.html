@@ -49,11 +49,11 @@
         $.ajax(
         {
             type:"GET",
-            url: "/",
+            url: "{{ request.path }}",
 
             success: function( data )
             {
-              window.location.href = "/";
+              window.location.href = "{{ request.path }}";
             }
          })
     });

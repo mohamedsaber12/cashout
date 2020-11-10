@@ -354,6 +354,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                 ets_amount_list.append(record_dict['amount'])
             elif str(record_dict['issuer']).lower() == 'aman':
                 aman_amount_list.append(record_dict['amount'])
+        else:
+            vf_amount_list.append(record_dict['amount'])
 
     valid = True
     if len([value for value in errors if value]) > 0:

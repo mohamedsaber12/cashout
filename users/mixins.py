@@ -118,6 +118,25 @@ class UserWithDisbursementPermissionRequired(UserPassesTestMixin, LoginRequiredM
         return False
 
 
+# class UserWithAbnormalFlowDisbursementPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+#     """
+#     Check if the user has disbursement permission and from a disbursement family
+#     """
+#
+#     def test_func(self):
+#         status = self.request.user.get_status(self.request)
+#
+#         if status == "disbursement" and \
+#                 (self.request.user.is_root and not self.request.user.root_entity_setups.is_normal_flow) or \
+#                 (
+#                         self.request.user.is_maker or self.request.user.is_checker and
+#                         not self.request.user.root.root_entity_setups.is_normal_flow
+#                 ):
+#             return True
+#
+#         return False
+
+
 class SupportUserRequiredMixin(LoginRequiredMixin):
     """
     Mixin to give access permission for only support users

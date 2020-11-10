@@ -47,8 +47,10 @@
           <li><a><i class="fa fa-home"></i> {% trans 'Home' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="{% url 'data:e_wallets_home' %}">{% trans 'E-Wallets Files' %}</a></li>
-              <li><a href="{% url 'data:bank_wallets_home' %}">{% trans 'Bank Wallets/Orange Files' %}</a></li>
-              <li><a href="{% url 'data:bank_cards_home' %}">{% trans 'Bank Cards Files' %}</a></li>
+              {% if request.user.is_root and not request.user.root_entity_setups.is_normal_flow or not request.user.root.root_entity_setups.is_normal_flow %}
+                <li><a href="{% url 'data:bank_wallets_home' %}">{% trans 'Bank Wallets/Orange Files' %}</a></li>
+                <li><a href="{% url 'data:bank_cards_home' %}">{% trans 'Bank Cards Files' %}</a></li>
+              {% endif %}
             </ul>
           </li>
         {% endif %}

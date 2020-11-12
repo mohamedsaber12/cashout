@@ -10,7 +10,7 @@ ALLOWED_HOSTS += [
 
 # Email Reporting
 ADMINS += [
-    ('Omar Nawar', 'omarnawar@paymobsolutions.com')
+    ('Omar Nawar', 'omarnawar@paymob.com'),
 ]
 
 # base url

@@ -51,7 +51,7 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             'data.Doc',
             on_delete=models.CASCADE,
             related_name=_('bank_wallets_transactions'),
-            verbose_name=_('Disbursement Document'),
+            verbose_name=_('Bank Wallets Document'),
             null=True
     )
     uid = models.UUIDField(

@@ -132,10 +132,13 @@ class FileDocumentForm(forms.ModelForm):
                     if file_category.unique_identifiers_number > xl_workbook.sheet_by_index(0).ncols:
                         error = MSG_WRONG_FILE_FORMAT
 
-            # Validate bank wallets sheet headers
-            elif self.doc_type == AbstractBaseDocType.BANK_WALLETS:
-                valid_headers = ['mobile number', 'amount', 'full name']
-                HEADERS_ERR_MSG = f"Sheet headers are not proper, the valid headers naming and order is {valid_headers}"
+            # Validate bank wallets/cards sheet headers
+            elif self.doc_type in [AbstractBaseDocType.BANK_WALLETS, AbstractBaseDocType.BANK_CARDS]:
+                if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
+                    valid_headers = ['mobile number', 'amount', 'full name']
+                else:
+                    valid_headers = ['account number', 'amount', 'full name', 'bank code', 'transaction type']
+                HEADERS_ERR_MSG = f"File headers are not proper, the valid headers naming and order is {valid_headers}"
 
                 try:
                     df = pd.read_excel(file)
@@ -143,10 +146,6 @@ class FileDocumentForm(forms.ModelForm):
                     if min(df.count()) < 1: raise ValueError
                 except (ValueError, Exception):
                     error = "File data is not proper, check it and upload it again."
-
-            # Validate bank cards sheet headers
-            elif self.doc_type == AbstractBaseDocType.BANK_CARDS:
-                pass
 
             # Raise form validation error if any
             if error:

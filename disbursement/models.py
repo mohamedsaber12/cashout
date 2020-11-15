@@ -190,18 +190,25 @@ class BankTransaction(AbstractTimeStamp,
     Model for managing bank transactions.
     """
 
+    user_created = models.ForeignKey(
+            settings.AUTH_USER_MODEL,
+            on_delete=models.CASCADE,
+            related_name=_('bank_transactions'),
+            verbose_name=_('Disburser')
+    )
+    document = models.ForeignKey(
+            'data.Doc',
+            on_delete=models.CASCADE,
+            related_name=_('bank_cards_transactions'),
+            verbose_name=_('Bank Cards Document'),
+            null=True
+    )
     parent_transaction = models.ForeignKey(
             'self',
             on_delete=models.CASCADE,
             related_name=_('children_transactions'),
             verbose_name=_('Parent Transaction'),
             null=True
-    )
-    user_created = models.ForeignKey(
-            settings.AUTH_USER_MODEL,
-            on_delete=models.CASCADE,
-            related_name=_('bank_transactions'),
-            verbose_name=_('Disburser')
     )
     transaction_id = models.UUIDField(
             _('Transaction ID'),

@@ -30,7 +30,7 @@ class Client(models.Model):
     fees_percentage = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=100)
     custom_profile = models.CharField(
             max_length=50,
-            default=False,
+            default='',
             null=True,
             blank=True,
             help_text=_("Custom profile name/constant ONLY for clients with custom budgets")
@@ -66,7 +66,7 @@ class Client(models.Model):
         Used at the change profile request
         :return: String/Constant that will be used as a value of the NEWPROFILE key
         """
-        if self.custom_profile != 'False':
+        if self.custom_profile:
             return self.custom_profile
         elif self.fees_percentage == 100:
             return "Full"

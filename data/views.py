@@ -30,7 +30,7 @@ from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm, Format
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
 from .tasks import (
     doc_review_maker_mail, handle_disbursement_file,
-    handle_uploaded_file, notify_checkers, notify_disbursers, BankWalletsSheetProcessor,
+    handle_uploaded_file, notify_checkers, notify_disbursers, BankWalletsAndCardsSheetProcessor,
 )
 
 
@@ -179,11 +179,7 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
                 file_doc.mark_uploaded_successfully()
                 msg = f"uploaded {self.doc_list_header.lower()} file with doc id: {file_doc.id}"
                 UPLOAD_LOGGER.debug(f"[message] [{self.doc_list_header.lower()} file upload] [{request.user}] -- {msg}")
-                if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
-                    BankWalletsSheetProcessor.delay(file_doc.id)
-                elif self.doc_type == AbstractBaseDocType.BANK_CARDS:
-                    # process_bank_cards_sheet.delay(file_doc.id, language=translation.get_language())
-                    pass
+                BankWalletsAndCardsSheetProcessor.delay(file_doc.id)
                 return HttpResponseRedirect(request.path)
             else:
                 UPLOAD_LOGGER.debug(
@@ -362,10 +358,12 @@ def document_view(request, doc_id):
     # 3. Retrieve the document related transactions to be viewed
     if doc.is_processed and doc.is_e_wallet:
         doc_transactions = doc.disbursement_data.all()
-        template_name = 'data/e_wallets_document_viewer.html'
-    elif doc.is_processed and doc.is_bank_wallet or doc.is_bank_card:
+    elif doc.is_processed and doc.is_bank_wallet:
         doc_transactions = doc.bank_wallets_transactions.all()
-        template_name = 'data/banks_document_viewer.html'
+    elif doc.is_processed and doc.is_bank_card:
+        doc_transactions = doc.bank_cards_transactions.all()
+
+    template_name = 'data/e_wallets_document_viewer.html' if doc.is_e_wallet else 'data/banks_document_viewer.html'
 
     # 4. Prepare the context dict to be passed to the template
     context = {

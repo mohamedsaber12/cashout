@@ -91,3 +91,39 @@ def custom_titled_filter(title):
             instance.title = title
             return instance
     return Wrapper
+
+
+def determine_trx_category_and_purpose(transaction_type):
+    """Determine transaction category code and purpose based on the passed transaction_type"""
+    if transaction_type.upper() == "MOBILE":
+        category_purpose_dict = {
+            "category_code": "MOBI",
+            "purpose": "CASH"
+        }
+    elif transaction_type.upper() == "SALARY":
+        category_purpose_dict = {
+            "category_code": "CASH",
+            "purpose": "SALA"
+        }
+    elif transaction_type.upper() == "PENSION":
+        category_purpose_dict = {
+            "category_code": "PENS",
+            "purpose": "PENS"
+        }
+    elif transaction_type.upper() == "PREPAID":
+        category_purpose_dict = {
+            "category_code": "PCRD",
+            "purpose": "CASH"
+        }
+    elif transaction_type.upper() == "CREDIT_CARD":
+        category_purpose_dict = {
+            "category_code": "CASH",
+            "purpose": "CCRD"
+        }
+    else:
+        category_purpose_dict = {
+            "category_code": "CASH",
+            "purpose": "CASH"
+        }
+
+    return category_purpose_dict

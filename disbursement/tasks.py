@@ -169,20 +169,29 @@ class BulkDisbursementThroughOneStepCashin(Task):
         }
         return BankTransaction.objects.create(**transaction_dict)
 
-    def disburse_for_bank_wallets(self, doc, checker):
+    def disburse_for_bank_docs(self, doc, checker):
         """
         :param doc: the document being disbursed
         :param checker: the checker user who have taken the disbursement action
         :return
         """
-        bank_wallets_transactions = doc.bank_wallets_transactions.all()
+        if doc.is_bank_wallet:
+            bank_wallets_transactions = doc.bank_wallets_transactions.all()
 
-        for instant_trx_obj in bank_wallets_transactions:
-            try:
-                bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
-                BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
-            except:
-                pass
+            for instant_trx_obj in bank_wallets_transactions:
+                try:
+                    bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
+                    BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
+                except:
+                    pass
+        else:
+            bank_cards_transactions = doc.bank_cards_transactions.all()
+
+            for bank_trx_obj in bank_cards_transactions:
+                try:
+                    BankTransactionsChannel.send_transaction(bank_trx_obj, False)
+                except:
+                    pass
 
     def run(self, doc_id, checker_username, *args, **kwargs):
         """
@@ -206,14 +215,10 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 if vf_recipients.count() == 0 and (ets_recipients or aman_recipients):
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
-            # 2. Handle doc of type bank-wallets
-            elif doc_obj.is_bank_wallet:
-                self.disburse_for_bank_wallets(doc=doc_obj, checker=checker)
+            # 2. Handle doc of type bank wallets/cards
+            elif doc_obj.is_bank_wallet or doc_obj.is_bank_card:
+                self.disburse_for_bank_docs(doc=doc_obj, checker=checker)
                 DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
-
-            # 3. Handle doc of type bank-cards
-            elif doc_obj.is_bank_card:
-                pass
 
         except (Doc.DoesNotExist, User.DoesNotExist, Exception) as err:
             DISBURSE_LOGGER.\

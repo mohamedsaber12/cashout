@@ -139,7 +139,7 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     'has_success': doc_obj.disbursement_data.filter(is_disbursed=True).count() != 0,
                     'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
                 }
-            elif doc_obj.is_bank_wallet or doc_obj.is_bank_card:
+            elif doc_obj.is_bank_wallet:
                 template_name = "disbursement/bank_transactions_list.html"
                 context = {
                     'doc_transactions': doc_obj.bank_wallets_transactions.all(),
@@ -147,6 +147,17 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                             status=AbstractBaseStatus.FAILED
                     ).count() != 0,
                     'has_success': doc_obj.bank_wallets_transactions.filter(
+                            status=AbstractBaseStatus.SUCCESSFUL
+                    ).count() != 0,
+                }
+            elif doc_obj.is_bank_card:
+                template_name = "disbursement/bank_transactions_list.html"
+                context = {
+                    'doc_transactions': doc_obj.bank_cards_transactions.all(),
+                    'has_failed': doc_obj.bank_cards_transactions.filter(
+                            status=AbstractBaseStatus.FAILED
+                    ).count() != 0,
+                    'has_success': doc_obj.bank_cards_transactions.filter(
                             status=AbstractBaseStatus.SUCCESSFUL
                     ).count() != 0,
                 }

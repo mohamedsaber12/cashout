@@ -29,7 +29,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
         (None, {
             'fields': (
                 'parent_transaction', 'transaction_id', 'message_id', 'user_created', 'status', 'amount', 'currency',
-                'purpose', 'category_code', 'transaction_status_code', 'transaction_status_description'
+                'purpose', 'category_code', 'transaction_status_code', 'transaction_status_description', 'document'
             )
         }),
         (_('Creditor/Beneficiary Data'), {

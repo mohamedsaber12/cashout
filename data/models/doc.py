@@ -161,9 +161,10 @@ class Doc(AbstractBaseDocType):
 
             return success_percentage
 
-        # 2. Calculate the success disbursement ratio of bank-wallets docs
-        elif self.is_bank_wallet:
-            doc_transactions = self.bank_wallets_transactions.all()
+        # 2. Calculate the success disbursement ratio of bank wallets/cards docs
+        elif self.is_bank_wallet or self.is_bank_card:
+            doc_transactions = self.bank_wallets_transactions.all() \
+                if self.is_bank_wallet else self.bank_cards_transactions.all()
             doc_transactions_count = doc_transactions.count()
             if doc_transactions_count == 0:
                 return 0

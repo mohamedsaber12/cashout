@@ -36,6 +36,8 @@ def status(status_value):
             return _("Successful")
         elif status_value == AbstractBaseStatus.PENDING:
             return _("Pending")
+        elif status_value == AbstractBaseStatus.DEFAULT:
+            return _("Default")
         else:
             return _("Failed")
     else:

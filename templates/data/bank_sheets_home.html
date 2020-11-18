@@ -2,7 +2,7 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{% trans "Bank wallets - Orange | Disbursement Files" %}{% endblock title %}
+{% block title %}{{ doc_list_header }}{% trans " | Disbursement Files" %}{% endblock title %}
 
 {% block gentellacss %}
 <link rel="stylesheet" href="{% static 'gentella/vendors/dropzone/dist/min/dropzone.min.css' %}">
@@ -113,7 +113,10 @@
     $(function () {
         $('[data-toggle="tooltip"]').tooltip()
     })
-</script>
 
+    $("#BankList").click(function () {
+      $("#bankCodesModel").modal();
+    });
+</script>
     {% include 'data/document_delete_script.html' %}
 {% endblock script %}

@@ -34,7 +34,7 @@ from users.models import EntitySetup
 from utilities import messages
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
-from .models import Agent
+from .models import Agent, BankTransaction
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -152,8 +152,13 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                 }
             elif doc_obj.is_bank_card:
                 template_name = "disbursement/bank_transactions_list.html"
+                bank_trx_ids = BankTransaction.objects.filter(document=doc_obj).\
+                    order_by("parent_transaction__transaction_id", "-id").\
+                    distinct("parent_transaction__transaction_id").\
+                    values_list("id", flat=True)
+                doc_transactions = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
                 context = {
-                    'doc_transactions': doc_obj.bank_cards_transactions.all(),
+                    'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.bank_cards_transactions.filter(
                             status=AbstractBaseStatus.FAILED
                     ).count() != 0,

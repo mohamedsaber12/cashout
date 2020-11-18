@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load custom_tags %}
+{% load banks_tags %}
 {% get_current_language as LANGUAGE_CODE %}
 
 {% block title %} {% trans 'Document details' %} {% endblock %}
@@ -23,6 +24,35 @@
       }
       .error_span{
           color: red;
+      }
+      .row-hover:hover {
+          background-color: transparent;
+          cursor: pointer;
+          color: #444;
+          box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
+          transform: translate(-1px,-1px);
+      }
+      .selected {
+          background-color: #f0f0f0 !important;
+          cursor: pointer;
+          color: #333;
+          box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
+          transform: translateY(-1px);
+      }
+      ul{
+          list-style: none;
+          padding: 0px;
+      }
+      ul > li > span{
+          display: inline-block;
+          width: 130px;
+          font-weight: bold;
+          color: #73879C;
+          line-height: 25px;
+      }
+      ul > li > b{
+          margin-right: 5px;
+          color: #777;
       }
   </style>
 {% endblock %}
@@ -183,36 +213,49 @@
             <h3 class="font-13 m-b-30" style="font-weight: bolder;">
               {% trans 'Count:' %} {{ doc.total_count }} | {% trans 'Total Amount:' %} {{ doc.total_amount }}
             </h3>
-            <table id="doc-datatable" class="table table-striped table-bordered">
+            <table id="doc-datatable" class="table table-bordered">
               {% if doc.is_bank_wallet %}
                 <thead>
+                  <th>{% trans 'Transaction ID' %}</th>
                   <th>{% trans 'Wallet number' %}</th>
                   <th>{% trans 'Amount' %}</th>
-                  <th>{% trans 'Full name' %}</th>
                 </thead>
                 <tbody>
                   {% for trx  in doc_transactions %}
-                    <tr>
+                    <tr data-id="{{ trx.uid }}"
+                        data-anon_recipient="{{ trx.anon_recipient }}"
+                        data-amount="{{ trx.amount }}"
+                        data-recipient_name="{{ trx.recipient_name }}"
+                        data-doc_maker="{{ doc.owner }}"
+                        data-doc_id="{{ doc.id }}"
+                        class="row-hover">
+                      <td>{{ trx.uid }}</td>
                       <td>{{ trx.anon_recipient }}</td>
                       <td>{{ trx.amount }}</td>
-                      <td>{{ trx.recipient_name }}</td>
                     </tr>
                   {% endfor %}
                 </tbody>
               {% else %}
                 <thead>
+                  <th>{% trans 'Transaction ID' %}</th>
                   <th>{% trans 'Account number' %}</th>
                   <th>{% trans 'Amount' %}</th>
-                  <th>{% trans 'Full name' %}</th>
-                  <th>{% trans 'Bank code' %}</th>
                 </thead>
                 <tbody>
                   {% for trx  in doc_transactions %}
-                    <tr>
+                    <tr data-id="{{ trx.parent_transaction.transaction_id }}"
+                        data-creditor_account_number="{{ trx.creditor_account_number }}"
+                        data-amount="{{ trx.amount }}"
+                        data-creditor_name="{{ trx.creditor_name }}"
+                        data-creditor_bank="{{ trx.creditor_bank }}"
+                        data-bank_name="{{ trx.creditor_bank|bank_name }}"
+                        data-type="{{ trx|transaction_type }}"
+                        data-doc_maker="{{ doc.owner }}"
+                        data-doc_id="{{ doc.id }}"
+                        class="row-hover">
+                      <td>{{ trx.parent_transaction.transaction_id }}</td>
                       <td>{{ trx.creditor_account_number }}</td>
                       <td>{{ trx.amount }}</td>
-                      <td>{{ trx.creditor_name }}</td>
-                      <td>{{ trx.creditor_bank }}</td>
                     </tr>
                   {% endfor %}
                 </tbody>
@@ -223,7 +266,23 @@
       </div>
     </div>
   </div>
+<!-- transaction details -->
+  <div id="trxDetails" style="display: none;" class="row">
+      <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+              <div class="x_title">
+                  <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+                  <div class="clearfix"></div>
+              </div>
 
+              <div class="x_content">
+                  <ul id="trxDetailsData">
+                  </ul>
+              </div>
+
+          </div>
+      </div>
+  </div>
   <div id="myModal" class="modal fade" role="dialog" tabindex="-1">
     <div class="modal-dialog">
 
@@ -374,6 +433,60 @@
         });
 
       });
+    });
+  </script>
+
+  <script>
+    $('#doc-datatable tbody').on( 'click', 'tr', function () {
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            $("#trxDetails").hide();
+        }
+        else {
+            $('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            let ul = $('#trxDetailsData');
+            let appendedTags = '';
+            {% if doc.is_bank_wallet %}
+              let uid = $(this).data('id');
+              appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
+              let anon_recipient = $(this).data('anon_recipient');
+              appendedTags += `<li><span>Wallet number</span><b>:</b>${anon_recipient}</li>`;
+              let amount = $(this).data('amount');
+              appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+              let recipient_name = $(this).data('recipient_name');
+              appendedTags += `<li><span>Full name</span><b>:</b>${recipient_name}</li>`;
+              let doc_id = $(this).data('doc_id');
+              appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
+              let doc_maker = $(this).data('doc_maker');
+              appendedTags += `<li><span>Maker user</span><b>:</b>${doc_maker}</li>`;
+            {% else %}
+              let uid = $(this).data('id');
+              appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
+              let creditor_account_number = $(this).data('creditor_account_number');
+              appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
+              let amount = $(this).data('amount');
+              appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+              let creditor_name = $(this).data('creditor_name');
+              appendedTags += `<li><span>Full name</span><b>:</b>${creditor_name}</li>`;
+              let creditor_bank = $(this).data('creditor_bank');
+              appendedTags += `<li><span>Bank code</span><b>:</b>${creditor_bank}</li>`;
+              let bank_name = $(this).data('bank_name');
+              appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
+              let type = $(this).data('type');
+              appendedTags += `<li><span>Transaction type</span><b>:</b>${type}</li>`;
+              let doc_id = $(this).data('doc_id');
+              appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
+              let doc_maker = $(this).data('doc_maker');
+              appendedTags += `<li><span>Maker user</span><b>:</b>${doc_maker}</li>`;
+            {% endif %}
+            ul.empty();
+            ul.append(appendedTags);
+            $("#trxDetails").show();
+            $('html,body').animate({
+                scrollTop: $("#trxDetails").offset().top
+            }, 'slow');
+       }
     });
   </script>
   {% include 'data/document_delete_script.html' %}

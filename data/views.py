@@ -18,6 +18,7 @@ from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, TemplateView, View
 from django.views.static import serve
 
+from disbursement.utils import BANK_CODES
 from users.decorators import collection_users, disbursement_users, root_only, setup_required
 from users.mixins import (
     SupportOrRootOrMakerUserPassesTestMixin, UserWithAcceptVFOnboardingPermissionRequired,
@@ -161,6 +162,7 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
             'has_vmt_setup': has_vmt_setup,
             'admin_is_active': self.admin_is_active,
             'banks_doc_list': docs,
+            'bank_codes': BANK_CODES,
             'doc_list_header': self.doc_list_header
         }
 

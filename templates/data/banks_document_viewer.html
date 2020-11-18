@@ -2,6 +2,7 @@
 {% load i18n %}
 {% load static %}
 {% load custom_tags %}
+{% load banks_tags %}
 {% get_current_language as LANGUAGE_CODE %}
 
 {% block title %} {% trans 'Document details' %} {% endblock %}
@@ -247,6 +248,8 @@
                         data-amount="{{ trx.amount }}"
                         data-creditor_name="{{ trx.creditor_name }}"
                         data-creditor_bank="{{ trx.creditor_bank }}"
+                        data-bank_name="{{ trx.creditor_bank|bank_name }}"
+                        data-type="{{ trx|transaction_type }}"
                         data-doc_maker="{{ doc.owner }}"
                         data-doc_id="{{ doc.id }}"
                         class="row-hover">
@@ -468,10 +471,10 @@
               appendedTags += `<li><span>Full name</span><b>:</b>${creditor_name}</li>`;
               let creditor_bank = $(this).data('creditor_bank');
               appendedTags += `<li><span>Bank code</span><b>:</b>${creditor_bank}</li>`;
-              // will add bank name
-              appendedTags += `<li><span>Bank name</span><b>:</b></li>`;
-              // will add transaction type
-              appendedTags += `<li><span>Transaction Type</span><b>:</b></li>`;
+              let bank_name = $(this).data('bank_name');
+              appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
+              let type = $(this).data('type');
+              appendedTags += `<li><span>Transaction type</span><b>:</b>${type}</li>`;
               let doc_id = $(this).data('doc_id');
               appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
               let doc_maker = $(this).data('doc_maker');

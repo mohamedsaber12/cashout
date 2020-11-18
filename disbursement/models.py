@@ -324,6 +324,7 @@ class BankTransaction(AbstractTimeStamp,
             blank=True,
             default=''
     )
+    is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
 
     class Meta:
         verbose_name = 'Bank Transaction'

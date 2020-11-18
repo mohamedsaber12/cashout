@@ -34,6 +34,7 @@ from users.models import EntitySetup
 from utilities import messages
 
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
+from .mixins import AdminOrCheckerRequiredMixin
 from .models import Agent, BankTransaction
 
 DATA_LOGGER = logging.getLogger("disburse")
@@ -501,3 +502,22 @@ class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):
 
     def get_queryset(self):
         return Agent.objects.filter(wallet_provider=self.request.user)
+
+
+class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView):
+    """
+    List view for single step bank transactions over the manual patch
+    """
+
+    model = BankTransaction
+    context_object_name = 'transactions_list'
+    template_name = 'disbursement/banks_single_step_trx_list.html'
+
+    def get_queryset(self):
+        bank_trx_ids = BankTransaction.objects.\
+            filter(user_created__hierarchy=self.request.user.hierarchy, is_single_step=True).\
+            order_by("parent_transaction__transaction_id", "-id").\
+            distinct("parent_transaction__transaction_id").\
+            values_list("id", flat=True)
+
+        return BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")

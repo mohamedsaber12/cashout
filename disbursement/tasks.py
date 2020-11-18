@@ -8,6 +8,7 @@ from decimal import Decimal
 import requests
 from celery import Task
 
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status
 
@@ -294,7 +295,7 @@ def check_for_late_change_profile_callback(**kwargs):
     disbursement_doc_data = DisbursementDocData.objects.filter(
             doc__created_at__gte=day_ago, doc__has_change_profile_callback=False,
             doc_status=DisbursementDocData.UPLOADED_SUCCESSFULLY
-    )
+    ).filter(~Q(doc__txn_id=None))
 
     if disbursement_doc_data.count() < 1:
         return False

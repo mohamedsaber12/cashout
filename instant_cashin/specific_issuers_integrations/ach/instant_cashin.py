@@ -45,6 +45,7 @@ class BankTransactionsChannel:
             'category_code': bank_trx_obj.category_code,
             'purpose': bank_trx_obj.purpose,
             'parent_transaction': bank_trx_obj.parent_transaction,
+            'document': bank_trx_obj.document,
             'user_created': bank_trx_obj.user_created,
             'transaction_status_code': bank_trx_obj.transaction_status_code,
             'transaction_status_description': bank_trx_obj.transaction_status_description,

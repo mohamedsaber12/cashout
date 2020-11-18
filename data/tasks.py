@@ -196,7 +196,6 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "Duplicate mobile number"
                     else:
                         errors_list[index] = "\nDuplicate mobile number"
-                        msisdns_list.append(record[1])
         except:
             pass
         finally:

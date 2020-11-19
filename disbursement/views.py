@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import io
 import logging
+import random
 import os
 
+from faker import Factory as fake_factory
+import pandas as pd
 import requests
 
 from django.conf import settings
@@ -29,6 +33,7 @@ from users.mixins import (
     SuperFinishedSetupMixin, SuperRequiredMixin,
     SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
     SuperWithoutDefaultOnboardingPermissionRequired, UserWithDisbursementPermissionRequired,
+    UserWithAcceptVFOnboardingPermissionRequired,
 )
 from users.models import EntitySetup
 from utilities import messages
@@ -36,6 +41,7 @@ from utilities import messages
 from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
 from .mixins import AdminOrCheckerRequiredMixin
 from .models import Agent, BankTransaction
+from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -521,3 +527,78 @@ class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView):
             values_list("id", flat=True)
 
         return BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+
+
+class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):
+    """
+    View for downloading disbursement sample files
+    """
+
+    def generate_e_wallets_sample_file(self):
+        """"""
+        pass
+
+    def generate_bank_wallets_sample_df(self):
+        """Generate bank wallets sample data frame"""
+        filename = 'bank_wallets_sample_file.xlsx'
+        fake = fake_factory.create()
+        bank_wallets_headers = ['mobile number', 'amount', 'full name']
+        bank_wallets_sample_records = []
+
+        for _ in range(9):
+            msisdn_carrier = random.choice(['010########', '011########', '012########'])
+            msisdn = f"{fake.numerify(text=msisdn_carrier)}"
+            amount = round(random.random() * 1000, 2)
+            full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
+            bank_wallets_sample_records.append([msisdn, amount, full_name])
+
+        bank_wallets_df = pd.DataFrame(bank_wallets_sample_records, columns=bank_wallets_headers)
+        return filename, bank_wallets_df
+
+    def generate_bank_cards_sample_df(self):
+        """Generate bank cards sample data frame"""
+        filename = 'bank_cards_sample_file.xlsx'
+        fake = fake_factory.create()
+        bank_cards_headers = ['account number', 'amount', 'full name', 'bank code', 'transaction type']
+        bank_cards_sample_records = []
+
+        for _ in range(9):
+            account_number = f"{fake.numerify(text='9###############')}"
+            amount = round(random.random() * 1000, 2)
+            full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
+            bank_code = random.choice(VALID_BANK_CODES_LIST)
+            transaction_type = random.choice(VALID_BANK_TRANSACTION_TYPES_LIST).lower()
+            bank_cards_sample_records.append([account_number, amount, full_name, bank_code, transaction_type])
+
+        bank_cards_df = pd.DataFrame(bank_cards_sample_records, columns=bank_cards_headers)
+        return filename, bank_cards_df
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests calls to download the sheet"""
+        file_type = request.GET.get("type", None)
+
+        try:
+            # 1. Generate data frame based on the given type
+            if file_type == 'bank_wallets':
+                filename, file_df = self.generate_bank_wallets_sample_df()
+            elif file_type == 'bank_cards':
+                filename, file_df = self.generate_bank_cards_sample_df()
+            else:
+                raise Http404
+
+            # 2. Save data frame as an excel file into memory for streaming
+            in_memory_fp = io.BytesIO()
+            file_df.to_excel(in_memory_fp, index=False)
+            in_memory_fp.seek(0)
+
+            # 3. Return the excel file as an attachment to be downloaded
+            response = HttpResponse(
+                    in_memory_fp.read(),
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            in_memory_fp.close()
+
+            return response
+        except:
+            raise Http404

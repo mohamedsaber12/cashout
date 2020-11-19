@@ -10,12 +10,19 @@
     <div class="title_left">
         <h3>{{ list_header }}{% trans ' Disbursement Documents' %}</h3>
     </div>
+
     {% if list_header == 'Bank Cards' %}
-        <div class="title_right">
-            <button id="BankList" style="float:right;" class="btn btn-default dialogButton"
-                data-toggle="tooltip" data-placement="bottom"
-                title="Open Bank Codes List">Bank Codes List</button>
-        </div>
+      <div class="title_right">
+        <button id="export_bank_cards_sample_file" style="float:right;" class="btn btn-default dialogButton"
+                data-display-toggle="tooltip" data-placement="bottom" title="Download Sample File For Bank Cards">Download Sample File</button>
+        <button id="BankList" style="float:right;" class="btn btn-default dialogButton"
+                data-toggle="tooltip" data-placement="bottom" title="Open Bank Codes List">Bank Codes List</button>
+      </div>
+    {% elif list_header == 'Bank wallets - Orange' %}
+      <div class="title_right">
+        <button id="export_bank_wallets_sample_file" style="float:right;" class="btn btn-default dialogButton"
+                data-display-toggle="tooltip" data-placement="bottom" title="Download Sample File For Bank Wallets">Download Sample File</button>
+      </div>
     {% endif %}
 </div>
 

@@ -976,7 +976,7 @@ def notify_maker(doc, download_url=None):
     if doc.is_processed:
         message = _(f"{message_intro} validated successfully. You can notify checkers now.<br><br>Thanks, BR")
     else:
-        MSG = _(f"{message_intro} failed validation.<br><br>The reason is: {doc.processing_failure_reason}.<br><br>")
+        MSG = _(f"{message_intro} failed validations.<br><br>The reason is: {doc.processing_failure_reason}.<br><br>")
 
         if download_url:
             MSG = _(f"{MSG}You can download the file containing errors from <a href='{download_url}'>here.</a><br><br>")

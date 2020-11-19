@@ -98,6 +98,7 @@ class Budget(AbstractTimeStamp):
         """Accumulate amount being disbursed with fees percentage and 14 % VAT"""
         actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
+        # 1. Determine the type of the issuer to calculate the fees for
         if issuer_type == "vodafone":
             issuer_type_refined = FeeSetup.VODAFONE
         elif issuer_type == "etisalat":
@@ -111,24 +112,36 @@ class Budget(AbstractTimeStamp):
         elif issuer_type == "bank_wallet":
             issuer_type_refined = FeeSetup.BANK_WALLET
 
+        # 2. Pick the fees objects corresponding to the determined issuer type
         fees_obj = self.fees.filter(issuer=issuer_type_refined)
         fees_obj = fees_obj.first() if fees_obj.count() > 0 else None
 
-        if fees_obj.fee_type == FeeSetup.FIXED_FEE:
-            fixed_value = round(fees_obj.fixed_value, 2)
-            fees_aggregated_value = fixed_value
-        elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
-            percentage_value = round(fees_obj.percentage_value, 2)
-            fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2)
-        elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
-            fixed_value = round(fees_obj.fixed_value, 2)
-            percentage_value = round(fees_obj.percentage_value, 2)
-            fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2) + fixed_value
+        # 3. Calculate the fees for the passed amount to be disbursed using the picked fees type and value
+        if fees_obj:
+            if fees_obj.fee_type == FeeSetup.FIXED_FEE:
+                fixed_value = round(fees_obj.fixed_value, 2)
+                fees_aggregated_value = fixed_value
+            elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
+                percentage_value = round(fees_obj.percentage_value, 2)
+                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2)
+            elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
+                fixed_value = round(fees_obj.fixed_value, 2)
+                percentage_value = round(fees_obj.percentage_value, 2)
+                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2) + fixed_value
 
-        vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 2)
-        total_amount_with_fees_and_vat = round((actual_amount + fees_aggregated_value + vat_value), 2)
+            # 3.1 Check the total fees_aggregated_value if it complies against the min and max values
+            if 0 < fees_obj.min_value > fees_aggregated_value:
+                fees_aggregated_value = fees_obj.min_value
 
-        return total_amount_with_fees_and_vat
+            if 0 < fees_obj.max_value < fees_aggregated_value:
+                fees_aggregated_value = fees_obj.max_value
+
+            vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 2)
+            total_amount_with_fees_and_vat = round((actual_amount + fees_aggregated_value + vat_value), 2)
+
+            return total_amount_with_fees_and_vat
+        else:
+            raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
 
     def within_threshold(self, amount_to_be_disbursed, issuer_type):
         """
@@ -257,6 +270,38 @@ class FeeSetup(models.Model):
             null=True,
             blank=True,
             help_text=_("Applied with transactions of type percentage or mixed fees")
+    )
+    min_value = models.DecimalField(
+            _("Minimum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+            null=True,
+            blank=True,
+            help_text=_(
+                    "Fees value to be added instead of the fixed/percentage fees when "
+                        "the total calculated fees before 14% is less than this min value"
+            )
+    )
+    max_value = models.DecimalField(
+            _("Maximum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(10000.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+            null=True,
+            blank=True,
+            help_text=_(
+                    "Fees value to be added instead of the fixed/percentage fees when "
+                    "the total calculated fees before 14% is greater than this max value"
+            )
     )
 
     @property

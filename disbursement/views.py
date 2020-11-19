@@ -18,7 +18,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import View, ListView
+from django.views.generic import View, ListView, CreateView
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
@@ -27,6 +27,7 @@ from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_data, generate_success_disbursed_data)
 from data.utils import redirect_params
+from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
 from users.mixins import (
@@ -38,7 +39,7 @@ from users.mixins import (
 from users.models import EntitySetup
 from utilities import messages
 
-from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm
+from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, SingleStepTransactionForm
 from .mixins import AdminOrCheckerRequiredMixin
 from .models import Agent, BankTransaction
 from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
@@ -510,7 +511,7 @@ class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):
         return Agent.objects.filter(wallet_provider=self.request.user)
 
 
-class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView):
+class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView, CreateView):
     """
     List view for single step bank transactions over the manual patch
     """
@@ -527,6 +528,46 @@ class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView):
             values_list("id", flat=True)
 
         return BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+
+    def get(self, request, *args, **kwargs):
+        """
+        Handles GET requests for single step bank transactions list view
+        """
+        context = {
+            "form": SingleStepTransactionForm(current_user=request.user),
+            'transactions_list': self.get_queryset()
+        }
+        return render(request, template_name=self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests to single step bank transaction
+        """
+        context = {
+            "form": SingleStepTransactionForm(request.POST, current_user=request.user),
+            'transactions_list': self.get_queryset(),
+            "show_add_form": True
+        }
+
+        if not context["form"].is_valid():
+            return render(request, template_name=self.template_name, context=context)
+        if context["form"].is_valid():
+            form = context['form']
+            single_step_bank_transaction = form.save()
+            context = {
+                "form": SingleStepTransactionForm(current_user=request.user),
+                'transactions_list': self.get_queryset(),
+                'show_pop_up': True
+            }
+            try:
+                response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
+                context['status_code'] = response.data.get('status_code')
+                context['status_description'] = response.data.get('status_description')
+            except:
+                context['status_code'] = 'internal error'
+                context['status_description'] = 'Internal Error Please Contact your Support Team'
+
+            return render(request, template_name=self.template_name, context=context)
 
 
 class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):

@@ -5,7 +5,30 @@
 {% load transactions_tags i18n %}
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
-
+{% block customcss %}
+    <style>
+      .dialogButtonDiv {
+          float: right
+      }
+      .errorlist {
+        list-style: none;
+        padding: 0;
+      }
+      .help-block {
+        color: red;
+      }
+      .alert-success {
+        color: #3c763d;
+        background-color: #dff0d8;
+        border-color: #d6e9c6;
+      }
+      .alert-danger {
+        color: #a94442;
+        background-color: #f2dede;
+        border-color: #ebccd1;
+      }
+    </style>
+{% endblock %}
 {% block body %}
     <!-- page content -->
     <div class="col" role="main">
@@ -33,6 +56,12 @@
             <div class="x_panel">
               <div class="x_title">
                 <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
+                {% if user.is_checker %}
+                  <div class="dialogButtonDiv">
+                  <button id="addSingleTransaction" class="btn btn-default dialogButton" data-toggle="tooltip"
+                          data-placement="bottom" title="Add Single Transaction">Add</button>
+                </div>
+                {% endif %}
                 <ul class="nav navbar-right panel_toolbox">
                   <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                   </li>
@@ -72,4 +101,175 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal add transaction-->
+    <div class="modal fade" id="transactionModel" role="dialog">
+        <div class="modal-dialog">
+          <!-- Modal content-->
+          <div class="modal-content">
+            <div class="modal-header">
+              <button type="button" class="close" data-dismiss="modal">&times;</button>
+              <h4><span class="glyphicon glyphicon-plus"></span> Add Transaction</h4>
+            </div>
+            <div class="modal-body">
+              <div class="waiting-form-respond">
+              </div>
+              <form role="form" action="{% url 'disbursement:single_step_list_create' %}"
+                    method="post" id="addTransactionForm" class="autoValidateForm">
+                {% csrf_token %}
+                <div class="row">
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                        <span class="glyphicon glyphicon-user"></span> Account Number *
+                    </label>
+                    {{form.creditor_account_number}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.creditor_account_number.errors}}
+                    </div>
+                  </div>
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                        <span class="glyphicon glyphicon-tag"></span> Amount *
+                    </label>
+                    {{form.amount}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.amount.errors}}
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                    <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
+                    {{ form.creditor_name }}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{ form.creditor_name.errors }}
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                        <span class="glyphicon glyphicon-sort"></span> Transaction Type
+                    </label>
+                    {{ form.transaction_type }}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{ form.transaction_type.errors }}
+                    </div>
+                  </div>
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                        <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+                    </label>
+                    {{form.creditor_bank}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.creditor_bank.errors}}
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                    <label>
+                        <span class="glyphicon glyphicon-pushpin"></span> Pin *
+                    </label>
+                    {{form.pin}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.pin.errors}}
+                    </div>
+                  </div>
+                </div>
+
+                <button id="submitModal" class="btn btn-primary pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="submit">Submit</button>
+                <button class="btn btn-default pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-dismiss="modal">Cancel</button>
+              </form>
+            </div>
+            <div class="modal-footer" id="addFooter">
+              <!-- Error div for modal goes here -->
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <!-- Model Success create transaction -->
+    <div class="modal fade" id="successModal" role="dialog">
+    <div class="modal-dialog">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Success</h4>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-success" role="alert">
+            {{ status_description }}
+          </div>
+          <div style="text-align: center;">
+            <img src='https://image.flaticon.com/icons/svg/148/148767.svg' style='margin:auto;' width = '30%'/>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+    <!-- Model Success create transaction -->
+    <div class="modal fade" id="failedModal" role="dialog">
+      <div class="modal-dialog">
+
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Failed</h4>
+          </div>
+          <div class="modal-body">
+            <div class="alert alert-danger" role="alert">
+              {{ status_description }}
+            </div>
+            <div style="text-align: center;">
+              <img src='https://www.flaticon.com/svg/static/icons/svg/1828/1828843.svg'  width='30%'/>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+{% endblock %}
+
+{% block script %}
+<script>
+    {% if show_add_form == True %}
+      $("#transactionModel").modal();
+    {% endif %}
+    $("#addSingleTransaction").click(function () {
+        $("#transactionModel").modal();
+    });
+
+    {% if show_pop_up == True %}
+      {% if status_code != 8000 %}
+        $('#failedModal').modal({
+          backdrop: 'static',
+          keyboard: false
+        });
+      {% else %}
+        $('#successModal').modal({
+          backdrop: 'static',
+          keyboard: false
+        });
+      {% endif %}
+    {% endif %}
+
+</script>
 {% endblock %}

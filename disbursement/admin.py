@@ -23,7 +23,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
         'transaction_status_code', 'created_at'
     ]
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
-    list_filter = ['status', 'category_code', 'transaction_status_code']
+    list_filter = ['status', 'category_code', 'transaction_status_code', 'is_single_step']
     ordering = ['-id']
     fieldsets = (
         (None, {

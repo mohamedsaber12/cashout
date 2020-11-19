@@ -17,7 +17,8 @@ client_urls = [
 ]
 
 urlpatterns = [
-    path('disburse/bank-cards/single-step/', BankTransactionsSingleStepListView.as_view(), name='single_step_list'),
+    path('disburse/bank-cards/single-step/', BankTransactionsSingleStepListView.as_view(),
+         name='single_step_list_create'),
     path('disburse_call/<doc_id>/', disburse, name='disburse'),
     path('disburse/export-sample-file/', DownloadSampleSheetView.as_view(), name='export_sample_file'),
     path('disburse/report/<doc_id>/', DisbursementDocTransactionsView.as_view(), name='disbursed_data'),

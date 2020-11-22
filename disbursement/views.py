@@ -19,6 +19,7 @@ from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import View, ListView, CreateView
+from rest_framework import status
 
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
@@ -39,7 +40,7 @@ from users.mixins import (
 from users.models import EntitySetup
 from utilities import messages
 
-from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, SingleStepTransactionForm
+from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, SingleStepTransactionModelForm
 from .mixins import AdminOrCheckerRequiredMixin
 from .models import Agent, BankTransaction
 from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
@@ -511,9 +512,9 @@ class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):
         return Agent.objects.filter(wallet_provider=self.request.user)
 
 
-class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView, CreateView):
+class BankTransactionsSingleStepView(AdminOrCheckerRequiredMixin, View):
     """
-    List view for single step bank transactions over the manual patch
+    List/Create view for single step bank transactions over the manual patch
     """
 
     model = BankTransaction
@@ -530,32 +531,26 @@ class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView, 
         return BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
 
     def get(self, request, *args, **kwargs):
-        """
-        Handles GET requests for single step bank transactions list view
-        """
+        """Handles GET requests for single step bank transactions list view"""
         context = {
-            "form": SingleStepTransactionForm(current_user=request.user),
+            'form': SingleStepTransactionModelForm(checker_user=request.user),
             'transactions_list': self.get_queryset()
         }
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):
-        """
-        Handles POST requests to single step bank transaction
-        """
+        """Handles POST requests to single step bank transaction"""
         context = {
-            "form": SingleStepTransactionForm(request.POST, current_user=request.user),
+            'form': SingleStepTransactionModelForm(request.POST, checker_user=request.user),
             'transactions_list': self.get_queryset(),
-            "show_add_form": True
+            'show_add_form': True
         }
 
-        if not context["form"].is_valid():
-            return render(request, template_name=self.template_name, context=context)
-        if context["form"].is_valid():
+        if context['form'].is_valid():
             form = context['form']
             single_step_bank_transaction = form.save()
             context = {
-                "form": SingleStepTransactionForm(current_user=request.user),
+                'form': SingleStepTransactionModelForm(checker_user=request.user),
                 'transactions_list': self.get_queryset(),
                 'show_pop_up': True
             }
@@ -564,10 +559,10 @@ class BankTransactionsSingleStepListView(AdminOrCheckerRequiredMixin, ListView, 
                 context['status_code'] = response.data.get('status_code')
                 context['status_description'] = response.data.get('status_description')
             except:
-                context['status_code'] = 'internal error'
-                context['status_description'] = 'Internal Error Please Contact your Support Team'
+                context['status_code'] = status.HTTP_500_INTERNAL_SERVER_ERROR
+                context['status_description'] = 'Process stopped during an internal error, please can you try again.'
 
-            return render(request, template_name=self.template_name, context=context)
+        return render(request, template_name=self.template_name, context=context)
 
 
 class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):

@@ -1,3 +1,4 @@
+from decimal import Decimal
 import logging
 
 import requests
@@ -6,11 +7,14 @@ from django import forms
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
 
+from instant_cashin.utils import get_digits, get_from_env
 from payouts.utils import get_dot_env
 from users.tasks import set_pin_error_mail
 
-from .models import Agent, VMTData
-
+from .models import Agent, BankTransaction, VMTData
+from .utils import (BANK_CODES, VALID_BANK_CODES_LIST,
+                    VALID_BANK_TRANSACTION_TYPES_LIST,
+                    determine_trx_category_and_purpose)
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
@@ -183,6 +187,123 @@ class BalanceInquiryPinForm(forms.Form):
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
         return pin
+
+
+class SingleStepTransactionModelForm(forms.ModelForm):
+    """
+    single step transaction Form by Checker users
+    """
+
+    pin = forms.CharField(
+        required=True,
+        min_length=6,
+        max_length=6,
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control', 'id': 'pin', 'name': 'pin', 'placeholder': 'Enter your pin'
+        })
+    )
+    transaction_type = forms.CharField(
+        required=True,
+        widget=forms.Select(
+                choices=(
+                    (tx_type, tx_type.replace('_', ' ').capitalize()) for tx_type in VALID_BANK_TRANSACTION_TYPES_LIST
+                ) ,
+                attrs={'class': 'form-control', 'id': 'tx_type', 'name': 'trx_type'}
+        )
+    )
+
+    class Meta:
+        model = BankTransaction
+        fields = ['creditor_account_number', 'amount', 'creditor_name', 'creditor_bank']
+
+    def __init__(self, *args, **kwargs):
+        self.checker_user = kwargs.pop('checker_user', None)
+
+        super().__init__(*args, **kwargs)
+
+        self.fields['creditor_account_number'].widget.attrs.update({
+            'class': 'form-control', 'id': 'accountNumber',
+            'name': 'accountNumber', 'placeholder': 'Enter account number'
+        })
+        self.fields['amount'].widget.attrs.update({
+            'class': 'form-control', 'id': 'trxAmount', 'min': 30,
+            'name': 'trxAmount', 'placeholder': 'Enter transaction amount'
+        })
+        self.fields['creditor_name'].widget.attrs.update({
+            'class': 'form-control', 'id': 'full_name', 'name': 'full_name', 'placeholder': 'Enter full name'
+        })
+        bank_choices = ((dic['code'], dic['name']) for dic in BANK_CODES)
+        self.fields['creditor_bank'].widget = forms.Select(choices=bank_choices, attrs={
+            'class': 'form-control', 'id': 'bank_name', 'name': 'bank_name'
+        })
+
+    def clean_pin(self):
+        pin = self.cleaned_data.get('pin', None)
+
+        if pin and not pin.isnumeric():
+            raise forms.ValidationError(_('Pin must be numeric'))
+        if not pin or self.checker_user.root.pin and not self.checker_user.root.check_pin(pin):
+            raise forms.ValidationError(_('Invalid pin'))
+
+        return pin
+
+    def clean_transaction_type(self):
+        transaction_type = self.cleaned_data.get('transaction_type', None)
+
+        if not transaction_type or str(transaction_type).upper() not in VALID_BANK_TRANSACTION_TYPES_LIST:
+            raise forms.ValidationError(_('Invalid transaction purpose'))
+
+        return transaction_type
+
+    def clean_creditor_account_number(self):
+        creditor_account_number = self.cleaned_data.get('creditor_account_number', None)
+        account = get_digits(str(creditor_account_number)) if creditor_account_number else None
+
+        if not (account and len(account) == 16):
+            raise forms.ValidationError(_('Invalid Account number'))
+
+        return account
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount', None)
+
+        if not amount or not (str(amount).replace('.', '', 1).isdigit() and Decimal(amount) >= 30):
+            raise forms.ValidationError(_('Invalid amount'))
+
+        return round(Decimal(amount), 2)
+
+    def clean_creditor_name(self):
+        creditor_name = self.cleaned_data.get('creditor_name', None)
+
+        if not creditor_name:
+            raise forms.ValidationError(_('Invalid name'))
+
+        return creditor_name
+
+    def clean_creditor_bank(self):
+        creditor_bank = self.cleaned_data.get('creditor_bank', None)
+
+        if not creditor_bank or str(creditor_bank).upper() not in VALID_BANK_CODES_LIST:
+            raise forms.ValidationError(_('Invalid bank code'))
+
+        return creditor_bank
+
+    def save(self, commit=True):
+        single_step_bank_transaction = super().save(commit=False)
+
+        single_step_bank_transaction.user_created = self.checker_user
+        category_purpose_dict = determine_trx_category_and_purpose(self.cleaned_data.get('transaction_type'))
+        single_step_bank_transaction.category_code = category_purpose_dict.get('category_code', 'CASH')
+        single_step_bank_transaction.purpose = category_purpose_dict.get('purpose', 'CASH')
+        single_step_bank_transaction.is_single_step = True
+        single_step_bank_transaction.corporate_code = get_from_env('ACH_CORPORATE_CODE')
+        single_step_bank_transaction.debtor_account = get_from_env('ACH_DEBTOR_ACCOUNT')
+        single_step_bank_transaction.currency = 'EGP'
+        single_step_bank_transaction.debtor_address_1 = 'EG'
+        single_step_bank_transaction.creditor_address_1 = 'EG'
+
+        single_step_bank_transaction.save()
+        return single_step_bank_transaction
 
 
 AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)

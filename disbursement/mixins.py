@@ -1,6 +1,7 @@
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
 
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext as _
 
 
@@ -20,3 +21,18 @@ class AdminSiteOwnerOnlyPermissionMixin:
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+class AdminOrCheckerRequiredMixin(LoginRequiredMixin):
+    """
+    Check if the user accessing resource is admin or checker with disbursement and accept vf on-boarding permissions
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        status = self.request.user.get_status(self.request)
+
+        if not (status == "disbursement" and
+                self.request.user.is_accept_vodafone_onboarding and
+                (self.request.user.is_checker or self.request.user.is_root)):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)

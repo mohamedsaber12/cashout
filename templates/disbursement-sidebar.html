@@ -77,6 +77,10 @@
           </li>
         {% endif %}
 
+        {% if request.user.is_root and not request.user.root_entity_setups.is_normal_flow or request.user.is_checker and not request.user.root.root_entity_setups.is_normal_flow %}
+          <li><a href="{% url 'disbursement:single_step_list_create' %}"><i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}</a></li>
+        {% endif %}
+
         <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o"></i>{% trans 'Active Sessions' %}</a></li>
         <li><a><i class="fa fa-life-ring"></i> {% trans 'Settings' %} <span class="fa fa-chevron-down"></span></a>
           <ul class="nav child_menu">

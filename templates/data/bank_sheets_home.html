@@ -117,6 +117,14 @@
     $("#BankList").click(function () {
       $("#bankCodesModel").modal();
     });
+
+    $('#export_bank_wallets_sample_file').on('click', function () {
+      window.open('{% url 'disbursement:export_sample_file' %}?type=bank_wallets', '_blank');
+    });
+
+    $('#export_bank_cards_sample_file').on('click', function () {
+      window.open('{% url 'disbursement:export_sample_file' %}?type=bank_cards', '_blank');
+    });
 </script>
     {% include 'data/document_delete_script.html' %}
 {% endblock script %}

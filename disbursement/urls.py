@@ -1,9 +1,11 @@
 from django.urls import path
 
-from .views import (AgentsListView, BalanceInquiry,
-                    SuperAdminAgentsSetup, disburse, DisbursementDocTransactionsView,
-                    download_failed_validation_file,
-                    failed_disbursed_for_download)
+from .views import (
+    AgentsListView, BalanceInquiry,
+    SuperAdminAgentsSetup, disburse, DisbursementDocTransactionsView,
+    download_failed_validation_file,
+    failed_disbursed_for_download, BankTransactionsSingleStepView, DownloadSampleSheetView,
+)
 
 
 app_name = 'disbursement'
@@ -15,7 +17,9 @@ client_urls = [
 ]
 
 urlpatterns = [
+    path('disburse/bank-cards/single-step/', BankTransactionsSingleStepView.as_view(), name='single_step_list_create'),
     path('disburse_call/<doc_id>/', disburse, name='disburse'),
+    path('disburse/export-sample-file/', DownloadSampleSheetView.as_view(), name='export_sample_file'),
     path('disburse/report/<doc_id>/', DisbursementDocTransactionsView.as_view(), name='disbursed_data'),
     path('disburse/export_failed_download/<doc_id>/', failed_disbursed_for_download, name='download_failed'),
     path('disburse/export_failed_validation_download/<doc_id>/',

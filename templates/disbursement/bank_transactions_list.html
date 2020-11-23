@@ -12,37 +12,7 @@
 <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
-<style>
-    .row-hover:hover {
-        background-color: transparent;
-        cursor: pointer;
-        color: #444;
-        box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-        transform: translate(-1px,-1px);
-    }
-    .selected {
-        background-color: #f0f0f0 !important;
-        cursor: pointer;
-        color: #333;
-        box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-        transform: translateY(-1px);
-    }
-    ul{
-        list-style: none;
-        padding: 0px;
-    }
-    ul > li > span{
-        display: inline-block;
-        width: 210px;
-        font-weight: bold;
-        color: #73879C;
-        line-height: 25px;
-    }
-    ul > li > b{
-        margin-right: 5px;
-        color: #777;
-    }
-</style>
+<link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
@@ -175,8 +145,22 @@
               </div>
 
               <div class="x_content">
-                  <ul id="trxDetailsData">
-                  </ul>
+                <div class="row">
+                  <div class="col-md-6 col-sm-6 col-xs-6">
+                    <ul id="trxDetailsData">
+                    </ul>
+                  </div>
+                  <div class="col-md-6 col-sm-6 col-xs-6">
+                    <ul id="trxDetailsDataRight">
+                    </ul>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+                    <ul id="trxDetailsDataLast">
+                    </ul>
+                  </div>
+                </div>
               </div>
 
           </div>
@@ -246,6 +230,8 @@
             $('tr.selected').removeClass('selected');
             $(this).addClass('selected');
             let ul = $('#trxDetailsData');
+            let ulRight = $('#trxDetailsDataRight');
+            let ulLast = $('#trxDetailsDataLast');
             let appendedTags = '';
             {% if doc_obj.is_bank_wallet %}
               let uid = $(this).data('id');
@@ -276,18 +262,27 @@
               let status = $(this).data('status');
               appendedTags += `<li><span>Disbursed</span><b>:</b>${status}</li>`;
             {% endif %}
-            let transaction_status_code = $(this).data('transaction_status_code');
-              appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${transaction_status_code}</li>`;
-              let transaction_status_description = $(this).data('transaction_status_description');
-              appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
+
+            ul.empty();
+            ul.append(appendedTags);
+            appendedTags = '';
             let doc_id = $(this).data('doc_id');
             appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
             let doc_maker = $(this).data('doc_maker');
             appendedTags += `<li><span>Maker user</span><b>:</b>${doc_maker}</li>`;
             let doc_checker = $(this).data('doc_checker');
             appendedTags += `<li><span>Checker user</span><b>:</b>${doc_checker}</li>`;
-            ul.empty();
-            ul.append(appendedTags);
+
+            ulRight.empty();
+            ulRight.append(appendedTags);
+            appendedTags = '';
+
+            let transaction_status_code = $(this).data('transaction_status_code');
+            appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${transaction_status_code}</li>`;
+            let transaction_status_description = $(this).data('transaction_status_description');
+            appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
+            ulLast.empty();
+            ulLast.append(appendedTags);
             $("#trxDetails").show();
             $('html,body').animate({
                 scrollTop: $("#trxDetails").offset().top

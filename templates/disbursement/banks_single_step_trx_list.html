@@ -1,4 +1,5 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
@@ -6,6 +7,7 @@
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
 {% block customcss %}
+    <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
     <style>
       .dialogButtonDiv {
           float: right
@@ -26,6 +28,9 @@
         color: #a94442;
         background-color: #f2dede;
         border-color: #ebccd1;
+      }
+      ul > li > span{
+        width: 120px;
       }
     </style>
 {% endblock %}
@@ -69,7 +74,7 @@
               </div>
 
               <div class="x_content">
-                <table class="table table-striped table-bordered" id="transaction-table">
+                <table class="table table-bordered" id="transaction-table">
                   <thead>
                     <tr>
                       <th>{% trans 'Transaction ID' %}</th>
@@ -77,19 +82,27 @@
                       <th>{% trans 'Bank code' %}</th>
                       <th>{% trans 'Amount' %}</th>
                       <th>{% trans 'Status' %}</th>
-                      <th>{% trans 'Created At' %}</th>
+                      <th>{% trans 'Updated At' %}</th>
                     </tr>
                   </thead>
 
                   <tbody>
                   {% for transaction in transactions_list %}
-                    <tr data-href="#">
+                    <tr data-href="#"
+                        data-id="{{ transaction.parent_transaction.transaction_id }}"
+                        data-creditor_account_number="{{ transaction.creditor_account_number }}"
+                        data-creditor_bank="{{ transaction.creditor_bank }}"
+                        data-amount="{{ transaction.amount }}"
+                        data-status="{{ transaction.status|status }}"
+                        data-created_at="{{ transaction.parent_transaction.created_at }}"
+                        data-updated_at="{{ transaction.updated_at }}"
+                        class="row-hover">
                       <td>{{ transaction.parent_transaction.transaction_id }}</td>
                       <td>{{ transaction.creditor_account_number }}</td>
                       <td>{{ transaction.creditor_bank }}</td>
                       <td>{{ transaction.amount }}</td>
                       <td>{{ transaction.status|status }}</td>
-                      <td>{{ transaction.created_at }}</td>
+                      <td>{{ transaction.updated_at }}</td>
                     </tr>
                   {% endfor %}
                   </tbody>
@@ -243,6 +256,31 @@
 
       </div>
     </div>
+
+    <!-- transaction details -->
+    <div id="trxDetails" style="display: none;" class="row">
+      <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+            <div class="clearfix"></div>
+          </div>
+
+          <div class="x_content">
+            <div class="row">
+              <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsData">
+                </ul>
+                </div>
+              <div class="col-md-6 col-sm-6 col-xs-6">
+                <ul id="trxDetailsDataRight">
+                </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
 {% endblock %}
 
 {% block script %}
@@ -268,5 +306,45 @@
           });
         {% endif %}
       {% endif %}
+  </script>
+  <script>
+    $('#transaction-table tbody').on( 'click', 'tr', function () {
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            $("#trxDetails").hide();
+        }
+        else {
+            $('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            let ul = $('#trxDetailsData');
+            let ulRight = $('#trxDetailsDataRight');
+            let appendedTags = '';
+            let trx_id = $(this).data('id')
+            appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
+            let creditor_account_number = $(this).data('creditor_account_number');
+            appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
+            let creditor_bank = $(this).data('creditor_bank');
+            appendedTags += `<li><span>creditor_bank</span><b>:</b>${creditor_bank}</li>`;
+            let amount = $(this).data('amount');
+            appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+            let status = $(this).data('status');
+            ul.empty();
+            ul.append(appendedTags);
+            appendedTags = '';
+
+            appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
+            let created_at = $(this).data('created_at');
+            appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+            let updated_at = $(this).data('updated_at');
+            appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+
+            ulRight.empty();
+            ulRight.append(appendedTags);
+            $("#trxDetails").show();
+            $('html,body').animate({
+                scrollTop: $("#trxDetails").offset().top
+            }, 'slow');
+       }
+    });
   </script>
 {% endblock %}

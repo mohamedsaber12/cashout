@@ -11,35 +11,7 @@
 <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
-<style>
-    .row-hover:hover {
-        background-color: transparent;
-        cursor: pointer;
-        color: #444;
-        box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-        transform: translate(-1px,-1px);
-    }
-    .selected {
-        background-color: #f0f0f0 !important;
-        cursor: pointer;
-        color: #333;
-        box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-        transform: translateY(-1px);
-    }
-    ul{
-        list-style: none;
-        padding: 0px;
-    }
-    ul > li > span{
-        display: inline-block;
-        width: 210px;
-        font-weight: bold;
-        line-height: 25px;
-    }
-    ul > li > b{
-        margin-right: 5px;
-    }
-</style>
+<link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block body %}

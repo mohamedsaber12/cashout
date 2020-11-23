@@ -126,6 +126,7 @@ BANK_CODES = [
   ]
 
 ERROR_CODES_MESSAGES = {
+    # ToDo: Add etisalat error codes
     '403':	'Channel Authentication Failed',
     '404':	'Undefined request type',
     '406':	'Incorrect input given to request',
@@ -158,8 +159,8 @@ ERROR_CODES_MESSAGES = {
     '5465':	'Service Call Failed.',
     '6001':	'Funding Account Status is Referral',
     '6003':	'Invalid Agent',
-    '6004':	'Funding Account Status is Pick-up CR Problem or Fraud/ Capture Card',
-    '6005':	'Funding Account was not Honored/ General Decline',
+    '6004':	'Funding Account Status is Pick-up CR Problem or Fraud/Capture Card',
+    '6005':	'Funding Account was not Honored/General Decline',
     '6012':	'Invalid Transaction',
     '6013':	'Invalid Amount ',
     '6014':	'Invalid Funding Account Card Number',
@@ -170,8 +171,8 @@ ERROR_CODES_MESSAGES = {
     '6051':	'Funding Account has Insufficient Funds',
     '6054':	'Funding Account is Expired',
     '6055':	'Invalid C-PIN',
-    '6057':	'Transaction Not Permitted to Issuer / Card Holder',
-    '6058':	'Transaction Not Permitted to Acquirer / Terminal',
+    '6057':	'Transaction Not Permitted to Issuer/Card Holder',
+    '6058':	'Transaction Not Permitted to Acquirer/Terminal',
     '6061':	'Exceeded Transaction Amount Limit',
     '6062':	'Restricted Card',
     '6063':	'Security Violation',
@@ -179,21 +180,22 @@ ERROR_CODES_MESSAGES = {
     '6070':	'Contact Card Issuer',
     '6071':	'C-PIN Not Changed',
     '6075':	'Allowable Number of C-PIN Tries Exceeded',
-    '6076':	'Invalid/ Non-Existent "To Account"',
-    '6077':	'Invalid / Non-Existent "From Account"',
-    '6078':	'Invalid / Non-Existent Account',
+    '6076':	'Invalid/Non-Existent "To Account"',
+    '6077':	'Invalid/Non-Existent "From Account"',
+    '6078':	'Invalid/Non-Existent Account',
     '6084':	'Invalid Authorization Life Cycle',
     '6086':	'C-PIN Validation Not Possible',
     '6088':	'Cryptographic Failure',
     '6089':	'Unacceptable C-PIN',
-    '6091':	'Authorization System / Issuer System Inoperative',
+    '6091':	'Authorization System/Issuer System Inoperative',
     '6092':	'Unable to Route Transaction',
     '6094':	'Duplicate Authorization Request',
     '6096':	'General System Error',
-    '6097':	'MIP is Down / Not Connected',
+    '6097':	'MIP is Down/Not Connected',
     '6098':	'No Response from MIP',
     '6099':	'Catch All Acquirer SE Error',
 }
+
 
 def custom_titled_filter(title):
     """
@@ -244,12 +246,11 @@ def determine_trx_category_and_purpose(transaction_type):
     return category_purpose_dict
 
 
-def get_error_code_message(code):
-    if code:
-        message = ERROR_CODES_MESSAGES.get(code)
-        if message:
-            return _(message)
-        else:
-            return 'Error, please contact your support team'
-    else:
-        return 'Error, please contact your support team'
+def get_error_description_from_error_code(code):
+    """Map the error description for a specific error code"""
+    if code and code in ERROR_CODES_MESSAGES.keys():
+        return _(str(ERROR_CODES_MESSAGES.get(code)).capitalize())
+    elif code and code == 'SUCCESS':
+        return str(code).capitalize()
+
+    return _('External error, please contact your support team for further details')

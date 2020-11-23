@@ -2,7 +2,8 @@ from import_export import resources
 from import_export.fields import Field
 
 from .models import DisbursementData
-from .utils import get_error_code_message
+from .utils import get_error_description_from_error_code
+
 
 class DisbursementDataResource(resources.ModelResource):
     disbursed = Field(attribute='get_is_disbursed')
@@ -29,5 +30,5 @@ class DisbursementDataResource(resources.ModelResource):
     def export_resource(self, obj):
         obj_resources = super(DisbursementDataResource, self).export_resource(obj)
         if obj_resources[2] == 'Failed':
-            obj_resources[3] = get_error_code_message(obj_resources[3])
+            obj_resources[3] = get_error_description_from_error_code(obj_resources[3])
         return obj_resources

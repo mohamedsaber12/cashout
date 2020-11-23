@@ -15,231 +15,239 @@
 {% endblock %}
 
 {% block body %}
+  <div class="row">
+      <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+          {% trans 'You will receive an email shortly with the file to download' %}
+      </div>
+      <!-- button -->
+      <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+          <button id="export-all"
+              class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
+          </button>
+      </div>
+  </div>
 
-
-<div class="row">
-    <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button id="export-all"
-            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
-        </button>
-    </div>
-</div>
-{% if has_failed %}
-<div class="row">
-    <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the failed data file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
-        </button>
-    </div>
-</div>
-{%endif%}
-{% if has_success %}
-<div class="row">
-    <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the success data file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button id="export-success"
-            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
-        </button>
-    </div>
-</div>
-{%endif%}
-
-<div class="row">
-    <div class="col-md-12 col-sm-12 col-xs-12">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>{% trans 'Transactions' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc_obj.id %}">{{doc_obj.filename}}</a></small></h2>
-                <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
-                </ul>
-                <div class="clearfix"></div>
-            </div>
-            <div class="x_content">
-
-                <table class="table table-bordered" id="transaction-table">
-                    <thead>
-                        <tr>
-                            {% if not is_normal_flow %}<th>{% trans 'Transaction ID' %}</th>{% endif %}
-                            <th>{% trans 'Wallet Number' %}</th>
-                            <th>{% trans 'Amount' %}</th>
-                            {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
-                            <th>{% trans 'Disbursed?' %}</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for transaction in doc_transactions %}
-                        <tr {% if not is_normal_flow %} data-trx_id="{{ transaction.reference_id }}" {% endif %}
-                            data-msisdn="{{ transaction.msisdn }}"
-                            data-amount="{{ transaction.amount }}"
-                            {% if not is_normal_flow %} data-issuer="{{ transaction.issuer }}"{% endif %}
-                            data-is_disbursed="{{ transaction.is_disbursed }}"
-                            data-reason="{{ transaction.reason }}"
-                            data-reason_description="{{ transaction.reason | code_description }} {% if transaction.issuer == 'aman' %} and {% if transaction.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %} {% endif %}"
-                            class="row-hover">
-                            {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
-                            <td>{{ transaction.msisdn }}</td>
-                            <td>{{ transaction.amount }}</td>
-                            {% if not is_normal_flow %}<td>{{ transaction.issuer }}</td>{% endif %}
-                            <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
-                                {% if transaction.is_disbursed %}
-                                    <span style="color: #2e6da4">&#10004;</span>
-                                {% elif not transaction.reason %}
-                                    <span>⏳</span>
-                                {% else %}
-                                    <span style="color: #942a25">&#10006;</span>
-                                {% endif %}
-                            </td>
-<!--                            <td>-->
-<!--                                {% if transaction.reason %}-->
-<!--                                    {{ transaction.reason | code_description}}-->
-<!--                                    {% if transaction.issuer == "aman" %} and {% if transaction.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %} {% endif %}-->
-<!--                                {% else %}-->
-<!--                                    {% trans 'Disbursement process is running' %}-->
-<!--                                {% endif %}-->
-<!--                            </td>-->
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
+  {% if has_failed %}
+    <div class="row">
+        <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+            {% trans 'You will receive an email shortly with the failed data file to download' %}
+        </div>
+        <!-- button -->
+        <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+            <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
+            </button>
         </div>
     </div>
-</div>
+  {%endif%}
 
-<!-- transaction details -->
-<div id="trxDetails" style="display: none;" class="row">
-    <div class="col-md-12 col-sm-12 col-xs-12">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
-                <div class="clearfix"></div>
-            </div>
-
-            <div class="x_content">
-                <ul id="trxDetailsData">
-                </ul>
-            </div>
-
+  {% if has_success %}
+    <div class="row">
+        <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+            {% trans 'You will receive an email shortly with the success data file to download' %}
+        </div>
+        <!-- button -->
+        <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+            <button id="export-success"
+                class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
+            </button>
         </div>
     </div>
-</div>
+  {%endif%}
+
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+            <h2>{% trans 'Transactions' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc_obj.id %}">{{doc_obj.filename}}</a></small></h2>
+            <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+        <div class="x_content">
+          <table class="table table-bordered" id="transaction-table">
+            <thead>
+              <tr>
+                {% if not is_normal_flow %}<th>{% trans 'Transaction ID' %}</th>{% endif %}
+                <th>{% trans 'Wallet Number' %}</th>
+                <th>{% trans 'Amount' %}</th>
+                {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
+                <th>{% trans 'Disbursed?' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for transaction in doc_transactions %}
+                <tr data-created_at="{{ transaction.created_at }}"
+                    data-updated_at="{{ transaction.updated_at }}"
+                    data-msisdn="{{ transaction.msisdn }}"
+                    data-amount="{{ transaction.amount }}"
+                    data-is_disbursed="{{ transaction.is_disbursed }}"
+                    {% if not is_normal_flow %} data-trx_id="{{ transaction.reference_id }}" {% endif %}
+                    {% if not is_normal_flow %} data-issuer="{{ transaction.issuer }}"{% endif %}
+                    data-reason="{{ transaction.reason }}"
+                    data-reason_description="{{ transaction.reason | code_description }} {% if transaction.issuer == 'aman' %} and {% if transaction.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %}{% endif %}"
+                    class="row-hover">
+
+                  {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
+                  <td>{{ transaction.msisdn }}</td>
+                  <td>{{ transaction.amount }}</td>
+                  {% if not is_normal_flow %}<td>{{ transaction.issuer }}</td>{% endif %}
+                  <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
+                    {% if transaction.is_disbursed %}
+                        <span style="color: #2e6da4">&#10004;</span>
+                    {% elif not transaction.reason %}
+                        <span>⏳</span>
+                    {% else %}
+                        <span style="color: #942a25">&#10006;</span>
+                    {% endif %}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- transaction details -->
+  <div id="trxDetails" style="display: none;" class="row">
+      <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+              <div class="x_title">
+                  <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+                  <div class="clearfix"></div>
+              </div>
+
+              <div class="x_content">
+                  <ul id="trxDetailsData">
+                  </ul>
+              </div>
+          </div>
+      </div>
+  </div>
 {% endblock %}
 
 {% block script %}
-<!-- Datatables -->
-<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
-<script>
-    $('#transaction-table').DataTable();
+  <!-- Datatables -->
+  <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script>
+      $('#transaction-table').DataTable();
 
-    $(document).ready(function () {
+      $(document).ready(function () {
+          $('#export-failed').on('click',function(ev) {
+              $.ajax({
+                  type:'GET',
+                  url: '{{request.path}}' + '?export_failed=true',
+                  success: function (data, text, xhr) {
+                      $('#failed-alert-msg').show()
+                  },
+              })
 
-        $('#export-failed').on('click',function(ev) {
-            $.ajax({
-                type:'GET',
-                url: '{{request.path}}' + '?export_failed=true',
-                success: function (data, text, xhr) {
-                    $('#failed-alert-msg').show()
-                },
-            })
+          });
+          $('#export-success').on('click', function (ev) {
+              $.ajax({
+                  type: 'GET',
+                  url: '{{request.path}}' + '?export_success=true',
+                  success: function (data, text, xhr) {
+                      $('#success-alert-msg').show()
+                  },
+              })
 
-        });
-        $('#export-success').on('click', function (ev) {
-            $.ajax({
-                type: 'GET',
-                url: '{{request.path}}' + '?export_success=true',
-                success: function (data, text, xhr) {
-                    $('#success-alert-msg').show()
-                },
-            })
+          });
+          $('#export-all').on('click', function (ev) {
+              $.ajax({
+                  type: 'GET',
+                  url: '{{request.path}}' + '?export_all=true',
+                  success: function (data, text, xhr) {
+                      $('#all-alert-msg').show()
+                  },
+              })
 
-        });
-        $('#export-all').on('click', function (ev) {
-            $.ajax({
-                type: 'GET',
-                url: '{{request.path}}' + '?export_all=true',
-                success: function (data, text, xhr) {
-                    $('#all-alert-msg').show()
-                },
-            })
-
-        });
-    });
-
-</script>
-<script>
-    $('#transaction-table tbody').on( 'click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            $("#trxDetails").hide();
-        }
-        else {
-            $('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            let ul = $('#trxDetailsData');
-            let appendedTags = '';
-            {% if not is_normal_flow %}
-                let trx_id = $(this).data('trx_id')
-                appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
-            {% endif %}
-            let msisdn = $(this).data('msisdn');
-            appendedTags += `<li><span>Wallet Number</span><b>:</b>${msisdn}</li>`;
-            let amount = $(this).data('amount');
-            appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
-            {% if not is_normal_flow %}
-                let issuer = $(this).data('issuer');
-                appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
-            {% endif %}
-            let is_disbursed = $(this).data('is_disbursed');
-            let reason = $(this).data('reason');
-            if (is_disbursed === 'True') {
-                appendedTags += `<li><span>Disbursed</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
-            }
-            else if (!reason) {
-                appendedTags += `<li><span>Disbursed</span><b>:</b><span>⏳</span></li>`;
-            }
-            else {
-                appendedTags += `<li><span>Disbursed</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
-            }
-            if (reason) {
-                appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${reason}</li>`;
-                if (reason !== 'SUCCESS'){
-                    let reason_description = $(this).data('reason_description');
-                    appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${reason_description}</li>`;
-                }
-            } else {
-                appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>Disbursement process is running</li>`;
-                let reason_description = $(this).data('reason_description');
-                appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>Disbursement process is running</li>`;
-            }
-            ul.empty();
-            ul.append(appendedTags);
-            $("#trxDetails").show();
-            $('html,body').animate({
-                scrollTop: $("#trxDetails").offset().top
-            }, 'slow');
-       }
-    });
+          });
+      });
   </script>
 
+  <script>
+      $('#transaction-table tbody').on('click', 'tr', function () {
+          if ($(this).hasClass('selected')) {
+              $(this).removeClass('selected');
+              $("#trxDetails").hide();
+          }
+          else {
+              $('tr.selected').removeClass('selected');
+              $(this).addClass('selected');
+              let ul = $('#trxDetailsData');
+              let appendedTags = '';
+
+              {% if not is_normal_flow %}
+                  let trx_id = $(this).data('trx_id')
+                  appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
+              {% endif %}
+
+              let msisdn = $(this).data('msisdn');
+              appendedTags += `<li><span>Wallet Number</span><b>:</b>${msisdn}</li>`;
+
+              let amount = $(this).data('amount');
+              appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+
+              {% if not is_normal_flow %}
+                  let issuer = $(this).data('issuer');
+                  appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+              {% endif %}
+
+              let is_disbursed = $(this).data('is_disbursed');
+              let reason = $(this).data('reason');
+
+              {# Handle is_disbursed icon based of the record disbursement status #}
+              if (is_disbursed === 'True') {
+                  appendedTags += `<li><span>Disbursed</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
+              }
+              else if (!reason) {
+                  appendedTags += `<li><span>Disbursed</span><b>:</b><span>⏳</span></li>`;
+              }
+              else {
+                  appendedTags += `<li><span>Disbursed</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
+              }
+
+              {# Handle disbursement status description based of the record disbursement status #}
+              if (reason) {
+                  if (reason === 'SUCCESS') {
+                      appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>200</li>`;
+                  } else {
+                      appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${reason}</li>`;
+                  }
+                let reason_description = $(this).data('reason_description');
+                appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${reason_description}</li>`;
+              } else {
+                  appendedTags += `<li><span>Disbursement Status Code</span><b>:</b> -- </li>`;
+                  appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>Disbursement process is running</li>`;
+              }
+
+              let created_at = $(this).data('created_at');
+              appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+
+              let updated_at = $(this).data('updated_at');
+              appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+
+              ul.empty();
+              ul.append(appendedTags);
+              $("#trxDetails").show();
+              $('html,body').animate({
+                  scrollTop: $("#trxDetails").offset().top
+              }, 'slow');
+         }
+      });
+    </script>
 {% endblock %}

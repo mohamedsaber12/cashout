@@ -4,6 +4,7 @@
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 {% load transactions_tags i18n %}
+{% load banks_tags i18n %}
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
 {% block customcss %}
@@ -87,24 +88,29 @@
                   </thead>
 
                   <tbody>
-                  {% for transaction in transactions_list %}
-                    <tr data-href="#"
-                        data-id="{{ transaction.parent_transaction.transaction_id }}"
-                        data-creditor_account_number="{{ transaction.creditor_account_number }}"
-                        data-creditor_bank="{{ transaction.creditor_bank }}"
-                        data-amount="{{ transaction.amount }}"
-                        data-status="{{ transaction.status|status }}"
-                        data-created_at="{{ transaction.parent_transaction.created_at }}"
-                        data-updated_at="{{ transaction.updated_at }}"
-                        class="row-hover">
-                      <td>{{ transaction.parent_transaction.transaction_id }}</td>
-                      <td>{{ transaction.creditor_account_number }}</td>
-                      <td>{{ transaction.creditor_bank }}</td>
-                      <td>{{ transaction.amount }}</td>
-                      <td>{{ transaction.status|status }}</td>
-                      <td>{{ transaction.updated_at }}</td>
-                    </tr>
-                  {% endfor %}
+                    {% for transaction in transactions_list %}
+                      <tr data-href="#"
+                          data-id="{{ transaction.parent_transaction.transaction_id }}"
+                          data-creditor_account_number="{{ transaction.creditor_account_number }}"
+                          data-creditor_bank="{{ transaction.creditor_bank }}"
+                          data-bank_name="{{ transaction.creditor_bank|bank_name }}"
+                          data-status_code="{{ transaction.transaction_status_code }}"
+                          data-status_description="{{ transaction.transaction_status_description }}"
+                          data-transaction_type="{{ transaction|transaction_type }}"
+                          data-amount="{{ transaction.amount }}"
+                          data-checker="{{ transaction.user_created }}"
+                          data-status="{{ transaction.status|status }}"
+                          data-created_at="{{ transaction.parent_transaction.created_at }}"
+                          data-updated_at="{{ transaction.updated_at }}"
+                          class="row-hover">
+                        <td>{{ transaction.parent_transaction.transaction_id }}</td>
+                        <td>{{ transaction.creditor_account_number }}</td>
+                        <td>{{ transaction.creditor_bank }}</td>
+                        <td>{{ transaction.amount }}</td>
+                        <td>{{ transaction.status|status }}</td>
+                        <td>{{ transaction.updated_at }}</td>
+                      </tr>
+                    {% endfor %}
                   </tbody>
                 </table>
 
@@ -269,15 +275,15 @@
           <div class="x_content">
             <div class="row">
               <div class="col-md-6 col-sm-6 col-xs-6">
-              <ul id="trxDetailsData">
+                <ul id="trxDetailsData">
                 </ul>
-                </div>
+              </div>
               <div class="col-md-6 col-sm-6 col-xs-6">
                 <ul id="trxDetailsDataRight">
                 </ul>
+              </div>
             </div>
           </div>
-
         </div>
       </div>
     </div>
@@ -308,7 +314,7 @@
       {% endif %}
   </script>
   <script>
-    $('#transaction-table tbody').on( 'click', 'tr', function () {
+    $('#transaction-table tbody').on('click', 'tr', function () {
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
             $("#trxDetails").hide();
@@ -324,14 +330,25 @@
             let creditor_account_number = $(this).data('creditor_account_number');
             appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
             let creditor_bank = $(this).data('creditor_bank');
-            appendedTags += `<li><span>creditor_bank</span><b>:</b>${creditor_bank}</li>`;
-            let amount = $(this).data('amount');
-            appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
-            let status = $(this).data('status');
+            appendedTags += `<li><span>Bank code</span><b>:</b>${creditor_bank}</li>`;
+            let bank_name = $(this).data('bank_name');
+            appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
+            let transaction_type = $(this).data('transaction_type');
+            appendedTags += `<li><span>Transaction type</span><b>:</b>${transaction_type}</li>`;
+            let status_code = $(this).data('status_code');
+            appendedTags += `<li><span>Status code</span><b>:</b>${status_code}</li>`;
+            let status_description = $(this).data('status_description');
+            appendedTags += `<li><span>Status description</span><b>:</b>${status_description}</li>`;
+
             ul.empty();
             ul.append(appendedTags);
             appendedTags = '';
 
+            let checker = $(this).data('checker');
+            appendedTags += `<li><span>Checker</span><b>:</b>${checker}</li>`;
+            let amount = $(this).data('amount');
+            appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+            let status = $(this).data('status');
             appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
             let created_at = $(this).data('created_at');
             appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;

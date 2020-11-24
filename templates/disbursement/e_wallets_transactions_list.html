@@ -85,7 +85,7 @@
                     {% if not is_normal_flow %} data-trx_id="{{ transaction.reference_id }}" {% endif %}
                     {% if not is_normal_flow %} data-issuer="{{ transaction.issuer }}"{% endif %}
                     data-reason="{{ transaction.reason }}"
-                    data-reason_description="{{ transaction.reason | code_description }} {% if transaction.issuer == 'aman' %} and {% if transaction.aman_transaction_is_paid %} PAID {% else %} UNPAID {% endif %}{% endif %}"
+                    data-reason_description="{{ transaction.reason | code_description }} {% if transaction.issuer == 'aman' %} and {% if transaction.aman_transaction_is_paid %} Paid {% else %} Unpaid {% endif %}{% endif %}"
                     class="row-hover">
 
                   {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}

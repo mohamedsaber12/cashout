@@ -126,7 +126,7 @@ BANK_CODES = [
   ]
 
 ERROR_CODES_MESSAGES = {
-    # ToDo: Add etisalat error codes
+    # Vodafone Cash Codes
     '403':	'Channel Authentication Failed',
     '404':	'Undefined request type',
     '406':	'Incorrect input given to request',
@@ -138,7 +138,7 @@ ERROR_CODES_MESSAGES = {
     '618':	'Recipient Is Unregistered',
     '1051':	'MSISDN Does Not Exist',
     '1056':	'Invalid Consumer PIN',
-    '1033':	'Initial MPIN has not been changed.',
+    '1033':	'Initial MPIN has not been changed',
     '1069':	'Sender and Recipient Accounts are the Same',
     '1102':	'M-PIN is Empty',
     '1118':	'MSISDN is Locked',
@@ -156,13 +156,13 @@ ERROR_CODES_MESSAGES = {
     '4140':	'Agent ID Does Not Exist',
     '4333':	"Recipient Consumer's MPIN has not been changed",
     '4334':	"Recipient Consumer's has exceeded transaction count limit",
-    '5465':	'Service Call Failed.',
+    '5465':	'Service Call Failed',
     '6001':	'Funding Account Status is Referral',
     '6003':	'Invalid Agent',
     '6004':	'Funding Account Status is Pick-up CR Problem or Fraud/Capture Card',
     '6005':	'Funding Account was not Honored/General Decline',
     '6012':	'Invalid Transaction',
-    '6013':	'Invalid Amount ',
+    '6013':	'Invalid Amount',
     '6014':	'Invalid Funding Account Card Number',
     '6015':	'Invalid Issuer',
     '6030':	'Format Error',
@@ -194,6 +194,14 @@ ERROR_CODES_MESSAGES = {
     '6097':	'MIP is Down/Not Connected',
     '6098':	'No Response from MIP',
     '6099':	'Catch All Acquirer SE Error',
+
+    # Etisalat Cash Codes
+    '0'    : 'Successful transaction',
+    '90002': 'Invalid disbursement request',
+    '90003': 'Invalid or missing parameters',
+    '90007': 'Invalid or missing parameters',
+    '90005': 'Service is down',
+    '90006': 'Service is down'
 }
 
 

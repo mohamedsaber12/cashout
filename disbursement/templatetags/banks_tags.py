@@ -26,12 +26,12 @@ def transaction_type(transaction_obj):
     """Map transaction type used at doc upload regarding the trx details"""
 
     if transaction_obj.purpose == 'SALA':
-        return _('salary')
+        return _('Salary')
     elif transaction_obj.purpose == 'PENS':
-        return _('pension')
+        return _('Pension')
     elif transaction_obj.purpose == 'CCRD':
-        return _('credit_card')
+        return _('Credit card')
     elif transaction_obj.category_code == 'PCRD':
-        return _('prepaid')
+        return _('Prepaid')
     else:
-        return _('cash_transfer')
+        return _('Cash transfer')

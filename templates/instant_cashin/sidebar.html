@@ -47,7 +47,7 @@
             <li><a href="{% url 'instant_cashin:banks_trx_list' %}">{% trans 'Bank Transactions' %}</a></li>
           </ul>
         </li>
-        <li><a href="{% url 'docs:instant_docs' path='' %}"><i class="fa fa-book"></i> {% trans 'API Documentation'%}</a></li>
+        <li><a href="{% url 'docs:instant_docs' path='' %}" target="_blank"><i class="fa fa-book"></i> {% trans 'API Documentation'%}</a></li>
         {% if request.user.is_root %}
           <li>
             <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">

@@ -2,27 +2,35 @@
 {% load transactions_tags i18n %}
 
 <div class="x_content">
-  <table class="table table-striped table-bordered" id="transaction-table">
+  <table class="table table-bordered" id="transaction-table">
     <thead>
     <tr>
-      <th style="width: 22%">{% trans 'Transaction ID' %}</th>
+      <th>{% trans 'Transaction ID' %}</th>
       <th>{% trans 'Recipient' %}</th>
       <th>{% trans 'Amount' %}</th>
       <th>{% trans 'Status' %}</th>
-      <th>{% trans 'Channel' %}</th>
-      <th>{% trans 'Created At' %}</th>
+      <th>{% trans 'Updated At' %}</th>
     </tr>
     </thead>
 
     <tbody>
     {% for trx in transactions %}
-      <tr data-href="#">
+      <tr data-id="{{ trx.uid }}"
+          data-anon_recipient="{{ trx.anon_recipient }}"
+          data-amount="{{ trx.amount }}"
+          data-status="{{ trx.status|status }}"
+          data-issuer_type="{{ trx.issuer_type|issuer_type }}"
+          data-created_at="{{ trx.created_at }}"
+          data-updated_at="{{ trx.updated_at }}"
+          data-status_code="{{ trx.transaction_status_code }}"
+          data-status_description="{{ trx.transaction_status_description }}"
+          class="row-hover"
+          data-href="#">
         <td>{{ trx.uid }}</td>
         <td>{{ trx.anon_recipient }}</td>
         <td>{{ trx.amount }}</td>
         <td>{{ trx.status|status }}</td>
-        <td>{{ trx.issuer_type|issuer_type }}</td>
-        <td>{{ trx.created_at }}</td>
+        <td>{{ trx.updated_at }}</td>
       </tr>
 
     {% endfor %}

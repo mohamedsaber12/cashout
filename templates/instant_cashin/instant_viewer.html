@@ -1,10 +1,14 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
-
+{% block gentellacss %}
+<!-- Datatables -->
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+{% endblock %}
 {% block body %}
   <div class="well upload-nav col-xs-12">
     <h4><strong>{% trans 'IMPORTANT: DISBURSEMENT FOR BANK ACCOUNTS/WALLETS IS AVAILABLE NOW, CHECK THE UPDATED API DOCUMENTATION!' %}</strong></h4>
@@ -60,5 +64,105 @@
         </div>
       </div>
     </div>
+
+    <!-- transaction details -->
+    <div id="trxDetails" style="display: none;" class="row">
+  <div class="col-md-12 col-sm-12 col-xs-12">
+    <div class="x_panel">
+      <div class="x_title">
+        <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+        <div class="clearfix"></div>
+      </div>
+
+      <div class="x_content">
+        <div class="row">
+          <div class="col-md-6 col-sm-6 col-xs-6">
+            <ul id="trxDetailsData">
+            </ul>
+          </div>
+          <div class="col-md-6 col-sm-6 col-xs-6">
+            <ul id="trxDetailsDataRight">
+            </ul>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-12 col-sm-12 col-xs-12">
+            <ul id="trxDetailsDataLast">
+            </ul>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
   {% endif %}
+{% endblock %}
+
+{% block script %}
+<script>
+    $('#transaction-table tbody').on( 'click', 'tr', function () {
+        console.log("aww")
+        if ($(this).hasClass('selected')) {
+            $(this).removeClass('selected');
+            $("#trxDetails").hide();
+        }
+        else {
+            $('tr.selected').removeClass('selected');
+            $(this).addClass('selected');
+            let ul = $('#trxDetailsData');
+            let ulRight = $('#trxDetailsDataRight');
+            let ulLast = $('#trxDetailsDataLast');
+            let appendedTags = '';
+
+            let uid = $(this).data('id');
+            appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
+
+            {% if bank_transactions %}
+              let creditor_account_number = $(this).data('creditor_account_number');
+              appendedTags += `<li><span>Recipient Account Number</span><b>:</b>${creditor_account_number}</li>`;
+            {% else %}
+              let anon_recipient = $(this).data('anon_recipient');
+              appendedTags += `<li><span>Recipient</span><b>:</b>${anon_recipient}</li>`;
+            {% endif %}
+            let amount = $(this).data('amount');
+            appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+            let status = $(this).data('status');
+            appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
+
+            ul.empty();
+            ul.append(appendedTags);
+            appendedTags = '';
+
+            {% if bank_transactions %}
+              let creditor_name = $(this).data('creditor_name');
+              appendedTags += `<li><span>Recipient Name</span><b>:</b>${creditor_name}</li>`;
+              let creditor_bank = $(this).data('creditor_bank');
+              appendedTags += `<li><span>Recipient Bank</span><b>:</b>${creditor_bank}</li>`;
+            {% else %}
+              let issuer_type = $(this).data('issuer_type');
+              appendedTags += `<li><span>Channel</span><b>:</b>${issuer_type}</li>`;
+            {% endif %}
+            let created_at = $(this).data('created_at');
+            appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+            let updated_at = $(this).data('updated_at');
+            appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+
+            ulRight.empty();
+            ulRight.append(appendedTags);
+            appendedTags = '';
+
+            let status_code = $(this).data('status_code');
+            appendedTags += `<li><span>Transaction Status Code</span><b>:</b>${status_code}</li>`;
+            let status_description = $(this).data('status_description');
+            appendedTags += `<li><span>Transaction Status Description</span><b>:</b>${status_description}</li>`;
+            ulLast.empty();
+            ulLast.append(appendedTags);
+            $("#trxDetails").show();
+            $('html,body').animate({
+                scrollTop: $("#trxDetails").offset().top
+            }, 'slow');
+       }
+    });
+  </script>
 {% endblock %}

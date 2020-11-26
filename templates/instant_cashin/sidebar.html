@@ -26,7 +26,7 @@
         {% if request.user.get_full_name %}
             {{ request.user.get_full_name }}
         {%else%}
-            {{ request.user.username }}
+            {{ request.user|capfirst|truncatechars:16 }}
         {%endif%}
       </h2>
     </div>

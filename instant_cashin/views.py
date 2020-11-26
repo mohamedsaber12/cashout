@@ -16,10 +16,11 @@ from disbursement.models import BankTransaction
 from utilities.constants import SPREADSHEET_CONTENT_TYPE_CONSTANT
 from utilities.logging import logging_message
 
-from .mixins import InstantReviewerRequiredMixin, RootWithInstantPermissionsPassesTestMixin, RootOwnsRequestedFileTestMixin
+from .mixins import (IntegrationUserPassesTestMixin,
+                     RootOwnsRequestedFileTestMixin,
+                     RootWithInstantPermissionsPassesTestMixin)
 from .models import AbstractBaseIssuer, InstantTransaction
 from .tasks import generate_pending_orange_instant_transactions
-
 
 GENERATE_SHEET_LOGGER = logging.getLogger("generate_sheet")
 DOWNLOAD_SERVE_LOGGER = logging.getLogger("download_serve")
@@ -35,7 +36,7 @@ class BaseInstantTransactionsListView(ListView):
     paginate_by = 11
 
 
-class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTransactionsListView):
+class InstantTransactionsListView(IntegrationUserPassesTestMixin, BaseInstantTransactionsListView):
     """
     View for displaying instant transactions
     """
@@ -57,7 +58,7 @@ class InstantTransactionsListView(InstantReviewerRequiredMixin, BaseInstantTrans
         return queryset
 
 
-class BankTransactionsListView(InstantReviewerRequiredMixin, ListView):
+class BankTransactionsListView(IntegrationUserPassesTestMixin, ListView):
     """
     View for displaying bank transactions
     """

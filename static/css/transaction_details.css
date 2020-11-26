@@ -38,3 +38,8 @@ ul > li > b{
     background-color: #ddd;
     display: block;
 }
+
+.trxTableHeader {
+    font-weight: bold;
+    color: #777;
+}

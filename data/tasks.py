@@ -23,7 +23,10 @@ from django.utils.translation import gettext as _
 
 from core.utils.validations import phonenumber_form_validate
 from disbursement.models import DisbursementData, BankTransaction
-from disbursement.resources import DisbursementDataResource
+from disbursement.resources import (
+    DisbursementDataResource, DisbursementDataResourceForBankWallet,
+    DisbursementDataResourceForBankCards
+)
 from disbursement.utils import (
     VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
     determine_trx_category_and_purpose,
@@ -686,8 +689,13 @@ def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
     """
     doc_obj = Doc.objects.get(id=doc_id)
     filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(4)}.xlsx")
-
-    dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
+    dataset = None
+    if doc_obj.is_e_wallet:
+        dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
+    elif doc_obj.is_bank_wallet:
+        dataset = DisbursementDataResourceForBankWallet(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
+    elif doc_obj.is_bank_card:
+        dataset = DisbursementDataResourceForBankCards(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
     dataset = dataset.export()
     file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
     with open(file_path, "wb") as f:
@@ -720,7 +728,13 @@ def generate_success_disbursed_data(doc_id, user_id, **kwargs):
     doc_obj = Doc.objects.get(id=doc_id)
     filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
 
-    dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
+    dataset = None
+    if doc_obj.is_e_wallet:
+        dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
+    elif doc_obj.is_bank_wallet:
+        dataset = DisbursementDataResourceForBankWallet(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
+    elif doc_obj.is_bank_card:
+        dataset = DisbursementDataResourceForBankCards(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
     dataset = dataset.export()
     file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
     with open(file_path, "wb") as f:
@@ -750,11 +764,13 @@ def generate_all_disbursed_data(doc_id, user_id, **kwargs):
     doc_obj = Doc.objects.get(id=doc_id)
     filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(4))
 
-    dataset = DisbursementDataResource(
-        file_category=doc_obj.file_category,
-        doc=doc_obj,
-        is_disbursed=None
-    )
+    dataset = None
+    if doc_obj.is_e_wallet:
+        dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=None)
+    elif doc_obj.is_bank_wallet:
+        dataset = DisbursementDataResourceForBankWallet(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=None)
+    elif doc_obj.is_bank_card:
+        dataset = DisbursementDataResourceForBankCards(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=None)
     dataset = dataset.export()
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
     with open(file_path, "wb") as f:

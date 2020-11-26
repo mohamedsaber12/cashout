@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from core.models import AbstractBaseStatus
 
 from ..models import AbstractBaseIssuer
-
+from disbursement.utils import get_transformed_transaction_status
 
 register = template.Library()
 
@@ -31,14 +31,5 @@ def issuer_type(issuer_value):
 @register.filter
 def status(status_value):
     """Transform transaction status key to into its corresponding informative string"""
-    if status_value:
-        if status_value == AbstractBaseStatus.SUCCESSFUL:
-            return _("Successful")
-        elif status_value == AbstractBaseStatus.PENDING:
-            return _("Pending")
-        elif status_value == AbstractBaseStatus.DEFAULT:
-            return _("Default")
-        else:
-            return _("Failed")
-    else:
-        return _("Failed")
+
+    return get_transformed_transaction_status(status_value)

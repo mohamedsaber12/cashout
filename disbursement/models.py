@@ -21,6 +21,7 @@ from utilities.models import (
     AbstractTransactionPurpose,
 )
 
+from .utils import determine_transaction_type
 
 INTERNAL_ERROR = _("Process stopped during an internal error, can you try again or contact your support team.")
 
@@ -335,6 +336,10 @@ class BankTransaction(AbstractTimeStamp,
 
     def __str__(self):
         return str(self.transaction_id)
+
+    @property
+    def get_transaction_type(self):
+        return  determine_transaction_type(self.category_code, self.purpose)
 
     def update_status_code_and_description(self, code=None, description=None):
         self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR

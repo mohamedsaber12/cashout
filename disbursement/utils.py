@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
+from core.models import AbstractBaseStatus
+
 INSTANT_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the carrier"
 INSTANT_TRX_BEING_PROCESSED = "Transaction received by the carrier and being processed now"
 INSTANT_TRX_IS_ACCEPTED = "Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now"
@@ -254,6 +256,20 @@ def determine_trx_category_and_purpose(transaction_type):
     return category_purpose_dict
 
 
+def determine_transaction_type(category_code, purpose):
+    """Determine transaction type based on transaction category code and purpose"""
+    if category_code == 'CASH' and purpose == 'SALA':
+        return 'salary'
+    elif category_code == 'PENS' and purpose == 'PENS':
+        return 'pension'
+    elif category_code == 'PCRD' and purpose == 'CASH':
+        return 'prepaid'
+    elif category_code == 'CASH' and purpose == 'CCRD':
+        return 'credit_card'
+    else:
+        return 'cash_transfer'
+
+
 def get_error_description_from_error_code(code):
     """Map the error description for a specific error code"""
     if code and code in ERROR_CODES_MESSAGES.keys():
@@ -262,3 +278,17 @@ def get_error_description_from_error_code(code):
         return str(code).capitalize()
 
     return _('External error, please contact your support team for further details')
+
+def get_transformed_transaction_status(status_value):
+    """Transform transaction status key to into its corresponding informative string"""
+    if status_value:
+        if status_value == AbstractBaseStatus.SUCCESSFUL:
+            return _("Successful")
+        elif status_value == AbstractBaseStatus.PENDING:
+            return _("Pending")
+        elif status_value == AbstractBaseStatus.DEFAULT:
+            return _("Default")
+        else:
+            return _("Failed")
+    else:
+        return _("Failed")

@@ -98,8 +98,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         }
 
         if not self.object.is_vodafone_default_onboarding:
-            entity_dict["agents_setup"] = True
-            entity_dict["fees_setup"] = True
+            entity_dict['agents_setup'] = True
+            entity_dict['fees_setup'] = True
             Budget.objects.create(disburser=self.object, created_by=self.request.user)
 
         if self.object.is_instant_model_onboarding:
@@ -112,6 +112,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_inquiry=False, balance_inquiry=False
             )
         elif self.object.is_accept_vodafone_onboarding:
+            entity_dict['is_normal_flow'] = False
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.create(
                     user_created=self.object, instant_disbursement=False, set_pin=False,

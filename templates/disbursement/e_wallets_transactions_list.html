@@ -82,10 +82,13 @@
                     data-msisdn="{{ transaction.msisdn }}"
                     data-amount="{{ transaction.amount }}"
                     data-is_disbursed="{{ transaction.is_disbursed }}"
-                    {% if not is_normal_flow %} data-trx_id="{{ transaction.reference_id }}" {% endif %}
-                    {% if not is_normal_flow %} data-issuer="{{ transaction.issuer }}"{% endif %}
                     data-reason="{{ transaction.reason }}"
-                    data-reason_description="{{ transaction.reason | code_description }} {% if transaction.issuer == 'aman' %} and {% if transaction.aman_transaction_is_paid %} Paid {% else %} Unpaid {% endif %}{% endif %}"
+                    data-reason_description="{{ transaction.reason | code_description }}"
+                    {% if not is_normal_flow %}
+                      data-trx_id="{{ transaction.reference_id }}"
+                      data-issuer="{{ transaction.issuer }}"
+                      data-aman_is_paid="{{ transaction.aman_transaction_is_paid }}"
+                    {% endif %}
                     class="row-hover">
 
                   {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
@@ -183,7 +186,7 @@
       $('#transaction-table tbody').on('click', 'tr', function () {
           if ($(this).hasClass('selected')) {
               $(this).removeClass('selected');
-              $("#trxDetails").hide();
+              $("#trxDetails").fadeOut();
           }
           else {
               $('tr.selected').removeClass('selected');
@@ -205,6 +208,16 @@
               {% if not is_normal_flow %}
                   let issuer = $(this).data('issuer');
                   appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+                  let aman_is_paid = $(this).data('aman_is_paid');
+
+                  {# Determine is_paid? status for aman transactions #}
+                  if (issuer === 'aman') {
+                      if (aman_is_paid === 'True') {
+                      appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+                      } else {
+                      appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+                      }
+                  }
               {% endif %}
 
               let is_disbursed = $(this).data('is_disbursed');
@@ -212,13 +225,13 @@
 
               {# Handle is_disbursed icon based of the record disbursement status #}
               if (is_disbursed === 'True') {
-                  appendedTags += `<li><span>Disbursed</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
+                  appendedTags += `<li><span>Disbursed?</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
               }
               else if (!reason) {
-                  appendedTags += `<li><span>Disbursed</span><b>:</b><span>⏳</span></li>`;
+                  appendedTags += `<li><span>Disbursed?</span><b>:</b><span>⏳</span></li>`;
               }
               else {
-                  appendedTags += `<li><span>Disbursed</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
+                  appendedTags += `<li><span>Disbursed?</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
               }
 
               {# Handle disbursement status description based of the record disbursement status #}

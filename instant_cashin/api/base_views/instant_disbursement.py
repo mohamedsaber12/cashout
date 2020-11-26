@@ -20,7 +20,7 @@ from utilities.logging import logging_message
 
 from ...models import InstantTransaction
 from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
-from ...utils import default_response_structure, get_from_env
+from ...utils import default_response_structure, get_digits, get_from_env
 from ..mixins import IsInstantAPICheckerUser
 from ..serializers import InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer
 
@@ -118,14 +118,14 @@ class InstantDisbursementAPIView(views.APIView):
 
         if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
-            creditor_bank = "THWL"      # ToDo: Change it to "MIDG" at the production environment
+            creditor_bank = "MIDG"      # ToDo: Should be "THWL" at the staging environment
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
                     issuer_type=self.match_issuer_type(issuer), recipient_name=full_name
             )
         else:
-            creditor_account_number = serializer.validated_data["bank_card_number"]
+            creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])
             creditor_bank = serializer.validated_data["bank_code"]
             transaction_type = serializer.validated_data["bank_transaction_type"]
 
@@ -201,9 +201,14 @@ class InstantDisbursementAPIView(views.APIView):
             if not request.user.root.\
                     budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):
                 raise ValidationError(BUDGET_EXCEEDED_MSG)
-        except (ValidationError, ValueError) as e:
-            failure_message = BUDGET_EXCEEDED_MSG if e.args[0] == BUDGET_EXCEEDED_MSG else serializer.errors
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [VALIDATION ERROR]", request, failure_message)
+        except (ValidationError, ValueError, Exception) as e:
+            if len(serializer.errors) > 0:
+                failure_message = serializer.errors
+            elif e.args[0] == BUDGET_EXCEEDED_MSG:
+                failure_message = BUDGET_EXCEEDED_MSG
+            else:
+                failure_message = INTERNAL_ERROR_MSG
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [VALIDATION ERROR]", request, e.args)
             return Response({
                 "disbursement_status": _("failed"), "status_description": failure_message,
                 "status_code": str(status.HTTP_400_BAD_REQUEST)

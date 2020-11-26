@@ -144,6 +144,7 @@ class DisbursementData(AbstractTimeStamp):
     amount = models.FloatField(verbose_name=_('AMOUNT'))
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default', db_index=True)
+    # ToDo: Replace reason field with status_code and status_description fields
     reason = models.TextField()
     reference_id = models.CharField(
             _('Reference ID'),

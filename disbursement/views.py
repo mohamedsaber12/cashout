@@ -10,6 +10,7 @@ from faker import Factory as fake_factory
 import pandas as pd
 import requests
 
+from django.db.models import Sum, Count
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.http import Http404, HttpResponse, HttpResponseRedirect
@@ -166,7 +167,26 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     distinct("parent_transaction__transaction_id").\
                     values_list("id", flat=True)
                 doc_transactions = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+                # prepare dashboard data
+                dashboard_data = doc_transactions.values('status')\
+                    .annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
+                # sum of all
+                All_data = {
+                    'total_amount' : sum(item['total_amount'] for item in dashboard_data),
+                    'number' : sum(item['number'] for item in dashboard_data)
+                }
+                dashboard_data =  { o['status']: o for o in dashboard_data }
+                dashboard_data['all'] = All_data
+
+                # add default to pending
+                if dashboard_data.get('d') and dashboard_data.get('P'):
+                    dashboard_data['P']['total_amount'] += dashboard_data.get('d').get('total_amount')
+                    dashboard_data['P']['number'] += dashboard_data.get('d').get('number')
+                elif dashboard_data.get('d'):
+                    dashboard_data['P'] = dashboard_data.get('d')
+
                 context = {
+                    'dashboard_data': dashboard_data,
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.bank_cards_transactions.filter(
                             status=AbstractBaseStatus.FAILED

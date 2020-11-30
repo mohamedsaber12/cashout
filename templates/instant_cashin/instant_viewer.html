@@ -7,6 +7,15 @@
 {% block title %} {% trans 'Transactions' %} {% endblock %}
 {% block gentellacss %}
   <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <style>
+    #trxDetailsDataRight > li > span{
+      {% if bank_transactions %}
+        width: 140px;
+      {% else %}
+        width: 90px;
+      {% endif %}
+    }
+  </style>
 {% endblock %}
 {% block body %}
   <div class="col-xs-12 alert alert-info">

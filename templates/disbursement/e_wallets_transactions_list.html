@@ -12,6 +12,12 @@
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+
+<style>
+  #trxDetailsDataRight > li > span{
+    width: 90px;
+  }
+</style>
 {% endblock %}
 
 {% block body %}
@@ -123,8 +129,22 @@
               </div>
 
               <div class="x_content">
-                  <ul id="trxDetailsData">
-                  </ul>
+                <div class="row">
+                  <div class="col-md-6 col-sm-6 col-xs-6">
+                    <ul id="trxDetailsData">
+                    </ul>
+                  </div>
+                  <div class="col-md-6 col-sm-6 col-xs-6">
+                    <ul id="trxDetailsDataRight">
+                    </ul>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+                    <ul id="trxDetailsDataLast">
+                    </ul>
+                  </div>
+                </div>
               </div>
           </div>
       </div>
@@ -192,7 +212,11 @@
               $('tr.selected').removeClass('selected');
               $(this).addClass('selected');
               let ul = $('#trxDetailsData');
+              let ulRight = $('#trxDetailsDataRight');
+              let ulLast = $('#trxDetailsDataLast');
               let appendedTags = '';
+              let appendedTagsRight = '';
+              let appendedTagsBottom = '';
 
               {% if not is_normal_flow %}
                   let trx_id = $(this).data('trx_id')
@@ -225,37 +249,44 @@
 
               {# Handle is_disbursed icon based of the record disbursement status #}
               if (is_disbursed === 'True') {
-                  appendedTags += `<li><span>Disbursed?</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
+                  appendedTagsRight += `<li><span>Disbursed?</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
               }
               else if (!reason) {
-                  appendedTags += `<li><span>Disbursed?</span><b>:</b><span>⏳</span></li>`;
+                  appendedTagsRight += `<li><span>Disbursed?</span><b>:</b><span>⏳</span></li>`;
               }
               else {
-                  appendedTags += `<li><span>Disbursed?</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
+                  appendedTagsRight += `<li><span>Disbursed?</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
               }
 
               {# Handle disbursement status description based of the record disbursement status #}
               if (reason) {
                   if (reason === 'SUCCESS') {
-                      appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>200</li>`;
+                      appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>200</li>`;
                   } else {
-                      appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${reason}</li>`;
+                      appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>${reason}</li>`;
                   }
                 let reason_description = $(this).data('reason_description');
-                appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${reason_description}</li>`;
+                appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${reason_description}</li>`;
               } else {
-                  appendedTags += `<li><span>Disbursement Status Code</span><b>:</b> -- </li>`;
-                  appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>Disbursement process is running</li>`;
+                  appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b> -- </li>`;
+                  appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>Disbursement process is running</li>`;
               }
 
               let created_at = $(this).data('created_at');
-              appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+              appendedTagsRight += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
 
               let updated_at = $(this).data('updated_at');
-              appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+              appendedTagsRight += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
 
               ul.empty();
               ul.append(appendedTags);
+
+              ulRight.empty();
+              ulRight.append(appendedTagsRight);
+
+              ulLast.empty();
+              ulLast.append(appendedTagsBottom);
+
               $("#trxDetails").show();
               $('html,body').animate({
                   scrollTop: $("#trxDetails").offset().top

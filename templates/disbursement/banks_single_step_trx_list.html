@@ -33,6 +33,9 @@
       ul > li > span{
         width: 120px;
       }
+      #trxDetailsDataRight > li > span{
+        width: 80px;
+      }
     </style>
 {% endblock %}
 {% block body %}
@@ -283,6 +286,12 @@
                 </ul>
               </div>
             </div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <ul id="trxDetailsDataLast">
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -324,7 +333,9 @@
             $(this).addClass('selected');
             let ul = $('#trxDetailsData');
             let ulRight = $('#trxDetailsDataRight');
+            let ulLast = $('#trxDetailsDataLast');
             let appendedTags = '';
+
             let trx_id = $(this).data('id')
             appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
             let creditor_account_number = $(this).data('creditor_account_number');
@@ -335,10 +346,6 @@
             appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
             let transaction_type = $(this).data('transaction_type');
             appendedTags += `<li><span>Transaction type</span><b>:</b>${transaction_type}</li>`;
-            let status_code = $(this).data('status_code');
-            appendedTags += `<li><span>Status code</span><b>:</b>${status_code}</li>`;
-            let status_description = $(this).data('status_description');
-            appendedTags += `<li><span>Status description</span><b>:</b>${status_description}</li>`;
 
             ul.empty();
             ul.append(appendedTags);
@@ -357,6 +364,16 @@
 
             ulRight.empty();
             ulRight.append(appendedTags);
+            appendedTags = '';
+
+            let status_code = $(this).data('status_code');
+            appendedTags += `<li><span>Status code</span><b>:</b>${status_code}</li>`;
+            let status_description = $(this).data('status_description');
+            appendedTags += `<li><span>Status description</span><b>:</b>${status_description}</li>`;
+
+            ulLast.empty();
+            ulLast.append(appendedTags);
+
             $("#trxDetails").show();
             $('html,body').animate({
                 scrollTop: $("#trxDetails").offset().top

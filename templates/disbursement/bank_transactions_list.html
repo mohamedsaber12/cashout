@@ -13,47 +13,173 @@
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+<style>
+  #trxDetailsDataRight > li > span{
+    width: 90px;
+  }
+  .count_top {
+    font-size: 14px;
+    margin-bottom: 5px;
+    font-weight: bolder;
+  }
+  .count {
+    font-size: 30px;
+  }
+  .dashboard-row {
+    margin-bottom: 20px;
+  }
+  .data_element::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    right: 8px;
+    height: 75px;
+    border-left: 2px solid #ADB2B5;
+    margin-top: 10px;
+  }
+  .export-dropdown {
+    position: relative;
+    display: inline-block;
+    border: 0;
+    background: transparent;
+    border-radius: .5rem!important;
+    width: 8rem!important;
+    padding: .75rem!important;
+    -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+  }
+  .open .export-dropdown {
+    background-color: #fff !important;
+  }
+  .vs-dropdown--menu--after {
+    position: absolute;
+    right: 10px;
+    width: 10px;
+    height: 10px;
+    display: block;
+    background: #fff;
+    -webkit-transform: rotate(45deg) translate(-7px);
+    transform: rotate(45deg) translate(-7px);
+    border-bottom: 1px solid rgba(0,0,0,.1);
+    border-right: 1px solid rgba(0,0,0,.1);
+    z-index: 10;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+  }
+  .dropdown-menu {
+    border: 0;
+  }
+  .dropdown--menu {
+    background: #fff;
+    padding-left: 0!important;
+    border-radius: 5px;
+    -webkit-box-shadow: 0 5px 25px 0 rgba(0,0,0,.1);
+    box-shadow: 0 5px 25px 0 rgba(0,0,0,.1);
+    border: 1px solid rgba(0,0,0,.1);
+    padding-top: 5px;
+    padding-bottom: 5px;
+    position: absolute;
+    top: 45px;
+    right: 20px;
+    margin: 0;
+  }
+  .dropdown--item {
+    z-index: 100;
+    text-align: left;
+    border-radius: 5px;
+    width: calc(100% - 6px);
+    margin: 0 3px;
+    list-style: none;
+    font-weight: 400!important;
+    font-size: 1.2em;
+  }
+
+  .dropdown--item-link {
+    background: inherit!important;
+    color: inherit!important;
+    cursor: pointer;
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    width: 100%;
+    display: block;
+    color: rgba(0,0,0,.7);
+  }
+  .dropdown--item:hover {
+    background: rgba(0, 0, 0, 0.01) !important;
+    color: #333;
+  }
+</style>
 {% endblock %}
 
 {% block body %}
-
-
-<div class="row">
-    <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the file to download' %}
+<!-- Dashboard Row  -->
+<div class="row dashboard-row">
+  <div class="col-md-2 col-sm-2 col-xs-2 data_element">
+    <span class="count_top">All</span>
+    <div class="count">{{ dashboard_data.all.number|default:0 }}</div>
+    <span>Total {{ dashboard_data.all.total_amount|default:0 }} LE</span>
+  </div>
+  <div class="col-md-3 col-sm-3 col-xs-3 data_element">
+    <span class="count_top">Successful</span>
+    <div class="count">{{ dashboard_data.S.number|default:0 }}</div>
+    <span>Total: {{ dashboard_data.S.total_amount|default:0 }} LE</span>
+  </div>
+  <div class="col-md-3 col-sm-3 col-xs-3 data_element">
+    <span class="count_top">Failed</span>
+    <div class="count">{{ dashboard_data.F.number|default:0 }}</div>
+    <span>Total: {{ dashboard_data.F.total_amount|default:0 }} LE</span>
+  </div>
+  <div class="col-md-2 col-sm-2 col-xs-2">
+    <span class="count_top">Pending</span>
+    <div class="count">{{ dashboard_data.P.number|default:0 }}</div>
+    <span>Total: {{ dashboard_data.P.total_amount|default:0 }} LE</span>
+  </div>
+  <div class="col-md-2 col-sm-2 col-xs-2">
+    <div class="dropdown">
+      <button class="btn btn-default dropdown-toggle export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+              type="button" id="menu1" data-toggle="dropdown">
+        <span class="glyphicon glyphicon-download-alt"></span> Export
+      </button>
+      <div class="dropdown-menu dropdown-menu-right">
+        <div class="vs-dropdown--menu--after" style="bottom: -50px;right:30px;transform: rotate(225deg);"></div>
+        <ul class="dropdown--menu">
+          <li class="dropdown--item">
+            <a id="export-all" class="dropdown--item-link">
+              <span class="flex items-center">
+                <span class="glyphicon glyphicon-download-alt"
+                      style="margin-right: .5rem!important;"></span>
+                <span>All</span>
+              </span>
+            </a>
+          </li>
+          {% if has_success %}
+            <li class="dropdown--item">
+              <a id="export-success" class="dropdown--item-link">
+                <span class="flex items-center">
+                  <span class="glyphicon glyphicon-ok"
+                        style="margin-right: .5rem!important;"></span>
+                  <span>Success</span>
+                </span>
+              </a>
+            </li>
+          {% endif %}
+          {% if has_failed %}
+            <li class="dropdown--item">
+              <a id="export-failed" class="dropdown--item-link">
+                <span class="flex items-center">
+                  <span class="glyphicon glyphicon-remove"
+                        style="margin-right: .5rem!important;"></span>
+                  <span>Failed</span>
+                </span>
+              </a>
+            </li>
+          {% endif %}
+        </ul>
+      </div>
     </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button id="export-all"
-            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
-        </button>
-    </div>
+  </div>
 </div>
-{% if has_failed %}
-<div class="row">
-    <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the failed data file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
-        </button>
-    </div>
-</div>
-{%endif%}
-{% if has_success %}
-<div class="row">
-    <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the success data file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button id="export-success"
-            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
-        </button>
-    </div>
-</div>
-{%endif%}
 
 <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
@@ -136,7 +262,7 @@
 </div>
 
 <!-- transaction details -->
-  <div id="trxDetails" style="display: none;" class="row">
+<div id="trxDetails" style="display: none;" class="row">
       <div class="col-md-12 col-sm-12 col-xs-12">
           <div class="x_panel">
               <div class="x_title">
@@ -146,11 +272,11 @@
 
               <div class="x_content">
                 <div class="row">
-                  <div class="col-md-6 col-sm-6 col-xs-6">
+                  <div class="col-md-7 col-sm-7 col-xs-7">
                     <ul id="trxDetailsData">
                     </ul>
                   </div>
-                  <div class="col-md-6 col-sm-6 col-xs-6">
+                  <div class="col-md-5 col-sm-5 col-xs-5">
                     <ul id="trxDetailsDataRight">
                     </ul>
                   </div>
@@ -166,6 +292,63 @@
           </div>
       </div>
   </div>
+
+<!-- Model For Export All -->
+<div class="modal fade" id="exportAllModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Report Exported Successfully</h4>
+      </div>
+      <div class="modal-body">
+          {% trans 'You will receive an email shortly with the file to download' %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Model For Export Success -->
+<div class="modal fade" id="exportSuccessModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Report Exported Successfully</h4>
+      </div>
+      <div class="modal-body">
+        {% trans 'You will receive an email shortly with the success data file to download' %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Model For Export Failed -->
+<div class="modal fade" id="exportFailedModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Report Exported Successfully</h4>
+      </div>
+      <div class="modal-body">
+        {% trans 'You will receive an email shortly with the failed data file to download' %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block script %}
@@ -192,7 +375,10 @@
                 type:'GET',
                 url: '{{request.path}}' + '?export_failed=true',
                 success: function (data, text, xhr) {
-                    $('#failed-alert-msg').show()
+                    $('#exportFailedModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                  })
                 },
             })
 
@@ -202,7 +388,10 @@
                 type: 'GET',
                 url: '{{request.path}}' + '?export_success=true',
                 success: function (data, text, xhr) {
-                    $('#success-alert-msg').show()
+                    $('#exportSuccessModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                  })
                 },
             })
 
@@ -212,7 +401,10 @@
                 type: 'GET',
                 url: '{{request.path}}' + '?export_all=true',
                 success: function (data, text, xhr) {
-                    $('#all-alert-msg').show()
+                  $('#exportAllModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                  })
                 },
             })
 

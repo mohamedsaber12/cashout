@@ -12,7 +12,7 @@
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
-
+<link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
 <style>
   #trxDetailsDataRight > li > span{
     width: 90px;
@@ -21,44 +21,8 @@
 {% endblock %}
 
 {% block body %}
-  <div class="row">
-      <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-          {% trans 'You will receive an email shortly with the file to download' %}
-      </div>
-      <!-- button -->
-      <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-          <button id="export-all"
-              class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
-          </button>
-      </div>
-  </div>
-
-  {% if has_failed %}
-    <div class="row">
-        <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-            {% trans 'You will receive an email shortly with the failed data file to download' %}
-        </div>
-        <!-- button -->
-        <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-            <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
-            </button>
-        </div>
-    </div>
-  {%endif%}
-
-  {% if has_success %}
-    <div class="row">
-        <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-            {% trans 'You will receive an email shortly with the success data file to download' %}
-        </div>
-        <!-- button -->
-        <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-            <button id="export-success"
-                class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
-            </button>
-        </div>
-    </div>
-  {%endif%}
+  <!-- Dashboard Row  -->
+  {% include 'disbursement/disbursement_transactions_dashboard.html' %}
 
   <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">

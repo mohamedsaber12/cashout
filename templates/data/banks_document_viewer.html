@@ -13,7 +13,9 @@
   <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
-
+  <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+  <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
   <style>
       .user_name{
           font-size:14px;
@@ -25,34 +27,27 @@
       .error_span{
           color: red;
       }
-      .row-hover:hover {
-          background-color: transparent;
-          cursor: pointer;
-          color: #444;
-          box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-          transform: translate(-1px,-1px);
-      }
-      .selected {
-          background-color: #f0f0f0 !important;
-          cursor: pointer;
-          color: #333;
-          box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-          transform: translateY(-1px);
-      }
-      ul{
-          list-style: none;
-          padding: 0px;
-      }
       ul > li > span{
-          display: inline-block;
           width: 130px;
-          font-weight: bold;
           color: #73879C;
-          line-height: 25px;
       }
       ul > li > b{
           margin-right: 5px;
           color: #777;
+      }
+      #notify_button {
+          width: 13rem!important;
+      }
+      #disburse_button {
+          width: 11rem!important;
+      }
+      #download-doc {
+          width: 17rem!important;
+          margin-right: 10px;
+          color: #333;
+      }
+      #download-doc span {
+          color: #333;
       }
   </style>
 {% endblock %}
@@ -60,37 +55,44 @@
 {% block body %}
 
   <!-- button -->
-  <div class="row">
+  <div class="row dashboard-row">
+    <div class="col-md-3 col-sm-3 col-xs-3 data_element">
+      <span class="count_top">All</span>
+      <div class="count">{{ doc.total_count }}</div>
+      <span>Total {{ doc.total_amount }} LE</span>
+    </div>
     <!-- checker buttons -->
     {% if request.user.is_checker %}
-      <div class="col-md-12 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+      <div class="col-md-9 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
         {% if can_user_disburse.can_disburse and doc.total_amount <= request.user.level.max_amount_can_be_disbursed %}
-          <button id="disburse_button" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Disburse' %}</button>
+          <button id="disburse_button" class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+            <i class="fa fa-money" aria-hidden="true"></i> {% trans 'Disburse' %}
+          </button>
         {% else %}
-          <button disabled class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Disburse' %}</button>
-          <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-            {{ can_user_disburse.reason }}
+          <div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+               role="alert" style="margin-top: 12px;">
+            {{ can_user_disburse.reason }} <span>⏳</span>
           </div>
         {% endif %}
       </div>
       <!-- maker buttons -->
     {% elif request.user.is_maker %}
-      <div class="col-md-12 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+      <div class="col-md-9 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
         {% if doc.is_processed and not doc.can_be_disbursed %}
-          <button id="notify_button" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
-            {% trans 'Notify Chekers' %}
+          <button id="notify_button" class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
+            <span class="glyphicon glyphicon-bell"></span> {% trans 'Notify Chekers' %}
           </button>
           {% elif doc.can_be_disbursed %}
-          <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-            {% trans 'Checkers Notified' %}
+          <div class="alert alert-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
+            {% trans 'Checkers Notified' %} <span class="glyphicon glyphicon-ok"></span>
           </div>
           {% elif doc.processing_failure_reason %}
-          <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-            {{ doc.processing_failure_reason }}
+          <div class="alert alert-danger pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
+            {{ doc.processing_failure_reason }} <span class="glyphicon glyphicon-remove"></span>
           </div>
         {% else %}
-          <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-            {% trans 'Pending' %}
+          <div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
+            {% trans 'Pending' %} <span>⏳</span>
           </div>
         {% endif %}
       </div>
@@ -195,7 +197,7 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
       <div class="x_panel">
         <div class="x_title">
-          <h2>{% trans 'Bank wallets/Orange Document Transactions' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc.id %}">{{ doc.filename }}</a></small></h2>
+          <h2>{% trans 'Bank wallets/Orange Document Transactions' %}</h2>
           <ul class="nav navbar-right panel_toolbox">
             {% if request.user.is_root %}
               <li>
@@ -203,16 +205,21 @@
                 </button>
               </li>
             {% endif %}
-            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            <li>
+              <a class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+                 target="_blank" type="button" id="download-doc"
+                 href="{% url 'data:download_doc' doc.id %}">
+                <span class="glyphicon glyphicon-download"></span> Download Document
+              </a>
+            </li>
+            <li>
+              <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
             </li>
           </ul>
           <div class="clearfix"></div>
         </div>
         {% if doc.is_processed %}
           <div class="x_content">
-            <h3 class="font-13 m-b-30" style="font-weight: bolder;">
-              {% trans 'Count:' %} {{ doc.total_count }} | {% trans 'Total Amount:' %} {{ doc.total_amount }}
-            </h3>
             <table id="doc-datatable" class="table table-bordered">
               {% if doc.is_bank_wallet %}
                 <thead>

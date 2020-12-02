@@ -168,7 +168,7 @@ msgid "Not Permitted to disburse"
 msgstr ""
 
 #: data/models/doc.py:102
-msgid "Document is still suspend due to shortage of checking"
+msgid "Document is still suspended due to shortage of checking"
 msgstr ""
 
 #: data/models/doc.py:105

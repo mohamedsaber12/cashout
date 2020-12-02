@@ -13,6 +13,7 @@
     <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+    <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
     <style>
         .user_name{
             font-size:14px;
@@ -37,28 +38,13 @@
         #disburse_button {
             width: 11rem!important;
         }
-        .alert {
-            margin-bottom: 0;
+        #download-doc {
+            width: 17rem!important;
+            margin-right: 10px;
+            color: #333;
         }
-        .alert-success {
-            color: #3c763d;
-            background-color: #dff0d8;
-            border-color: #d6e9c6;
-        }
-        .alert-danger {
-            color: #a94442;
-            background-color: #f2dede;
-            border-color: #ebccd1;
-        }
-        .alert-warning {
-            color: #856404;
-            background-color: #fff3cd;
-            border-color: #ffeeba;
-        }
-        .alert-info {
-            color: #0c5460;
-            background-color: #d1ecf1;
-            border-color: #bee5eb;
+        #download-doc span {
+            color: #333;
         }
     </style>
     {% endblock %}
@@ -80,7 +66,7 @@
                         <i class="fa fa-money" aria-hidden="true"></i> {% trans 'Disburse' %}
                     </button>
                 {% else %}
-                    <div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}"
+                    <div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
                          role="alert" style="margin-top: 12px;">
                         {{ can_user_disburse.reason }} <span>⏳</span>
                     </div>
@@ -208,7 +194,7 @@
         <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
                 <div class="x_title">
-                    <h2>{% trans 'Disbursement Document data' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc.id %}">{{ doc.filename }}</a></small></h2>
+                    <h2>{% trans 'Document Transactions' %}</h2>
                     <ul class="nav navbar-right panel_toolbox">
                         {% if request.user.is_root %}
                             <li>
@@ -216,16 +202,21 @@
                             </button>
                             </li>
                         {% endif %}
-                        <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                        <li>
+                            <a class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+                               target="_blank" type="button" id="download-doc"
+                               href="{% url 'data:download_doc' doc.id %}">
+                                <span class="glyphicon glyphicon-download"></span> Download Document
+                            </a>
+                        </li>
+                        <li>
+                            <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                         </li>
                     </ul>
                     <div class="clearfix"></div>
                 </div>
                 {% if doc.is_processed %}
                 <div class="x_content">
-<!--                    <h3 class="font-13 m-b-30" style="font-weight: bolder;">-->
-<!--                        {% trans 'Count:' %} {{ doc.total_count }} | {% trans 'Total Amount:' %} {{ doc.total_amount }}-->
-<!--                    </h3>-->
                     <table id="doc-datatable" class="table table-bordered">
                         <thead>
                             <th>{% trans 'Msisdn' %}</th>

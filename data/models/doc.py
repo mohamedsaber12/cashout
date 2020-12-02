@@ -132,7 +132,7 @@ class Doc(AbstractBaseDocType):
                         reason = _("Not Permitted to disburse")
                         code = 3
                 else:
-                    reason = _("Document is still suspend due to shortage of checking")
+                    reason = _("Document is still suspended due to shortage of checking")
                     code = 2
             else:
                 reason = _("Issues are submitted by some users, please resolve any conflict first")

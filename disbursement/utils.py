@@ -4,7 +4,6 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from core.models import AbstractBaseStatus
 
 INSTANT_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the carrier"
 INSTANT_TRX_BEING_PROCESSED = "Transaction received by the carrier and being processed now"
@@ -129,15 +128,15 @@ BANK_CODES = [
 
 ERROR_CODES_MESSAGES = {
     # Vodafone Cash Codes
-    '403':	'Channel Authentication Failed',
-    '404':	'Undefined request type',
-    '406':	'Incorrect input given to request',
-    '501':	'Internal Error',
-    '583':	'Exceeded Maximum Limit Per Single Transaction',
-    '604':	'Below Minimum Transaction Limit Per Single Transaction',
-    '610':	'User Not Eligible To Perform Transaction',
-    '615':	'Sender and Recipient Accounts are the Same',
-    '618':	'Recipient Is Unregistered',
+    '403' : 'Channel Authentication Failed',
+    '404' : 'Undefined request type',
+    '406' : 'Incorrect input given to request',
+    '501' : 'Internal Error',
+    '583' : 'Exceeded Maximum Limit Per Single Transaction',
+    '604' : 'Below Minimum Transaction Limit Per Single Transaction',
+    '610' : 'User Not Eligible To Perform Transaction',
+    '615' : 'Sender and Recipient Accounts are the Same',
+    '618' : 'Recipient Is Unregistered',
     '1051':	'MSISDN Does Not Exist',
     '1056':	'Invalid Consumer PIN',
     '1033':	'Initial MPIN has not been changed',
@@ -278,17 +277,3 @@ def get_error_description_from_error_code(code):
         return str(code).capitalize()
 
     return _('External error, please contact your support team for further details')
-
-def get_transformed_transaction_status(status_value):
-    """Transform transaction status key to into its corresponding informative string"""
-    if status_value:
-        if status_value == AbstractBaseStatus.SUCCESSFUL:
-            return _("Successful")
-        elif status_value == AbstractBaseStatus.PENDING:
-            return _("Pending")
-        elif status_value == AbstractBaseStatus.DEFAULT:
-            return _("Default")
-        else:
-            return _("Failed")
-    else:
-        return _("Failed")

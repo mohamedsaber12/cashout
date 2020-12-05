@@ -82,6 +82,11 @@ class Agent(models.Model):
             return f"SuperAgent {self.msisdn} for Root: {self.wallet_provider.username}"
         return f"Agent {self.msisdn} for Root: {self.wallet_provider.username}"
 
+    @property
+    def agent_choice_verbose(self):
+        """Return the corresponding verbose name of the agent type"""
+        return dict(self.AGENT_TYPE_CHOICES)[self.type]
+
 
 class DisbursementDocData(AbstractBaseDocStatus):
     """
@@ -339,7 +344,13 @@ class BankTransaction(AbstractTimeStamp,
 
     @property
     def get_transaction_type(self):
-        return  determine_transaction_type(self.category_code, self.purpose)
+        """Determine transaction type based on transaction category code and purpose"""
+        return determine_transaction_type(self.category_code, self.purpose)
+
+    @property
+    def status_choice_verbose(self):
+        """Return the corresponding verbose name of the transaction status type"""
+        return dict(AbstractBaseStatus.STATUS_CHOICES)[self.status]
 
     def update_status_code_and_description(self, code=None, description=None):
         self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR

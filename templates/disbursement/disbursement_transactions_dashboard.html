@@ -3,23 +3,23 @@
 <div class="row dashboard-row">
   <div class="col-md-2 col-sm-2 col-xs-2 data_element">
     <span class="count_top">All</span>
-    <div class="count">{{ dashboard_data.all.number|default:0 }}</div>
-    <span>Total {{ dashboard_data.all.total_amount|default:0 }} LE</span>
+    <div class="count">{{ doc_transactions_totals.all.number|default:0 }}</div>
+    <span>Total {{ doc_transactions_totals.all.total_amount|default:0 }} LE</span>
   </div>
   <div class="col-md-3 col-sm-3 col-xs-3 data_element">
     <span class="count_top">Successful</span>
-    <div class="count">{{ dashboard_data.S.number|default:0 }}</div>
-    <span>Total: {{ dashboard_data.S.total_amount|default:0 }} LE</span>
+    <div class="count">{{ doc_transactions_totals.S.number|default:0 }}</div>
+    <span>Total: {{ doc_transactions_totals.S.total_amount|default:0 }} LE</span>
   </div>
   <div class="col-md-3 col-sm-3 col-xs-3 data_element">
     <span class="count_top">Failed</span>
-    <div class="count">{{ dashboard_data.F.number|default:0 }}</div>
-    <span>Total: {{ dashboard_data.F.total_amount|default:0 }} LE</span>
+    <div class="count">{{ doc_transactions_totals.F.number|default:0 }}</div>
+    <span>Total: {{ doc_transactions_totals.F.total_amount|default:0 }} LE</span>
   </div>
   <div class="col-md-2 col-sm-2 col-xs-2">
     <span class="count_top">Pending</span>
-    <div class="count">{{ dashboard_data.P.number|default:0 }}</div>
-    <span>Total: {{ dashboard_data.P.total_amount|default:0 }} LE</span>
+    <div class="count">{{ doc_transactions_totals.P.number|default:0 }}</div>
+    <span>Total: {{ doc_transactions_totals.P.total_amount|default:0 }} LE</span>
   </div>
   <div class="col-md-2 col-sm-2 col-xs-2">
     <div class="dropdown">
@@ -40,26 +40,26 @@
             </a>
           </li>
           {% if has_success %}
-          <li class="dropdown--item">
-            <a id="export-success" class="dropdown--item-link">
-                <span class="flex items-center">
-                  <span class="glyphicon glyphicon-ok"
-                        style="margin-right: .5rem!important;"></span>
-                  <span>Success</span>
-                </span>
-            </a>
-          </li>
+            <li class="dropdown--item">
+              <a id="export-success" class="dropdown--item-link">
+                  <span class="flex items-center">
+                    <span class="glyphicon glyphicon-ok"
+                          style="margin-right: .5rem!important;"></span>
+                    <span>Success</span>
+                  </span>
+              </a>
+            </li>
           {% endif %}
           {% if has_failed %}
-          <li class="dropdown--item">
-            <a id="export-failed" class="dropdown--item-link">
-                <span class="flex items-center">
-                  <span class="glyphicon glyphicon-remove"
-                        style="margin-right: .5rem!important;"></span>
-                  <span>Failed</span>
-                </span>
-            </a>
-          </li>
+            <li class="dropdown--item">
+              <a id="export-failed" class="dropdown--item-link">
+                  <span class="flex items-center">
+                    <span class="glyphicon glyphicon-remove"
+                          style="margin-right: .5rem!important;"></span>
+                    <span>Failed</span>
+                  </span>
+              </a>
+            </li>
           {% endif %}
         </ul>
       </div>

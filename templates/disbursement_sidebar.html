@@ -36,16 +36,26 @@
   <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
     <div class="menu_section">
       <ul class="nav side-menu">
-        <li><a href="{% url 'instant_cashin:wallets_trx_list' %}"><i class="fa fa-exchange"></i>{% trans 'Wallets Transactions' %}</a></li>
-        <li><a href="{% url 'instant_cashin:banks_trx_list' %}"><i class="fa fa-exchange"></i>{% trans 'Banks Transactions' %}</a></li>
+
+        {% if request.user.is_vodafone_default_onboarding %}
+          <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Disbursement Files' %}</a></li>
+        {% elif request.user.is_accept_vodafone_onboarding %}
+          <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'E-Wallets Files' %}</a></li>
+          <li><a href="{% url 'data:bank_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Bank Wallets/Orange Files' %}</a></li>
+          <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-files-o"></i>{% trans 'Bank Accounts/Cards Files' %}</a></li>
+
+          {% if request.user.is_root or request.user.is_checker %}
+            <li><a href="{% url 'disbursement:single_step_list_create' %}"><i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}</a></li>
+          {% endif %}
+        {% endif %}
 
         {% if request.user.is_root %}
-          <li><a><i class="fa fa-users"></i>{% trans 'Members' %}<span class="fa fa-chevron-down"></span></a>
+          <li><a><i class="fa fa-users"></i>{% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
                 <ul class="nav child_menu">
-                  <li><a href="{% url 'users:add_viewer' %}">{% trans 'Viewer' %}</a></li>
-                  <li><a href="{% url 'users:add_api_checker' %}">{% trans 'API Checker' %}</a></li>
+                  <li><a href="{% url 'users:add_maker' %}">{% trans 'Maker' %}</a></li>
+                  <li><a href="{% url 'users:add_checker' %}">{% trans 'Checker' %}</a></li>
                 </ul>
               </li>
               <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
@@ -54,9 +64,22 @@
           <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}"><i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}</a></li>
         {% endif %}
 
-        <li><a href="{% url 'docs:instant_docs' path='' %}" target="_blank"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>
         <li><a href="{% url 'users:profile' request.user.username %}"><i class="fa fa-user"></i>{% trans 'Profile' %}</a></li>
         <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o"></i>{% trans 'Active Sessions' %}</a></li>
+
+        {% if request.user.is_root or request.user.is_maker %}
+          <li><a><i class="fa fa-cog"></i>{% trans 'Settings' %}<span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              {% if request.user.is_root %}
+                <li><a href="{% url 'users:setting-disbursement-pin' %}">{% trans 'Setups' %}</a></li>
+                <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
+                <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+              {% elif request.user.is_maker  %}
+                <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+              {% endif %}
+            </ul>
+          </li>
+        {% endif %}
       </ul>
     </div>
   </div>

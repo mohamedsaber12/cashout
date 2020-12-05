@@ -3,45 +3,48 @@ from __future__ import unicode_literals
 
 import io
 import logging
-import random
 import os
+import random
 
 from faker import Factory as fake_factory
 import pandas as pd
 import requests
 
-from django.db.models import Sum, Count, Q
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import View, ListView, CreateView
-from rest_framework import status
+from django.views.generic import ListView, View
 
+from rest_framework import status
 from rest_framework_expiring_authtoken.models import ExpiringToken
 
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (generate_all_disbursed_data, generate_failed_disbursed_data, generate_success_disbursed_data)
+from data.tasks import (generate_all_disbursed_data,
+                        generate_failed_disbursed_data,
+                        generate_success_disbursed_data)
 from data.utils import redirect_params
 from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (
-    SuperFinishedSetupMixin, SuperRequiredMixin,
-    SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-    SuperWithoutDefaultOnboardingPermissionRequired, UserWithDisbursementPermissionRequired,
-    UserWithAcceptVFOnboardingPermissionRequired,
-)
+from users.mixins import (SuperFinishedSetupMixin,
+                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
+                          SuperRequiredMixin,
+                          SuperWithoutDefaultOnboardingPermissionRequired,
+                          UserWithAcceptVFOnboardingPermissionRequired,
+                          UserWithDisbursementPermissionRequired)
 from users.models import EntitySetup
 from utilities import messages
 
-from .forms import AgentForm, AgentFormSet, BalanceInquiryPinForm, SingleStepTransactionModelForm
+from .forms import (AgentForm, AgentFormSet, BalanceInquiryPinForm,
+                    SingleStepTransactionModelForm)
 from .mixins import AdminOrCheckerRequiredMixin
 from .models import Agent, BankTransaction
 from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
@@ -110,6 +113,43 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
     View for handling disbursed doc transactions list
     """
 
+    @staticmethod
+    def get_document_transactions_totals(doc_obj, doc_transactions):
+        """Returns aggregated totals for specific doc"""
+
+        # Handle e-wallets docs -vodafone/etisalat/aman-
+        if doc_obj.is_e_wallet:
+            pending_transactions = doc_transactions.filter(reason='').\
+                values('is_disbursed').annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
+            failed_transactions = doc_transactions.filter(~Q(reason=''), is_disbursed=False).\
+                values('is_disbursed').annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
+            success_transactions = doc_transactions.filter(is_disbursed=True).\
+                values('is_disbursed').annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
+            doc_transactions_totals = {
+                'P': pending_transactions[0] if pending_transactions else None,
+                'F': failed_transactions[0] if failed_transactions else None,
+                'S': success_transactions[0] if success_transactions else None
+            }
+
+        # Handle bank cards/wallets/orange docs
+        elif doc_obj.is_bank_wallet or doc_obj.is_bank_card:
+            trx_id = 'uid' if doc_obj.is_bank_wallet else 'id'
+            doc_transactions_totals = doc_transactions.values('status').\
+                annotate(total_amount=Sum('amount'), number=Count(trx_id)).order_by()
+
+            doc_transactions_totals = { agg_dict['status']: agg_dict for agg_dict in doc_transactions_totals }
+            if doc_transactions_totals.get('d') and doc_transactions_totals.get('P'):
+                doc_transactions_totals['P']['total_amount'] += doc_transactions_totals.get('d').get('total_amount')
+                doc_transactions_totals['P']['number'] += doc_transactions_totals.get('d').get('number')
+            elif doc_transactions_totals.get('d'):
+                doc_transactions_totals['P'] = doc_transactions_totals.get('d')
+
+        doc_transactions_totals['all'] = {
+            'total_amount' : doc_obj.total_amount,
+            'number' : doc_obj.total_count
+        }
+        return doc_transactions_totals
+
     def get(self, request, *args, **kwargs):
         """"""
         doc_id = self.kwargs.get("doc_id")
@@ -145,33 +185,7 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                 template_name = "disbursement/e_wallets_transactions_list.html"
                 doc_transactions = doc_obj.disbursement_data.all()
 
-                pending_transactions = doc_transactions.filter(reason='')
-                failed_transactions = doc_transactions.filter(~Q(reason=''), is_disbursed=False)
-                success_transactions = doc_transactions.filter(is_disbursed=True)
-                pending_transactions = pending_transactions.values('is_disbursed')\
-                    .annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
-                failed_transactions = failed_transactions.values('is_disbursed') \
-                    .annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
-                success_transactions = success_transactions.values('is_disbursed') \
-                    .annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
-                # prepare dashboard data
-                default_data = {'total_amount': 0, 'number': 0}
-                dashboard_data = {
-                    'P': pending_transactions[0] if pending_transactions else default_data,
-                    'F': failed_transactions[0] if failed_transactions else default_data,
-                    'S': success_transactions[0] if success_transactions else default_data,
-                }
-                # sum of all
-                dashboard_data['all'] = {
-                    'total_amount' : dashboard_data['P'].get('total_amount') +
-                                     dashboard_data['F'].get('total_amount') +
-                                     dashboard_data['S'].get('total_amount'),
-                    'number' : dashboard_data['P'].get('number') +
-                               dashboard_data['F'].get('number') +
-                               dashboard_data['S'].get('number')
-                }
                 context = {
-                    'dashboard_data': dashboard_data,
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
                     'has_success': doc_obj.disbursement_data.filter(is_disbursed=True).count() != 0,
@@ -180,26 +194,8 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
             elif doc_obj.is_bank_wallet:
                 template_name = "disbursement/bank_transactions_list.html"
                 doc_transactions = doc_obj.bank_wallets_transactions.all()
-                # prepare dashboard data
-                dashboard_data = doc_transactions.values('status') \
-                    .annotate(total_amount=Sum('amount'), number=Count('uid')).order_by()
-                # sum of all
-                All_data = {
-                    'total_amount' : sum(item['total_amount'] for item in dashboard_data),
-                    'number' : sum(item['number'] for item in dashboard_data)
-                }
-                dashboard_data =  { o['status']: o for o in dashboard_data }
-                dashboard_data['all'] = All_data
-
-                # add default to pending
-                if dashboard_data.get('d') and dashboard_data.get('P'):
-                    dashboard_data['P']['total_amount'] += dashboard_data.get('d').get('total_amount')
-                    dashboard_data['P']['number'] += dashboard_data.get('d').get('number')
-                elif dashboard_data.get('d'):
-                    dashboard_data['P'] = dashboard_data.get('d')
 
                 context = {
-                    'dashboard_data': dashboard_data,
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.bank_wallets_transactions.filter(
                             status=AbstractBaseStatus.FAILED
@@ -216,26 +212,7 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     values_list("id", flat=True)
                 doc_transactions = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
 
-                # prepare dashboard data
-                dashboard_data = doc_transactions.values('status')\
-                    .annotate(total_amount=Sum('amount'), number=Count('id')).order_by()
-                # sum of all
-                All_data = {
-                    'total_amount' : sum(item['total_amount'] for item in dashboard_data),
-                    'number' : sum(item['number'] for item in dashboard_data)
-                }
-                dashboard_data =  { o['status']: o for o in dashboard_data }
-                dashboard_data['all'] = All_data
-
-                # add default to pending
-                if dashboard_data.get('d') and dashboard_data.get('P'):
-                    dashboard_data['P']['total_amount'] += dashboard_data.get('d').get('total_amount')
-                    dashboard_data['P']['number'] += dashboard_data.get('d').get('number')
-                elif dashboard_data.get('d'):
-                    dashboard_data['P'] = dashboard_data.get('d')
-
                 context = {
-                    'dashboard_data': dashboard_data,
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.bank_cards_transactions.filter(
                             status=AbstractBaseStatus.FAILED
@@ -245,7 +222,10 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     ).count() != 0,
                 }
 
-            context.update({'doc_obj': doc_obj})
+            context.update({
+                'doc_obj': doc_obj,
+                'doc_transactions_totals': self.__class__.get_document_transactions_totals(doc_obj, doc_transactions),
+            })
             return render(request, template_name=template_name, context=context)
 
         return HttpResponse(status=401)

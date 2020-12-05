@@ -157,3 +157,13 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             return self.aman_obj.first()
         except AttributeError:
             return None
+
+    @property
+    def issuer_choice_verbose(self):
+        """Return the corresponding verbose name of the used issuer type"""
+        return dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[self.issuer_type]
+
+    @property
+    def status_choice_verbose(self):
+        """Return the corresponding verbose name of the transaction status type"""
+        return dict(self.STATUS_CHOICES)[self.status]

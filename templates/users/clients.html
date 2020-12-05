@@ -12,7 +12,7 @@
     </div>
   {% else %}
 
-    <!-- page content -->
+    {# page content #}
     <div class="col" role="main">
       <div class="">
         <div class="page-title">
@@ -20,19 +20,7 @@
             <h3>{% trans 'Users' %}</h3>
           </div>
 
-          <div class="title_right">
-            <form action="." method="get">
-              <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
-                <div class="input-group">
-
-                  <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for...">
-                  <span class="input-group-btn">
-                    <button class="btn btn-default" type="submit" value="search">{% trans 'Go!' %}</button>
-                  </span>
-                </div>
-              </div>
-            </form>
-          </div>
+          {% include 'search_bar.html' %}
         </div>
 
         <div class="clearfix"></div>
@@ -74,11 +62,11 @@
                             </i>
                           </h4>
                           <div class="left col-xs-7">
-                            <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.username }}</h2>
-                            <h5><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {{ client_setup.client.title }}</h5>
+                            <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.get_full_name|truncatechars:26 }}</h2>
+                            <h5><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {{ client_setup.client.title|truncatechars:24 }}</h5>
                             <ul class="list-unstyled">
-                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ client_setup.client.email }}</li></ul></li>
                               <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ client_setup.client.mobile_no }}</li></ul></li>
+                              <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ client_setup.client.email|truncatechars:38 }}</li></ul></li>
                             </ul>
                           </div>
                           <div class="right col-xs-5 text-center">
@@ -87,10 +75,9 @@
                         </div>
                         <div class="col-xs-12 bottom text-center">
                           <div class="col-xs-12 col-sm-6 emphasis">
-                            <p class="ratings">
-                            </p>
+                            <p class="ratings"><a>{% trans 'Active' %}</a></p>
                           </div>
-                          <div class="col-xs-12 emphasis text-right">
+                          <div class="col-xs-12 col-sm-6 emphasis text-right">
                             <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
                                     data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
                               <i class="fa fa-trash-o" title="Delete User"></i>
@@ -113,7 +100,6 @@
                             </a>
                           </div>
                         </div>
-
                       </div>
                     </div>
                   {% empty %}
@@ -129,8 +115,9 @@
         </div>
       </div>
     </div>
-    <!-- /page content -->
+    {# end of page content #}
 
+    {# delete client/user modal #}
     <div id="delete-user-modal" class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
@@ -151,7 +138,9 @@
         </div>
       </div>
     </div>
+    {# end of delete client/user modal #}
 
+    {# activate client/user modal #}
     <div id="activation-modal" class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
@@ -171,7 +160,9 @@
         </div>
       </div>
     </div>
+    {# end of activate client/user modal #}
 
+    {# success confirmation modal #}
     <div class="modal fade delete-success" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
@@ -190,55 +181,58 @@
         </div>
       </div>
     </div>
+    {# end of success confirmation modal #}
   {% endif %}
 {% endblock body %}
 
 {% block script %}
   <script type="text/javascript">
-      function update_modal(obj_id, activation) {
-          $("#activate_btn").data('id', obj_id);
-          if (activation == 'True') {
-              $("#activation-modal #modal-body-header").text("{% trans 'Do you want to deactivate?' %}");
-              $("#activate_btn").text("{% trans 'Deactivate?' %}");
-          }else{
-              $("#activation-modal #modal-body-header").text("{% trans 'Do you want to activate?' %}");
-              $("#activate_btn").text("{% trans 'Activate?' %}");
+    function update_modal(obj_id, activation) {
+      $("#activate_btn").data('id', obj_id);
 
+      if (activation == 'True') {
+        $("#activation-modal #modal-body-header").text("{% trans 'Do you want to deactivate?' %}");
+        $("#activate_btn").text("{% trans 'Deactivate?' %}");
+      } else {
+        $("#activation-modal #modal-body-header").text("{% trans 'Do you want to activate?' %}");
+        $("#activate_btn").text("{% trans 'Activate?' %}");
+      }
+    }
+
+    function delete_modal(obj_id) {
+      $("#delete-btn").data('id', obj_id);
+    }
+
+    function toggle() {
+      var id = $("#activate_btn").data('id');
+
+      $.ajax({
+        url: "{% url 'users:toggle' %}",
+        type: "POST",
+        data: {user_id: id, action: 'toggle'},
+        success: function(data, text, xhr) {
+          if (data["valid"]==true) {
+            $("#activation-modal").modal('hide');
+            location.reload()
           }
-      }
+        }
+      });
+    }
 
-      function delete_modal(obj_id){
-        $("#delete-btn").data('id', obj_id);
-      }
+    function delete_user() {
+      var id = $("#delete-btn").data('id');
 
-      function toggle(){
-          var id = $("#activate_btn").data('id');
-          $.ajax({
-              url: "{% url 'users:toggle' %}",
-              type: "POST",
-              data: {user_id: id, action: 'toggle'},
-              success: function(data, text, xhr) {
-                  if (data["valid"]==true){
-                      $("#activation-modal").modal('hide');
-                      location.reload()
-                  }
-              }
-          });
-      }
-
-      function delete_user() {
-        var id = $("#delete-btn").data('id');
-          $.ajax({
-            url: "{% url 'users:delete' %}",
-            type: "POST",
-            data: { user_id: id, client: true },
-            success: function (data, text, xhr) {
-              if (data["valid"] == "true") {
-                $("#delete-user-modal").modal('hide');
-                location.reload()
-              }
-            }
-          });
-      }
+      $.ajax({
+        url: "{% url 'users:delete' %}",
+        type: "POST",
+        data: { user_id: id, client: true },
+        success: function (data, text, xhr) {
+          if (data["valid"] == "true") {
+            $("#delete-user-modal").modal('hide');
+            location.reload()
+          }
+        }
+      });
+    }
   </script>
 {% endblock script %}

@@ -2,7 +2,6 @@
 {% load static %}
 {% load i18n %}
 {% load custom_tags %}
-{% load transactions_tags i18n %}
 {% load banks_tags %}
 {% block title %} Transactions {% endblock %}
 {% block gentellacss %}
@@ -69,7 +68,7 @@
                               data-anon_recipient="{{ transaction.anon_recipient }}"
                               data-amount="{{ transaction.amount }}"
                               data-recipient_name="{{ transaction.recipient_name }}"
-                              data-status="{{ transaction.status|status }}"
+                              data-status="{{ transaction.status_choice_verbose }}"
                               data-transaction_status_code="{{ transaction.transaction_status_code }}"
                               data-transaction_status_description="{{ transaction.transaction_status_description }}"
                               data-doc_maker="{{ doc_obj.owner }}"
@@ -79,7 +78,7 @@
                             <td>{{ transaction.uid }}</td>
                             <td>{{ transaction.anon_recipient }}</td>
                             <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.status|status }}</td>
+                            <td>{{ transaction.status_choice_verbose }}</td>
                           </tr>
                         {% endfor %}
                       </tbody>
@@ -98,7 +97,7 @@
                               data-creditor_account_number="{{ transaction.creditor_account_number }}"
                               data-amount="{{ transaction.amount }}"
                               data-creditor_name="{{ transaction.creditor_name }}"
-                              data-status="{{ transaction.status|status }}"
+                              data-status="{{ transaction.status_choice_verbose }}"
                               data-creditor_bank="{{ transaction.creditor_bank }}"
                               data-bank_name="{{ transaction.creditor_bank|bank_name }}"
                               data-type="{{ transaction|transaction_type }}"
@@ -111,7 +110,7 @@
                             <td>{{ transaction.parent_transaction.transaction_id }}</td>
                             <td>{{ transaction.creditor_account_number }}</td>
                             <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.status|status }}</td>
+                            <td>{{ transaction.status_choice_verbose }}</td>
                           </tr>
                         {% endfor %}
                       </tbody>
@@ -277,7 +276,7 @@
     $('#transaction-table tbody').on( 'click', 'tr', function () {
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
-            $("#trxDetails").hide();
+            $("#trxDetails").slideUp().fadeOut();
         }
         else {
             $('tr.selected').removeClass('selected');
@@ -336,7 +335,7 @@
             appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
             ulLast.empty();
             ulLast.append(appendedTags);
-            $("#trxDetails").show();
+            $("#trxDetails").slideDown();
             $('html,body').animate({
                 scrollTop: $("#trxDetails").offset().top
             }, 'slow');

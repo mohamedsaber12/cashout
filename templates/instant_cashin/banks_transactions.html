@@ -1,5 +1,4 @@
 {% load i18n %}
-{% load transactions_tags i18n %}
 {% load banks_tags i18n %}
 
 <div class="x_content">
@@ -23,7 +22,7 @@
           data-creditor_bank_name="{{ trx.creditor_bank|bank_name }}"
           data-transaction_type="{{ trx|transaction_type }}"
           data-amount="{{ trx.amount }}"
-          data-status="{{ trx.status|status }}"
+          data-status="{{ trx.status_choice_verbose }}"
           data-status_code="{{ trx.transaction_status_code }}"
           data-updated_at="{{ trx.updated_at }}"
           data-created_at="{{ trx.parent_transaction.created_at }}"
@@ -33,7 +32,7 @@
         <td>{{ trx.parent_transaction.transaction_id }}</td>
         <td>{{ trx.creditor_account_number }}</td>
         <td>{{ trx.amount }}</td>
-        <td>{{ trx.status|status }}</td>
+        <td>{{ trx.status_choice_verbose }}</td>
         <td>{{ trx.updated_at }}</td>
       </tr>
 

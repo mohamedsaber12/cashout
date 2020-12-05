@@ -10,10 +10,10 @@ import re
 from datetime import datetime
 
 from celery import Task
+from dateutil.parser import parse
 import requests
 import tablib
 import xlrd
-from dateutil.parser import parse
 import pandas as pd
 
 from django.conf import settings
@@ -22,17 +22,15 @@ from django.urls import reverse
 from django.utils.translation import gettext as _
 
 from core.utils.validations import phonenumber_form_validate
-from disbursement.models import DisbursementData, BankTransaction
-from disbursement.resources import (
-    DisbursementDataResource, DisbursementDataResourceForBankWallet,
-    DisbursementDataResourceForBankCards
-)
-from disbursement.utils import (
-    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
-    determine_trx_category_and_purpose,
-)
-from instant_cashin.models import InstantTransaction, AbstractBaseIssuer
-from instant_cashin.utils import get_from_env, get_digits
+from disbursement.models import BankTransaction, DisbursementData
+from disbursement.resources import (DisbursementDataResourceForEWallets,
+                                    DisbursementDataResourceForBankCards,
+                                    DisbursementDataResourceForBankWallet)
+from disbursement.utils import (VALID_BANK_CODES_LIST,
+                                VALID_BANK_TRANSACTION_TYPES_LIST,
+                                determine_trx_category_and_purpose)
+from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
+from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
 from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
@@ -43,13 +41,12 @@ from .decorators import respects_language
 from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
-
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
-MSG_NOT_WITHIN_THRESHOLD = _(f"File's total amount exceeds your current balance, {MSG_TRY_OR_CONTACT}")
-MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(
-        f"File's total amount exceeds your maximum amount that can be disbursed, {MSG_TRY_OR_CONTACT}")
+MSG_NOT_WITHIN_THRESHOLD = _(f"File's total amount exceeds your current balance, please contact your support team")
+MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(f"File's total amount exceeds your maximum amount that can be disbursed,"
+                                               f" please contact your support team")
 MSG_REGISTRATION_PROCESS_ERROR = _(f"Registration process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
 
 
@@ -677,6 +674,40 @@ def handle_change_profile_callback(doc_id, transactions):
     return
 
 
+def prepare_disbursed_data_report(doc_id, report_type):
+    """Prepare report for all, failed or success document transactions"""
+    doc_obj = Doc.objects.get(id=doc_id)
+
+    if report_type == 'all':
+        filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(4))
+        resource_query_dict = {'doc': doc_obj, 'is_disbursed': None}
+    elif report_type == 'success':
+        filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
+        resource_query_dict = {'doc': doc_obj, 'is_disbursed': True}
+    else:
+        filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(4)}.xlsx")
+        resource_query_dict = {'doc': doc_obj, 'is_disbursed': False}
+
+    if doc_obj.is_e_wallet:
+        dataset = DisbursementDataResourceForEWallets(**resource_query_dict)
+    elif doc_obj.is_bank_wallet:
+        dataset = DisbursementDataResourceForBankWallet(**resource_query_dict)
+    elif doc_obj.is_bank_card:
+        dataset = DisbursementDataResourceForBankCards(**resource_query_dict)
+
+    dataset = dataset.export()
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+
+    with open(file_path, "wb") as f:
+        f.write(dataset.xlsx)
+
+    report_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
+    report_download_url = settings.BASE_URL + \
+                   str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
+
+    return doc_obj, report_view_url, report_download_url
+
+
 @app.task()
 @respects_language
 def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
@@ -687,30 +718,12 @@ def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
     :param kwargs:
     :return:
     """
-    doc_obj = Doc.objects.get(id=doc_id)
-    filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(4)}.xlsx")
-    dataset = None
-    if doc_obj.is_e_wallet:
-        dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
-    elif doc_obj.is_bank_wallet:
-        dataset = DisbursementDataResourceForBankWallet(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
-    elif doc_obj.is_bank_card:
-        dataset = DisbursementDataResourceForBankCards(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=False)
-    dataset = dataset.export()
-    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
-    with open(file_path, "wb") as f:
-        f.write(dataset.xlsx)
-
+    doc_obj, report_view_url, report_download_url = prepare_disbursed_data_report(doc_id, 'failed')
     user = User.objects.get(id=user_id)
-    disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
-
-    download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
-
     message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
         You can download the failed disbursement data related to this document
-        <a href="{disb_doc_view_url}" >{doc_obj.filename()}</a>
-        from here <a href="{download_url}" >Download</a><br><br>
+        <a href="{report_view_url}" >{doc_obj.filename()}</a>
+        from here <a href="{report_download_url}" >Download</a><br><br>
         Thanks, BR""")
     deliver_mail(user, _(' Failed Disbursement File Download'), message)
 
@@ -725,31 +738,12 @@ def generate_success_disbursed_data(doc_id, user_id, **kwargs):
     :param kwargs:
     :return:
     """
-    doc_obj = Doc.objects.get(id=doc_id)
-    filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
-
-    dataset = None
-    if doc_obj.is_e_wallet:
-        dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
-    elif doc_obj.is_bank_wallet:
-        dataset = DisbursementDataResourceForBankWallet(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
-    elif doc_obj.is_bank_card:
-        dataset = DisbursementDataResourceForBankCards(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=True)
-    dataset = dataset.export()
-    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
-    with open(file_path, "wb") as f:
-        f.write(dataset.xlsx)
-
+    doc_obj, report_view_url, report_download_url = prepare_disbursed_data_report(doc_id, 'success')
     user = User.objects.get(id=user_id)
-    disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
-
-    download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
-
     message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
         You can download the success disbursement data related to this document
-        <a href="{disb_doc_view_url}" >{doc_obj.filename()}</a>
-        from here <a href="{download_url}" >Download</a><br><br>
+        <a href="{report_view_url}" >{doc_obj.filename()}</a>
+        from here <a href="{report_download_url}" >Download</a><br><br>
         Thanks, BR""")
     deliver_mail(user, _(' Success Disbursement File Download'), message)
 
@@ -761,31 +755,12 @@ def generate_all_disbursed_data(doc_id, user_id, **kwargs):
     Related to disbursement
     Generate success and failed excel sheet from already disbursed data
     """
-    doc_obj = Doc.objects.get(id=doc_id)
-    filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(4))
-
-    dataset = None
-    if doc_obj.is_e_wallet:
-        dataset = DisbursementDataResource(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=None)
-    elif doc_obj.is_bank_wallet:
-        dataset = DisbursementDataResourceForBankWallet(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=None)
-    elif doc_obj.is_bank_card:
-        dataset = DisbursementDataResourceForBankCards(file_category=doc_obj.file_category, doc=doc_obj, is_disbursed=None)
-    dataset = dataset.export()
-    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
-    with open(file_path, "wb") as f:
-        f.write(dataset.xlsx)
-
+    doc_obj, report_view_url, report_download_url = prepare_disbursed_data_report(doc_id, 'all')
     user = User.objects.get(id=user_id)
-    disb_doc_view_url = settings.BASE_URL + str(reverse('disbursement:disbursed_data', kwargs={'doc_id': doc_id}))
-
-    download_url = settings.BASE_URL + \
-        str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id})) + '?filename=' + filename
-
     message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
         You can download the disbursement data related to this document
-        <a href="{disb_doc_view_url}" >{doc_obj.filename()}</a>
-        from here <a href="{download_url}" >Download</a><br><br>
+        <a href="{report_view_url}" >{doc_obj.filename()}</a>
+        from here <a href="{report_download_url}" >Download</a><br><br>
         Thanks, BR""")
     deliver_mail(user, _(' Disbursement Data File Download'), message)
 

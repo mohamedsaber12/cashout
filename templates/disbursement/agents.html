@@ -7,29 +7,21 @@
 
 {% block body %}
   {% if not agents_list %}
-    <div class="well upload-nav col-xs-12">
+    <div class="alert alert-warning col-xs-12">
       <strong style="margin-top: 15px;">{% trans 'You do not have any agents yet!' %}</strong>
     </div>
 
   {% else %}
 
-    <!-- page content -->
     <div class="col" role="main">
       <div class="">
-        <div class="page-title">
-          <div class="title_left">
-            <h3><strong>{% trans 'Agents list of' %}:</strong> {{ request.user }}</h3>
-          </div>
-        </div>
-
         <div class="row">
           <div class="col-md-12 col-sm-12 col-xs-12">
             <div class="x_panel">
               <div class="x_title">
-                <h2>{% trans 'Agents' %}</h2>
+                <h2>{% trans 'Agents List' %}</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                  <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                  </li>
+                  <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
                 </ul>
                 <div class="clearfix"></div>
               </div>
@@ -38,10 +30,10 @@
                 <table class="table table-striped table-bordered">
                   <thead>
                     <tr>
-                      <th>{% trans 'Wallet Number' %}</th>
+                      <th>{% trans 'Agent Number' %}</th>
                       <th>{% trans 'Type' %}</th>
-                      <th>{% trans 'Has pin setup?' %}</th>
-                      <th>{% trans 'Is super agent?' %}</th>
+                      <th>{% trans 'Is Pin Registered?' %}</th>
+                      <th>{% trans 'Is Super Agent?' %}</th>
                     </tr>
                   </thead>
 
@@ -49,11 +41,7 @@
                     {% for agent in agents_list %}
                       <tr data-href="#">
                         <td>{{ agent.msisdn }}</td>
-                        {% if agent.type == 'V' %}
-                          <td>{% trans 'Vodafone' %}</td>
-                        {% else %}
-                          <td>{% trans 'Etisalat' %}</td>
-                        {% endif %}
+                        <td>{{ agent.agent_choice_verbose|title }}</td>
                         <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
                           {% if agent.pin %}
                             <span style="color: #2e6da4">&#10004;</span>

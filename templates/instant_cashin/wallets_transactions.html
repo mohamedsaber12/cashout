@@ -1,31 +1,41 @@
 {% load i18n %}
-{% load transactions_tags i18n %}
 
 <div class="x_content">
-  <table class="table table-striped table-bordered" id="transaction-table">
+  <table class="table table-bordered" id="transaction-table">
     <thead>
-    <tr>
-      <th style="width: 22%">{% trans 'Transaction ID' %}</th>
-      <th>{% trans 'Recipient' %}</th>
-      <th>{% trans 'Amount' %}</th>
-      <th>{% trans 'Status' %}</th>
-      <th>{% trans 'Channel' %}</th>
-      <th>{% trans 'Created At' %}</th>
-    </tr>
+      <tr>
+        <th class="trxTableHeader">{% trans 'Transaction ID' %}</th>
+        <th class="trxTableHeader">{% trans 'Recipient' %}</th>
+        <th class="trxTableHeader">{% trans 'Channel' %}</th>
+        <th class="trxTableHeader">{% trans 'Amount' %}</th>
+        <th class="trxTableHeader">{% trans 'Status' %}</th>
+        <th class="trxTableHeader">{% trans 'Updated At' %}</th>
+      </tr>
     </thead>
 
     <tbody>
-    {% for trx in transactions %}
-      <tr data-href="#">
-        <td>{{ trx.uid }}</td>
-        <td>{{ trx.anon_recipient }}</td>
-        <td>{{ trx.amount }}</td>
-        <td>{{ trx.status|status }}</td>
-        <td>{{ trx.issuer_type|issuer_type }}</td>
-        <td>{{ trx.created_at }}</td>
-      </tr>
-
-    {% endfor %}
+      {% for transaction in transactions %}
+        <tr data-id="{{ transaction.uid }}"
+            data-anon_recipient="{{ transaction.anon_recipient }}"
+            data-recipient_name="{{ transaction.recipient_name }}"
+            data-amount="{{ transaction.amount }}"
+            data-status="{{ transaction.status_choice_verbose }}"
+            data-issuer_type="{{ transaction.issuer_choice_verbose }}"
+            data-created_at="{{ transaction.created_at }}"
+            data-updated_at="{{ transaction.updated_at }}"
+            data-status_code="{{ transaction.transaction_status_code }}"
+            data-status_description="{{ transaction.transaction_status_description }}"
+            data-aman_is_paid="{{ transaction.aman_transaction.is_paid }}"
+            class="row-hover"
+            data-href="#">
+          <td>{{ transaction.uid }}</td>
+          <td>{{ transaction.anon_recipient }}</td>
+          <td>{{ transaction.issuer_choice_verbose }}</td>
+          <td>{{ transaction.amount }}</td>
+          <td>{{ transaction.status_choice_verbose }}</td>
+          <td>{{ transaction.updated_at }}</td>
+        </tr>
+      {% endfor %}
     </tbody>
   </table>
 

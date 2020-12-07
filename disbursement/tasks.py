@@ -57,6 +57,9 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if issuer == "etisalat":
                 callback_json = callback.json()
                 trx_callback_status = callback_json["TXNSTATUS"]
+                # ToDo: After adding status_code & status_description fields to DisbursementData model
+                # trx_callback_status_code = callback_json["TXNSTATUS"]
+                # trx_callback_status_description = callback_json["MESSAGE"]
                 reference_id = callback_json["TXNID"]
             elif issuer == "aman":
                 if callback.status_code == status.HTTP_200_OK:
@@ -157,7 +160,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             "currency": "EGP",
             "debtor_address_1": "EG",
             "creditor_address_1": "EG",
-            "creditor_bank": "THWL",      # ToDo: Change it to "MIDG" at the production environment
+            "creditor_bank": "MIDG",      # ToDo: Should be "THWL" at the staging environment
             "category_code": "MOBI",
             "purpose": "CASH",
             "corporate_code": get_from_env("ACH_CORPORATE_CODE"),

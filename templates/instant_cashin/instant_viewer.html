@@ -1,64 +1,184 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
 
+{% block gentellacss %}
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
+  <style>
+    #trxDetailsDataRight > li > span{
+      {% if bank_transactions %}
+        width: 140px;
+      {% else %}
+        width: 90px;
+      {% endif %}
+    }
+  </style>
+{% endblock %}
+
 {% block body %}
-  <div class="well upload-nav col-xs-12">
-    <h4><strong>{% trans 'IMPORTANT: DISBURSEMENT FOR BANK ACCOUNTS/WALLETS IS AVAILABLE NOW, CHECK THE UPDATED API DOCUMENTATION!' %}</strong></h4>
+  <div class="col-xs-12 alert alert-info" role="alert">
+    <p>{% trans 'IMPORTANT: DISBURSEMENT FOR BANK ACCOUNTS/WALLETS IS AVAILABLE NOW, CHECK THE UPDATED API DOCUMENTATION!' %}</p>
   </div>
 
-  {% if not bank_transactions and not instant_transactions %}
-    <div class="well upload-nav col-xs-12">
-      <strong style="margin-top: 15px;">{% trans 'You do not have any transactions yet!' %}</strong>
-    </div>
+  {# page content #}
+  <div class="col" role="main">
+    <div class="">
+      <div class="page-title">
+        <div class="title_left">
+          {% if bank_transactions %}
+            <h3>Bank Accounts/Cards Transactions</h3>
+          {% else %}
+            <h3>Wallets/Aggregators Transactions</h3>
+          {% endif %}
+        </div>
+        {% include 'search_bar.html' %}
+      </div>
 
-  {% else %}
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
 
-    <!-- page content -->
-    <div class="col" role="main">
-      <div class="">
-        <div class="page-title">
-          <div class="title_left">
-            <h3></h3>
-          </div>
-          <div class="title_right">
-            <form action="." method="get">
-              <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
-                <div class="input-group">
-                  <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for a transaction...">
-                  <span class="input-group-btn">
-                    <button class="btn btn-default" type="submit" value="search">{% trans 'Go!'%}</button>
-                  </span>
-                </div>
-              </div>
-            </form>
+            {% if bank_transactions %}
+              {% include 'instant_cashin/banks_transactions.html' with transactions=bank_transactions %}
+            {% else %}
+              {% include 'instant_cashin/wallets_transactions.html' with transactions=instant_transactions %}
+            {% endif %}
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+  {# end of page content #}
 
-        <div class="row">
-          <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel">
-              <div class="x_title">
-                <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
-                <ul class="nav navbar-right panel_toolbox">
-                  <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                  </li>
-                </ul>
-                <div class="clearfix"></div>
-              </div>
+  {# transaction details #}
+  <div id="trxDetails" style="display: none;" class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+          <div class="clearfix"></div>
+        </div>
 
-              {% if bank_transactions %}
-                {% include 'instant_cashin/banks_transactions.html' with transactions=bank_transactions %}
-              {% else %}
-                {% include 'instant_cashin/wallets_transactions.html' with transactions=instant_transactions %}
-              {% endif %}
+        <div class="x_content">
+          <div class="row">
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsData">
+              </ul>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsDataRight">
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <ul id="trxDetailsDataLast">
+              </ul>
             </div>
           </div>
         </div>
       </div>
     </div>
-  {% endif %}
+  </div>
+  {# end of transaction details #}
+{% endblock %}
+
+{% block script %}
+  <script>
+    $('.alert').fadeOut(10000);
+
+    $('#transaction-table tbody').on('click', 'tr', function () {
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+        $("#trxDetails").slideUp().fadeOut();
+      } else {
+        $('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+        let ul = $('#trxDetailsData');
+        let ulRight = $('#trxDetailsDataRight');
+        let ulLast = $('#trxDetailsDataLast');
+        let appendedTags = '';
+
+        let uid = $(this).data('id');
+        appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
+
+        {% if bank_transactions %}
+          let creditor_account_number = $(this).data('creditor_account_number');
+          appendedTags += `<li><span>Recipient</span><b>:</b>${creditor_account_number}</li>`;
+          let creditor_name = $(this).data('creditor_name');
+          appendedTags += `<li><span>Recipient Name</span><b>:</b>${creditor_name}</li>`;
+        {% else %}
+          let anon_recipient = $(this).data('anon_recipient');
+          appendedTags += `<li><span>Recipient</span><b>:</b>${anon_recipient}</li>`;
+          let issuer_type = $(this).data('issuer_type');
+
+          if (['Orange', 'Bank Wallet'].includes(issuer_type)) {
+            let recipient_name = $(this).data('recipient_name');
+            appendedTags += `<li><span>Recipient Name</span><b>:</b>${recipient_name}</li>`;
+          }
+        {% endif %}
+        let amount = $(this).data('amount');
+        appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+        let status = $(this).data('status');
+        appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
+
+        ul.empty();
+        ul.append(appendedTags);
+        appendedTags = '';
+
+        {% if bank_transactions %}
+          let creditor_bank_code = $(this).data('creditor_bank_code');
+          appendedTags += `<li><span>Recipient Bank Code</span><b>:</b>${creditor_bank_code}</li>`;
+          let creditor_bank_name = $(this).data('creditor_bank_name');
+          appendedTags += `<li><span>Recipient Bank Name</span><b>:</b>${creditor_bank_name}</li>`;
+          let transaction_type = $(this).data('transaction_type');
+          appendedTags += `<li><span>Transaction Type</span><b>:</b>${transaction_type}</li>`;
+        {% else %}
+          appendedTags += `<li><span>Channel</span><b>:</b>${issuer_type}</li>`;
+          let aman_is_paid = $(this).data('aman_is_paid');
+
+          {# Determine is_paid? status for aman transactions #}
+          if (issuer_type === 'Aman') {
+            if (aman_is_paid === 'True') {
+              appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
+        {% endif %}
+        let created_at = $(this).data('created_at');
+        appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+        let updated_at = $(this).data('updated_at');
+        appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+
+        ulRight.empty();
+        ulRight.append(appendedTags);
+        appendedTags = '';
+
+        let status_code = $(this).data('status_code');
+        appendedTags += `<li><span>Transaction Status Code</span><b>:</b>${status_code}</li>`;
+        let status_description = $(this).data('status_description');
+        appendedTags += `<li><span>Transaction Status Description</span><b>:</b>${status_description}</li>`;
+        ulLast.empty();
+        ulLast.append(appendedTags);
+        $("#trxDetails").slideDown();
+        $('html,body').animate({
+          scrollTop: $("#trxDetails").offset().top
+        }, 'slow');
+     }
+    });
+  </script>
 {% endblock %}

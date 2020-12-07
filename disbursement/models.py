@@ -21,6 +21,7 @@ from utilities.models import (
     AbstractTransactionPurpose,
 )
 
+from .utils import determine_transaction_type
 
 INTERNAL_ERROR = _("Process stopped during an internal error, can you try again or contact your support team.")
 
@@ -80,6 +81,11 @@ class Agent(models.Model):
         if self.super:
             return f"SuperAgent {self.msisdn} for Root: {self.wallet_provider.username}"
         return f"Agent {self.msisdn} for Root: {self.wallet_provider.username}"
+
+    @property
+    def agent_choice_verbose(self):
+        """Return the corresponding verbose name of the agent type"""
+        return dict(self.AGENT_TYPE_CHOICES)[self.type]
 
 
 class DisbursementDocData(AbstractBaseDocStatus):
@@ -144,6 +150,7 @@ class DisbursementData(AbstractTimeStamp):
     amount = models.FloatField(verbose_name=_('AMOUNT'))
     msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     issuer = models.CharField(max_length=8, verbose_name=_('Issuer Option'), default='default', db_index=True)
+    # ToDo: Replace reason field with status_code and status_description fields
     reason = models.TextField()
     reference_id = models.CharField(
             _('Reference ID'),
@@ -334,6 +341,16 @@ class BankTransaction(AbstractTimeStamp,
 
     def __str__(self):
         return str(self.transaction_id)
+
+    @property
+    def get_transaction_type(self):
+        """Determine transaction type based on transaction category code and purpose"""
+        return determine_transaction_type(self.category_code, self.purpose)
+
+    @property
+    def status_choice_verbose(self):
+        """Return the corresponding verbose name of the transaction status type"""
+        return dict(AbstractBaseStatus.STATUS_CHOICES)[self.status]
 
     def update_status_code_and_description(self, code=None, description=None):
         self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR

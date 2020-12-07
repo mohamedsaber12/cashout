@@ -2,7 +2,10 @@
 {% load static %}
 {% load i18n %}
 {% load custom_tags %}
+{% load error_codes_tags %}
+
 {% block title %} Transactions {% endblock %}
+
 {% block gentellacss %}
   <!-- Datatables -->
   <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
@@ -10,9 +13,26 @@
   <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+  <style>
+      #trxDetailsDataRight > li > span{
+          width: 90px;
+      }
+      #download-doc {
+          width: 17rem!important;
+          margin-right: 10px;
+          color: #333;
+      }
+      #download-doc span {
+          color: #333;
+      }
+  </style>
 {% endblock %}
 
 {% block body %}
+  {% include 'disbursement/disbursement_transactions_dashboard.html' %}
+
   <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
       <div class="x_panel">

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
 from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from django.urls import reverse_lazy
@@ -10,6 +10,7 @@ from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 
 from data.models import Doc
+from disbursement.views import DisbursementDocTransactionsView
 
 from ..forms import SupportUserCreationForm
 from ..mixins import (
@@ -162,6 +163,7 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
     def get(self, request, *args, **kwargs):
         """Handle GET request to retrieve details for specific document with id"""
 
+        # ToDo: Should handle different types of files, NOW it ONLY handles e-wallets files -disbursement_data-
         admin = RootUser.objects.get(username=self.admin_username)
         doc = Doc.objects.prefetch_related('disbursement_data', 'disbursement_txn', 'reviews').filter(
                 id=self.doc_id, owner__hierarchy=admin.hierarchy
@@ -170,15 +172,20 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         if not doc.exists():
             raise Http404(_(f"Document with id: {self.doc_id} for {self.admin_username} entity members not found."))
 
-        doc = doc.first()
+        # ToDo: Should handle different types of files, NOW it ONLY handles e-wallets files
+        doc_obj = doc.first()
+        doc_transactions = doc_obj.disbursement_data.all()
+
         context = {
-            'doc_obj': doc,
-            'reviews': doc.reviews.all() ,
-            'doc_status': self.retrieve_doc_status(doc),
-            'disbursement_ratio': doc.disbursement_ratio(),
-            'is_reviews_completed': doc.is_reviews_completed(),
-            'disbursement_records': doc.disbursement_data.all(),
-            'disbursement_doc_data': doc.disbursement_txn
+            'doc_obj': doc_obj,
+            'reviews': doc_obj.reviews.all() ,
+            'doc_status': self.retrieve_doc_status(doc_obj),
+            'disbursement_ratio': doc_obj.disbursement_ratio(),
+            'is_reviews_completed': doc_obj.is_reviews_completed(),
+            'disbursement_records': doc_obj.disbursement_data.all(),
+            'disbursement_doc_data': doc_obj.disbursement_txn,
+            'doc_transactions_totals':
+                DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions),
         }
 
         return render(request, 'support/document_details.html', context=context)

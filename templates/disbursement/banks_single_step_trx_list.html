@@ -1,202 +1,214 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
-{% load transactions_tags i18n %}
+{% load banks_tags i18n %}
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
+
 {% block customcss %}
-    <style>
-      .dialogButtonDiv {
-          float: right
-      }
-      .errorlist {
-        list-style: none;
-        padding: 0;
-      }
-      .help-block {
-        color: red;
-      }
-      .alert-success {
-        color: #3c763d;
-        background-color: #dff0d8;
-        border-color: #d6e9c6;
-      }
-      .alert-danger {
-        color: #a94442;
-        background-color: #f2dede;
-        border-color: #ebccd1;
-      }
-    </style>
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <style>
+    .dialogButtonDiv {
+        float: right
+    }
+    .errorlist {
+      list-style: none;
+      padding: 0;
+    }
+    .help-block {
+      color: red;
+    }
+    .alert-success {
+      color: #3c763d;
+      background-color: #dff0d8;
+      border-color: #d6e9c6;
+    }
+    .alert-danger {
+      color: #a94442;
+      background-color: #f2dede;
+      border-color: #ebccd1;
+    }
+    ul > li > span{
+      width: 120px;
+    }
+    #trxDetailsDataRight > li > span{
+      width: 80px;
+    }
+  </style>
 {% endblock %}
+
 {% block body %}
-    <!-- page content -->
-    <div class="col" role="main">
-      <div class="">
-        <div class="page-title">
-          <div class="title_left">
-            <h3></h3>
-          </div>
-          <div class="title_right">
-            <form action="." method="get">
-              <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
-                <div class="input-group">
-                  <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for a transaction...">
-                  <span class="input-group-btn">
-                    <button class="btn btn-default" type="submit" value="search">{% trans 'Go!'%}</button>
-                  </span>
-                </div>
-              </div>
-            </form>
-          </div>
+  {# Page content #}
+  <div class="col" role="main">
+    <div class="">
+      <div class="page-title">
+        <div class="title_left">
+          <h3>Single Step Bank Accounts/Cards Transactions</h3>
         </div>
+        {% include "search_bar.html" %}
+      </div>
 
-        <div class="row">
-          <div class="col-md-12 col-sm-12 col-xs-12">
-            <div class="x_panel">
-              <div class="x_title">
-                <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
-                {% if user.is_checker %}
-                  <div class="dialogButtonDiv">
-                    <button id="addSingleTransaction" class="btn btn-primary">Make New Bank Transaction</button>
-                  </div>
-                {% endif %}
-                <ul class="nav navbar-right panel_toolbox">
-                  <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                  </li>
-                </ul>
-                <div class="clearfix"></div>
-              </div>
+      <div class="row">
+        <div class="col-md-12 col-sm-12 col-xs-12">
+          <div class="x_panel">
+            <div class="x_title">
+              <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
+              {% if user.is_checker %}
+                <div class="dialogButtonDiv">
+                  <button id="addSingleTransaction" class="btn btn-primary">Make New Bank Transaction</button>
+                </div>
+              {% endif %}
+              <ul class="nav navbar-right panel_toolbox">
+                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
 
-              <div class="x_content">
-                <table class="table table-striped table-bordered" id="transaction-table">
-                  <thead>
-                    <tr>
-                      <th>{% trans 'Transaction ID' %}</th>
-                      <th>{% trans 'Account number' %}</th>
-                      <th>{% trans 'Bank code' %}</th>
-                      <th>{% trans 'Amount' %}</th>
-                      <th>{% trans 'Status' %}</th>
-                      <th>{% trans 'Created At' %}</th>
-                    </tr>
-                  </thead>
+            <div class="x_content">
+              <table class="table table-bordered" id="transaction-table">
+                <thead>
+                  <tr>
+                    <th>{% trans 'Transaction ID' %}</th>
+                    <th>{% trans 'Account number' %}</th>
+                    <th>{% trans 'Bank code' %}</th>
+                    <th>{% trans 'Amount' %}</th>
+                    <th>{% trans 'Status' %}</th>
+                    <th>{% trans 'Updated At' %}</th>
+                  </tr>
+                </thead>
 
-                  <tbody>
+                <tbody>
                   {% for transaction in transactions_list %}
-                    <tr data-href="#">
+                    <tr data-href="#"
+                        data-id="{{ transaction.parent_transaction.transaction_id }}"
+                        data-creditor_account_number="{{ transaction.creditor_account_number }}"
+                        data-creditor_bank="{{ transaction.creditor_bank }}"
+                        data-bank_name="{{ transaction.creditor_bank|bank_name }}"
+                        data-status_code="{{ transaction.transaction_status_code }}"
+                        data-status_description="{{ transaction.transaction_status_description }}"
+                        data-transaction_type="{{ transaction|transaction_type }}"
+                        data-amount="{{ transaction.amount }}"
+                        data-checker="{{ transaction.user_created }}"
+                        data-status="{{ transaction.status_choice_verbose }}"
+                        data-created_at="{{ transaction.parent_transaction.created_at }}"
+                        data-updated_at="{{ transaction.updated_at }}"
+                        class="row-hover">
                       <td>{{ transaction.parent_transaction.transaction_id }}</td>
                       <td>{{ transaction.creditor_account_number }}</td>
                       <td>{{ transaction.creditor_bank }}</td>
                       <td>{{ transaction.amount }}</td>
-                      <td>{{ transaction.status|status }}</td>
-                      <td>{{ transaction.created_at }}</td>
+                      <td>{{ transaction.status_choice_verbose }}</td>
+                      <td>{{ transaction.updated_at }}</td>
                     </tr>
                   {% endfor %}
-                  </tbody>
-                </table>
+                </tbody>
+              </table>
 
-                {% include 'pagination.html' %}
-              </div>
+              {% include 'pagination.html' %}
             </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+  {# End of page content #}
 
-    <!-- Modal add transaction-->
-    <div class="modal fade" id="transactionModel" role="dialog">
-        <div class="modal-dialog">
-          <!-- Modal content-->
-          <div class="modal-content">
-            <div class="modal-header">
-              <button type="button" class="close" data-dismiss="modal">&times;</button>
-              <h4><span class="glyphicon glyphicon-plus"></span> Make New Bank Transaction</h4>
-            </div>
-            <div class="modal-body">
-              <div class="waiting-form-respond">
-              </div>
-              <form role="form" action="{% url 'disbursement:single_step_list_create' %}"
-                    method="post" id="addTransactionForm" class="autoValidateForm">
-                {% csrf_token %}
-                <div class="row">
-                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                    <label>
-                        <span class="glyphicon glyphicon-user"></span> Account Number *
-                    </label>
-                    {{form.creditor_account_number}}
-                    <span class="respond-span"></span>
-                    <div class="help-block">
-                      {{form.creditor_account_number.errors}}
-                    </div>
-                  </div>
-                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                    <label>
-                        <span class="glyphicon glyphicon-tag"></span> Amount *
-                    </label>
-                    {{form.amount}}
-                    <span class="respond-span"></span>
-                    <div class="help-block">
-                      {{form.amount.errors}}
-                    </div>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                    <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
-                    {{ form.creditor_name }}
-                    <span class="respond-span"></span>
-                    <div class="help-block">
-                      {{ form.creditor_name.errors }}
-                    </div>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                    <label>
-                        <span class="glyphicon glyphicon-sort"></span> Transaction Type
-                    </label>
-                    {{ form.transaction_type }}
-                    <span class="respond-span"></span>
-                    <div class="help-block">
-                      {{ form.transaction_type.errors }}
-                    </div>
-                  </div>
-                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                    <label>
-                        <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
-                    </label>
-                    {{form.creditor_bank}}
-                    <span class="respond-span"></span>
-                    <div class="help-block">
-                      {{form.creditor_bank.errors}}
-                    </div>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                    <label>
-                        <span class="glyphicon glyphicon-pushpin"></span> Pin *
-                    </label>
-                    {{form.pin}}
-                    <span class="respond-span"></span>
-                    <div class="help-block">
-                      {{form.pin.errors}}
-                    </div>
-                  </div>
-                </div>
-
-                <button id="submitModal" class="btn btn-primary pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="submit">Submit</button>
-                <button class="btn btn-default pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-dismiss="modal">Cancel</button>
-              </form>
-            </div>
-          </div>
-        </div>
-    </div>
-
-    <!-- Model Success create transaction -->
-    <div class="modal fade" id="successModal" role="dialog">
+  {# Add new single step bank transaction modal #}
+  <div class="modal fade" id="transactionModel" role="dialog">
     <div class="modal-dialog">
-      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4><span class="glyphicon glyphicon-plus"></span> Make New Bank Transaction</h4>
+        </div>
+        <div class="modal-body">
+          <div class="waiting-form-respond">
+          </div>
+          <form role="form" action="{% url 'disbursement:single_step_list_create' %}"
+                method="post" id="addTransactionForm" class="autoValidateForm">
+            {% csrf_token %}
+            <div class="row">
+              <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                <label>
+                    <span class="glyphicon glyphicon-user"></span> Account Number *
+                </label>
+                {{form.creditor_account_number}}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{form.creditor_account_number.errors}}
+                </div>
+              </div>
+              <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                <label>
+                    <span class="glyphicon glyphicon-tag"></span> Amount *
+                </label>
+                {{form.amount}}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{form.amount.errors}}
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
+                {{ form.creditor_name }}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{ form.creditor_name.errors }}
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                <label>
+                    <span class="glyphicon glyphicon-sort"></span> Transaction Type
+                </label>
+                {{ form.transaction_type }}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{ form.transaction_type.errors }}
+                </div>
+              </div>
+              <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                <label>
+                    <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+                </label>
+                {{form.creditor_bank}}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{form.creditor_bank.errors}}
+                </div>
+              </div>
+            </div>
+            <div class="row">
+              <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                <label>
+                    <span class="glyphicon glyphicon-pushpin"></span> Pin *
+                </label>
+                {{form.pin}}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{form.pin.errors}}
+                </div>
+              </div>
+            </div>
+
+            <button id="submitModal" class="btn btn-primary pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="submit">Submit</button>
+            <button class="btn btn-default pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-dismiss="modal">Cancel</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of add new single step bank transaction modal #}
+
+  {# Add new transaction success modal #}
+  <div class="modal fade" id="successModal" role="dialog">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
@@ -214,59 +226,149 @@
           <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
         </div>
       </div>
-
     </div>
   </div>
+  {# End of add new transaction success modal #}
 
-    <!-- Model Success create transaction -->
-    <div class="modal fade" id="failedModal" role="dialog">
-      <div class="modal-dialog">
-
-        <!-- Modal content-->
-        <div class="modal-content">
-          <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">Failed</h4>
+  {# Add new transaction failed modal #}
+  <div class="modal fade" id="failedModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Failed</h4>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-danger" role="alert">
+            {{ status_description }}
           </div>
-          <div class="modal-body">
-            <div class="alert alert-danger" role="alert">
-              {{ status_description }}
-            </div>
-            <div style="text-align: center;">
-              <img src='https://www.flaticon.com/svg/static/icons/svg/1828/1828843.svg'  width='30%'/>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <div style="text-align: center;">
+            <img src='https://www.flaticon.com/svg/static/icons/svg/1828/1828843.svg'  width='30%'/>
           </div>
         </div>
-
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
+  </div>
+  {# End of add new transaction failed modal #}
+
+  {# Selected transaction details #}
+  <div id="trxDetails" style="display: none;" class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+          <div class="row">
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsData">
+              </ul>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsDataRight">
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <ul id="trxDetailsDataLast">
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of selected transaction details #}
 {% endblock %}
 
 {% block script %}
   <script>
-      {% if show_add_form == True %}
+    {% if show_add_form == True %}
+      $("#transactionModel").modal();
+    {% endif %}
+
+    $("#addSingleTransaction").click(function () {
         $("#transactionModel").modal();
-      {% endif %}
+    });
 
-      $("#addSingleTransaction").click(function () {
-          $("#transactionModel").modal();
-      });
-
-      {% if show_pop_up == True %}
-        {% if status_code != 8000 %}
-          $('#failedModal').modal({
-            backdrop: 'static',
-            keyboard: false
-          });
-        {% else %}
-          $('#successModal').modal({
-            backdrop: 'static',
-            keyboard: false
-          });
-        {% endif %}
+    {% if show_pop_up == True %}
+      {% if status_code != "8000" %}
+        $('#failedModal').modal({
+          backdrop: 'static',
+          keyboard: false
+        });
+      {% else %}
+        $('#successModal').modal({
+          backdrop: 'static',
+          keyboard: false
+        });
       {% endif %}
+    {% endif %}
+  </script>
+
+  <script>
+    $('#transaction-table tbody').on('click', 'tr', function () {
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+        $("#trxDetails").slideUp().fadeOut();
+      }
+      else {
+        $('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+        let ul = $('#trxDetailsData');
+        let ulRight = $('#trxDetailsDataRight');
+        let ulLast = $('#trxDetailsDataLast');
+        let appendedTags = '';
+
+        let trx_id = $(this).data('id')
+        appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
+        let creditor_account_number = $(this).data('creditor_account_number');
+        appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
+        let creditor_bank = $(this).data('creditor_bank');
+        appendedTags += `<li><span>Bank code</span><b>:</b>${creditor_bank}</li>`;
+        let bank_name = $(this).data('bank_name');
+        appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
+        let transaction_type = $(this).data('transaction_type');
+        appendedTags += `<li><span>Transaction type</span><b>:</b>${transaction_type}</li>`;
+
+        ul.empty();
+        ul.append(appendedTags);
+        appendedTags = '';
+
+        let checker = $(this).data('checker');
+        appendedTags += `<li><span>Checker</span><b>:</b>${checker}</li>`;
+        let amount = $(this).data('amount');
+        appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+        let status = $(this).data('status');
+        appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
+        let created_at = $(this).data('created_at');
+        appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+        let updated_at = $(this).data('updated_at');
+        appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+
+        ulRight.empty();
+        ulRight.append(appendedTags);
+        appendedTags = '';
+
+        let status_code = $(this).data('status_code');
+        appendedTags += `<li><span>Status code</span><b>:</b>${status_code}</li>`;
+        let status_description = $(this).data('status_description');
+        appendedTags += `<li><span>Status description</span><b>:</b>${status_description}</li>`;
+
+        ulLast.empty();
+        ulLast.append(appendedTags);
+
+        $("#trxDetails").slideDown();
+        $('html,body').animate({
+            scrollTop: $("#trxDetails").offset().top
+        }, 'slow');
+     }
+    });
   </script>
 {% endblock %}

@@ -2,7 +2,6 @@
 {% load static %}
 {% load i18n %}
 {% load custom_tags %}
-{% load transactions_tags i18n %}
 {% load banks_tags %}
 {% block title %} Transactions {% endblock %}
 {% block gentellacss %}
@@ -12,86 +11,43 @@
 <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
 <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+<link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
 <style>
-    .row-hover:hover {
-        background-color: transparent;
-        cursor: pointer;
-        color: #444;
-        box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-        transform: translate(-1px,-1px);
-    }
-    .selected {
-        background-color: #f0f0f0 !important;
-        cursor: pointer;
-        color: #333;
-        box-shadow: 0px 2px 2px #ccc, 0px -2px 2px #ccc;
-        transform: translateY(-1px);
-    }
-    ul{
-        list-style: none;
-        padding: 0px;
-    }
-    ul > li > span{
-        display: inline-block;
-        width: 210px;
-        font-weight: bold;
-        color: #73879C;
-        line-height: 25px;
-    }
-    ul > li > b{
-        margin-right: 5px;
-        color: #777;
-    }
+  #trxDetailsDataRight > li > span{
+    width: 90px;
+  }
+  #download-doc {
+      width: 17rem!important;
+      margin-right: 10px;
+      color: #333;
+  }
+  #download-doc span {
+      color: #333;
+  }
 </style>
 {% endblock %}
 
 {% block body %}
-
-
-<div class="row">
-    <div hidden id="all-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button id="export-all"
-            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export All' %}
-        </button>
-    </div>
-</div>
-{% if has_failed %}
-<div class="row">
-    <div hidden id="failed-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the failed data file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button  id="export-failed" class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Failed' %}
-        </button>
-    </div>
-</div>
-{%endif%}
-{% if has_success %}
-<div class="row">
-    <div hidden id="success-alert-msg" class="alert alert-info col-md-6 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-        {% trans 'You will receive an email shortly with the success data file to download' %}
-    </div>
-    <!-- button -->
-    <div class="col-md-6 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        <button id="export-success"
-            class="btn btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">{% trans 'Export Success' %}
-        </button>
-    </div>
-</div>
-{%endif%}
+<!-- Dashboard Row  -->
+{% include 'disbursement/disbursement_transactions_dashboard.html' %}
 
 <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
         <div class="x_panel">
             <div class="x_title">
-                <h2>{% trans 'Transactions' %} <small>{% trans 'Document name:' %} <a target="_blank" href="{% url 'data:download_doc' doc_obj.id %}">{{doc_obj.filename}}</a></small></h2>
+                <h2>{% trans 'Transactions' %}</h2>
                 <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                  <li>
+                    <a class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+                       target="_blank" type="button" id="download-doc"
+                       href="{% url 'data:download_doc' doc_obj.id %}">
+                      <span class="glyphicon glyphicon-download"></span> Download Document
+                    </a>
+                  </li>
+                  <li>
+                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                  </li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
@@ -112,7 +68,7 @@
                               data-anon_recipient="{{ transaction.anon_recipient }}"
                               data-amount="{{ transaction.amount }}"
                               data-recipient_name="{{ transaction.recipient_name }}"
-                              data-status="{{ transaction.status|status }}"
+                              data-status="{{ transaction.status_choice_verbose }}"
                               data-transaction_status_code="{{ transaction.transaction_status_code }}"
                               data-transaction_status_description="{{ transaction.transaction_status_description }}"
                               data-doc_maker="{{ doc_obj.owner }}"
@@ -122,7 +78,7 @@
                             <td>{{ transaction.uid }}</td>
                             <td>{{ transaction.anon_recipient }}</td>
                             <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.status|status }}</td>
+                            <td>{{ transaction.status_choice_verbose }}</td>
                           </tr>
                         {% endfor %}
                       </tbody>
@@ -141,7 +97,7 @@
                               data-creditor_account_number="{{ transaction.creditor_account_number }}"
                               data-amount="{{ transaction.amount }}"
                               data-creditor_name="{{ transaction.creditor_name }}"
-                              data-status="{{ transaction.status|status }}"
+                              data-status="{{ transaction.status_choice_verbose }}"
                               data-creditor_bank="{{ transaction.creditor_bank }}"
                               data-bank_name="{{ transaction.creditor_bank|bank_name }}"
                               data-type="{{ transaction|transaction_type }}"
@@ -154,7 +110,7 @@
                             <td>{{ transaction.parent_transaction.transaction_id }}</td>
                             <td>{{ transaction.creditor_account_number }}</td>
                             <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.status|status }}</td>
+                            <td>{{ transaction.status_choice_verbose }}</td>
                           </tr>
                         {% endfor %}
                       </tbody>
@@ -166,7 +122,7 @@
 </div>
 
 <!-- transaction details -->
-  <div id="trxDetails" style="display: none;" class="row">
+<div id="trxDetails" style="display: none;" class="row">
       <div class="col-md-12 col-sm-12 col-xs-12">
           <div class="x_panel">
               <div class="x_title">
@@ -175,13 +131,84 @@
               </div>
 
               <div class="x_content">
-                  <ul id="trxDetailsData">
-                  </ul>
+                <div class="row">
+                  <div class="col-md-7 col-sm-7 col-xs-7">
+                    <ul id="trxDetailsData">
+                    </ul>
+                  </div>
+                  <div class="col-md-5 col-sm-5 col-xs-5">
+                    <ul id="trxDetailsDataRight">
+                    </ul>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+                    <ul id="trxDetailsDataLast">
+                    </ul>
+                  </div>
+                </div>
               </div>
 
           </div>
       </div>
   </div>
+
+<!-- Model For Export All -->
+<div class="modal fade" id="exportAllModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Report Exported Successfully</h4>
+      </div>
+      <div class="modal-body">
+          {% trans 'You will receive an email shortly with the file to download' %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Model For Export Success -->
+<div class="modal fade" id="exportSuccessModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Report Exported Successfully</h4>
+      </div>
+      <div class="modal-body">
+        {% trans 'You will receive an email shortly with the success data file to download' %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Model For Export Failed -->
+<div class="modal fade" id="exportFailedModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Report Exported Successfully</h4>
+      </div>
+      <div class="modal-body">
+        {% trans 'You will receive an email shortly with the failed data file to download' %}
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock %}
 
 {% block script %}
@@ -208,7 +235,10 @@
                 type:'GET',
                 url: '{{request.path}}' + '?export_failed=true',
                 success: function (data, text, xhr) {
-                    $('#failed-alert-msg').show()
+                    $('#exportFailedModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                  })
                 },
             })
 
@@ -218,7 +248,10 @@
                 type: 'GET',
                 url: '{{request.path}}' + '?export_success=true',
                 success: function (data, text, xhr) {
-                    $('#success-alert-msg').show()
+                    $('#exportSuccessModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                  })
                 },
             })
 
@@ -228,7 +261,10 @@
                 type: 'GET',
                 url: '{{request.path}}' + '?export_all=true',
                 success: function (data, text, xhr) {
-                    $('#all-alert-msg').show()
+                  $('#exportAllModal').modal({
+                    backdrop: 'static',
+                    keyboard: false
+                  })
                 },
             })
 
@@ -240,12 +276,14 @@
     $('#transaction-table tbody').on( 'click', 'tr', function () {
         if ($(this).hasClass('selected')) {
             $(this).removeClass('selected');
-            $("#trxDetails").hide();
+            $("#trxDetails").slideUp().fadeOut();
         }
         else {
             $('tr.selected').removeClass('selected');
             $(this).addClass('selected');
             let ul = $('#trxDetailsData');
+            let ulRight = $('#trxDetailsDataRight');
+            let ulLast = $('#trxDetailsDataLast');
             let appendedTags = '';
             {% if doc_obj.is_bank_wallet %}
               let uid = $(this).data('id');
@@ -276,19 +314,28 @@
               let status = $(this).data('status');
               appendedTags += `<li><span>Disbursed</span><b>:</b>${status}</li>`;
             {% endif %}
-            let transaction_status_code = $(this).data('transaction_status_code');
-              appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${transaction_status_code}</li>`;
-              let transaction_status_description = $(this).data('transaction_status_description');
-              appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
+
+            ul.empty();
+            ul.append(appendedTags);
+            appendedTags = '';
             let doc_id = $(this).data('doc_id');
             appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
             let doc_maker = $(this).data('doc_maker');
             appendedTags += `<li><span>Maker user</span><b>:</b>${doc_maker}</li>`;
             let doc_checker = $(this).data('doc_checker');
             appendedTags += `<li><span>Checker user</span><b>:</b>${doc_checker}</li>`;
-            ul.empty();
-            ul.append(appendedTags);
-            $("#trxDetails").show();
+
+            ulRight.empty();
+            ulRight.append(appendedTags);
+            appendedTags = '';
+
+            let transaction_status_code = $(this).data('transaction_status_code');
+            appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${transaction_status_code}</li>`;
+            let transaction_status_description = $(this).data('transaction_status_description');
+            appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
+            ulLast.empty();
+            ulLast.append(appendedTags);
+            $("#trxDetails").slideDown();
             $('html,body').animate({
                 scrollTop: $("#trxDetails").offset().top
             }, 'slow');

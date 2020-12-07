@@ -4,6 +4,20 @@ from __future__ import unicode_literals
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 
+class IntegrationUserPassesTestMixin(UserPassesTestMixin, LoginRequiredMixin):
+    """
+    Permit only logged-in users with integration patch setups from accessing resources related to integration patch
+    """
+
+    def test_func(self):
+        if self.request.user.is_root and self.request.user.is_instant_model_onboarding:
+            return True
+        elif self.request.user.is_instantapiviewer:
+            return True
+
+        return False
+
+
 class InstantReviewerRequiredMixin(LoginRequiredMixin):
     """
     Prevent non logged-in or non instant-viewer users from accessing instant transactions.

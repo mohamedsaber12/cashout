@@ -81,7 +81,7 @@ class User(AbstractUser):
         ordering = ['-id', '-hierarchy']
 
     def __str__(self):
-        return str(self.username)
+        return self.username
 
     def set_pin(self, raw_pin):
         """Sets pin for every Admin/Root user. Handles hashing formats"""
@@ -206,7 +206,7 @@ class User(AbstractUser):
     @cached_property
     def get_full_name(self):
         full_name = f"{self.first_name.capitalize()} {self.last_name}"
-        return full_name.strip()
+        return full_name.strip() if full_name.strip() else self
 
     @property
     def has_vmt_setup(self):

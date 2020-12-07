@@ -1,0 +1,14 @@
+{% load custom_tags i18n %}
+
+<div class="title_right">
+  <form action="." method="get">
+    <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
+      <div class="input-group">
+        <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for a transaction...">
+        <span class="input-group-btn">
+          <button class="btn btn-default" type="submit" value="search">{% trans 'Go!'%}</button>
+        </span>
+      </div>
+    </div>
+  </form>
+</div>

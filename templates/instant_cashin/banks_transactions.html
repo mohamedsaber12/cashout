@@ -1,31 +1,38 @@
 {% load i18n %}
-{% load transactions_tags i18n %}
+{% load banks_tags i18n %}
 
 <div class="x_content">
-  <table class="table table-striped table-bordered" id="transaction-table">
+  <table class="table table-bordered" id="transaction-table">
     <thead>
     <tr>
-      <th style="width: 22%">{% trans 'Reference' %}</th>
-      <th>{% trans 'Recipient Name' %}</th>
-      <th>{% trans 'Recipient Account Number' %}</th>
-      <th>{% trans 'Recipient Bank' %}</th>
-      <th>{% trans 'Amount' %}</th>
-      <th>{% trans 'Status' %}</th>
-      <th>{% trans 'Code' %}</th>
-      <th>{% trans 'Updated At' %}</th>
+      <th class="trxTableHeader">{% trans 'Reference ID' %}</th>
+      <th class="trxTableHeader">{% trans 'Recipient' %}</th>
+      <th class="trxTableHeader">{% trans 'Amount' %}</th>
+      <th class="trxTableHeader">{% trans 'Status' %}</th>
+      <th class="trxTableHeader">{% trans 'Updated At' %}</th>
     </tr>
     </thead>
 
     <tbody>
     {% for trx in transactions %}
-      <tr data-href="#">
+      <tr data-id="{{ trx.parent_transaction.transaction_id }}"
+          data-creditor_name="{{ trx.creditor_name }}"
+          data-creditor_account_number="{{ trx.creditor_account_number }}"
+          data-creditor_bank_code="{{ trx.creditor_bank }}"
+          data-creditor_bank_name="{{ trx.creditor_bank|bank_name }}"
+          data-transaction_type="{{ trx|transaction_type }}"
+          data-amount="{{ trx.amount }}"
+          data-status="{{ trx.status_choice_verbose }}"
+          data-status_code="{{ trx.transaction_status_code }}"
+          data-updated_at="{{ trx.updated_at }}"
+          data-created_at="{{ trx.parent_transaction.created_at }}"
+          data-status_description="{{ trx.transaction_status_description }}"
+          class="row-hover"
+          data-href="#">
         <td>{{ trx.parent_transaction.transaction_id }}</td>
-        <td>{{ trx.creditor_name }}</td>
         <td>{{ trx.creditor_account_number }}</td>
-        <td>{{ trx.creditor_bank }}</td>
         <td>{{ trx.amount }}</td>
-        <td>{{ trx.status|status }}</td>
-        <td>{{ trx.transaction_status_code }}</td>
+        <td>{{ trx.status_choice_verbose }}</td>
         <td>{{ trx.updated_at }}</td>
       </tr>
 

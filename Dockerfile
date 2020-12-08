@@ -32,7 +32,7 @@ RUN mkdir -p $HOME/staticfiles/static \
 # Install environment dependencies
 COPY ./requirements/requirements.txt .
 RUN pip3 install --upgrade pip \
-    && pip3 install --no-cache-dir -r requirements.txt
+    && pip3 install --no-cache-dir -r requirements.txt --no-deps
 
 ## Install system dependencies
 RUN apt-get update \

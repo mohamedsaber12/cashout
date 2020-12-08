@@ -120,9 +120,11 @@ def login_view(request):
     user = None
 
     if request.user.is_authenticated:
-        if not request.user.is_superuser and \
-                (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
-            return HttpResponseRedirect(reverse('two_factor:profile'))
+        if request.user.is_vodafone_default_onboarding or \
+                request.user.is_accept_vodafone_onboarding and request.user.is_checker:
+            if not request.user.is_superuser and \
+                    (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
+                return HttpResponseRedirect(reverse('two_factor:profile'))
         return redirect('data:main_view')
     if request.method == 'POST':
         username = request.POST['username']
@@ -132,10 +134,12 @@ def login_view(request):
             if user.is_active:
                 login(request, user)
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
-                if not request.user.is_superuser and (user.is_checker or user.is_root or user.is_superadmin):
-                    user.is_totp_verified = False
-                    user.save()
-                    return HttpResponseRedirect(reverse('two_factor:profile'))
+                if request.user.is_vodafone_default_onboarding or \
+                        request.user.is_accept_vodafone_onboarding and request.user.is_checker:
+                    if not request.user.is_superuser and (user.is_checker or user.is_root or user.is_superadmin):
+                        user.is_totp_verified = False
+                        user.save()
+                        return HttpResponseRedirect(reverse('two_factor:profile'))
 
                 if user.is_upmaker or (user.is_root and user.data_type() == 3):
                     return HttpResponseRedirect(reverse('users:redirect'))

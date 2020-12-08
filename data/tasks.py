@@ -217,7 +217,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 # 1.1 Validate account numbers
                 account = get_digits(str(record[1]))
                 valid_account = False
-                if account and len(account) == 16:
+                if account and (6 <= len(account) <= 20):
                     accounts_list.append(account)
                     valid_account = True
                 else:

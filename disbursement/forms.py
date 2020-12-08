@@ -259,7 +259,7 @@ class SingleStepTransactionModelForm(forms.ModelForm):
         creditor_account_number = self.cleaned_data.get('creditor_account_number', None)
         account = get_digits(str(creditor_account_number)) if creditor_account_number else None
 
-        if not (account and len(account) == 16):
+        if not (account and  6 <= len(account) <= 20):
             raise forms.ValidationError(_('Invalid Account number'))
 
         return account

@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from decimal import Decimal
+
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
+from rest_framework.compat import MinValueValidator
 
 from core.models import AbstractBaseStatus
 from disbursement.models import BankTransaction
@@ -25,11 +28,16 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
             - decimal places allowed at the cases of decimals is for only 2 digits ex: 356.98 EG
             - max number of digits allowed is 7 digits 10,000.00
     """
-    amount = serializers.DecimalField(required=True, decimal_places=2, max_digits=7)
     issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])
     msisdn = serializers.CharField(max_length=11, required=False, allow_blank=False, validators=[msisdn_validator])
     bank_code = serializers.CharField(max_length=4, required=False, allow_blank=False, validators=[bank_code_validator])
     bank_card_number = CardNumberField(required=False, allow_blank=False)
+    amount = serializers.DecimalField(
+            required=True,
+            decimal_places=2,
+            max_digits=7,
+            validators=[MinValueValidator(Decimal(1.0))],
+    )
     bank_transaction_type = serializers.CharField(
             min_length=6,
             max_length=13,

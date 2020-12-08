@@ -43,7 +43,7 @@ class UUIDListField(serializers.ListField):
 
 class CustomMinLengthValidator(MinLengthValidator):
     """
-
+    Customized min length validator for validating&escaping chars from bank account/card numbers
     """
 
     def clean(self, x):
@@ -52,7 +52,7 @@ class CustomMinLengthValidator(MinLengthValidator):
 
 class CustomMaxLengthValidator(MaxLengthValidator):
     """
-
+    Customized max length validator for validating&escaping chars from bank account/card numbers
     """
 
     def clean(self, x):
@@ -61,10 +61,10 @@ class CustomMaxLengthValidator(MaxLengthValidator):
 
 class CardNumberField(serializers.CharField):
     """
-
+    Form field for validating and accepting bank accounts/cards
     """
 
     default_validators = [
-        CustomMinLengthValidator(16),
-        CustomMaxLengthValidator(16),
+        CustomMinLengthValidator(6),
+        CustomMaxLengthValidator(20),
     ]

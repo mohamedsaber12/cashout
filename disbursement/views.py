@@ -648,7 +648,7 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
         bank_cards_sample_records = []
 
         for _ in range(9):
-            account_number = f"{fake.numerify(text='9###############')}"
+            account_number = f"{fake.numerify(text='#'*random.randint(6, 20))}"
             amount = round(random.random() * 1000, 2)
             full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
             bank_code = random.choice(VALID_BANK_CODES_LIST)

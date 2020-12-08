@@ -269,6 +269,8 @@ class SingleStepTransactionModelForm(forms.ModelForm):
 
         if not amount or not (str(amount).replace('.', '', 1).isdigit() and Decimal(amount) >= 30):
             raise forms.ValidationError(_('Invalid amount'))
+        if Decimal(self.checker_user.level.max_amount_can_be_disbursed) < amount:
+            raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))
 
         return round(Decimal(amount), 2)
 

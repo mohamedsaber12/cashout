@@ -40,9 +40,9 @@
         {% if request.user.is_vodafone_default_onboarding %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Disbursement Files' %}</a></li>
         {% elif request.user.is_accept_vodafone_onboarding %}
-          <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'E-Wallets Files' %}</a></li>
-          <li><a href="{% url 'data:bank_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Bank Wallets/Orange Files' %}</a></li>
-          <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-files-o"></i>{% trans 'Bank Accounts/Cards Files' %}</a></li>
+          <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
+          <li><a href="{% url 'data:bank_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+          <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-files-o"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
 
           {% if request.user.is_root or request.user.is_checker %}
             <li><a href="{% url 'disbursement:single_step_list_create' %}"><i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}</a></li>

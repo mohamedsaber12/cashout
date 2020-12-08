@@ -2,7 +2,13 @@
 {% load static %}
 {% load i18n %}
 
-{% block title %}{% trans "E-wallets Disbursement Files" %}{% endblock title %}
+{% block title %}
+  {% if request.user.is_accept_vodafone_onboarding %}
+    {% trans "Vodafone/Etisalat/Aman Disbursement Files" %}
+  {% else %}
+    {% trans "Disbursement Files" %}
+  {% endif %}
+{% endblock title %}
 
 {% block gentellacss %}
 <link rel="stylesheet" href="{% static 'gentella/vendors/dropzone/dist/min/dropzone.min.css' %}">
@@ -51,7 +57,7 @@
     {% endif %}
 
     {% if request.user.is_accept_vodafone_onboarding %}
-      {% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement list_header='E-Wallets' %}
+      {% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement list_header='Vodafone/Etisalat/Aman' %}
     {% else %}
       {% include 'data/document_disbursement_list.html' with object_list=doc_list_disbursement %}
     {% endif %}

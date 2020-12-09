@@ -679,7 +679,7 @@ class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
     :type request: :class:`~django.http.HttpRequest`
     """
     # otp_device = forms.ChoiceField(choices=[])
-    otp_token = forms.CharField(required=False)
+    otp_token = forms.CharField(label="OTP Code", required=False)
     # otp_challenge = forms.CharField(required=False)
 
     def __init__(self, user, request=None, *args, **kwargs):

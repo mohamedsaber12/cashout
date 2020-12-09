@@ -2,17 +2,21 @@
 {% load i18n %}
 {% load custom_tags %}
 {% get_current_language as LANGUAGE_CODE %}
+
 {% block customcss %}
-<style>
-.right_col .container{
-    background: none !important;
-}
-</style>
+  <style>
+    .right_col .container {
+      background: none !important;
+    }
+  </style>
 {% endblock %}
+
+{% block title %} {% trans 'Two Factor Authentication' %} {% endblock %}
+
 {% block content %}
-<form method="post" action=".">
+  <form method="post" action=".">
     {% csrf_token %}
-{{form.as_p}}
-<button class="btn btn-success" type="submit">{% trans 'submit' %} </button>
-</form>
-{%endblock%}
+    {{ form.as_p }}
+    <button class="btn btn-success" type="submit">{% trans 'submit' %} </button>
+  </form>
+{% endblock %}

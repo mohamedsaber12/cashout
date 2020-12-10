@@ -147,15 +147,15 @@
           let transaction_type = $(this).data('transaction_type');
           appendedTags += `<li><span>Transaction Type</span><b>:</b>${transaction_type}</li>`;
         {% else %}
-          appendedTags += `<li><span>Channel</span><b>:</b>${issuer_type}</li>`;
+          appendedTags += `<li><span>Issuer</span><b>:</b>${issuer_type}</li>`;
           let aman_is_paid = $(this).data('aman_is_paid');
 
           {# Determine is_paid? status for aman transactions #}
           if (issuer_type === 'Aman') {
             if (aman_is_paid === 'True') {
-              appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTags += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTags += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
             }
           }
         {% endif %}

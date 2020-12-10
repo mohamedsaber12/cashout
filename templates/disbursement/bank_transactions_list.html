@@ -3,343 +3,351 @@
 {% load i18n %}
 {% load custom_tags %}
 {% load banks_tags %}
+
 {% block title %} Transactions {% endblock %}
+
 {% block gentellacss %}
-<!-- Datatables -->
-<link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
-<link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
-<link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
-<link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
-<link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
-<link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
-<link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
-<style>
-  #trxDetailsDataRight > li > span{
-    width: 90px;
-  }
-  #download-doc {
-      width: 17rem!important;
+  <!-- Datatables -->
+  <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+  <style>
+    #trxDetailsDataRight > li > span {
+      width: 90px;
+    }
+
+    #download-doc {
+      width: 17rem !important;
       margin-right: 10px;
       color: #333;
-  }
-  #download-doc span {
+    }
+
+    #download-doc span {
       color: #333;
-  }
-</style>
+    }
+  </style>
 {% endblock %}
 
 {% block body %}
-<!-- Dashboard Row  -->
-{% include 'disbursement/disbursement_transactions_dashboard.html' %}
+  <!-- Dashboard Row  -->
+  {% include 'disbursement/disbursement_transactions_dashboard.html' %}
 
-<div class="row">
+  <div class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>{% trans 'Transactions' %}</h2>
-                <ul class="nav navbar-right panel_toolbox">
-                  <li>
-                    <a class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
-                       target="_blank" type="button" id="download-doc"
-                       href="{% url 'data:download_doc' doc_obj.id %}">
-                      <span class="glyphicon glyphicon-download"></span> Download Document
-                    </a>
-                  </li>
-                  <li>
-                    <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                  </li>
-                </ul>
-                <div class="clearfix"></div>
-            </div>
-            <div class="x_content">
-                <table class="table table-bordered" id="transaction-table">
-                    {% if doc_obj.is_bank_wallet %}
-                      <thead>
-                        <tr>
-                          <th>{% trans 'Transaction ID' %}</th>
-                          <th>{% trans 'Wallet Number' %}</th>
-                          <th>{% trans 'Amount' %}</th>
-                          <th>{% trans 'Disbursed?' %}</th>
-                          </tr>
-                      </thead>
-                      <tbody>
-                        {% for transaction in doc_transactions %}
-                          <tr data-id="{{ transaction.uid }}"
-                              data-anon_recipient="{{ transaction.anon_recipient }}"
-                              data-amount="{{ transaction.amount }}"
-                              data-recipient_name="{{ transaction.recipient_name }}"
-                              data-status="{{ transaction.status_choice_verbose }}"
-                              data-transaction_status_code="{{ transaction.transaction_status_code }}"
-                              data-transaction_status_description="{{ transaction.transaction_status_description }}"
-                              data-doc_maker="{{ doc_obj.owner }}"
-                              data-doc_checker="{{ doc_obj.disbursed_by }}"
-                              data-doc_id="{{ doc_obj.id }}"
-                              class="row-hover">
-                            <td>{{ transaction.uid }}</td>
-                            <td>{{ transaction.anon_recipient }}</td>
-                            <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.status_choice_verbose }}</td>
-                          </tr>
-                        {% endfor %}
-                      </tbody>
-                    {% else %}
-                      <thead>
-                        <tr>
-                          <th>{% trans 'Transaction ID' %}</th>
-                          <th>{% trans 'Account Number' %}</th>
-                          <th>{% trans 'Amount' %}</th>
-                          <th>{% trans 'Disbursed?' %}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {% for transaction in doc_transactions %}
-                          <tr data-id="{{ transaction.parent_transaction.transaction_id }}"
-                              data-creditor_account_number="{{ transaction.creditor_account_number }}"
-                              data-amount="{{ transaction.amount }}"
-                              data-creditor_name="{{ transaction.creditor_name }}"
-                              data-status="{{ transaction.status_choice_verbose }}"
-                              data-creditor_bank="{{ transaction.creditor_bank }}"
-                              data-bank_name="{{ transaction.creditor_bank|bank_name }}"
-                              data-type="{{ transaction|transaction_type }}"
-                              data-transaction_status_code="{{ transaction.transaction_status_code }}"
-                              data-transaction_status_description="{{ transaction.transaction_status_description }}"
-                              data-doc_maker="{{ doc_obj.owner }}"
-                              data-doc_checker="{{ doc_obj.disbursed_by }}"
-                              data-doc_id="{{ doc_obj.id }}"
-                              class="row-hover">
-                            <td>{{ transaction.parent_transaction.transaction_id }}</td>
-                            <td>{{ transaction.creditor_account_number }}</td>
-                            <td>{{ transaction.amount }}</td>
-                            <td>{{ transaction.status_choice_verbose }}</td>
-                          </tr>
-                        {% endfor %}
-                      </tbody>
-                    {% endif %}
-                </table>
-            </div>
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>{% trans 'Transactions' %}</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li>
+              <a class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+                 target="_blank" type="button" id="download-doc"
+                 href="{% url 'data:download_doc' doc_obj.id %}">
+                <span class="glyphicon glyphicon-download"></span> Download Document
+              </a>
+            </li>
+            <li>
+              <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
         </div>
+        <div class="x_content">
+          <table class="table table-bordered" id="transaction-table">
+            {% if doc_obj.is_bank_wallet %}
+              <thead>
+              <tr>
+                <th>{% trans 'Transaction ID' %}</th>
+                <th>{% trans 'Wallet Number' %}</th>
+                <th>{% trans 'Amount' %}</th>
+                <th>{% trans 'Status' %}</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for transaction in doc_transactions %}
+                <tr data-id="{{ transaction.uid }}"
+                    data-anon_recipient="{{ transaction.anon_recipient }}"
+                    data-amount="{{ transaction.amount }}"
+                    data-recipient_name="{{ transaction.recipient_name }}"
+                    data-status="{{ transaction.status_choice_verbose }}"
+                    data-transaction_status_code="{{ transaction.transaction_status_code }}"
+                    data-transaction_status_description="{{ transaction.transaction_status_description }}"
+                    data-doc_maker="{{ doc_obj.owner }}"
+                    data-doc_checker="{{ doc_obj.disbursed_by }}"
+                    data-doc_id="{{ doc_obj.id }}"
+                    class="row-hover">
+                  <td>{{ transaction.uid }}</td>
+                  <td>{{ transaction.anon_recipient }}</td>
+                  <td>{{ transaction.amount }}</td>
+                  <td>{{ transaction.status_choice_verbose }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            {% else %}
+              <thead>
+              <tr>
+                <th>{% trans 'Transaction ID' %}</th>
+                <th>{% trans 'Account Number' %}</th>
+                <th>{% trans 'Amount' %}</th>
+                <th>{% trans 'Status' %}</th>
+              </tr>
+              </thead>
+              <tbody>
+              {% for transaction in doc_transactions %}
+                <tr data-id="{{ transaction.parent_transaction.transaction_id }}"
+                    data-creditor_account_number="{{ transaction.creditor_account_number }}"
+                    data-amount="{{ transaction.amount }}"
+                    data-creditor_name="{{ transaction.creditor_name }}"
+                    data-status="{{ transaction.status_choice_verbose }}"
+                    data-creditor_bank="{{ transaction.creditor_bank }}"
+                    data-bank_name="{{ transaction.creditor_bank|bank_name }}"
+                    data-type="{{ transaction|transaction_type }}"
+                    data-transaction_status_code="{{ transaction.transaction_status_code }}"
+                    data-transaction_status_description="{{ transaction.transaction_status_description }}"
+                    data-doc_maker="{{ doc_obj.owner }}"
+                    data-doc_checker="{{ doc_obj.disbursed_by }}"
+                    data-doc_id="{{ doc_obj.id }}"
+                    class="row-hover">
+                  <td>{{ transaction.parent_transaction.transaction_id }}</td>
+                  <td>{{ transaction.creditor_account_number }}</td>
+                  <td>{{ transaction.amount }}</td>
+                  <td>{{ transaction.status_choice_verbose }}</td>
+                </tr>
+              {% endfor %}
+              </tbody>
+            {% endif %}
+          </table>
+        </div>
+      </div>
     </div>
-</div>
+  </div>
 
-<!-- transaction details -->
-<div id="trxDetails" style="display: none;" class="row">
-      <div class="col-md-12 col-sm-12 col-xs-12">
-          <div class="x_panel">
-              <div class="x_title">
-                  <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
-                  <div class="clearfix"></div>
-              </div>
+  <!-- transaction details -->
+  <div id="trxDetails" style="display: none;" class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+          <div class="clearfix"></div>
+        </div>
 
-              <div class="x_content">
-                <div class="row">
-                  <div class="col-md-7 col-sm-7 col-xs-7">
-                    <ul id="trxDetailsData">
-                    </ul>
-                  </div>
-                  <div class="col-md-5 col-sm-5 col-xs-5">
-                    <ul id="trxDetailsDataRight">
-                    </ul>
-                  </div>
-                </div>
-                <div class="row">
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-                    <ul id="trxDetailsDataLast">
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
+        <div class="x_content">
+          <div class="row">
+            <div class="col-md-7 col-sm-7 col-xs-7">
+              <ul id="trxDetailsData">
+              </ul>
+            </div>
+            <div class="col-md-5 col-sm-5 col-xs-5">
+              <ul id="trxDetailsDataRight">
+              </ul>
+            </div>
           </div>
+          <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <ul id="trxDetailsDataLast">
+              </ul>
+            </div>
+          </div>
+        </div>
+
       </div>
+    </div>
   </div>
 
-<!-- Model For Export All -->
-<div class="modal fade" id="exportAllModal" role="dialog">
-  <div class="modal-dialog">
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Report Exported Successfully</h4>
-      </div>
-      <div class="modal-body">
+  <!-- Model For Export All -->
+  <div class="modal fade" id="exportAllModal" role="dialog">
+    <div class="modal-dialog">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Report Exported Successfully</h4>
+        </div>
+        <div class="modal-body">
           {% trans 'You will receive an email shortly with the file to download' %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Model For Export Success -->
-<div class="modal fade" id="exportSuccessModal" role="dialog">
-  <div class="modal-dialog">
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Report Exported Successfully</h4>
-      </div>
-      <div class="modal-body">
-        {% trans 'You will receive an email shortly with the success data file to download' %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+  <!-- Model For Export Success -->
+  <div class="modal fade" id="exportSuccessModal" role="dialog">
+    <div class="modal-dialog">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Report Exported Successfully</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the success data file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Model For Export Failed -->
-<div class="modal fade" id="exportFailedModal" role="dialog">
-  <div class="modal-dialog">
-    <!-- Modal content-->
-    <div class="modal-content">
-      <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Report Exported Successfully</h4>
-      </div>
-      <div class="modal-body">
-        {% trans 'You will receive an email shortly with the failed data file to download' %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+  <!-- Model For Export Failed -->
+  <div class="modal fade" id="exportFailedModal" role="dialog">
+    <div class="modal-dialog">
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Report Exported Successfully</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the failed data file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
       </div>
     </div>
   </div>
-</div>
 {% endblock %}
 
 {% block script %}
-<!-- Datatables -->
-<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
-<script>
+  <!-- Datatables -->
+  <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script>
     $('#transaction-table').DataTable();
 
     $(document).ready(function () {
-
-        $('#export-failed').on('click',function(ev) {
-            $.ajax({
-                type:'GET',
-                url: '{{request.path}}' + '?export_failed=true',
-                success: function (data, text, xhr) {
-                    $('#exportFailedModal').modal({
-                    backdrop: 'static',
-                    keyboard: false
-                  })
-                },
+      $('#export-failed').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_failed=true',
+          success: function (data, text, xhr) {
+            $('#exportFailedModal').modal({
+              backdrop: 'static',
+              keyboard: false
             })
+          },
+        })
+      });
 
-        });
-        $('#export-success').on('click', function (ev) {
-            $.ajax({
-                type: 'GET',
-                url: '{{request.path}}' + '?export_success=true',
-                success: function (data, text, xhr) {
-                    $('#exportSuccessModal').modal({
-                    backdrop: 'static',
-                    keyboard: false
-                  })
-                },
+      $('#export-success').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_success=true',
+          success: function (data, text, xhr) {
+            $('#exportSuccessModal').modal({
+              backdrop: 'static',
+              keyboard: false
             })
+          },
+        })
+      });
 
-        });
-        $('#export-all').on('click', function (ev) {
-            $.ajax({
-                type: 'GET',
-                url: '{{request.path}}' + '?export_all=true',
-                success: function (data, text, xhr) {
-                  $('#exportAllModal').modal({
-                    backdrop: 'static',
-                    keyboard: false
-                  })
-                },
+      $('#export-all').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_all=true',
+          success: function (data, text, xhr) {
+            $('#exportAllModal').modal({
+              backdrop: 'static',
+              keyboard: false
             })
-
-        });
+          },
+        })
+      });
     });
+  </script>
 
-</script>
- <script>
-    $('#transaction-table tbody').on( 'click', 'tr', function () {
-        if ($(this).hasClass('selected')) {
-            $(this).removeClass('selected');
-            $("#trxDetails").slideUp().fadeOut();
-        }
-        else {
-            $('tr.selected').removeClass('selected');
-            $(this).addClass('selected');
-            let ul = $('#trxDetailsData');
-            let ulRight = $('#trxDetailsDataRight');
-            let ulLast = $('#trxDetailsDataLast');
-            let appendedTags = '';
-            {% if doc_obj.is_bank_wallet %}
-              let uid = $(this).data('id');
-              appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
-              let anon_recipient = $(this).data('anon_recipient');
-              appendedTags += `<li><span>Wallet number</span><b>:</b>${anon_recipient}</li>`;
-              let amount = $(this).data('amount');
-              appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
-              let recipient_name = $(this).data('recipient_name');
-              appendedTags += `<li><span>Full name</span><b>:</b>${recipient_name}</li>`;
-              let status = $(this).data('status');
-              appendedTags += `<li><span>Disbursed</span><b>:</b>${status}</li>`;
-            {% else %}
-              let uid = $(this).data('id');
-              appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
-              let creditor_account_number = $(this).data('creditor_account_number');
-              appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
-              let amount = $(this).data('amount');
-              appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
-              let creditor_name = $(this).data('creditor_name');
-              appendedTags += `<li><span>Full name</span><b>:</b>${creditor_name}</li>`;
-              let creditor_bank = $(this).data('creditor_bank');
-              appendedTags += `<li><span>Bank code</span><b>:</b>${creditor_bank}</li>`;
-              let bank_name = $(this).data('bank_name');
-              appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
-              let type = $(this).data('type');
-              appendedTags += `<li><span>Transaction type</span><b>:</b>${type}</li>`;
-              let status = $(this).data('status');
-              appendedTags += `<li><span>Disbursed</span><b>:</b>${status}</li>`;
-            {% endif %}
+  <script>
+    $('#transaction-table tbody').on('click', 'tr', function () {
 
-            ul.empty();
-            ul.append(appendedTags);
-            appendedTags = '';
-            let doc_id = $(this).data('doc_id');
-            appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
-            let doc_maker = $(this).data('doc_maker');
-            appendedTags += `<li><span>Maker user</span><b>:</b>${doc_maker}</li>`;
-            let doc_checker = $(this).data('doc_checker');
-            appendedTags += `<li><span>Checker user</span><b>:</b>${doc_checker}</li>`;
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+        $("#trxDetails").slideUp().fadeOut();
+      } else {
+        $('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+        let ul = $('#trxDetailsData');
+        let ulRight = $('#trxDetailsDataRight');
+        let ulLast = $('#trxDetailsDataLast');
+        let appendedTags = '';
 
-            ulRight.empty();
-            ulRight.append(appendedTags);
-            appendedTags = '';
+        {% if doc_obj.is_bank_wallet %}
+          let uid = $(this).data('id');
+          appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
+          let anon_recipient = $(this).data('anon_recipient');
+          appendedTags += `<li><span>Wallet Number</span><b>:</b>${anon_recipient}</li>`;
+          let amount = $(this).data('amount');
+          appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+          let recipient_name = $(this).data('recipient_name');
+          appendedTags += `<li><span>Full Name</span><b>:</b>${recipient_name}</li>`;
+          let status = $(this).data('status');
+          appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
 
-            let transaction_status_code = $(this).data('transaction_status_code');
-            appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${transaction_status_code}</li>`;
-            let transaction_status_description = $(this).data('transaction_status_description');
-            appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
-            ulLast.empty();
-            ulLast.append(appendedTags);
-            $("#trxDetails").slideDown();
-            $('html,body').animate({
-                scrollTop: $("#trxDetails").offset().top
-            }, 'slow');
-       }
+        {% else %}
+
+          let uid = $(this).data('id');
+          appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
+          let creditor_account_number = $(this).data('creditor_account_number');
+          appendedTags += `<li><span>Account Number</span><b>:</b>${creditor_account_number}</li>`;
+          let amount = $(this).data('amount');
+          appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+          let creditor_name = $(this).data('creditor_name');
+          appendedTags += `<li><span>Full Name</span><b>:</b>${creditor_name}</li>`;
+          let creditor_bank = $(this).data('creditor_bank');
+          appendedTags += `<li><span>Bank Code</span><b>:</b>${creditor_bank}</li>`;
+          let bank_name = $(this).data('bank_name');
+          appendedTags += `<li><span>Bank Name</span><b>:</b>${bank_name}</li>`;
+          let type = $(this).data('type');
+          appendedTags += `<li><span>Transaction Type</span><b>:</b>${type}</li>`;
+          let status = $(this).data('status');
+          appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
+        {% endif %}
+
+        ul.empty();
+        ul.append(appendedTags);
+        appendedTags = '';
+
+        let doc_id = $(this).data('doc_id');
+        appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
+        let doc_maker = $(this).data('doc_maker');
+        appendedTags += `<li><span>Maker</span><b>:</b>${doc_maker}</li>`;
+        let doc_checker = $(this).data('doc_checker');
+        appendedTags += `<li><span>Checker</span><b>:</b>${doc_checker}</li>`;
+
+        ulRight.empty();
+        ulRight.append(appendedTags);
+        appendedTags = '';
+
+        let transaction_status_code = $(this).data('transaction_status_code');
+        appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${transaction_status_code}</li>`;
+        let transaction_status_description = $(this).data('transaction_status_description');
+        appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${transaction_status_description}</li>`;
+
+        ulLast.empty();
+        ulLast.append(appendedTags);
+
+        $("#trxDetails").slideDown();
+        $('html,body').animate({
+          scrollTop: $("#trxDetails").offset().top
+        }, 'slow');
+      }
     });
   </script>
 

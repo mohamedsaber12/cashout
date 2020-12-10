@@ -64,7 +64,8 @@
                 <th>{% trans 'Wallet Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
                 {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
-                <th>{% trans 'Disbursed?' %}</th>
+                <th>{% trans 'Status' %}</th>
+                <th>{% trans 'Updated At' %}</th>
               </tr>
             </thead>
             <tbody>
@@ -78,7 +79,7 @@
                     data-reason_description="{{ transaction.reason | code_description }}"
                     {% if not is_normal_flow %}
                       data-trx_id="{{ transaction.reference_id }}"
-                      data-issuer="{{ transaction.issuer }}"
+                      data-issuer="{{ transaction.issuer|title }}"
                       data-aman_is_paid="{{ transaction.aman_transaction_is_paid }}"
                     {% endif %}
                     class="row-hover">
@@ -86,16 +87,17 @@
                   {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
                     <td>{{ transaction.msisdn }}</td>
                     <td>{{ transaction.amount }}</td>
-                  {% if not is_normal_flow %}<td>{{ transaction.issuer }}</td>{% endif %}
-                  <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
+                  {% if not is_normal_flow %}<td>{{ transaction.issuer|title }}</td>{% endif %}
+                  <td>
                     {% if transaction.is_disbursed %}
-                        <span style="color: #2e6da4">&#10004;</span>
+                      {% trans "Successful" %}
                     {% elif not transaction.reason %}
-                        <span>⏳</span>
+                      {% trans "Pending" %}
                     {% else %}
-                        <span style="color: #942a25">&#10006;</span>
+                      {% trans "Failed" %}
                     {% endif %}
                   </td>
+                <td>{{ transaction.updated_at }}</td>
                 </tr>
               {% endfor %}
             </tbody>
@@ -282,34 +284,34 @@
         let amount = $(this).data('amount');
         appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
 
-        {% if not is_normal_flow %}
-          let issuer = $(this).data('issuer');
-          appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
-          let aman_is_paid = $(this).data('aman_is_paid');
-
-          {# Determine is_paid? status for aman transactions #}
-          if (issuer === 'aman') {
-            if (aman_is_paid === 'True') {
-              appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
-            } else {
-              appendedTags += `<li><span>Is paid?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
-            }
-          }
-        {% endif %}
-
         let is_disbursed = $(this).data('is_disbursed');
         let reason = $(this).data('reason');
 
         {# Handle is_disbursed icon based of the record disbursement status #}
         if (is_disbursed === 'True') {
-          appendedTagsRight += `<li><span>Disbursed?</span><b>:</b><span style="color: #2e6da4">&#10004;</span></li>`;
+          appendedTags += `<li><span>Status</span><b>:</b>{% trans "Successful" %}</li>`;
         }
         else if (!reason) {
-          appendedTagsRight += `<li><span>Disbursed?</span><b>:</b><span>⏳</span></li>`;
+          appendedTags += `<li><span>Status</span><b>:</b>{% trans "Pending" %}</li>`;
         }
         else {
-          appendedTagsRight += `<li><span>Disbursed?</span><b>:</b><span style="color: #942a25">&#10006;</span></li>`;
+          appendedTags += `<li><span>Status</span><b>:</b>{% trans "Failed" %}</li>`;
         }
+
+        {% if not is_normal_flow %}
+          let issuer = $(this).data('issuer');
+          appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+          let aman_is_paid = $(this).data('aman_is_paid');
+
+          {# Determine is_paid? status for aman transactions #}
+          if (issuer === 'Aman') {
+            if (aman_is_paid === 'True') {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
+        {% endif %}
 
         {# Handle disbursement status description based of the record disbursement status #}
         if (reason) {

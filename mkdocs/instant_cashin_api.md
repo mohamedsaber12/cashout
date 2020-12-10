@@ -41,7 +41,7 @@
         * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
         * **{msisdn}**: the +2 added automatically so it consists of 11 numbers, ex: 01020304050
         * **{bank_card_number}**: consists of 16 numbers with dashes - between every 4 numbers or not, ex #1: 1111222233334444 or ex #2: 1111-2222-3333-4444
-        * **{bank_transaction_type}** options list: [cash_transfer, salary, pension, prepaid, credit_card] -case insensitive-.
+        * **{bank_transaction_type}** options list: [cash_transfer, salary, prepaid_card, credit_card] -case insensitive-.
         * **aman** cases, after every successful disbursement user will be notified at his/her email with
             the reference number of his/her transaction.
         * **{bank_code}**: the banks list and their corresponding codes -case sensitive-.

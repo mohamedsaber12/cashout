@@ -29,6 +29,17 @@
     -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
     box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
 }
+.desc-list {
+    position: relative;
+    display: block;
+    border: 0;
+    background: transparent;
+    border-radius: .5rem!important;
+    padding: .75rem!important;
+    -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    float: right;
+}
 .open .export-dropdown {
     background-color: #fff !important;
 }

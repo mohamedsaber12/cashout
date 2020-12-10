@@ -27,11 +27,9 @@ def transaction_type(transaction_obj):
 
     if transaction_obj.purpose == 'SALA':
         return _('Salary')
-    elif transaction_obj.purpose == 'PENS':
-        return _('Pension')
     elif transaction_obj.purpose == 'CCRD':
         return _('Credit card')
     elif transaction_obj.category_code == 'PCRD':
-        return _('Prepaid')
+        return _('Prepaid card')
     else:
         return _('Cash transfer')

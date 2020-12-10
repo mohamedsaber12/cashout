@@ -1,207 +1,229 @@
 {% load i18n %}
-<style>
-    .list-group{
-        max-height: 300px;
-        margin-bottom: 0px;
-        overflow:auto;
-    }
-</style>
-<div class="page-title">
-    <div class="title_left">
-        <h3>{{ list_header }}{% trans ' Disbursement Files' %}</h3>
-    </div>
+{% load custom_tags %}
 
-    {% if list_header == 'Bank Accounts/Cards' %}
-      <div class="title_right">
-        <button id="export_bank_cards_sample_file" style="float:right;" class="btn btn-default dialogButton"
-                data-display-toggle="tooltip" data-placement="bottom" title="Download Sample File For Bank Cards">Download Sample File</button>
-        <button id="BankList" style="float:right;" class="btn btn-default dialogButton"
-                data-toggle="tooltip" data-placement="bottom" title="Open Bank Codes List">Bank Codes List</button>
-      </div>
-    {% elif list_header == 'Bank wallets/Orange cash' %}
-      <div class="title_right">
-        <button id="export_bank_wallets_sample_file" style="float:right;" class="btn btn-default dialogButton"
-                data-display-toggle="tooltip" data-placement="bottom" title="Download Sample File For Bank Wallets">Download Sample File</button>
-      </div>
-    {% endif %}
+<style>
+  .list-group {
+    max-height: 300px;
+    margin-bottom: 0px;
+    overflow: auto;
+  }
+</style>
+
+<div class="page-title">
+  <div class="title_left">
+    <h3>{{ list_header }}{% trans ' Disbursement Files' %}</h3>
+  </div>
+
+  {% if list_header == 'Bank Accounts/Cards' %}
+    <div class="title_right">
+      <a class="btn btn-default desc-list" type="button" id="export_bank_cards_sample_file">
+        <span class="glyphicon glyphicon-download"></span> Download Sample File
+      </a>
+
+      <a class="btn btn-default desc-list" type="button" id="bank_codes_btn">
+        <span class="glyphicon glyphicon-info-sign"></span> Bank Codes List
+      </a>
+
+      <a class="btn btn-default desc-list" type="button" id="transaction_types_btn">
+        <span class="glyphicon glyphicon-info-sign"></span> Transactions Types List
+      </a>
+    </div>
+  {% elif list_header == 'Bank wallets/Orange cash' %}
+    <div class="title_right">
+      <a class="btn btn-default desc-list pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="button" id="export_bank_wallets_sample_file">
+        <span class="glyphicon glyphicon-download"></span> Download Sample File
+      </a>
+    </div>
+  {% endif %}
 </div>
 
 <div class="clearfix"></div>
 
 <div class="row">
-    <div class="col-md-12">
-        <div class="x_panel">
-            <div class="x_title">
-                <h2>{% trans 'Documents list' %}</h2>
-                <ul class="nav navbar-right panel_toolbox">
-                    <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                    </li>
-                </ul>
-                <div class="clearfix"></div>
-            </div>
+  <div class="col-md-12">
+    <div class="x_panel">
+      <div class="x_title">
+        <h2>{% trans 'Documents list' %}</h2>
+        <ul class="nav navbar-right panel_toolbox">
+          <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
 
-            <div class="x_content">
-                <!-- start doc list -->
-                <table class="table table-striped projects">
-                    <thead>
-                        <tr>
-                            <th style="width: 25%">{% trans 'Document ID' %}</th>
-                            <th style="width: 15%">{% trans 'Reviews' %}</th>
-                            <th>{% trans 'Disbursed By' %}</th>
-                            <th>{% trans 'Disbursement Progress' %}</th>
-                            <th>{% trans 'Status' %}</th>
-                            <th>{% trans 'View' %}</th>
-                            {% if request.user.is_root %}
-                                <th>{% trans 'Delete' %}</th>
-                            {%endif%}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for doc in object_list %}
-                            <tr>
-                                <td>
-                                    <a>{{ doc.id }}</a>
-                                    <br />
-                                    <small>{% trans 'Created' %} {{doc.created_at}}</small>
-                                </td>
-                                <td>
-                                    {% if doc.reviews.exists %}
-                                        <ul class="list-inline">
-                                            {% for review in doc.reviews.all %}
-                                                <li>
-                                                    <img style="background-color:{%if review.is_ok%}green{%else%}red{%endif%}"
-                                                    data-toggle="tooltip" data-placement="top" title="{{review.user_created.username}}"
-                                                     src="{{review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
-                                                </li>
-                                            {%endfor%}
-                                        </ul>
-                                    {%else%}
-                                        <p>{% trans 'No reviews yet' %}</p>
-                                    {%endif%}
-
-                                </td>
-                                <td>
-                                    {% if doc.is_disbursed %}
-                                        <h6><strong>{{doc.disbursed_by.username}}</strong></h6>
-                                    {% endif %}
-                                </td>
-                                <td class="project_progress">
-                                    <div class="progress progress_sm">
-                                        <div class="progress-bar bg-green" role="progressbar" data-transitiongoal="{{doc.disbursement_ratio}}"></div>
-                                    </div>
-                                    <small>{{doc.disbursement_ratio}}% {% trans 'Complete' %}</small>
-                                </td>
-                                <td>
-                                    {% if doc.has_callback %}
-                                        <h4><span class="label label-success">{% trans 'Disbursed Successfully' %}</span></h4>
-                                    {% elif doc.waiting_disbursement_callback %}
-                                        <h4><span class="label label-primary">{% trans 'Waiting Disbursement Callback' %}</span></h4>
-                                    {% elif doc.disbursement_failed %}
-                                        <h4><span class="label label-danger">{% trans 'Disbursement Failed' %}</span></h4>
-                                    {% elif doc.waiting_disbursement %}
-                                        <h4><span class="label label-primary">{% trans 'Ready for Disbursement' %}</span></h4>
-                                    {% elif request.user.is_checker and not doc.can_be_disbursed %}
-                                        <h4><span class="label label-info">{% trans 'Not ready for disbursement yet' %}</span></h4>
-                                    {% elif doc.validation_process_is_running %}
-                                        <h4><span class="label label-info">{% trans 'Validation Process Running' %}</span></h4>
-                                    {% elif doc.validation_failed %}
-                                        <h4><span class="label label-danger">{% trans 'Validation Failed' %}</span></h4>
-                                    {% elif doc.validated_successfully %}
-                                        <h4><span class="label label-warning">{% trans 'Validated Successfully' %}</span></h4>
-                                    {% else %}
-                                        <h4><span class="label label-danger">{% trans 'Internal Error' %}</span></h4>
-                                    {% endif %}
-                                </td>
-                                <td>
-                                    <!-- File format deleted -->
-                                    {% if not doc.file_category and doc.is_e_wallet %}
-                                        <button disabled class="btn btn-danger addMore"
-                                                title="{% trans 'Can not be viewed. File format has been deleted' %}">
-                                            {% trans 'Can not be viewed' %}
-                                        </button>
-                                    <!-- Document disbursed successfully -->
-                                    {% elif doc.has_callback %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-success btn-md">{% trans 'View' %}</a>
-                                    <!-- Document is ready for disbursement or waiting for disbursement callback -->
-                                    {% elif doc.waiting_disbursement or doc.waiting_disbursement_callback %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-primary btn-md">{% trans 'View' %}</a>
-                                    <!-- Document disbursement failed -->
-                                    {% elif doc.disbursement_failed %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
-                                    <!-- Document validation error -->
-                                    {% elif not request.user.is_checker and doc.validation_failed %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
-                                    <!-- Document validated successfully and no checkers notified -->
-                                    {% elif not request.user.is_checker and doc.validated_successfully  %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-warning btn-md addMore"
-                                               title="{% trans 'No checkers notified yet' %}">{% trans 'View' %}</a>
-                                    <!-- Checker: Document validation error or owner has not notify checkers -->
-                                    {% elif request.user.is_checker and not doc.can_be_disbursed %}
-                                        <button disabled class="btn btn-info addMore"
-                                                title="{% trans 'Not ready for disbursement yet' %}">{% trans 'Pending' %}</button>
-                                    <!-- Document is being validated -->
-                                    {% elif doc.validation_process_is_running %}
-                                      <a href="{{doc.get_absolute_url}}" class="btn btn-info btn-md">{% trans 'View' %}</a>
-                                    {% else %}
-                                        <a href="{{doc.get_absolute_url}}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
-                                    {% endif %}
-                                </td>
-                                {% if request.user.is_root %}
-                                <td>
-                                    <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)">
-                                        {% trans 'Delete' %}
-                                    </a>
-                                </td>
-                                {% endif %}
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-                <!-- end doc list -->
-                <ul class="pagination">
-                    {% if object_list.has_previous %}
-                        <li><a class="btn btn-outline-info mb-4" href="?page=1">First</a></li>
-                        <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.previous_page_number }}">Previous</a></li>
-                    {% endif %}
-
-                    {% for num in object_list.paginator.page_range %}
-                        {% if object_list.number == num %}
-                            <li><a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
-                        {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
-                          <li><a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
-                        {% endif %}
+      <div class="x_content">
+        <!-- start doc list -->
+        <table class="table table-striped projects">
+          <thead>
+          <tr>
+            <th style="width: 25%">{% trans 'Document ID' %}</th>
+            <th style="width: 15%">{% trans 'Reviews' %}</th>
+            <th>{% trans 'Disbursed By' %}</th>
+            <th>{% trans 'Disbursement Progress' %}</th>
+            <th>{% trans 'Status' %}</th>
+            <th>{% trans 'View' %}</th>
+            {% if request.user.is_root %}
+              <th>{% trans 'Delete' %}</th>
+            {% endif %}
+          </tr>
+          </thead>
+          <tbody>
+          {% for doc in object_list %}
+            <tr>
+              <td>
+                <a>{{ doc.id }}</a>
+                <br/>
+                <small>{% trans 'Created' %} {{ doc.created_at }}</small>
+              </td>
+              <td>
+                {% if doc.reviews.exists %}
+                  <ul class="list-inline">
+                    {% for review in doc.reviews.all %}
+                      <li>
+                        <img style="background-color:{% if review.is_ok %}green{% else %}red{% endif %}"
+                             data-toggle="tooltip" data-placement="top" title="{{ review.user_created.username }}"
+                             src="{{ review.user_created.avatar_thumbnail.url }}" class="avatar" alt="Avatar">
+                      </li>
                     {% endfor %}
+                  </ul>
+                {% else %}
+                  <p>{% trans 'No reviews yet' %}</p>
+                {% endif %}
 
-                    {% if object_list.has_next %}
-                        <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.next_page_number }}">Next</a></li>
-                        <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.paginator.num_pages }}">Last</a></li>
-                    {% endif %}
-                </ul>
-            </div>
+              </td>
+              <td>
+                {% if doc.is_disbursed %}
+                  <h6><strong>{{ doc.disbursed_by.username }}</strong></h6>
+                {% endif %}
+              </td>
+              <td class="project_progress">
+                <div class="progress progress_sm">
+                  <div class="progress-bar bg-green" role="progressbar" data-transitiongoal="{{ doc.disbursement_ratio }}"></div>
+                </div>
+                <small>{{ doc.disbursement_ratio }}% {% trans 'Complete' %}</small>
+              </td>
+              <td>
+                {% if doc.has_callback %}
+                  <h4><span class="label label-success">{% trans 'Disbursed Successfully' %}</span></h4>
+                  {% elif doc.waiting_disbursement_callback %}
+                  <h4><span class="label label-primary">{% trans 'Waiting Disbursement Callback' %}</span></h4>
+                  {% elif doc.disbursement_failed %}
+                  <h4><span class="label label-danger">{% trans 'Disbursement Failed' %}</span></h4>
+                  {% elif doc.waiting_disbursement %}
+                  <h4><span class="label label-primary">{% trans 'Ready for Disbursement' %}</span></h4>
+                  {% elif request.user.is_checker and not doc.can_be_disbursed %}
+                  <h4><span class="label label-info">{% trans 'Not ready for disbursement yet' %}</span></h4>
+                  {% elif doc.validation_process_is_running %}
+                  <h4><span class="label label-info">{% trans 'Validation Process Running' %}</span></h4>
+                  {% elif doc.validation_failed %}
+                  <h4><span class="label label-danger">{% trans 'Validation Failed' %}</span></h4>
+                  {% elif doc.validated_successfully %}
+                  <h4><span class="label label-warning">{% trans 'Validated Successfully' %}</span></h4>
+                {% else %}
+                  <h4><span class="label label-danger">{% trans 'Internal Error' %}</span></h4>
+                {% endif %}
+              </td>
+              <td>
+                <!-- File format deleted -->
+                {% if not doc.file_category and doc.is_e_wallet %}
+                  <button disabled class="btn btn-danger addMore"
+                          title="{% trans 'Can not be viewed. File format has been deleted' %}">
+                    {% trans 'Can not be viewed' %}
+                  </button>
+                  <!-- Document disbursed successfully -->
+                  {% elif doc.has_callback %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-success btn-md">{% trans 'View' %}</a>
+                  <!-- Document is ready for disbursement or waiting for disbursement callback -->
+                  {% elif doc.waiting_disbursement or doc.waiting_disbursement_callback %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-primary btn-md">{% trans 'View' %}</a>
+                  <!-- Document disbursement failed -->
+                  {% elif doc.disbursement_failed %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+                  <!-- Document validation error -->
+                  {% elif not request.user.is_checker and doc.validation_failed %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+                  <!-- Document validated successfully and no checkers notified -->
+                  {% elif not request.user.is_checker and doc.validated_successfully %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-warning btn-md addMore"
+                     title="{% trans 'No checkers notified yet' %}">{% trans 'View' %}</a>
+                  <!-- Checker: Document validation error or owner has not notify checkers -->
+                  {% elif request.user.is_checker and not doc.can_be_disbursed %}
+                  <button disabled class="btn btn-info addMore"
+                          title="{% trans 'Not ready for disbursement yet' %}">{% trans 'Pending' %}</button>
+                  <!-- Document is being validated -->
+                  {% elif doc.validation_process_is_running %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-info btn-md">{% trans 'View' %}</a>
+                {% else %}
+                  <a href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+                {% endif %}
+              </td>
+              {% if request.user.is_root %}
+                <td>
+                  <a data-uri="{{ doc.get_delete_url }}" class="btn btn-danger btn-md" onclick="delete_func(this)">
+                    {% trans 'Delete' %}
+                  </a>
+                </td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+        <!-- end doc list -->
+        <ul class="pagination">
+          {% if object_list.has_previous %}
+            <li><a class="btn btn-outline-info mb-4" href="?page=1">First</a></li>
+            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.previous_page_number }}">Previous</a>
+            </li>
+          {% endif %}
 
-        </div>
+          {% for num in object_list.paginator.page_range %}
+            {% if object_list.number == num %}
+              <li><a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
+            {% elif num > object_list.number|add:'-3' and num < object_list.number|add:'3' %}
+              <li><a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+          {% endfor %}
+
+          {% if object_list.has_next %}
+            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.next_page_number }}">Next</a></li>
+            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.paginator.num_pages }}">Last</a></li>
+          {% endif %}
+        </ul>
+      </div>
+
     </div>
+  </div>
 </div>
 
-<div class="modal fade" id="bankCodesModel" role="dialog">
+<div class="modal fade" id="bank_accounts_description_modal" role="dialog">
   <div class="modal-dialog">
     <!-- Modal content-->
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4><span class="glyphicon glyphicon-list-alt"></span> Bank Codes</h4>
+        <h4 id="description_header">
+        </h4>
       </div>
       <div class="modal-body">
         <div class="waiting-form-respond">
         </div>
         <div class="container">
-          <ul class="list-group">
-              {% for bank in bank_codes %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ bank.name }}
-                    <span class="badge badge-primary badge-pill">{{ bank.code }}</span>
-                </li>
-              {% endfor %}
+          <ul id="transaction_types_list" class="list-group">
+            {% for item in transaction_type_desc_list %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ item.description }}
+                <span class="badge badge-primary badge-pill">{{ item.type }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+
+          <ul id="bank_codes_list" class="list-group">
+            {% for bank in bank_codes %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ bank.name }}
+                <span class="badge badge-primary badge-pill">{{ bank.code }}</span>
+              </li>
+            {% endfor %}
           </ul>
         </div>
       </div>

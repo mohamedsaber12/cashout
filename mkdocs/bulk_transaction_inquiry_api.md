@@ -155,27 +155,13 @@
                         "updated_at": "2020-10-06 16:39:13.093580"
                     },
                     {
-                        "transaction_id": "24a47791-0c0a-4080-8b2b-6b464bbf9d96",
-                        "issuer": "bank_card",
-                        "amount": "100.00",
-                        "bank_card_number": "8398033689008423",
-                        "full_name": "Tom Bernard Ceisar",
-                        "bank_code": "CIB",
-                        "bank_transaction_type": "pension",
-                        "disbursement_status": "pending",
-                        "status_code": "8000",
-                        "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",
-                        "created_at": "2020-10-06 16:37:51.688459",
-                        "updated_at": "2020-10-06 16:37:56.001660"
-                    },
-                    {
                         "transaction_id": "8613a98e-3fa3-47c2-8dbf-874bc4fba62d",
                         "issuer": "bank_card",
                         "amount": "100.00",
                         "bank_card_number": "8602522883580815",
                         "full_name": "Tom Bernard Ceisar",
                         "bank_code": "ENBD",
-                        "bank_transaction_type": "prepaid",
+                        "bank_transaction_type": "prepaid_card",
                         "disbursement_status": "pending",
                         "status_code": "8000",
                         "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",

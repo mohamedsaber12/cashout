@@ -144,12 +144,10 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         """Retrieves transaction type"""
         if transaction.purpose == "SALA":
             bank_transaction_type = "salary"
-        elif transaction.purpose == "PENS":
-            bank_transaction_type = "pension"
         elif transaction.purpose == "CCRD":
             bank_transaction_type = "credit_card"
         elif transaction.category_code == "PCRD":
-            bank_transaction_type = "prepaid"
+            bank_transaction_type = "prepaid_card"
         else:
             bank_transaction_type = "cash_transfer"
 

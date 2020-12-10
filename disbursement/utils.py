@@ -65,8 +65,7 @@ VALID_BANK_CODES_LIST = [
 VALID_BANK_TRANSACTION_TYPES_LIST = [
     "CASH_TRANSFER",
     "SALARY",
-    "PENSION",
-    "PREPAID",
+    "PREPAID_CARD",
     "CREDIT_CARD"
 ]
 
@@ -80,50 +79,57 @@ TRX_REJECTED_BY_BANK_CODES = [
     "000012", "000013", "000014"
 ]
 
+BANK_TRANSACTION_TYPES_DESCRIPTION_LIST = [
+    {'type': 'salary'       , 'description': 'For concurrent or repeated payments'},
+    {'type': 'credit_card'  , 'description': 'For credit cards payments'},
+    {'type': 'prepaid_card' , 'description': 'For prepaid cards and Meeza cards payments'},
+    {'type': 'cash_transfer', 'description': 'For bank accounts, debit cards etc..'},
+]
+
 BANK_CODES = [
-    {"name": "Ahli United Bank"                           , "code":  "AUB"},
-    {"name": "Citi Bank N.A. Egypt"                       , "code":  "CITI"},
-    {"name": "MIDBANK"                                    , "code":  "MIDB"},
-    {"name": "Banque Du Caire"                            , "code":  "BDC"},
-    {"name": "HSBC Bank Egypt S.A.E"                      , "code":  "HSBC"},
-    {"name": "Credit Agricole Egypt S.A.E"                , "code":  "CAE"},
-    {"name": "Egyptian Gulf Bank"                         , "code":  "EGB"},
-    {"name": "The United Bank"                            , "code":  "UB"},
-    {"name": "Qatar National Bank Alahli"                 , "code":  "QNB"},
-    {"name": "Central Bank Of Egypt"                      , "code":  "BBE"},
-    {"name": "Arab Bank PLC"                              , "code":  "ARAB"},
-    {"name": "Emirates National Bank of Dubai"            , "code":  "ENBD"},
-    {"name": "Al Ahli Bank of Kuwait – Egypt"             , "code":  "ABK"},
-    {"name": "National Bank of Kuwait – Egypt"            , "code":  "NBK"},
-    {"name": "Arab Banking Corporation - Egypt S.A.E"     , "code":  "ABC"},
-    {"name": "First Abu Dhabi Bank"                       , "code":  "FAB"},
-    {"name": "Abu Dhabi Islamic Bank – Egypt"             , "code":  "ADIB"},
-    {"name": "Commercial International Bank - Egypt S.A.E", "code":  "CIB"},
-    {"name": "Housing And Development Bank"               , "code":  "HDB"},
-    {"name": "Banque Misr"                                , "code":  "MISR"},
-    {"name": "Arab African International Bank"            , "code":  "AAIB"},
-    {"name": "Egyptian Arab Land Bank"                    , "code":  "EALB"},
-    {"name": "Export Development Bank of Egypt"           , "code":  "EDBE"},
-    {"name": "Faisal Islamic Bank of Egypt"               , "code":  "FAIB"},
-    {"name": "Blom Bank"                                  , "code":  "BLOM"},
-    {"name": "Abu Dhabi Commercial Bank – Egypt"          , "code":  "ADCB"},
-    {"name": "Alex Bank Egypt"                            , "code":  "BOA"},
-    {"name": "Societe Arabe Internationale De Banque"     , "code":  "SAIB"},
-    {"name": "National Bank of Egypt"                     , "code":  "NBE"},
-    {"name": "Al Baraka Bank Egypt B.S.C."                , "code":  "ABRK"},
-    {"name": "Egypt Post"                                 , "code":  "POST"},
-    {"name": "Nasser Social Bank"                         , "code":  "NSB"},
-    {"name": "Industrial Development Bank"                , "code":  "IDB"},
-    {"name": "Suez Canal Bank"                            , "code":  "SCB"},
-    {"name": "Mashreq Bank"                               , "code":  "MASH"},
-    {"name": "Arab Investment Bank"                       , "code":  "AIB"},
-    {"name": "Audi Bank"                                  , "code":  "AUDI"},
-    {"name": "General Authority For Supply Commodities"   , "code":  "GASC"},
-    {"name": "National Bank of Egypt - EGPA"              , "code":  "EGPA"},
-    {"name": "Arab International Bank"                    , "code":  "ARIB"},
-    {"name": "Agricultural Bank of Egypt"                 , "code":  "PDAC"},
-    {"name": "National Bank of Greece"                    , "code":  "NBG"},
-    {"name": "Central Bank Of Egypt"                      , "code":  "CBE"}
+    {'name': 'Ahli United Bank'                           , 'code':  'AUB' },
+    {'name': 'Citi Bank N.A. Egypt'                       , 'code':  'CITI'},
+    {'name': 'MIDBANK'                                    , 'code':  'MIDB'},
+    {'name': 'Banque Du Caire'                            , 'code':  'BDC' },
+    {'name': 'HSBC Bank Egypt S.A.E'                      , 'code':  'HSBC'},
+    {'name': 'Credit Agricole Egypt S.A.E'                , 'code':  'CAE' },
+    {'name': 'Egyptian Gulf Bank'                         , 'code':  'EGB' },
+    {'name': 'The United Bank'                            , 'code':  'UB'  },
+    {'name': 'Qatar National Bank Alahli'                 , 'code':  'QNB' },
+    {'name': 'Central Bank Of Egypt'                      , 'code':  'BBE' },
+    {'name': 'Arab Bank PLC'                              , 'code':  'ARAB'},
+    {'name': 'Emirates National Bank of Dubai'            , 'code':  'ENBD'},
+    {'name': 'Al Ahli Bank of Kuwait – Egypt'             , 'code':  'ABK' },
+    {'name': 'National Bank of Kuwait – Egypt'            , 'code':  'NBK' },
+    {'name': 'Arab Banking Corporation - Egypt S.A.E'     , 'code':  'ABC' },
+    {'name': 'First Abu Dhabi Bank'                       , 'code':  'FAB' },
+    {'name': 'Abu Dhabi Islamic Bank – Egypt'             , 'code':  'ADIB'},
+    {'name': 'Commercial International Bank - Egypt S.A.E', 'code':  'CIB' },
+    {'name': 'Housing And Development Bank'               , 'code':  'HDB' },
+    {'name': 'Banque Misr'                                , 'code':  'MISR'},
+    {'name': 'Arab African International Bank'            , 'code':  'AAIB'},
+    {'name': 'Egyptian Arab Land Bank'                    , 'code':  'EALB'},
+    {'name': 'Export Development Bank of Egypt'           , 'code':  'EDBE'},
+    {'name': 'Faisal Islamic Bank of Egypt'               , 'code':  'FAIB'},
+    {'name': 'Blom Bank'                                  , 'code':  'BLOM'},
+    {'name': 'Abu Dhabi Commercial Bank – Egypt'          , 'code':  'ADCB'},
+    {'name': 'Alex Bank Egypt'                            , 'code':  'BOA' },
+    {'name': 'Societe Arabe Internationale De Banque'     , 'code':  'SAIB'},
+    {'name': 'National Bank of Egypt'                     , 'code':  'NBE' },
+    {'name': 'Al Baraka Bank Egypt B.S.C'                 , 'code':  'ABRK'},
+    {'name': 'Egypt Post'                                 , 'code':  'POST'},
+    {'name': 'Nasser Social Bank'                         , 'code':  'NSB' },
+    {'name': 'Industrial Development Bank'                , 'code':  'IDB' },
+    {'name': 'Suez Canal Bank'                            , 'code':  'SCB' },
+    {'name': 'Mashreq Bank'                               , 'code':  'MASH'},
+    {'name': 'Arab Investment Bank'                       , 'code':  'AIB' },
+    {'name': 'Audi Bank'                                  , 'code':  'AUDI'},
+    {'name': 'General Authority For Supply Commodities'   , 'code':  'GASC'},
+    {'name': 'National Bank of Egypt - EGPA'              , 'code':  'EGPA'},
+    {'name': 'Arab International Bank'                    , 'code':  'ARIB'},
+    {'name': 'Agricultural Bank of Egypt'                 , 'code':  'PDAC'},
+    {'name': 'National Bank of Greece'                    , 'code':  'NBG' },
+    {'name': 'Central Bank Of Egypt'                      , 'code':  'CBE' }
   ]
 
 ERROR_CODES_MESSAGES = {
@@ -231,12 +237,7 @@ def determine_trx_category_and_purpose(transaction_type):
             "category_code": "CASH",
             "purpose": "SALA"
         }
-    elif transaction_type.upper() == "PENSION":
-        category_purpose_dict = {
-            "category_code": "PENS",
-            "purpose": "PENS"
-        }
-    elif transaction_type.upper() == "PREPAID":
+    elif transaction_type.upper() == "PREPAID_CARD":
         category_purpose_dict = {
             "category_code": "PCRD",
             "purpose": "CASH"
@@ -259,10 +260,8 @@ def determine_transaction_type(category_code, purpose):
     """Determine transaction type based on transaction category code and purpose"""
     if category_code == 'CASH' and purpose == 'SALA':
         return 'salary'
-    elif category_code == 'PENS' and purpose == 'PENS':
-        return 'pension'
     elif category_code == 'PCRD' and purpose == 'CASH':
-        return 'prepaid'
+        return 'prepaid_card'
     elif category_code == 'CASH' and purpose == 'CCRD':
         return 'credit_card'
     else:

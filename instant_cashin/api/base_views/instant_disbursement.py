@@ -86,12 +86,7 @@ class InstantDisbursementAPIView(views.APIView):
                 "category_code": "CASH",
                 "purpose": "SALA"
             }
-        elif transaction_type.upper() == "PENSION":
-            category_purpose_dict = {
-                "category_code": "PENS",
-                "purpose": "PENS"
-            }
-        elif transaction_type.upper() == "PREPAID":
+        elif transaction_type.upper() == "PREPAID_CARD":
             category_purpose_dict = {
                 "category_code": "PCRD",
                 "purpose": "CASH"

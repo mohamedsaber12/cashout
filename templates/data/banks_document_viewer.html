@@ -439,8 +439,8 @@
           type: "POST",
           url: url,
           success: function (result, xhr, message) {
-            elem = `<div class="alert alert-info pull-{{'left'|invert_dir:LANGUAGE_CODE}}" role="alert">
-                        {% trans 'Checkers Notified' %}
+            elem = `<div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
+                        {% trans 'Checkers Notified' %} <span class="glyphicon glyphicon-ok"></span>
                     </div>`
             btn.replaceWith(elem)
           },
@@ -490,7 +490,7 @@
           let creditor_name = $(this).data('creditor_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${creditor_name}</li>`;
           let creditor_bank = $(this).data('creditor_bank');
-          appendedTags += `<li><span>Bank Code</span><b>:</b>${creditor_bank}</li>`;
+          appendedTags += `<li><span>Bank Swift Code</span><b>:</b>${creditor_bank}</li>`;
           let bank_name = $(this).data('bank_name');
           appendedTags += `<li><span>Bank Name</span><b>:</b>${bank_name}</li>`;
           let type = $(this).data('type');

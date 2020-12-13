@@ -119,7 +119,7 @@
           let creditor_account_number = $(this).data('creditor_account_number');
           appendedTags += `<li><span>Recipient</span><b>:</b>${creditor_account_number}</li>`;
           let creditor_name = $(this).data('creditor_name');
-          appendedTags += `<li><span>Recipient Name</span><b>:</b>${creditor_name}</li>`;
+          appendedTags += `<li><span>Full Name</span><b>:</b>${creditor_name}</li>`;
         {% else %}
           let anon_recipient = $(this).data('anon_recipient');
           appendedTags += `<li><span>Recipient</span><b>:</b>${anon_recipient}</li>`;
@@ -127,7 +127,7 @@
 
           if (['Orange', 'Bank Wallet'].includes(issuer_type)) {
             let recipient_name = $(this).data('recipient_name');
-            appendedTags += `<li><span>Recipient Name</span><b>:</b>${recipient_name}</li>`;
+            appendedTags += `<li><span>Full Name</span><b>:</b>${recipient_name}</li>`;
           }
         {% endif %}
         let amount = $(this).data('amount');
@@ -141,9 +141,9 @@
 
         {% if bank_transactions %}
           let creditor_bank_code = $(this).data('creditor_bank_code');
-          appendedTags += `<li><span>Recipient Bank Code</span><b>:</b>${creditor_bank_code}</li>`;
+          appendedTags += `<li><span>Bank Swift Code</span><b>:</b>${creditor_bank_code}</li>`;
           let creditor_bank_name = $(this).data('creditor_bank_name');
-          appendedTags += `<li><span>Recipient Bank Name</span><b>:</b>${creditor_bank_name}</li>`;
+          appendedTags += `<li><span>Bank Name</span><b>:</b>${creditor_bank_name}</li>`;
           let transaction_type = $(this).data('transaction_type');
           appendedTags += `<li><span>Transaction Type</span><b>:</b>${transaction_type}</li>`;
         {% else %}

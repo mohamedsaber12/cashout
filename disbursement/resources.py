@@ -107,7 +107,7 @@ class DisbursementDataResourceForBankCards(resources.ModelResource):
 
     def get_export_headers(self):
         return [
-            'Account Number', 'Amount', 'Full Name', 'Bank Code', 'Transaction Type',
+            'Account Number', 'Amount', 'Full Name', 'Bank Swift Code', 'Transaction Type',
             'Disbursement Status', 'Disbursement Status Code', 'Disbursement Status Description'
         ]
 

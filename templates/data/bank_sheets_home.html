@@ -112,7 +112,7 @@
     })
 
     $("#bank_codes_btn").click(function () {
-      var bank_codes_desc_header = '<span class="glyphicon glyphicon-list-alt"></span> {% trans "Bank Codes" %}'
+      var bank_codes_desc_header = '<span class="glyphicon glyphicon-list-alt"></span> {% trans "Banks Swift Codes" %}'
       $("#description_header").html(bank_codes_desc_header);
       transaction_types_list_group.hide();
       bank_codes_list_group.show();
@@ -121,7 +121,7 @@
     });
 
     $("#transaction_types_btn").click(function () {
-      var transaction_type_desc_header = '<span class="glyphicon glyphicon-list-alt"></span> {% trans "Transaction Types" %}'
+      var transaction_type_desc_header = '<span class="glyphicon glyphicon-list-alt"></span> {% trans "Transactions Types" %}'
       $("#description_header").html(transaction_type_desc_header);
       bank_codes_list_group.hide();
       transaction_types_list_group.show();

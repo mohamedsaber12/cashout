@@ -34,7 +34,7 @@
       width: 120px;
     }
     #trxDetailsDataRight > li > span{
-      width: 80px;
+      width: 120px;
     }
   </style>
 {% endblock %}
@@ -72,8 +72,8 @@
                 <thead>
                   <tr>
                     <th>{% trans 'Transaction ID' %}</th>
-                    <th>{% trans 'Account number' %}</th>
-                    <th>{% trans 'Bank code' %}</th>
+                    <th>{% trans 'Account Number' %}</th>
+                    <th>{% trans 'Bank Swift Code' %}</th>
                     <th>{% trans 'Amount' %}</th>
                     <th>{% trans 'Status' %}</th>
                     <th>{% trans 'Updated At' %}</th>
@@ -85,6 +85,7 @@
                     <tr data-href="#"
                         data-id="{{ transaction.parent_transaction.transaction_id }}"
                         data-creditor_account_number="{{ transaction.creditor_account_number }}"
+                        data-creditor_name="{{ transaction.creditor_name }}"
                         data-creditor_bank="{{ transaction.creditor_bank }}"
                         data-bank_name="{{ transaction.creditor_bank|bank_name }}"
                         data-status_code="{{ transaction.transaction_status_code }}"
@@ -325,44 +326,44 @@
         let ulRight = $('#trxDetailsDataRight');
         let ulLast = $('#trxDetailsDataLast');
         let appendedTags = '';
+        let appendedTagsRight = '';
+        let appendedTagsBottom = '';
 
         let trx_id = $(this).data('id')
         appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
         let creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
-        let creditor_bank = $(this).data('creditor_bank');
-        appendedTags += `<li><span>Bank code</span><b>:</b>${creditor_bank}</li>`;
-        let bank_name = $(this).data('bank_name');
-        appendedTags += `<li><span>Bank name</span><b>:</b>${bank_name}</li>`;
-        let transaction_type = $(this).data('transaction_type');
-        appendedTags += `<li><span>Transaction type</span><b>:</b>${transaction_type}</li>`;
-
-        ul.empty();
-        ul.append(appendedTags);
-        appendedTags = '';
-
-        let checker = $(this).data('checker');
-        appendedTags += `<li><span>Checker</span><b>:</b>${checker}</li>`;
+        appendedTags += `<li><span>Account Number</span><b>:</b>${creditor_account_number}</li>`;
+        let creditor_name = $(this).data('creditor_name');
+        appendedTags += `<li><span>Full Name</span><b>:</b>${creditor_name}</li>`;
         let amount = $(this).data('amount');
         appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
         let status = $(this).data('status');
         appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
-        let created_at = $(this).data('created_at');
-        appendedTags += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
-        let updated_at = $(this).data('updated_at');
-        appendedTags += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
 
-        ulRight.empty();
-        ulRight.append(appendedTags);
-        appendedTags = '';
+        let creditor_bank = $(this).data('creditor_bank');
+        appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${creditor_bank}</li>`;
+        let bank_name = $(this).data('bank_name');
+        appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${bank_name}</li>`;
+        let transaction_type = $(this).data('transaction_type');
+        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${transaction_type}</li>`;
+        let checker = $(this).data('checker');
+        appendedTagsRight += `<li><span>Checker</span><b>:</b>${checker}</li>`;
+        let created_at = $(this).data('created_at');
+        appendedTagsRight += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+        let updated_at = $(this).data('updated_at');
+        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
 
         let status_code = $(this).data('status_code');
-        appendedTags += `<li><span>Status code</span><b>:</b>${status_code}</li>`;
+        appendedTagsBottom += `<li><span>Status Code</span><b>:</b>${status_code}</li>`;
         let status_description = $(this).data('status_description');
-        appendedTags += `<li><span>Status description</span><b>:</b>${status_description}</li>`;
+        appendedTagsBottom += `<li><span>Status Description</span><b>:</b>${status_description}</li>`;
 
+        ul.empty();
+        ul.append(appendedTags);
+        ulRight.empty();
+        ulRight.append(appendedTagsRight);
         ulLast.empty();
-        ulLast.append(appendedTags);
+        ulLast.append(appendedTagsBottom);
 
         $("#trxDetails").slideDown();
         $('html,body').animate({

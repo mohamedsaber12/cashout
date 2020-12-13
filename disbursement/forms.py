@@ -286,7 +286,7 @@ class SingleStepTransactionModelForm(forms.ModelForm):
         creditor_bank = self.cleaned_data.get('creditor_bank', None)
 
         if not creditor_bank or str(creditor_bank).upper() not in VALID_BANK_CODES_LIST:
-            raise forms.ValidationError(_('Invalid bank code'))
+            raise forms.ValidationError(_('Invalid bank swift code'))
 
         return creditor_bank
 

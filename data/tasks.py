@@ -11,10 +11,10 @@ from datetime import datetime
 
 from celery import Task
 from dateutil.parser import parse
+import pandas as pd
 import requests
 import tablib
 import xlrd
-import pandas as pd
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -23,9 +23,9 @@ from django.utils.translation import gettext as _
 
 from core.utils.validations import phonenumber_form_validate
 from disbursement.models import BankTransaction, DisbursementData
-from disbursement.resources import (DisbursementDataResourceForEWallets,
-                                    DisbursementDataResourceForBankCards,
-                                    DisbursementDataResourceForBankWallet)
+from disbursement.resources import (DisbursementDataResourceForBankCards,
+                                    DisbursementDataResourceForBankWallet,
+                                    DisbursementDataResourceForEWallets)
 from disbursement.utils import (VALID_BANK_CODES_LIST,
                                 VALID_BANK_TRANSACTION_TYPES_LIST,
                                 determine_trx_category_and_purpose)
@@ -120,7 +120,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
             headers = ["mobile number", "amount", "full name", "errors"]
         else:
             sheet_data = list(zip(numbers_list, amount_list, names_list, codes_list, purposes_list, errors_list))
-            headers = ["account number", "amount", "full name", "bank code", "transaction type", "errors"]
+            headers = ["account number", "amount", "full name", "bank swift code", "transaction type", "errors"]
 
         filename = f"failed_validations_{randomword(4)}.xlsx"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
@@ -254,13 +254,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     else:
                         errors_list[index] = "\nInvalid name"
 
-                # 4. Validate bank codes
+                # 4. Validate banks swift codes
                 codes_list.append(record[4])
                 if not record[4] or str(record[4]).upper() not in VALID_BANK_CODES_LIST:
                     if errors_list[index]:
-                        errors_list[index] = "Invalid bank code"
+                        errors_list[index] = "Invalid bank swift code"
                     else:
-                        errors_list[index] = "\nInvalid bank code"
+                        errors_list[index] = "\nInvalid bank swift code"
 
                 # 5. Validate transaction purpose
                 purposes_list.append(record[5])
@@ -343,7 +343,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
             # 1.2 For bank cards: Check if all records has no empty values
             elif doc_obj.is_bank_card:
                 if not (rows_count["account number"] == rows_count["amount"] ==
-                        rows_count["full name"] == rows_count["bank code"] == rows_count["transaction type"]):
+                        rows_count["full name"] == rows_count["bank swift code"] == rows_count["transaction type"]):
                     self.end_with_failure(doc_obj, MSG_WRONG_FILE_FORMAT)
                     return False
                 accounts_list, amounts_list, names_list, codes_list, purposes_list, errors_list, total_amount = \

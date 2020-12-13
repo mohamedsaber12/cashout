@@ -208,7 +208,7 @@ class BankTransactionsChannel:
             #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
             # )
         elif response_code == "8002":
-            bank_trx_obj.mark_failed(response_code, _("Invalid bank code"))
+            bank_trx_obj.mark_failed(response_code, _("Invalid bank swift code"))
         elif response_code == "8011":
             bank_trx_obj.mark_failed(response_code, _("Invalid bank transaction type"))
         elif response_code in ["8001", "8003", "8004", "8005", "8006", "8007", "8008", "8888"]:

@@ -63,6 +63,7 @@
                 <th>{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Wallet Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                <th>{% trans 'Issuer' %}</th>
                 <th>{% trans 'Status' %}</th>
               </tr>
               </thead>
@@ -72,6 +73,7 @@
                     data-anon_recipient="{{ transaction.anon_recipient }}"
                     data-amount="{{ transaction.amount }}"
                     data-recipient_name="{{ transaction.recipient_name }}"
+                    data-issuer="{{ transaction.issuer_choice_verbose }}"
                     data-status="{{ transaction.status_choice_verbose }}"
                     data-transaction_status_code="{{ transaction.transaction_status_code }}"
                     data-transaction_status_description="{{ transaction.transaction_status_description }}"
@@ -82,6 +84,7 @@
                   <td>{{ transaction.uid }}</td>
                   <td>{{ transaction.anon_recipient }}</td>
                   <td>{{ transaction.amount }}</td>
+                  <td>{{ transaction.issuer_choice_verbose }}</td>
                   <td>{{ transaction.status_choice_verbose }}</td>
                 </tr>
               {% endfor %}
@@ -297,6 +300,8 @@
           appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
           let recipient_name = $(this).data('recipient_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${recipient_name}</li>`;
+          let issuer = $(this).data('issuer');
+          appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
           let status = $(this).data('status');
           appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
 

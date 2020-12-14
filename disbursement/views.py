@@ -627,7 +627,7 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
         """Generate bank wallets sample data frame"""
         filename = 'bank_wallets_sample_file.xlsx'
         fake = fake_factory.create()
-        bank_wallets_headers = ['mobile number', 'amount', 'full name']
+        bank_wallets_headers = ['mobile number', 'amount', 'full name', 'issuer']
         bank_wallets_sample_records = []
 
         for _ in range(9):
@@ -635,7 +635,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             msisdn = f"{fake.numerify(text=msisdn_carrier)}"
             amount = round(random.random() * 1000, 2)
             full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
-            bank_wallets_sample_records.append([msisdn, amount, full_name])
+            issuer = random.choice(['orange', 'bank_wallet'])
+            bank_wallets_sample_records.append([msisdn, amount, full_name, issuer])
 
         bank_wallets_df = pd.DataFrame(bank_wallets_sample_records, columns=bank_wallets_headers)
         return filename, bank_wallets_df

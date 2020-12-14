@@ -112,12 +112,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
                                        numbers_list,
                                        amount_list,
                                        names_list,
+                                       issuers_list=None,
                                        codes_list=None,
                                        purposes_list=None,
                                        errors_list=None):
         if doc_obj.is_bank_wallet:
-            sheet_data = list(zip(numbers_list, amount_list, names_list, errors_list))
-            headers = ["mobile number", "amount", "full name", "errors"]
+            sheet_data = list(zip(numbers_list, amount_list, names_list, issuers_list, errors_list))
+            headers = ["mobile number", "amount", "full name", "issuer", "errors"]
         else:
             sheet_data = list(zip(numbers_list, amount_list, names_list, codes_list, purposes_list, errors_list))
             headers = ["account number", "amount", "full name", "bank swift code", "transaction type", "errors"]
@@ -139,33 +140,14 @@ class BankWalletsAndCardsSheetProcessor(Task):
         :return: msisdn_list, amount_list, names_list, errors_list, total_amount
         """
         total_amount = 0
-        msisdns_list, amounts_list, names_list, errors_list = [], [], [], []
+        msisdns_list, amounts_list, names_list, issuers_list, errors_list = [], [], [], [], []
 
         try:
             for record in df.itertuples():
                 index = record[0]
                 errors_list.append(None)
 
-                # 1. Validate amounts
-                if self.amount_is_valid_digit(record[2]) and float(record[2]) >= 1.0:
-                    amounts_list.append(round(Decimal(record[2]), 2))
-                    total_amount += round(Decimal(record[2]), 2)
-                else:
-                    if errors_list[index]:
-                        errors_list[index] = "Invalid amount"
-                    else:
-                        errors_list[index] = "\nInvalid amount"
-                    amounts_list.append(record[2])
-
-                # 2. Validate for empty names
-                names_list.append(record[3])
-                if not record[3]:
-                    if errors_list[index]:
-                        errors_list[index] = "Invalid name"
-                    else:
-                        errors_list[index] = "\nInvalid name"
-
-                # 3. Validate msisdns
+                # 1. Validate msisdns
                 msisdn = str(record[1])
                 valid_msisdn = False
                 try:
@@ -196,10 +178,39 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "Duplicate mobile number"
                     else:
                         errors_list[index] = "\nDuplicate mobile number"
-        except:
-            pass
-        finally:
-            return msisdns_list, amounts_list, names_list, errors_list, total_amount
+
+                # 2. Validate amounts
+                if self.amount_is_valid_digit(record[2]) and float(record[2]) >= 1.0:
+                    amounts_list.append(round(Decimal(record[2]), 2))
+                    total_amount += round(Decimal(record[2]), 2)
+                else:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid amount"
+                    else:
+                        errors_list[index] = "\nInvalid amount"
+                    amounts_list.append(record[2])
+
+                # 3. Validate for empty names
+                names_list.append(record[3])
+                if not record[3]:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid name"
+                    else:
+                        errors_list[index] = "\nInvalid name"
+
+                # 4. Validate issuer
+                issuer = str(record[4])
+                issuers_list.append(issuer)
+                if not issuer or issuer.lower() not in ["orange", "bank_wallet"]:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid issuer option"
+                    else:
+                        errors_list[index] = "\nInvalid issuer option"
+
+        except Exception as e:
+            raise Exception(e)
+        print("ERRORS LIST: ", errors_list)
+        return msisdns_list, amounts_list, names_list, issuers_list, errors_list, total_amount
 
     def process_and_validate_cards_records(self, df):
         """
@@ -279,17 +290,19 @@ class BankWalletsAndCardsSheetProcessor(Task):
                                      amounts_list,
                                      names_list,
                                      recipients_list,
+                                     issuers_list=None,
                                      codes_list=None,
                                      purposes_list=None):
         """"""
 
         # 1 For bank wallets/Orange: Save the refined data as instant transactions records
         if doc_obj.is_bank_wallet:
-            processed_data = zip(amounts_list, names_list, recipients_list)
+            processed_data = zip(amounts_list, names_list, recipients_list, issuers_list)
             objs = [
                 InstantTransaction(
                         document=doc_obj,
-                        issuer_type=AbstractBaseIssuer.BANK_WALLET,
+                        issuer_type=AbstractBaseIssuer.ORANGE if record[3].lower() == "orange"
+                                                                                    else AbstractBaseIssuer.BANK_WALLET,
                         amount=record[0],
                         recipient_name=record[1],
                         anon_recipient=record[2]
@@ -334,10 +347,11 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
             # 1.1 For bank wallets: Check if all records has no empty values
             if doc_obj.is_bank_wallet:
-                if not (rows_count["mobile number"] == rows_count["amount"] == rows_count["full name"]):
+                if not (rows_count["mobile number"] == rows_count["amount"] ==
+                        rows_count["full name"] == rows_count["issuer"]):
                     self.end_with_failure(doc_obj, MSG_WRONG_FILE_FORMAT)
                     return False
-                msisdn_list, amounts_list, names_list, errors_list, total_amount = \
+                msisdn_list, amounts_list, names_list, issuers_list, errors_list, total_amount = \
                     self.process_and_validate_wallets_records(df)
 
             # 1.2 For bank cards: Check if all records has no empty values
@@ -361,11 +375,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
             elif len([value for value in errors_list if value]) > 0:
                 if doc_obj.is_bank_wallet:
                     self.end_with_failure_sheet_details(
-                            doc_obj, msisdn_list, amounts_list, names_list, errors_list=errors_list
+                            doc_obj, msisdn_list, amounts_list, names_list, issuers_list=issuers_list,
+                            errors_list=errors_list
                     )
                 elif doc_obj.is_bank_card:
                     self.end_with_failure_sheet_details(
-                            doc_obj, accounts_list, amounts_list, names_list, codes_list, purposes_list, errors_list
+                            doc_obj, accounts_list, amounts_list, names_list, codes_list=codes_list,
+                            purposes_list=purposes_list, errors_list=errors_list
                     )
                 return False
 
@@ -381,12 +397,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
             # 6.1 For bank wallets/Orange: Save the refined data as instant transactions records
             if doc_obj.is_bank_wallet:
-                self.save_processed_records_to_db(doc_obj, amounts_list, names_list, msisdn_list)
+                self.save_processed_records_to_db(doc_obj, amounts_list, names_list, msisdn_list, issuers_list)
 
             # 6.2 For bank cards: Save the refined data as bank transactions records
             elif doc_obj.is_bank_card:
                 self.save_processed_records_to_db(
-                        doc_obj, amounts_list, names_list, accounts_list, codes_list, purposes_list
+                        doc_obj, amounts_list, names_list, accounts_list, codes_list=codes_list,
+                        purposes_list=purposes_list
                 )
 
             # 7. Change doc status to processed successfully and notify makers that doc passed validations

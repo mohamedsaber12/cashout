@@ -237,6 +237,7 @@
                 <th>{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Wallet number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                <th>{% trans 'Issuer' %}</th>
                 </thead>
                 <tbody>
                 {% for trx  in doc_transactions %}
@@ -244,12 +245,14 @@
                       data-anon_recipient="{{ trx.anon_recipient }}"
                       data-amount="{{ trx.amount }}"
                       data-recipient_name="{{ trx.recipient_name }}"
+                      data-issuer="{{ trx.issuer_choice_verbose }}"
                       data-doc_maker="{{ doc.owner }}"
                       data-doc_id="{{ doc.id }}"
                       class="row-hover">
                     <td>{{ trx.uid }}</td>
                     <td>{{ trx.anon_recipient }}</td>
                     <td>{{ trx.amount }}</td>
+                    <td>{{ trx.issuer_choice_verbose }}</td>
                   </tr>
                 {% endfor %}
                 </tbody>
@@ -466,7 +469,6 @@
         $(this).addClass('selected');
         let ul = $('#trxDetailsData');
         let ulRight = $('#trxDetailsDataRight');
-        let ulLast = $('#trxDetailsDataLast');
         let appendedTags = '';
 
         {% if doc.is_bank_wallet %}
@@ -478,6 +480,8 @@
           appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
           let recipient_name = $(this).data('recipient_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${recipient_name}</li>`;
+          let issuer = $(this).data('issuer');
+          appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
 
         {% else %}
 

@@ -10,7 +10,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractBaseStatus
-from disbursement.models import DisbursementDocData
+from disbursement.models import DisbursementDocData, BankTransaction
 from users.models import CheckerUser
 from utilities.models import AbstractBaseDocType
 
@@ -163,8 +163,15 @@ class Doc(AbstractBaseDocType):
 
         # 2. Calculate the success disbursement ratio of bank wallets/cards docs
         elif self.is_bank_wallet or self.is_bank_card:
-            doc_transactions = self.bank_wallets_transactions.all() \
-                if self.is_bank_wallet else self.bank_cards_transactions.all()
+            if self.is_bank_wallet:
+                doc_transactions = self.bank_wallets_transactions.all()
+            else:
+                bank_trx_ids = BankTransaction.objects.filter(document=self). \
+                    order_by("parent_transaction__transaction_id", "-id"). \
+                    distinct("parent_transaction__transaction_id"). \
+                    values_list("id", flat=True)
+                doc_transactions = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+
             doc_transactions_count = doc_transactions.count()
             if doc_transactions_count == 0:
                 return 0

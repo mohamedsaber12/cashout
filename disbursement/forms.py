@@ -226,7 +226,7 @@ class SingleStepTransactionModelForm(forms.ModelForm):
             'name': 'accountNumber', 'placeholder': 'Enter account number'
         })
         self.fields['amount'].widget.attrs.update({
-            'class': 'form-control', 'id': 'trxAmount', 'min': 30,
+            'class': 'form-control', 'id': 'trxAmount', 'min': 1,
             'name': 'trxAmount', 'placeholder': 'Enter transaction amount'
         })
         self.fields['creditor_name'].widget.attrs.update({
@@ -267,7 +267,7 @@ class SingleStepTransactionModelForm(forms.ModelForm):
     def clean_amount(self):
         amount = self.cleaned_data.get('amount', None)
 
-        if not amount or not (str(amount).replace('.', '', 1).isdigit() and Decimal(amount) >= 30):
+        if not amount or not (str(amount).replace('.', '', 1).isdigit() and Decimal(amount) >= 1):
             raise forms.ValidationError(_('Invalid amount'))
         if Decimal(self.checker_user.level.max_amount_can_be_disbursed) < amount:
             raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))

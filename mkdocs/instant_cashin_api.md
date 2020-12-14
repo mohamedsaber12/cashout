@@ -23,25 +23,33 @@
 ### Request
 1. **Request Parameters**
 
-    |  Field                  |   M/O/C  |    Type    |    Notes                                     |
-    |-------	              |------    |--------    |---------                                     |
-    | issuer                  |   M      |   String   |  the channel to disburse the e-money through |
-    | amount                  |   M      |   Float    |                                              |
-    | msisdn                  |   C      |   String   |  vodafone/etisalat/orange/aman/bank wallets  |
-    | bank_card_number        |   C      |   String   |  bank cards only                             |
-    | bank_transaction_type   |   C      |   String   |  bank cards only                             |
-    | bank_code               |   C      |   String   |  bank cards only                             |
-    | full_name               |   C      |   String   |  bank cards/bank wallets/Orange only         |
-    | first_name              |   C      |   String   |  aman only                                   |
-    | last_name               |   C      |   String   |  aman only                                   |
-    | email                   |   C      |   String   |  aman only                                   |
+    |  Field                  |   M/O/C  |    Type    |    Notes                                       |
+    |-------	              |------    |--------    |---------                                       |
+    | issuer                  |   M      |   String   |  the channel to disburse the e-money through   |
+    | amount                  |   M      |   Float    |                                                |
+    | msisdn                  |   C      |   String   |  vodafone/etisalat/orange/aman/bank wallets    |
+    | bank_card_number        |   C      |   String   |  bank accounts/cards only                      |
+    | bank_transaction_type   |   C      |   String   |  bank accounts/cards only                      |
+    | bank_code               |   C      |   String   |  bank accounts/cards only                      |
+    | full_name               |   C      |   String   |  bank accounts, cards/bank wallets/Orange only |
+    | first_name              |   C      |   String   |  aman only                                     |
+    | last_name               |   C      |   String   |  aman only                                     |
+    | email                   |   C      |   String   |  aman only                                     |
 
     * **Usage:** 
         * **{issuer}** options list: [vodafone, etisalat, orange, aman, bank_wallet, bank_card] -case insensitive-.
         * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
-        * **{msisdn}**: the +2 added automatically so it consists of 11 numbers, ex: 01020304050
-        * **{bank_card_number}**: consists of 16 numbers with dashes - between every 4 numbers or not, ex #1: 1111222233334444 or ex #2: 1111-2222-3333-4444
-        * **{bank_transaction_type}** options list: [cash_transfer, salary, prepaid_card, credit_card] -case insensitive-.
+        * **{msisdn}**: the +2 added automatically, so it consists of 11 numbers, ex: 01020304050
+        * **{bank_card_number}**: expected: [bank account number, IBAN, card number]
+        * **{bank_transaction_type}** options list: [salary, credit_card, prepaid_card, cash_transfer] -case insensitive-.
+
+             |  Description                                |   Type           |
+             |-------	                                   |------            |
+             |  For concurrent or repeated payments        |   salary         |
+             |  For credit cards payments                  |   credit_card    |
+             |  For prepaid cards and Meeza cards payments |   prepaid_card   |
+             |  For bank accounts, debit cards etc.        |   cash_transfer  |
+
         * **aman** cases, after every successful disbursement user will be notified at his/her email with
             the reference number of his/her transaction.
         * **{bank_code}**: the banks list and their corresponding codes -case sensitive-.

@@ -1,0 +1,97 @@
+<script>
+/*
+    Important Note: this script use trx object so plz do not use it in any component
+    that don't have trx object
+*/
+  $(document).ready(function () {
+    $('#generate-pdf').click(function () {
+      let div = document.createElement('div');
+      div.classList.add("container");
+      div.classList.add("container-pdf");
+      let htmlForPdf = "<div class='bulk_info_title'>Bulk Information</div>";
+      htmlForPdf += "<div class='payment_info_title'>Payment Information</div>";
+      if(trx.transaction_status_description === 'None') {
+        htmlForPdf += "<div class='debtor_info_title' style='top: 325px;'>Debtor Information</div>";
+        htmlForPdf += "<div class='creditor_info_title' style='top: 470px;'>Creditor Information</div>";
+      } else {
+        htmlForPdf += "<div class='debtor_info_title'>Debtor Information</div>";
+        htmlForPdf += "<div class='creditor_info_title'>Creditor Information</div>";
+      }
+      htmlForPdf += "<div class='row' style='margin-bottom: 30px;'>";
+      htmlForPdf += "<div id='imgContainer' class='col-md-4 col-sm-4 col-xs-4'>";
+      htmlForPdf += "<img src=' data:image/png;base64,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' width='200'>";
+      htmlForPdf += "</div>";
+      htmlForPdf += "<div class='col-md-4 col-sm-4 col-xs-4'>";
+      htmlForPdf += "<h3 style='color:#000;'>Transaction Report</h3>";
+      htmlForPdf += "</div>";
+      htmlForPdf += "<div class='col-md-4 col-sm-4 col-xs-4'>";
+      htmlForPdf += "</div></div>";
+
+      htmlForPdf += "<div class='row info_set' style='margin-bottom: 30px;'>";
+      htmlForPdf += "<div style='margin-top: 25px;padding-right: 0;padding-left: 0;' class='col-md-6 col-sm-6 col-xs-6'>";
+      htmlForPdf += "<ul class='ulright'>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Bulk ID</span><b>:</b> ";
+      {% if doc_obj %}
+        htmlForPdf += "{{doc_obj.id}}</li>";
+      {% else %}
+        htmlForPdf += trx.id+"</li>";
+      {% endif %}
+      htmlForPdf += "<li class='padding-left'><span>Currency</span><b>:</b> EGP</li></ul></div>";
+      htmlForPdf += "<div style='margin-top: 25px;padding-right: 0;padding-left: 0;' class='col-md-6 col-sm-6 col-xs-6'>";
+      htmlForPdf += "<ul class='ulleft'>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Sending Date</span><b>:</b>"+trx.created_at+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Last Update Date</span><b>:</b>"+trx.updated_at;
+      htmlForPdf += "</li></ul></div></div>";
+
+      htmlForPdf += "<div class='row info_set payment_info' style='margin-bottom: 30px;'>";
+      htmlForPdf += "<div style='margin-top: 25px;padding-right: 0;padding-left: 0;' class='col-md-8 col-sm-8 col-xs-8'>";
+      htmlForPdf += "<ul class='ulright'>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Transaction ID</span><b>:</b> "+trx.id+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Transaction Status</span><b>:</b> "+trx.status+"</li></ul>";
+      htmlForPdf += "</div>";
+      htmlForPdf += "<div style='margin-top: 25px;padding-right: 0;padding-left: 0;' class='col-md-4 col-sm-4 col-xs-4'>";
+      htmlForPdf += "<ul class='ulleft'>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Amount</span><b>:</b> "+trx.amount+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Transaction Type</span><b>:</b> "+trx.type+"</li></ul></div>";
+      htmlForPdf += "<div style='padding-right: 0;padding-left: 0;'";
+      htmlForPdf += "class='col-md-12 col-sm-12 col-xs-12'>";
+      htmlForPdf += "<ul class='full-width'>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Transaction Status Description</span><b>:</b> "+trx.transaction_status_description;
+      htmlForPdf += "</li></ul></div></div>";
+
+      htmlForPdf += "<div class='row info_set debtor_info' style='margin-bottom: 30px;'>";
+      htmlForPdf += "<div style='margin-top: 25px;padding-right: 0;padding-left: 0;'";
+      htmlForPdf += "class='col-md-12 col-sm-12 col-xs-12'>";
+      htmlForPdf += "<ul><li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Name</span><b>:</b> PAY MOB SOLUTIONS COMPANY</li>";
+      htmlForPdf += "<li class='padding-left'><span>Bank Name</span><b>:</b> Commercial International Bank - Egypt S.A.E</li>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Account Number</span><b>:</b> "+ trx.debtor_account;
+      htmlForPdf += "</li></ul></div></div>";
+
+      htmlForPdf += "<div class='row info_set debtor_info' style='margin-bottom: 10px;'>";
+      htmlForPdf += "<div style='margin-top: 25px;padding-right: 0;padding-left: 0;'";
+      htmlForPdf += "class='col-md-12 col-sm-12 col-xs-12'>";
+      htmlForPdf += "<ul><li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Name</span><b>:</b> "+trx.creditor_name+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Bank Name</span><b>:</b> "+trx.bank_name+"</li>";
+      htmlForPdf += "<li class='list-element-odd padding-left'>";
+      htmlForPdf += "<span>Account Number</span><b>:</b> "+trx.creditor_account_number+"</li>";
+      htmlForPdf += "</ul></div></div>";
+      htmlForPdf += "<div style='color:#000;'>"+ new Date(Date.now()).toString() +"</div";
+      htmlForPdf += "</div>";
+      div.innerHTML = htmlForPdf;
+
+      let opt = {
+        margin: 10,
+        filename: 'transaction_details.pdf',
+      }
+      html2pdf().from(div).set(opt).save();
+    });
+  });
+</script>

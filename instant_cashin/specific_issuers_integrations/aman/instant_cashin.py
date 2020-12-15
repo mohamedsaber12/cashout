@@ -38,7 +38,6 @@ class AmanChannel:
         self.order_registration_url = "https://accept.paymobsolutions.com/api/ecommerce/orders"
         self.payment_key_url = "https://accept.paymobsolutions.com/api/acceptance/payment_keys"
         self.pay_request_url = "https://accept.paymobsolutions.com/api/acceptance/payments/pay"
-        # self.merchant_notification_url = f"{self.request.get_host()}/paymob_notification_callback?hmac="
 
     def log_message(self, request, head, message):
         """Custom logging for aman channel"""
@@ -84,10 +83,7 @@ class AmanChannel:
             merchant_id = json_response.get('profile', False).get('id', False)
             return Response({'api_auth_token': token, 'merchant_id': merchant_id}, status=status.HTTP_201_CREATED)
         except (HTTPError, ConnectionError, Exception):
-            return Response(
-                    {'message': 'Failed to generate new auth token from Accept'},
-                    status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            raise Exception('Failed to generate new auth token from Accept')
 
     def order_registration(self, api_auth_token, merchant_id, transaction_id):
         """
@@ -110,10 +106,7 @@ class AmanChannel:
             order_id = json_response.get('id', '')
             return Response({'order_id': str(order_id)}, status=status.HTTP_201_CREATED)
         except (HTTPError, ConnectionError, Exception):
-            return Response(
-                    {'message': 'Failed to register new order on Accept'},
-                    status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            raise Exception('Failed to register new order on Accept')
 
     def obtain_payment_key(self, api_auth_token, order_id, first_name, last_name, email, phone_number, **kwargs):
         """
@@ -158,10 +151,7 @@ class AmanChannel:
             payment_token = json_response.get('token', '')
             return Response({'payment_token': payment_token}, status=status.HTTP_201_CREATED)
         except (HTTPError, ConnectionError, Exception):
-            return Response(
-                    {'message': f'Failed to obtain order {order_id} payment key'},
-                    status=status.HTTP_424_FAILED_DEPENDENCY
-            )
+            return Exception('Failed to obtain order {order_id} payment key')
 
     def make_pay_request(self, payment_token):
         """Make payment request done to accept your order"""
@@ -214,9 +204,8 @@ class AmanChannel:
                     "status_code": str(status.HTTP_504_GATEWAY_TIMEOUT),
                 }, status=status.HTTP_200_OK)
 
-        except (HTTPError, ConnectionError, Exception) as err:
-            self.log_message(self.request, f"[EXCEPTION - MAKE PAY REQUEST]", f"Exception: {err.args[0]}")
-            return Response({'message': f'Failed to make your pay request'}, status=status.HTTP_424_FAILED_DEPENDENCY)
+        except (HTTPError, ConnectionError, Exception):
+            raise Exception('Failed to make your pay request')
 
     @staticmethod
     def notify_merchant(payload):

@@ -209,15 +209,13 @@ class BankTransactionsChannel:
             # )
         elif response_code == "8002":
             bank_trx_obj.mark_failed(response_code, _("Invalid bank swift code"))
-        elif response_code == "8011":
-            bank_trx_obj.mark_failed(response_code, _("Invalid bank transaction type"))
-        elif response_code in ["8001", "8003", "8004", "8005", "8006", "8007", "8008", "8888"]:
+        elif response_code in ["8001", "8003", "8004", "8005", "8006", "8007", "8008", "8011", "8888"]:
             bank_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
         else:
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
 
         if instant_trx_obj and response_code not in ["8000", "8111"]:
-            instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INSTANT_TRX_IS_REJECTED)
+            instant_trx_obj.mark_failed("8888", INSTANT_TRX_IS_REJECTED)
 
         return bank_trx_obj, instant_trx_obj
 
@@ -250,7 +248,7 @@ class BankTransactionsChannel:
             elif response_code in TRX_RETURNED_BY_BANK_CODES + TRX_REJECTED_BY_BANK_CODES:
                 new_trx_obj.mark_failed(response_code, response_description)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_failed(response_code, INSTANT_TRX_IS_REJECTED) if instant_trx else None
+                instant_trx.mark_failed("8888", INSTANT_TRX_IS_REJECTED) if instant_trx else None
                 new_trx_obj.user_created.root.budget.return_disbursed_amount_for_cancelled_trx(new_trx_obj.amount)
             return new_trx_obj
 
@@ -277,7 +275,7 @@ class BankTransactionsChannel:
             else:
                 bank_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 if instant_trx_obj:
-                    instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, EXTERNAL_ERROR_MSG)
+                    instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                     return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
                 else:
                     return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)

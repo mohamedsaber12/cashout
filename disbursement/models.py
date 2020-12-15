@@ -155,8 +155,7 @@ class DisbursementData(AbstractTimeStamp):
     reference_id = models.CharField(
             _('Reference ID'),
             max_length=30,
-            default='None',
-            null=False
+            default='None'
     )
     aman_obj = GenericRelation(
             "instant_cashin.AmanTransaction",

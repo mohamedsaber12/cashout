@@ -107,7 +107,7 @@ class InstantDisbursementAPIView(views.APIView):
     def create_bank_transaction(self, disburser, serializer):
         """Create a bank transaction out of the passed serializer data"""
         amount = serializer.validated_data["amount"]
-        issuer = serializer.validated_data["issuer"]
+        issuer = serializer.validated_data["issuer"].lower()
         full_name = serializer.validated_data["full_name"]
         instant_transaction = False
 
@@ -135,7 +135,7 @@ class InstantDisbursementAPIView(views.APIView):
             "creditor_name": full_name,
             "creditor_account_number": creditor_account_number,
             "creditor_bank": creditor_bank,
-            "end_to_end": "" if issuer.lower() == "bank_card" else instant_transaction.uid
+            "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
@@ -180,9 +180,9 @@ class InstantDisbursementAPIView(views.APIView):
                         return make_payment_request
 
         except Exception as err:
-            aman_object.log_message(request, f"[GENERAL FAILURE - AMAN CHANNEL]", f"Exception: {err.args[0]}")
-
-        raise Exception(EXTERNAL_ERROR_MSG)
+            aman_object.log_message(request, f"[failed instant trx]", f"exception: {err.args[0]}")
+            transaction_object.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+            return Response(InstantTransactionResponseModelSerializer(transaction_object).data)
 
     def post(self, request, *args, **kwargs):
         """
@@ -238,12 +238,12 @@ class InstantDisbursementAPIView(views.APIView):
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
             except Exception as e:
-                if transaction:transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, INTERNAL_ERROR_MSG)
+                if transaction:transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [INTERNAL SYSTEM ERROR]", request, e.args)
                 return default_response_structure(
                         transaction_id=transaction.uid if transaction else None,
                         status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY
+                        field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
@@ -255,11 +255,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             try:
                 if issuer == "aman":
-                    specific_issuer_handler = getattr(self, f"{issuer}_issuer_handler")
-                    specific_issuer_response = specific_issuer_handler(request, transaction, serializer)
-
-                    if isinstance(specific_issuer_response, Response):
-                        return specific_issuer_response
+                    return self.aman_issuer_handler(request, transaction, serializer)
 
                 trx_response = requests.post(
                         get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
@@ -276,7 +272,7 @@ class InstantDisbursementAPIView(views.APIView):
                 logging_message(
                         INSTANT_CASHIN_FAILURE_LOGGER, "[message] [DISBURSEMENT VALIDATION ERROR]", request, e.args
                 )
-                transaction.mark_failed("6061", INTERNAL_ERROR_MSG)
+                transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (requests.Timeout, TimeoutError) as e:
@@ -304,14 +300,14 @@ class InstantDisbursementAPIView(views.APIView):
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
         elif issuer in ["bank_wallet", "bank_card", "orange"]:
-            instant_trx_obj = False
+
             try:
                 bank_trx_obj, instant_trx_obj = self.create_bank_transaction(request.user, serializer)
-                return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
-            except (ImproperlyConfigured, Exception) as e:
+            except Exception as e:
                 ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{request.user}] -- {e.args}"))
-                if instant_trx_obj: instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
                 return default_response_structure(
                         transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                        field_status_code=status.HTTP_424_FAILED_DEPENDENCY, response_status_code=status.HTTP_200_OK
+                        field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK
                 )
+
+            return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)

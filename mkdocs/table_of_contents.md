@@ -6,5 +6,5 @@
 * [Instant Cashin API Endpoint](/docs/instant_cashin_api/)
 * [Bulk Transaction Inquiry API Endpoint](/docs/bulk_transaction_inquiry_api/)
 * [User Budget Inquiry API Endpoint](/docs/budget_inquiry_api/)
-* [General Responses To Be Expected](/docs/response_codes_to_be_expected/)
+* [Response Codes](/docs/response_codes/)
 * [License](#license)

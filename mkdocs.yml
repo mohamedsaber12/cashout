@@ -10,7 +10,7 @@ nav:
   - Instant Cashin API: instant_cashin_api.md
   - Bulk Transaction Inquiry API: bulk_transaction_inquiry_api.md
   - Budget Inquiry API: budget_inquiry_api.md
-  - Response Codes To Be Expected: response_codes_to_be_expected.md
+  - Response Codes: response_codes.md
 
 theme:
     name: readthedocs
@@ -18,6 +18,9 @@ theme:
     hljs_languages:
         - yaml
         - rust
+
+markdown_extensions:
+  - attr_list
 
 extra:
     version: 2.0

@@ -93,9 +93,7 @@
             }
 
 
-### Samples
-
-1. **Generate new access token using CURL**
+4. **Generate new access token using CURL**
 
           curl -i \
               -X POST \
@@ -105,7 +103,7 @@
               https://stagingpayouts.paymobsolutions.com/api/secure/o/token/
 
 
-2. **Generate new access token using Postman**
+5. **Generate new access token using Postman**
 
     2.1) Create new request page and open the **Authorization** tab:
         ![step_1](https://user-images.githubusercontent.com/13325802/102062023-e18b7c80-3dfc-11eb-965e-9f75e730138e.jpg)

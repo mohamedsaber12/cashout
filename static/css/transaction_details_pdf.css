@@ -3,7 +3,7 @@
 }
 .bulk_info_title {
   position: absolute;
-  top: 60px;
+  top: 150px;
   margin-left: 1em;
   text-align: center;
   display: inline;
@@ -17,7 +17,7 @@
 }
 .payment_info_title {
   position: absolute;
-  top: 180px;
+  top: 340px;
   margin-left: 1em;
   text-align: center;
   display: inline;
@@ -31,7 +31,7 @@
 }
 .debtor_info_title {
   position: absolute;
-  top: 340px;
+  top: 562px;
   margin-left: 1em;
   text-align: center;
   display: inline;
@@ -45,7 +45,7 @@
 }
 .creditor_info_title {
   position: absolute;
-  top: 485px;
+  top: 725px;
   margin-left: 1em;
   text-align: center;
   display: inline;

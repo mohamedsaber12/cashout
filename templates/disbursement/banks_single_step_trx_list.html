@@ -36,6 +36,17 @@
     #trxDetailsDataRight > li > span{
       width: 120px;
     }
+    .export-dropdown {
+      position: relative;
+      display: inline-block;
+      border: 0;
+      background: transparent;
+      border-radius: .5rem!important;
+      width: 16rem!important;
+      padding: .75rem!important;
+      -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    }
   </style>
   <!-- transaction details pdf css -->
   <link href="{% static 'css/transaction_details_pdf.css' %}" rel="stylesheet">
@@ -92,7 +103,7 @@
                         data-bank_name="{{ transaction.creditor_bank|bank_name }}"
                         data-status_code="{{ transaction.transaction_status_code }}"
                         data-transaction_status_description="{{ transaction.transaction_status_description }}"
-                        data-transaction_type="{{ transaction|transaction_type }}"
+                        data-type="{{ transaction|transaction_type }}"
                         data-amount="{{ transaction.amount }}"
                         data-checker="{{ transaction.user_created }}"
                         data-status="{{ transaction.status_choice_verbose }}"
@@ -264,7 +275,7 @@
       <div class="x_panel">
         <div class="x_title">
           <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
-          <button id="generate-pdf" class="btn btn-default
+          <button id="generate-pdf" class="btn btn-default export-dropdown
                           pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
             <i class="fa fa-file-pdf-o"></i> Export PDF Report
           </button>
@@ -359,8 +370,8 @@
         appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
         trx.bank_name = $(this).data('bank_name');
         appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
-        trx.transaction_type = $(this).data('transaction_type');
-        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.transaction_type}</li>`;
+        trx.type = $(this).data('type');
+        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
         trx.checker = $(this).data('checker');
         appendedTagsRight += `<li><span>Checker</span><b>:</b>${trx.checker}</li>`;
         trx.created_at = $(this).data('created_at');

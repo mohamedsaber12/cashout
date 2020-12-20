@@ -185,8 +185,8 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            self.total_disbursed_amount -= Decimal(amount)
-            self.current_balance += Decimal(amount)
+            self.total_disbursed_amount -= round(Decimal(amount), 2)
+            self.current_balance += round(Decimal(amount), 2)
             self.save()
         except Exception:
             raise ValueError(_(f"Error adding to the current balance and cutting from the total disbursed amount"))

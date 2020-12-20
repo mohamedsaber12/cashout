@@ -26,9 +26,7 @@ from ..serializers import InstantDisbursementRequestSerializer, InstantTransacti
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
-INSTANT_CASHIN_PENDING_LOGGER = logging.getLogger("instant_cashin_pending")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
-ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 
 INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team")
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
@@ -304,7 +302,7 @@ class InstantDisbursementAPIView(views.APIView):
             try:
                 bank_trx_obj, instant_trx_obj = self.create_bank_transaction(request.user, serializer)
             except Exception as e:
-                ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{request.user}] -- {e.args}"))
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [ACH EXCEPTION]", request, e.args)
                 return default_response_structure(
                         transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
                         field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK

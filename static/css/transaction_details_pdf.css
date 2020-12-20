@@ -3,6 +3,7 @@
 }
 .bulk_info_title {
   position: absolute;
+  font-weight: bold;
   top: 150px;
   margin-left: 1em;
   text-align: center;
@@ -17,6 +18,7 @@
 }
 .payment_info_title {
   position: absolute;
+  font-weight: bold;
   top: 340px;
   margin-left: 1em;
   text-align: center;
@@ -31,6 +33,7 @@
 }
 .debtor_info_title {
   position: absolute;
+  font-weight: bold;
   top: 562px;
   margin-left: 1em;
   text-align: center;
@@ -45,6 +48,7 @@
 }
 .creditor_info_title {
   position: absolute;
+  font-weight: bold;
   top: 725px;
   margin-left: 1em;
   text-align: center;

@@ -14,12 +14,13 @@ from django.utils.translation import gettext_lazy as _
 
 from rest_framework import status
 
-from core.models import AbstractBaseStatus, AbstractTimeStamp
+from core.models import AbstractTimeStamp
 from utilities.models import (
     AbstractBaseDocStatus, AbstractBaseVMTData,
     AbstractTransactionCategory, AbstractTransactionCurrency,
     AbstractTransactionPurpose,
 )
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from .utils import determine_transaction_type
 
@@ -188,7 +189,7 @@ class DisbursementData(AbstractTimeStamp):
 
 
 class BankTransaction(AbstractTimeStamp,
-                      AbstractBaseStatus,
+                      AbstractBaseACHTransactionStatus,
                       AbstractTransactionCategory,
                       AbstractTransactionCurrency,
                       AbstractTransactionPurpose):
@@ -349,16 +350,28 @@ class BankTransaction(AbstractTimeStamp,
     @property
     def status_choice_verbose(self):
         """Return the corresponding verbose name of the transaction status type"""
-        return dict(AbstractBaseStatus.STATUS_CHOICES)[self.status]
+        return dict(AbstractBaseACHTransactionStatus.STATUS_CHOICES)[self.status]
 
     def update_status_code_and_description(self, code=None, description=None):
         self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR
-        self.transaction_status_description = description if description else ""
+        self.transaction_status_description = description if description else INTERNAL_ERROR
+
+    def mark_returned(self, status_code, status_description):
+        """Mark transaction status as returned"""
+        self.update_status_code_and_description(status_code, status_description)
+        self.status = self.RETURNED
+        self.save()
 
     def mark_successful(self, status_code, status_description):
         """Mark transaction status as successful"""
         self.update_status_code_and_description(status_code, status_description)
         self.status = self.SUCCESSFUL
+        self.save()
+
+    def mark_rejected(self, status_code, status_description):
+        """Mark transaction status as rejected"""
+        self.update_status_code_and_description(status_code, status_description)
+        self.status = self.REJECTED
         self.save()
 
     def mark_failed(self, status_code, status_description):

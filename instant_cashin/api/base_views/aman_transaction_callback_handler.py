@@ -84,6 +84,6 @@ class AmanTransactionCallbackHandlerAPIView(views.APIView):
             }, status=status.HTTP_200_OK)
         else:
             logging_message(
-                    AMAN_LOGGER, "[message] [TRX CALLBACK HANDLER - ERROR]", request, f"{request.data}"
+                    AMAN_LOGGER, "[message] [TRX CALLBACK HANDLER - ERROR]", request, f"{request.data}, {failure_reason}"
             )
             return Response({"Status": "Transaction with this id is not found"}, status=status.HTTP_404_NOT_FOUND)

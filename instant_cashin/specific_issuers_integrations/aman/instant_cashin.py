@@ -214,7 +214,7 @@ class AmanChannel:
         bill_reference = payload.get("obj", "").get("id", "")
 
         try:
-            if is_success == "true" and bill_reference:
+            if is_success and bill_reference:
                 AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
                 return True, ""
             raise ValueError(_(f"Transaction payment failed! is_success: {is_success}, bill_ref: {bill_reference}"))

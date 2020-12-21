@@ -1,70 +1,38 @@
-.info_set {
-  border: 2px solid #000;
+fieldset {
+    border: 2px solid #000;
+    padding-top: 30px;
+}
+
+legend {
+  margin-left: 1em;
+  background-color: white;
+  border: 2px solid gray;
+  height: 32px;
+  border-radius: 10px;
+  padding: 2px 10px;
+  color: #000;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.471;
+  position: absolute !important;
+  top: -15px;
 }
 .bulk_info_title {
-  position: absolute;
-  font-weight: bold;
-  top: 150px;
-  margin-left: 1em;
-  text-align: center;
-  display: inline;
-  background-color: white;
-  border: 2px solid gray;
-  width: 150px;
-  height: 32px;
-  border-radius: 10px;
-  padding-top: 2px;
-  color: #000;
+    width: 130px;
 }
 .payment_info_title {
-  position: absolute;
-  font-weight: bold;
-  top: 340px;
-  margin-left: 1em;
-  text-align: center;
-  display: inline;
-  background-color: white;
-  border: 2px solid gray;
-  width: 180px;
-  height: 32px;
-  border-radius: 10px;
-  padding-top: 2px;
-  color: #000;
+  width: 155px;
 }
 .debtor_info_title {
-  position: absolute;
-  font-weight: bold;
-  top: 562px;
-  margin-left: 1em;
-  text-align: center;
-  display: inline;
-  background-color: white;
-  border: 2px solid gray;
-  width: 180px;
-  height: 32px;
-  border-radius: 10px;
-  padding-top: 2px;
-  color: #000;
+  width: 145px;
 }
 .creditor_info_title {
-  position: absolute;
-  font-weight: bold;
-  top: 725px;
-  margin-left: 1em;
-  text-align: center;
-  display: inline;
-  background-color: white;
-  border: 2px solid gray;
-  width: 180px;
-  height: 32px;
-  border-radius: 10px;
-  padding-top: 2px;
-  color: #000;
+  width: 155px;
 }
 .list-element-odd {
   background-color: rgba(0,0,0,.05);
 }
-.payment_info .ulright, .payment_info .ulleft {
+.payment_info .ulright {
   margin-bottom: 0;
 }
 .debtor_info li span {
@@ -73,10 +41,10 @@
 .padding-left {
   padding-left: 20px;
 }
-.info_set ul li {
+fieldset ul li {
   color: #000;
 }
-.info_set ul li span {
+fieldset ul li span {
   display: inline-block;
   font-weight: bold;
   line-height: 25px;

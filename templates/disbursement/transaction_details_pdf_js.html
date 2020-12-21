@@ -39,10 +39,10 @@
       htmlForPdf += "<li class='padding-left'><span>Last Update Date</span><b>:</b>"+trx.updated_at;
       htmlForPdf += "</li></ul></fieldset></div></div>";
 
-      htmlForPdf += "<div class='row payment_info' style='margin-bottom: 50px;'>";
+      htmlForPdf += "<div class='row' style='margin-bottom: 50px;'>";
       htmlForPdf += "<div style='padding-right: 0;padding-left: 0;' class='col-md-12 col-sm-12 col-xs-12'>";
       htmlForPdf += "<fieldset><legend class='payment_info_title'>Payment Information</legend>";
-      htmlForPdf += "<ul class='ulright'>";
+      htmlForPdf += "<ul>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
       htmlForPdf += "<span>Transaction ID</span><b>:</b> "+trx.id+"</li>";
       htmlForPdf += "<li class='padding-left'><span>Transaction Status</span><b>:</b> "+trx.status+"</li>";

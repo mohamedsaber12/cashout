@@ -32,9 +32,6 @@ legend {
 .list-element-odd {
   background-color: rgba(0,0,0,.05);
 }
-.payment_info .ulright {
-  margin-bottom: 0;
-}
 .debtor_info li span {
   width: 150px;
 }

@@ -17,7 +17,7 @@
   <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
   <style>
     #trxDetailsDataRight > li > span {
-      width: 90px;
+      width: 120px;
     }
     #download-doc {
       width: 17rem !important;
@@ -305,6 +305,8 @@
         let ulRight = $('#trxDetailsDataRight');
         let ulLast = $('#trxDetailsDataLast');
         let appendedTags = '';
+        let appendedTagsRight = '';
+        let appendedTagsBottom = '';
 
         trx.created_at = $(this).data('created_at');
         trx.updated_at = $(this).data('updated_at');
@@ -331,37 +333,39 @@
           trx.creditor_name = $(this).data('creditor_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
           trx.creditor_bank = $(this).data('creditor_bank');
-          appendedTags += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
           trx.bank_name = $(this).data('bank_name');
-          appendedTags += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
           trx.type = $(this).data('type');
-          appendedTags += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
           trx.status = $(this).data('status');
           appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
         {% endif %}
 
-        ul.empty();
-        ul.append(appendedTags);
-        appendedTags = '';
+        {% if doc_obj.is_bank_wallet %}
+          let issuer = $(this).data('issuer');
+          appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+        {% else %}
+          appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
+          appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
+          appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
+        {% endif %}
 
         let doc_id = $(this).data('doc_id');
-        appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
+        appendedTagsRight += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
         let doc_maker = $(this).data('doc_maker');
-        appendedTags += `<li><span>Maker</span><b>:</b>${doc_maker}</li>`;
+        appendedTagsRight += `<li><span>Maker</span><b>:</b>${doc_maker}</li>`;
         let doc_checker = $(this).data('doc_checker');
-        appendedTags += `<li><span>Checker</span><b>:</b>${doc_checker}</li>`;
-
-        ulRight.empty();
-        ulRight.append(appendedTags);
-        appendedTags = '';
+        appendedTagsRight += `<li><span>Checker</span><b>:</b>${doc_checker}</li>`;
 
         trx.transaction_status_code = $(this).data('transaction_status_code');
-        appendedTags += `<li><span>Disbursement Status Code</span><b>:</b>${trx.transaction_status_code}</li>`;
+        appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>${trx.transaction_status_code}</li>`;
         trx.transaction_status_description = $(this).data('transaction_status_description');
-        appendedTags += `<li><span>Disbursement Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
+        appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
 
+        ul.empty();
+        ul.append(appendedTags);
+        ulRight.empty();
+        ulRight.append(appendedTagsRight);
         ulLast.empty();
-        ulLast.append(appendedTags);
+        ulLast.append(appendedTagsBottom);
 
         $("#trxDetails").slideDown();
         $('html,body').animate({

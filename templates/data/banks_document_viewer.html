@@ -480,8 +480,6 @@
           appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
           let recipient_name = $(this).data('recipient_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${recipient_name}</li>`;
-          let issuer = $(this).data('issuer');
-          appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
 
         {% else %}
 
@@ -504,6 +502,11 @@
         ul.empty();
         ul.append(appendedTags);
         appendedTags = '';
+
+        {% if doc.is_bank_wallet %}
+          let issuer = $(this).data('issuer');
+          appendedTags += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+        {% endif %}
 
         let doc_id = $(this).data('doc_id');
         appendedTags += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;

@@ -36,7 +36,20 @@
     #trxDetailsDataRight > li > span{
       width: 120px;
     }
+    .export-dropdown {
+      position: relative;
+      display: inline-block;
+      border: 0;
+      background: transparent;
+      border-radius: .5rem!important;
+      width: 16rem!important;
+      padding: .75rem!important;
+      -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    }
   </style>
+  <!-- transaction details pdf css -->
+  <link href="{% static 'css/transaction_details_pdf.css' %}" rel="stylesheet">
 {% endblock %}
 
 {% block body %}
@@ -89,13 +102,14 @@
                         data-creditor_bank="{{ transaction.creditor_bank }}"
                         data-bank_name="{{ transaction.creditor_bank|bank_name }}"
                         data-status_code="{{ transaction.transaction_status_code }}"
-                        data-status_description="{{ transaction.transaction_status_description }}"
-                        data-transaction_type="{{ transaction|transaction_type }}"
+                        data-transaction_status_description="{{ transaction.transaction_status_description }}"
+                        data-type="{{ transaction|transaction_type }}"
                         data-amount="{{ transaction.amount }}"
                         data-checker="{{ transaction.user_created }}"
                         data-status="{{ transaction.status_choice_verbose }}"
                         data-created_at="{{ transaction.parent_transaction.created_at }}"
-                        data-updated_at="{{ transaction.updated_at }}"
+                        data-updated_at="{{ transaction.created_at }}"
+                        data-debtor_account="{{ transaction.debtor_account }}"
                         class="row-hover">
                       <td>{{ transaction.parent_transaction.transaction_id }}</td>
                       <td>{{ transaction.creditor_account_number }}</td>
@@ -261,6 +275,10 @@
       <div class="x_panel">
         <div class="x_title">
           <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+          <button id="generate-pdf" class="btn btn-default export-dropdown
+                          pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+            <i class="fa fa-file-pdf-o"></i> Export PDF Report
+          </button>
           <div class="clearfix"></div>
         </div>
 
@@ -289,6 +307,8 @@
 {% endblock %}
 
 {% block script %}
+  <!--  generate pdf script-->
+  <script src="{% static 'js/html2pdf.bundle.min.js' %}"></script>
   <script>
     {% if show_add_form == True %}
       $("#transactionModel").modal();
@@ -313,7 +333,9 @@
     {% endif %}
   </script>
 
+  <!-- transaction details script  -->
   <script>
+    let trx = {};
     $('#transaction-table tbody').on('click', 'tr', function () {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
@@ -329,34 +351,38 @@
         let appendedTagsRight = '';
         let appendedTagsBottom = '';
 
-        let trx_id = $(this).data('id')
-        appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
-        let creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>Account Number</span><b>:</b>${creditor_account_number}</li>`;
-        let creditor_name = $(this).data('creditor_name');
-        appendedTags += `<li><span>Full Name</span><b>:</b>${creditor_name}</li>`;
-        let amount = $(this).data('amount');
-        appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
-        let status = $(this).data('status');
-        appendedTags += `<li><span>Status</span><b>:</b>${status}</li>`;
+        trx.created_at = $(this).data('created_at');
+        trx.updated_at = $(this).data('updated_at');
+        trx.debtor_account = $(this).data('debtor_account');
 
-        let creditor_bank = $(this).data('creditor_bank');
-        appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${creditor_bank}</li>`;
-        let bank_name = $(this).data('bank_name');
-        appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${bank_name}</li>`;
-        let transaction_type = $(this).data('transaction_type');
-        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${transaction_type}</li>`;
-        let checker = $(this).data('checker');
-        appendedTagsRight += `<li><span>Checker</span><b>:</b>${checker}</li>`;
-        let created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
-        let updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+        trx.id = $(this).data('id')
+        appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
+        trx.creditor_account_number = $(this).data('creditor_account_number');
+        appendedTags += `<li><span>Account Number</span><b>:</b>${trx.creditor_account_number}</li>`;
+        trx.creditor_name = $(this).data('creditor_name');
+        appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
+        trx.amount = $(this).data('amount');
+        appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
+        trx.status = $(this).data('status');
+        appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
 
-        let status_code = $(this).data('status_code');
-        appendedTagsBottom += `<li><span>Status Code</span><b>:</b>${status_code}</li>`;
-        let status_description = $(this).data('status_description');
-        appendedTagsBottom += `<li><span>Status Description</span><b>:</b>${status_description}</li>`;
+        trx.creditor_bank = $(this).data('creditor_bank');
+        appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
+        trx.bank_name = $(this).data('bank_name');
+        appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
+        trx.type = $(this).data('type');
+        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
+        trx.checker = $(this).data('checker');
+        appendedTagsRight += `<li><span>Checker</span><b>:</b>${trx.checker}</li>`;
+        trx.created_at = $(this).data('created_at');
+        appendedTagsRight += `<li><span>Created At</span><b>:</b>${trx.created_at}</li>`;
+        trx.updated_at = $(this).data('updated_at');
+        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
+
+        trx.status_code = $(this).data('status_code');
+        appendedTagsBottom += `<li><span>Status Code</span><b>:</b>${trx.status_code}</li>`;
+        trx.transaction_status_description = $(this).data('transaction_status_description');
+        appendedTagsBottom += `<li><span>Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
 
         ul.empty();
         ul.append(appendedTags);
@@ -372,4 +398,9 @@
      }
     });
   </script>
+
+  <!-- generate pdf script-->
+  <!-- Important Not this script should be after transaction details script because   -->
+  <!-- because it use trx object that exist in  transaction details script above -->
+  {% include 'disbursement/transaction_details_pdf_js.html' %}
 {% endblock %}

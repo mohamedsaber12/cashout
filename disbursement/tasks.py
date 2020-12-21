@@ -274,7 +274,9 @@ def check_for_late_disbursement_callback(**kwargs):
 
                 # If disb_record['status'] = 0, it means this record amount is disbursed successfully
                 if disbursement_doc.doc.owner.root.has_custom_budget and disb_record['status'] == '0':
-                    total_disbursed_amount += Decimal(DisbursementData.objects.get(id=disb_record['id']).amount)
+                    total_disbursed_amount += round(
+                            Decimal(DisbursementData.objects.get(id=disb_record['id']).amount), 2
+                    )
 
             if disbursement_doc.doc.owner.root.has_custom_budget and total_disbursed_amount > 0:
                 disbursement_doc.doc.owner.root.budget.\

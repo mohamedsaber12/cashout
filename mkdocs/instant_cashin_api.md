@@ -95,7 +95,6 @@
             |  Arab Investment Bank                         |   AIB         |
             |  Audi Bank                                    |   AUDI        |
             |  General Authority For Supply Commodities     |   GASC        |
-            |  National Bank of Egypt - EGPA                |   EGPA        |
             |  Arab International Bank                      |   ARIB        |
             |  Agricultural Bank of Egypt                   |   PDAC        |
             |  National Bank of Greece                      |   NBG         |

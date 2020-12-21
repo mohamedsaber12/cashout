@@ -11,7 +11,8 @@ INSTANT_TRX_IS_ACCEPTED = "Transaction processed and accepted by the carrier. Yo
 INSTANT_TRX_IS_REJECTED = "Transaction rejected by the carrier. Please try again or contact your support team"
 BANK_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the bank"
 BANK_TRX_BEING_PROCESSED = "Transaction received by the bank and being processed now"
-BANK_TRX_IS_ACCEPTED = "Transaction processed and accepted by the bank. Your transfer is ready for exchanging now"
+BANK_TRX_IS_SUCCESSFUL_1 = "Successful with warning, A transfer will take place once authorized by the receiver bank"
+BANK_TRX_IS_SUCCESSFUL_2 = "Successful, transaction is settled by the receiver bank"
 INTERNAL_ERROR_MSG = "Process stopped during an internal error, can you try again or contact your support team"
 EXTERNAL_ERROR_MSG = "Process stopped during an external error, can you try again or contact your support team"
 
@@ -55,7 +56,6 @@ VALID_BANK_CODES_LIST = [
     "AIB",
     "AUDI",
     "GASC",
-    "EGPA",
     "ARIB",
     "PDAC",
     "NBG",
@@ -125,7 +125,6 @@ BANK_CODES = [
     {'name': 'Arab Investment Bank'                       , 'code':  'AIB' },
     {'name': 'Audi Bank'                                  , 'code':  'AUDI'},
     {'name': 'General Authority For Supply Commodities'   , 'code':  'GASC'},
-    {'name': 'National Bank of Egypt - EGPA'              , 'code':  'EGPA'},
     {'name': 'Arab International Bank'                    , 'code':  'ARIB'},
     {'name': 'Agricultural Bank of Egypt'                 , 'code':  'PDAC'},
     {'name': 'National Bank of Greece'                    , 'code':  'NBG' },

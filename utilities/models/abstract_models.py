@@ -412,3 +412,31 @@ class AbstractTransactionPurpose(models.Model):
 
     class Meta:
         abstract = True
+
+
+class AbstractBaseACHTransactionStatus(models.Model):
+    """
+    Base ACH Transaction Status model.
+    """
+
+    # choices
+    SUCCESSFUL = "S"
+    RETURNED = "R"
+    REJECTED = "J"
+    FAILED = "F"
+    PENDING = "P"
+    DEFAULT = "d"
+    STATUS_CHOICES = [
+        (SUCCESSFUL, _("Successful")),
+        (RETURNED, _("Returned")),
+        (REJECTED, _("Rejected")),
+        (FAILED, _("Failed")),
+        (PENDING, _("Pending")),
+        (DEFAULT, _("Default")),
+    ]
+    status = models.CharField(
+            _("status"), max_length=1, choices=STATUS_CHOICES, default=DEFAULT
+    )
+
+    class Meta:
+        abstract = True

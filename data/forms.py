@@ -135,7 +135,7 @@ class FileDocumentForm(forms.ModelForm):
             # Validate bank wallets/cards sheet headers
             elif self.doc_type in [AbstractBaseDocType.BANK_WALLETS, AbstractBaseDocType.BANK_CARDS]:
                 if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
-                    valid_headers = ['mobile number', 'amount', 'full name']
+                    valid_headers = ['mobile number', 'amount', 'full name', 'issuer']
                 else:
                     valid_headers = ['account number', 'amount', 'full name', 'bank swift code', 'transaction type']
                 HEADERS_ERR_MSG = f"File headers are not proper, the valid headers naming and order is {valid_headers}"

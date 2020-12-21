@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from requests.exceptions import ConnectionError, HTTPError
 import json
-import requests
 import logging
 import uuid
+
+from requests.exceptions import ConnectionError, HTTPError
+import requests
 
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
@@ -13,20 +14,22 @@ from django.utils.translation import gettext as _
 from rest_framework import status
 from rest_framework.response import Response
 
-from core.models import AbstractBaseStatus
 from disbursement.models import BankTransaction
-from disbursement.utils import (BANK_TRX_BEING_PROCESSED, BANK_TRX_IS_ACCEPTED,
-                                BANK_TRX_RECEIVED, EXTERNAL_ERROR_MSG,
-                                INSTANT_TRX_BEING_PROCESSED, INSTANT_TRX_IS_ACCEPTED,
+from disbursement.utils import (BANK_TRX_BEING_PROCESSED,
+                                BANK_TRX_IS_SUCCESSFUL_1,
+                                BANK_TRX_IS_SUCCESSFUL_2, BANK_TRX_RECEIVED,
+                                EXTERNAL_ERROR_MSG,
+                                INSTANT_TRX_BEING_PROCESSED,
+                                INSTANT_TRX_IS_ACCEPTED,
                                 INSTANT_TRX_IS_REJECTED, INSTANT_TRX_RECEIVED,
                                 INTERNAL_ERROR_MSG, TRX_REJECTED_BY_BANK_CODES,
                                 TRX_RETURNED_BY_BANK_CODES)
 from utilities.ssl_certificate import SSLCertificate
 
-from ...api.serializers import BankTransactionResponseModelSerializer, InstantTransactionResponseModelSerializer
+from ...api.serializers import (BankTransactionResponseModelSerializer,
+                                InstantTransactionResponseModelSerializer)
 from ...models import AbstractBaseIssuer, InstantTransaction
 from ...utils import get_from_env
-
 
 ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
@@ -189,35 +192,38 @@ class BankTransactionsChannel:
         else:
             issuer = "bank_card"
 
-        if response_code == "8000":
-            bank_trx_obj.mark_pending(response_code, BANK_TRX_RECEIVED)
-            instant_trx_obj.mark_pending(response_code, INSTANT_TRX_RECEIVED) if instant_trx_obj else None
+        # 1. Transaction is validated and accepted by EBC, and or dispatched for being processed by the bank
+        if response_code in ["8000", "8111"]:
+            if response_code == "8000":
+                bank_message = BANK_TRX_RECEIVED
+                instant_message = INSTANT_TRX_RECEIVED
+            else:
+                bank_message = BANK_TRX_BEING_PROCESSED
+                instant_message = INSTANT_TRX_BEING_PROCESSED
+
+            bank_trx_obj.mark_pending(response_code, bank_message)
+            instant_trx_obj.mark_pending(response_code, instant_message) if instant_trx_obj else None
             bank_trx_obj.user_created.root.\
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
             # ToDo: Log custom budget updates
             # custom_budget_logger(
             #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
             # )
-        elif response_code == "8111":
-            bank_trx_obj.mark_pending(response_code, BANK_TRX_BEING_PROCESSED)
-            instant_trx_obj.mark_pending(response_code, INSTANT_TRX_BEING_PROCESSED) if instant_trx_obj else None
-            bank_trx_obj.user_created.root.\
-                budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-            # ToDo: Log custom budget updates
-            # custom_budget_logger(
-            #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
-            # )
+
+        # 2. Transaction validation is rejected by EBC because of invalid bank swift code
         elif response_code == "8002":
             bank_trx_obj.mark_failed(response_code, _("Invalid bank swift code"))
-        elif response_code == "8011":
-            bank_trx_obj.mark_failed(response_code, _("Invalid bank transaction type"))
-        elif response_code in ["8001", "8003", "8004", "8005", "8006", "8007", "8008", "8888"]:
+
+        # 3. Transaction validation is rejected by EBC because of internal errors
+        elif response_code in ["8001", "8003", "8004", "8005", "8006", "8007", "8008", "8011", "8888"]:
             bank_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
         else:
+            # 4. Transaction is failed due to unexpected response code for the send transaction api endpoint
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
 
+        # If the bank transaction isn't accepted and it is bank wallet/orange mark it as failed at the instant trx table
         if instant_trx_obj and response_code not in ["8000", "8111"]:
-            instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INSTANT_TRX_IS_REJECTED)
+            instant_trx_obj.mark_failed("8888", INSTANT_TRX_IS_REJECTED)
 
         return bank_trx_obj, instant_trx_obj
 
@@ -232,55 +238,69 @@ class BankTransactionsChannel:
         #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
         # )
 
+        # 1. If the new status code is exact to the current transaction's status code return without updating
         if response_code == bank_trx_obj.transaction_status_code:
             return bank_trx_obj
+
+        # 2. If the new status code is not in the expected status codes list ignore it and return without updating
         elif response_code not in ["8111", "8222"] + TRX_RETURNED_BY_BANK_CODES + TRX_REJECTED_BY_BANK_CODES:
             return bank_trx_obj
+
+        # 3. Otherwise start creating new bank transaction with the new status code
         else:
             new_trx_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(bank_trx_obj)
 
+            # 3.1) Transaction accepted by the bank
             if response_code == "8111":
                 new_trx_obj.mark_pending(response_code, BANK_TRX_BEING_PROCESSED)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
                 instant_trx.mark_pending(response_code, INSTANT_TRX_BEING_PROCESSED) if instant_trx else None
-            elif response_code == "8222":
-                new_trx_obj.mark_successful(response_code, BANK_TRX_IS_ACCEPTED)
+
+            # 3.2) Transaction is accepted by the bank - first settlement or final settlement
+            elif response_code in ["8222", "8333"]:
+                bank_trx_message = BANK_TRX_IS_SUCCESSFUL_1 if response_code == "8222" else BANK_TRX_IS_SUCCESSFUL_2
+                new_trx_obj.mark_successful(response_code, bank_trx_message)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_successful(response_code, INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
-            elif response_code in TRX_RETURNED_BY_BANK_CODES + TRX_REJECTED_BY_BANK_CODES:
-                new_trx_obj.mark_failed(response_code, response_description)
+                instant_trx.mark_successful("8222", INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
+
+            # 3.4) Handle bank reject and return cases
+            elif response_code in TRX_REJECTED_BY_BANK_CODES + TRX_RETURNED_BY_BANK_CODES:
+                # 3.4.1) Transaction is rejected by the bank
+                if response_code in TRX_REJECTED_BY_BANK_CODES:
+                    new_trx_obj.mark_rejected(response_code, response_description)
+
+                # 3.4.2) Transaction is returned by the bank
+                else:
+                    new_trx_obj.mark_returned(response_code, response_description)
+
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_failed(response_code, INSTANT_TRX_IS_REJECTED) if instant_trx else None
+                instant_trx.mark_failed("8888", INSTANT_TRX_IS_REJECTED) if instant_trx else None
                 new_trx_obj.user_created.root.budget.return_disbursed_amount_for_cancelled_trx(new_trx_obj.amount)
+
             return new_trx_obj
 
     @staticmethod
     def send_transaction(bank_trx_obj, instant_trx_obj):
         """Make a new send transaction request to EBC"""
+        has_valid_response = True
+
         try:
             payload = BankTransactionsChannel.accumulate_send_transaction_payload(bank_trx_obj)
             response = BankTransactionsChannel.post(get_from_env("EBC_API_URL"), payload, bank_trx_obj)
-            bank_trx_obj, instant_trx_obj = BankTransactionsChannel.\
-                map_response_code_and_message(bank_trx_obj, instant_trx_obj, json.loads(response.json()))
-            if instant_trx_obj:
-                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
-            else:
-                return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
-        except (HTTPError, ConnectionError, ValidationError, Exception) as e:
+        except (HTTPError, ConnectionError, Exception) as e:
+            has_valid_response = False
             ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"))
+            bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+            instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
 
-            # ToDo: Cancel the trx with EBC
-            if bank_trx_obj.status == AbstractBaseStatus.PENDING and instant_trx_obj:
-                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
-            elif bank_trx_obj.status == AbstractBaseStatus.PENDING and not instant_trx_obj:
-                return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
-            else:
-                bank_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
-                if instant_trx_obj:
-                    instant_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, EXTERNAL_ERROR_MSG)
-                    return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
-                else:
-                    return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+        if has_valid_response:
+            bank_trx_obj, instant_trx_obj = BankTransactionsChannel. \
+                map_response_code_and_message(bank_trx_obj, instant_trx_obj, json.loads(response.json()))
+
+        if instant_trx_obj:
+            return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+        else:
+            return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
     @staticmethod
     def get_transaction_status(bank_trx_obj):
@@ -290,6 +310,6 @@ class BankTransactionsChannel:
             response = BankTransactionsChannel.get(get_from_env("EBC_API_URL"), payload, bank_trx_obj)
             new_bank_trx_obj = BankTransactionsChannel.update_bank_trx_status(bank_trx_obj, json.loads(response.json()))
             return Response(BankTransactionResponseModelSerializer(new_bank_trx_obj).data)
-        except (HTTPError, ConnectionError, ValidationError, Exception) as e:
+        except (HTTPError, ConnectionError, Exception) as e:
             ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"))
             return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)

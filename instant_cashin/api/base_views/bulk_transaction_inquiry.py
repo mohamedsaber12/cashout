@@ -83,4 +83,4 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
 
         except Exception as err:
             logging_message(BULK_TRX_INQUIRY_LOGGER, "[message] [GENERAL ERROR]", request, f"{err.args}")
-            return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_424_FAILED_DEPENDENCY)
+            return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

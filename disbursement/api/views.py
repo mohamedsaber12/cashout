@@ -1,3 +1,4 @@
+from decimal import Decimal
 import json
 import logging
 
@@ -206,7 +207,7 @@ class DisburseCallBack(UpdateAPIView):
         Handles UPDATE requests coming from wallets as a callback to a disbursement request
             and UPDATES the budget record of the disbursed document Owner/Admin it he/she has custom budget
         """
-        DATA_LOGGER.debug(f"[response] [BULK DISBURSEMENT CALLBACK] [{request.user}] -- {str(request.data)}")
+        DATA_LOGGER.debug(f"[response] [automatic bulk disbursement callback] [{request.user}] -- {str(request.data)}")
         total_disbursed_amount = 0
         last_doc_record_id = successfully_disbursed_obj = None
 
@@ -225,7 +226,7 @@ class DisburseCallBack(UpdateAPIView):
                 # If data['status'] = 0, it means this record amount is disbursed successfully
                 if data['status'] == '0':
                     successfully_disbursed_obj = DisbursementData.objects.get(id=int(data['id']))
-                    total_disbursed_amount += int(successfully_disbursed_obj.amount)
+                    total_disbursed_amount += round(Decimal(successfully_disbursed_obj.amount), 2)
             except DisbursementData.DoesNotExist:
                 return JsonResponse({}, status=status.HTTP_404_NOT_FOUND)
 

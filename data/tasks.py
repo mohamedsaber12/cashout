@@ -15,7 +15,9 @@ import pandas as pd
 import requests
 import tablib
 import xlrd
+import xlwt
 
+from django.db.models import Sum, Count, Q, Case, When, F, Value
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -724,6 +726,228 @@ def prepare_disbursed_data_report(doc_id, report_type):
 
     return doc_obj, report_view_url, report_download_url
 
+def prepare_transactions_report(super_admin_id):
+    """Prepare report for transactions related to client"""
+    super_admin = User.objects.get(id=super_admin_id)
+
+    # get all admin of current super admin
+    admins_qs = super_admin.children()
+    # get all api checkers for all admin of current super admin
+    checkers_qs = []
+    makers_qs = []
+    makers_checkers_parent_username = {}
+    makers_checkers_parent_ids = {}
+    for admin in admins_qs:
+        admin_children = admin.children()
+        for child in admin_children:
+            makers_checkers_parent_username[child.username] = admin.username
+            makers_checkers_parent_ids[child.username] = admin.id
+            if child.user_type in [2, 6]:
+                checkers_qs.append(child)
+            else:
+                makers_qs.append(child)
+
+    issuer_obj = {
+        'V': 'vodafone',
+        'E': 'etisalat',
+        'O': 'orange',
+        'A': 'aman'
+    }
+
+    # Calculate disbursement data report from Disbursement Data model
+    disbursement_data_qs = DisbursementData.objects.filter(
+            Q(reason__exact='SUCCESS'),
+            Q(doc__owner__in=makers_qs)
+    ).annotate(maker_or_checker=F('doc__owner__username')
+    ).values('maker_or_checker', 'issuer') \
+        .annotate(total=Sum('amount'), count=Count('id'))
+
+    # add admin to disbursement_data_qs
+    for q in disbursement_data_qs:
+        q['admin'] = makers_checkers_parent_username[q['maker_or_checker']]
+
+    # add fees to disbursement_data_qs
+    for q in disbursement_data_qs:
+        q['fees'] = Budget.objects.get(disburser=makers_checkers_parent_ids[q['maker_or_checker']]). \
+                        accumulate_amount_with_fees_and_vat(q['total'], q['issuer']) - \
+                    round(Decimal(q['total']), 2)
+
+    # Calculate disbursement data report from instant transaction model
+    instant_transaction_qs = InstantTransaction.objects.filter(
+            Q(status__exact='S'),
+            Q(document__owner__in=makers_qs) |
+            Q(from_user__in=checkers_qs),
+    ).annotate(
+            maker_or_checker=Case(When(from_user__isnull=False,
+                                       then=F('from_user__username')),
+                                  default=F('document__owner__username'))
+    ).values('maker_or_checker', 'issuer_type') \
+        .annotate(total=Sum('amount'), count=Count('uid'))
+
+    # add admin to instant transaction qs
+    for q in instant_transaction_qs:
+        if q['issuer_type'] == 'C' or q['issuer_type'] == 'B':
+            q['issuer'] = q['issuer_type']
+        else:
+            q['issuer'] = issuer_obj[q['issuer_type']]
+        q['admin'] = makers_checkers_parent_username[q['maker_or_checker']]
+
+    # add fees to instant_transaction_qs
+    for q in instant_transaction_qs:
+        q['fees'] = Budget.objects.get(disburser=makers_checkers_parent_ids[q['maker_or_checker']]). \
+                        accumulate_amount_with_fees_and_vat(q['total'], q['issuer']) - \
+                    round(Decimal(q['total']), 2)
+
+    # Calculate disbursement data report from bank transaction model
+    bank_transaction_qs = BankTransaction.objects.filter(
+            Q(status__exact='S'),
+            Q(document__owner__in=makers_qs)
+            | Q(user_created__in=checkers_qs)
+    ).annotate(
+            maker_or_checker=Case(When(user_created__isnull=False,
+                                       then=F('user_created__username')),
+                                  default=F('document__owner__username'))
+    ).values('maker_or_checker') \
+        .annotate(total=Sum('amount'), count=Count('id'))
+
+    # add admin to bank_transaction qs
+    for q in bank_transaction_qs:
+        q['issuer'] = 'C'
+        q['admin'] = makers_checkers_parent_username[q['maker_or_checker']]
+
+    # add fees to bank_transaction_qs
+    for q in bank_transaction_qs:
+        q['fees'] = Budget.objects.get(disburser=makers_checkers_parent_ids[q['maker_or_checker']]). \
+                        accumulate_amount_with_fees_and_vat(q['total'], q['issuer']) - \
+                    round(Decimal(q['total']), 2)
+
+    # group all data by admin
+    final_data = dict()
+    for q in disbursement_data_qs:
+        if q['admin'] in final_data:
+            issuer_exist = False
+            for admin_q in final_data[q['admin']]:
+                if q['issuer'] == admin_q['issuer']:
+                    admin_q['total'] += q['total']
+                    admin_q['count'] += q['count']
+                    admin_q['fees'] += q['fees']
+                    issuer_exist = True
+                    break
+            if not issuer_exist:
+                final_data[q['admin']].append(q)
+        else:
+            final_data[q['admin']] = [q]
+
+    for q in instant_transaction_qs:
+        if q['admin'] in final_data:
+            issuer_exist = False
+            for admin_q in final_data[q['admin']]:
+                if q['issuer'] == admin_q['issuer']:
+                    admin_q['total'] += q['total']
+                    admin_q['count'] += q['count']
+                    admin_q['fees'] += q['fees']
+                    issuer_exist = True
+                    break
+            if not issuer_exist:
+                final_data[q['admin']].append(q)
+        else:
+            final_data[q['admin']] = [q]
+
+    for q in bank_transaction_qs:
+        if q['admin'] in final_data:
+            issuer_exist = False
+            for admin_q in final_data[q['admin']]:
+                if q['issuer'] == admin_q['issuer']:
+                    admin_q['total'] += q['total']
+                    admin_q['count'] += q['count']
+                    admin_q['fees'] += q['fees']
+                    issuer_exist = True
+                    break
+            if not issuer_exist:
+                final_data[q['admin']].append(q)
+        else:
+            final_data[q['admin']] = [q]
+
+    # calculate total volume, count, fees on each admin
+    for key in final_data.keys():
+        total_per_admin = {
+            'admin': key,
+            'issuer': 'total',
+            'total': round(Decimal(0), 2),
+            'count': round(Decimal(0), 2),
+            'fees': round(Decimal(0), 2)
+        }
+        for el in final_data[key]:
+            total_per_admin['total'] += round(Decimal(el['total']), 2);
+            total_per_admin['count'] += el['count'];
+            total_per_admin['fees'] += el['fees'];
+        final_data[key].append(total_per_admin)
+
+    # add issuer with values 0 to final data
+    for key in final_data.keys():
+        issuers_exist = {
+            'vodafone': False,
+            'etisalat': False,
+            'aman': False,
+            'orange': False,
+            'B': False,
+            'C': False
+        }
+        for el in final_data[key]:
+            if el['issuer'] != 'total':
+                issuers_exist[el['issuer']] = True
+        for issuer in issuers_exist.keys():
+            if not issuers_exist[issuer]:
+                final_data[key].append({'issuer': issuer, 'count': 0, 'total': 0, 'fees': 0})
+
+    ######################  start write data to excel file #############################################
+    filename = _(f"transactions_report_for_{super_admin.username}_{randomword(4)}.xlsx")
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+    wb = xlwt.Workbook(encoding='utf-8')
+    ws = wb.add_sheet('report')
+
+    # Sheet header, first row
+    row_num = 0
+
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+
+    columns = ['','', 'Total', 'Vodafone', 'Etisalat', 'Aman',
+               'Orange', 'Bank Wallets', 'Bank Accounts/Cards' ]
+
+    for col_num in range(len(columns)):
+        ws.write(row_num, col_num, columns[col_num], font_style)
+
+    # Sheet body, remaining rows
+    font_style = xlwt.XFStyle()
+    col_nums = {
+        'total': 2,
+        'vodafone': 3,
+        'etisalat': 4,
+        'aman': 5,
+        'orange': 6,
+        'B': 7,
+        'C': 8
+    }
+    row_num += 1
+    # write data to excel file
+    for key in final_data.keys():
+        ws.write(row_num, 0, key, font_style)
+        ws.write(row_num, 1, 'Volume', font_style)
+        ws.write(row_num+1, 1, 'Count', font_style)
+        ws.write(row_num+2, 1, 'Fees', font_style)
+        for el in final_data[key]:
+            ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
+            ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
+            ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+        row_num += 3
+
+    wb.save(file_path)
+
+    report_download_url = settings.BASE_URL + \
+                          str(reverse('disbursement:download_exported')) + f"?filename={filename}"
+
+    return  report_download_url
 
 @app.task()
 @respects_language
@@ -780,6 +1004,21 @@ def generate_all_disbursed_data(doc_id, user_id, **kwargs):
         from here <a href="{report_download_url}" >Download</a><br><br>
         Thanks, BR""")
     deliver_mail(user, _(' Disbursement Data File Download'), message)
+
+
+@app.task()
+@respects_language
+def generate_transactions_report(user_id, **kwargs):
+    """
+    Generate Transactions report related to All clients of super admin
+    """
+    report_download_url = prepare_transactions_report(user_id)
+    user = User.objects.get(id=user_id)
+    message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
+        You can download transactions report related to your Clients 
+        from here <a href="{report_download_url}" >Download</a><br><br>
+        Thanks, BR""")
+    deliver_mail(user, _(' Transactions report File Download'), message)
 
 
 @app.task(ignore_result=False)

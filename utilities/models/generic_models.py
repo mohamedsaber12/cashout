@@ -99,17 +99,17 @@ class Budget(AbstractTimeStamp):
         actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
         # 1. Determine the type of the issuer to calculate the fees for
-        if issuer_type == "vodafone":
+        if issuer_type == "vodafone" or issuer_type == "V":
             issuer_type_refined = FeeSetup.VODAFONE
-        elif issuer_type == "etisalat":
+        elif issuer_type == "etisalat" or issuer_type == "E":
             issuer_type_refined = FeeSetup.ETISALAT
-        elif issuer_type == "orange":
+        elif issuer_type == "orange" or issuer_type == "O":
             issuer_type_refined = FeeSetup.ORANGE
-        elif issuer_type == "aman":
+        elif issuer_type == "aman" or issuer_type == "A":
             issuer_type_refined = FeeSetup.AMAN
-        elif issuer_type == "bank_card":
+        elif issuer_type == "bank_card" or issuer_type == "C":
             issuer_type_refined = FeeSetup.BANK_CARD
-        elif issuer_type == "bank_wallet":
+        elif issuer_type == "bank_wallet" or issuer_type == "B":
             issuer_type_refined = FeeSetup.BANK_WALLET
 
         # 2. Pick the fees objects corresponding to the determined issuer type

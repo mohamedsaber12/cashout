@@ -30,7 +30,9 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
     re.compile(settings.MEDIA_URL.lstrip('/')),
-    re.compile(reverse('set_language').lstrip('/'))
+    re.compile(reverse('set_language').lstrip('/')),
+    re.compile(r'^disburse/export_transactions/*'),
+    re.compile(reverse('disbursement:download_exported').lstrip('/'))
 )
 
 

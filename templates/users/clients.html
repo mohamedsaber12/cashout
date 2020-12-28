@@ -4,7 +4,23 @@
 {% load custom_tags %}
 
 {% block title %} {% trans 'Clients' %} {% endblock title %}
-
+{% block customcss %}
+  <style>
+    #export-report {
+      color: #768399;
+      position: relative;
+      float: left;
+      padding: 6px 12px;
+      margin-left: -1px;
+      line-height: 1.42857143;
+      text-decoration: none;
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 0;
+    }
+  </style>
+{% endblock customcss %}
 {% block body %}
   {% if not request.user.has_vmt_setup %}
     <div class="well upload-nav col-xs-12">
@@ -34,6 +50,14 @@
                     <ul class="pagination pagination-split">
                       <li><a href="?q=active">{% trans 'Active' %}</a></li>
                       <li><a href="?q=inactive">{% trans 'InActive' %}</a></li>
+                      {% if request.user.is_superadmin %}
+                      <li>
+                        <button id="export-report" type="button" onclick="export_transactions()">
+                          <i class="fa fa-file-excel-o" title="Export Transactions"></i>
+                          Export Report for all Clients
+                        </button>
+                      </li>
+                      {% endif%}
                     </ul>
                   </div>
 
@@ -182,6 +206,43 @@
       </div>
     </div>
     {# end of success confirmation modal #}
+    <!-- Model For Export All -->
+    <div class="modal fade" id="exportTransactionsModal" role="dialog">
+      <div class="modal-dialog">
+        <!-- Modal content-->
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal">&times;</button>
+            <h4 class="modal-title">Report Exported Successfully</h4>
+          </div>
+          <div class="modal-body">
+            {% trans 'You will receive an email shortly with the file to download' %}
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- Model For Export All action Failed -->
+<div class="modal fade" id="exportTransactionsFailedModal" role="dialog">
+  <div class="modal-dialog">
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal">&times;</button>
+        <h4 class="modal-title">Error</h4>
+      </div>
+      <div class="modal-body">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
   {% endif %}
 {% endblock body %}
 
@@ -233,6 +294,29 @@
           }
         }
       });
+    }
+    function export_transactions() {
+      $.ajax({
+        type: 'GET',
+        url: "{% url 'disbursement:export_transactions' %}",
+        success: function (data, text, xhr) {
+          if (xhr.responseText == "") {
+            $('#exportTransactionsModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          } else {
+            window.location.replace("../user/login")
+          }
+        },
+        error: function(jqXHR, textStatus, errorThrown) {
+            $(errorThrown).appendTo('#exportTransactionsFailedModal.modal-body');
+            $('#exportTransactionsFailedModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+        },
+      })
     }
   </script>
 {% endblock script %}

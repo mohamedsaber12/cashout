@@ -29,7 +29,8 @@ from data.decorators import otp_required
 from data.models import Doc
 from data.tasks import (generate_all_disbursed_data,
                         generate_failed_disbursed_data,
-                        generate_success_disbursed_data)
+                        generate_success_disbursed_data,
+                        generate_transactions_report)
 from data.utils import redirect_params
 from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
@@ -230,6 +231,18 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
 
         return HttpResponse(status=401)
 
+class ExportTransactionsPerSuperAdmin(SuperRequiredMixin, View):
+    """
+    View for export report per super admin
+    """
+    def get(self, request, *args, **kwargs):
+        # 1 If the request is ajax and current user super admin user
+        if request.is_ajax() and request.user.is_superadmin:
+            generate_transactions_report.delay(request.user.id, language=translation.get_language())
+            return HttpResponse(status=200)
+
+        return HttpResponse(status=401)
+
 
 @setup_required
 @login_required
@@ -266,6 +279,26 @@ def failed_disbursed_for_download(request, doc_id):
     else:
         raise Http404
 
+@login_required
+def download_exported_transactions(request):
+    filename = request.GET.get('filename', None)
+    if not filename:
+        raise Http404
+
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(
+                    fh.read(),
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            FAILED_DISBURSEMENT_DOWNLOAD.debug(
+                    f"[message] [DOWNLOAD EXPORTED TRANSACTIONS] [{request.user}] -- file name: {filename}"
+            )
+            return response
+    else:
+        raise Http404
 
 @setup_required
 @login_required

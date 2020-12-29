@@ -7,7 +7,7 @@ import itertools
 import json
 import logging
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from celery import Task
 from dateutil.parser import parse
@@ -729,6 +729,24 @@ def prepare_disbursed_data_report(doc_id, report_type):
 def prepare_transactions_report(super_admin_id):
     """Prepare report for transactions related to client"""
     super_admin = User.objects.get(id=super_admin_id)
+    # get first and last date of current month
+    first_day_of_current_month = last_day_of_current_month = datetime.today()
+    first_day_of_current_month = first_day_of_current_month.replace(day=1)
+    first_day_of_current_month = first_day_of_current_month.replace(hour=0)
+    first_day_of_current_month = first_day_of_current_month.replace(minute=0)
+    first_day_of_current_month = first_day_of_current_month.replace(second=0)
+    first_day_of_current_month = first_day_of_current_month.replace(microsecond=0)
+
+    # Guaranteed to get the next month. Force any_date to 28th and then add 4 days.
+    next_month = last_day_of_current_month.replace(day=28) + timedelta(days=4)
+
+    # Subtract all days that are over since the start of the month.
+    last_day_of_current_month = next_month - timedelta(days=next_month.day)
+
+    last_day_of_current_month = last_day_of_current_month.replace(hour=23)
+    last_day_of_current_month = last_day_of_current_month.replace(minute=59)
+    last_day_of_current_month = last_day_of_current_month.replace(second=59)
+    last_day_of_current_month = last_day_of_current_month.replace(microsecond=0)
 
     # get all admin of current super admin
     admins_qs = super_admin.children()
@@ -756,6 +774,8 @@ def prepare_transactions_report(super_admin_id):
 
     # Calculate disbursement data report from Disbursement Data model
     disbursement_data_qs = DisbursementData.objects.filter(
+            Q(created_at__gte=first_day_of_current_month),
+            Q(created_at__lte=last_day_of_current_month),
             Q(reason__exact='SUCCESS'),
             Q(doc__owner__in=makers_qs)
     ).annotate(maker_or_checker=F('doc__owner__username')
@@ -774,6 +794,8 @@ def prepare_transactions_report(super_admin_id):
 
     # Calculate disbursement data report from instant transaction model
     instant_transaction_qs = InstantTransaction.objects.filter(
+            Q(created_at__gte=first_day_of_current_month),
+            Q(created_at__lte=last_day_of_current_month),
             Q(status__exact='S'),
             Q(document__owner__in=makers_qs) |
             Q(from_user__in=checkers_qs),
@@ -800,6 +822,8 @@ def prepare_transactions_report(super_admin_id):
 
     # Calculate disbursement data report from bank transaction model
     bank_transaction_qs = BankTransaction.objects.filter(
+            Q(created_at__gte=first_day_of_current_month),
+            Q(created_at__lte=last_day_of_current_month),
             Q(status__exact='S'),
             Q(document__owner__in=makers_qs)
             | Q(user_created__in=checkers_qs)

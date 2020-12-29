@@ -50,11 +50,11 @@
                     <ul class="pagination pagination-split">
                       <li><a href="?q=active">{% trans 'Active' %}</a></li>
                       <li><a href="?q=inactive">{% trans 'InActive' %}</a></li>
-                      {% if request.user.is_superadmin %}
+                      {% if request.user.is_superadmin and request.user.is_accept_vodafone_onboarding %}
                       <li>
                         <button id="export-report" type="button" onclick="export_transactions()">
                           <i class="fa fa-file-excel-o" title="Export Transactions"></i>
-                          Export Report for all Clients
+                          Export Report for all Clients for current month
                         </button>
                       </li>
                       {% endif%}

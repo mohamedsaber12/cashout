@@ -30,7 +30,8 @@ from disbursement.resources import (DisbursementDataResourceForBankCards,
                                     DisbursementDataResourceForEWallets)
 from disbursement.utils import (VALID_BANK_CODES_LIST,
                                 VALID_BANK_TRANSACTION_TYPES_LIST,
-                                determine_trx_category_and_purpose)
+                                determine_trx_category_and_purpose,
+                                DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
@@ -726,27 +727,21 @@ def prepare_disbursed_data_report(doc_id, report_type):
 
     return doc_obj, report_view_url, report_download_url
 
-def prepare_transactions_report(super_admin_id):
+def prepare_transactions_report(super_admin_id, start_date, end_date):
     """Prepare report for transactions related to client"""
     super_admin = User.objects.get(id=super_admin_id)
     # get first and last date of current month
-    first_day_of_current_month = last_day_of_current_month = datetime.today()
-    first_day_of_current_month = first_day_of_current_month.replace(day=1)
-    first_day_of_current_month = first_day_of_current_month.replace(hour=0)
-    first_day_of_current_month = first_day_of_current_month.replace(minute=0)
-    first_day_of_current_month = first_day_of_current_month.replace(second=0)
-    first_day_of_current_month = first_day_of_current_month.replace(microsecond=0)
+    first_day = datetime(int(start_date.split('-')[0]),int(start_date.split('-')[1]),int(start_date.split('-')[2]))
+    first_day = first_day.replace(hour=0)
+    first_day = first_day.replace(minute=0)
+    first_day = first_day.replace(second=0)
+    first_day = first_day.replace(microsecond=0)
 
-    # Guaranteed to get the next month. Force any_date to 28th and then add 4 days.
-    next_month = last_day_of_current_month.replace(day=28) + timedelta(days=4)
-
-    # Subtract all days that are over since the start of the month.
-    last_day_of_current_month = next_month - timedelta(days=next_month.day)
-
-    last_day_of_current_month = last_day_of_current_month.replace(hour=23)
-    last_day_of_current_month = last_day_of_current_month.replace(minute=59)
-    last_day_of_current_month = last_day_of_current_month.replace(second=59)
-    last_day_of_current_month = last_day_of_current_month.replace(microsecond=0)
+    last_day = datetime(int(end_date.split('-')[0]),int(end_date.split('-')[1]),int(end_date.split('-')[2]))
+    last_day = last_day.replace(hour=23)
+    last_day = last_day.replace(minute=59)
+    last_day = last_day.replace(second=59)
+    last_day = last_day.replace(microsecond=0)
 
     # get all admin of current super admin
     admins_qs = super_admin.children()
@@ -774,8 +769,8 @@ def prepare_transactions_report(super_admin_id):
 
     # Calculate disbursement data report from Disbursement Data model
     disbursement_data_qs = DisbursementData.objects.filter(
-            Q(created_at__gte=first_day_of_current_month),
-            Q(created_at__lte=last_day_of_current_month),
+            Q(created_at__gte=first_day),
+            Q(created_at__lte=last_day),
             Q(reason__exact='SUCCESS'),
             Q(doc__owner__in=makers_qs)
     ).annotate(maker_or_checker=F('doc__owner__username')
@@ -794,8 +789,8 @@ def prepare_transactions_report(super_admin_id):
 
     # Calculate disbursement data report from instant transaction model
     instant_transaction_qs = InstantTransaction.objects.filter(
-            Q(created_at__gte=first_day_of_current_month),
-            Q(created_at__lte=last_day_of_current_month),
+            Q(created_at__gte=first_day),
+            Q(created_at__lte=last_day),
             Q(status__exact='S'),
             Q(document__owner__in=makers_qs) |
             Q(from_user__in=checkers_qs),
@@ -822,8 +817,8 @@ def prepare_transactions_report(super_admin_id):
 
     # Calculate disbursement data report from bank transaction model
     bank_transaction_qs = BankTransaction.objects.filter(
-            Q(created_at__gte=first_day_of_current_month),
-            Q(created_at__lte=last_day_of_current_month),
+            Q(created_at__gte=first_day),
+            Q(created_at__lte=last_day),
             Q(status__exact='S'),
             Q(document__owner__in=makers_qs)
             | Q(user_created__in=checkers_qs)
@@ -923,6 +918,11 @@ def prepare_transactions_report(super_admin_id):
         for issuer in issuers_exist.keys():
             if not issuers_exist[issuer]:
                 final_data[key].append({'issuer': issuer, 'count': 0, 'total': 0, 'fees': 0})
+
+    # add all admin that have no transactions
+    for current_admin in admins_qs:
+        if not current_admin.username in final_data.keys():
+            final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
 
     ######################  start write data to excel file #############################################
     filename = _(f"transactions_report_for_{super_admin.username}_{randomword(4)}.xlsx")
@@ -1032,11 +1032,11 @@ def generate_all_disbursed_data(doc_id, user_id, **kwargs):
 
 @app.task()
 @respects_language
-def generate_transactions_report(user_id, **kwargs):
+def generate_transactions_report(user_id, start_date, end_date, **kwargs):
     """
     Generate Transactions report related to All clients of super admin
     """
-    report_download_url = prepare_transactions_report(user_id)
+    report_download_url = prepare_transactions_report(user_id, start_date, end_date)
     user = User.objects.get(id=user_id)
     message = _(f"""Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>
         You can download transactions report related to your Clients 

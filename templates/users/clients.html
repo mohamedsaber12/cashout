@@ -7,17 +7,22 @@
 {% block customcss %}
   <style>
     #export-report {
-      color: #768399;
       position: relative;
-      float: left;
-      padding: 6px 12px;
-      margin-left: -1px;
-      line-height: 1.42857143;
-      text-decoration: none;
-      background-color: #fff;
-      border: 1px solid #ddd;
+      display: inline-block;
+      border: 0;
+      background: transparent;
+      border-radius: .5rem!important;
+      padding: .75rem!important;
+      -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    }
+    #start_date, #end_date {
+      border: 1px solid #ccc;
       border-radius: 4px;
-      margin-bottom: 0;
+      background-color: #eee;
+      width: 100%;
+      font-size: 14px;
+      padding: 5px;
     }
   </style>
 {% endblock customcss %}
@@ -45,19 +50,28 @@
           <div class="col-md-12">
             <div class="x_panel">
               <div class="x_content">
+                {% if request.user.is_superadmin and request.user.is_accept_vodafone_onboarding %}
+                  <div class="row">
+                  <div class="col-md-4 col-sm-4 col-xs-4 text-center">
+                    <input onchange="toggle_export_button()" id="start_date" type="date">
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-4 text-center">
+                    <input onchange="toggle_export_button()" id="end_date" type="date">
+                  </div>
+                  <div class="col-md-4 col-sm-4 col-xs-4">
+                    <button id="export-report" type="button" onclick="export_transactions()"
+                            disabled="true" class="btn btn-default">
+                      <i class="fa fa-file-excel-o" title="Export Transactions"></i>
+                      Export Report for all Clients
+                    </button>
+                  </div>
+                </div>
+                {% endif%}
                 <div class="row">
                   <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                     <ul class="pagination pagination-split">
                       <li><a href="?q=active">{% trans 'Active' %}</a></li>
                       <li><a href="?q=inactive">{% trans 'InActive' %}</a></li>
-                      {% if request.user.is_superadmin and request.user.is_accept_vodafone_onboarding %}
-                      <li>
-                        <button id="export-report" type="button" onclick="export_transactions()">
-                          <i class="fa fa-file-excel-o" title="Export Transactions"></i>
-                          Export Report for all Clients for current month
-                        </button>
-                      </li>
-                      {% endif%}
                     </ul>
                   </div>
 
@@ -248,6 +262,17 @@
 
 {% block script %}
   <script type="text/javascript">
+    function toggle_export_button() {
+      let startDateElement = document.getElementById('start_date');
+      let endDateElement = document.getElementById('end_date');
+      let export_btn = document.getElementById('export-report');
+
+      if(startDateElement.value == '' || endDateElement.value == '') {
+        export_btn.disabled = true;
+      } else {
+        export_btn.disabled = false;
+      }
+    }
     function update_modal(obj_id, activation) {
       $("#activate_btn").data('id', obj_id);
 
@@ -296,27 +321,32 @@
       });
     }
     function export_transactions() {
-      $.ajax({
-        type: 'GET',
-        url: "{% url 'disbursement:export_transactions' %}",
-        success: function (data, text, xhr) {
-          if (xhr.responseText == "") {
-            $('#exportTransactionsModal').modal({
-              backdrop: 'static',
-              keyboard: false
-            })
-          } else {
-            window.location.replace("../user/login")
-          }
-        },
-        error: function(jqXHR, textStatus, errorThrown) {
-            $(errorThrown).appendTo('#exportTransactionsFailedModal.modal-body');
-            $('#exportTransactionsFailedModal').modal({
-              backdrop: 'static',
-              keyboard: false
-            })
-        },
-      })
+      let startDateElement = document.getElementById('start_date');
+      let endDateElement = document.getElementById('end_date');
+      if(!(startDateElement.value == '' || endDateElement.value == '')) {
+        let qsOfUrl = `?start_date=${startDateElement.value}&end_date=${endDateElement.value}`;
+        $.ajax({
+          type: 'GET',
+          url: "{% url 'disbursement:export_transactions' %}"+qsOfUrl,
+          success: function (data, text, xhr) {
+            if (xhr.responseText == "") {
+              $('#exportTransactionsModal').modal({
+                backdrop: 'static',
+                keyboard: false
+              })
+            } else {
+              window.location.replace("../user/login")
+            }
+          },
+          error: function(jqXHR, textStatus, errorThrown) {
+              $(errorThrown).appendTo('#exportTransactionsFailedModal.modal-body');
+              $('#exportTransactionsFailedModal').modal({
+                backdrop: 'static',
+                keyboard: false
+              })
+          },
+        })
+      }
     }
   </script>
 {% endblock script %}

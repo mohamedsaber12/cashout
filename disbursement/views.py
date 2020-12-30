@@ -236,9 +236,11 @@ class ExportTransactionsPerSuperAdmin(SuperRequiredMixin, View):
     View for export report per super admin
     """
     def get(self, request, *args, **kwargs):
+        start_date = request.GET.get('start_date', None)
+        end_date = request.GET.get('end_date', None)
         # 1 If the request is ajax and current user super admin user
         if request.is_ajax() and request.user.is_superadmin:
-            generate_transactions_report.delay(request.user.id, language=translation.get_language())
+            generate_transactions_report.delay(request.user.id, start_date, end_date, language=translation.get_language())
             return HttpResponse(status=200)
 
         return HttpResponse(status=401)

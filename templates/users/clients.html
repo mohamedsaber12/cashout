@@ -20,7 +20,7 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       background-color: #eee;
-      width: 100%;
+      width: 75%;
       font-size: 14px;
       padding: 5px;
     }
@@ -53,9 +53,11 @@
                 {% if request.user.is_superadmin and request.user.is_accept_vodafone_onboarding %}
                   <div class="row">
                   <div class="col-md-4 col-sm-4 col-xs-4 text-center">
+                    <label style="width:20%;">Start Date</label>
                     <input onchange="toggle_export_button()" id="start_date" type="date">
                   </div>
                   <div class="col-md-4 col-sm-4 col-xs-4 text-center">
+                    <label style="width:20%;">End Date</label>
                     <input onchange="toggle_export_button()" id="end_date" type="date">
                   </div>
                   <div class="col-md-4 col-sm-4 col-xs-4">

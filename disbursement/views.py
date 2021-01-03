@@ -27,10 +27,10 @@ from rest_framework_expiring_authtoken.models import ExpiringToken
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (generate_all_disbursed_data,
+from data.tasks import (ExportClientsTransactionsMonthlyReportTask,
+                        generate_all_disbursed_data,
                         generate_failed_disbursed_data,
-                        generate_success_disbursed_data,
-                        generate_transactions_report)
+                        generate_success_disbursed_data)
 from data.utils import redirect_params
 from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
@@ -231,16 +231,18 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
 
         return HttpResponse(status=401)
 
-class ExportTransactionsPerSuperAdmin(SuperRequiredMixin, View):
+
+class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
     """
-    View for export report per super admin
+    View for exporting clients aggregated transactions report per super admin
     """
+
     def get(self, request, *args, **kwargs):
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
-        # 1 If the request is ajax and current user super admin user
-        if request.is_ajax() and request.user.is_superadmin:
-            generate_transactions_report.delay(request.user.id, start_date, end_date, language=translation.get_language())
+
+        if request.is_ajax():
+            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date)
             return HttpResponse(status=200)
 
         return HttpResponse(status=401)

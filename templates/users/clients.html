@@ -50,25 +50,43 @@
           <div class="col-md-12">
             <div class="x_panel">
               <div class="x_content">
-                {% if request.user.is_superadmin and request.user.is_accept_vodafone_onboarding %}
+
+                {# Export clients transactions report sections #}
+                {% if not request.user.is_vodafone_default_onboarding %}
                   <div class="row">
-                  <div class="col-md-4 col-sm-4 col-xs-4 text-center">
-                    <label style="width:20%;">Start Date</label>
-                    <input onchange="toggle_export_button()" id="start_date" type="date">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                      <div class="x_panel">
+                        <div class="x_title">
+                          <h2>{% trans 'Export Clients Transactions Report' %}</h2>
+                          <ul class="nav navbar-right panel_toolbox">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                          </ul>
+                          <div class="clearfix"></div>
+                        </div>
+
+                        <div class="x_content">
+                          <div class="col-md-4 col-sm-4 col-xs-4 text-left">
+                            <label style="width:20%;">Start Date</label>
+                            <input onchange="toggle_export_button()" id="start_date" type="date">
+                          </div>
+                          <div class="col-md-4 col-sm-4 col-xs-4 text-left">
+                            <label style="width:20%;">End Date</label>
+                            <input onchange="toggle_export_button()" id="end_date" type="date">
+                          </div>
+                          <div class="col-md-4 col-sm-4 col-xs-4">
+                            <button id="export-report" type="button" onclick="export_clients_transactions_report()"
+                                    disabled="true" class="btn btn-default pull-right">
+                              <i class="fa fa-file-excel-o" title="Export Transactions"></i>
+                              Export Report
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div class="col-md-4 col-sm-4 col-xs-4 text-center">
-                    <label style="width:20%;">End Date</label>
-                    <input onchange="toggle_export_button()" id="end_date" type="date">
-                  </div>
-                  <div class="col-md-4 col-sm-4 col-xs-4">
-                    <button id="export-report" type="button" onclick="export_transactions()"
-                            disabled="true" class="btn btn-default">
-                      <i class="fa fa-file-excel-o" title="Export Transactions"></i>
-                      Export Report for all Clients
-                    </button>
-                  </div>
-                </div>
                 {% endif%}
+                {# End of export clients transactions report sections #}
+
                 <div class="row">
                   <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                     <ul class="pagination pagination-split">
@@ -322,14 +340,14 @@
         }
       });
     }
-    function export_transactions() {
+    function export_clients_transactions_report() {
       let startDateElement = document.getElementById('start_date');
       let endDateElement = document.getElementById('end_date');
       if(!(startDateElement.value == '' || endDateElement.value == '')) {
         let qsOfUrl = `?start_date=${startDateElement.value}&end_date=${endDateElement.value}`;
         $.ajax({
           type: 'GET',
-          url: "{% url 'disbursement:export_transactions' %}"+qsOfUrl,
+          url: "{% url 'disbursement:export_clients_transactions_report' %}"+qsOfUrl,
           success: function (data, text, xhr) {
             if (xhr.responseText == "") {
               $('#exportTransactionsModal').modal({

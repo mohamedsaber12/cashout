@@ -2,7 +2,16 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
-
+{% block customcss %}
+<style>
+    .checker-keys {
+      display: inline-block;
+      word-wrap: break-word;
+      margin-left: 10px;
+      width: -webkit-fill-available;
+    }
+  </style>
+{% endblock %}
 {% block title %}{{ oauth2_app.user.username }} {% trans 'Auth Keys' %}{% endblock %}
 {% block body %}
   <div class="page-title">
@@ -15,22 +24,39 @@
       <div class="col-lg-12">
         <div class="panel panel-default">
           <div class="panel-body">
-            <ul>
-              <li>
-                <h4>{% trans 'Client ID:' %}</h4>
-                {% if oauth2_app %}
-                  {{ oauth2_app.client_id }}
-                {% else %}
-                  No client ID for this user
-                {% endif %}
+            <ul class="list-group">
+              <li class="list-group-item">
+                <div class="row">
+                  <div class="col-md-2 col-sm-2 col-xs-2">
+                    <label style="font-size: 16px;">{% trans 'Client ID:' %}</label>
+                  </div>
+                  <div class="col-md-10 col-sm-10 col-xs-10">
+                    <p class="checker-keys">
+                      {% if oauth2_app %}
+                        {{ oauth2_app.client_id }}
+                      {% else %}
+                        No client ID for this user
+                      {% endif %}
+                    </p>
+                  </div>
+                </div>
               </li>
-              <li>
-                <h4>{% trans 'Client Secret:' %}</h4>
-                {% if oauth2_app %}
-                  {{ oauth2_app.client_secret}}
-                {% else %}
-                  No client secret for this user
-                {% endif %}
+
+              <li class="list-group-item">
+                <div class="row">
+                  <div class="col-md-2 col-sm-2 col-xs-2">
+                    <label style="font-size: 16px;">{% trans 'Client Secret:' %}</label>
+                  </div>
+                  <div class="col-md-10 col-sm-10 col-xs-10">
+                    <p class="checker-keys">
+                      {% if oauth2_app %}
+                        {{ oauth2_app.client_secret}}
+                      {% else %}
+                        No client secret for this user
+                      {% endif %}
+                    </p>
+                  </div>
+                </div>
               </li>
             </ul>
           </div>

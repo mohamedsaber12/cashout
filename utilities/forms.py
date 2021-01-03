@@ -88,3 +88,29 @@ class BudgetAdminModelForm(forms.ModelForm):
     class Meta:
         model = Budget
         fields = ['add_new_amount']
+
+
+class IncreaseBalanceRequestForm(forms.Form):
+    """
+    form For Increase Balance Request
+    """
+    amount = forms.IntegerField(
+            label=_('Amount To Be Added '),
+            required=True,
+            validators=[MinValueValidator(round(Decimal(100), 2))],
+            widget=forms.TextInput(attrs={
+                'placeholder': _('New budget, ex: 100'),
+                'class': 'form-control',
+                'type': 'number'
+            })
+    )
+    type = forms.ChoiceField(
+            label=_('Type'),
+            required=True,
+            choices=[('from_bank_transfer', 'From Bank Transfer'),
+                     ('from_accept_balance', 'From Accept Balance'),],
+            widget=forms.Select(attrs={
+                'class': 'form-control',
+            })
+    )
+

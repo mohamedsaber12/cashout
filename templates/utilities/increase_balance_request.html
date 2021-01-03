@@ -1,0 +1,60 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% block customcss %}
+  <style>
+    #id_amount, #id_type {
+      margin-bottom: 20px;
+    }
+    #flash_success_message {
+      font-size: 10px;
+      opacity: 0.15;
+      display: none;
+    }
+  </style>
+  <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
+{% endblock %}
+{% block body %}
+  <div class="container">
+    <div id="flash_success_message" class="row">
+      <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
+        <div class="alert alert-success" role="alert">
+          Your Request Has Been Received Successfully
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
+        <h4>
+          <span class="glyphicon glyphicon-plus"></span>
+          <span style="font-weight:bold;font-size:23px;">Increase Your Balance</span>
+        </h4>
+      </div>
+    </div>
+    <div style="back-ground: white;" class="row">
+      <div style="padding:10px;" class="col-md-6 col-sm-6 col-xs-6">
+        <form action="{% url 'utilities:increase_balance' %}" method="post">
+          {% csrf_token %}
+          {{ form }}
+          <input class="btn btn-primary pull-right" type="submit" value="Submit">
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock body %}
+{% block script %}
+  <script>
+    function hide_message() {
+      setTimeout(function() {
+        $('#flash_success_message').fadeOut("slow");
+      }, 5000)
+    }
+    function animate_message() {
+       $('#flash_success_message').animate({fontSize: '16px'}, "3000", hide_message);
+    }
+    {% if request_received %}
+      $('#flash_success_message').fadeTo("slow", 1.0, animate_message);
+    {% endif %}
+  </script>
+{% endblock %}

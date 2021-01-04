@@ -27,7 +27,8 @@ from rest_framework_expiring_authtoken.models import ExpiringToken
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (generate_all_disbursed_data,
+from data.tasks import (ExportClientsTransactionsMonthlyReportTask,
+                        generate_all_disbursed_data,
                         generate_failed_disbursed_data,
                         generate_success_disbursed_data)
 from data.utils import redirect_params
@@ -231,6 +232,22 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
         return HttpResponse(status=401)
 
 
+class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
+    """
+    View for exporting clients aggregated transactions report per super admin
+    """
+
+    def get(self, request, *args, **kwargs):
+        start_date = request.GET.get('start_date', None)
+        end_date = request.GET.get('end_date', None)
+
+        if request.is_ajax():
+            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date)
+            return HttpResponse(status=200)
+
+        return HttpResponse(status=401)
+
+
 @setup_required
 @login_required
 def failed_disbursed_for_download(request, doc_id):
@@ -266,6 +283,26 @@ def failed_disbursed_for_download(request, doc_id):
     else:
         raise Http404
 
+@login_required
+def download_exported_transactions(request):
+    filename = request.GET.get('filename', None)
+    if not filename:
+        raise Http404
+
+    file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+    if os.path.exists(file_path):
+        with open(file_path, 'rb') as fh:
+            response = HttpResponse(
+                    fh.read(),
+                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+            response['Content-Disposition'] = 'attachment; filename=%s' % filename
+            FAILED_DISBURSEMENT_DOWNLOAD.debug(
+                    f"[message] [DOWNLOAD EXPORTED TRANSACTIONS] [{request.user}] -- file name: {filename}"
+            )
+            return response
+    else:
+        raise Http404
 
 @setup_required
 @login_required

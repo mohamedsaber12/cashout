@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
+import logging
 
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
@@ -10,6 +11,8 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractTimeStamp
+
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
 
 class CallWalletsModerator(models.Model):
@@ -99,17 +102,17 @@ class Budget(AbstractTimeStamp):
         actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
         # 1. Determine the type of the issuer to calculate the fees for
-        if issuer_type == "vodafone":
+        if issuer_type == "vodafone" or issuer_type == "V":
             issuer_type_refined = FeeSetup.VODAFONE
-        elif issuer_type == "etisalat":
+        elif issuer_type == "etisalat" or issuer_type == "E":
             issuer_type_refined = FeeSetup.ETISALAT
-        elif issuer_type == "orange":
+        elif issuer_type == "orange" or issuer_type == "O":
             issuer_type_refined = FeeSetup.ORANGE
-        elif issuer_type == "aman":
+        elif issuer_type == "aman" or issuer_type == "A":
             issuer_type_refined = FeeSetup.AMAN
-        elif issuer_type == "bank_card":
+        elif issuer_type == "bank_card" or issuer_type == "C":
             issuer_type_refined = FeeSetup.BANK_CARD
-        elif issuer_type == "bank_wallet":
+        elif issuer_type == "bank_wallet" or issuer_type == "B":
             issuer_type_refined = FeeSetup.BANK_WALLET
 
         # 2. Pick the fees objects corresponding to the determined issuer type
@@ -119,15 +122,15 @@ class Budget(AbstractTimeStamp):
         # 3. Calculate the fees for the passed amount to be disbursed using the picked fees type and value
         if fees_obj:
             if fees_obj.fee_type == FeeSetup.FIXED_FEE:
-                fixed_value = round(fees_obj.fixed_value, 2)
+                fixed_value = fees_obj.fixed_value
                 fees_aggregated_value = fixed_value
             elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
-                percentage_value = round(fees_obj.percentage_value, 2)
-                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2)
+                percentage_value = fees_obj.percentage_value
+                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 4)
             elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
-                fixed_value = round(fees_obj.fixed_value, 2)
-                percentage_value = round(fees_obj.percentage_value, 2)
-                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 2) + fixed_value
+                fixed_value = fees_obj.fixed_value
+                percentage_value = fees_obj.percentage_value
+                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 4) + fixed_value
 
             # 3.1 Check the total fees_aggregated_value if it complies against the min and max values
             if 0 < fees_obj.min_value > fees_aggregated_value:
@@ -136,7 +139,7 @@ class Budget(AbstractTimeStamp):
             if 0 < fees_obj.max_value < fees_aggregated_value:
                 fees_aggregated_value = fees_obj.max_value
 
-            vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 2)
+            vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 4)
             total_amount_with_fees_and_vat = round((actual_amount + fees_aggregated_value + vat_value), 2)
 
             return total_amount_with_fees_and_vat
@@ -168,13 +171,21 @@ class Budget(AbstractTimeStamp):
         """
         try:
             amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower())
+            current_balance_before = self.current_balance
+            applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
             self.total_disbursed_amount += amount_plus_fees_vat
             self.current_balance -= amount_plus_fees_vat
             self.save()
-        except Exception:
-            raise ValueError(
-                    _(f"Error updating the total disbursed amount and the current balance, please retry again later.")
+            BUDGET_LOGGER.debug(
+                    f"[message] [CUSTOM BUDGET UPDATE] [{self.disburser.username}] -- disbursed amount: {amount}, "
+                    f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
+                    f"current balance before: {current_balance_before}, current balance after: {self.current_balance}"
             )
+        except Exception as e:
+            raise ValueError(_(
+                    f"Error updating the total disbursed amount and the current balance, please retry again later, "
+                    f"exception: {e.args}"
+            ))
 
         return True
 
@@ -185,9 +196,14 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
+            current_balance_before = self.current_balance
             self.total_disbursed_amount -= round(Decimal(amount), 2)
             self.current_balance += round(Decimal(amount), 2)
             self.save()
+            BUDGET_LOGGER.debug(
+                    f"[message] [CUSTOM BUDGET UPDATE] [{self.disburser.username}] -- returned amount: {amount}, "
+                    f"current balance before: {current_balance_before}, current balance after: {self.current_balance}"
+            )
         except Exception:
             raise ValueError(_(f"Error adding to the current balance and cutting from the total disbursed amount"))
 

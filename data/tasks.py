@@ -7,7 +7,6 @@ import itertools
 import json
 import logging
 import re
-from datetime import datetime
 
 from celery import Task
 from dateutil.parser import parse
@@ -15,12 +14,16 @@ import pandas as pd
 import requests
 import tablib
 import xlrd
+import xlwt
 
+from django.db.models import Sum, Count, Q, Case, When, F
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
+from django.utils.timezone import datetime, make_aware
 from django.utils.translation import gettext as _
 
+from core.models import AbstractBaseStatus
 from core.utils.validations import phonenumber_form_validate
 from disbursement.models import BankTransaction, DisbursementData
 from disbursement.resources import (DisbursementDataResourceForBankCards,
@@ -28,7 +31,8 @@ from disbursement.resources import (DisbursementDataResourceForBankCards,
                                     DisbursementDataResourceForEWallets)
 from disbursement.utils import (VALID_BANK_CODES_LIST,
                                 VALID_BANK_TRANSACTION_TYPES_LIST,
-                                determine_trx_category_and_purpose)
+                                determine_trx_category_and_purpose,
+                                DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
@@ -421,7 +425,276 @@ class BankWalletsAndCardsSheetProcessor(Task):
             return False
 
 
+class ExportClientsTransactionsMonthlyReportTask(Task):
+    """
+    Task to export clients transactions monthly reports.
+    """
+
+    superadmin_user = None
+    start_date = None
+    end_date = None
+    first_day = None
+    last_day = None
+
+    def refine_first_and_end_date_format(self):
+        """
+        Refine start date and end date format using datetime and set values for first and last days.
+        make_aware(): Converts naive datetime object (without timezone info) to the one that has timezone info,
+            using timezone specified in your django settings if you don't specify it explicitly as a second argument.
+        """
+        first_day = datetime(
+                year=int(self.start_date.split('-')[0]),
+                month=int(self.start_date.split('-')[1]),
+                day=int(self.start_date.split('-')[2]),
+        )
+        self.first_day = make_aware(first_day)
+
+        last_day = datetime(
+                year=int(self.end_date.split('-')[0]),
+                month=int(self.end_date.split('-')[1]),
+                day=int(self.end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+        )
+        self.last_day = make_aware(last_day)
+
+    def _add_admin_username_to_qs_values(self, qs, checkers_parent_username):
+        """Append admin username to the output transactions queryset values dict"""
+        for q in qs:
+            if q['issuer'] == AbstractBaseIssuer.BANK_CARD:
+                q['issuer'] = 'C'
+            elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
+                q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
+
+            q['admin'] = checkers_parent_username[q['checker']]
+        return qs
+
+    def _calculate_and_add_fees_to_qs_values(self, qs):
+        """Calculate and append the fees to the output transactions queryset values dict"""
+        for q in qs:
+            q['fees'] = Budget.objects.get(disburser__username=q['admin']).\
+                            accumulate_amount_with_fees_and_vat(q['total'], q['issuer']) - round(Decimal(q['total']), 2)
+        return qs
+
+    def aggregate_vf_ets_aman_transactions(self, checkers_qs, checkers_parent_username):
+        """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
+        qs = DisbursementData.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(reason__exact='SUCCESS'),
+                Q(doc__disbursed_by__in=checkers_qs)
+        ).annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer').\
+            annotate(total=Sum('amount'), count=Count('id'))
+
+        qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+        qs = self._calculate_and_add_fees_to_qs_values(qs)
+        return qs
+
+    def aggregate_bank_wallets_orange_instant_transactions(self, checkers_qs, checkers_parent_username):
+        """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
+        qs = InstantTransaction.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(status=AbstractBaseStatus.SUCCESSFUL),
+                Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
+                ).annotate(
+                checker=Case(
+                        When(from_user__isnull=False, then=F('from_user__username')),
+                        default=F('document__disbursed_by__username')
+                )
+        ).extra(select={'issuer': 'issuer_type'}).values('checker', 'issuer').\
+            annotate(total=Sum('amount'), count=Count('uid'))
+
+        qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+        qs = self._calculate_and_add_fees_to_qs_values(qs)
+        return qs
+
+    def aggregate_bank_cards_transactions(self, checkers_qs, checkers_parent_username):
+        """Calculate bank cards transactions details from BankTransaction model"""
+        qs = BankTransaction.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(status=AbstractBaseStatus.SUCCESSFUL),
+                Q(document__disbursed_by__in=checkers_qs),
+                Q(user_created__in=checkers_qs)
+        ).annotate(
+                checker=Case(
+                        When(user_created__isnull=False, then=F('user_created__username')),
+                        default=F('document__disbursed_by__username')
+                )
+        ).values('checker').annotate(total=Sum('amount'), count=Count('id'))
+
+        qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+        qs = self._calculate_and_add_fees_to_qs_values(qs)
+        print('bank cards: ', qs)
+        return qs
+
+    def group_result_transactions_data(self, vf_ets_aman_qs, bank_wallets_orange_instant_qs, cards_qs):
+        """Group all data by admin"""
+        transactions_details_list = [vf_ets_aman_qs, bank_wallets_orange_instant_qs, cards_qs]
+        final_data = dict()
+
+        for transactions_result_type in transactions_details_list:
+            for q in transactions_result_type:
+                if q['admin'] in final_data:
+                    issuer_exist = False
+                    for admin_q in final_data[q['admin']]:
+                        if q['issuer'] == admin_q['issuer']:
+                            admin_q['total'] += q['total']
+                            admin_q['count'] += q['count']
+                            admin_q['fees'] += q['fees']
+                            issuer_exist = True
+                            break
+                    if not issuer_exist:
+                        final_data[q['admin']].append(q)
+                else:
+                    final_data[q['admin']] = [q]
+
+        return final_data
+
+    def write_data_to_excel_file(self, final_data):
+        """Write exported transactions data to excel file"""
+        column_names_list = [
+            'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
+        ]
+        filename = _(f"clients_monthly_report_{self.superadmin_user.username}_{self.end_date}_{randomword(4)}.xlsx")
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('report')
+
+        # 1. Write sheet header/column names - first row
+        row_num = 0
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+
+        for col_nums in range(len(column_names_list)):
+            ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+
+        # 2. Write sheet body/data - remaining rows
+        font_style = xlwt.XFStyle()
+        col_nums = {
+            'total': 2,
+            'vodafone': 3,
+            'etisalat': 4,
+            'aman': 5,
+            'orange': 6,
+            'B': 7,
+            'C': 8
+        }
+        row_num += 1
+
+        for key in final_data.keys():
+            ws.write(row_num, 0, key, font_style)
+            ws.write(row_num, 1, 'Volume', font_style)
+            ws.write(row_num+1, 1, 'Count', font_style)
+            ws.write(row_num+2, 1, 'Fees', font_style)
+            for el in final_data[key]:
+                ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
+                ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
+                ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+
+            row_num += 3
+
+        wb.save(file_path)
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
+
+    def prepare_transactions_report(self):
+        """Prepare report for transactions related to client"""
+        # 1. Format start and end date
+        self.refine_first_and_end_date_format()
+
+        # 2. Get all clients of the current superadmin
+        admins_qs = self.superadmin_user.children()
+
+        # 3. Get all children [checkers/api checkers] for every client at the clients list
+        checkers_qs = []
+        checkers_parent_username = {}
+        for admin in admins_qs:
+            admin_children_list = admin.children()
+            for child in admin_children_list:
+                if child.is_checker or child.is_instantapichecker:
+                    checkers_qs.append(child)
+                    checkers_parent_username[child.username] = admin.username
+
+        # 4. Calculate vodafone, etisalat, aman transactions details
+        vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions(checkers_qs, checkers_parent_username)
+
+        # 5. Calculate bank wallets, orange, instant transactions details
+        bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions(
+                checkers_qs, checkers_parent_username
+        )
+
+        # 6. Calculate bank cards/accounts transactions details
+        bank_cards_transactions_qs = self.aggregate_bank_cards_transactions(checkers_qs, checkers_parent_username)
+
+        # 7. Group all data by admin
+        final_data = self.group_result_transactions_data(
+                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
+        )
+
+        # 8. Calculate total volume, count, fees for each admin
+        for key in final_data.keys():
+            total_per_admin = {
+                'admin': key,
+                'issuer': 'total',
+                'total': round(Decimal(0), 2),
+                'count': round(Decimal(0), 2),
+                'fees': round(Decimal(0), 2)
+            }
+            for el in final_data[key]:
+                total_per_admin['total'] += round(Decimal(el['total']), 2)
+                total_per_admin['count'] += el['count']
+                total_per_admin['fees'] += el['fees']
+            final_data[key].append(total_per_admin)
+
+        # 9. Add issuer with values 0 to final data
+        for key in final_data.keys():
+            issuers_exist = {
+                'vodafone': False,
+                'etisalat': False,
+                'aman': False,
+                'orange': False,
+                'B': False,
+                'C': False
+            }
+            for el in final_data[key]:
+                if el['issuer'] != 'total':
+                    issuers_exist[el['issuer']] = True
+            for issuer in issuers_exist.keys():
+                if not issuers_exist[issuer]:
+                    final_data[key].append({'issuer': issuer, 'count': 0, 'total': 0, 'fees': 0})
+
+        # 10. Add all admin that have no transactions
+        for current_admin in admins_qs:
+            if not current_admin.username in final_data.keys():
+                final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
+
+        # 11. Write final data to excel file
+        return self.write_data_to_excel_file(final_data)
+
+    def prepare_and_send_report_mail(self, report_download_url):
+        """Prepare the mail to be sent with the report download link"""
+        mail_subject = f' {self.superadmin_user.get_full_name} Clients Transactions Report ' \
+                       f'From {self.start_date} To {self.end_date}'
+        mail_content_message = _(
+                f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br>You can download "
+                f"transactions report of your clients within the period of {self.start_date} to {self.end_date}"
+                f"from here <a href='{report_download_url}' >Download</a><br><br>Thanks, Best Regards"
+        )
+        deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
+
+    def run(self, user_id, start_date, end_date, *args, **kwargs):
+        self.superadmin_user = User.objects.get(id=user_id)
+        self.start_date = start_date
+        self.end_date = end_date
+        report_download_url = self.prepare_transactions_report()
+        self.prepare_and_send_report_mail(report_download_url)
+
+
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
+ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
 
 
 def check_total_budget_regarding_issuer(doc, amount_list, issuer):
@@ -471,7 +744,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
                     if item.value == '' or float(item.value) < 1.0:
                         row_dict['error'] = '\nInvalid amount'
                     else:
-                        row_dict['amount'] = float(item.value)
+                        row_dict['amount'] = round(float(item.value), 2)
                     if not row_dict['error']:
                         row_dict['error'] = None
                 except ValueError:

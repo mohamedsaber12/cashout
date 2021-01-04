@@ -215,43 +215,50 @@ DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [
         'issuer': 'total',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     },
     {
         'issuer': 'vodafone',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     },
     {
         'issuer': 'etisalat',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     },
     {
         'issuer': 'aman',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     },
     {
         'issuer': 'orange',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     },
     {
         'issuer': 'B',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     },
     {
         'issuer': 'C',
         'total': 0,
         'count': 0,
-        'fees': 0
+        'fees': 0,
+        'vat': 0
     }
 ]
 

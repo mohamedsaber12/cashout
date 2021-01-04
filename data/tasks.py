@@ -543,6 +543,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                             admin_q['total'] += q['total']
                             admin_q['count'] += q['count']
                             admin_q['fees'] += q['fees']
+                            admin_q['vat'] += q['vat']
                             issuer_exist = True
                             break
                     if not issuer_exist:
@@ -588,12 +589,15 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             ws.write(row_num, 1, 'Volume', font_style)
             ws.write(row_num+1, 1, 'Count', font_style)
             ws.write(row_num+2, 1, 'Fees', font_style)
+            ws.write(row_num+3, 1, 'Vat', font_style)
+
             for el in final_data[key]:
                 ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
                 ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
                 ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+                ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
 
-            row_num += 3
+            row_num += 4
 
         wb.save(file_path)
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
@@ -640,12 +644,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 'issuer': 'total',
                 'total': round(Decimal(0), 2),
                 'count': round(Decimal(0), 2),
-                'fees': round(Decimal(0), 2)
+                'fees': round(Decimal(0), 2),
+                'vat': round(Decimal(0), 2)
             }
             for el in final_data[key]:
                 total_per_admin['total'] += round(Decimal(el['total']), 2)
                 total_per_admin['count'] += el['count']
                 total_per_admin['fees'] += el['fees']
+                total_per_admin['vat'] += el['vat']
             final_data[key].append(total_per_admin)
 
         # 9. Add issuer with values 0 to final data

@@ -516,8 +516,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
-                Q(document__disbursed_by__in=checkers_qs),
-                Q(user_created__in=checkers_qs)
+                Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
         ).annotate(
                 checker=Case(
                         When(user_created__isnull=False, then=F('user_created__username')),

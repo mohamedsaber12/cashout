@@ -462,7 +462,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _add_admin_username_to_qs_values(self, qs, checkers_parent_username):
         """Append admin username to the output transactions queryset values dict"""
         for q in qs:
-            if q['issuer'] == AbstractBaseIssuer.BANK_CARD:
+            if len(str(q['issuer'])) > 20:
                 q['issuer'] = 'C'
             elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
                 q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
@@ -473,8 +473,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _calculate_and_add_fees_to_qs_values(self, qs):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
-            q['fees'] = Budget.objects.get(disburser__username=q['admin']).\
-                            accumulate_amount_with_fees_and_vat(q['total'], q['issuer']) - round(Decimal(q['total']), 2)
+            q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']).\
+                                      calculate_fees_and_vat_for_amount(q['total'], q['issuer'])
         return qs
 
     def aggregate_vf_ets_aman_transactions(self, checkers_qs, checkers_parent_username):
@@ -519,14 +519,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
         ).annotate(
                 checker=Case(
-                        When(user_created__isnull=False, then=F('user_created__username')),
-                        default=F('document__disbursed_by__username')
+                        When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__username')),
+                        default=F('user_created__username')
                 )
-        ).values('checker').annotate(total=Sum('amount'), count=Count('id'))
+        ).extra(select={'issuer': 'transaction_id'}).values('checker', 'issuer').\
+            annotate(total=Sum('amount'), count=Count('id'))
 
         qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
         qs = self._calculate_and_add_fees_to_qs_values(qs)
-        print('bank cards: ', qs)
         return qs
 
     def group_result_transactions_data(self, vf_ets_aman_qs, bank_wallets_orange_instant_qs, cards_qs):
@@ -557,7 +557,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         column_names_list = [
             'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
         ]
-        filename = _(f"clients_monthly_report_{self.superadmin_user.username}_{self.end_date}_{randomword(4)}.xls")
+        filename = _(f"clients_monthly_report_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')
@@ -679,8 +679,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                        f'From {self.start_date} To {self.end_date}'
         mail_content_message = _(
                 f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br>You can download "
-                f"transactions report of your clients within the period of {self.start_date} to {self.end_date}"
-                f"from here <a href='{report_download_url}' >Download</a><br><br>Thanks, Best Regards"
+                f"transactions report of your clients within the period of {self.start_date} to {self.end_date} "
+                f"from here <a href='{report_download_url}' >Download</a>.<br><br>Best Regards,"
         )
         deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
 
@@ -690,6 +690,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.end_date = end_date
         report_download_url = self.prepare_transactions_report()
         self.prepare_and_send_report_mail(report_download_url)
+        return True
 
 
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())

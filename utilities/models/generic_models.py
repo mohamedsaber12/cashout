@@ -146,6 +146,56 @@ class Budget(AbstractTimeStamp):
         else:
             raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
 
+    def calculate_fees_and_vat_for_amount(self, amount_to_be_disbursed, issuer_type):
+        """
+        Calculate fees percentage and 14 % VAT regarding specific amount and issuer.
+        TODO: Remove the repeated code via exporting the main part into a generic method
+        """
+        actual_amount = round(Decimal(amount_to_be_disbursed), 2)
+
+        # 1. Determine the type of the issuer to calculate the fees for
+        if issuer_type == "vodafone" or issuer_type == "V":
+            issuer_type_refined = FeeSetup.VODAFONE
+        elif issuer_type == "etisalat" or issuer_type == "E":
+            issuer_type_refined = FeeSetup.ETISALAT
+        elif issuer_type == "orange" or issuer_type == "O":
+            issuer_type_refined = FeeSetup.ORANGE
+        elif issuer_type == "aman" or issuer_type == "A":
+            issuer_type_refined = FeeSetup.AMAN
+        elif issuer_type == "bank_card" or issuer_type == "C":
+            issuer_type_refined = FeeSetup.BANK_CARD
+        elif issuer_type == "bank_wallet" or issuer_type == "B":
+            issuer_type_refined = FeeSetup.BANK_WALLET
+
+        # 2. Pick the fees objects corresponding to the determined issuer type
+        fees_obj = self.fees.filter(issuer=issuer_type_refined)
+        fees_obj = fees_obj.first() if fees_obj.count() > 0 else None
+
+        # 3. Calculate the fees for the passed amount to be disbursed using the picked fees type and value
+        if fees_obj:
+            if fees_obj.fee_type == FeeSetup.FIXED_FEE:
+                fixed_value = fees_obj.fixed_value
+                fees_value = fixed_value
+            elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
+                percentage_value = fees_obj.percentage_value
+                fees_value = round(((actual_amount * percentage_value) / 100), 4)
+            elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
+                fixed_value = fees_obj.fixed_value
+                percentage_value = fees_obj.percentage_value
+                fees_value = round(((actual_amount * percentage_value) / 100), 4) + fixed_value
+
+            # 3.1 Check the total fees_value if it complies against the min and max values
+            if 0 < fees_obj.min_value > fees_value:
+                fees_value = fees_obj.min_value
+
+            if 0 < fees_obj.max_value < fees_value:
+                fees_value = fees_obj.max_value
+
+            vat_value = round(((fees_value * Decimal(14.00)) / 100), 4)
+            return fees_value, vat_value
+        else:
+            raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
+
     def within_threshold(self, amount_to_be_disbursed, issuer_type):
         """
         Check if the amount to be disbursed won't exceed the current balance

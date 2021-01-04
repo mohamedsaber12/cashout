@@ -557,7 +557,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         column_names_list = [
             'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
         ]
-        filename = _(f"clients_monthly_report_{self.superadmin_user.username}_{self.end_date}_{randomword(4)}.xlsx")
+        filename = _(f"clients_monthly_report_{self.superadmin_user.username}_{self.end_date}_{randomword(4)}.xls")
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')

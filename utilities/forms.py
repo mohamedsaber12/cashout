@@ -113,4 +113,108 @@ class IncreaseBalanceRequestForm(forms.Form):
                 'class': 'form-control',
             })
     )
+    username = forms.CharField(
+            label=_('username'),
+            required=False,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('Accept Username'),
+                'class': 'form-control'
+            })
+    )
+    from_bank = forms.CharField(
+            label=_('bank'),
+            required=False,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('Bank Name'),
+                'class': 'form-control'
+            })
+    )
+    to_bank = forms.CharField(
+            label=_('bank'),
+            required=False,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('Bank Name'),
+                'class': 'form-control'
+            })
+    )
+    from_account_number = forms.CharField(
+            label=_('acc. number'),
+            required=False,
+            max_length=34,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('From Account Number'),
+                'class': 'form-control'
+            })
+    )
+    to_account_number = forms.CharField(
+            label=_('acc. number'),
+            required=False,
+            max_length=34,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('To Account Number'),
+                'class': 'form-control'
+            })
+    )
+    from_account_name = forms.CharField(
+            label=_('account name'),
+            required=False,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('From Account Name'),
+                'class': 'form-control'
+            })
+    )
+    to_account_name = forms.CharField(
+            label=_('account number'),
+            required=False,
+            widget=forms.TextInput(attrs={
+                'placeholder': _('To Account Name'),
+                'class': 'form-control'
+            })
+    )
+    from_date = forms.DateField(
+            label=_('date'),
+            required=False,
+            widget=forms.DateInput(attrs={
+                'placeholder': _('Enter Date'),
+                'class': 'form-control'
+            })
+    )
+    to_attach_proof = forms.ImageField(
+            label=_('Attach Proof'),
+            required=False,
+            widget=forms.FileInput(attrs={
+                'class': 'custom-file-input'
+            })
+    )
+
+    def clean(self):
+        data = self.cleaned_data
+        print(data)
+        if data.get('type', None) == 'from_accept_balance':
+            if data.get('username', None) != '':
+                return data
+            else:
+                raise forms.ValidationError({'username': ['Accept username required']})
+        elif data.get('type', None) == 'from_bank_transfer':
+            validationErrors = {}
+            if data.get('from_bank', None) == '':
+                validationErrors['from_bank'] = ['from bank required']
+            if data.get('to_bank', None) == '':
+                validationErrors['to_bank'] = ['to bank required']
+            if data.get('from_account_number', None) == '':
+                validationErrors['from_account_number'] = ['from account number required']
+            if data.get('to_account_number', None) == '':
+                validationErrors['to_account_number'] = ['to account number required']
+            if data.get('from_account_name', None) == '':
+                validationErrors['from_account_name'] = ['from account name required']
+            if data.get('to_account_name', None) == '':
+                validationErrors['to_account_name'] = ['to account name required']
+            if data.get('from_date', None) == None:
+                validationErrors['from_date'] = ['date required']
+            if data.get('to_attach_proof', None) == None:
+                validationErrors['to_attach_proof'] = ['attach proof required']
+            if len(validationErrors.keys()) == 0:
+                return data
+            else:
+                raise forms.ValidationError(validationErrors)
 

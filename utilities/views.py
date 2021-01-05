@@ -7,6 +7,7 @@ import logging
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
 from django.views.generic import UpdateView, View
+from django.core.files.storage import default_storage
 
 from users.mixins import (SuperOwnsCustomizedBudgetClientRequiredMixin,
                           RootRequiredMixin)
@@ -54,7 +55,7 @@ class IncreaseBalanceRequestView(RootRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """Handles POST requests increase balance request"""
         context = {
-            'form': IncreaseBalanceRequestForm(request.POST),
+            'form': IncreaseBalanceRequestForm(request.POST, request.FILES),
         }
 
         if context['form'].is_valid():
@@ -62,6 +63,7 @@ class IncreaseBalanceRequestView(RootRequiredMixin, View):
             BUDGET_LOGGER.debug(
                 f"[response] [INCREASE BALANCE REQUEST] [{request.user}] -- With Payload {form.cleaned_data}"
             )
+            # prepare email message
             message = _(f"""Dear <strong>Manger</strong><br><br>
             This E-mail to Inform you that this Account {request.user} has made request for 
             increase his balance <br/><br/>
@@ -69,9 +71,31 @@ class IncreaseBalanceRequestView(RootRequiredMixin, View):
             <label>Amount To Be Added:-  </label>{form.cleaned_data['amount']}<br/><br/>
             <label>Type:-  </label> {form.cleaned_data['type'].replace("_", " ")} <br/><br/>
             Thanks, BR""")
-
+            rest_of_message = None
+            if form.cleaned_data['type'] == 'from_accept_balance':
+                rest_of_message = _(f"""<label>Accept username:-  </label> {form.cleaned_data['username']} <br/><br/>
+                Thanks, BR""")
+            else:
+                rest_of_message = _(f"""<h4>From :- </h4>
+                <label> Bank Name :-  </label> {form.cleaned_data['from_bank']} <br/><br/>
+                <label> Account Number :-  </label> {form.cleaned_data['from_account_number']} <br/><br/>
+                <label> Account Name :-  </label> {form.cleaned_data['from_account_name']} <br/><br/>
+                <label> Date :-  </label> {form.cleaned_data['from_date']} <br/><br/>
+                <h4>To:- </h4>
+                <label> Bank Name :-  </label> {form.cleaned_data['to_bank']} <br/><br/>
+                <label> Account Number :-  </label> {form.cleaned_data['to_account_number']} <br/><br/>
+                <label> Account Name *:-  </label> {form.cleaned_data['to_account_name']} <br/><br/>
+                Thanks, BR""")
+            message += rest_of_message
+            # prepare recipients list
             business_team = [dict(email=s, brand={'mail_subject':'Payout'}) for s in get_from_env('BUSINESS_TEAM').split(',')]
-            deliver_mail(None, _(f"Increase Balance Request From {request.user}"), message, business_team)
+
+            # save image to media and get it's url
+            proof_image = request.FILES['to_attach_proof']
+            file_name = default_storage.save(proof_image.name, proof_image)
+            # get file url
+            uploaded_file_url = default_storage.url(file_name)
+            deliver_mail(None, _(f"Increase Balance Request From {request.user}"), message, business_team, uploaded_file_url)
 
             context = {
                 'request_received': True,

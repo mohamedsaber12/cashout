@@ -208,7 +208,7 @@ def randomword(length):
     return ''.join(random.choice(letters) for i in range(length))
 
 
-def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
+def deliver_mail(user_obj, subject_tail, message_body, recipients=None, attached_file_url=None):
     """
     Send a message to inform the user with disbursement/collection related action.
     :param user_obj: Request's user instance that the mail will be sent to.
@@ -227,8 +227,12 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
         for mail in recipient_list:
             mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
             mail_to_be_sent.attach_alternative(message_body, "text/html")
+            if attached_file_url != None:
+                mail_to_be_sent.attach_file(attached_file_url)
             mail_to_be_sent.send()
         return
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")
+    if attached_file_url != None:
+        mail_to_be_sent.attach_file(attached_file_url)
     return mail_to_be_sent.send()

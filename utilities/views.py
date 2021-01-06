@@ -90,14 +90,14 @@ class IncreaseBalanceRequestView(RootRequiredMixin, View):
             # prepare recipients list
             business_team = [dict(email=s, brand={'mail_subject':'Payout'}) for s in get_from_env('BUSINESS_TEAM').split(',')]
             if form.cleaned_data['type'] == 'from_accept_balance':
-                deliver_mail(None, _(f"Increase Balance Request From {request.user}"), message, business_team)
+                deliver_mail(None, _(f"Transfer Request {request.user.username}"), message, business_team)
             else:
                 # save image to media and get it's url
                 proof_image = request.FILES['to_attach_proof']
                 file_name = default_storage.save(proof_image.name, proof_image)
                 # get file url
                 file = default_storage.open(file_name)
-                deliver_mail(None, _(f"Increase Balance Request From {request.user}"), message, business_team, file)
+                deliver_mail(None, _(f"Transfer Request {request.user.username}"), message, business_team, file)
 
             context = {
                 'request_received': True,

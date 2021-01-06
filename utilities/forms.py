@@ -179,7 +179,7 @@ class IncreaseBalanceRequestForm(forms.Form):
                 'class': 'form-control'
             })
     )
-    to_attach_proof = forms.ImageField(
+    to_attach_proof = forms.FileField(
             label=_('Attach Proof'),
             required=False,
             widget=forms.FileInput(attrs={

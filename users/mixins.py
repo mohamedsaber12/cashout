@@ -97,10 +97,7 @@ class SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired(LoginRequire
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not (
-                request.user.is_accept_vodafone_onboarding or
-                request.user.is_vodafone_facilitator_accept_vodafone_onboarding
-        ):
+        if not (request.user.is_accept_vodafone_onboarding or request.user.is_vodafone_facilitator_onboarding):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 

@@ -828,8 +828,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         valid = False
         error_message = MSG_WRONG_FILE_FORMAT
 
-    if doc_obj.owner.root.is_accept_vodafone_onboarding:
-        if valid and doc_obj.owner.root.has_custom_budget and (vf_amount_list or ets_amount_list or aman_amount_list):
+    if not doc_obj.owner.root.is_vodafone_default_onboarding:
+        if valid and (vf_amount_list or ets_amount_list or aman_amount_list):
             vf_total_amount = ets_total_amount = aman_total_amount = 0
             if vf_amount_list:
                 vf_total_amount = check_total_budget_regarding_issuer(doc_obj, vf_amount_list, "vodafone")
@@ -849,7 +849,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
         valid = False
 
-    if valid and doc_obj.owner.root.has_custom_budget and not is_total_amount_within_threshold:
+    if valid and not doc_obj.owner.root.is_vodafone_default_onboarding and not is_total_amount_within_threshold:
         error_message = MSG_NOT_WITHIN_THRESHOLD
         valid = False
 

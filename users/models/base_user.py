@@ -287,7 +287,7 @@ class User(AbstractUser):
         return False
 
     @cached_property
-    def is_vodafone_facilitator_accept_vodafone_onboarding(self):
+    def is_vodafone_facilitator_onboarding(self):
         """Check if the current user belongs the vodafone facilitator accept vodafone onboarding setups"""
         if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
             return True

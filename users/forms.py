@@ -273,7 +273,7 @@ class RootCreationForm(forms.ModelForm):
         elif self.request.user.is_accept_vodafone_onboarding:
             user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'))
-        elif self.request.user.is_vodafone_facilitator_accept_vodafone_onboarding:
+        elif self.request.user.is_vodafone_facilitator_onboarding:
             user.user_permissions.add(Permission.objects.get(
                     content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding'
             ))

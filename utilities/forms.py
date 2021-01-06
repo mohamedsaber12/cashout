@@ -189,7 +189,6 @@ class IncreaseBalanceRequestForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-        print(data)
         if data.get('type', None) == 'from_accept_balance':
             if data.get('username', None) != '':
                 return data

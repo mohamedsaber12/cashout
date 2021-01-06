@@ -241,7 +241,9 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
 
-        if request.is_ajax():
+        if request.is_ajax() and (
+                request.user.is_accept_vodafone_onboarding or request.user.is_instant_model_onboarding
+        ):
             ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date)
             return HttpResponse(status=200)
 

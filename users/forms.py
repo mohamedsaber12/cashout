@@ -225,7 +225,6 @@ class RootCreationForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request', None)
-        self.is_default_vf_setups = self.request.user.is_vodafone_default_onboarding
         super(RootCreationForm, self).__init__(*args, **kwargs)
 
         for field in self.fields:
@@ -268,17 +267,20 @@ class RootCreationForm(forms.ModelForm):
 
         user.save()
 
-        if self.is_default_vf_setups: # default vf model
-            user.user_permissions. \
+        if self.request.user.is_vodafone_default_onboarding:
+            user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))
-        elif self.request.user.is_accept_vodafone_onboarding : # Accept vf model
-            user.user_permissions. \
+        elif self.request.user.is_accept_vodafone_onboarding:
+            user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'))
-
-        else: # Instant Patch model
-            user.user_permissions. \
+        elif self.request.user.is_vodafone_facilitator_accept_vodafone_onboarding:
+            user.user_permissions.add(Permission.objects.get(
+                    content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding'
+            ))
+        else:
+            user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
-            user.user_permissions. \
+            user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement'))
 
         return user

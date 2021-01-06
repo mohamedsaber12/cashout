@@ -77,6 +77,10 @@ class User(AbstractUser):
             ("vodafone_default_onboarding", "the onboarding will be the old one at the super admin and the admin"),
             ("instant_model_onboarding", "the onboarding of an instant entity will be only for the mandatory setups"),
             ("accept_vodafone_onboarding", "the new vf & accept business model of no direct calls to the wallets"),
+            (
+                "vodafone_facilitator_accept_vodafone_onboarding",
+                "like our send business model but can only disburse for vodafone"
+            ),
         )
         ordering = ['-id', '-hierarchy']
 
@@ -279,5 +283,12 @@ class User(AbstractUser):
     def is_accept_vodafone_onboarding(self):
         """Check if the current user belongs the accept vodafone onboarding setups"""
         if self.has_perm('users.accept_vodafone_onboarding'):
+            return True
+        return False
+
+    @cached_property
+    def is_vodafone_facilitator_accept_vodafone_onboarding(self):
+        """Check if the current user belongs the vodafone facilitator accept vodafone onboarding setups"""
+        if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
             return True
         return False

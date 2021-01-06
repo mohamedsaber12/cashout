@@ -52,7 +52,7 @@
               <div class="x_content">
 
                 {# Export clients transactions report sections #}
-                {% if not request.user.is_vodafone_default_onboarding %}
+                {% if request.user.is_accept_vodafone_onboarding or request.user.is_instant_model_onboarding %}
                   <div class="row">
                     <div class="col-md-12 col-sm-12 col-xs-12">
                       <div class="x_panel">
@@ -111,11 +111,13 @@
                             </i>
                             <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               {% if client_setup.client.is_instant_model_onboarding %}
-                                Instant Patch
+                                Integration Disbursement Model
                               {% elif client_setup.client.is_accept_vodafone_onboarding %}
-                                Accept - Vodafone Model
+                                Send Disbursement Model
+                              {% elif client_setup.client.is_vodafone_facilitator_accept_vodafone_onboarding %}
+                                Vodafone Facilitator Disbursement Model
                               {% else %}
-                                Basic Disbursement Model
+                                Vodafone PSP Disbursement Model
                               {% endif %}
                             </i>
                           </h4>

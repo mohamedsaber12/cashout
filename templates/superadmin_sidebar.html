@@ -42,14 +42,14 @@
             <li><a href="{% url 'users:add_client' %}">{% trans 'New Client' %}</a></li>
             <li><a href="{% url 'users:clients' %}">{% trans 'All Clients' %}</a></li>
 
-            {% if request.user.is_accept_vodafone_onboarding %}
+            {% if request.user.is_accept_vodafone_onboarding or request.user.is_vodafone_facilitator_accept_vodafone_onboarding %}
               <li><a href="{% url 'users:add_support' %}">{% trans 'New Support Member' %}</a></li>
               <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
             {% endif %}
           </ul>
         </li>
 
-        {% if request.user.is_accept_vodafone_onboarding %}
+        {% if request.user.is_accept_vodafone_onboarding or request.user.is_vodafone_facilitator_accept_vodafone_onboarding %}
           <li><a href="{% url 'disbursement:agents_list' %}"><i class="fa fa-th-list"></i>{% trans 'Agents'%}</a></li>
           <li><a href="{% url 'users:super_fees_profile' %}"><i class="fa fa-sliders"></i>{% trans 'Fees Profile'%}</a></li>
         {% elif request.user.is_instant_model_onboarding %}

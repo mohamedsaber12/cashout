@@ -218,12 +218,6 @@ class RootCreationForm(forms.ModelForm):
     Admin/Root on-boarding form
     """
 
-    ONBOARDING_CHOICES = (
-        ("instant", "Instant Model"),
-        ("accept", "Accept - Vodafone Model")
-    )
-    business_setups = forms.ChoiceField(choices=ONBOARDING_CHOICES, widget=forms.RadioSelect())
-
     class Meta:
         model = RootUser
         fields = ['username', 'email']
@@ -233,9 +227,6 @@ class RootCreationForm(forms.ModelForm):
         self.request = kwargs.pop('request', None)
         self.is_default_vf_setups = self.request.user.is_vodafone_default_onboarding
         super(RootCreationForm, self).__init__(*args, **kwargs)
-
-        if self.is_default_vf_setups:
-            self.fields.pop("business_setups")
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
@@ -277,19 +268,18 @@ class RootCreationForm(forms.ModelForm):
 
         user.save()
 
-        if not self.is_default_vf_setups:
-            business_setups = self.cleaned_data['business_setups']
-            if 'instant' in business_setups:
-                user.user_permissions.\
-                    add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
-                user.user_permissions.\
-                    add(Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement'))
-            elif 'accept' in business_setups:
-                user.user_permissions.\
-                    add(Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'))
-        else:
-            user.user_permissions.\
+        if self.is_default_vf_setups: # default vf model
+            user.user_permissions. \
                 add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))
+        elif self.request.user.is_accept_vodafone_onboarding : # Accept vf model
+            user.user_permissions. \
+                add(Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'))
+
+        else: # Instant Patch model
+            user.user_permissions. \
+                add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
+            user.user_permissions. \
+                add(Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement'))
 
         return user
 

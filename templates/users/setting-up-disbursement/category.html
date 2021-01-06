@@ -64,11 +64,11 @@
         <a href="#step-5">
           <span class="step_no">{{ 5|localize }}</span>
           <span class="step_descr">
-            {% if request.user.is_vodafone_default_onboarding %}
-              {% trans 'Format' %}<br/>
+            {% if request.user.is_accept_vodafone_onboarding %}
+              {% trans 'VF/ET/Aman Format' %}<br/>
               <small>{% trans 'Add File Formats' %}</small>
             {% else %}
-              {% trans 'VF/ET/Aman Format' %}<br/>
+              {% trans 'Format' %}<br/>
               <small>{% trans 'Add File Formats' %}</small>
             {% endif %}
           </span>

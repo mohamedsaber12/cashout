@@ -1,22 +1,21 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from datetime import datetime
 
+from datetime import datetime
 import logging
 
+from django.core.files.storage import default_storage
 from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
 from django.views.generic import UpdateView, View
-from django.core.files.storage import default_storage
 
-from users.mixins import (SuperOwnsCustomizedBudgetClientRequiredMixin,
-                          RootRequiredMixin)
-from data.utils import deliver_mail
-from instant_cashin.utils import get_from_env
+from users.mixins import (RootWithoutDefaultOnboardingPermissionRequired,
+                          SuperOwnsCustomizedBudgetClientRequiredMixin)
 
 from .forms import BudgetModelForm, IncreaseBalanceRequestForm
 from .mixins import BudgetActionMixin
 from .models import Budget
+from .tasks import send_transfer_request_email
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -38,11 +37,12 @@ class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin,
         """Retrieve the budget object of the accessed disburser"""
         return get_object_or_404(Budget, disburser__username=self.kwargs["username"])
 
-class IncreaseBalanceRequestView(RootRequiredMixin, View):
+
+class IncreaseBalanceRequestView(RootWithoutDefaultOnboardingPermissionRequired, View):
     """
     Request view for increase balance on accept vodafone admins
     """
-    template_name = 'utilities/increase_balance_request.html'
+    template_name = 'utilities/transfer_request.html'
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for Increase Balance Request"""
@@ -61,43 +61,39 @@ class IncreaseBalanceRequestView(RootRequiredMixin, View):
         if context['form'].is_valid():
             form = context['form']
             BUDGET_LOGGER.debug(
-                f"[response] [INCREASE BALANCE REQUEST] [{request.user}] -- With Payload {form.cleaned_data}"
+                f"[message] [transfer request] [{request.user}] -- payload: {form.cleaned_data}"
             )
-            # prepare email message
-            message = _(f"""Dear <strong>Manger</strong><br><br>
-            This E-mail to Inform you that this Account {request.user} has made request for 
-            increase his balance <br/><br/>
-            <label>Date/Time:-  </label> {datetime.now()}<br/><br/>
-            <label>Amount To Be Added:-  </label>{form.cleaned_data['amount']}<br/><br/>
-            <label>Type:-  </label> {form.cleaned_data['type'].replace("_", " ")} <br/><br/>
+            # Prepare email message
+            message = _(f"""Dear All,<br><br>
+            <label>Admin Username: </label> {request.user}<br/>
+            <label>Request Date/Time: </label> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}<br/>
+            <label>Amount To Be Added: </label>{form.cleaned_data['amount']}<br/>
+            <label>Transfer Type: </label> {form.cleaned_data['type'].replace("_", " ")} <br/><br/>
             """)
-            rest_of_message = None
+
             if form.cleaned_data['type'] == 'from_accept_balance':
-                rest_of_message = _(f"""<label>Accept username:-  </label> {form.cleaned_data['username']} <br/><br/>
-                Thanks, BR""")
+                rest_of_message = _(f"""<label>Accept username:  </label> {form.cleaned_data['username']} <br/><br/>
+                Best Regards,""")
             else:
-                rest_of_message = _(f"""<h4>From :- </h4>
-                <label> Bank Name :-  </label> {form.cleaned_data['from_bank']} <br/><br/>
-                <label> Account Number :-  </label> {form.cleaned_data['from_account_number']} <br/><br/>
-                <label> Account Name :-  </label> {form.cleaned_data['from_account_name']} <br/><br/>
-                <label> Date :-  </label> {form.cleaned_data['from_date']} <br/><br/>
-                <h4>To:- </h4>
-                <label> Bank Name :-  </label> {form.cleaned_data['to_bank']} <br/><br/>
-                <label> Account Number :-  </label> {form.cleaned_data['to_account_number']} <br/><br/>
-                <label> Account Name *:-  </label> {form.cleaned_data['to_account_name']} <br/><br/>
-                Thanks, BR""")
+                rest_of_message = _(f"""<h4>From: </h4>
+                <label> Bank Name:  </label> {form.cleaned_data['from_bank']} <br/>
+                <label> Account Number:  </label> {form.cleaned_data['from_account_number']} <br/>
+                <label> Account Name:  </label> {form.cleaned_data['from_account_name']} <br/>
+                <label> Date: </label> {form.cleaned_data['from_date']} <br/><br/>
+                <h4>To: </h4>
+                <label> Bank Name:  </label> {form.cleaned_data['to_bank']} <br/>
+                <label> Account Number:  </label> {form.cleaned_data['to_account_number']} <br/>
+                <label> Account Name:  </label> {form.cleaned_data['to_account_name']} <br/><br/>
+                Best Regards,""")
             message += rest_of_message
-            # prepare recipients list
-            business_team = [dict(email=s, brand={'mail_subject':'Payout'}) for s in get_from_env('BUSINESS_TEAM').split(',')]
+
             if form.cleaned_data['type'] == 'from_accept_balance':
-                deliver_mail(None, _(f"Transfer Request {request.user.username}"), message, business_team)
+                send_transfer_request_email.delay(request.user.username, message)
             else:
-                # save image to media and get it's url
+                # Save attached file to media and get it's url
                 proof_image = request.FILES['to_attach_proof']
                 file_name = default_storage.save(proof_image.name, proof_image)
-                # get file url
-                file = default_storage.open(file_name)
-                deliver_mail(None, _(f"Transfer Request {request.user.username}"), message, business_team, file)
+                send_transfer_request_email.delay(request.user.username, message, file_name)
 
             context = {
                 'request_received': True,

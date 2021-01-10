@@ -51,7 +51,7 @@
         {% endif %}
 
         {% if request.user.is_root and request.user.is_accept_vodafone_onboarding %}
-        <li><a href="{% url 'utilities:increase_balance' %}">
+        <li><a href="{% url 'utilities:transfer_request' %}">
           <img style="width: 27px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Transfer Request' %}</a></li>
         {% endif %}
 

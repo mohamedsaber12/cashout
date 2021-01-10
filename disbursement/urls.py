@@ -12,7 +12,7 @@ app_name = 'disbursement'
 
 client_urls = [
     path('agents/', AgentsListView.as_view(), name='agents_list'),
-    path('agent/balance-inquiry/<str:username>/', BalanceInquiry.as_view(), name='balance_inquiry'),
+    path('budget/inquiry/<str:username>/', BalanceInquiry.as_view(), name='balance_inquiry'),
     path('client/creation/agents/<token>/', SuperAdminAgentsSetup.as_view(), name='add_agents'),
 ]
 

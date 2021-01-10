@@ -107,8 +107,10 @@ class IncreaseBalanceRequestForm(forms.Form):
     type = forms.ChoiceField(
             label=_('Type'),
             required=True,
-            choices=[('from_bank_transfer', 'From Bank Transfer'),
-                     ('from_accept_balance', 'From Accept Balance'),],
+            choices=[
+                ('from_bank_transfer', 'From Bank Transfer'),
+                ('from_accept_balance', 'From Accept Balance')
+            ],
             widget=forms.Select(attrs={
                 'class': 'form-control',
             })
@@ -189,31 +191,33 @@ class IncreaseBalanceRequestForm(forms.Form):
 
     def clean(self):
         data = self.cleaned_data
-        if data.get('type', None) == 'from_accept_balance':
-            if data.get('username', None) != '':
-                return data
+        transfer_type = data.get('type')
+        is_required_msg = 'This field is required'
+        validationErrors = {}
+
+        if transfer_type == 'from_accept_balance':
+            if not data.get('username'):
+                validationErrors['username'] = [is_required_msg]
             else:
-                raise forms.ValidationError({'username': ['Accept username required']})
-        elif data.get('type', None) == 'from_bank_transfer':
-            validationErrors = {}
-            if data.get('from_bank', None) == '':
-                validationErrors['from_bank'] = ['from bank required']
-            if data.get('to_bank', None) == '':
-                validationErrors['to_bank'] = ['to bank required']
-            if data.get('from_account_number', None) == '':
-                validationErrors['from_account_number'] = ['from account number required']
-            if data.get('to_account_number', None) == '':
-                validationErrors['to_account_number'] = ['to account number required']
-            if data.get('from_account_name', None) == '':
-                validationErrors['from_account_name'] = ['from account name required']
-            if data.get('to_account_name', None) == '':
-                validationErrors['to_account_name'] = ['to account name required']
-            if data.get('from_date', None) == None:
-                validationErrors['from_date'] = ['date required']
-            if data.get('to_attach_proof', None) == None:
-                validationErrors['to_attach_proof'] = ['attach proof required']
+                return data
+        elif transfer_type == 'from_bank_transfer':
+            if not data.get('from_bank'):
+                validationErrors['from_bank'] = [is_required_msg]
+            if not data.get('to_bank'):
+                validationErrors['to_bank'] = [is_required_msg]
+            if not data.get('from_account_number'):
+                validationErrors['from_account_number'] = [is_required_msg]
+            if not data.get('to_account_number'):
+                validationErrors['to_account_number'] = [is_required_msg]
+            if not data.get('from_account_name'):
+                validationErrors['from_account_name'] = [is_required_msg]
+            if not data.get('to_account_name'):
+                validationErrors['to_account_name'] = [is_required_msg]
+            if not data.get('from_date'):
+                validationErrors['from_date'] = [is_required_msg]
+            if not data.get('to_attach_proof'):
+                validationErrors['to_attach_proof'] = [is_required_msg]
             if len(validationErrors.keys()) == 0:
                 return data
-            else:
-                raise forms.ValidationError(validationErrors)
 
+        raise forms.ValidationError(validationErrors)

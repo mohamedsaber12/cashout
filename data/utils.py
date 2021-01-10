@@ -208,7 +208,7 @@ def randomword(length):
     return ''.join(random.choice(letters) for i in range(length))
 
 
-def deliver_mail(user_obj, subject_tail, message_body, recipients=None, attached_file=None):
+def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
     """
     Send a message to inform the user with disbursement/collection related action.
     :param user_obj: Request's user instance that the mail will be sent to.
@@ -218,24 +218,44 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None, attached
     :return: Action of sending the mail to the user.
     """
     from_email = settings.SERVER_EMAIL
+
     if recipients is None:
         subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
         recipient_list = [user_obj.email]
     else:
-        subject = f'[{recipients[0].get("brand").get("mail_subject") or ""}]' + subject_tail
-        recipient_list = [recipient.get('email') for recipient in recipients]
-        file_content = None
-        if attached_file != None:
-            file_content = attached_file.read()
+        subject = f'[{recipients[0].brand.mail_subject}]' + subject_tail
+        recipient_list = [recipient.email for recipient in recipients]
+
         for mail in recipient_list:
             mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
             mail_to_be_sent.attach_alternative(message_body, "text/html")
-            if attached_file != None:
-                mail_to_be_sent.attach(attached_file.name, file_content)
             mail_to_be_sent.send()
         return
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")
-    if attached_file != None:
+    return mail_to_be_sent.send()
+
+
+def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
+                                                        subject_tail,
+                                                        message_body,
+                                                        recipients=None,
+                                                        attached_file=None):
+    """
+    Send a message to inform the user with disbursement/collection related action.
+    :param user_obj: Request's user instance that the mail will be sent to.
+    :param subject_tail: Tailed mail subject header after his/her chosen mail header brand.
+    :param message_body: Body of the message that will be sent.
+    :param recipients: If there are multiple makers/checkers to be notified.
+    :return: Action of sending the mail to the user.
+    """
+    from_email = settings.SERVER_EMAIL
+    subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+    recipient_list = [recipient.get('email') for recipient in recipients]
+    mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
+    mail_to_be_sent.attach_alternative(message_body, "text/html")
+
+    if attached_file:
         mail_to_be_sent.attach(attached_file.name, attached_file.read())
+
     return mail_to_be_sent.send()

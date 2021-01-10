@@ -71,7 +71,7 @@
             <tbody>
               {% for transaction in doc_transactions %}
                 <tr data-created_at="{{ transaction.created_at }}"
-                    data-updated_at="{{ transaction.updated_at }}"
+                    data-updated_at="{{ doc_obj.updated_at }}"
                     data-msisdn="{{ transaction.msisdn }}"
                     data-amount="{{ transaction.amount }}"
                     data-is_disbursed="{{ transaction.is_disbursed }}"
@@ -97,7 +97,7 @@
                       {% trans "Failed" %}
                     {% endif %}
                   </td>
-                <td>{{ transaction.updated_at }}</td>
+                <td>{{ doc_obj.updated_at }}</td>
                 </tr>
               {% endfor %}
             </tbody>

@@ -121,7 +121,8 @@ def login_view(request):
 
     if request.user.is_authenticated:
         if request.user.is_vodafone_default_onboarding or \
-                request.user.is_accept_vodafone_onboarding and request.user.is_checker:
+                request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
+                request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
             if not request.user.is_superuser and \
                     (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
                 return HttpResponseRedirect(reverse('two_factor:profile'))
@@ -135,7 +136,8 @@ def login_view(request):
                 login(request, user)
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
                 if request.user.is_vodafone_default_onboarding or \
-                        request.user.is_accept_vodafone_onboarding and request.user.is_checker:
+                        request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
+                        request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
                     if not request.user.is_superuser and (user.is_checker or user.is_root or user.is_superadmin):
                         user.is_totp_verified = False
                         user.save()

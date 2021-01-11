@@ -1,7 +1,6 @@
 from django.db import models
 
 from imagekit.models import ProcessedImageField
-from imagekit.processors import ResizeToFill
 
 
 class Brand(models.Model):
@@ -13,4 +12,4 @@ class Brand(models.Model):
                                format='JPEG',
                                options={'quality': 60}, null=True, default='entities_logo/pm_name.png')
 
-    mail_subject = models.CharField(max_length=200, null=True, blank=True, default='Payouts')
+    mail_subject = models.CharField(max_length=200, null=True, blank=True, default='Paymob Send')

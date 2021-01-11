@@ -35,15 +35,15 @@ class Client(models.Model):
             blank=True,
             help_text=_("Custom profile name/constant ONLY for clients with custom budgets")
     )
-    client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, related_name='client', null=True)
-    creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)
     smsc_sender_name = models.CharField(
             max_length=11,
             default='',
             null=True,
             blank=True,
-            help_text=_("SMSC sender name for sending SMS at every new onboarded entity by the standard vf model")
+            help_text=_("SMSC sender name for naming the header of the sms sent at every vf bulk disbursement request")
     )
+    client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, related_name='client', null=True)
+    creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)
     objects = ClientManager()
 
     class Meta:

@@ -97,6 +97,10 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             "user": self.request.user,
             "entity": self.object
         }
+        client_dict = {
+            "creator": self.request.user,
+            "client": self.object,
+        }
 
         if not self.object.is_vodafone_default_onboarding:
             entity_dict['agents_setup'] = True
@@ -120,18 +124,14 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_inquiry=False, balance_inquiry=False
             )
         else:
+            client_dict['smsc_sender_name'] = self.object.smsc_sender_name
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
 
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
         EntitySetup.objects.create(**entity_dict)
-        if self.object.is_vodafone_default_onboarding:
-            Client.objects.create(creator=self.request.user,
-                              client=self.object,
-                              smsc_sender_name=self.object.smsc_sender_name)
-        else:
-            Client.objects.create(creator=self.request.user, client=self.object)
+        Client.objects.create(**client_dict)
 
     def form_valid(self, form):
         self.object = form.save()

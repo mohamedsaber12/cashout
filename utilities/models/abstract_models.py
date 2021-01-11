@@ -143,6 +143,7 @@ class AbstractBaseVMTData(models.Model):
                 "SENDERS": "",      # List of dicts of Agents with their pins
                 "RECIPIENTS": "",   # List of consumers
                 "PIN": "",          # Raw pin
+                "SMSSENDER": "",    # SMSC sender name for the standard vodafone users
                 "SERVICETYPE": "P2P",
                 "SOURCE": "DISB",
                 "TYPE": "PPREQ"
@@ -187,10 +188,11 @@ class AbstractBaseVMTData(models.Model):
 
         return data
 
-    def accumulate_bulk_disbursement_payload(self, agents_attr, consumers_attr):
+    def accumulate_bulk_disbursement_payload(self, agents_attr, consumers_attr, sms_sender_name=''):
         """
         :param agents_attr: Agents list along with their pins that will make the disbursement action
         :param consumers_attr: Consumers of the e-money
+        :param sms_sender_name: SMSC sender name for the standard vodafone users
         :return: bulk disbursement request payload, refined payload without pin to be logged
         """
         if not all([agents_attr, consumers_attr]):
@@ -199,7 +201,8 @@ class AbstractBaseVMTData(models.Model):
         payload = self.return_vmt_data(self.DISBURSEMENT)
         payload.update({
             'SENDERS': agents_attr,
-            'RECIPIENTS': consumers_attr
+            'RECIPIENTS': consumers_attr,
+            'SMSSENDER': sms_sender_name
         })
 
         payload_without_pin = copy.deepcopy(payload)

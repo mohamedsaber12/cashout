@@ -68,7 +68,7 @@ class IncreaseBalanceRequestView(RootWithoutDefaultOnboardingPermissionRequired,
             # Prepare email message
             message = _(f"""Dear All,<br><br>
             <label>Admin Username: </label> {request.user}<br/>
-            <label>Request Date/Time: </label> {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}<br/>
+            <label>Request Date/Time: </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
             <label>Amount To Be Added: </label>{form.cleaned_data['amount']}<br/>
             <label>Transfer Type: </label> {form.cleaned_data['type'].replace("_", " ")} <br/><br/>
             """)

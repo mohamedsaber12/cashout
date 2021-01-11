@@ -5,15 +5,18 @@ from datetime import timedelta
 import logging
 
 from django.conf import settings
+from django.core.files.storage import default_storage
 from django.core.mail import EmailMessage
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from data.decorators import respects_language
+from data.utils import deliver_mail_to_multiple_recipients_with_attachment
 from disbursement.models import DisbursementData
+from instant_cashin.utils import get_from_env
 from payouts.settings.celery import app
-from users.models import EntitySetup
+from users.models import EntitySetup, User
 
 from .functions import render_to_pdf
 from .models import AbstractBaseDocStatus
@@ -77,3 +80,27 @@ def generate_onboarded_entities_report(recipients_list, superadmin_username, **k
     mail = EmailMessage(subject, message, sender, recipients_list)
     mail.attach_file(filepath)
     return mail.send()
+
+
+@app.task()
+@respects_language
+def send_transfer_request_email(admin_username, message, attachment_file_name=None, **kwargs):
+    """"""
+    # 1. Prepare recipients list
+    business_team = [dict(email=email) for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')]
+
+    # 2. Get admin user object
+    admin_user = User.objects.get(username=admin_username)
+
+    # 3. Send the email
+    if attachment_file_name:
+        file = default_storage.open(attachment_file_name)
+        deliver_mail_to_multiple_recipients_with_attachment(
+                admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team, file
+        )
+    else:
+        deliver_mail_to_multiple_recipients_with_attachment(
+                admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team
+        )
+
+    return True

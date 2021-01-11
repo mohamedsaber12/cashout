@@ -218,12 +218,14 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
     :return: Action of sending the mail to the user.
     """
     from_email = settings.SERVER_EMAIL
+
     if recipients is None:
         subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
         recipient_list = [user_obj.email]
     else:
         subject = f'[{recipients[0].brand.mail_subject}]' + subject_tail
         recipient_list = [recipient.email for recipient in recipients]
+
         for mail in recipient_list:
             mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
             mail_to_be_sent.attach_alternative(message_body, "text/html")
@@ -231,4 +233,29 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
         return
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")
+    return mail_to_be_sent.send()
+
+
+def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
+                                                        subject_tail,
+                                                        message_body,
+                                                        recipients=None,
+                                                        attached_file=None):
+    """
+    Send a message to inform the user with disbursement/collection related action.
+    :param user_obj: Request's user instance that the mail will be sent to.
+    :param subject_tail: Tailed mail subject header after his/her chosen mail header brand.
+    :param message_body: Body of the message that will be sent.
+    :param recipients: If there are multiple makers/checkers to be notified.
+    :return: Action of sending the mail to the user.
+    """
+    from_email = settings.SERVER_EMAIL
+    subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+    recipient_list = [recipient.get('email') for recipient in recipients]
+    mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
+    mail_to_be_sent.attach_alternative(message_body, "text/html")
+
+    if attached_file:
+        mail_to_be_sent.attach(attached_file.name, attached_file.read())
+
     return mail_to_be_sent.send()

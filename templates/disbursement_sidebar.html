@@ -6,7 +6,7 @@
   <div class="navbar nav_title" style="text-align:center; padding-top: 12px;">
     {% if brand_logo %}
       <a href="{% url 'data:main_view' %}" class="site_title">
-        <span><img class="center" src="{{ brand_logo }}" height="38px" id="paymob_logo"></span>
+        <span><img class="center" src="{{ brand_logo }}" height="38px" id="brand_logo"></span>
       </a>
     {% else %}
       <a href="{% url 'data:main_view' %}" class="site_title">
@@ -48,6 +48,11 @@
           {% if request.user.is_root or request.user.is_checker %}
             <li><a href="{% url 'disbursement:single_step_list_create' %}"><i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}</a></li>
           {% endif %}
+        {% endif %}
+
+        {% if request.user.is_root and request.user.is_accept_vodafone_onboarding %}
+        <li><a href="{% url 'utilities:transfer_request' %}">
+          <img style="width: 27px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Transfer Request' %}</a></li>
         {% endif %}
 
         {% if request.user.is_root %}

@@ -1,0 +1,248 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+{% block customcss %}
+  <style>
+    #id_amount, #id_type {
+      margin-bottom: 20px;
+    }
+    #flash_success_message {
+      font-size: 10px;
+      opacity: 0.15;
+      display: none;
+    }
+    .custom-file-input {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      height: calc(2.25rem + 2px);
+      margin: 0;
+      opacity: 0;
+    }
+    .custom-file-label {
+      position: absolute;
+      top: 24px;
+      right: 0;
+      left: 0;
+      z-index: 1;
+      height: calc(2.25rem + 10px);
+      padding: .375rem .75rem;
+      font-weight: 400;
+      line-height: 1.5;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: .25rem;
+    }
+    .custom-file-label::after {
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 3;
+      display: block;
+      height: calc(2.25rem+10px);
+      padding: .375rem .75rem;
+      line-height: 1.5;
+      color: #495057;
+      content: "Browse";
+      background-color: #e9ecef;
+      border-left: inherit;
+      border-radius: 0 .25rem .25rem 0;
+    }
+    .help-block {
+      color: red;
+    }
+  </style>
+  <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block title %} {% trans 'Transfer Request' %} {% endblock title %}
+
+{% block body %}
+  <div class="container">
+    <div id="flash_success_message" class="row">
+      <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
+        <div class="alert alert-success" role="alert">
+          Your Request Has Been Received Successfully
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
+        <h4>
+          <span class="glyphicon glyphicon-plus"></span>
+          <span style="font-weight:bold;font-size:23px;">Increase Your Balance</span>
+        </h4>
+      </div>
+    </div>
+    <div style="back-ground: white;" class="row">
+      <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
+        <form role="form" action="{% url 'utilities:transfer_request' %}"
+              method="post" class="autoValidateForm" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="row">
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-sort"></span> Type *
+              </label>
+              {{ form.type }}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{ form.type.errors }}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-tag"></span> Amount To Be Added * (EGP)
+              </label>
+              {{form.amount}}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{form.amount.errors}}
+              </div>
+            </div>
+          </div>
+          <div style="display:none;" id="accept_form_row" class="row">
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-user"></span> Accept Username *
+              </label>
+                {{ form.username }}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{ form.username.errors }}
+              </div>
+            </div>
+          </div>
+          <div style="display:none;" id="bank_transfer_form_row" class="row">
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+              </label>
+              {{form.from_bank}}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{form.from_bank.errors}}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+              </label>
+              {{form.to_bank}}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{form.to_bank.errors}}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-user"></span> Account Number *
+              </label>
+              {{form.from_account_number}}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{form.from_account_number.errors}}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label>
+                <span class="glyphicon glyphicon-user"></span> Account Number *
+              </label>
+              {{form.to_account_number}}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{form.to_account_number.errors}}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+              {{ form.from_account_name }}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{ form.from_account_name.errors }}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+              {{ form.to_account_name }}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{ form.to_account_name.errors }}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+              <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+              {{ form.from_date }}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{ form.from_date.errors }}
+              </div>
+            </div>
+            <div class="form-group col-md-6 col-sm-6 col-xs-12 custom-file">
+              <label><span class="glyphicon glyphicon-import"></span> Attach Proof *</label>
+              {{ form.to_attach_proof }}
+              <label class="custom-file-label">Choose File</label>
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{ form.to_attach_proof.errors }}
+              </div>
+            </div>
+          </div>
+          <input class="btn btn-primary pull-left" type="submit" value="Submit">
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock body %}
+
+{% block script %}
+  <script>
+    function hide_message() {
+      setTimeout(function() {
+        $('#flash_success_message').fadeOut("slow");
+      }, 5000)
+    }
+    function animate_message() {
+       $('#flash_success_message').animate({fontSize: '16px'}, "3000", hide_message);
+    }
+    {% if request_received %}
+      $('#flash_success_message').fadeTo("slow", 1.0, animate_message);
+    {% endif %}
+
+    let type = document.getElementById('id_type');
+    let acceptForm = document.getElementById('accept_form_row');
+    let bankTransferForm = document.getElementById('bank_transfer_form_row');
+
+    if (type.value == 'from_accept_balance') {
+      acceptForm.style.display = 'block';
+      bankTransferForm.style.display = 'none';
+    } else if (type.value == 'from_bank_transfer') {
+      acceptForm.style.display = 'none';
+      bankTransferForm.style.display = 'block';
+    }
+
+    function toggleForm() {
+      if (type.value == 'from_accept_balance') {
+        acceptForm.style.display = 'block';
+        bankTransferForm.style.display = 'none';
+      } else if (type.value == 'from_bank_transfer') {
+        acceptForm.style.display = 'none';
+        bankTransferForm.style.display = 'block';
+      }
+    }
+    type.addEventListener('change', toggleForm);
+    $(".custom-file-input").on("change", function() {
+      var fileName = $(this).val().split("\\").pop();
+      $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+    });
+  </script>
+{% endblock %}

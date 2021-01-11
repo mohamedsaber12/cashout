@@ -91,5 +91,5 @@ class BudgetAdmin(admin.ModelAdmin):
         obj.save()
         custom_budget_logger(
                 obj.disburser, f"New added amount: {form.cleaned_data['add_new_amount']} LE",
-                obj.created_by, head="[CUSTOM BUDGET - ADMIN PANEL]"
+                obj.created_by, head="[message] [update from django admin]"
         )

@@ -218,6 +218,11 @@ class RootCreationForm(forms.ModelForm):
     Admin/Root on-boarding form
     """
 
+    smsc_sender_name = forms.CharField(
+            label=_('SMSC sender name'),
+            required=False,
+            max_length=11
+    )
     class Meta:
         model = RootUser
         fields = ['username', 'email']
@@ -229,6 +234,8 @@ class RootCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+        if not self.request.user.is_vodafone_default_onboarding:
+            self.fields['smsc_sender_name'].widget = forms.HiddenInput()
 
     def clean_username(self):
         name = self.cleaned_data['username']
@@ -282,7 +289,8 @@ class RootCreationForm(forms.ModelForm):
                 add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
             user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement'))
-
+        if self.request.user.is_vodafone_default_onboarding:
+            user.smsc_sender_name = self.cleaned_data['smsc_sender_name']
         return user
 
 

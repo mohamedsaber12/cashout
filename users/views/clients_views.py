@@ -126,7 +126,12 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
         EntitySetup.objects.create(**entity_dict)
-        Client.objects.create(creator=self.request.user, client=self.object)
+        if self.object.is_vodafone_default_onboarding:
+            Client.objects.create(creator=self.request.user,
+                              client=self.object,
+                              smsc_sender_name=self.object.smsc_sender_name)
+        else:
+            Client.objects.create(creator=self.request.user, client=self.object)
 
     def form_valid(self, form):
         self.object = form.save()

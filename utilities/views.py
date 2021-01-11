@@ -9,6 +9,8 @@ from django.shortcuts import get_object_or_404, render
 from django.utils.translation import gettext as _
 from django.views.generic import UpdateView, View
 
+from data.utils import randomword
+from payouts import settings
 from users.mixins import (RootWithoutDefaultOnboardingPermissionRequired,
                           SuperOwnsCustomizedBudgetClientRequiredMixin)
 
@@ -92,7 +94,8 @@ class IncreaseBalanceRequestView(RootWithoutDefaultOnboardingPermissionRequired,
             else:
                 # Save attached file to media and get it's url
                 proof_image = request.FILES['to_attach_proof']
-                file_name = default_storage.save(proof_image.name, proof_image)
+                file_path = f"{settings.MEDIA_ROOT}/transfer_request_attach/{randomword(5)}_{proof_image.name}"
+                file_name = default_storage.save(file_path, proof_image)
                 send_transfer_request_email.delay(request.user.username, message, file_name)
 
             context = {

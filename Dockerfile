@@ -20,6 +20,7 @@ RUN mkdir -p $HOME/staticfiles/static \
     && mkdir -p $HOME/mediafiles/mkdocs/build \
     && mkdir -p $HOME/mediafiles/media/avatars \
     && mkdir -p $HOME/mediafiles/media/certificates \
+    && mkdir -p $HOME/mediafiles/media/transfer_request_attach \
     && mkdir $HOME/mediafiles/media/entities_logo \
     && mkdir -p $HOME/mediafiles/media/documents/disbursement \
     && mkdir $HOME/mediafiles/media/documents/files_uploaded \

@@ -205,10 +205,6 @@ class BankTransactionsChannel:
             instant_trx_obj.mark_pending(response_code, instant_message) if instant_trx_obj else None
             bank_trx_obj.user_created.root.\
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-            # ToDo: Log custom budget updates
-            # custom_budget_logger(
-            #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
-            # )
 
         # 2. Transaction validation is rejected by EBC because of invalid bank swift code
         elif response_code == "8002":
@@ -233,17 +229,12 @@ class BankTransactionsChannel:
         response_code = json_response.get("TransactionStatusCode", "")
         response_description = json_response.get("TransactionStatusDescription", "")
 
-        # ToDo: Log custom budget updates
-        # custom_budget_logger(
-        #         bank_trx_obj.user_created.root.username, f"Total disbursed amount: {bank_trx_obj.amount} LE"
-        # )
-
         # 1. If the new status code is exact to the current transaction's status code return without updating
         if response_code == bank_trx_obj.transaction_status_code:
             return bank_trx_obj
 
         # 2. If the new status code is not in the expected status codes list ignore it and return without updating
-        elif response_code not in ["8111", "8222"] + TRX_RETURNED_BY_BANK_CODES + TRX_REJECTED_BY_BANK_CODES:
+        elif response_code not in ["8111", "8222", "8333"] + TRX_RETURNED_BY_BANK_CODES + TRX_REJECTED_BY_BANK_CODES:
             return bank_trx_obj
 
         # 3. Otherwise start creating new bank transaction with the new status code

@@ -21,7 +21,8 @@ from ..forms import ClientFeesForm, CustomClientProfilesForm, RootCreationForm
 from ..mixins import (
     SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
     SuperOwnsCustomizedBudgetClientRequiredMixin,
-    SuperRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired,
+    SuperRequiredMixin,
+    SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired,
 )
 from ..models import Client, EntitySetup, RootUser, User, Setup
 
@@ -111,8 +112,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_created=self.object, disbursement=False, change_profile=False, set_pin=False,
                     user_inquiry=False, balance_inquiry=False
             )
-        elif self.object.is_accept_vodafone_onboarding:
-            entity_dict['is_normal_flow'] = False
+        elif self.object.is_accept_vodafone_onboarding or self.object.is_vodafone_facilitator_onboarding:
+            entity_dict['is_normal_flow'] = False if self.object.is_accept_vodafone_onboarding else True
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.create(
                     user_created=self.object, instant_disbursement=False, set_pin=False,
@@ -185,7 +186,7 @@ class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequired
         return get_object_or_404(Client, creator=self.request.user, client__username=self.kwargs.get('username'))
 
 
-class SuperAdminFeesProfileTemplateView(UserWithAcceptVFOnboardingPermissionRequired, TemplateView):
+class SuperAdminFeesProfileTemplateView(SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired, TemplateView):
     """
     Template view for viewing the fees profile of a certain super admin with accept-vf onboarding setups
     """

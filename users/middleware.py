@@ -30,7 +30,9 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(reverse('users:entity_branding').lstrip('/')),
     re.compile(reverse('users:delete').lstrip('/')),
     re.compile(settings.MEDIA_URL.lstrip('/')),
-    re.compile(reverse('set_language').lstrip('/'))
+    re.compile(reverse('set_language').lstrip('/')),
+    re.compile(r'^disburse/export-clients-transactions-report/*'),
+    re.compile(reverse('disbursement:download_exported').lstrip('/'))
 )
 
 
@@ -96,7 +98,8 @@ class AdministrativeTwoFactorAuthMiddleWare:
         if request.user.is_authenticated and not is_media_path and not request.user.is_superuser and \
                 (
                         request.user.is_vodafone_default_onboarding or
-                        request.user.is_accept_vodafone_onboarding and request.user.is_checker
+                        request.user.is_accept_vodafone_onboarding and request.user.is_checker or
+                        request.user.is_vodafone_facilitator_onboarding and request.user.is_checker
                 ) and \
                 (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
             is_verified = request.user.is_verified() or request.user.is_totp_verified

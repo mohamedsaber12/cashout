@@ -104,6 +104,17 @@ class SuperWithoutDefaultOnboardingPermissionRequired(UserPassesTestMixin, Login
         return False
 
 
+class SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only support users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_accept_vodafone_onboarding or request.user.is_vodafone_facilitator_onboarding):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class UserWithAcceptVFOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
     Check if the user has the accept vodafone onboarding permission

@@ -15,12 +15,12 @@ from disbursement.views import DisbursementDocTransactionsView
 from ..forms import SupportUserCreationForm
 from ..mixins import (
     SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin,
-    UserWithAcceptVFOnboardingPermissionRequired,
+    SuperWithoutDefaultOnboardingPermissionRequired,
 )
 from ..models import Client, SupportSetup, SupportUser, RootUser
 
 
-class SuperAdminSupportSetupCreateView(UserWithAcceptVFOnboardingPermissionRequired,
+class SuperAdminSupportSetupCreateView(SuperWithoutDefaultOnboardingPermissionRequired,
                                        SuperRequiredMixin,
                                        CreateView):
     """
@@ -44,7 +44,7 @@ class SuperAdminSupportSetupCreateView(UserWithAcceptVFOnboardingPermissionRequi
         return HttpResponseRedirect(self.success_url)
 
 
-class SupportUsersListView(UserWithAcceptVFOnboardingPermissionRequired,
+class SupportUsersListView(SuperWithoutDefaultOnboardingPermissionRequired,
                            SuperRequiredMixin,
                            ListView):
     """

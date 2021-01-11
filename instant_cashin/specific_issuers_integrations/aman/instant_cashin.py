@@ -82,8 +82,8 @@ class AmanChannel:
             token = json_response.get('token', False)
             merchant_id = json_response.get('profile', False).get('id', False)
             return Response({'api_auth_token': token, 'merchant_id': merchant_id}, status=status.HTTP_201_CREATED)
-        except (HTTPError, ConnectionError, Exception):
-            raise Exception('Failed to generate new auth token from Accept')
+        except (HTTPError, ConnectionError, Exception) as e:
+            raise Exception(f'Failed to generate new auth token from Accept, exception: {e.args}')
 
     def order_registration(self, api_auth_token, merchant_id, transaction_id):
         """
@@ -105,8 +105,8 @@ class AmanChannel:
             json_response = response.json()
             order_id = json_response.get('id', '')
             return Response({'order_id': str(order_id)}, status=status.HTTP_201_CREATED)
-        except (HTTPError, ConnectionError, Exception):
-            raise Exception('Failed to register new order on Accept')
+        except (HTTPError, ConnectionError, Exception) as e:
+            raise Exception(f'Failed to register new order on Accept, exception: {e.args}')
 
     def obtain_payment_key(self, api_auth_token, order_id, first_name, last_name, email, phone_number, **kwargs):
         """
@@ -150,8 +150,8 @@ class AmanChannel:
             json_response = response.json()
             payment_token = json_response.get('token', '')
             return Response({'payment_token': payment_token}, status=status.HTTP_201_CREATED)
-        except (HTTPError, ConnectionError, Exception):
-            return Exception('Failed to obtain order {order_id} payment key')
+        except (HTTPError, ConnectionError, Exception) as e:
+            return Exception(f'Failed to obtain order {order_id} payment key, exception: {e.args}')
 
     def make_pay_request(self, payment_token):
         """Make payment request done to accept your order"""
@@ -204,8 +204,8 @@ class AmanChannel:
                     "status_code": str(status.HTTP_504_GATEWAY_TIMEOUT),
                 }, status=status.HTTP_200_OK)
 
-        except (HTTPError, ConnectionError, Exception):
-            raise Exception('Failed to make your pay request')
+        except (HTTPError, ConnectionError, Exception) as e:
+            raise Exception(f'Failed to make your pay request, exception: {e.args}')
 
     @staticmethod
     def notify_merchant(payload):
@@ -218,5 +218,5 @@ class AmanChannel:
                 AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
                 return True, ""
             raise ValueError(_(f"Transaction payment failed! is_success: {is_success}, bill_ref: {bill_reference}"))
-        except (AmanTransaction.DoesNotExist, ValueError, Exception) as err:
-            return False, err.args[0]
+        except (AmanTransaction.DoesNotExist, ValueError, Exception) as e:
+            return False, e.args[0]

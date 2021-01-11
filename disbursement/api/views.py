@@ -70,7 +70,7 @@ class DisburseAPIView(APIView):
         :param raw_pin: the raw pin used at disbursement
         :return: tuple of vodafone agent, etisalat agents lists
         """
-        if provider.is_accept_vodafone_onboarding:
+        if not provider.is_vodafone_default_onboarding:
             agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
         else:
             agents = Agent.objects.filter(wallet_provider=provider, super=False)
@@ -177,14 +177,16 @@ class DisburseAPIView(APIView):
             vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
 
             if vf_recipients:
-                if checker.root.is_accept_vodafone_onboarding:
+                if not checker.is_vodafone_default_onboarding:
                     pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
                 vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
                 vf_payload, log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
                 vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, log_payload, True)
 
         # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)
-        BulkDisbursementThroughOneStepCashin.delay(doc_id=str(doc_obj.id), checker_username=str(checker.username))
+        if checker.is_accept_vodafone_onboarding:
+            BulkDisbursementThroughOneStepCashin.delay(doc_id=str(doc_obj.id), checker_username=str(checker.username))
+
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, temp_response)
 
         if is_success_disbursement:

@@ -73,10 +73,15 @@
     {# checker buttons #}
     {% if request.user.is_checker %}
       <div class="col-md-9 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-        {% if can_user_disburse.can_disburse and doc.total_amount <= request.user.level.max_amount_can_be_disbursed %}
+        {% if can_user_disburse.can_disburse %}
           <button id="disburse_button" class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
             <i class="fa fa-money" aria-hidden="true"></i> {% trans 'Disburse' %}
           </button>
+        {% elif can_user_disburse.code == 3 or can_user_disburse.code == 5 %}
+          <div class="alert alert-danger pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+               role="alert" style="margin-top: 12px;">
+            {{ can_user_disburse.reason }} <span class="glyphicon glyphicon-remove"></span>
+          </div>
         {% else %}
           <div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
                role="alert" style="margin-top: 12px;">
@@ -208,7 +213,7 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
       <div class="x_panel">
         <div class="x_title">
-          <h2>{% trans 'Bank wallets/Orange Document Transactions' %}</h2>
+          <h2>{% if doc.is_bank_wallet %}{% trans 'Bank wallets/Orange Document Transactions' %}{% else %}{% trans 'Bank Accounts/Cards Document Transactions' %}{% endif %}</h2>
           <ul class="nav navbar-right panel_toolbox">
             {% if request.user.is_root %}
               <li>

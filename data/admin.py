@@ -24,7 +24,7 @@ class DocAdmin(admin.ModelAdmin):
             'fields': (
                 'id', 'file', 'type_of', 'file_category', 'owner', 'disbursed_by', 'txn_id',
                 'has_change_profile_callback', 'is_processed', 'processing_failure_reason', 'can_be_disbursed',
-                'is_disbursed', 'total_amount', 'total_count'
+                'is_disbursed', 'total_amount', 'total_amount_with_fees_vat', 'total_count'
             )
         }),
         (_('Important Dates'), {

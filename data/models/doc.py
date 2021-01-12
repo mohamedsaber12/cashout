@@ -30,6 +30,14 @@ class Doc(AbstractBaseDocType):
     txn_id = models.CharField(max_length=16, null=True, blank=True)
     processing_failure_reason = models.CharField(max_length=256, null=True)
     total_amount = models.FloatField(default=False)
+    total_amount_with_fees_vat = models.DecimalField(
+            _("Total amount plus fees and VAT"),
+            max_digits=10,
+            decimal_places=2,
+            default=0,
+            null=True,
+            blank=True
+    )
     total_count = models.PositiveIntegerField(default=False)
     has_change_profile_callback = models.BooleanField(default=False, verbose_name=_('Has change profile callback?'))
     owner = models.ForeignKey(
@@ -124,12 +132,29 @@ class Doc(AbstractBaseDocType):
                 all_categories = self.owner.root.file_category.all()
                 reviews_required = min([cat.no_of_reviews_required for cat in all_categories])
 
+            if not checker.is_vodafone_default_onboarding:
+                if self.is_e_wallet:
+                    within_threshold = True if self.total_amount_with_fees_vat <= checker.root.budget.current_balance \
+                        else False
+                elif self.is_bank_wallet:
+                    within_threshold = checker.root.budget.within_threshold(self.total_amount, "bank_wallet")
+                else:
+                    within_threshold = checker.root.budget.within_threshold(self.total_amount, "bank_card")
+
+                if not within_threshold:
+                    reason = _("File's total amount exceeds your current balance, please contact your support team")
+                    code = 5
+                    return False, reason, code
+
             if self.can_be_disbursed and reviews.filter(is_ok=False).count() == 0:
                 if reviews.filter(is_ok=True).count() >= reviews_required:
                     if checker.level.max_amount_can_be_disbursed >= self.total_amount:
                         return True, reason, 0
                     else:
-                        reason = _("Not Permitted to disburse")
+                        reason = _(
+                                f"Not Permitted to disburse because the file's total amount exceeds your "
+                                   f"maximum amount that can be disbursed, please contact your support team"
+                        )
                         code = 3
                 else:
                     reason = _("Document is still suspended due to shortage of checking")

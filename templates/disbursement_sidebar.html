@@ -77,7 +77,6 @@
           <li><a><i class="fa fa-cog"></i>{% trans 'Settings' %}<span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               {% if request.user.is_root %}
-                <li><a href="{% url 'users:setting-disbursement-pin' %}">{% trans 'Setups' %}</a></li>
                 <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
                 <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
               {% elif request.user.is_maker  %}

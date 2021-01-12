@@ -827,7 +827,7 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
         valid = False
         error_message = MSG_WRONG_FILE_FORMAT
 
-    if not doc_obj.owner.root.is_vodafone_default_onboarding:
+    if not doc_obj.owner.is_vodafone_default_onboarding:
         if valid and (vf_amount_list or ets_amount_list or aman_amount_list):
             vf_total_amount = ets_total_amount = aman_total_amount = 0
             if vf_amount_list:
@@ -837,8 +837,8 @@ def handle_disbursement_file(doc_obj_id, **kwargs):
             if aman_amount_list:
                 aman_total_amount = check_total_budget_regarding_issuer(doc_obj, aman_amount_list, "aman")
 
-            if sum([vf_total_amount, ets_total_amount, aman_total_amount]) <= \
-                    Budget.objects.get(disburser=doc_obj.owner.root).current_balance:
+            doc_obj.total_amount_with_fees_vat = sum([vf_total_amount, ets_total_amount, aman_total_amount])
+            if doc_obj.total_amount_with_fees_vat <= Budget.objects.get(disburser=doc_obj.owner.root).current_balance:
                 is_total_amount_within_threshold = True
 
     max_amount_can_be_disbursed = max(

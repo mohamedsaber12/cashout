@@ -26,6 +26,18 @@ class Client(models.Model):
     Model to track/manage entities/clients per SuperAdmin user
     """
 
+    # Agents onboarding choices
+    NEW_SUPERAGENT_AGENTS = 0
+    EXISTING_SUPERAGENT_NEW_AGENTS = 1
+    EXISTING_SUPERAGENT_AGENTS = 2
+    P2M = 3
+    AGENTS_ONBOARDING_CHOICES = [
+        (NEW_SUPERAGENT_AGENTS, _("New superagent and agents")),
+        (EXISTING_SUPERAGENT_NEW_AGENTS, _("Existing superagent and new agents")),
+        (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and agents")),
+        (P2M, _("P2M")),
+    ]
+
     is_active = models.BooleanField(default=True)
     fees_percentage = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=100)
     custom_profile = models.CharField(
@@ -41,6 +53,12 @@ class Client(models.Model):
             null=True,
             blank=True,
             help_text=_("SMSC sender name for naming the header of the sms sent at every vf bulk disbursement request")
+    )
+    agents_onboarding_choice = models.PositiveSmallIntegerField(
+            _("Agents Onboarding Choice"),
+            db_index=True,
+            choices=AGENTS_ONBOARDING_CHOICES,
+            default=NEW_SUPERAGENT_AGENTS
     )
     client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, related_name='client', null=True)
     creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)

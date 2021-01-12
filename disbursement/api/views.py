@@ -175,12 +175,14 @@ class DisburseAPIView(APIView):
             superadmin = checker.root.client.creator
             wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
             vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
+            smsc_sender_name = checker.root.client.smsc_sender_name
 
             if vf_recipients:
                 if not checker.is_vodafone_default_onboarding:
                     pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
                 vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
-                vf_payload, log_payload = superadmin.vmt.accumulate_bulk_disbursement_payload(vf_agents, vf_recipients)
+                vf_payload, log_payload = superadmin.vmt.\
+                    accumulate_bulk_disbursement_payload(vf_agents, vf_recipients, smsc_sender_name)
                 vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, log_payload, True)
 
         # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)

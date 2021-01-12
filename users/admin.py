@@ -11,8 +11,6 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from data.utils import get_client_ip
-
 from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
 from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
                      InstantAPIViewerUser, MakerUser, RootUser, Setup, SupportUser, SupportSetup,

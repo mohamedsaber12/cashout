@@ -213,7 +213,6 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
         except Exception as e:
             raise Exception(e)
-        print("ERRORS LIST: ", errors_list)
         return msisdns_list, amounts_list, names_list, issuers_list, errors_list, total_amount
 
     def process_and_validate_cards_records(self, df):

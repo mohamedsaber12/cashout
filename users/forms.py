@@ -12,6 +12,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
+from django.core.validators import RegexValidator
 from django.forms import modelformset_factory
 from django.urls import reverse
 from django.utils.crypto import get_random_string
@@ -27,6 +28,8 @@ from .models import (
     SupportUser, InstantAPIViewerUser, InstantAPICheckerUser,
 )
 from .signals import ALLOWED_UPPER_CHARS, ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS
+
+alphaCharacters = RegexValidator(r'^[a-zA-Z]*$', 'Only alpha characters are allowed.')
 
 
 class SetPasswordForm(forms.Form):
@@ -218,6 +221,13 @@ class RootCreationForm(forms.ModelForm):
     Admin/Root on-boarding form
     """
 
+    smsc_sender_name = forms.CharField(
+            label=_('SMSC sender name'),
+            required=False,
+            max_length=11,
+            validators=[alphaCharacters]
+    )
+
     class Meta:
         model = RootUser
         fields = ['username', 'email']
@@ -229,6 +239,9 @@ class RootCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+        if not self.request.user.is_vodafone_default_onboarding:
+            self.fields['smsc_sender_name'].widget = forms.HiddenInput()
 
     def clean_username(self):
         name = self.cleaned_data['username']
@@ -268,6 +281,7 @@ class RootCreationForm(forms.ModelForm):
         user.save()
 
         if self.request.user.is_vodafone_default_onboarding:
+            user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
             user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))
         elif self.request.user.is_accept_vodafone_onboarding:

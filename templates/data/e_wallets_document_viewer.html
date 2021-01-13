@@ -66,14 +66,12 @@
           <button id="disburse_button" class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
             <i class="fa fa-money" aria-hidden="true"></i> {% trans 'Disburse' %}
           </button>
-        {% elif can_user_disburse.code == 3 or can_user_disburse.code == 5 %}
-          <div class="alert alert-danger pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
-               role="alert" style="margin-top: 12px;">
+        {% elif can_user_disburse.code == 3 or can_user_disburse.code == 4 or can_user_disburse.code == 5 %}
+          <div class="alert alert-danger pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert" style="margin-top: 12px;">
             {{ can_user_disburse.reason }} <span class="glyphicon glyphicon-remove"></span>
           </div>
         {% else %}
-          <div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
-             role="alert" style="margin-top: 12px;">
+          <div class="alert alert-info pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert" style="margin-top: 12px;">
             {{ can_user_disburse.reason }} <span>⏳</span>
           </div>
         {% endif %}

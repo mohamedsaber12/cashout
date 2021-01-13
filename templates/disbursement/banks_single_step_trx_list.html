@@ -69,9 +69,15 @@
             <div class="x_title">
               <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
               {% if user.is_checker %}
-                <div class="dialogButtonDiv">
-                  <button id="addSingleTransaction" class="btn btn-primary">Make New Bank Transaction</button>
-                </div>
+                {% if user.root.client.is_active %}
+                  <div class="dialogButtonDiv">
+                    <button id="addSingleTransaction" class="btn btn-primary">Make New Bank Transaction</button>
+                  </div>
+                {% else %}
+                  <div class="alert alert-danger pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
+                    {% trans "Your Entity is deactivated" %} <span class="glyphicon glyphicon-remove"></span>
+                  </div>
+                {% endif %}
               {% endif %}
               <ul class="nav navbar-right panel_toolbox">
                 <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>

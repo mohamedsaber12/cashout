@@ -12,7 +12,7 @@ from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.models import Group, Permission
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
-from django.core.validators import RegexValidator
+from django.core.validators import MinLengthValidator, RegexValidator
 from django.forms import modelformset_factory
 from django.urls import reverse
 from django.utils.crypto import get_random_string
@@ -23,13 +23,11 @@ from django_otp.forms import OTPAuthenticationFormMixin
 
 from oauth2_provider.models import Application
 
-from .models import (
-    Brand, CheckerUser, Client, EntitySetup, Levels, MakerUser, RootUser, UploaderUser, User,
-    SupportUser, InstantAPIViewerUser, InstantAPICheckerUser,
-)
-from .signals import ALLOWED_UPPER_CHARS, ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS
-
-alphaCharacters = RegexValidator(r'^[a-zA-Z]*$', 'Only alpha characters are allowed.')
+from .models import (Brand, CheckerUser, Client, EntitySetup,
+                     InstantAPICheckerUser, InstantAPIViewerUser, Levels,
+                     MakerUser, RootUser, SupportUser, UploaderUser, User)
+from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
+                      ALLOWED_UPPER_CHARS)
 
 
 class SetPasswordForm(forms.Form):
@@ -221,6 +219,18 @@ class RootCreationForm(forms.ModelForm):
     Admin/Root on-boarding form
     """
 
+    numeric_regex = RegexValidator(regex='^[0-9.]*$', message='Only numeric characters are allowed.', code='nomatch')
+    alphaCharacters = RegexValidator(r'^[a-zA-Z]*$', 'Only alpha characters are allowed.')
+
+    vodafone_facilitator_identifier = forms.CharField(
+            label=_('Unique identifier ex: 5.10593.00.00.100000'),
+            required=False,
+            max_length=150,
+            validators=[
+                MinLengthValidator(10),
+                numeric_regex
+            ]
+    )
     smsc_sender_name = forms.CharField(
             label=_('SMSC sender name'),
             required=False,
@@ -242,6 +252,11 @@ class RootCreationForm(forms.ModelForm):
 
         if not self.request.user.is_vodafone_default_onboarding:
             self.fields['smsc_sender_name'].widget = forms.HiddenInput()
+
+        if self.request.user.is_vodafone_facilitator_onboarding:
+            self.fields['vodafone_facilitator_identifier'].required = True
+        else:
+            self.fields['vodafone_facilitator_identifier'].widget = forms.HiddenInput()
 
     def clean_username(self):
         name = self.cleaned_data['username']
@@ -288,6 +303,7 @@ class RootCreationForm(forms.ModelForm):
             user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'))
         elif self.request.user.is_vodafone_facilitator_onboarding:
+            user.vodafone_facilitator_identifier = self.cleaned_data['vodafone_facilitator_identifier'].strip()
             user.user_permissions.add(Permission.objects.get(
                     content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding'
             ))

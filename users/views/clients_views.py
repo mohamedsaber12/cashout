@@ -117,7 +117,11 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
                     user_inquiry=False, balance_inquiry=False
             )
         elif self.object.is_accept_vodafone_onboarding or self.object.is_vodafone_facilitator_onboarding:
-            entity_dict['is_normal_flow'] = False if self.object.is_accept_vodafone_onboarding else True
+            if self.object.is_accept_vodafone_onboarding:
+                entity_dict['is_normal_flow'] = False
+            else:
+                client_dict['vodafone_facilitator_identifier'] = self.object.vodafone_facilitator_identifier
+                entity_dict['is_normal_flow'] = True
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.create(
                     user_created=self.object, instant_disbursement=False, set_pin=False,

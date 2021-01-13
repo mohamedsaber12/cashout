@@ -1,4 +1,4 @@
-from django.core.validators import MaxValueValidator
+from django.core.validators import MaxValueValidator, MinLengthValidator
 from django.db import models
 from django.shortcuts import reverse
 from django.utils.translation import gettext_lazy as _
@@ -40,6 +40,14 @@ class Client(models.Model):
 
     is_active = models.BooleanField(default=True)
     fees_percentage = models.PositiveSmallIntegerField(validators=[MaxValueValidator(100)], default=100)
+    vodafone_facilitator_identifier = models.CharField(
+            _("Vodafone facilitator unique identifier"),
+            max_length=150,
+            validators=[MinLengthValidator(10)],
+            default='',
+            null=True,
+            blank=True
+    )
     custom_profile = models.CharField(
             max_length=50,
             default='',
@@ -62,6 +70,7 @@ class Client(models.Model):
     )
     client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, related_name='client', null=True)
     creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)
+
     objects = ClientManager()
 
     class Meta:
@@ -69,7 +78,7 @@ class Client(models.Model):
 
     def __str__(self):
         """:return: String representation of each client object"""
-        return f'The client {self.client.username} by {self.creator}'
+        return f'The client: {self.client.username} owned by superadmin: {self.creator}'
 
     def get_absolute_url(self):
         """Success form submit - object saving url"""

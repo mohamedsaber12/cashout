@@ -52,10 +52,12 @@ class Agent(models.Model):
     VODAFONE = 'V'
     ETISALAT = 'E'
     ORANGE = 'O'
+    P2M = 'P'
     AGENT_TYPE_CHOICES = [
         (VODAFONE, _('vodafone')),
         (ETISALAT, _('etisalat')),
-        (ORANGE, _('orange'))
+        (ORANGE, _('orange')),
+        (P2M, _('P2M'))
     ]
 
     msisdn = models.CharField(max_length=14, verbose_name=_("Mobile number"))

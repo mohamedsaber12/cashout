@@ -5,6 +5,11 @@
 {% block title %} {% trans 'New Client' %} {% endblock %}
 {% block gentellacss %}
     <link href="{% static 'gentella/iCheck/skins/flat/green.css' %}" rel="stylesheet">
+    <style>
+      #id_agents_onboarding_choice {
+        margin-bottom: 20px;
+      }
+    </style>
 {% endblock %}
 {% block form %}
     <form action="." method="post">

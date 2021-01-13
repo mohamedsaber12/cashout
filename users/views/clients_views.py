@@ -125,6 +125,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             )
         else:
             client_dict['smsc_sender_name'] = self.object.smsc_sender_name
+            client_dict['agents_onboarding_choice'] = self.object.agents_onboarding_choice
             Setup.objects.create(user=self.object)
             CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
 

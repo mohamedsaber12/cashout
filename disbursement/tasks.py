@@ -53,43 +53,41 @@ class BulkDisbursementThroughOneStepCashin(Task):
     def handle_disbursement_callback(self, recipient, callback, issuer):
         """Handle disbursement callback depending on issuer based recipients"""
         try:
-            trx_callback_status = False
+            trx_callback_status = status.HTTP_424_FAILED_DEPENDENCY
+            reference_id = recipient["txn_id"]
+
             if issuer == "etisalat":
                 callback_json = callback.json()
                 trx_callback_status = callback_json["TXNSTATUS"]
+                reference_id = callback_json["TXNID"]
+                trx_callback_msg = callback_json["MESSAGE"]
                 # ToDo: After adding status_code & status_description fields to DisbursementData model
                 # trx_callback_status_code = callback_json["TXNSTATUS"]
                 # trx_callback_status_description = callback_json["MESSAGE"]
-                reference_id = callback_json["TXNID"]
             elif issuer == "aman":
-                if callback.status_code == status.HTTP_200_OK:
-                    send_sms(f"+{str(recipient['msisdn'])[2:]}", callback.data["status_description"], "PayMob")
+                if callback and callback.status_code == status.HTTP_200_OK:
                     trx_callback_status = "200"
+                    trx_callback_msg = callback.data["status_description"]
+                    send_sms(f"+{str(recipient['msisdn'])[2:]}", trx_callback_msg, "PayMob")
                     reference_id = callback.data["cashing_details"]["bill_reference"]
-                else:
-                    trx_callback_status = callback.status_code
 
             disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
             disbursement_data_record.reference_id = reference_id
-            disbursement_data_record.is_disbursed = True if trx_callback_status == "200" else False
-            disbursement_data_record.reason = "SUCCESS" if trx_callback_status == "200" else trx_callback_status
             doc_obj = disbursement_data_record.doc
+
+            if trx_callback_status == "200":
+                disbursement_data_record.is_disbursed = True
+                disbursement_data_record.reason = trx_callback_msg
+                doc_obj.owner.root.budget. \
+                    update_disbursed_amount_and_current_balance(disbursement_data_record.amount, issuer)
+            else:
+                disbursement_data_record.is_disbursed = False
+                disbursement_data_record.reason = trx_callback_status
+
             disbursement_data_record.save()
 
             if issuer == "aman":
-                AmanTransaction.objects.create(
-                        transaction=disbursement_data_record,
-                        bill_reference=callback.data["cashing_details"]["bill_reference"]
-                )
-
-            if trx_callback_status == "200":
-                doc_obj.owner.root.budget. \
-                    update_disbursed_amount_and_current_balance(disbursement_data_record.amount, issuer)
-                custom_budget_logger(
-                        doc_obj.owner.root.username,
-                        f"Total disbursed amount: {disbursement_data_record.amount} LE",
-                        doc_obj.owner.username, f", doc id: {doc_obj.id}"
-                )
+                AmanTransaction.objects.create(transaction=disbursement_data_record, bill_reference=reference_id)
 
             return True
         except (DisbursementData.DoesNotExist, Exception):
@@ -115,12 +113,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
         api_auth_response = aman_channel_object.api_authentication()
+        api_auth_token = merchant_id = None
 
         if api_auth_response.status_code == status.HTTP_201_CREATED:
             api_auth_token = api_auth_response.data.get("api_auth_token", "")
             merchant_id = str(api_auth_response.data.get("merchant_id", ""))
 
-            return api_auth_token, merchant_id
+        return api_auth_token, merchant_id
 
     def disburse_for_aman(self, checker, aman_recipients):
         """Disburse for aman specific recipients"""
@@ -130,7 +129,10 @@ class BulkDisbursementThroughOneStepCashin(Task):
             aman_object = AmanChannel(request, amount=recipient["amount"])
 
             try:
+                # 1. Generate new auth token from Accept
                 api_auth_token, merchant_id = self.aman_api_authentication_params(aman_object)
+
+                # 2. Register the order at Accept
                 order_registration = aman_object.order_registration(api_auth_token, merchant_id, recipient["txn_id"])
 
                 if order_registration.status_code == status.HTTP_201_CREATED:
@@ -140,9 +142,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
                         "order_id": order_registration.data.get("order_id", ""),
                         "first_name": "Manual",
                         "last_name": "Patch",
-                        "email": f"confirmrequest@paymob.com",
+                        "email": f"noreply@paymob.com",
                         "phone_number": f"+{str(recipient['msisdn'])[2:]}"
                     }
+
+                    # 3. Obtain payment key
                     payment_key_obtained = aman_object.obtain_payment_key(**payment_key_params)
 
                     if payment_key_obtained.status_code == status.HTTP_201_CREATED:
@@ -151,7 +155,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                         self.handle_disbursement_callback(recipient, aman_callback, issuer="aman")
 
             except Exception as err:
-                aman_object.log_message(request, f"[GENERAL FAILURE - AMAN CHANNEL]", f"Exception: {err.args[0]}")
+                aman_object.log_message(request, f"[general failure - aman bulk channel]", f"Exception: {err.args[0]}")
+                self.handle_disbursement_callback(recipient, False, issuer="aman")
 
     def create_bank_transaction_from_instant_transaction(self, checker, record):
         """Create a bank transaction out of the passed record data/instant transaction"""

@@ -142,12 +142,13 @@ class InstantDisbursementAPIView(views.APIView):
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
         api_auth_response = aman_channel_object.api_authentication()
+        api_auth_token = merchant_id = None
 
         if api_auth_response.status_code == status.HTTP_201_CREATED:
             api_auth_token = api_auth_response.data.get('api_auth_token', '')
             merchant_id = str(api_auth_response.data.get('merchant_id', ''))
 
-            return api_auth_token, merchant_id
+        return api_auth_token, merchant_id
 
     def aman_issuer_handler(self, request, transaction_object, serializer):
         """Handle aman operations/transactions separately"""

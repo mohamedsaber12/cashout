@@ -15,10 +15,10 @@
 
 {% block form %}
   <form action="." method="post" id="step_1_form">
-    {% if agentform %}
+    {% if agents_formset %}
       <h1>{% trans 'Add Agents' %}</h1>
     {% else %}
-      <h1>{% trans 'Add P2M' %}</h1>
+      <h1>{% trans 'Add P2M Agent' %}</h1>
     {% endif %}
 
     {%if non_form_error%}
@@ -28,31 +28,31 @@
     {% csrf_token %}
 
     <!-- super agent form -->
-    {% if agentform %}
+    {% if agents_formset %}
       <h4>{% trans 'Super agent' %}</h4>
     {% else %}
-      <h4>{% trans 'P2M' %}</h4>
+      <h4></h4>
     {% endif %}
 
     {% for field in super_agent_form.visible_fields %}
       <div class="form-group">
         <label class="control-label col-md-2 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
-        <div class="col-md-9 col-sm-9 col-xs-12">
+        <div class="col-md-9 col-sm-9 col-xs-12" style="margin-bottom: 20px;">
           {{ field | add_class:'form-control'}}
           {{ field.errors.as_ul }}
         </div>
       </div>
     {%endfor%}
     <!--  -->
-    {% if agentform %}
+    {% if agents_formset %}
       <h4>{% trans 'Agents' %}</h4>
-      {% if agentform.non_form_errors%}
-        {{ agentform.non_form_errors }}
+      {% if agents_formset.non_form_errors%}
+        {{ agents_formset.non_form_errors }}
       {%endif%}
 
       <table class="table" id="agentform">
-        {{ agentform.management_form }}
-        {% for form in agentform.forms %}
+        {{ agents_formset.management_form }}
+        {% for form in agents_formset.forms %}
           {% if forloop.first %}
             <thead>
               <tr>
@@ -66,7 +66,7 @@
         {% endfor %}
 
         <tbody>
-          {% for form in agentform.forms %}
+          {% for form in agents_formset.forms %}
             <tr class="agent_form">
               {% for field in form.visible_fields %}
                 <td>
@@ -112,7 +112,7 @@
       levelform.formset({
           addText: ' {% trans "add another agent" %} ',
           deleteText: '&nbsp; <i class="fa fa-times-circle-o" aria-hidden="true"></i>',
-          prefix: '{{ agentform.prefix }}',
+          prefix: '{{ agents_formset.prefix }}',
           formCssClass: 'level'
       });
   </script>

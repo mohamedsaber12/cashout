@@ -32,10 +32,10 @@ class Client(models.Model):
     EXISTING_SUPERAGENT_AGENTS = 2
     P2M = 3
     AGENTS_ONBOARDING_CHOICES = [
-        (NEW_SUPERAGENT_AGENTS, _("New superagent and agents")),
+        (NEW_SUPERAGENT_AGENTS, _("New superagent and new agents")),
         (EXISTING_SUPERAGENT_NEW_AGENTS, _("Existing superagent and new agents")),
-        (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and agents")),
-        (P2M, _("P2M")),
+        (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and existing agents")),
+        (P2M, _("P2M Agent")),
     ]
 
     is_active = models.BooleanField(default=True)

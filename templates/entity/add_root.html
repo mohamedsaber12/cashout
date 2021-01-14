@@ -2,7 +2,9 @@
 {% load i18n %}
 {% load static %}
 {% load custom_tags %}
+
 {% block title %} {% trans 'New Client' %} {% endblock %}
+
 {% block gentellacss %}
     <link href="{% static 'gentella/iCheck/skins/flat/green.css' %}" rel="stylesheet">
     <style>
@@ -11,55 +13,56 @@
       }
     </style>
 {% endblock %}
+
 {% block form %}
-    <form action="." method="post">
-      <h1>{% trans 'Add Client User' %}</h1>
+<form action="." method="post">
+  <h1>{% trans 'Add Client User' %}</h1>
 
-        {% csrf_token %}
-            <div>
-                {% for field in form.visible_fields %}
-                        {% ifequal field.name "business_setups"  %}
-                            <div class="checkbox" style="position: relative;">
-                                <div class="col-xs-12" style="text-align: left;">
-                                    {{ field }}
-                                    {{ field.errors.as_ul }}
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="form-group">
-                            <div class="col-xs-12">
+  {% csrf_token %}
+  <div>
+    {% for field in form.visible_fields %}
+    {% ifequal field.name "business_setups" %}
+    <div class="checkbox" style="position: relative;">
+      <div class="col-xs-12" style="text-align: left;">
+        {{ field }}
+        {{ field.errors.as_ul }}
+      </div>
+    </div>
+    {% else %}
+    <div class="form-group">
+      <div class="col-xs-12">
 
-                                    <div class="">
-                                        {{ field | add_class:'form-control'}}
-                                        {{ field.errors.as_ul }}
+        <div class="">
+          {{ field | add_class:'form-control'}}
+          {{ field.errors.as_ul }}
 
-                                    </div>
-
-                            </div>
-                        </div>
-                        {% endifequal %}
-                {% endfor %}
-
-            </div>
-
-      <div>
-          <a class="reset_pass" href="{% url 'users:clients' %}">{% trans 'Back' %}</a>
-          <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
+        </div>
 
       </div>
+    </div>
+    {% endifequal %}
+    {% endfor %}
 
-      <div class="clearfix"></div>
+  </div>
 
-      <div class="separator">
+  <div>
+    <a class="reset_pass" href="{% url 'users:clients' %}">{% trans 'Back' %}</a>
+    <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
 
-        <div class="clearfix"></div>
-        <br />
+  </div>
 
-      </div>
-    </form>
+  <div class="clearfix"></div>
 
+  <div class="separator">
+
+    <div class="clearfix"></div>
+    <br/>
+
+  </div>
+</form>
 {% endblock %}
+
 {% block script %}
-        <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
-        <script src="{% static 'gentella/icheck.min.js' %}"></script>
+  <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/icheck.min.js' %}"></script>
 {% endblock %}

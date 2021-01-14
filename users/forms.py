@@ -29,18 +29,6 @@ from .models import (Brand, CheckerUser, Client, EntitySetup,
 from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
                       ALLOWED_UPPER_CHARS)
 
-# Agents onboarding choices
-NEW_SUPERAGENT_AGENTS = 0
-EXISTING_SUPERAGENT_NEW_AGENTS = 1
-EXISTING_SUPERAGENT_AGENTS = 2
-P2M = 3
-
-AGENTS_ONBOARDING_CHOICES = [
-    (NEW_SUPERAGENT_AGENTS, _("New superagent and agents")),
-    (EXISTING_SUPERAGENT_NEW_AGENTS, _("Existing superagent and new agents")),
-    (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and agents")),
-    (P2M, _("P2M")),
-]
 
 class SetPasswordForm(forms.Form):
     """
@@ -234,6 +222,19 @@ class RootCreationForm(forms.ModelForm):
     numeric_regex = RegexValidator(regex='^[0-9.]*$', message='Only numeric characters are allowed.', code='nomatch')
     alphaCharacters = RegexValidator(r'^[a-zA-Z]*$', 'Only alpha characters are allowed.')
 
+    # Agents onboarding choices
+    NEW_SUPERAGENT_AGENTS = 0
+    EXISTING_SUPERAGENT_NEW_AGENTS = 1
+    EXISTING_SUPERAGENT_AGENTS = 2
+    P2M = 3
+
+    AGENTS_ONBOARDING_CHOICES = [
+        (NEW_SUPERAGENT_AGENTS, _("New superagent and new agents")),
+        (EXISTING_SUPERAGENT_NEW_AGENTS, _("Existing superagent and new agents")),
+        (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and existing agents")),
+        (P2M, _("P2M Agent")),
+    ]
+
     vodafone_facilitator_identifier = forms.CharField(
             label=_('Unique identifier ex: 5.10593.00.00.100000'),
             required=False,
@@ -315,7 +316,7 @@ class RootCreationForm(forms.ModelForm):
 
         if self.request.user.is_vodafone_default_onboarding:
             user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
-            user.agents_onboarding_choice = self.cleaned_data['agents_onboarding_choice'].strip()
+            user.agents_onboarding_choice = int(self.cleaned_data['agents_onboarding_choice'].strip())
             user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))
         elif self.request.user.is_accept_vodafone_onboarding:

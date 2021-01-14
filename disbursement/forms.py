@@ -66,9 +66,10 @@ class AgentForm(forms.ModelForm):
             raise forms.ValidationError(_("Mobile number is not valid"))
         return msisdn
 
+
 class ExistingAgentForm(forms.ModelForm):
     """
-    Agent form for adding new agents for newly created Admins
+    Agent form for adding agents for newly created Admins using existing agents related to the current superadmin
     """
     msisdn = forms.ChoiceField(label=_("Mobile number"))
 

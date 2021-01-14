@@ -15,7 +15,11 @@
 
 {% block form %}
   <form action="." method="post" id="step_1_form">
-    <h1>{% trans 'Add Agents' %}</h1>
+    {% if agentform %}
+      <h1>{% trans 'Add Agents' %}</h1>
+    {% else %}
+      <h1>{% trans 'Add P2M' %}</h1>
+    {% endif %}
 
     {%if non_form_error%}
       <span style="color:red;">{{non_form_error}}</span>
@@ -24,7 +28,12 @@
     {% csrf_token %}
 
     <!-- super agent form -->
-    <h4>{% trans 'Super agent' %}</h4>
+    {% if agentform %}
+      <h4>{% trans 'Super agent' %}</h4>
+    {% else %}
+      <h4>{% trans 'P2M' %}</h4>
+    {% endif %}
+
     {% for field in super_agent_form.visible_fields %}
       <div class="form-group">
         <label class="control-label col-md-2 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
@@ -35,47 +44,47 @@
       </div>
     {%endfor%}
     <!--  -->
+    {% if agentform %}
+      <h4>{% trans 'Agents' %}</h4>
+      {% if agentform.non_form_errors%}
+        {{ agentform.non_form_errors }}
+      {%endif%}
 
-    <h4>{% trans 'Agents' %}</h4>
-    {% if agentform.non_form_errors%}
-      {{ agentform.non_form_errors }}
-    {%endif%}
+      <table class="table" id="agentform">
+        {{ agentform.management_form }}
+        {% for form in agentform.forms %}
+          {% if forloop.first %}
+            <thead>
+              <tr>
+                <!-- <th>Super agent</th> -->
+                {% for field in form.visible_fields %}
+                  <th>{{ field.label|capfirst }}</th>
+                {% endfor %}
+              </tr>
+            </thead>
+          {% endif %}
+        {% endfor %}
 
-    <table class="table" id="agentform">
-      {{ agentform.management_form }}
-      {% for form in agentform.forms %}
-        {% if forloop.first %}
-          <thead>
-            <tr>
-              <!-- <th>Super agent</th> -->
+        <tbody>
+          {% for form in agentform.forms %}
+            <tr class="agent_form">
               {% for field in form.visible_fields %}
-                <th>{{ field.label|capfirst }}</th>
+                <td>
+                  {# Include the hidden fields in the form #}
+                  {% if forloop.first %}
+                    {% for hidden in form.hidden_fields %}
+                      {{ hidden }}
+                    {% endfor %}
+                  {% endif %}
+                  {{ field.errors.as_ul }}
+                  {{ field | add_class:'form-control' }}
+                </td>
               {% endfor %}
             </tr>
-          </thead>
-        {% endif %}
-      {% endfor %}
-
-      <tbody>
-        {% for form in agentform.forms %}
-          <tr class="agent_form">
-            {% for field in form.visible_fields %}
-              <td>
-                {# Include the hidden fields in the form #}
-                {% if forloop.first %}
-                  {% for hidden in form.hidden_fields %}
-                    {{ hidden }}
-                  {% endfor %}
-                {% endif %}
-                {{ field.errors.as_ul }}
-                {{ field | add_class:'form-control' }}
-              </td>
-            {% endfor %}
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
     <div>
       <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
     </div>
@@ -89,7 +98,7 @@
   </form>
 
   <div class="form-group col-md-offset-0">
-    <form method="POST" action="{% url 'users:delete_client' username=agentform.form_kwargs.root.username %}">
+    <form method="POST" action="{% url 'users:delete_client' username=super_agent_form.root.username %}">
       {% csrf_token %}
       <input class="btn btn-dark" type="submit" value="{% trans 'Cancel On-boarding Process?' %}">
     </form>

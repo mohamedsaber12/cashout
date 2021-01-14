@@ -41,11 +41,11 @@ from users.mixins import (SuperFinishedSetupMixin,
                           SuperWithoutDefaultOnboardingPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
                           UserWithDisbursementPermissionRequired)
-from users.models import EntitySetup
+from users.models import EntitySetup, Client
 from utilities import messages
 
-from .forms import (AgentForm, AgentFormSet, BalanceInquiryPinForm,
-                    SingleStepTransactionModelForm)
+from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
+                    BalanceInquiryPinForm, SingleStepTransactionModelForm)
 from .mixins import AdminOrCheckerRequiredMixin
 from .models import Agent, BankTransaction
 from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
@@ -340,6 +340,24 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
     """
     template_name = 'entity/add_agent.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        self.root = ExpiringToken.objects.get(key=self.kwargs['token']).user
+        self.client = Client.objects.get(client=self.root)
+        current_children_of_super_admin = None
+        if self.client.agents_onboarding_choice == 1 or self.client.agents_onboarding_choice == 2:
+            current_children_of_super_admin = request.user.children()
+            existing_super_agents = Agent.objects.filter(
+                    super=True,
+                    wallet_provider__in=current_children_of_super_admin)
+            self.super_agents_choices = [(l.msisdn, l.msisdn) for l  in existing_super_agents]
+        if self.client.agents_onboarding_choice == 2:
+            existing_non_super_agents = Agent.objects.filter(
+                    super=False,
+                    wallet_provider__in=current_children_of_super_admin)
+            self.non_super_agents_choices = [(l.msisdn, l.msisdn) for l  in existing_non_super_agents]
+
+        return super().dispatch(request, *args, **kwargs)
+
     def get_success_url(self, root):
         token, created = ExpiringToken.objects.get_or_create(user=root)
         if created:
@@ -353,40 +371,118 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         """
         Handles GET requests to the SuperAdminAgentsSetup view
         """
-        root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         context = {
             'agentform': AgentFormSet(
-                queryset=Agent.objects.filter(wallet_provider=root, super=False),
-                prefix='agents',
-                form_kwargs={'root': root}
+                    queryset=Agent.objects.filter(wallet_provider=self.root, super=False),
+                    prefix='agents',
+                    form_kwargs={'root': self.root}
             ),
 
             'super_agent_form':  AgentForm(
-                initial=Agent.objects.filter(wallet_provider=root, super=False),
-                root=root
+                    initial=Agent.objects.filter(wallet_provider=self.root, super=False),
+                    root=self.root
             )
         }
+        if self.client.agents_onboarding_choice == 1:
+            context = {
+                'agentform': AgentFormSet(
+                        queryset=Agent.objects.filter(wallet_provider=self.root, super=False),
+                        prefix='agents',
+                        form_kwargs={'root': self.root}
+                ),
+                'super_agent_form':  ExistingAgentForm(
+                        initial=Agent.objects.filter(wallet_provider=self.root, super=False),
+                        root=self.root,
+                        agents_choices=self.super_agents_choices
+                )
+            }
+        elif self.client.agents_onboarding_choice == 2:
+            context = {
+                'agentform': ExistingAgentFormSet(
+                        queryset=Agent.objects.filter(wallet_provider=self.root, super=False),
+                        prefix='agents',
+                        form_kwargs={'root': self.root, 'agents_choices': self.non_super_agents_choices}
+                ),
+                'super_agent_form':  ExistingAgentForm(
+                        initial=Agent.objects.filter(wallet_provider=self.root, super=False),
+                        root=self.root,
+                        agents_choices=self.super_agents_choices
+                )
+            }
+        elif self.client.agents_onboarding_choice == 3:
+            context = {
+                'super_agent_form':  AgentForm(
+                        initial=Agent.objects.filter(wallet_provider=self.root, super=False),
+                        root=self.root
+                )
+            }
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):
         """
         Handles POST requests to the SuperAdminAgentsSetup view
         """
-        root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         data = request.POST.copy()          # pop superagent data
         data.pop('msisdn', None)
         agentform = AgentFormSet(
             data,
-            queryset=Agent.objects.filter(wallet_provider=root),
+            queryset=Agent.objects.filter(wallet_provider=self.root),
             prefix='agents',
-            form_kwargs={'root': root}
+            form_kwargs={'root': self.root}
         )
-        super_agent_form = AgentForm({'msisdn': request.POST.get('msisdn')}, root=root)
+        super_agent_form = AgentForm({'msisdn': request.POST.get('msisdn')}, root=self.root)
+        
+        if self.client.agents_onboarding_choice == 1:
+            super_agent_form =  ExistingAgentForm(
+                    {'msisdn': request.POST.get('msisdn')},
+                    root=self.root,
+                    agents_choices=self.super_agents_choices
+            )
 
-        if agentform.is_valid() and super_agent_form.is_valid():
+        elif self.client.agents_onboarding_choice == 2:
+            agentform = ExistingAgentFormSet(
+                    data,
+                    queryset=Agent.objects.filter(wallet_provider=self.root),
+                    prefix='agents',
+                    form_kwargs={'root': self.root, 'agents_choices': self.non_super_agents_choices}
+            )
+            super_agent_form =  ExistingAgentForm(
+                    {'msisdn': request.POST.get('msisdn')},
+                    root=self.root,
+                    agents_choices=self.super_agents_choices
+            )
+
+        if self.client.agents_onboarding_choice == 3 and super_agent_form.is_valid():
             super_agent = super_agent_form.save(commit=False)
             super_agent.super = True
-            super_agent.wallet_provider = root
+            super_agent.type = 'P'
+            super_agent.wallet_provider = self.root
+            agents_msisdn = [super_agent.msisdn]
+
+            if self.root.callwallets_moderator.first().user_inquiry:
+                transactions, error = self.validate_agent_wallet(request, agents_msisdn)
+                if not transactions:                        # handle non form errors
+                    context = {
+                        "non_form_error": error,
+                        "super_agent_form": super_agent_form,
+                    }
+                    return render(request, template_name=self.template_name, context=context)
+
+                if self.error_exist(transactions):          # transactions exist # check if have error or not #
+                    return self.handle_form_errors(None, super_agent_form, transactions)
+
+            super_agent.save()
+            entity_setup = EntitySetup.objects.get(user=self.request.user, entity=self.root)
+            entity_setup.agents_setup = True
+            entity_setup.save()
+            AGENT_CREATE_LOGGER.debug(
+                    f"[message] [AGENTS CREATED] [{self.request.user}] -- agents: {' , '.join(agents_msisdn)}"
+            )
+            return HttpResponseRedirect(self.get_success_url(self.root))
+        elif agentform.is_valid() and super_agent_form.is_valid():
+            super_agent = super_agent_form.save(commit=False)
+            super_agent.super = True
+            super_agent.wallet_provider = self.root
             agents_msisdn = [super_agent.msisdn]
             objs = agentform.save(commit=False)
             try:
@@ -395,10 +491,10 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             except AttributeError:
                 pass
             for obj in objs:
-                obj.wallet_provider = root
+                obj.wallet_provider = self.root
                 agents_msisdn.append(obj.msisdn)
 
-            if root.callwallets_moderator.first().user_inquiry:
+            if self.root.callwallets_moderator.first().user_inquiry:
                 transactions, error = self.validate_agent_wallet(request, agents_msisdn)
                 if not transactions:                        # handle non form errors
                     context = {
@@ -413,13 +509,13 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
             super_agent.save()
             agentform.save()
-            entity_setup = EntitySetup.objects.get(user=self.request.user, entity=root)
+            entity_setup = EntitySetup.objects.get(user=self.request.user, entity=self.root)
             entity_setup.agents_setup = True
             entity_setup.save()
             AGENT_CREATE_LOGGER.debug(
                     f"[message] [AGENTS CREATED] [{self.request.user}] -- agents: {' , '.join(agents_msisdn)}"
             )
-            return HttpResponseRedirect(self.get_success_url(root))
+            return HttpResponseRedirect(self.get_success_url(self.root))
         else:
             context = {
                 "agentform": agentform,
@@ -464,16 +560,21 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
         super_msg = self.get_msg(super_msisdn, transactions)
         if super_msg:
             super_agent_form.add_error('msisdn', super_msg)
-        for form in agentform.forms:
-            msisdn = form.cleaned_data.get('msisdn')
-            msg = self.get_msg(msisdn, transactions)
-            if msg:
-                form.add_error('msisdn', msg)
+        if agentform:
+            for form in agentform.forms:
+                msisdn = form.cleaned_data.get('msisdn')
+                msg = self.get_msg(msisdn, transactions)
+                if msg:
+                    form.add_error('msisdn', msg)
 
-        context = {
-            "agentform": agentform,
-            "super_agent_form": super_agent_form,
-        }
+            context = {
+                "agentform": agentform,
+                "super_agent_form": super_agent_form,
+            }
+        else:
+            context = {
+                "super_agent_form": super_agent_form,
+            }
         return render(self.request, template_name=self.template_name, context=context)
 
     def error_exist(self, transactions):

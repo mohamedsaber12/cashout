@@ -66,6 +66,34 @@ class AgentForm(forms.ModelForm):
             raise forms.ValidationError(_("Mobile number is not valid"))
         return msisdn
 
+class ExistingAgentForm(forms.ModelForm):
+    """
+    Agent form for adding new agents for newly created Admins
+    """
+    msisdn = forms.ChoiceField(label=_("Mobile number"))
+
+    class Meta:
+        model = Agent
+        fields = ('msisdn',)
+
+    def __init__(self, *args, root, agents_choices, **kwargs):
+        self.root = root
+        super().__init__(*args, **kwargs)
+        self.fields['msisdn'].choices = agents_choices
+
+    def clean_msisdn(self):
+        """
+        :return: Validate the passed agent mobile number against r regex (EG, 010x, 011x, 012x)
+        """
+        msisdn = self.cleaned_data.get('msisdn', None)
+        if not msisdn:
+            return msisdn
+        import re
+        r = re.compile('(201|01)[0-2|5]\d{7}')
+        if not r.match(msisdn):
+            raise forms.ValidationError(_("Mobile number is not valid"))
+        return msisdn
+
 
 class PinForm(forms.Form):
     """
@@ -309,3 +337,4 @@ class SingleStepTransactionModelForm(forms.ModelForm):
 
 
 AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)
+ExistingAgentFormSet = modelformset_factory(model=Agent, form=ExistingAgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)

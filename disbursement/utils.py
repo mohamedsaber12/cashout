@@ -262,6 +262,12 @@ DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [
     }
 ]
 
+DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT = {
+    'issuer': 'default',
+    'total': 0,
+    'count': 0,
+}
+
 
 def custom_titled_filter(title):
     """

@@ -32,7 +32,9 @@ from disbursement.resources import (DisbursementDataResourceForBankCards,
 from disbursement.utils import (VALID_BANK_CODES_LIST,
                                 VALID_BANK_TRANSACTION_TYPES_LIST,
                                 determine_trx_category_and_purpose,
-                                DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT)
+                                DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                                DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT
+)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
@@ -468,6 +470,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
             q['admin'] = checkers_parent_username[q['checker']]
         return qs
+    def _add_vf_facilitator_identifier_to_qs_values(self, qs, checkers_parent_username,
+                                                    admins_vf_facilitator_identifier):
+        """Append vodafone facilitator identifier to the output transactions queryset values dict"""
+        for q in qs:
+            q['vf_facilitator_identifier'] = \
+                admins_vf_facilitator_identifier[checkers_parent_username[q['checker']]]
+            q['full_date'] = f"{self.start_date} to {self.end_date}"
+        return qs
 
     def _calculate_and_add_fees_to_qs_values(self, qs):
         """Calculate and append the fees to the output transactions queryset values dict"""
@@ -476,7 +486,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                                       calculate_fees_and_vat_for_amount(q['total'], q['issuer'])
         return qs
 
-    def aggregate_vf_ets_aman_transactions(self, checkers_qs, checkers_parent_username):
+    def aggregate_vf_ets_aman_transactions(
+            self,
+            checkers_qs,
+            checkers_parent_username,
+            checkers_parent_vf_facilitator_identifier=None):
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
         qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
@@ -487,7 +501,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             annotate(total=Sum('amount'), count=Count('id'))
 
         qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
-        qs = self._calculate_and_add_fees_to_qs_values(qs)
+
+        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+            qs = self._add_vf_facilitator_identifier_to_qs_values(qs, checkers_parent_username, checkers_parent_vf_facilitator_identifier)
+        else:
+            qs = self._calculate_and_add_fees_to_qs_values(qs)
         return qs
 
     def aggregate_bank_wallets_orange_instant_transactions(self, checkers_qs, checkers_parent_username):
@@ -601,6 +619,43 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         wb.save(file_path)
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
+    def write_data_of_vf_facilitator_to_excel_file(self, final_data, distinct_msisdn):
+        """Write exported transactions data to excel file"""
+        column_names_list = [
+            'Account name ', 'Total Count', 'Total Amount', 'Distinct receivers', 'full date (Daily)', 'Billing number '
+        ]
+        filename = _(f"clients_monthly_report_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('report')
+
+        # 1. Write sheet header/column names - first row
+        row_num = 0
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+
+        for col_nums in range(len(column_names_list)):
+            ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+
+        # 2. Write sheet body/data - remaining rows
+        font_style = xlwt.XFStyle()
+        row_num += 1
+
+        for key in final_data.keys():
+            current_admin_report = final_data[key][0]
+            ws.write(row_num, 0, key, font_style)
+            ws.write(row_num, 1, current_admin_report['count'], font_style)
+            ws.write(row_num, 2, current_admin_report['total'], font_style)
+            ws.write(row_num, 3, len(distinct_msisdn[key]), font_style)
+            ws.write(row_num, 4, current_admin_report['full_date'], font_style)
+            ws.write(row_num, 5, current_admin_report['vf_facilitator_identifier'],
+                     font_style)
+
+            row_num += 1
+
+        wb.save(file_path)
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
 
     def prepare_transactions_report(self):
         """Prepare report for transactions related to client"""
@@ -678,6 +733,86 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # 11. Write final data to excel file
         return self.write_data_to_excel_file(final_data)
 
+    def prepare_vf_facilitator_transactions_report(self):
+        """Prepare report for transactions related to client"""
+        # 1. Format start and end date
+        self.refine_first_and_end_date_format()
+
+        # 2. Get all clients of the current superadmin
+        admins_qs = self.superadmin_user.children()
+
+        # 3. Get all children [checkers/api checkers] for every client at the clients list
+        checkers_qs = []
+        checkers_parent_username = {}
+        admins_vf_facilitator_identifier = {}
+        for admin in admins_qs:
+            admins_vf_facilitator_identifier[admin.username] = \
+                admin.client.vodafone_facilitator_identifier
+            admin_children_list = admin.children()
+            for child in admin_children_list:
+                if child.is_checker or child.is_instantapichecker:
+                    checkers_qs.append(child)
+                    checkers_parent_username[child.username] = admin.username
+
+        # 4. Calculate vodafone, etisalat, aman transactions details
+        vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions(
+                checkers_qs,
+                checkers_parent_username,
+                admins_vf_facilitator_identifier)
+
+        # 7. Group all data by admin
+        final_data = dict()
+
+        for q in vf_ets_aman_qs:
+            if q['admin'] in final_data:
+                issuer_exist = False
+                for admin_q in final_data[q['admin']]:
+                    if q['issuer'] == admin_q['issuer']:
+                        admin_q['total'] += q['total']
+                        admin_q['count'] += q['count']
+                        issuer_exist = True
+                        break
+                if not issuer_exist:
+                    final_data[q['admin']].append(q)
+            else:
+                final_data[q['admin']] = [q]
+
+        # 8. Add issuer with values 0 to final data
+        for key in final_data.keys():
+            issuers_exist = {
+                'default': False,
+            }
+            for el in final_data[key]:
+                issuers_exist[el['issuer']] = True
+            if not issuers_exist['default']:
+                final_data[key].append({'issuer': 'default', 'count': 0, 'total': 0})
+
+        # 9. Add all admin that have no transactions
+        for current_admin in admins_qs:
+            if not current_admin.username in final_data.keys():
+                final_data[current_admin.username] = [{
+                    **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                    'full_date': f"{self.start_date} to {self.end_date}",
+                    'vf_facilitator_identifier': admins_vf_facilitator_identifier[current_admin.username]
+                }]
+
+
+        # 10. calculate distinct msisdn per admin
+        distinct_msisdn = dict()
+        for el in vf_ets_aman_qs.values():
+            if checkers_parent_username[el['checker']] in distinct_msisdn:
+                distinct_msisdn[checkers_parent_username[el['checker']]].add(el['msisdn'])
+            else:
+                distinct_msisdn[checkers_parent_username[el['checker']]] = set([el['msisdn']])
+
+        # 10. Add all admin that have no transactions to distinct msisdn
+        for current_admin in admins_qs:
+            if not current_admin.username in distinct_msisdn.keys():
+                distinct_msisdn[current_admin.username] = set([])
+
+        # 12. Write final data to excel file
+        return self.write_data_of_vf_facilitator_to_excel_file(final_data, distinct_msisdn)
+
     def prepare_and_send_report_mail(self, report_download_url):
         """Prepare the mail to be sent with the report download link"""
         mail_subject = f' {self.superadmin_user.get_full_name} Clients Transactions Report ' \
@@ -693,7 +828,10 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
-        report_download_url = self.prepare_transactions_report()
+        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+            report_download_url = self.prepare_vf_facilitator_transactions_report()
+        else:
+            report_download_url = self.prepare_transactions_report()
         self.prepare_and_send_report_mail(report_download_url)
         return True
 

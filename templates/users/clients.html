@@ -52,7 +52,7 @@
               <div class="x_content">
 
                 {# Export clients transactions report sections #}
-                {% if request.user.is_accept_vodafone_onboarding or request.user.is_instant_model_onboarding %}
+                {% if request.user.is_accept_vodafone_onboarding or request.user.is_instant_model_onboarding or request.user.is_vodafone_facilitator_onboarding %}
                   <div class="row">
                     <div class="col-md-12 col-sm-12 col-xs-12">
                       <div class="x_panel">

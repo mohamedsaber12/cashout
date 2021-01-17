@@ -723,7 +723,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     issuers_exist[el['issuer']] = True
             for issuer in issuers_exist.keys():
                 if not issuers_exist[issuer]:
-                    final_data[key].append({'issuer': issuer, 'count': 0, 'total': 0, 'fees': 0})
+                    final_data[key].append({'issuer': issuer, 'count': 0, 'total': 0, 'fees': 0, 'vat': 0})
 
         # 10. Add all admin that have no transactions
         for current_admin in admins_qs:

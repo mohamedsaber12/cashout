@@ -21,7 +21,7 @@ from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthen
 
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
-from users.models import CheckerUser, User
+from users.models import CheckerUser, User, Client
 from utilities.custom_requests import CustomRequests
 from utilities.functions import custom_budget_logger, get_value_from_env
 from utilities.messages import MSG_DISBURSEMENT_ERROR, MSG_DISBURSEMENT_IS_RUNNING, MSG_PIN_INVALID
@@ -73,7 +73,10 @@ class DisburseAPIView(APIView):
         if not provider.is_vodafone_default_onboarding:
             agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
         else:
-            agents = Agent.objects.filter(wallet_provider=provider, super=False)
+            agents = Agent.objects.filter(wallet_provider=provider)
+            agents = agents.filter(super=True) if provider.client.agents_onboarding_choice == Client.P2M else \
+                agents.filter(super=False)
+
         vodafone_agents = agents.filter(type=Agent.VODAFONE)
         etisalat_agents = agents.filter(type=Agent.ETISALAT)
 

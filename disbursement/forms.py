@@ -9,6 +9,7 @@ from django.utils.translation import gettext as _
 
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.utils import get_dot_env
+from users.models import Client
 from users.tasks import set_pin_error_mail
 
 from .models import Agent, BankTransaction, VMTData
@@ -136,16 +137,24 @@ class PinForm(forms.Form):
         raw_pin = self.cleaned_data.get('pin')
         if not raw_pin:
             return False
+
         if self.root.is_vodafone_default_onboarding and self.root.callwallets_moderator.first().set_pin:
-            msisdns = list(self.agents.values_list('msisdn', flat=True))
-            transactions, error = self.call_wallet(raw_pin, msisdns)
-            if error:
-                self.add_error('pin', error)
-                return False
-            error = self.get_transactions_error(transactions)       # handle transactions list
-            if error:
-                self.add_error('pin', error)
-                return False
+            if self.root.client.agents_onboarding_choice in [Client.NEW_SUPERAGENT_AGENTS, Client.P2M]:
+                msisdns = list(self.agents.values_list('msisdn', flat=True))
+            elif self.root.client.agents_onboarding_choice == Client.EXISTING_SUPERAGENT_NEW_AGENTS:
+                msisdns = list(self.agents.filter(super=False).values_list('msisdn', flat=True))
+            else:
+                msisdns = False
+
+            if msisdns:
+                transactions, error = self.call_wallet(raw_pin, msisdns)
+                if error:
+                    self.add_error('pin', error)
+                    return False
+                error = self.get_transactions_error(transactions)       # handle transactions list
+                if error:
+                    self.add_error('pin', error)
+                    return False
 
         self.agents.update(pin=True)
         self.root.set_pin(raw_pin)
@@ -153,15 +162,15 @@ class PinForm(forms.Form):
 
     def call_wallet(self, pin, msisdns):
         superadmin = self.root.client.creator
-        payload = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
+        payload, payload_without_pin = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
         try:
-            WALLET_API_LOGGER.debug(f"[request] [SET PIN] [{self.root}] -- {payload['USERS']}")
+            WALLET_API_LOGGER.debug(f"[request] [set pin] [{self.root}] -- {payload_without_pin}")
             response = requests.post(self.env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"[message] [SET PIN ERROR] [{self.root}] -- {e.args}")
+            WALLET_API_LOGGER.debug(f"[message] [set pin error] [{self.root}] -- {e.args}")
             return None, MSG_PIN_SETTING_ERROR
         else:
-            WALLET_API_LOGGER.debug(f"[response] [SET PIN] [{self.root}] -- {str(response.text)}")
+            WALLET_API_LOGGER.debug(f"[response] [set pin] [{self.root}] -- {str(response.text)}")
 
         if response.ok:
             response_dict = response.json()

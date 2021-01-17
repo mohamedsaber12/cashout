@@ -281,6 +281,14 @@ class RootCreationForm(forms.ModelForm):
         name = self.cleaned_data['username']
         return name
 
+    def clean_vodafone_facilitator_identifier(self):
+        facilitator_identifier = self.cleaned_data['vodafone_facilitator_identifier']
+
+        if facilitator_identifier and \
+            Client.objects.filter(vodafone_facilitator_identifier=facilitator_identifier).exists():
+            raise forms.ValidationError(_("Identifier already exists!"))
+        return facilitator_identifier
+
     def define_new_admin_hierarchy(self, new_user):
         """
         Generate/Define the hierarchy of the new admin user

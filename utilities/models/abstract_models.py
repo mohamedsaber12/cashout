@@ -188,6 +188,13 @@ class AbstractBaseVMTData(models.Model):
 
         return data
 
+    def _refine_payload_pin(self, payload):
+        """Replace payload pin with *"""
+        payload_without_pin = copy.deepcopy(payload)
+        payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
+
+        return payload_without_pin
+
     def accumulate_bulk_disbursement_payload(self, agents_attr, consumers_attr, sms_sender_name=''):
         """
         :param agents_attr: Agents list along with their pins that will make the disbursement action
@@ -239,10 +246,7 @@ class AbstractBaseVMTData(models.Model):
             'PIN': raw_pin_attr
         })
 
-        payload_without_pin = copy.deepcopy(payload)
-        payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
-
-        return payload, payload_without_pin
+        return payload, self._refine_payload_pin(payload)
 
     def accumulate_change_profile_payload(self, users_attr, new_profile_attr):
         """
@@ -274,7 +278,8 @@ class AbstractBaseVMTData(models.Model):
             'USERS': users_attr,
             'PIN': pin_attr
         })
-        return payload
+
+        return payload, self._refine_payload_pin(payload)
 
     def accumulate_user_inquiry_payload(self, users_attr):
         """
@@ -303,10 +308,7 @@ class AbstractBaseVMTData(models.Model):
             'PIN': pin_attr
         })
 
-        payload_without_pin = copy.deepcopy(payload)
-        payload_without_pin['PIN'] = '******' if payload_without_pin.get('PIN', False) else False
-
-        return payload, payload_without_pin
+        return payload, self._refine_payload_pin(payload)
 
     def accumulate_disbursement_or_change_profile_callback_inquiry_payload(self, batch_id):
         """

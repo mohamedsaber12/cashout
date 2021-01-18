@@ -23,6 +23,7 @@ from django_otp.forms import OTPAuthenticationFormMixin
 
 from oauth2_provider.models import Application
 
+from core.utils.validations import phonenumber_form_validate
 from .models import (Brand, CheckerUser, Client, EntitySetup,
                      InstantAPICheckerUser, InstantAPIViewerUser, Levels,
                      MakerUser, RootUser, SupportUser, UploaderUser, User)
@@ -244,6 +245,12 @@ class RootCreationForm(forms.ModelForm):
                 numeric_regex
             ]
     )
+    mobile_number = forms.CharField(
+            label=_('Mobile number'),
+            required=False,
+            max_length=11,
+            validators=[MinLengthValidator(11)]
+    )
     smsc_sender_name = forms.CharField(
             label=_('SMSC sender name'),
             required=False,
@@ -271,6 +278,7 @@ class RootCreationForm(forms.ModelForm):
         if not self.request.user.is_vodafone_default_onboarding:
             self.fields['smsc_sender_name'].widget = forms.HiddenInput()
             self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
+            self.fields['mobile_number'].widget = forms.HiddenInput()
 
         if self.request.user.is_vodafone_facilitator_onboarding:
             self.fields['vodafone_facilitator_identifier'].required = True
@@ -324,6 +332,7 @@ class RootCreationForm(forms.ModelForm):
 
         if self.request.user.is_vodafone_default_onboarding:
             user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
+            user.mobile_no = self.cleaned_data['mobile_number'].strip()
             user.agents_onboarding_choice = int(self.cleaned_data['agents_onboarding_choice'].strip())
             user.user_permissions.\
                 add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))

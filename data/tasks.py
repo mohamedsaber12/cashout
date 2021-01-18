@@ -486,6 +486,21 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                                       calculate_fees_and_vat_for_amount(q['total'], q['issuer'])
         return qs
 
+    def _Add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):
+        for key in final_data.keys():
+            for el in final_data[key]:
+                if el['issuer'] != 'total':
+                    issuers_exist[el['issuer']] = True
+            for issuer in issuers_exist.keys():
+                if not issuers_exist[issuer]:
+                    default_issuer_dict = {'issuer': issuer, 'count': 0, 'total': 0}
+                    if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+                        default_issuer_dict['fees'] = 0
+                        default_issuer_dict['vat'] = 0
+                    final_data[key].append(default_issuer_dict)
+
+        return final_data
+
     def aggregate_vf_ets_aman_transactions(
             self,
             checkers_qs,
@@ -503,7 +518,10 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
 
         if self.superadmin_user.is_vodafone_facilitator_onboarding:
-            qs = self._add_vf_facilitator_identifier_to_qs_values(qs, checkers_parent_username, checkers_parent_vf_facilitator_identifier)
+            qs = self._add_vf_facilitator_identifier_to_qs_values(
+                    qs,
+                    checkers_parent_username,
+                    checkers_parent_vf_facilitator_identifier)
         else:
             qs = self._calculate_and_add_fees_to_qs_values(qs)
         return qs
@@ -559,8 +577,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                         if q['issuer'] == admin_q['issuer']:
                             admin_q['total'] += q['total']
                             admin_q['count'] += q['count']
-                            admin_q['fees'] += q['fees']
-                            admin_q['vat'] += q['vat']
+                            if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+                                admin_q['fees'] += q['fees']
+                                admin_q['vat'] += q['vat']
                             issuer_exist = True
                             break
                     if not issuer_exist:
@@ -570,60 +589,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         return final_data
 
-    def write_data_to_excel_file(self, final_data):
+    def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
         """Write exported transactions data to excel file"""
-        column_names_list = [
-            'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
-        ]
-        filename = _(f"clients_monthly_report_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
-        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
-        wb = xlwt.Workbook(encoding='utf-8')
-        ws = wb.add_sheet('report')
-
-        # 1. Write sheet header/column names - first row
-        row_num = 0
-        font_style = xlwt.XFStyle()
-        font_style.font.bold = True
-
-        for col_nums in range(len(column_names_list)):
-            ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
-
-        # 2. Write sheet body/data - remaining rows
-        font_style = xlwt.XFStyle()
-        col_nums = {
-            'total': 2,
-            'vodafone': 3,
-            'etisalat': 4,
-            'aman': 5,
-            'orange': 6,
-            'B': 7,
-            'C': 8
-        }
-        row_num += 1
-
-        for key in final_data.keys():
-            ws.write(row_num, 0, key, font_style)
-            ws.write(row_num, 1, 'Volume', font_style)
-            ws.write(row_num+1, 1, 'Count', font_style)
-            ws.write(row_num+2, 1, 'Fees', font_style)
-            ws.write(row_num+3, 1, 'Vat', font_style)
-
-            for el in final_data[key]:
-                ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
-                ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
-                ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
-                ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
-
-            row_num += 4
-
-        wb.save(file_path)
-        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
-        return report_download_url
-    def write_data_of_vf_facilitator_to_excel_file(self, final_data, distinct_msisdn):
-        """Write exported transactions data to excel file"""
-        column_names_list = [
-            'Account name ', 'Total Count', 'Total Amount', 'Distinct receivers', 'full date (Daily)', 'Billing number '
-        ]
         filename = _(f"clients_monthly_report_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
@@ -641,99 +608,46 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         font_style = xlwt.XFStyle()
         row_num += 1
 
-        for key in final_data.keys():
-            current_admin_report = final_data[key][0]
-            ws.write(row_num, 0, key, font_style)
-            ws.write(row_num, 1, current_admin_report['count'], font_style)
-            ws.write(row_num, 2, current_admin_report['total'], font_style)
-            ws.write(row_num, 3, len(distinct_msisdn[key]), font_style)
-            ws.write(row_num, 4, current_admin_report['full_date'], font_style)
-            ws.write(row_num, 5, current_admin_report['vf_facilitator_identifier'],
-                     font_style)
+        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+            col_nums = {
+                'total': 2,
+                'vodafone': 3,
+                'etisalat': 4,
+                'aman': 5,
+                'orange': 6,
+                'B': 7,
+                'C': 8
+            }
+            for key in final_data.keys():
+                ws.write(row_num, 0, key, font_style)
+                ws.write(row_num, 1, 'Volume', font_style)
+                ws.write(row_num+1, 1, 'Count', font_style)
+                ws.write(row_num+2, 1, 'Fees', font_style)
+                ws.write(row_num+3, 1, 'Vat', font_style)
 
-            row_num += 1
+                for el in final_data[key]:
+                    ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
+                    ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
+                    ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+                    ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
+
+                row_num += 4
+        else:
+            for key in final_data.keys():
+                current_admin_report = final_data[key][0]
+                ws.write(row_num, 0, key, font_style)
+                ws.write(row_num, 1, current_admin_report['count'], font_style)
+                ws.write(row_num, 2, current_admin_report['total'], font_style)
+                ws.write(row_num, 3, len(distinct_msisdn[key]), font_style)
+                ws.write(row_num, 4, current_admin_report['full_date'], font_style)
+                ws.write(row_num, 5, current_admin_report['vf_facilitator_identifier'], font_style)
+                row_num += 1
 
         wb.save(file_path)
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
     def prepare_transactions_report(self):
-        """Prepare report for transactions related to client"""
-        # 1. Format start and end date
-        self.refine_first_and_end_date_format()
-
-        # 2. Get all clients of the current superadmin
-        admins_qs = self.superadmin_user.children()
-
-        # 3. Get all children [checkers/api checkers] for every client at the clients list
-        checkers_qs = []
-        checkers_parent_username = {}
-        for admin in admins_qs:
-            admin_children_list = admin.children()
-            for child in admin_children_list:
-                if child.is_checker or child.is_instantapichecker:
-                    checkers_qs.append(child)
-                    checkers_parent_username[child.username] = admin.username
-
-        # 4. Calculate vodafone, etisalat, aman transactions details
-        vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions(checkers_qs, checkers_parent_username)
-
-        # 5. Calculate bank wallets, orange, instant transactions details
-        bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions(
-                checkers_qs, checkers_parent_username
-        )
-
-        # 6. Calculate bank cards/accounts transactions details
-        bank_cards_transactions_qs = self.aggregate_bank_cards_transactions(checkers_qs, checkers_parent_username)
-
-        # 7. Group all data by admin
-        final_data = self.group_result_transactions_data(
-                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
-        )
-
-        # 8. Calculate total volume, count, fees for each admin
-        for key in final_data.keys():
-            total_per_admin = {
-                'admin': key,
-                'issuer': 'total',
-                'total': round(Decimal(0), 2),
-                'count': round(Decimal(0), 2),
-                'fees': round(Decimal(0), 2),
-                'vat': round(Decimal(0), 2)
-            }
-            for el in final_data[key]:
-                total_per_admin['total'] += round(Decimal(el['total']), 2)
-                total_per_admin['count'] += el['count']
-                total_per_admin['fees'] += el['fees']
-                total_per_admin['vat'] += el['vat']
-            final_data[key].append(total_per_admin)
-
-        # 9. Add issuer with values 0 to final data
-        for key in final_data.keys():
-            issuers_exist = {
-                'vodafone': False,
-                'etisalat': False,
-                'aman': False,
-                'orange': False,
-                'B': False,
-                'C': False
-            }
-            for el in final_data[key]:
-                if el['issuer'] != 'total':
-                    issuers_exist[el['issuer']] = True
-            for issuer in issuers_exist.keys():
-                if not issuers_exist[issuer]:
-                    final_data[key].append({'issuer': issuer, 'count': 0, 'total': 0, 'fees': 0, 'vat': 0})
-
-        # 10. Add all admin that have no transactions
-        for current_admin in admins_qs:
-            if not current_admin.username in final_data.keys():
-                final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
-
-        # 11. Write final data to excel file
-        return self.write_data_to_excel_file(final_data)
-
-    def prepare_vf_facilitator_transactions_report(self):
         """Prepare report for transactions related to client"""
         # 1. Format start and end date
         self.refine_first_and_end_date_format()
@@ -756,62 +670,101 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         # 4. Calculate vodafone, etisalat, aman transactions details
         vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions(
-                checkers_qs,
-                checkers_parent_username,
-                admins_vf_facilitator_identifier)
+                checkers_qs, checkers_parent_username, admins_vf_facilitator_identifier)
+
+        bank_wallets_orange_instant_transactions_qs = []
+        bank_cards_transactions_qs = []
+
+        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+            # 5. Calculate bank wallets, orange, instant transactions details
+            bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions(
+                    checkers_qs, checkers_parent_username
+            )
+
+            # 6. Calculate bank cards/accounts transactions details
+            bank_cards_transactions_qs = self.aggregate_bank_cards_transactions(checkers_qs, checkers_parent_username)
 
         # 7. Group all data by admin
-        final_data = dict()
+        final_data = self.group_result_transactions_data(
+                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs,
+                bank_cards_transactions_qs
+        )
 
-        for q in vf_ets_aman_qs:
-            if q['admin'] in final_data:
-                issuer_exist = False
-                for admin_q in final_data[q['admin']]:
-                    if q['issuer'] == admin_q['issuer']:
-                        admin_q['total'] += q['total']
-                        admin_q['count'] += q['count']
-                        issuer_exist = True
-                        break
-                if not issuer_exist:
-                    final_data[q['admin']].append(q)
-            else:
-                final_data[q['admin']] = [q]
+        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+            # 8. Calculate total volume, count, fees for each admin
+            for key in final_data.keys():
+                total_per_admin = {
+                    'admin': key,
+                    'issuer': 'total',
+                    'total': round(Decimal(0), 2),
+                    'count': round(Decimal(0), 2),
+                    'fees': round(Decimal(0), 2),
+                    'vat': round(Decimal(0), 2)
+                }
+                for el in final_data[key]:
+                    total_per_admin['total'] += round(Decimal(el['total']), 2)
+                    total_per_admin['count'] += el['count']
+                    total_per_admin['fees'] += el['fees']
+                    total_per_admin['vat'] += el['vat']
+                final_data[key].append(total_per_admin)
 
-        # 8. Add issuer with values 0 to final data
-        for key in final_data.keys():
+        # 9. Add issuer with values 0 to final data
+        issuers_exist = None
+        if self.superadmin_user.is_vodafone_facilitator_onboarding:
             issuers_exist = {
                 'default': False,
             }
-            for el in final_data[key]:
-                issuers_exist[el['issuer']] = True
-            if not issuers_exist['default']:
-                final_data[key].append({'issuer': 'default', 'count': 0, 'total': 0})
+        else:
+            issuers_exist = {
+                'vodafone': False,
+                'etisalat': False,
+                'aman': False,
+                'orange': False,
+                'B': False,
+                'C': False
+            }
 
-        # 9. Add all admin that have no transactions
+        final_data = self._Add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
+
+        # 10. Add all admin that have no transactions
         for current_admin in admins_qs:
             if not current_admin.username in final_data.keys():
-                final_data[current_admin.username] = [{
-                    **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
-                    'full_date': f"{self.start_date} to {self.end_date}",
-                    'vf_facilitator_identifier': admins_vf_facilitator_identifier[current_admin.username]
-                }]
+                if self.superadmin_user.is_vodafone_facilitator_onboarding:
+                    final_data[current_admin.username] = [{
+                        **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                        'full_date': f"{self.start_date} to {self.end_date}",
+                        'vf_facilitator_identifier': admins_vf_facilitator_identifier[current_admin.username]
+                    }]
+                else:
+                    final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
 
+        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+            # 11. calculate distinct msisdn per admin
+            distinct_msisdn = dict()
+            for el in vf_ets_aman_qs.values():
+                if checkers_parent_username[el['checker']] in distinct_msisdn:
+                    distinct_msisdn[checkers_parent_username[el['checker']]].add(el['msisdn'])
+                else:
+                    distinct_msisdn[checkers_parent_username[el['checker']]] = set([el['msisdn']])
 
-        # 10. calculate distinct msisdn per admin
-        distinct_msisdn = dict()
-        for el in vf_ets_aman_qs.values():
-            if checkers_parent_username[el['checker']] in distinct_msisdn:
-                distinct_msisdn[checkers_parent_username[el['checker']]].add(el['msisdn'])
-            else:
-                distinct_msisdn[checkers_parent_username[el['checker']]] = set([el['msisdn']])
+            # 12. Add all admin that have no transactions to distinct msisdn
+            for current_admin in admins_qs:
+                if not current_admin.username in distinct_msisdn.keys():
+                    distinct_msisdn[current_admin.username] = set([])
 
-        # 10. Add all admin that have no transactions to distinct msisdn
-        for current_admin in admins_qs:
-            if not current_admin.username in distinct_msisdn.keys():
-                distinct_msisdn[current_admin.username] = set([])
-
-        # 12. Write final data to excel file
-        return self.write_data_of_vf_facilitator_to_excel_file(final_data, distinct_msisdn)
+            column_names_list = [
+                'Account name ', 'Total Count', 'Total Amount', 'Distinct receivers',
+                'full date (Daily)', 'Billing number'
+            ]
+            return self.write_data_to_excel_file(final_data, column_names_list,
+                                                 distinct_msisdn)
+        else:
+            column_names_list = [
+                'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange',
+                'Bank Wallets', 'Bank Accounts/Cards'
+            ]
+            # 13. Write final data to excel file
+            return self.write_data_to_excel_file(final_data, column_names_list)
 
     def prepare_and_send_report_mail(self, report_download_url):
         """Prepare the mail to be sent with the report download link"""
@@ -828,10 +781,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
-            report_download_url = self.prepare_vf_facilitator_transactions_report()
-        else:
-            report_download_url = self.prepare_transactions_report()
+        report_download_url = self.prepare_transactions_report()
         self.prepare_and_send_report_mail(report_download_url)
         return True
 

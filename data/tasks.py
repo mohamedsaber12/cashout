@@ -470,12 +470,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
             q['admin'] = checkers_parent_username[q['checker']]
         return qs
-    def _add_vf_facilitator_identifier_to_qs_values(self, qs, checkers_parent_username,
+
+    def _add_vf_facilitator_identifier_to_qs_values(self,
+                                                    qs,
+                                                    checkers_parent_username,
                                                     admins_vf_facilitator_identifier):
         """Append vodafone facilitator identifier to the output transactions queryset values dict"""
         for q in qs:
-            q['vf_facilitator_identifier'] = \
-                admins_vf_facilitator_identifier[checkers_parent_username[q['checker']]]
+            q['vf_facilitator_identifier'] = admins_vf_facilitator_identifier[checkers_parent_username[q['checker']]]
             q['full_date'] = f"{self.start_date} to {self.end_date}"
         return qs
 
@@ -486,7 +488,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                                       calculate_fees_and_vat_for_amount(q['total'], q['issuer'])
         return qs
 
-    def _Add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):
+    def _add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):
         for key in final_data.keys():
             for el in final_data[key]:
                 if el['issuer'] != 'total':
@@ -501,11 +503,10 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         return final_data
 
-    def aggregate_vf_ets_aman_transactions(
-            self,
-            checkers_qs,
-            checkers_parent_username,
-            checkers_parent_vf_facilitator_identifier=None):
+    def aggregate_vf_ets_aman_transactions(self,
+                                           checkers_qs,
+                                           checkers_parent_username,
+                                           checkers_parent_vf_facilitator_identifier):
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
         qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
@@ -521,7 +522,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             qs = self._add_vf_facilitator_identifier_to_qs_values(
                     qs,
                     checkers_parent_username,
-                    checkers_parent_vf_facilitator_identifier)
+                    checkers_parent_vf_facilitator_identifier
+            )
         else:
             qs = self._calculate_and_add_fees_to_qs_values(qs)
         return qs
@@ -660,8 +662,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         checkers_parent_username = {}
         admins_vf_facilitator_identifier = {}
         for admin in admins_qs:
-            admins_vf_facilitator_identifier[admin.username] = \
-                admin.client.vodafone_facilitator_identifier
+            admins_vf_facilitator_identifier[admin.username] = admin.client.vodafone_facilitator_identifier
             admin_children_list = admin.children()
             for child in admin_children_list:
                 if child.is_checker or child.is_instantapichecker:
@@ -670,7 +671,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         # 4. Calculate vodafone, etisalat, aman transactions details
         vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions(
-                checkers_qs, checkers_parent_username, admins_vf_facilitator_identifier)
+                checkers_qs, checkers_parent_username, admins_vf_facilitator_identifier
+        )
 
         bank_wallets_orange_instant_transactions_qs = []
         bank_cards_transactions_qs = []
@@ -686,8 +688,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         # 7. Group all data by admin
         final_data = self.group_result_transactions_data(
-                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs,
-                bank_cards_transactions_qs
+                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
         if not self.superadmin_user.is_vodafone_facilitator_onboarding:
@@ -709,7 +710,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 final_data[key].append(total_per_admin)
 
         # 9. Add issuer with values 0 to final data
-        issuers_exist = None
         if self.superadmin_user.is_vodafone_facilitator_onboarding:
             issuers_exist = {
                 'default': False,
@@ -724,7 +724,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 'C': False
             }
 
-        final_data = self._Add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
+        final_data = self._add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
 
         # 10. Add all admin that have no transactions
         for current_admin in admins_qs:
@@ -753,15 +753,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     distinct_msisdn[current_admin.username] = set([])
 
             column_names_list = [
-                'Account name ', 'Total Count', 'Total Amount', 'Distinct receivers',
-                'full date (Daily)', 'Billing number'
+                'Account Name ', 'Total Count', 'Total Amount', 'Distinct Receivers', 'Full Date', 'Billing Number'
             ]
-            return self.write_data_to_excel_file(final_data, column_names_list,
-                                                 distinct_msisdn)
+            return self.write_data_to_excel_file(final_data, column_names_list, distinct_msisdn)
         else:
             column_names_list = [
-                'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange',
-                'Bank Wallets', 'Bank Accounts/Cards'
+                'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
             ]
             # 13. Write final data to excel file
             return self.write_data_to_excel_file(final_data, column_names_list)

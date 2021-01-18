@@ -369,6 +369,7 @@ class SupportUserCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+            self.fields['can_onboard_entities'].widget = forms.HiddenInput()
 
     def save(self, commit=True):
         user = super().save(commit=False)

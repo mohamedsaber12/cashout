@@ -36,8 +36,7 @@ class SuperAdminSupportSetupCreateView(SuperWithoutDefaultOnboardingPermissionRe
         self.support_user = form.save()
         support_setup_dict = {
             'support_user': self.support_user,
-            'user_created': self.request.user,
-            'can_onboard_entities': form.cleaned_data['can_onboard_entities']
+            'user_created': self.request.user
         }
         SupportSetup.objects.create(**support_setup_dict)
 

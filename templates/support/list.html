@@ -51,9 +51,6 @@
                             <h2><i class="fa fa-user"></i> {{ support_setup.support_user.username }}</h2><br>
                             <h5><strong>{% trans 'About:' %} </strong> {{ support_setup.support_user.title }} </h5>
                             <ul class="list-unstyled">
-                              <li><i class="fa fa-plus-circle"></i> <strong>{% trans 'Can On-board Other Entities:' %}</strong><ul>
-                                <li> {% if support_setup.can_onboard_entities %} {% trans 'Yes' %} {% else %} {% trans 'No' %} {% endif %} </li></ul>
-                              </li>
                               <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ support_setup.support_user.email }}</li></ul></li>
                               <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ support_setup.support_user.mobile_no }}</li></ul></li>
                             </ul>

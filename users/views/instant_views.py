@@ -36,6 +36,11 @@ class ViewerCreateView(BaseInstantMemberCreateView):
     model = InstantAPIViewerUser
     form_class = ViewerUserCreationModelForm
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
     def get_context_data(self, **kwargs):
         kwargs["page_title"] = "New Viewer"
         kwargs["form_title"] = "Add Viewer User"

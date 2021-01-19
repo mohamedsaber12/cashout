@@ -345,10 +345,10 @@ class RootCreationForm(forms.ModelForm):
                     content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding'
             ))
         else:
-            user.user_permissions.\
-                add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
-            user.user_permissions.\
-                add(Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement'))
+            user.user_permissions.add(
+                    Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'),
+                    Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement')
+            )
 
         return user
 
@@ -365,16 +365,33 @@ class SupportUserCreationForm(forms.ModelForm):
         fields = ['username', 'email', 'can_onboard_entities']
 
     def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
         super().__init__(*args, **kwargs)
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+            # TODO: Enable only integration patch users to onboard other entities
             self.fields['can_onboard_entities'].widget = forms.HiddenInput()
 
     def save(self, commit=True):
         user = super().save(commit=False)
         user.user_type = 8
         user.save()
+
+        if self.request.user.is_vodafone_default_onboarding:
+            onboarding_permission = Permission.objects.\
+                get(content_type__app_label='users', codename='vodafone_default_onboarding')
+        elif self.request.user.is_accept_vodafone_onboarding:
+            onboarding_permission = Permission.objects.\
+                get(content_type__app_label='users', codename='accept_vodafone_onboarding')
+        elif self.request.user.is_vodafone_facilitator_onboarding:
+            onboarding_permission = Permission.objects.\
+                get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
+        else:
+            onboarding_permission = Permission.objects.\
+                get(content_type__app_label='users', codename='instant_model_onboarding')
+
+        user.user_permissions.add(onboarding_permission)
         return user
 
 
@@ -584,8 +601,11 @@ class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
         user.save()
-        user.user_permissions. \
-            add(Permission.objects.get(content_type__app_label='users', codename='can_view_api_docs'))
+
+        onboarding_permission = Permission.objects.\
+            get(content_type__app_label='users', codename='instant_model_onboarding')
+        api_docs_permission = Permission.objects.get(content_type__app_label='users', codename='can_view_api_docs')
+        user.user_permissions.add(onboarding_permission, api_docs_permission)
         return user
 
 

@@ -30,6 +30,11 @@ class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
     template_name = 'support/add_support.html'
     success_url = reverse_lazy('users:support')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["request"] = self.request
+        return kwargs
+
     def form_valid(self, form):
         self.support_user = form.save()
         support_setup_dict = {

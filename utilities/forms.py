@@ -17,7 +17,7 @@ class BudgetModelForm(forms.ModelForm):
     new_amount = forms.IntegerField(
             label=_('Amount to be added'),
             required=False,
-            validators=[MinValueValidator(round(Decimal(100), 2))],
+            validators=[MinValueValidator(round(Decimal(0), 2))],
             widget=forms.TextInput(attrs={'placeholder': _('New budget, ex: 100')})
     )
     readonly_fields = ['current_balance', 'disburser', 'created_by']
@@ -68,7 +68,7 @@ class BudgetAdminModelForm(forms.ModelForm):
 
     add_new_amount = forms.IntegerField(
             required=False,
-            validators=[MinValueValidator(round(Decimal(100), 2))],
+            validators=[MinValueValidator(round(Decimal(0), 2))],
             widget=forms.TextInput(attrs={'placeholder': _('Add New budget, ex: 100')})
     )
 

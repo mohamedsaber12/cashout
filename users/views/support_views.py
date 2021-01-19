@@ -20,9 +20,7 @@ from ..mixins import (
 from ..models import Client, SupportSetup, SupportUser, RootUser
 
 
-class SuperAdminSupportSetupCreateView(SuperWithoutDefaultOnboardingPermissionRequired,
-                                       SuperRequiredMixin,
-                                       CreateView):
+class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
     """
     Create view for super admin users to create support users
     """
@@ -43,9 +41,7 @@ class SuperAdminSupportSetupCreateView(SuperWithoutDefaultOnboardingPermissionRe
         return HttpResponseRedirect(self.success_url)
 
 
-class SupportUsersListView(SuperWithoutDefaultOnboardingPermissionRequired,
-                           SuperRequiredMixin,
-                           ListView):
+class SupportUsersListView(SuperRequiredMixin, ListView):
     """
     List support users related to the currently logged in super admin
     Search for support users by username, email or mobile no by "search" query parameter.

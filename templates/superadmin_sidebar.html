@@ -14,11 +14,8 @@
           <ul class="nav child_menu">
             <li><a href="{% url 'users:add_client' %}">{% trans 'New Client' %}</a></li>
             <li><a href="{% url 'users:clients' %}">{% trans 'All Clients' %}</a></li>
-
-            {% if request.user.is_accept_vodafone_onboarding or request.user.is_vodafone_facilitator_onboarding %}
-              <li><a href="{% url 'users:add_support' %}">{% trans 'New Support Member' %}</a></li>
-              <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
-            {% endif %}
+            <li><a href="{% url 'users:add_support' %}">{% trans 'New Support Member' %}</a></li>
+            <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
           </ul>
         </li>
 

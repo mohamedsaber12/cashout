@@ -64,11 +64,11 @@
                             <p class="ratings">
                             </p>
                           </div>
-                          <div class="col-xs-12 col-sm-6 emphasis">
+                          <div class="col-xs-12 col-sm-6 emphasis text-right">
                             <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target=".delete-modal-sm" onclick="delete_modal({{ support_setup.id }})">
                               <i class="fa fa-trash-o"></i>
                             </button>
-                            <a href="{% url 'users:profile' support_setup.support_user.username %}" type="button" class="btn btn-primary btn-xs">
+                            <a href="{% url 'users:profile' support_setup.support_user.username %}" type="button" class="btn btn-primary btn-xs pull-right">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                             </a>
                           </div>

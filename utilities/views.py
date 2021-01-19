@@ -11,7 +11,7 @@ from django.views.generic import UpdateView, View
 
 from data.utils import randomword
 from payouts import settings
-from users.mixins import (RootWithoutDefaultOnboardingPermissionRequired,
+from users.mixins import (MakeTransferRequestPermissionRequired,
                           SuperOwnsCustomizedBudgetClientRequiredMixin)
 
 from .forms import BudgetModelForm, IncreaseBalanceRequestForm
@@ -40,7 +40,7 @@ class BudgetUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin,
         return get_object_or_404(Budget, disburser__username=self.kwargs["username"])
 
 
-class IncreaseBalanceRequestView(RootWithoutDefaultOnboardingPermissionRequired, View):
+class IncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
     """
     Request view for increase balance on accept vodafone admins
     """
@@ -74,8 +74,9 @@ class IncreaseBalanceRequestView(RootWithoutDefaultOnboardingPermissionRequired,
             """)
 
             if form.cleaned_data['type'] == 'from_accept_balance':
-                rest_of_message = _(f"""<label>Accept username:  </label> {form.cleaned_data['username']} <br/><br/>
-                Best Regards,""")
+                rest_of_message = _(
+                        f"<label>Accept username:  </label> {form.cleaned_data['username']} <br/><br/>Best Regards,"
+                )
             else:
                 rest_of_message = _(f"""<h4>From: </h4>
                 <label> Bank Name:  </label> {form.cleaned_data['from_bank']} <br/>

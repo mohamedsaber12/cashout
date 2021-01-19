@@ -31,17 +31,18 @@ class RootRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-class RootWithoutDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+class MakeTransferRequestPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
     Admin user with any onboarding business model but the standard vodafone one.
     """
 
     def test_func(self):
-        if not self.request.user.is_root or \
-                self.request.user.is_root and self.request.user.is_vodafone_default_onboarding:
-            return False
+        if not self.request.user.is_vodafone_default_onboarding and (
+                self.request.user.is_root or self.request.user.is_instantapiviewer
+        ):
+            return True
 
-        return True
+        return False
 
 
 class CollectionRootRequiredMixin(RootRequiredMixin):

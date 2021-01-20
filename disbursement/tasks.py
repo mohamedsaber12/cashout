@@ -126,7 +126,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
         request = { "user": checker }
 
         for recipient in aman_recipients:
-            aman_object = AmanChannel(request, amount=recipient["amount"])
+            aman_object = AmanChannel(request, amount=Decimal(str(recipient["amount"])))
 
             try:
                 # 1. Generate new auth token from Accept

@@ -4,20 +4,14 @@ from __future__ import unicode_literals
 import datetime
 import logging
 
-from django.conf import settings
 from django.db.models import Q
-from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext as _
 
 from core.models import AbstractBaseStatus
 from data.decorators import respects_language
-from data.utils import deliver_mail
 from disbursement.models import BankTransaction
 from payouts.settings.celery import app
-from users.models import User
 
-from .resources import PendingOrangeInstantTransactionsModelResource
 from .specific_issuers_integrations import BankTransactionsChannel
 
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")

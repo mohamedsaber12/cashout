@@ -8,6 +8,12 @@
     .errorlist {
       color: red;
     }
+    {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+        #cancel-onboarding{
+            background: red !important;
+            border-color: red !important;
+        }
+    {% endif %}
   </style>
 {% endblock customcss %}
 
@@ -100,7 +106,7 @@
   <div class="form-group col-md-offset-0">
     <form method="POST" action="{% url 'users:delete_client' username=super_agent_form.root.username %}">
       {% csrf_token %}
-      <input class="btn btn-dark" type="submit" value="{% trans 'Cancel On-boarding Process?' %}">
+      <input id="cancel-onboarding" class="btn btn-dark" type="submit" value="{% trans 'Cancel On-boarding Process?' %}">
     </form>
   </div>
 {% endblock form %}

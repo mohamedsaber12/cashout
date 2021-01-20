@@ -9,6 +9,11 @@
     .errorlist {
         color: red;
     }
+    {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+        .done:before {
+            background: red !important;
+        }
+    {% endif %}
 </style>
 {% endblock %}
 {% block title %}{% trans 'Settings' %}{% endblock %}
@@ -137,7 +142,16 @@
 
         });
 
+        {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+            // change color of buttons in on boarding process
+            $('.buttonPrevious').css('background-color', color);
+            $('.buttonPrevious').css('border-color', color);
 
+            $('.buttonNext').css('background-color', color);
+            $('.buttonNext').css('border-color', color);
+
+            $('.done').children('span[class="step_no"]').css('background', color);
+        {% endif %}
 
     });
 

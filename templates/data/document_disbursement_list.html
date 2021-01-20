@@ -71,7 +71,7 @@
           {% for doc in object_list %}
             <tr>
               <td>
-                <a>{{ doc.id }}</a>
+                <a type="id">{{ doc.id }}</a>
                 <br/>
                 <small>{% trans 'Created' %} {{ doc.created_at }}</small>
               </td>
@@ -132,19 +132,19 @@
                   </button>
                   <!-- Document disbursed successfully -->
                   {% elif doc.has_callback %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-success btn-md">{% trans 'View' %}</a>
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-success btn-md">{% trans 'View' %}</a>
                   <!-- Document is ready for disbursement or waiting for disbursement callback -->
                   {% elif doc.waiting_disbursement or doc.waiting_disbursement_callback %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-primary btn-md">{% trans 'View' %}</a>
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-primary btn-md">{% trans 'View' %}</a>
                   <!-- Document disbursement failed -->
                   {% elif doc.disbursement_failed %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
                   <!-- Document validation error -->
                   {% elif not request.user.is_checker and doc.validation_failed %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
                   <!-- Document validated successfully and no checkers notified -->
                   {% elif not request.user.is_checker and doc.validated_successfully %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-warning btn-md addMore"
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-warning btn-md addMore"
                      title="{% trans 'No checkers notified yet' %}">{% trans 'View' %}</a>
                   <!-- Checker: Document validation error or owner has not notify checkers -->
                   {% elif request.user.is_checker and not doc.can_be_disbursed %}
@@ -152,9 +152,9 @@
                           title="{% trans 'Not ready for disbursement yet' %}">{% trans 'Pending' %}</button>
                   <!-- Document is being validated -->
                   {% elif doc.validation_process_is_running %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-info btn-md">{% trans 'View' %}</a>
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-info btn-md">{% trans 'View' %}</a>
                 {% else %}
-                  <a href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
+                  <a type="button" href="{{ doc.get_absolute_url }}" class="btn btn-danger btn-md">{% trans 'View' %}</a>
                 {% endif %}
               </td>
               {% if request.user.is_root %}

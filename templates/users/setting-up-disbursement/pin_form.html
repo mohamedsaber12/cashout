@@ -24,6 +24,10 @@
         {% endfor %}
     </form>
     {%else%}
-    <h3 style="color: green">{% trans 'Pin has been created' %}</h3>
+        {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+            <h3 style="color: red">{% trans 'Pin has been created' %}</h3>
+        {% else %}
+            <h3 style="color: green">{% trans 'Pin has been created' %}</h3>
+        {% endif %}
     {%endif%}
 </div>

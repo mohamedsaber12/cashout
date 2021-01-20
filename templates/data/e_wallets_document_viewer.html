@@ -369,6 +369,7 @@
                 {% trans 'Checkers Notified' %} <span class="glyphicon glyphicon-ok"></span>
             </div>`
             btn.replaceWith(elem)
+            $('.alert').css('background-color', color);
           },
           error: function (xhr, error, reason) {
             $('#modal-header').append('{% trans "Error Occurred!" %}');

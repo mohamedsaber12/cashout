@@ -95,19 +95,63 @@
 
             return rgb;
         }
-    
     let color = '{{brand_color}}';
+    if (color == 'None' || color == '') {
+      {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+        color = '#e74021';
+      {% else %}
+        color = '#2B70B0';
+      {% endif %}
+    }
     $('.left_col .scroll-view').css('background-color', color);
     $('html').css('background-color', color);
     $('.site_title').css('background-color', color);
     $('.nav_title').css('background', color);
-    $('.container').css('background', color);    
+    $('.container').css('background', color);
     $('.main_container').css('background', color);
-    
+
     $(document).ready(function () {
         if (color == 'None' || color == '')
             return;
-        
+
+        // change color if user is vf onboarding
+        {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+          let allButtons = $('button');
+          allButtons.css('background-color', color);
+          allButtons.css('border-color', color);
+
+          let allUrls = $('a[type="button"]');
+          allUrls.css('background-color', color);
+          allUrls.css('border-color', color);
+
+          let inputsWithTypeSubmit = $('input[type="submit"]');
+          inputsWithTypeSubmit.css('background-color', color);
+          inputsWithTypeSubmit.css('border-color', color);
+
+          let allAlerts = $('.alert');
+          allAlerts.css('background-color', color);
+          allAlerts.css('color', 'white');
+
+          $('.label').css('background-color', color);
+
+          let progressBars = $('.progress-bar.bg-green');
+          progressBars.css('background', color);
+          progressBars.css('border-color', color);
+          progressBars.removeClass('bg-green');
+
+          $('.alignright.glyphicon.glyphicon-ok').removeAttr('style');
+
+          $('.right_col .container').removeAttr('style');
+
+          $('img[data-toggle="tooltip"]').removeAttr('style');
+
+          $('a[type="id"]').css('color', color);
+
+          $('a[class="done"]').children().css('background', color);
+
+          $('.current-page').css('border-right', '5px solid white');
+        {% endif %}
+
         let frm = ColorLuminance(color, -0.1);
         let to = ColorLuminance(frm, -0.1);
         let color_gradient = '-webkit-gradient(linear, left top, left bottom, from(' + to + '), to(' + frm + '))'
@@ -118,18 +162,18 @@
         }
         $SIDEBAR_MENU.find('.current-page').find('a').removeAttr('style');
         $SIDEBAR_MENU.find('a').on('click', function (ev) {
-            
+
             let $li = $(this).parent();
             if ($li.is('.active')) {
-                
+
                 $(this).css('background', color);
             }
         });
-        
+
         $('body').css('color', ColorLuminance(color, -0.5));
         $(".nav.child_menu li a").on('mouseover', function (ev) {
             $(this).removeAttr('style');
-        });    
+        });
         $('.fa-bars').css('color', color);
         $('#sidebar-div').css('background',color);
         //small menu

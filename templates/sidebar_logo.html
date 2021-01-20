@@ -6,11 +6,11 @@
   {% if request.user.is_vodafone_facilitator_onboarding or request.user.is_vodafone_default_onboarding %}
     {% if brand_logo %}
       <a href="{% url 'data:main_view' %}" class="site_title">
-        <span><img class="center" src="{{ brand_logo }}" height="80px" id="paymob_logo"></span>
+        <span><img style="max-width: 100%;" class="center" src="{{ brand_logo }}" height="65px" id="paymob_logo"></span>
       </a>
     {% else %}
       <a href="{% url 'data:main_view' %}" class="site_title">
-        <span><img class="center" src="{% static 'img/vodafone_logo.png' %}" height="80px" id="paymob_logo"></span>
+        <span><img style="max-width: 100%;" class="center" src="{% static 'img/vodafone_logo.png' %}" height="85px" id="paymob_logo"></span>
       </a>
     {% endif %}
 
@@ -18,11 +18,11 @@
 
       {% if brand_logo %}
         <a href="{% url 'data:main_view' %}" class="site_title">
-          <span><img class="center" src="{{ brand_logo }}" height="60px" id="paymob_logo"></span>
+          <span><img style="max-width: 100%;" class="center" src="{{ brand_logo }}" height="65px" id="paymob_logo"></span>
         </a>
       {% else %}
         <a href="{% url 'data:main_view' %}" class="site_title">
-          <span><img class="center" src="{% static 'img/send_new_logo.png' %}" height="60px" id="paymob_logo"></span>
+          <span><img style="max-width: 100%;" class="center" src="{% static 'img/send_new_logo.png' %}" height="65px" id="paymob_logo"></span>
         </a>
       {% endif %}
   {% endif %}
@@ -38,7 +38,7 @@
   <div class="profile clearfix">
 {% endif %}
   <div class="profile_pic">
-    <img src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
+    <img style="max-width: 100%;" src="{{ request.user.avatar_thumbnail.url }}" alt="..." class="img-circle profile_img">
   </div>
   <div class="profile_info">
     <span><strong>{% trans 'Welcome,' %}</strong></span>

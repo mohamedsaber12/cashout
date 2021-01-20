@@ -636,6 +636,10 @@ class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
         user.save()
+
+        onboarding_permission = Permission.objects.\
+            get(content_type__app_label='users', codename='instant_model_onboarding')
+        user.user_permissions.add(onboarding_permission)
         self.create_oauth2_provider_app(user)
         return user
 

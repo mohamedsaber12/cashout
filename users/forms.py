@@ -232,7 +232,7 @@ class RootCreationForm(forms.ModelForm):
     AGENTS_ONBOARDING_CHOICES = [
         (NEW_SUPERAGENT_AGENTS, _("New superagent and new agents")),
         (EXISTING_SUPERAGENT_NEW_AGENTS, _("Existing superagent and new agents")),
-        (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and existing agents")),
+        # (EXISTING_SUPERAGENT_AGENTS, _("Existing superagent and existing agents")),
         (P2M, _("P2M Agent")),
     ]
 

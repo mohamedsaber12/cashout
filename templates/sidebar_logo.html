@@ -6,7 +6,7 @@
   {% if request.user.is_vodafone_facilitator_onboarding or request.user.is_vodafone_default_onboarding %}
     {% if brand_logo %}
       <a href="{% url 'data:main_view' %}" class="site_title">
-        <span><img style="max-width: 100%;" class="center" src="{{ brand_logo }}" height="65px" id="paymob_logo"></span>
+        <span><img style="max-width: 100%;" class="center" src="{{ brand_logo }}" height="78px" id="paymob_logo"></span>
       </a>
     {% else %}
       <a href="{% url 'data:main_view' %}" class="site_title">

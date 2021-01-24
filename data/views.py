@@ -8,32 +8,33 @@ import xlrd
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
-from django.http import (Http404, HttpResponse, HttpResponseRedirect, JsonResponse)
+from django.http import (Http404, HttpResponse, HttpResponseRedirect,
+                         JsonResponse)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import translation
-from django.utils.translation import ugettext as _
 from django.utils.decorators import method_decorator
+from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, TemplateView, View
 from django.views.static import serve
 
-from disbursement.utils import BANK_CODES, BANK_TRANSACTION_TYPES_DESCRIPTION_LIST
-from users.decorators import collection_users, disbursement_users, root_only, setup_required
-from users.mixins import (
-    SupportOrRootOrMakerUserPassesTestMixin, UserWithAcceptVFOnboardingPermissionRequired,
-    UserWithDisbursementPermissionRequired,
-)
+from disbursement.utils import (BANK_CODES,
+                                BANK_TRANSACTION_TYPES_DESCRIPTION_LIST)
+from users.decorators import (collection_users, disbursement_users, root_only,
+                              setup_required)
+from users.mixins import (SupportOrRootOrMakerUserPassesTestMixin,
+                          UserWithAcceptVFOnboardingPermissionRequired,
+                          UserWithDisbursementPermissionRequired)
 from users.models import CheckerUser, Levels
 from utilities.models import AbstractBaseDocType
 
-from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm, FormatFormSet)
+from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm,
+                    FormatFormSet)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
-from .tasks import (
-    doc_review_maker_mail, handle_disbursement_file,
-    handle_uploaded_file, notify_checkers, notify_disbursers, BankWalletsAndCardsSheetProcessor,
-)
-
+from .tasks import (BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor,
+                    doc_review_maker_mail, handle_uploaded_file,
+                    notify_checkers, notify_disbursers)
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -111,13 +112,15 @@ class DisbursementHomeView(UserWithDisbursementPermissionRequired, View):
                 file_doc.mark_uploaded_successfully()
                 msg = f"uploaded e-wallets file with doc id: {file_doc.id}"
                 UPLOAD_LOGGER.debug(f"[message] [e-wallets file upload] [{request.user}] -- {msg}")
-                handle_disbursement_file.delay(file_doc.id, language=translation.get_language())
+                EWalletsSheetProcessor.delay(file_doc.id)
                 return HttpResponseRedirect(request.path)       # Redirect to the document list after successful POST
             else:
                 UPLOAD_LOGGER.\
                     debug(f"[message] [e-wallets file upload error] [{request.user}] -- {form_doc.errors['file'][0]}")
                 return JsonResponse(form_doc.errors, status=400)
         else:
+            UPLOAD_LOGGER.\
+                debug(f"[message] [e-wallets file upload error] [{request.user}] -- Upload permissions not fulfilled")
             return HttpResponseRedirect(request.path)
 
 

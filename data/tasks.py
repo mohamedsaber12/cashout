@@ -2,23 +2,22 @@
 from __future__ import print_function
 
 import csv
-from decimal import Decimal
-import itertools
 import json
 import logging
 import re
+from decimal import Decimal
 
-from celery import Task
-from dateutil.parser import parse
 import pandas as pd
 import requests
 import tablib
 import xlrd
 import xlwt
+from celery import Task
+from dateutil.parser import parse
 
-from django.db.models import Sum, Count, Q, Case, When, F
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.db.models import Case, Count, F, Q, Sum, When
 from django.urls import reverse
 from django.utils.timezone import datetime, make_aware
 from django.utils.translation import gettext as _
@@ -29,17 +28,16 @@ from disbursement.models import BankTransaction, DisbursementData
 from disbursement.resources import (DisbursementDataResourceForBankCards,
                                     DisbursementDataResourceForBankWallet,
                                     DisbursementDataResourceForEWallets)
-from disbursement.utils import (VALID_BANK_CODES_LIST,
+from disbursement.utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                                DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                                VALID_BANK_CODES_LIST,
                                 VALID_BANK_TRANSACTION_TYPES_LIST,
-                                determine_trx_category_and_purpose,
-                                DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
-                                DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT
-)
+                                determine_trx_category_and_purpose)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
-from payouts.utils import get_dot_env
 from users.models import CheckerUser, Levels, UploaderUser, User
+from utilities.functions import get_value_from_env
 from utilities.messages import MSG_TRY_OR_CONTACT, MSG_WRONG_FILE_FORMAT
 from utilities.models import Budget
 
@@ -54,6 +52,7 @@ MSG_NOT_WITHIN_THRESHOLD = _(f"File's total amount exceeds your current balance,
 MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(f"File's total amount exceeds your maximum amount that can be disbursed,"
                                                f" please contact your support team")
 MSG_REGISTRATION_PROCESS_ERROR = _(f"Registration process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+MSG_CHANGE_PROFILE_ERROR = _(f"Internal error while trying to apply the fees, {MSG_TRY_OR_CONTACT}")
 
 
 UPLOAD_LOGGER = logging.getLogger("upload")
@@ -373,7 +372,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
             # 2. Check if the entity admin is privileged to disburse sheets
             if not callwallets_moderator.disbursement:
-                self.end_with_failure(doc_obj, f"Entity is suspended from disbursing sheets, {MSG_TRY_OR_CONTACT}")
+                self.end_with_failure(doc_obj, f"Your entity is suspended from disbursing sheets, {MSG_TRY_OR_CONTACT}")
                 return False
 
             # 3. Check if there is any errors happened at sheet processing
@@ -423,6 +422,383 @@ class BankWalletsAndCardsSheetProcessor(Task):
         except Exception as err:
             self.end_with_failure(doc_obj, MSG_REGISTRATION_PROCESS_ERROR)
             UPLOAD_LOGGER.debug(f"[message] [bank {file_type} processing error] [celery_task] -- {err.args}")
+            return False
+
+
+class EWalletsSheetProcessor(Task):
+    """
+    Task to process and validate vodafone/etisalat/aman uploaded sheets.
+    """
+
+    doc_obj = None
+    is_normal_sheet_specs = None
+
+    def amount_is_valid_digit(self, amount):
+        return str(amount).replace('.', '', 1).isdigit()
+
+    def return_total_amount_plus_fees_regarding_specific_issuer(self, amount_list, issuer):
+        return Budget.objects.get(disburser=self.doc_obj.owner.root).\
+            accumulate_amount_with_fees_and_vat(sum(amount_list), issuer)
+
+    def determine_max_amount_can_be_disbursed(self):
+        """:return: max_amount_can_be_disbursed"""
+        # TODO: Move this query to a separate queryset at Level model custom manager
+        return max(
+                [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=self.doc_obj.owner.root)]
+        )
+
+    def determine_csv_delimiter(self):
+        """:return: the delimiter used at the csv sheet or False if there is any problem"""
+        try:
+            as_string = self.doc_obj.file.read().decode("utf-8")
+            dialect = csv.Sniffer().sniff(as_string)
+            self.doc_obj.file.seek(0)
+            return dialect.delimiter
+        except:
+            return False
+
+    def accumulate_df(self):
+        """:return: data frame using pandas package"""
+        doc_type = "csv" if self.doc_obj.file.name.endswith(".csv") else "excel"
+
+        if doc_type == "excel":
+            df = pd.read_excel(self.doc_obj.file)
+        else:
+            df = pd.read_csv(self.doc_obj.file, delimiter=self.determine_csv_delimiter())
+
+        return df
+
+    def determine_headers_names(self, df):
+        amount_position, msisdn_position, issuer_position = self.doc_obj.file_category.fields_cols()
+        msisdn_header = df.columns[msisdn_position]
+        amount_header = df.columns[amount_position]
+        issuer_header = df.columns[issuer_position] if issuer_position else False
+
+        return msisdn_header, amount_header, issuer_header
+
+    def determine_starting_index(self):
+        return self.doc_obj.file_category.starting_row()
+
+    def end_with_failure(self, failure_message):
+        """
+        :param failure_message: the processing failure message to be recorded
+        :return: data frame using pandas package
+        """
+        self.doc_obj.processing_failure(failure_message)
+        notify_maker(self.doc_obj)
+        UPLOAD_LOGGER.debug(f"[message] [ewallets file processing error] [celery_task] -- {failure_message}")
+
+    def end_with_failure_sheet_details(self, numbers_list, amount_list, issuers_list=None, errors_list=None):
+        if self.is_normal_sheet_specs:
+            sheet_data = list(zip(numbers_list, amount_list, errors_list))
+            headers = ["mobile number", "amount", "errors"]
+        else:
+            sheet_data = list(zip(numbers_list, amount_list, issuers_list, errors_list))
+            headers = ["mobile number", "amount", "issuer", "errors"]
+
+        filename = f"failed_validations_{randomword(4)}.xlsx"
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        error_message = _("Validation error, file with errors sent to the maker user.")
+        sheet_data.insert(0, headers)
+        export_excel(file_path, sheet_data)
+        download_url = settings.BASE_URL + \
+                       str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': self.doc_obj.id})) + \
+                       f"?filename={filename}"
+        self.doc_obj.processing_failure(error_message)
+        notify_maker(self.doc_obj, download_url)
+
+    def process_and_validate_normal_specs_records(self, df, msisdn_header, amount_header):
+        """
+        :param df: data frame read from the uploaded document
+        :return: msisdn_list, amount_list, errors_list, total_amount
+        """
+        total_amount = 0
+        msisdns_list, amounts_list, errors_list = [], [], []
+
+        try:
+            for index, record in df.iterrows():
+                errors_list.append(None)
+
+                # 1. Validate msisdns
+                msisdn = str(record[msisdn_header])
+                valid_msisdn = False
+                try:
+                    if msisdn.startswith("1") and len(msisdn) == 10:
+                        phonenumber_form_validate(f"+20{msisdn}")
+                        msisdn = f"0020{msisdn}"
+                        msisdns_list.append(msisdn)
+                        valid_msisdn = True
+                    elif msisdn.startswith("01") and len(msisdn) == 11:
+                        phonenumber_form_validate(f"+2{msisdn}")
+                        msisdn = f"002{msisdn}"
+                        msisdns_list.append(msisdn)
+                        valid_msisdn = True
+                    elif msisdn.startswith("2") and len(msisdn) == 12:
+                        phonenumber_form_validate(f"+{msisdn}")
+                        msisdn = f"00{msisdn}"
+                        msisdns_list.append(msisdn)
+                        valid_msisdn = True
+                except ValidationError:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid mobile number"
+                    else:
+                        errors_list[index] = "\nInvalid mobile number"
+                    msisdns_list.append(msisdn)
+
+                if valid_msisdn and len(list(filter(lambda ms: ms == msisdn, msisdns_list))) > 1:
+                    if errors_list[index]:
+                        errors_list[index] = "Duplicate mobile number"
+                    else:
+                        errors_list[index] = "\nDuplicate mobile number"
+
+                # 2. Validate amounts
+                if self.amount_is_valid_digit(str(record[amount_header])) and float(str(record[amount_header])) >= 1.0:
+                    amounts_list.append(round(Decimal(str(record[amount_header])), 2))
+                    total_amount += round(Decimal(str(record[amount_header])), 2)
+                else:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid amount"
+                    else:
+                        errors_list[index] = "\nInvalid amount"
+                    amounts_list.append(record[amount_header])
+
+        except Exception as e:
+            raise Exception(e)
+        return msisdns_list, amounts_list, errors_list, total_amount, msisdns_list
+
+    def process_and_validate_issuers_specs_records(self, df, msisdn_header, amount_header, issuer_header):
+        """
+        :param df: data frame read from the uploaded document
+        :return: msisdn_list, amount_list, issuers_list, errors_list, total_amount
+        """
+        total_amount = 0
+        valid_issuers_list = ['vodafone', 'etisalat', 'aman']
+        msisdns_list, amounts_list, issuers_list, errors_list, vf_msisdns_list = [], [], [], [], []
+
+        try:
+            for index, record in df.iterrows():
+                errors_list.append(None)
+
+                # 1. Validate msisdns
+                msisdn = str(record[msisdn_header])
+                valid_msisdn = False
+                try:
+                    if msisdn.startswith("1") and len(msisdn) == 10:
+                        phonenumber_form_validate(f"+20{msisdn}")
+                        msisdn = f"0020{msisdn}"
+                        msisdns_list.append(msisdn)
+                        valid_msisdn = True
+                    elif msisdn.startswith("01") and len(msisdn) == 11:
+                        phonenumber_form_validate(f"+2{msisdn}")
+                        msisdn = f"002{msisdn}"
+                        msisdns_list.append(msisdn)
+                        valid_msisdn = True
+                    elif msisdn.startswith("2") and len(msisdn) == 12:
+                        phonenumber_form_validate(f"+{msisdn}")
+                        msisdn = f"00{msisdn}"
+                        msisdns_list.append(msisdn)
+                        valid_msisdn = True
+                except ValidationError:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid mobile number"
+                    else:
+                        errors_list[index] = "\nInvalid mobile number"
+                    msisdns_list.append(msisdn)
+
+                if valid_msisdn and len(list(filter(lambda ms: ms == msisdn, msisdns_list))) > 1:
+                    if errors_list[index]:
+                        errors_list[index] = "Duplicate mobile number"
+                    else:
+                        errors_list[index] = "\nDuplicate mobile number"
+
+                # 2. Validate amounts
+                if self.amount_is_valid_digit(str(record[amount_header])) and float(str(record[amount_header])) >= 1.0:
+                    amounts_list.append(round(Decimal(str(record[amount_header])), 2))
+                    total_amount += round(Decimal(str(record[amount_header])), 2)
+                else:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid amount"
+                    else:
+                        errors_list[index] = "\nInvalid amount"
+                    amounts_list.append(str(record[amount_header]))
+
+                # 3. Validate issuer
+                issuer = str(record[issuer_header]).lower()
+                issuers_list.append(issuer)
+                if issuer not in valid_issuers_list:
+                    if errors_list[index]:
+                        errors_list[index] = "Invalid issuer option"
+                    else:
+                        errors_list[index] = "\nInvalid issuer option"
+
+                # 4. Accumulate vodafone msisdns list
+                if issuer == "vodafone":
+                    vf_msisdns_list.append(msisdn)
+
+        except Exception as e:
+            raise Exception(e)
+        return msisdns_list, amounts_list, issuers_list, errors_list, total_amount, vf_msisdns_list
+
+    def validate_doc_total_amount_against_custom_budget(self, issuers_list, amounts_list):
+        vf_amount_list, ets_amount_list, aman_amount_list = [], [], []
+        vf_total_amount = ets_total_amount = aman_total_amount = 0
+        current_custom_budget = Budget.objects.get(disburser=self.doc_obj.owner.root).current_balance
+
+        if self.doc_obj.owner.is_accept_vodafone_onboarding:
+            for issuer, amount in zip(issuers_list, amounts_list):
+                if issuer == "vodafone":
+                    vf_amount_list.append(amount)
+                elif issuer == "etisalat":
+                    ets_amount_list.append(amount)
+                elif issuer == "aman":
+                    aman_amount_list.append(amount)
+        else:
+            vf_amount_list = amounts_list
+
+        if vf_amount_list:
+            vf_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(vf_amount_list, "vodafone")
+        if ets_amount_list:
+            ets_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(ets_amount_list, "etisalat")
+        if aman_amount_list:
+            aman_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(aman_amount_list, "aman")
+
+        self.doc_obj.total_amount_with_fees_vat = sum([vf_total_amount, ets_total_amount, aman_total_amount])
+        return self.doc_obj.total_amount_with_fees_vat <= current_custom_budget
+
+    def change_profile_for_vodafone_recipients(self, vodafone_recipients_list):
+        """
+        Change fees profile for vodafone recipients.
+        :return: True or False
+        """
+        superadmin = self.doc_obj.owner.root.client.creator
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        response_has_error = True
+        if self.doc_obj.owner.is_vodafone_default_onboarding:
+            fees_profile = self.doc_obj.owner.root.client.get_fees()
+        else:
+            fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
+        payload = superadmin.vmt.accumulate_change_profile_payload(vodafone_recipients_list, fees_profile)
+
+        try:
+            CHANGE_PROFILE_LOGGER.debug(f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}")
+            response = requests.post(wallets_env_url, json=payload, verify=False)
+        except Exception as e:
+            CHANGE_PROFILE_LOGGER.debug(f"[message] [change fees profile error] [{self.doc_obj.owner}] -- {e.args}")
+            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
+            return False
+
+        CHANGE_PROFILE_LOGGER.debug(f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}")
+        if response.ok:
+            response_dict = response.json()
+            if response_dict["TXNSTATUS"] == "200":
+                self.doc_obj.txn_id = response_dict["BATCH_ID"]
+                response_has_error = False
+            else:
+                response_has_error = response_dict.get("MESSAGE") or _(CHANGE_PROFILE_LOGGER)
+
+        if response_has_error:
+            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
+            return False
+
+        return True
+
+    def run(self, doc_id, *args, **kwargs):
+        try:
+            self.doc_obj = Doc.objects.get(id=doc_id)
+            self.is_normal_sheet_specs = self.doc_obj.owner.root.root_entity_setups.is_normal_flow
+            wallets_moderator = self.doc_obj.owner.root.callwallets_moderator.first()
+            max_amount_can_be_disbursed = self.determine_max_amount_can_be_disbursed()
+            df = self.accumulate_df()
+            rows_count = df.count()
+            msisdn_header, amount_header, issuer_header = self.determine_headers_names(df)
+            start_row = self.determine_starting_index()
+            issuers_list = None
+
+            # 1.1 For normal sheet specs: Check if all records has no empty values
+            if self.is_normal_sheet_specs:
+                if not (rows_count[msisdn_header] == rows_count[amount_header]):
+                    self.end_with_failure(MSG_WRONG_FILE_FORMAT)
+                    return False
+                msisdn_list, amounts_list, errors_list, total_amount, vf_msisdns_list = \
+                    self.process_and_validate_normal_specs_records(df, msisdn_header, amount_header)
+
+            # 1.2 For issuer based sheet specs: Check if all records has no empty values
+            else:
+                if not (rows_count[msisdn_header] == rows_count[amount_header] == rows_count[issuer_header]):
+                    self.end_with_failure(MSG_WRONG_FILE_FORMAT)
+                    return False
+                msisdn_list, amounts_list, issuers_list, errors_list, total_amount, vf_msisdns_list = \
+                    self.process_and_validate_issuers_specs_records(df, msisdn_header, amount_header, issuer_header)
+
+            self.doc_obj.total_amount = total_amount
+            self.doc_obj.total_count = max(rows_count)
+
+            # 2. Check if the entity admin is privileged to disburse sheets
+            if not wallets_moderator.disbursement:
+                self.end_with_failure(f"Your entity is suspended from disbursing sheets, {MSG_TRY_OR_CONTACT}")
+                return False
+
+            # 3. Check if there is any errors happened at sheet processing
+            elif len([value for value in errors_list if value]) > 0:
+                if self.is_normal_sheet_specs:
+                    self.end_with_failure_sheet_details(msisdn_list, amounts_list, errors_list=errors_list)
+                else:
+                    self.end_with_failure_sheet_details(
+                            msisdn_list, amounts_list, issuers_list, errors_list=errors_list
+                    )
+                return False
+
+            # 4. Check if the sheet's total amount doesn't exceed maximum amount that can be disbursed for this checker
+            elif total_amount > max_amount_can_be_disbursed:
+                self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
+                return False
+
+            # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
+            elif not self.doc_obj.owner.is_vodafone_default_onboarding:
+                has_sufficient_budget = self.validate_doc_total_amount_against_custom_budget(issuers_list, amounts_list)
+                if not has_sufficient_budget:
+                    self.end_with_failure(MSG_NOT_WITHIN_THRESHOLD)
+                    return False
+
+            # 6. Make change fees profile request for vodafone recipients only
+            if wallets_moderator.change_profile and vf_msisdns_list:
+                change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
+                if not change_profile_response:
+                    return False
+            elif not wallets_moderator.change_profile or (wallets_moderator.change_profile and not vf_msisdns_list):
+                self.doc_obj.has_change_profile_callback = True
+                self.doc_obj.txn_id = None
+                self.doc_obj.processed_successfully()
+
+            # 7.1 For normal flow sheets: Save the refined data as disbursement data records
+            if self.is_normal_sheet_specs:
+                records = zip(amounts_list, msisdn_list)
+                objs = [
+                    DisbursementData(doc=self.doc_obj, amount=float(record[0]), msisdn=record[1]) for record in records
+                ]
+                DisbursementData.objects.bulk_create(objs=objs)
+
+            # 7.2 For issuer based sheets: Save the refined data as disbursement data records
+            else:
+                records = zip(amounts_list, msisdn_list, issuers_list)
+                objs = [
+                    DisbursementData(
+                            doc=self.doc_obj, amount=float(record[0]), msisdn=record[1], issuer=record[2]
+                    ) for record in records
+                ]
+                DisbursementData.objects.bulk_create(objs=objs)
+
+            self.doc_obj.save()
+            notify_maker(self.doc_obj)
+            UPLOAD_LOGGER.debug(f"[message] [e wallets file passed processing] [celery_task] -- Doc id: {doc_id}")
+            return True
+        except Doc.DoesNotExist:
+            UPLOAD_LOGGER.\
+                debug(f"[message] [ewallets file processing error] [celery_task] -- Doc id: {doc_id} not found")
+            return False
+        except Exception as err:
+            self.end_with_failure(MSG_REGISTRATION_PROCESS_ERROR)
+            UPLOAD_LOGGER.debug(f"[message] [ewallets file processing error] [celery_task] -- {err.args}")
             return False
 
 
@@ -784,231 +1160,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
 
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
+EWalletsSheetProcessor = app.register_task(EWalletsSheetProcessor())
 ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
-
-
-def check_total_budget_regarding_issuer(doc, amount_list, issuer):
-     return Budget.objects.get(disburser=doc.owner.root).\
-        accumulate_amount_with_fees_and_vat(sum([float(value) for value in amount_list if value]), issuer)
-
-
-@app.task(ignore_result=False)
-@respects_language
-def handle_disbursement_file(doc_obj_id, **kwargs):
-    """
-    A function that parse the document and save it into the File Data
-    It has 3 cases :
-    Category has files so check if draft or delete stale data
-    Category has no files
-    """
-    doc_obj = Doc.objects.get(id=doc_obj_id)
-    issuers_valid_list = ['vodafone', 'etisalat', 'aman']
-    callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
-    is_normal_flow = doc_obj.owner.root.root_entity_setups.is_normal_flow
-    is_total_amount_within_threshold = False
-    amount_position, msisdn_position, issuer_position = doc_obj.file_category.fields_cols()
-    start_index = doc_obj.file_category.starting_row()
-    xl_workbook = xlrd.open_workbook(doc_obj.file.path)
-    xl_sheet = xl_workbook.sheet_by_index(0)
-    rows = itertools.islice(xl_sheet.get_rows(), start_index, None)
-    list_of_dicts = []
-    env = get_dot_env()
-    response_dict = None
-
-    for counter, sheet_record in enumerate(rows, start_index):
-        row_dict = {'msisdn': '', 'amount': '', 'issuer': '', 'error': ''}
-
-        for sheet_record_position, item in enumerate(sheet_record):
-            if not is_normal_flow and sheet_record_position == issuer_position:
-                if str(item.value).lower() in issuers_valid_list:
-                    row_dict['issuer'] = str(item.value).lower()
-                    row_dict['error'] = None
-                else:
-                    if row_dict['error']:
-                        row_dict['error'] += '\nInvalid issuer option'
-                    else:
-                        row_dict['error'] = 'Invalid issuer option'
-
-            elif sheet_record_position == amount_position:
-                try:
-                    if item.value == '' or float(item.value) < 1.0:
-                        row_dict['error'] = '\nInvalid amount'
-                    else:
-                        row_dict['amount'] = round(float(item.value), 2)
-                    if not row_dict['error']:
-                        row_dict['error'] = None
-                except ValueError:
-                    if row_dict['error']:
-                        row_dict['error'] += '\nInvalid amount'
-                    else:
-                        row_dict['error'] = '\nInvalid amount'
-                    row_dict['amount'] = item.value
-
-            elif sheet_record_position == msisdn_position:
-                if item.ctype == 2:
-                    str_value = str(int(item.value))
-                else:
-                    str_value = str(item.value).split('.')[0]
-                if str_value.startswith('`'):
-                    str_value = str_value.split('`')[-1]
-                elif str_value.startswith('1') and len(str_value) == 10:
-                    str_value = '0020' + str_value
-                elif str_value.startswith('2') and len(str_value) == 12:
-                    str_value = '00' + str_value
-                elif str_value.startswith('01') and len(str_value) == 11:
-                    str_value = '002' + str_value
-                else:
-                    row_dict['msisdn'] = item.value
-                    if row_dict['error']:
-                        row_dict['error'] += "\nInvalid mobile number"
-                    else:
-                        row_dict['error'] = "Invalid mobile number"
-
-                # if msisdn is duplicate
-                if list(filter(lambda d: d['msisdn'].replace(" ", "") == str_value.replace(" ", ""), list_of_dicts)):
-                    row_dict['msisdn'] = item.value
-                    if row_dict['error']:
-                        row_dict['error'] += "\nDuplicate mobile number"
-                    else:
-                        row_dict['error'] = "Duplicate mobile number"
-                else:
-                    if not row_dict['error']:
-                        row_dict['error'] = None
-                    row_dict['msisdn'] = str_value.replace(" ", "")
-
-        list_of_dicts.append(row_dict)
-
-    msisdn, amount, issuer, vodafone_msisdn, errors = [], [], [], [], []
-    vf_amount_list, ets_amount_list, aman_amount_list = [], [], []
-    for record_dict in list_of_dicts:
-        msisdn.append(record_dict['msisdn'])
-        amount.append(record_dict['amount'])
-        errors.append(record_dict['error'])
-        if not is_normal_flow:
-            issuer.append(record_dict['issuer'])
-
-            if str(record_dict['issuer']).lower() == 'vodafone':
-                vodafone_msisdn.append(record_dict['msisdn'])
-                vf_amount_list.append(record_dict['amount'])
-            elif str(record_dict['issuer']).lower() == 'etisalat':
-                ets_amount_list.append(record_dict['amount'])
-            elif str(record_dict['issuer']).lower() == 'aman':
-                aman_amount_list.append(record_dict['amount'])
-        else:
-            vf_amount_list.append(record_dict['amount'])
-
-    valid = True
-    if len([value for value in errors if value]) > 0:
-        for item in errors:
-            if item is not None:
-                valid = False
-                break
-
-    error_message = None
-    download_url = False
-    _msisdn = msisdn if is_normal_flow else vodafone_msisdn
-
-    if valid and (len([value for value in msisdn if value]) == 0 or len([value for value in amount if value]) == 0):
-        valid = False
-        error_message = MSG_WRONG_FILE_FORMAT
-
-    if not doc_obj.owner.is_vodafone_default_onboarding:
-        if valid and (vf_amount_list or ets_amount_list or aman_amount_list):
-            vf_total_amount = ets_total_amount = aman_total_amount = 0
-            if vf_amount_list:
-                vf_total_amount = check_total_budget_regarding_issuer(doc_obj, vf_amount_list, "vodafone")
-            if ets_amount_list:
-                ets_total_amount = check_total_budget_regarding_issuer(doc_obj, ets_amount_list, "etisalat")
-            if aman_amount_list:
-                aman_total_amount = check_total_budget_regarding_issuer(doc_obj, aman_amount_list, "aman")
-
-            doc_obj.total_amount_with_fees_vat = sum([vf_total_amount, ets_total_amount, aman_total_amount])
-            if doc_obj.total_amount_with_fees_vat <= Budget.objects.get(disburser=doc_obj.owner.root).current_balance:
-                is_total_amount_within_threshold = True
-
-    max_amount_can_be_disbursed = max(
-        [level.max_amount_can_be_disbursed for level in Levels.objects.filter(created=doc_obj.owner.root)]
-    )
-    if valid and sum([float(value) for value in amount if value]) > max_amount_can_be_disbursed:
-        error_message = MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED
-        valid = False
-
-    if valid and not doc_obj.owner.root.is_vodafone_default_onboarding and not is_total_amount_within_threshold:
-        error_message = MSG_NOT_WITHIN_THRESHOLD
-        valid = False
-
-    if not valid:
-        default_headers = ['Mobile Number', 'Amount']
-        filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
-        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
-        if error_message is None:
-            error_message = _("File validation error")
-            data = list(zip(msisdn, amount, errors)) if is_normal_flow else list(zip(msisdn, amount, issuer, errors))
-            headers = default_headers + ['Errors'] if is_normal_flow else default_headers + ['Issuer', 'Errors']
-            data.insert(0, headers)
-            export_excel(file_path, data)
-            download_url = settings.BASE_URL + \
-                str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj_id})) + \
-                f"?filename={filename}"
-        doc_obj.processing_failure(error_message)
-        notify_maker(doc_obj, download_url) if download_url else notify_maker(doc_obj)
-        return False
-
-    if doc_obj.owner.root.super_admin.wallet_fees_profile:
-        fees_profile = doc_obj.owner.root.super_admin.wallet_fees_profile
-    else:
-        fees_profile = doc_obj.owner.root.client.get_fees()
-
-    if callwallets_moderator.change_profile and _msisdn:
-        superadmin = doc_obj.owner.root.client.creator
-        payload = superadmin.vmt.accumulate_change_profile_payload(_msisdn, fees_profile)
-        try:
-            CHANGE_PROFILE_LOGGER.debug(f"[request] [CHANGE PROFILE] [{doc_obj.owner}] -- {payload}")
-            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
-        except Exception as e:
-            CHANGE_PROFILE_LOGGER.debug(f"[message] [CHANGE PROFILE ERROR] [{doc_obj.owner}] -- {e.args}")
-            doc_obj.processing_failure(MSG_REGISTRATION_PROCESS_ERROR)
-            notify_maker(doc_obj)
-            return False
-
-        CHANGE_PROFILE_LOGGER.debug(f"[response] [CHANGE PROFILE] [{doc_obj.owner}] -- {str(response.text)}")
-        error_message = None
-        if response.ok:
-            response_dict = response.json()
-            if response_dict["TXNSTATUS"] != '200':
-                error_message = response_dict.get('MESSAGE', None) or _("Failed to make registration")
-        else:
-            error_message = MSG_REGISTRATION_PROCESS_ERROR
-        if error_message:
-            doc_obj.processing_failure(error_message)
-            notify_maker(doc_obj)
-            return False
-
-    elif callwallets_moderator.disbursement and \
-            (not callwallets_moderator.change_profile or (callwallets_moderator.change_profile and not _msisdn)):
-        doc_obj.has_change_profile_callback = True
-        doc_obj.processed_successfully()
-        notify_maker(doc_obj)
-    else:
-        doc_obj.processing_failure(MSG_REGISTRATION_PROCESS_ERROR)
-        notify_maker(doc_obj)
-        return False
-
-    if is_normal_flow:
-        data = zip(amount, msisdn)
-        DisbursementData.objects.bulk_create(
-                [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1]) for i in data]
-        )
-    else:
-        data = zip(amount, msisdn, issuer)
-        DisbursementData.objects.bulk_create(
-                [DisbursementData(doc=doc_obj, amount=float(i[0]), msisdn=i[1], issuer=i[2]) for i in data]
-        )
-    doc_obj.total_amount = sum(amount)
-    doc_obj.total_count = len(amount)
-    doc_obj.txn_id = response_dict['BATCH_ID'] if response_dict else None
-    doc_obj.save()
-    return True
 
 
 @app.task()

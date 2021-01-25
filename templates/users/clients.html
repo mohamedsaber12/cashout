@@ -125,8 +125,10 @@
                             <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.get_full_name|truncatechars:26 }}</h2>
                             <h5><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {{ client_setup.client.title|truncatechars:24 }}</h5>
                             <ul class="list-unstyled">
+                              <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ client_setup.client.username }}</li></ul></li>
                               <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ client_setup.client.mobile_no }}</li></ul></li>
                               <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ client_setup.client.email|truncatechars:38 }}</li></ul></li>
+                              
                             </ul>
                           </div>
                           <div class="right col-xs-5 text-center">

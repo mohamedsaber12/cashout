@@ -38,7 +38,7 @@ from users.decorators import setup_required
 from users.mixins import (SuperFinishedSetupMixin,
                           SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
                           SuperRequiredMixin,
-                          SuperWithoutDefaultOnboardingPermissionRequired,
+                          AgentsListPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
                           UserWithDisbursementPermissionRequired)
 from users.models import EntitySetup, Client
@@ -46,7 +46,7 @@ from utilities import messages
 
 from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
                     BalanceInquiryPinForm, SingleStepTransactionModelForm)
-from .mixins import AdminOrCheckerRequiredMixin
+from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction
 from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
 
@@ -691,7 +691,7 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
         return False, MSG_BALANCE_INQUIRY_ERROR
 
 
-class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):
+class AgentsListView(AgentsListPermissionRequired, ListView):
     """
     View for enabling superadmins to list their own agents
     """
@@ -700,11 +700,18 @@ class AgentsListView(SuperWithoutDefaultOnboardingPermissionRequired, ListView):
     context_object_name = "agents_list"
     template_name = "disbursement/agents.html"
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['admin'] = self.request.GET.get("admin")
+        return context
+
     def get_queryset(self):
+        if self.request.user.is_support and self.request.user.is_vodafone_default_onboarding:
+            return Agent.objects.filter(wallet_provider__username=self.request.GET.get("admin"))
         return Agent.objects.filter(wallet_provider=self.request.user)
 
 
-class BankTransactionsSingleStepView(AdminOrCheckerRequiredMixin, View):
+class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View):
     """
     List/Create view for single step bank transactions over the manual patch
     """
@@ -714,8 +721,11 @@ class BankTransactionsSingleStepView(AdminOrCheckerRequiredMixin, View):
     template_name = 'disbursement/banks_single_step_trx_list.html'
 
     def get_queryset(self):
+        user_hierarchy = self.request.user.hierarchy
+        if self.request.user.is_support and self.request.GET.get("admin_hierarchy"):
+            user_hierarchy = self.request.GET.get("admin_hierarchy")
         bank_trx_ids = BankTransaction.objects.\
-            filter(user_created__hierarchy=self.request.user.hierarchy, is_single_step=True).\
+            filter(user_created__hierarchy=user_hierarchy, is_single_step=True).\
             order_by("parent_transaction__transaction_id", "-id").\
             distinct("parent_transaction__transaction_id").\
             values_list("id", flat=True)

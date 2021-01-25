@@ -15,7 +15,6 @@ from disbursement.views import DisbursementDocTransactionsView
 from ..forms import SupportUserCreationForm
 from ..mixins import (
     SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin,
-    SuperWithoutDefaultOnboardingPermissionRequired,
 )
 from ..models import Client, SupportSetup, SupportUser, RootUser
 
@@ -84,7 +83,7 @@ class ClientsForSupportListView(SupportUserRequiredMixin, ListView):
     """
 
     model = Client
-    paginate_by = 6
+    # paginate_by = 6
     context_object_name = 'clients'
     template_name = 'support/clients.html'
 
@@ -172,9 +171,12 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         if not doc.exists():
             raise Http404(_(f"Document with id: {self.doc_id} for {self.admin_username} entity members not found."))
 
-        # ToDo: Should handle different types of files, NOW it ONLY handles e-wallets files
         doc_obj = doc.first()
         doc_transactions = doc_obj.disbursement_data.all()
+        if doc_obj.is_bank_wallet:
+            doc_transactions = doc_obj.bank_wallets_transactions.all()
+        elif doc_obj.is_bank_card:
+            doc_transactions = doc_obj.bank_cards_transactions.all()
 
         context = {
             'doc_obj': doc_obj,
@@ -182,7 +184,7 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             'doc_status': self.retrieve_doc_status(doc_obj),
             'disbursement_ratio': doc_obj.disbursement_ratio(),
             'is_reviews_completed': doc_obj.is_reviews_completed(),
-            'disbursement_records': doc_obj.disbursement_data.all(),
+            'disbursement_records': doc_transactions,
             'disbursement_doc_data': doc_obj.disbursement_txn,
             'doc_transactions_totals':
                 DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions),

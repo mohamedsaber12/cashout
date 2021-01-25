@@ -1,9 +1,25 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 
 {% block title %} {% trans 'Clients' %} {% endblock title %}
+{% block gentellacss %}
+  <!-- Datatables -->
+  <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+
+  <style>
+    #clientDetailsDataLeft li span, #clientDetailsDataLast li span {
+      width: 100px;
+    }
+  </style>
+{% endblock %}
 
 {% block body %}
   <!-- page content -->
@@ -34,59 +50,188 @@
         <div class="col-md-12">
           <div class="x_panel">
             <div class="x_content">
-              <div class="row">
-                <div class="col-md-12 col-sm-12 col-xs-12 text-center">
-                  <ul class="pagination-split"></ul>
-                </div>
-                <div class="clearfix"></div>
-
+              <table class="table table-bordered" id="transaction-table">
+                <thead>
+                <tr>
+                  <th>{% trans 'Image' %}</th>
+                  <th>{% trans 'Username' %}</th>
+                  <th>{% trans 'E-mail' %}</th>
+                  <th>{% trans 'Status' %}</th>
+                </tr>
+                </thead>
+                <tbody>
                 {% for user in clients %}
-                  <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ user.id }}">
-                    <div class="well profile_view" style="width: 100%;">
-                      <div class="col-sm-12">
-                        <div class="left col-xs-7">
-                          <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.client.get_full_name|truncatechars:26 }}</h2><br>
-                          <h5><strong>{% trans 'About:' %} </strong> {% if user.client.title %}{{ user.client.title }}{% endif %} </h5>
-                          <ul class="list-unstyled">
-                            <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ user.client.email }}</li></ul></li>
-                            <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ user.client.mobile_no }}</li></ul></li>
-                            <li><i class="fa fa-file"></i> <strong>{% trans 'Formats:' %}</strong><ul><li> <a href="{% url 'data:list_format' %}?admin={{ user.client.username }}">{% trans 'Formats' %}</a></li></ul></li>
-                            <li><i class="fa fa-money"></i> <strong>{% trans 'Current Balance:' %}</strong><ul><li> {{ user.client.budget.current_balance }} EG </li></ul></li>
-                            <li><i class="fa fa-list"></i> <strong>{% trans 'Disbursement Documents List:' %}</strong><ul><li> <a href="{% url 'users:documents_list' username=user.client.username %}">{% trans 'Documents' %}</a></li></ul></li>
-                          </ul>
-                        </div>
-                        <div class="right col-xs-5 text-center">
-                          <img src="{{ user.client.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
-                        </div>
-                      </div>
-                      <div class="bottom profile_view" style="width: 100%; margin-bottom: -5px;">
-                        <div class="col-xs-12">
-                            <h4 class="brief">
-                              <i>
-                                {% ifequal user.is_active True %}
-                                  {% trans 'Active' %}
-                                {% else %}
-                                  {% trans 'InActive' %}
-                                {% endifequal %}
-                              </i>
-                              <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">Disbursement</i>
-                            </h4>
-                        </div>
-                        <div class="col-xs-12 col-sm-6 emphasis">
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <tr data-full_name="{{ user.client.get_full_name}}"
+                      data-username="{{ user.client.username }}"
+                      data-email="{{ user.client.email }}"
+                      data-phone="{{ user.client.mobile_no }}"
+                      data-about="{{ user.client.title }}"
+                      data-status="{% if user.is_active %} {% trans 'Active' %} {% else %} {% trans 'InActive' %} {% endif %}"
+
+                      {% if request.user.is_instant_model_onboarding %}
+                        data-integration_wallets_trx="{% url 'instant_cashin:wallets_trx_list' %}?client={{ user.client.username }}"
+                        data-integration_banks_trx="{% url 'instant_cashin:banks_trx_list' %}?client={{ user.client.username }}"
+                      {% else %}
+                        data-formats="{% url 'data:list_format' %}?admin={{ user.client.username }}"
+                        data-document_list="{% url 'users:documents_list' username=user.client.username %}"
+                      {% endif %}
+
+                      {% if user.client.is_vodafone_default_onboarding %}
+                        data-agent_list="{% url 'disbursement:agents_list' %}?admin={{ user.client.username }}"
+                      {% else %}
+                        data-current_balance="{{ user.client.budget.current_balance }}"
+                      {% endif %}
+
+                      {% if user.client.is_accept_vodafone_onboarding %}
+                        data-single_step_trxs="{% url 'disbursement:single_step_list_create' %}?admin_hierarchy={{ user.client.hierarchy }}"
+                      {% endif %}
+                      class="row-hover">
+                    <td style="text-align: center;"><img width="50" height="50" src="{{ user.client.avatar_thumbnail.url }}" alt="" class="img-circle"></td>
+                    <td>{{ user.client.username }}</td>
+                    <td>{{ user.client.email }}</td>
+                    <td>
+                      {% ifequal user.is_active True %}
+                        {% trans 'Active' %}
+                      {% else %}
+                        {% trans 'InActive' %}
+                      {% endifequal %}
+                    </td>
+                  </tr>
                 {% empty %}
                   <h4 class="text-center">{% trans 'No clients are set here...' %}</h4>
                 {% endfor %}
-              </div>
+                </tbody>
+              </table>
             </div>
-            {% include 'pagination.html' %}
           </div>
         </div>
       </div>
     </div>
+
+    {# client details #}
+    <div id="clientDetails" style="display: none;" class="row">
+      <div class="col-md-12 col-sm-12 col-xs-12">
+        <div class="x_panel">
+          <div class="x_title">
+            <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Client Details' %}</h2>
+            <div class="clearfix"></div>
+          </div>
+
+          <div class="x_content">
+            <div class="row">
+              <div class="col-md-6 col-sm-6 col-xs-6">
+                <ul id="clientDetailsDataLeft">
+                </ul>
+              </div>
+              <div class="col-md-6 col-sm-6 col-xs-6">
+                <ul id="clientDetailsDataRight">
+                </ul>
+              </div>
+            </div>
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12">
+                <ul id="clientDetailsDataLast">
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {# End of client details #}
   </div>
   <!-- /page content -->
 {% endblock body %}
+
+{% block script %}
+<!-- Datatables -->
+<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+<script>
+    $('#transaction-table').DataTable();
+  </script>
+<script>
+    $('#transaction-table tbody').on('click', 'tr', function () {
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+        $("#clientDetails").slideUp().fadeOut();
+      }
+      else {
+        $('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+        let ulLeft = $('#clientDetailsDataLeft');
+        let ulRight = $('#clientDetailsDataRight');
+        let ulLast = $('#clientDetailsDataLast');
+        let appendedTagsLeft = '';
+        let appendedTagsRight = '';
+        let appendedTagsLast = '';
+        // add data to ul left
+        let full_name = $(this).data('full_name');
+        appendedTagsLeft += `<li><span>Full Name</span><b>:</b>${full_name}</li>`;
+
+        let username = $(this).data('username');
+        appendedTagsLeft += `<li><span>Username</span><b>:</b>${username}</li>`;
+
+        let email = $(this).data('email');
+        appendedTagsLeft += `<li><span>Email</span><b>:</b>${email}</li>`;
+
+        let phone = $(this).data('phone');
+        appendedTagsLeft += `<li><span>Mobile Number</span><b>:</b>${phone}</li>`;
+
+        // add data to ul right
+        let status = $(this).data('status');
+        appendedTagsRight += `<li><span>Status</span><b>:</b>${status}</li>`;
+
+        let agent_list = $(this).data('agent_list');
+        let current_balance = $(this).data('current_balance');
+        if (agent_list && !current_balance) {
+          appendedTagsRight += `<li><span>{% trans 'Agents:' %}</span><b>:</b><a href=${agent_list} >{% trans 'Agents List' %}</a></li>`
+        } else {
+          appendedTagsRight += `<li><span>{% trans 'Current Balance:' %}</span><b>:</b>${current_balance} EG</li>`;
+        }
+
+        {% if request.user.is_instant_model_onboarding %}
+          let integration_wallets_trx = $(this).data('integration_wallets_trx');
+          let integration_banks_trx = $(this).data('integration_banks_trx');
+          appendedTagsRight += `<li><span>Wallets Transactions</span><b>:</b><a href=${integration_wallets_trx} >{% trans 'Transactions List' %}</a></li>`;
+          appendedTagsRight += `<li><span>Banks Transactions</span><b>:</b><a href=${integration_banks_trx} >{% trans 'Transactions List' %}</a></li>`;
+        {% else %}
+          let formats = $(this).data('formats');
+          let document_list = $(this).data('document_list');
+          appendedTagsRight += `<li><span>Formats</span><b>:</b><a href=${formats} >{% trans 'Formats' %}</a></li>`;
+          appendedTagsRight += `<li><span>Disbursement Documents List</span><b>:</b><a href=${document_list} >{% trans 'Documents' %}</a></li>`;
+          {% if request.user.is_accept_vodafone_onboarding %}
+            let single_step_trxs = $(this).data('single_step_trxs');
+            appendedTagsRight += `<li><span>Single Step Transactions</span><b>:</b><a href=${single_step_trxs} >{% trans 'Transactions' %}</a></li>`;
+          {% endif %}
+        {% endif %}
+
+        ulLeft.empty();
+        ulLeft.append(appendedTagsLeft);
+
+        ulRight.empty();
+        ulRight.append(appendedTagsRight);
+
+        let about = $(this).data('about');
+        appendedTagsLast += `<li><span>About</span><b>:</b>${about}</li>`;
+        ulLast.empty();
+        ulLast.append(appendedTagsLast);
+
+        $("#clientDetails").slideDown();
+        $('html,body').animate({
+          scrollTop: $("#clientDetails").offset().top
+        }, 'slow');
+     }
+    });
+  </script>
+{% endblock %}

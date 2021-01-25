@@ -36,3 +36,22 @@ class AdminOrCheckerRequiredMixin(LoginRequiredMixin):
                 (self.request.user.is_checker or self.request.user.is_root)):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
+
+
+class AdminOrCheckerOrSupportRequiredMixin(LoginRequiredMixin):
+    """
+    Check if the user accessing resource is admin or checker or support
+    with disbursement and accept vf on-boarding permissions
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.user.is_support and self.request.user.is_accept_vodafone_onboarding:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            status = self.request.user.get_status(self.request)
+
+            if not (status == "disbursement" and
+                    self.request.user.is_accept_vodafone_onboarding and
+                    (self.request.user.is_checker or self.request.user.is_root)):
+                return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)

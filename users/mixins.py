@@ -93,13 +93,19 @@ class UserWithInstantOnboardingPermissionRequired(UserPassesTestMixin, LoginRequ
         return False
 
 
-class SuperWithoutDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+class AgentsListPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
-    Check if the user is superadmin and it has onboarding setup of accept-vodafone or instant model.
+    Check if the user has the right to access the agents list view.
+
+    Cases:
+        1. Superadmin user with any on boarding setups other than the standard vodafone model.
+        2. Support user with on boarding setups of the standard vodafone model.
     """
 
     def test_func(self):
         if self.request.user.is_superadmin and not self.request.user.is_vodafone_default_onboarding:
+            return True
+        elif self.request.user.is_support and self.request.user.is_vodafone_default_onboarding:
             return True
 
         return False

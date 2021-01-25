@@ -21,9 +21,6 @@
 {% endblock %}
 
 {% block body %}
-  <div class="col-xs-12 alert alert-info" role="alert">
-    <p>{% trans 'IMPORTANT: DISBURSEMENT FOR BANK ACCOUNTS/WALLETS IS AVAILABLE NOW, CHECK THE UPDATED API DOCUMENTATION!' %}</p>
-  </div>
 
   {# page content #}
   <div class="col" role="main">
@@ -31,9 +28,9 @@
       <div class="page-title">
         <div class="title_left">
           {% if bank_transactions %}
-            <h3>Bank Accounts/Cards Transactions</h3>
+            <h3>Bank Accounts/Cards Transactions{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
           {% else %}
-            <h3>Wallets/Aggregators Transactions</h3>
+            <h3>Wallets/Aggregators Transactions{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
           {% endif %}
         </div>
         {% include 'search_bar.html' %}
@@ -98,8 +95,6 @@
 
 {% block script %}
   <script>
-    $('.alert').fadeOut(10000);
-
     $('#transaction-table tbody').on('click', 'tr', function () {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');

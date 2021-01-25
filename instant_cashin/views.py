@@ -1,35 +1,41 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.contrib.auth import get_user_model
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
 
 from disbursement.models import BankTransaction
 
-from .mixins import IntegrationUserPassesTestMixin
+from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction
 
 
-class BaseInstantTransactionsListView(ListView):
+class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
     """
-    Base list view for instant transactions
+    View for displaying instant transactions
     """
 
     model = InstantTransaction
     context_object_name = 'instant_transactions'
     paginate_by = 11
-
-
-class InstantTransactionsListView(IntegrationUserPassesTestMixin, BaseInstantTransactionsListView):
-    """
-    View for displaying instant transactions
-    """
-
     template_name = 'instant_cashin/instant_viewer.html'
     queryset = InstantTransaction.objects.all()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['admin'] = self.request.GET.get('client')
+        return context
+
     def get_queryset(self):
-        queryset = super().get_queryset().filter(from_user__hierarchy=self.request.user.hierarchy)
+        client_username_query_parameter = self.request.GET.get('client')
+        if self.request.user.is_support and client_username_query_parameter:
+            user = get_object_or_404(get_user_model(), username=client_username_query_parameter)
+            hierarchy_to_filter_with = user.hierarchy
+        else:
+            hierarchy_to_filter_with = self.request.user.hierarchy
+        queryset = super().get_queryset().filter(from_user__hierarchy=hierarchy_to_filter_with)
 
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
@@ -42,7 +48,7 @@ class InstantTransactionsListView(IntegrationUserPassesTestMixin, BaseInstantTra
         return queryset
 
 
-class BankTransactionsListView(IntegrationUserPassesTestMixin, ListView):
+class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
     """
     View for displaying bank transactions
     """
@@ -53,8 +59,19 @@ class BankTransactionsListView(IntegrationUserPassesTestMixin, ListView):
     template_name = 'instant_cashin/instant_viewer.html'
     queryset = BankTransaction.objects.all()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['admin'] = self.request.GET.get('client')
+        return context
+
     def get_queryset(self):
-        bank_trx_ids = super().get_queryset().filter(user_created__hierarchy=self.request.user.hierarchy).\
+        client_username_query_parameter = self.request.GET.get('client')
+        if self.request.user.is_support and client_username_query_parameter:
+            user = get_object_or_404(get_user_model(), username=client_username_query_parameter)
+            hierarchy_to_filter_with = user.hierarchy
+        else:
+            hierarchy_to_filter_with = self.request.user.hierarchy
+        bank_trx_ids = super().get_queryset().filter(user_created__hierarchy=hierarchy_to_filter_with).\
             filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
             order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id").\
             values_list("id", flat=True)

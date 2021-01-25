@@ -4,15 +4,17 @@ from __future__ import unicode_literals
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 
-class IntegrationUserPassesTestMixin(UserPassesTestMixin, LoginRequiredMixin):
+class IntegrationUserAndSupportUserPassesTestMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
-    Permit only logged-in users with integration patch setups from accessing resources related to integration patch
+    Mixin for giving access to integration patch related views.
+
+    Cases:
+        > Admin/Support/Instant viewer user with integration patch onboarding permissions
     """
 
     def test_func(self):
-        if self.request.user.is_root and self.request.user.is_instant_model_onboarding:
-            return True
-        elif self.request.user.is_instantapiviewer:
+        if self.request.user.is_instant_model_onboarding and \
+                (self.request.user.is_root or self.request.user.is_instantapiviewer or self.request.user.is_support):
             return True
 
         return False

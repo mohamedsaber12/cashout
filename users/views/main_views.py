@@ -117,6 +117,8 @@ def login_view(request):
     Checkers must do two factor authentication every login but makers don't.
     Non active users can't login.
     """
+    context = {}
+    context["is_vodafone_url"] = True if "vodafone" in request.get_host() else False
     user = None
 
     if request.user.is_authenticated:
@@ -157,15 +159,17 @@ def login_view(request):
             FAILED_LOGIN_LOGGER.debug(
                     f"[message] [API USER LOGIN ATTEMPT] [{username}] -- "
                     f"Failed Attempt from instant API user with username: {username}")
-            return render(request, 'data/login.html', {'error_invalid': "You're not permitted to login."})
+            context['error_invalid'] = "You're not permitted to login."
+            return render(request, 'data/login.html', context=context)
         else:
             # Bad login details were provided. So we can't log the user in.
             FAILED_LOGIN_LOGGER.debug(
                     f"[message] [FAILED LOGIN] [anonymous] -- Failed Login Attempt from user with username: {username}"
             )
-            return render(request, 'data/login.html', {'error_invalid': 'Invalid login details supplied.'})
+            context['error_invalid'] = 'Invalid login details supplied.'
+            return render(request, 'data/login.html', context=context)
     else:
-        return render(request, 'data/login.html')
+        return render(request, 'data/login.html', context=context)
 
 
 def ourlogout(request):

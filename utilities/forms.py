@@ -218,8 +218,9 @@ class IncreaseBalanceRequestForm(forms.Form):
                 validationErrors['from_date'] = [is_required_msg]
             if not data.get('to_attach_proof'):
                 validationErrors['to_attach_proof'] = [is_required_msg]
-            if not self.validate_image():
-                validationErrors['to_attach_proof'] = [error_file_size_msg]
+            else:
+                if not self.validate_image():
+                    validationErrors['to_attach_proof'] = [error_file_size_msg]
             if len(validationErrors.keys()) == 0:
                 return data
 

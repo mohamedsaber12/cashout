@@ -4,6 +4,7 @@ from .server import *
 
 ALLOWED_HOSTS += (
     'stagingpayouts.paymobsolutions.com',
+    'stagingvodafonepayouts.paymob.com',
     '18.220.141.7',
 )
 

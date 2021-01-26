@@ -670,7 +670,7 @@ $ sudo systemctl restart nginx
 ```
 sudo rm -rfv /etc/nginx/conf.d/default.conf
 
-sudo certbot --nginx --domain payouts.paymobsolutions.com
+sudo certbot --nginx --domain payouts.paymobsolutions.com,vodafonepayouts.paymob.com
 
 sudo systemctl restart nginx
 ```

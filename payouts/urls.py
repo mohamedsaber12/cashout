@@ -35,7 +35,8 @@ else:
     handler400 = 'payouts.views.bad_request_view'
 
     handler401 = 'payouts.views.unauthorized_view'
-
+    
+    handler413 = 'payouts.views.file_too_large_view'
 
 urlpatterns += [    
     path('i18n/', include('django.conf.urls.i18n')),

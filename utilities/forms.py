@@ -193,6 +193,7 @@ class IncreaseBalanceRequestForm(forms.Form):
         data = self.cleaned_data
         transfer_type = data.get('type')
         is_required_msg = 'This field is required'
+        error_file_size_msg = 'The uploaded attachment size must be less than 3 MB'
         validationErrors = {}
 
         if transfer_type == 'from_accept_balance':
@@ -217,7 +218,16 @@ class IncreaseBalanceRequestForm(forms.Form):
                 validationErrors['from_date'] = [is_required_msg]
             if not data.get('to_attach_proof'):
                 validationErrors['to_attach_proof'] = [is_required_msg]
+            if not self.validate_image():
+                validationErrors['to_attach_proof'] = [error_file_size_msg]
             if len(validationErrors.keys()) == 0:
                 return data
 
         raise forms.ValidationError(validationErrors)
+
+    def validate_image(self):
+        filesize = self.cleaned_data.get('to_attach_proof').size
+        megabyte_limit = 2.8
+        if filesize > megabyte_limit*1024*1024:
+            return False
+        return True

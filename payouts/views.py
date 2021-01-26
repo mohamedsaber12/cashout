@@ -19,3 +19,7 @@ def unauthorized_view(request, **kwargs):
 
 def bad_request_view(request, exception, **kwargs):
     return render(request, 'error-pages/400.html', status=400)
+
+
+def file_too_large_view(request, exception, **kwargs):
+    return render(request, 'error-pages/413.html', status=413)

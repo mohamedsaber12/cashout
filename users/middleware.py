@@ -59,6 +59,12 @@ class EntitySetupCompletionMiddleWare:
                 if request.user.has_uncomplete_entity_creation():
                     entity_creation = request.user.uncomplete_entity_creation()
                     path = entity_creation.get_reverse()
+                    if request.path == reverse("users:otp_login") or \
+                            request.path == reverse("two_factor:profile") or \
+                            request.path == reverse("two_factor:setup") or \
+                            request.path == '/account/two_factor/qrcode/' or \
+                            '/media/' in request.path :
+                        return None
                     if path == request.path:
                         return None
                     return redirect(entity_creation.get_reverse())

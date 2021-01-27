@@ -623,7 +623,7 @@ class EWalletsSheetProcessor(Task):
                     amounts_list.append(str(record[amount_header]))
 
                 # 3. Validate issuer
-                issuer = str(record[issuer_header]).lower()
+                issuer = str(record[issuer_header]).lower().strip()
                 issuers_list.append(issuer)
                 if issuer not in valid_issuers_list:
                     if errors_list[index]:

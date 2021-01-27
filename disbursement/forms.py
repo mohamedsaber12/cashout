@@ -309,6 +309,8 @@ class SingleStepTransactionModelForm(forms.ModelForm):
             raise forms.ValidationError(_('Invalid amount'))
         if Decimal(self.checker_user.level.max_amount_can_be_disbursed) < amount:
             raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))
+        if not self.checker_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
+            raise forms.ValidationError(_("Entered amount exceeds your current balance"))
 
         return round(Decimal(amount), 2)
 

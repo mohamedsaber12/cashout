@@ -292,3 +292,13 @@ class User(AbstractUser):
         if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
             return True
         return False
+    
+    @cached_property
+    def is_banks_standard_model_onboaring(self):
+        """
+        Check if the current user belongs to
+        the banks standard model onboaring setups
+        """
+        if self.has_perm('users.banks_standard_model_onboaring'):
+            return True
+        return False

@@ -81,6 +81,10 @@ class User(AbstractUser):
                 "vodafone_facilitator_accept_vodafone_onboarding",
                 "like our send business model but can only disburse for vodafone"
             ),
+            (
+                "banks_standard_model_onboaring",
+                "like the vodafone_default_onboarding but with different issuers"
+            ),
         )
         ordering = ['-id', '-hierarchy']
 

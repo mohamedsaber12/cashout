@@ -116,6 +116,8 @@
                                 Send Disbursement Model
                               {% elif client_setup.client.is_vodafone_facilitator_onboarding %}
                                 Vodafone Facilitator Disbursement Model
+                              {% elif client_setup.client.is_banks_standard_model_onboaring %}
+                              Banks PSP Disbursement Model
                               {% else %}
                                 Vodafone PSP Disbursement Model
                               {% endif %}

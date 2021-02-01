@@ -76,7 +76,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def get_success_url(self):
 
-        if not self.object.is_vodafone_default_onboarding:
+        if not self.object.is_vodafone_default_onboarding or\
+           not self.object.is_banks_standard_model_onboaring:
             return reverse('data:main_view')
 
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
@@ -102,7 +103,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             "client": self.object,
         }
 
-        if not self.object.is_vodafone_default_onboarding:
+        if not self.object.is_vodafone_default_onboarding and\
+           not self.object.is_banks_standard_model_onboaring:
             entity_dict['agents_setup'] = True
             entity_dict['fees_setup'] = True
             Budget.objects.create(disburser=self.object, created_by=self.request.user)

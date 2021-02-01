@@ -133,7 +133,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             client_dict['smsc_sender_name'] = self.object.smsc_sender_name
             client_dict['agents_onboarding_choice'] = self.object.agents_onboarding_choice
             Setup.objects.create(user=self.object)
-            CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
+            if self.object.is_banks_standard_model_onboaring:
+                CallWalletsModerator.objects.create(user_created=self.object,
+                                                    instant_disbursement=False,
+                                                    change_profile=False
+                                                    )
+            else:
+                CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
 
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))

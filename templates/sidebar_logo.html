@@ -14,6 +14,16 @@
       </a>
     {% endif %}
 
+  {% elif request.user.is_banks_standard_model_onboaring %}
+    {% if brand_logo %}
+      <a href="{% url 'data:main_view' %}" class="site_title">
+        <span><img style="max-width: 100%;" class="center" src="{{ brand_logo }}" height="78px" id="paymob_logo"></span>
+      </a>
+    {% else %}
+      <a href="{% url 'data:main_view' %}" class="site_title">
+        <span><img style="max-width: 100%;" class="center" src="{% static 'img/raseedy_logo.png' %}" height="85px" id="paymob_logo"></span>
+      </a>
+    {% endif %}
   {% else %}
 
       {% if brand_logo %}

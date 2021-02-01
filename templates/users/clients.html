@@ -52,7 +52,7 @@
               <div class="x_content">
 
                 {# Export clients transactions report sections #}
-                {% if not request.user.is_vodafone_default_onboarding %}
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
                   <div class="row">
                     <div class="col-md-12 col-sm-12 col-xs-12">
                       <div class="x_panel">
@@ -154,7 +154,7 @@
                               <i class="fa fa-check" title="Activate User"></i>
                               {% endifequal %}
                             </button>
-                            {% if not request.user.is_vodafone_default_onboarding %}
+                            {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
                               <button class="btn btn-default btn-xs" title="Update Budget">
                                 <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
                               </button>

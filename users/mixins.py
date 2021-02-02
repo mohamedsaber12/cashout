@@ -37,7 +37,7 @@ class MakeTransferRequestPermissionRequired(UserPassesTestMixin, LoginRequiredMi
     """
 
     def test_func(self):
-        if not self.request.user.is_vodafone_default_onboarding and (
+        if not (self.request.user.is_vodafone_default_onboarding or self.request.user.is_banks_standard_model_onboaring) and (
                 self.request.user.is_root or self.request.user.is_instantapiviewer
         ):
             return True
@@ -75,7 +75,7 @@ class UserWithDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequ
     """
 
     def test_func(self):
-        if self.request.user.is_vodafone_default_onboarding:
+        if self.request.user.is_vodafone_default_onboarding or self.request.user.is_banks_standard_model_onboaring:
             return True
 
         return False
@@ -106,6 +106,8 @@ class AgentsListPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
         if self.request.user.is_superadmin and not self.request.user.is_vodafone_default_onboarding:
             return True
         elif self.request.user.is_support and self.request.user.is_vodafone_default_onboarding:
+            return True
+        elif self.request.user.is_support and self.request.user.is_banks_standard_model_onboaring:
             return True
 
         return False

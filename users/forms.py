@@ -398,6 +398,9 @@ class SupportUserCreationForm(forms.ModelForm):
         elif self.request.user.is_vodafone_facilitator_onboarding:
             onboarding_permission = Permission.objects.\
                 get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
+        elif self.request.user.is_banks_standard_model_onboaring:
+            onboarding_permission = Permission.objects.\
+                get(content_type__app_label='users', codename='banks_standard_model_onboaring')
         else:
             onboarding_permission = Permission.objects.\
                 get(content_type__app_label='users', codename='instant_model_onboarding')

@@ -673,7 +673,8 @@ class EWalletsSheetProcessor(Task):
         superadmin = self.doc_obj.owner.root.client.creator
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
         response_has_error = True
-        if self.doc_obj.owner.is_vodafone_default_onboarding:
+        if self.doc_obj.owner.is_vodafone_default_onboarding or \
+            self.doc_obj.owner.is_banks_standard_model_onboaring:
             fees_profile = self.doc_obj.owner.root.client.get_fees()
         else:
             fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
@@ -752,9 +753,11 @@ class EWalletsSheetProcessor(Task):
             elif total_amount > max_amount_can_be_disbursed:
                 self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
                 return False
+            
 
             # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
-            elif not self.doc_obj.owner.is_vodafone_default_onboarding:
+            elif not self.doc_obj.owner.is_vodafone_default_onboarding\
+                and not self.doc_obj.owner.is_banks_standard_model_onboaring:
                 has_sufficient_budget = self.validate_doc_total_amount_against_custom_budget(issuers_list, amounts_list)
                 if not has_sufficient_budget:
                     self.end_with_failure(MSG_NOT_WITHIN_THRESHOLD)

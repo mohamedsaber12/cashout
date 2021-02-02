@@ -83,7 +83,7 @@
     </ul>
     {% include "users/formset_form.html" with btn_title='Add format' step_1_index=5 formset=form action='users:setting-disbursement-formats' is_normal_flow=is_normal_flow %}
 
-    {% if not request.user.is_vodafone_default_onboarding %}
+    {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
       <button id="default_format_btn" class="btn btn-success">{% trans "Save default format" %}</button>
     {% endif %}
   </div>

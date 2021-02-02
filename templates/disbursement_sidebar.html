@@ -10,7 +10,7 @@
     <div class="menu_section">
       <ul class="nav side-menu">
 
-        {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
+        {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding or request.user.is_banks_standard_model_onboaring %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Disbursement Files' %}</a></li>
         {% elif request.user.is_accept_vodafone_onboarding %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>

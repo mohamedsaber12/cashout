@@ -146,7 +146,7 @@ class Budget(AbstractTimeStamp):
         else:
             raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
 
-    def calculate_fees_and_vat_for_amount(self, amount_to_be_disbursed, issuer_type):
+    def calculate_fees_and_vat_for_amount(self, amount_to_be_disbursed, issuer_type, num_of_trns = 1):
         """
         Calculate fees percentage and 14 % VAT regarding specific amount and issuer.
         TODO: Remove the repeated code via exporting the main part into a generic method
@@ -175,7 +175,7 @@ class Budget(AbstractTimeStamp):
         if fees_obj:
             if fees_obj.fee_type == FeeSetup.FIXED_FEE:
                 fixed_value = fees_obj.fixed_value
-                fees_value = fixed_value
+                fees_value = fixed_value * num_of_trns
             elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
                 percentage_value = fees_obj.percentage_value
                 fees_value = round(((actual_amount * percentage_value) / 100), 4)

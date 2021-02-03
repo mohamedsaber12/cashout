@@ -283,6 +283,7 @@ class RootCreationForm(forms.ModelForm):
                          
         if self.request.user.is_banks_standard_model_onboaring:
             self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
+            self.fields['smsc_sender_name'].widget = forms.HiddenInput()
 
         if self.request.user.is_vodafone_facilitator_onboarding:
             self.fields['vodafone_facilitator_identifier'].required = True

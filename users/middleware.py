@@ -104,6 +104,7 @@ class AdministrativeTwoFactorAuthMiddleWare:
         if request.user.is_authenticated and not is_media_path and not request.user.is_superuser and \
                 (
                         request.user.is_vodafone_default_onboarding or
+                        request.user.is_banks_standard_model_onboaring or
                         request.user.is_accept_vodafone_onboarding and request.user.is_checker or
                         request.user.is_vodafone_facilitator_onboarding and request.user.is_checker
                 ) and \

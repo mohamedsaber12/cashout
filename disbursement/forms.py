@@ -62,7 +62,7 @@ class AgentForm(forms.ModelForm):
         if not msisdn:
             return msisdn
         import re
-        r = re.compile('(201|01)[0-2|5]\d{7}')
+        r = re.compile('(201|01|05)[0-2|5]\d{7}')
         if not r.match(msisdn):
             raise forms.ValidationError(_("Mobile number is not valid"))
         return msisdn
@@ -111,7 +111,7 @@ class PinForm(forms.Form):
     def __init__(self, *args, root, **kwargs):
         self.root = root
         super().__init__(*args, **kwargs)
-        if self.root.is_vodafone_default_onboarding:
+        if self.root.is_vodafone_default_onboarding or self.root.is_banks_standard_model_onboaring:
             self.agents = Agent.objects.filter(wallet_provider=root)
         else:
             self.agents = Agent.objects.filter(wallet_provider=root.super_admin)
@@ -119,7 +119,7 @@ class PinForm(forms.Form):
 
     def get_form(self):
         agent = self.agents.first()
-        if self.root.is_vodafone_default_onboarding and agent and agent.pin:
+        if (self.root.is_vodafone_default_onboarding or self.root.is_banks_standard_model_onboaring) and agent and agent.pin:
             return None
         return self
 
@@ -138,7 +138,7 @@ class PinForm(forms.Form):
         if not raw_pin:
             return False
 
-        if self.root.is_vodafone_default_onboarding and self.root.callwallets_moderator.first().set_pin:
+        if (self.root.is_vodafone_default_onboarding or self.root.is_banks_standard_model_onboaring) and self.root.callwallets_moderator.first().set_pin:
             if self.root.client.agents_onboarding_choice in [Client.NEW_SUPERAGENT_AGENTS, Client.P2M]:
                 msisdns = list(self.agents.values_list('msisdn', flat=True))
             elif self.root.client.agents_onboarding_choice == Client.EXISTING_SUPERAGENT_NEW_AGENTS:

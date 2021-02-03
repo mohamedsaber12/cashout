@@ -81,6 +81,10 @@ class User(AbstractUser):
                 "vodafone_facilitator_accept_vodafone_onboarding",
                 "like our send business model but can only disburse for vodafone"
             ),
+            (
+                "banks_standard_model_onboaring",
+                "like the vodafone_default_onboarding but with different issuers"
+            ),
         )
         ordering = ['-id', '-hierarchy']
 
@@ -290,5 +294,15 @@ class User(AbstractUser):
     def is_vodafone_facilitator_onboarding(self):
         """Check if the current user belongs the vodafone facilitator accept vodafone onboarding setups"""
         if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
+            return True
+        return False
+    
+    @cached_property
+    def is_banks_standard_model_onboaring(self):
+        """
+        Check if the current user belongs to
+        the banks standard model onboaring setups
+        """
+        if self.has_perm('users.banks_standard_model_onboaring'):
             return True
         return False

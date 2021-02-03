@@ -165,7 +165,7 @@ def notify_user(instance, created):
         uid = urlsafe_base64_encode(force_bytes(instance.pk))
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
 
-        if instance.is_root and instance.is_vodafone_default_onboarding:
+        if instance.is_root and (instance.is_vodafone_default_onboarding or instance.is_banks_standard_model_onboaring):
             send_activation_message(instance, url)
 
         from_email = settings.SERVER_EMAIL

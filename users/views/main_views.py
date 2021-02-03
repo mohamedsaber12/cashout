@@ -123,6 +123,7 @@ def login_view(request):
 
     if request.user.is_authenticated:
         if request.user.is_vodafone_default_onboarding or \
+                request.user.is_banks_standard_model_onboaring or\
                 request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
                 request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
             if not request.user.is_superuser and \
@@ -138,6 +139,7 @@ def login_view(request):
                 login(request, user)
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
                 if request.user.is_vodafone_default_onboarding or \
+                        request.user.is_banks_standard_model_onboaring or\
                         request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
                         request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
                     if not request.user.is_superuser and (user.is_checker or user.is_root or user.is_superadmin):

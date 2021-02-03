@@ -70,7 +70,7 @@ class DisburseAPIView(APIView):
         :param raw_pin: the raw pin used at disbursement
         :return: tuple of vodafone agent, etisalat agents lists
         """
-        if not provider.is_vodafone_default_onboarding:
+        if not (provider.is_vodafone_default_onboarding or provider.is_banks_standard_model_onboaring):
             agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
         else:
             agents = Agent.objects.filter(wallet_provider=provider)
@@ -181,7 +181,7 @@ class DisburseAPIView(APIView):
             smsc_sender_name = checker.root.client.smsc_sender_name
 
             if vf_recipients:
-                if not checker.is_vodafone_default_onboarding:
+                if not ( checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring):
                     pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
                 vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
                 vf_payload, log_payload = superadmin.vmt.\

@@ -39,6 +39,7 @@ THIRD_PARTY_APPS = [
     'imagekit',
     'django_extensions',
     'django.contrib.admindocs',
+    'log_viewer',
 ]
 
 SECURITY_THIRD_PARTY_APPS = [
@@ -318,3 +319,13 @@ ADMIN_INDEX_TITLE = 'Payouts Administration'
 TIMEOUT_CONSTANTS = {
     'CENTRAL_UIG': 33
 }
+
+
+# log viewer settings
+
+LOG_VIEWER_FILES = ['wallet_api.log', 'custom_budgets.log']
+LOG_VIEWER_FILES_PATTERN = '*.log'
+LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
+LOG_VIEWER_MAX_READ_LINES = 1000  # total log lines will be read
+LOG_VIEWER_PAGE_LENGTH = 25       # total log lines per-page
+LOG_VIEWER_PATTERNS = [']OFNI[', ']GUBED[', ']GNINRAW[', ']RORRE[', ']LACITIRC[']

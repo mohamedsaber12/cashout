@@ -211,6 +211,8 @@ class AbstractBaseVMTData(models.Model):
             'RECIPIENTS': consumers_attr,
             'SMSSENDER': sms_sender_name
         })
+        if not sms_sender_name:
+            del(payload["SMSSENDER"])
 
         payload_without_pin = copy.deepcopy(payload)
         for internal_agent_dictionary in payload_without_pin['SENDERS']:

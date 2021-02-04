@@ -292,8 +292,25 @@ class SupportSetupModelAdmin(admin.ModelAdmin):
 
     list_display = ['user_created', 'support_user', 'can_onboard_entities']
     list_filter = ['user_created']
+    
+@admin.register(User)
+class UserAdmin(UserAdmin):
+
+    form = UserChangeForm
+
+    list_display = ('email', )
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Important dates', {'fields': ('last_login',)}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2')}
+        ),
+    )
 
 
 # ToDo: Custom general user model
-admin.site.register(User)
+# admin.site.register(User)
 admin.site.register(Client)

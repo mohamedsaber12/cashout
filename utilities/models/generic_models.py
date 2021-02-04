@@ -97,7 +97,7 @@ class Budget(AbstractTimeStamp):
         """Success form submit - object saving url"""
         return reverse("utilities:budget_update", kwargs={"username": self.disburser.username})
 
-    def accumulate_amount_with_fees_and_vat(self, amount_to_be_disbursed, issuer_type):
+    def accumulate_amount_with_fees_and_vat(self, amount_to_be_disbursed, issuer_type, num_of_trns = 1):
         """Accumulate amount being disbursed with fees percentage and 14 % VAT"""
         actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
@@ -123,7 +123,7 @@ class Budget(AbstractTimeStamp):
         if fees_obj:
             if fees_obj.fee_type == FeeSetup.FIXED_FEE:
                 fixed_value = fees_obj.fixed_value
-                fees_aggregated_value = fixed_value
+                fees_aggregated_value = fixed_value * num_of_trns
             elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
                 percentage_value = fees_obj.percentage_value
                 fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 4)
@@ -146,7 +146,7 @@ class Budget(AbstractTimeStamp):
         else:
             raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
 
-    def calculate_fees_and_vat_for_amount(self, amount_to_be_disbursed, issuer_type):
+    def calculate_fees_and_vat_for_amount(self, amount_to_be_disbursed, issuer_type, num_of_trns = 1):
         """
         Calculate fees percentage and 14 % VAT regarding specific amount and issuer.
         TODO: Remove the repeated code via exporting the main part into a generic method
@@ -175,7 +175,7 @@ class Budget(AbstractTimeStamp):
         if fees_obj:
             if fees_obj.fee_type == FeeSetup.FIXED_FEE:
                 fixed_value = fees_obj.fixed_value
-                fees_value = fixed_value
+                fees_value = fixed_value * num_of_trns
             elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
                 percentage_value = fees_obj.percentage_value
                 fees_value = round(((actual_amount * percentage_value) / 100), 4)
@@ -212,7 +212,7 @@ class Budget(AbstractTimeStamp):
         except (ValueError, Exception) as e:
             raise ValueError(_(f"Error while checking the amount to be disbursed if within threshold - {e.args}"))
 
-    def update_disbursed_amount_and_current_balance(self, amount, issuer_type):
+    def update_disbursed_amount_and_current_balance(self, amount, issuer_type, num_of_trns = 1):
         """
         Update the total disbursement amount and the current balance after each successful transaction
         :param amount: the amount being disbursed
@@ -220,7 +220,7 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower())
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower(), num_of_trns)
             current_balance_before = self.current_balance
             applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
             self.total_disbursed_amount += amount_plus_fees_vat

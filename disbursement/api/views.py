@@ -70,7 +70,7 @@ class DisburseAPIView(APIView):
         :param raw_pin: the raw pin used at disbursement
         :return: tuple of vodafone agent, etisalat agents lists
         """
-        if not provider.is_vodafone_default_onboarding:
+        if not (provider.is_vodafone_default_onboarding or provider.is_banks_standard_model_onboaring):
             agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
         else:
             agents = Agent.objects.filter(wallet_provider=provider)
@@ -181,7 +181,7 @@ class DisburseAPIView(APIView):
             smsc_sender_name = checker.root.client.smsc_sender_name
 
             if vf_recipients:
-                if not checker.is_vodafone_default_onboarding:
+                if not ( checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring):
                     pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
                 vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
                 vf_payload, log_payload = superadmin.vmt.\
@@ -217,6 +217,7 @@ class DisburseCallBack(UpdateAPIView):
         DATA_LOGGER.debug(f"[response] [automatic bulk disbursement callback] [{request.user}] -- {str(request.data)}")
         total_disbursed_amount = 0
         last_doc_record_id = successfully_disbursed_obj = None
+        num_of_trns = 0
 
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
@@ -232,6 +233,7 @@ class DisburseCallBack(UpdateAPIView):
 
                 # If data['status'] = 0, it means this record amount is disbursed successfully
                 if data['status'] == '0':
+                    num_of_trns = num_of_trns + 1
                     successfully_disbursed_obj = DisbursementData.objects.get(id=int(data['id']))
                     total_disbursed_amount += round(Decimal(successfully_disbursed_obj.amount), 2)
             except DisbursementData.DoesNotExist:
@@ -239,7 +241,7 @@ class DisburseCallBack(UpdateAPIView):
 
         if successfully_disbursed_obj is not None and successfully_disbursed_obj.doc.owner.root.has_custom_budget:
             successfully_disbursed_obj.doc.owner.root.budget.\
-                update_disbursed_amount_and_current_balance(total_disbursed_amount, "vodafone")
+                update_disbursed_amount_and_current_balance(total_disbursed_amount, "vodafone", num_of_trns)
             custom_budget_logger(
                     successfully_disbursed_obj.doc.owner.root.username,
                     f"Total disbursed amount: {total_disbursed_amount} LE",

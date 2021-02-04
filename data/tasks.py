@@ -436,9 +436,9 @@ class EWalletsSheetProcessor(Task):
     def amount_is_valid_digit(self, amount):
         return str(amount).replace('.', '', 1).isdigit()
 
-    def return_total_amount_plus_fees_regarding_specific_issuer(self, amount_list, issuer):
+    def return_total_amount_plus_fees_regarding_specific_issuer(self, amount_list, issuer, amount_list_length):
         return Budget.objects.get(disburser=self.doc_obj.owner.root).\
-            accumulate_amount_with_fees_and_vat(sum(amount_list), issuer)
+            accumulate_amount_with_fees_and_vat(sum(amount_list), issuer, amount_list_length)
 
     def determine_max_amount_can_be_disbursed(self):
         """:return: max_amount_can_be_disbursed"""
@@ -656,11 +656,11 @@ class EWalletsSheetProcessor(Task):
             vf_amount_list = amounts_list
 
         if vf_amount_list:
-            vf_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(vf_amount_list, "vodafone")
+            vf_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(vf_amount_list, "vodafone", len(vf_amount_list))
         if ets_amount_list:
-            ets_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(ets_amount_list, "etisalat")
+            ets_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(ets_amount_list, "etisalat", len(ets_amount_list))
         if aman_amount_list:
-            aman_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(aman_amount_list, "aman")
+            aman_total_amount = self.return_total_amount_plus_fees_regarding_specific_issuer(aman_amount_list, "aman", len(aman_amount_list))
 
         self.doc_obj.total_amount_with_fees_vat = sum([vf_total_amount, ets_total_amount, aman_total_amount])
         return self.doc_obj.total_amount_with_fees_vat <= current_custom_budget
@@ -673,7 +673,8 @@ class EWalletsSheetProcessor(Task):
         superadmin = self.doc_obj.owner.root.client.creator
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
         response_has_error = True
-        if self.doc_obj.owner.is_vodafone_default_onboarding:
+        if self.doc_obj.owner.is_vodafone_default_onboarding or \
+            self.doc_obj.owner.is_banks_standard_model_onboaring:
             fees_profile = self.doc_obj.owner.root.client.get_fees()
         else:
             fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
@@ -752,9 +753,11 @@ class EWalletsSheetProcessor(Task):
             elif total_amount > max_amount_can_be_disbursed:
                 self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
                 return False
+            
 
             # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
-            elif not self.doc_obj.owner.is_vodafone_default_onboarding:
+            elif not self.doc_obj.owner.is_vodafone_default_onboarding\
+                and not self.doc_obj.owner.is_banks_standard_model_onboaring:
                 has_sufficient_budget = self.validate_doc_total_amount_against_custom_budget(issuers_list, amounts_list)
                 if not has_sufficient_budget:
                     self.end_with_failure(MSG_NOT_WITHIN_THRESHOLD)
@@ -861,7 +864,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
             q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']).\
-                                      calculate_fees_and_vat_for_amount(q['total'], q['issuer'])
+                                      calculate_fees_and_vat_for_amount(q['total'], q['issuer'], q['count'])
         return qs
 
     def _add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):

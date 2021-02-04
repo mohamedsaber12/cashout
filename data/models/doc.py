@@ -132,7 +132,7 @@ class Doc(AbstractBaseDocType):
                 all_categories = self.owner.root.file_category.all()
                 reviews_required = min([cat.no_of_reviews_required for cat in all_categories])
 
-            if not checker.is_vodafone_default_onboarding:
+            if not checker.is_vodafone_default_onboarding and not checker.is_banks_standard_model_onboaring:
                 if self.is_e_wallet:
                     within_threshold = True if self.total_amount_with_fees_vat <= checker.root.budget.current_balance \
                         else False

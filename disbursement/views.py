@@ -241,7 +241,7 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
 
-        if request.is_ajax() and not request.user.is_vodafone_default_onboarding:
+        if request.is_ajax() and not (request.user.is_vodafone_default_onboarding or request.user.is_banks_standard_model_onboaring):
             ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date)
             return HttpResponse(status=200)
 
@@ -706,7 +706,7 @@ class AgentsListView(AgentsListPermissionRequired, ListView):
         return context
 
     def get_queryset(self):
-        if self.request.user.is_support and self.request.user.is_vodafone_default_onboarding:
+        if self.request.user.is_support and (self.request.user.is_vodafone_default_onboarding or self.request.user.is_banks_standard_model_onboaring):
             return Agent.objects.filter(wallet_provider__username=self.request.GET.get("admin"))
         return Agent.objects.filter(wallet_provider=self.request.user)
 

@@ -11,7 +11,7 @@ todo.txt
 *.csv
 *.orig
 data/cronjobs/smpp
-.env*
+#.env*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

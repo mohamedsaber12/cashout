@@ -176,7 +176,9 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         if doc_obj.is_bank_wallet:
             doc_transactions = doc_obj.bank_wallets_transactions.all()
         elif doc_obj.is_bank_card:
-            doc_transactions = doc_obj.bank_cards_transactions.all()
+            doc_transactions = doc_obj.bank_cards_transactions.all()\
+                .order_by('parent_transaction__transaction_id', '-created_at')\
+                .distinct('parent_transaction__transaction_id')
 
         context = {
             'doc_obj': doc_obj,

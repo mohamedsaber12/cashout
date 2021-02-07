@@ -361,7 +361,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                     if agent.get('HAS_PIN', None):
                         error_message = f"Agents already have registered and have a pin, {messages.MSG_TRY_OR_CONTACT}"
                         return None, error_message
-                    if agent.get("USER_TYPE") != "Super-Agent" and agent.get("USER_TYPE") != "Agent":
+                    if agent.get("USER_TYPE") != "Super-Agent" and agent.get("USER_TYPE") != "Agent" \
+                            and agent.get("USER_TYPE") != "P2M-Merchant":
                         error_message = f"Agents you have entered are not registered, {messages.MSG_TRY_OR_CONTACT}"
                         return None, error_message
             return transactions, None

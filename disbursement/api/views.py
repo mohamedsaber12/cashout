@@ -80,6 +80,9 @@ class DisburseAPIView(APIView):
         vodafone_agents = agents.filter(type=Agent.VODAFONE)
         etisalat_agents = agents.filter(type=Agent.ETISALAT)
 
+        if agents.first().type == Agent.P2M and not vodafone_agents:
+            vodafone_agents = agents.filter(type=Agent.P2M)
+
         vodafone_agents = vodafone_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
         etisalat_agents = etisalat_agents.values_list('msisdn', flat=True)
 

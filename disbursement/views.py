@@ -423,7 +423,7 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
                 [Client.EXISTING_SUPERAGENT_NEW_AGENTS, Client.EXISTING_SUPERAGENT_AGENTS]:
             superadmin_children = request.user.children()
             agents_of_all_types = Agent.objects.filter(wallet_provider__in=superadmin_children).distinct('msisdn')
-            existing_super_agents = agents_of_all_types.filter(super=True)
+            existing_super_agents = agents_of_all_types.filter(super=True).exclude(type__in=[Agent.P2M])
             existing_non_super_agents = agents_of_all_types.filter(super=False)
             self.super_agents_choices = [(agent.msisdn, agent.msisdn) for agent in existing_super_agents]
             self.non_super_agents_choices = [(agent.msisdn, agent.msisdn) for agent in existing_non_super_agents]

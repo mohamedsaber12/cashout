@@ -274,12 +274,21 @@ $(document).ready( function () {
                 }
             },
             {
+                extend: 'print',
+                text : "PDF",
+                exportOptions: {
+                    columns: ':visible',
+                    
+                }
+            },
+            {
                 extend: 'excelHtml5',
                 text : "Export",
                 exportOptions: {
                     columns: ':visible',
                     
                 },
+                
                 customize: function( xlsx ) {
 					
                   var sheet = xlsx.xl.worksheets['sheet1.xml'];

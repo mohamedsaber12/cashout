@@ -18,6 +18,8 @@ from .validators import (
     fees_validator, issuer_validator, msisdn_validator, bank_transaction_type_validator,
 )
 
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
@@ -102,7 +104,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
 
     transaction_id = serializers.SerializerMethodField()
     issuer = serializers.SerializerMethodField()
-    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseACHTransactionStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     bank_card_number = serializers.SerializerMethodField()

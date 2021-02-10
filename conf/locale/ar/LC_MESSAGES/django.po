@@ -660,7 +660,7 @@ msgid "Disburse"
 msgstr ""
 
 #: templates/data/document_viewer_disbursement.html:53
-msgid "Notify Chekers"
+msgid "Notify Checkers"
 msgstr ""
 
 #: templates/data/document_viewer_disbursement.html:57

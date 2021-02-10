@@ -236,7 +236,7 @@
           <h4 class="modal-title">Success</h4>
         </div>
         <div class="modal-body">
-          <div class="alert alert-success" role="alert">
+          <div class="alert alert-success" role="alert" id="status_description_success">
             {{ status_description }}
           </div>
           <div style="text-align: center;">
@@ -260,7 +260,7 @@
           <h4 class="modal-title">Failed</h4>
         </div>
         <div class="modal-body">
-          <div class="alert alert-danger" role="alert">
+          <div class="alert alert-danger" role="alert" id="status_description_failed">
             {{ status_description }}
           </div>
           <div style="text-align: center;">
@@ -352,6 +352,22 @@
           keyboard: false
         });
       {% endif %}
+    {% endif %}
+    {% if request.GET.status%}
+    {% if request.GET.status == '8000' %}
+      $("#status_description_success").html('{{request.GET.message}}');
+      $('#successModal').modal({
+            backdrop: 'static',
+            keyboard: false
+          });
+    {% else %}
+    $("#status_description_failed").html('{{request.GET.message}}');
+      $('#failedModal').modal({
+            backdrop: 'static',
+            keyboard: false
+          });
+
+    {% endif %}
     {% endif %}
   </script>
 

@@ -759,13 +759,17 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
             }
             try:
                 response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
-                context['status_code'] = response.data.get('status_code')
-                context['status_description'] = response.data.get('status_description')
+                return redirect(f"{request.path}?status={response.data.get('status_code')}\
+                    &message={response.data.get('status_description')}")
+            
             except:
-                context['status_code'] = status.HTTP_500_INTERNAL_SERVER_ERROR
-                context['status_description'] = 'Process stopped during an internal error, please can you try again.'
+                error_msg = "Process stopped during an internal error, please can you try again."
+                return redirect(f"{request.path}?status={status.HTTP_500_INTERNAL_SERVER_ERROR}\
+                    &message={error_msg}")
 
         return render(request, template_name=self.template_name, context=context)
+        
+
 
 
 class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):

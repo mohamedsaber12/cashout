@@ -223,7 +223,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
         """
         total_amount = 0
         accounts_list, amount_list, names_list, codes_list, purposes_list, errors_list = [], [], [], [], [], []
-
+        iban_regex = re.compile('^EG\d{27}')
         try:
             for record in df.itertuples():
                 index = record[0]
@@ -236,7 +236,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     accounts_list.append(account)
                     valid_account = True
                 # check account is iban number
-                elif str(record[1]).startswith('EG') and account and len(account) == 27:
+                elif bool(iban_regex.match(str(record[1]))):
                     accounts_list.append(str(record[1]))
                     valid_account = True
                 else:
@@ -244,7 +244,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "Invalid account number"
                     else:
                         errors_list[index] = "\nInvalid account number"
-                    accounts_list.append(account)
+                    accounts_list.append(str(record[1]))
 
                 # 1.2 Validate for duplicate account numbers
                 if valid_account and len(list(filter(lambda acc: acc == account, accounts_list))) > 1:

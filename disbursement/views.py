@@ -20,6 +20,8 @@ from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import ListView, View
+import urllib
+
 
 from rest_framework import status
 from rest_framework_expiring_authtoken.models import ExpiringToken
@@ -759,13 +761,19 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
             }
             try:
                 response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
-                return redirect(f"{request.path}?status={response.data.get('status_code')}\
-                    &message={response.data.get('status_description')}")
+                data = {
+                    "status" : response.data.get('status_code'),
+                    "message": response.data.get('status_description')
+                }
+                return redirect(request.path + '?' + urllib.parse.urlencode(data))
             
             except:
                 error_msg = "Process stopped during an internal error, please can you try again."
-                return redirect(f"{request.path}?status={status.HTTP_500_INTERNAL_SERVER_ERROR}\
-                    &message={error_msg}")
+                data = {
+                    "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "message": error_msg
+                }
+                return redirect(request.path + '?' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)
         

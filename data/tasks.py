@@ -235,6 +235,10 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 if account and (6 <= len(account) <= 20):
                     accounts_list.append(account)
                     valid_account = True
+                # check account is iban number
+                elif str(record[1]).startswith('EG') and account and len(account) == 27:
+                    accounts_list.append(str(record[1]))
+                    valid_account = True
                 else:
                     if errors_list[index]:
                         errors_list[index] = "Invalid account number"

@@ -90,7 +90,6 @@
               <table class="table table-bordered" id="transaction-table">
                 <thead>
                   <tr>
-                    <th>{% trans 'Transaction ID' %}</th>
                     <th>{% trans 'Account Number' %}</th>
                     <th>{% trans 'Bank Swift Code' %}</th>
                     <th>{% trans 'Amount' %}</th>
@@ -117,7 +116,6 @@
                         data-updated_at="{{ transaction.created_at }}"
                         data-debtor_account="{{ transaction.debtor_account }}"
                         class="row-hover">
-                      <td>{{ transaction.parent_transaction.transaction_id }}</td>
                       <td>{{ transaction.creditor_account_number }}</td>
                       <td>{{ transaction.creditor_bank }}</td>
                       <td>{{ transaction.amount }}</td>

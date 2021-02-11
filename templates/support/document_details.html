@@ -57,10 +57,10 @@
             <thead>
             <tr>
               {% if doc_obj.is_bank_wallet %}
-                <th>{% trans 'Transaction ID' %}</th>
+                <th style="display:none;">{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Wallet Number' %}</th>
               {% elif doc_obj.is_bank_card %}
-                <th>{% trans 'Transaction ID' %}</th>
+                <th style="display:none;">{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Account Number' %}</th>
               {% else %}
                 <th>{% trans 'Wallet Number' %}</th>
@@ -105,10 +105,10 @@
                   data-amount="{{ record.amount }}"
                   class="row-hover">
                 {% if doc_obj.is_bank_wallet %}
-                  <td>{{ record.uid }}</td>
+                  <td style="display:none;">{{ record.uid }}</td>
                   <td>{{ record.anon_recipient }}</td>
                 {% elif doc_obj.is_bank_card %}
-                  <td>{{ record.parent_transaction.transaction_id }}</td>
+                  <td style="display:none;">{{ record.parent_transaction.transaction_id }}</td>
                   <td>{{ record.creditor_account_number }}</td>
                 {% else %}
                   <td>{{ record.msisdn }}</td>
@@ -284,13 +284,9 @@ $(document).ready( function () {
             {
                 extend: 'excelHtml5',
                 text : "Export",
-                exportOptions: {
-                    columns: ':visible',
-                    
-                },
                 
                 customize: function( xlsx ) {
-					
+
                   var sheet = xlsx.xl.worksheets['sheet1.xml'];
                   $('row c[r^="B"]:gt(0)', sheet).attr( 't', 'inlineStr' );  //add :gt(0) to skip column title
                   $('row c[r^="B"]:gt(0)', sheet).attr( 's', '67' );  //apply for new style
@@ -299,7 +295,7 @@ $(document).ready( function () {
                     $(this).text($(this).parent().siblings("v").text());  //paste text to new node
                     $(this).parent().siblings("v").remove();  //remove useless v node
                   });
-				}
+				       }
             }
         ]
     });

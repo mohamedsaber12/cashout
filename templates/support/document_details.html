@@ -268,18 +268,12 @@ $(document).ready( function () {
                 extend: 'copy',
                 text : "Copy",
                 exportOptions: {
-                    columns: ':visible',
                     charSet: "utf-8",
-                    
                 }
             },
             {
                 extend: 'print',
                 text : "PDF",
-                exportOptions: {
-                    columns: ':visible',
-                    
-                }
             },
             {
                 extend: 'excelHtml5',
@@ -288,13 +282,7 @@ $(document).ready( function () {
                 customize: function( xlsx ) {
 
                   var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                  $('row c[r^="B"]:gt(0)', sheet).attr( 't', 'inlineStr' );  //add :gt(0) to skip column title
-                  $('row c[r^="B"]:gt(0)', sheet).attr( 's', '67' );  //apply for new style
-                  $('row c[r^="B"]:gt(0)', sheet).append('<is><t xml:space="preserve"></t></is>');
-                  $('row c[r^="B"]:gt(0) > is > t', sheet).each(function () {
-                    $(this).text($(this).parent().siblings("v").text());  //paste text to new node
-                    $(this).parent().siblings("v").remove();  //remove useless v node
-                  });
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
 				       }
             }
         ]

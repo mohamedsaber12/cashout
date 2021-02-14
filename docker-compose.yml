@@ -15,6 +15,7 @@ services:
       - media_volume:/app/mediafiles/media
     ports:
       - 8000:8000
+      - 3000:3000
     command: >
       sh -c "
              python manage.py makemigrations users &&

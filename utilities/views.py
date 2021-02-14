@@ -77,11 +77,20 @@ class IncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
                 rest_of_message = _(
                         f"<label>Accept username:  </label> {form.cleaned_data['username']} <br/><br/>Best Regards,"
                 )
-            else:
+            elif form.cleaned_data['type'] == 'from_bank_transfer':
                 rest_of_message = _(f"""<h4>From: </h4>
                 <label> Bank Name:  </label> {form.cleaned_data['from_bank']} <br/>
                 <label> Account Number:  </label> {form.cleaned_data['from_account_number']} <br/>
                 <label> Account Name:  </label> {form.cleaned_data['from_account_name']} <br/>
+                <label> Date: </label> {form.cleaned_data['from_date']} <br/><br/>
+                <h4>To: </h4>
+                <label> Bank Name:  </label> {form.cleaned_data['to_bank']} <br/>
+                <label> Account Number:  </label> {form.cleaned_data['to_account_number']} <br/>
+                <label> Account Name:  </label> {form.cleaned_data['to_account_name']} <br/><br/>
+                Best Regards,""")
+            elif form.cleaned_data['type'] == 'from_bank_deposit':
+                rest_of_message = _(f"""<h4>From: </h4>
+                <label> Depositor:  </label> {form.cleaned_data['from_account_name']} <br/>
                 <label> Date: </label> {form.cleaned_data['from_date']} <br/><br/>
                 <h4>To: </h4>
                 <label> Bank Name:  </label> {form.cleaned_data['to_bank']} <br/>

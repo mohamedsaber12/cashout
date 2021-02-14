@@ -24,8 +24,8 @@
     .custom-file-label {
       position: absolute;
       top: 24px;
-      right: 0;
-      left: 0;
+      right: 12px;
+      left: 9px;
       z-index: 1;
       height: calc(2.25rem + 10px);
       padding: .375rem .75rem;
@@ -104,100 +104,7 @@
               </div>
             </div>
           </div>
-          <div style="display:none;" id="accept_form_row" class="row">
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label>
-                <span class="glyphicon glyphicon-user"></span> Accept Username *
-              </label>
-                {{ form.username }}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{ form.username.errors }}
-              </div>
-            </div>
-          </div>
-          <div style="display:none;" id="bank_transfer_form_row" class="row">
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label>
-                <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
-              </label>
-              {{form.from_bank}}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{form.from_bank.errors}}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label>
-                <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
-              </label>
-              {{form.to_bank}}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{form.to_bank.errors}}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label>
-                <span class="glyphicon glyphicon-user"></span> Account Number *
-              </label>
-              {{form.from_account_number}}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{form.from_account_number.errors}}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label>
-                <span class="glyphicon glyphicon-user"></span> Account Number *
-              </label>
-              {{form.to_account_number}}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{form.to_account_number.errors}}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
-              {{ form.from_account_name }}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{ form.from_account_name.errors }}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
-              {{ form.to_account_name }}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{ form.to_account_name.errors }}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
-              <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
-              {{ form.from_date }}
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{ form.from_date.errors }}
-              </div>
-            </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12 custom-file">
-              <label><span class="glyphicon glyphicon-import"></span> Attach Proof *</label>
-              {{ form.to_attach_proof }}
-              <label class="custom-file-label">Choose File</label>
-              <span class="respond-span"></span>
-              <div class="help-block">
-                {{ form.to_attach_proof.errors }}
-              </div>
-            </div>
-          </div>
-          <input class="btn btn-primary pull-left" type="submit" value="Submit">
+          <input id="submit_button" class="btn btn-primary pull-left" type="submit" value="Submit">
         </form>
       </div>
     </div>
@@ -217,26 +124,202 @@
     {% if request_received %}
       $('#flash_success_message').fadeTo("slow", 1.0, animate_message);
     {% endif %}
-
+    let submit_btn = $('#submit_button');
     let type = document.getElementById('id_type');
-    let acceptForm = document.getElementById('accept_form_row');
-    let bankTransferForm = document.getElementById('bank_transfer_form_row');
 
+    let acceptForm = `<div id="accept_form_row" class="row">
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-user"></span> Accept Username *
+        </label>
+          {{ form.username }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.username.errors }}
+        </div>
+      </div>
+    </div>`;
+    let bankTransferForm = `<div id="bank_transfer_form_row" class="row">
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+        </label>
+        {{form.from_bank}}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{form.from_bank.errors}}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+        </label>
+        {{form.to_bank}}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{form.to_bank.errors}}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-user"></span> Account Number *
+        </label>
+        {{form.from_account_number}}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{form.from_account_number.errors}}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-user"></span> Account Number *
+        </label>
+        {{form.to_account_number}}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{form.to_account_number.errors}}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+        {{ form.from_account_name }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.from_account_name.errors }}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+        {{ form.to_account_name }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.to_account_name.errors }}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+        {{ form.from_date }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.from_date.errors }}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12 custom-file">
+        <label><span class="glyphicon glyphicon-import"></span> Attach Proof *</label>
+        {{ form.to_attach_proof }}
+        <label class="custom-file-label">Choose File</label>
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.to_attach_proof.errors }}
+        </div>
+      </div>
+    </div>`;
+    let bankDepositForm = `<div id="bank_deposit_form_row" class="row">
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+      {{ form.from_account_name }}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{ form.from_account_name.errors }}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+      </label>
+      {{form.to_bank}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.to_bank.errors}}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+      {{ form.from_date }}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{ form.from_date.errors }}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-user"></span> Account Number *
+      </label>
+      {{form.to_account_number}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.to_account_number.errors}}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+      {{ form.to_account_name }}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{ form.to_account_name.errors }}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12 custom-file">
+      <label><span class="glyphicon glyphicon-import"></span> Attach Proof *</label>
+      {{ form.to_attach_proof }}
+      <label class="custom-file-label">Choose File</label>
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{ form.to_attach_proof.errors }}
+      </div>
+    </div>
+  </div>`;
     if (type.value == 'from_accept_balance') {
-      acceptForm.style.display = 'block';
-      bankTransferForm.style.display = 'none';
-    } else if (type.value == 'from_bank_transfer') {
-      acceptForm.style.display = 'none';
-      bankTransferForm.style.display = 'block';
+      $(acceptForm).insertBefore(submit_btn);
+      $('#bank_transfer_form_row').remove();
+      $('#bank_deposit_form_row').remove();
+    } else if (type.value == 'from_bank_transfer')  {
+      $(bankTransferForm).insertBefore(submit_btn);
+      $('#accept_form_row').remove();
+      $('#bank_deposit_form_row').remove();
+    } else if (type.value == 'from_bank_deposit') {
+       $(bankDepositForm).insertBefore(submit_btn);
+       $('#accept_form_row').remove();
+       $('#bank_transfer_form_row').remove();
     }
 
     function toggleForm() {
       if (type.value == 'from_accept_balance') {
-        acceptForm.style.display = 'block';
-        bankTransferForm.style.display = 'none';
-      } else if (type.value == 'from_bank_transfer') {
-        acceptForm.style.display = 'none';
-        bankTransferForm.style.display = 'block';
+        $('#bank_transfer_form_row').remove();
+        $('#bank_deposit_form_row').remove();
+        $(acceptForm).insertBefore(submit_btn);
+      } else if (type.value == 'from_bank_transfer')  {
+        $('#accept_form_row').remove();
+        $('#bank_deposit_form_row').remove();
+        $(bankTransferForm).insertBefore(submit_btn);
+        $(".custom-file-input").on("change", function() {
+          var fileName = $(this).val().split("\\").pop();
+          $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+      } else if (type.value == 'from_bank_deposit') {
+         $('#accept_form_row').remove();
+         $('#bank_transfer_form_row').remove();
+         $(bankDepositForm).insertBefore(submit_btn);
+         $(".custom-file-input").on("change", function() {
+          var fileName = $(this).val().split("\\").pop();
+          $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
       }
     }
     type.addEventListener('change', toggleForm);

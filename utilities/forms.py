@@ -95,98 +95,99 @@ class IncreaseBalanceRequestForm(forms.Form):
     form For Increase Balance Request
     """
     amount = forms.IntegerField(
-            label=_('Amount To Be Added '),
-            required=True,
-            validators=[MinValueValidator(round(Decimal(100), 2))],
-            widget=forms.TextInput(attrs={
-                'placeholder': _('New budget, ex: 100'),
-                'class': 'form-control',
-                'type': 'number'
-            })
+        label=_('Amount To Be Added '),
+        required=True,
+        validators=[MinValueValidator(round(Decimal(100), 2))],
+        widget=forms.TextInput(attrs={
+            'placeholder': _('New budget, ex: 100'),
+            'class': 'form-control',
+            'type': 'number'
+        })
     )
     type = forms.ChoiceField(
-            label=_('Type'),
-            required=True,
-            choices=[
-                ('from_bank_transfer', 'From Bank Transfer'),
-                ('from_accept_balance', 'From Accept Balance')
-            ],
-            widget=forms.Select(attrs={
-                'class': 'form-control',
-            })
+        label=_('Type'),
+        required=True,
+        choices=[
+            ('from_bank_transfer', 'Bank Transfer'),
+            ('from_accept_balance', 'From Accept Balance'),
+            ('from_bank_deposit', 'Bank Deposit')
+        ],
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+        })
     )
     username = forms.CharField(
-            label=_('username'),
-            required=False,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('Accept Username'),
-                'class': 'form-control'
-            })
+        label=_('username'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('Accept Username'),
+            'class': 'form-control'
+        })
     )
     from_bank = forms.CharField(
-            label=_('bank'),
-            required=False,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('Bank Name'),
-                'class': 'form-control'
-            })
+        label=_('bank'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('Bank Name'),
+            'class': 'form-control'
+        })
     )
     to_bank = forms.CharField(
-            label=_('bank'),
-            required=False,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('Bank Name'),
-                'class': 'form-control'
-            })
+        label=_('bank'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('Bank Name'),
+            'class': 'form-control'
+        })
     )
     from_account_number = forms.CharField(
-            label=_('acc. number'),
-            required=False,
-            max_length=34,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('From Account Number'),
-                'class': 'form-control'
-            })
+        label=_('acc. number'),
+        required=False,
+        max_length=34,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('From Account Number'),
+            'class': 'form-control'
+        })
     )
     to_account_number = forms.CharField(
-            label=_('acc. number'),
-            required=False,
-            max_length=34,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('To Account Number'),
-                'class': 'form-control'
-            })
+        label=_('acc. number'),
+        required=False,
+        max_length=34,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('To Account Number'),
+            'class': 'form-control'
+        })
     )
     from_account_name = forms.CharField(
-            label=_('account name'),
-            required=False,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('From Account Name'),
-                'class': 'form-control'
-            })
+        label=_('account name'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('From Account Name'),
+            'class': 'form-control'
+        })
     )
     to_account_name = forms.CharField(
-            label=_('account number'),
-            required=False,
-            widget=forms.TextInput(attrs={
-                'placeholder': _('To Account Name'),
-                'class': 'form-control'
-            })
+        label=_('account number'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'placeholder': _('To Account Name'),
+            'class': 'form-control'
+        })
     )
     from_date = forms.DateField(
-            label=_('date'),
-            required=False,
-            widget=forms.DateInput(attrs={
-                'placeholder': _('Enter Date'),
-                'class': 'form-control'
-            })
+        label=_('date'),
+        required=False,
+        widget=forms.DateInput(attrs={
+            'placeholder': _('Enter Date'),
+            'class': 'form-control'
+        })
     )
     to_attach_proof = forms.FileField(
-            label=_('Attach Proof'),
-            required=False,
-            widget=forms.FileInput(attrs={
-                'class': 'custom-file-input'
-            })
+        label=_('Attach Proof'),
+        required=False,
+        widget=forms.FileInput(attrs={
+            'class': 'custom-file-input'
+        })
     )
 
     def clean(self):
@@ -199,15 +200,15 @@ class IncreaseBalanceRequestForm(forms.Form):
         if transfer_type == 'from_accept_balance':
             if not data.get('username'):
                 validationErrors['username'] = [is_required_msg]
-            else:
-                return data
         elif transfer_type == 'from_bank_transfer':
             if not data.get('from_bank'):
                 validationErrors['from_bank'] = [is_required_msg]
-            if not data.get('to_bank'):
-                validationErrors['to_bank'] = [is_required_msg]
             if not data.get('from_account_number'):
                 validationErrors['from_account_number'] = [is_required_msg]
+        # validate shared fields between bank deposit and bank transfer
+        if transfer_type == 'from_bank_deposit' or transfer_type == 'from_bank_transfer':
+            if not data.get('to_bank'):
+                validationErrors['to_bank'] = [is_required_msg]
             if not data.get('to_account_number'):
                 validationErrors['to_account_number'] = [is_required_msg]
             if not data.get('from_account_name'):
@@ -221,9 +222,8 @@ class IncreaseBalanceRequestForm(forms.Form):
             else:
                 if not self.validate_image():
                     validationErrors['to_attach_proof'] = [error_file_size_msg]
-            if len(validationErrors.keys()) == 0:
-                return data
-
+        if len(validationErrors.keys()) == 0:
+            return data
         raise forms.ValidationError(validationErrors)
 
     def validate_image(self):

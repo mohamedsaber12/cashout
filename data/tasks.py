@@ -45,6 +45,7 @@ from .decorators import respects_language
 from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
+
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
 
@@ -476,7 +477,7 @@ class EWalletsSheetProcessor(Task):
         amount_position, msisdn_position, issuer_position = self.doc_obj.file_category.fields_cols()
         msisdn_header = df.columns[msisdn_position]
         amount_header = df.columns[amount_position]
-        issuer_header = df.columns[issuer_position] if issuer_position else False
+        issuer_header = df.columns[issuer_position] if issuer_position or type(issuer_position) else False
 
         return msisdn_header, amount_header, issuer_header
 

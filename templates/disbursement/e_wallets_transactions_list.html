@@ -60,7 +60,6 @@
           <table class="table table-bordered" id="transaction-table">
             <thead>
               <tr>
-                {% if not is_normal_flow %}<th>{% trans 'Transaction ID' %}</th>{% endif %}
                 <th>{% trans 'Wallet Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
                 {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
@@ -84,9 +83,8 @@
                     {% endif %}
                     class="row-hover">
 
-                  {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
-                    <td>{{ transaction.msisdn }}</td>
-                    <td>{{ transaction.amount }}</td>
+                  <td>{{ transaction.msisdn }}</td>
+                  <td>{{ transaction.amount }}</td>
                   {% if not is_normal_flow %}<td>{{ transaction.issuer|title }}</td>{% endif %}
                   <td>
                     {% if transaction.is_disbursed %}

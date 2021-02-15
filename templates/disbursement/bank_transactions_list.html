@@ -62,6 +62,10 @@
               <tr>
                 <th>{% trans 'Wallet Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <th>{% trans 'Fees' %}</th>
+                  <th>{% trans 'Vat' %}</th>
+                {% endif %}
                 <th>{% trans 'Issuer' %}</th>
                 <th>{% trans 'Status' %}</th>
               </tr>
@@ -84,6 +88,10 @@
                     class="row-hover">
                   <td>{{ transaction.anon_recipient }}</td>
                   <td>{{ transaction.amount }}</td>
+                  {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                    <td>{{ transaction.fees }}</td>
+                    <td>{{ transaction.vat }}</td>
+                  {% endif %}
                   <td>{{ transaction.issuer_choice_verbose }}</td>
                   <td>{{ transaction.status_choice_verbose }}</td>
                 </tr>
@@ -94,6 +102,10 @@
               <tr>
                 <th>{% trans 'Account Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <th>{% trans 'Fees' %}</th>
+                  <th>{% trans 'Vat' %}</th>
+                {% endif %}
                 <th>{% trans 'Status' %}</th>
               </tr>
               </thead>
@@ -118,6 +130,10 @@
                     class="row-hover">
                   <td>{{ transaction.creditor_account_number }}</td>
                   <td>{{ transaction.amount }}</td>
+                  {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                    <td>{{ transaction.fees }}</td>
+                    <td>{{ transaction.vat }}</td>
+                  {% endif %}
                   <td>{{ transaction.status_choice_verbose }}</td>
                 </tr>
               {% endfor %}

@@ -30,7 +30,6 @@
       }
       #download-doc span {
           color: #333;
-      
       }
       #menu1 {
         display:none;
@@ -66,6 +65,10 @@
                 <th>{% trans 'Wallet Number' %}</th>
               {% endif %}
               <th>{% trans 'Amount' %}</th>
+              {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                <th>{% trans 'Fees' %}</th>
+                <th>{% trans 'Vat' %}</th>
+              {% endif %}
               <th>{% trans 'Is Disbursed?' %}</th>
               <th>{% trans 'Updated At' %}</th>
             </tr>
@@ -114,6 +117,10 @@
                   <td>{{ record.msisdn }}</td>
                 {% endif %}
                 <td>{{ record.amount }}</td>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <td>{{ record.fees }}</td>
+                  <td>{{ record.vat }}</td>
+                {% endif %}
                 {% if doc_obj.disbursed_successfully %}
                   <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
                     {% if doc_obj.is_bank_card or doc_obj.is_bank_wallet %}

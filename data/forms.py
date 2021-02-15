@@ -217,9 +217,17 @@ class FileCategoryForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['issuer_field'].required = True
         self.fields['name'].initial = 'Default Format'
+        self.fields['name'].widget.attrs['readonly'] = True
+        
         self.fields['unique_field'].initial = 'A-1'
+        self.fields['unique_field'].widget.attrs['readonly'] = True
+        
         self.fields['amount_field'].initial = 'B-1'
+        self.fields['amount_field'].widget.attrs['readonly'] = True
+        
         self.fields['issuer_field'].initial = 'C-1'
+        self.fields['issuer_field'].widget.attrs['readonly'] = True
+        
         self.fields['no_of_reviews_required'].initial = '1'
         self.request = request
 

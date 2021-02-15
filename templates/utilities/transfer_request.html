@@ -228,14 +228,16 @@
       <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+      <label><span class="glyphicon glyphicon-briefcase"></span> Depositor Name *</label>
       {{ form.from_account_name }}
-      <span class="respond-span"></span>
+      <span class="respond-span" style="color:red;">
+        **Please note that only deposits submitted in your company's/entity's name will be accepted.
+      </span>
       <div class="help-block">
         {{ form.from_account_name.errors }}
       </div>
     </div>
-    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <div class="form-group col-md-6 col-sm-6 col-xs-12" style="margin-bottom: 50px;">
       <label>
         <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
       </label>

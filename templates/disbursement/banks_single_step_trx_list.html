@@ -90,10 +90,11 @@
               <table class="table table-bordered" id="transaction-table">
                 <thead>
                   <tr>
-                    <th>{% trans 'Transaction ID' %}</th>
                     <th>{% trans 'Account Number' %}</th>
                     <th>{% trans 'Bank Swift Code' %}</th>
                     <th>{% trans 'Amount' %}</th>
+                    <th>{% trans 'Fees' %}</th>
+                    <th>{% trans 'Vat' %}</th>
                     <th>{% trans 'Status' %}</th>
                     <th>{% trans 'Updated At' %}</th>
                   </tr>
@@ -117,10 +118,11 @@
                         data-updated_at="{{ transaction.created_at }}"
                         data-debtor_account="{{ transaction.debtor_account }}"
                         class="row-hover">
-                      <td>{{ transaction.parent_transaction.transaction_id }}</td>
                       <td>{{ transaction.creditor_account_number }}</td>
                       <td>{{ transaction.creditor_bank }}</td>
                       <td>{{ transaction.amount }}</td>
+                      <td>{{ transaction.fees }}</td>
+                      <td>{{ transaction.vat }}</td>
                       <td>{{ transaction.status_choice_verbose }}</td>
                       <td>{{ transaction.updated_at }}</td>
                     </tr>

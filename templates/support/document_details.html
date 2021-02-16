@@ -30,7 +30,6 @@
       }
       #download-doc span {
           color: #333;
-      
       }
       #menu1 {
         display:none;
@@ -57,15 +56,19 @@
             <thead>
             <tr>
               {% if doc_obj.is_bank_wallet %}
-                <th>{% trans 'Transaction ID' %}</th>
+                <th style="display:none;">{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Wallet Number' %}</th>
               {% elif doc_obj.is_bank_card %}
-                <th>{% trans 'Transaction ID' %}</th>
+                <th style="display:none;">{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Account Number' %}</th>
               {% else %}
                 <th>{% trans 'Wallet Number' %}</th>
               {% endif %}
               <th>{% trans 'Amount' %}</th>
+              {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                <th>{% trans 'Fees' %}</th>
+                <th>{% trans 'Vat' %}</th>
+              {% endif %}
               <th>{% trans 'Is Disbursed?' %}</th>
               <th>{% trans 'Updated At' %}</th>
             </tr>
@@ -105,15 +108,19 @@
                   data-amount="{{ record.amount }}"
                   class="row-hover">
                 {% if doc_obj.is_bank_wallet %}
-                  <td>{{ record.uid }}</td>
+                  <td style="display:none;">{{ record.uid }}</td>
                   <td>{{ record.anon_recipient }}</td>
                 {% elif doc_obj.is_bank_card %}
-                  <td>{{ record.parent_transaction.transaction_id }}</td>
+                  <td style="display:none;">{{ record.parent_transaction.transaction_id }}</td>
                   <td>{{ record.creditor_account_number }}</td>
                 {% else %}
                   <td>{{ record.msisdn }}</td>
                 {% endif %}
                 <td>{{ record.amount }}</td>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <td>{{ record.fees }}</td>
+                  <td>{{ record.vat }}</td>
+                {% endif %}
                 {% if doc_obj.disbursed_successfully %}
                   <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
                     {% if doc_obj.is_bank_card or doc_obj.is_bank_wallet %}
@@ -268,38 +275,22 @@ $(document).ready( function () {
                 extend: 'copy',
                 text : "Copy",
                 exportOptions: {
-                    columns: ':visible',
                     charSet: "utf-8",
-                    
                 }
             },
             {
                 extend: 'print',
                 text : "PDF",
-                exportOptions: {
-                    columns: ':visible',
-                    
-                }
             },
             {
                 extend: 'excelHtml5',
                 text : "Export",
-                exportOptions: {
-                    columns: ':visible',
-                    
-                },
                 
                 customize: function( xlsx ) {
-					
+
                   var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                  $('row c[r^="B"]:gt(0)', sheet).attr( 't', 'inlineStr' );  //add :gt(0) to skip column title
-                  $('row c[r^="B"]:gt(0)', sheet).attr( 's', '67' );  //apply for new style
-                  $('row c[r^="B"]:gt(0)', sheet).append('<is><t xml:space="preserve"></t></is>');
-                  $('row c[r^="B"]:gt(0) > is > t', sheet).each(function () {
-                    $(this).text($(this).parent().siblings("v").text());  //paste text to new node
-                    $(this).parent().siblings("v").remove();  //remove useless v node
-                  });
-				}
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
+				       }
             }
         ]
     });

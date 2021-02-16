@@ -166,6 +166,8 @@ class Budget(AbstractTimeStamp):
             issuer_type_refined = FeeSetup.BANK_CARD
         elif issuer_type == "bank_wallet" or issuer_type == "B":
             issuer_type_refined = FeeSetup.BANK_WALLET
+        elif issuer_type == 'default':
+            return 0, 0
 
         # 2. Pick the fees objects corresponding to the determined issuer type
         fees_obj = self.fees.filter(issuer=issuer_type_refined)

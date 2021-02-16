@@ -11,6 +11,7 @@ from django.views.generic import CreateView, ListView, TemplateView
 
 from data.models import Doc
 from disbursement.views import DisbursementDocTransactionsView
+from disbursement.utils import add_fees_and_vat_to_qs
 
 from ..forms import SupportUserCreationForm
 from ..mixins import (
@@ -189,7 +190,7 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             'doc_status': self.retrieve_doc_status(doc_obj),
             'disbursement_ratio': doc_obj.disbursement_ratio(),
             'is_reviews_completed': doc_obj.is_reviews_completed(),
-            'disbursement_records': doc_transactions,
+            'disbursement_records': add_fees_and_vat_to_qs(doc_transactions, admin, doc_obj),
             'disbursement_doc_data': doc_obj.disbursement_txn,
             'doc_transactions_totals':
                 DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions_qs),

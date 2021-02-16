@@ -45,12 +45,14 @@ from users.mixins import (SuperFinishedSetupMixin,
                           UserWithDisbursementPermissionRequired)
 from users.models import EntitySetup, Client
 from utilities import messages
+from utilities.models import Budget
 
 from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
                     BalanceInquiryPinForm, SingleStepTransactionModelForm)
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction
-from .utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
+from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
+                    add_fees_and_vat_to_qs)
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -224,7 +226,12 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                             status=AbstractBaseStatus.SUCCESSFUL
                     ).count() != 0,
                 }
-
+            # add fees and vat to query set in case of accept model
+            context['doc_transactions'] = add_fees_and_vat_to_qs(
+                context['doc_transactions'],
+                request.user.root,
+                doc_obj
+            )
             context.update({
                 'doc_obj': doc_obj,
                 'doc_transactions_totals': self.__class__.get_document_transactions_totals(doc_obj, doc_transactions),
@@ -733,7 +740,13 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
             distinct("parent_transaction__transaction_id").\
             values_list("id", flat=True)
 
-        return BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+        bank_trxs = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+        # add fees and vat to query set in case of accept model
+        return add_fees_and_vat_to_qs(
+            bank_trxs,
+            self.request.user.root,
+            None
+        )
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""

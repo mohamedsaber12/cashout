@@ -60,9 +60,12 @@
             {% if doc_obj.is_bank_wallet %}
               <thead>
               <tr>
-                <th>{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Wallet Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <th>{% trans 'Fees' %}</th>
+                  <th>{% trans 'Vat' %}</th>
+                {% endif %}
                 <th>{% trans 'Issuer' %}</th>
                 <th>{% trans 'Status' %}</th>
               </tr>
@@ -83,9 +86,12 @@
                     data-created_at="{{ transaction.parent_transaction.created_at }}"
                     data-updated_at="{{ transaction.created_at }}"
                     class="row-hover">
-                  <td>{{ transaction.uid }}</td>
                   <td>{{ transaction.anon_recipient }}</td>
                   <td>{{ transaction.amount }}</td>
+                  {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                    <td>{{ transaction.fees }}</td>
+                    <td>{{ transaction.vat }}</td>
+                  {% endif %}
                   <td>{{ transaction.issuer_choice_verbose }}</td>
                   <td>{{ transaction.status_choice_verbose }}</td>
                 </tr>
@@ -94,9 +100,12 @@
             {% else %}
               <thead>
               <tr>
-                <th>{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Account Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <th>{% trans 'Fees' %}</th>
+                  <th>{% trans 'Vat' %}</th>
+                {% endif %}
                 <th>{% trans 'Status' %}</th>
               </tr>
               </thead>
@@ -119,9 +128,12 @@
                     data-updated_at="{{ transaction.created_at }}"
                     data-debtor_account="{{ transaction.debtor_account }}"
                     class="row-hover">
-                  <td>{{ transaction.parent_transaction.transaction_id }}</td>
                   <td>{{ transaction.creditor_account_number }}</td>
                   <td>{{ transaction.amount }}</td>
+                  {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                    <td>{{ transaction.fees }}</td>
+                    <td>{{ transaction.vat }}</td>
+                  {% endif %}
                   <td>{{ transaction.status_choice_verbose }}</td>
                 </tr>
               {% endfor %}

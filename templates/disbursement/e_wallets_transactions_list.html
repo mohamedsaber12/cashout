@@ -60,9 +60,12 @@
           <table class="table table-bordered" id="transaction-table">
             <thead>
               <tr>
-                {% if not is_normal_flow %}<th>{% trans 'Transaction ID' %}</th>{% endif %}
                 <th>{% trans 'Wallet Number' %}</th>
                 <th>{% trans 'Amount' %}</th>
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                  <th>{% trans 'Fees' %}</th>
+                  <th>{% trans 'Vat' %}</th>
+                {% endif %}
                 {% if not is_normal_flow %}<th>{% trans 'Issuer' %}</th>{% endif %}
                 <th>{% trans 'Status' %}</th>
                 <th>{% trans 'Updated At' %}</th>
@@ -84,9 +87,12 @@
                     {% endif %}
                     class="row-hover">
 
-                  {% if not is_normal_flow %}<td>{{ transaction.reference_id }}</td>{% endif %}
-                    <td>{{ transaction.msisdn }}</td>
-                    <td>{{ transaction.amount }}</td>
+                  <td>{{ transaction.msisdn }}</td>
+                  <td>{{ transaction.amount }}</td>
+                  {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding %}
+                    <td>{{ transaction.fees }}</td>
+                    <td>{{ transaction.vat }}</td>
+                  {% endif %}
                   {% if not is_normal_flow %}<td>{{ transaction.issuer|title }}</td>{% endif %}
                   <td>
                     {% if transaction.is_disbursed %}

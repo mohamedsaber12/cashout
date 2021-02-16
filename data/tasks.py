@@ -242,9 +242,9 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     valid_account = True
                 else:
                     if errors_list[index]:
-                        errors_list[index] = "Invalid account number"
+                        errors_list[index] = "Invalid account number / IBAN"
                     else:
-                        errors_list[index] = "\nInvalid account number"
+                        errors_list[index] = "\nInvalid account number / IBAN"
                     accounts_list.append(str(record[1]))
 
                 # 1.2 Validate for duplicate account numbers

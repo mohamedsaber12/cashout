@@ -31,7 +31,7 @@
       border-color: #ebccd1;
     }
     ul > li > span{
-      width: 120px;
+      width: 160px;
     }
     #trxDetailsDataRight > li > span{
       width: 120px;
@@ -90,7 +90,7 @@
               <table class="table table-bordered" id="transaction-table">
                 <thead>
                   <tr>
-                    <th>{% trans 'Account Number' %}</th>
+                    <th>{% trans 'Account Number / IBAN' %}</th>
                     <th>{% trans 'Bank Swift Code' %}</th>
                     <th>{% trans 'Amount' %}</th>
                     <th>{% trans 'Fees' %}</th>
@@ -398,7 +398,7 @@
         trx.id = $(this).data('id')
         appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
         trx.creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>Account Number</span><b>:</b>${trx.creditor_account_number}</li>`;
+        appendedTags += `<li><span>Account Number / IBAN</span><b>:</b>${trx.creditor_account_number}</li>`;
         trx.creditor_name = $(this).data('creditor_name');
         appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
         trx.amount = $(this).data('amount');

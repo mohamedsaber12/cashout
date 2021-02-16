@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
+from utilities.models.generic_models import Budget
 
 INSTANT_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the carrier"
 INSTANT_TRX_BEING_PROCESSED = "Transaction received by the carrier and being processed now"
@@ -333,3 +334,25 @@ def get_error_description_from_error_code(code):
         return str(code).capitalize()
 
     return _('External error, please contact your support team for further details')
+
+
+def add_fees_and_vat_to_qs(qs, admin, doc_obj):
+    """Append fees and vat to the output transactions queryset values"""
+    if not (admin.is_vodafone_default_onboarding or
+            admin.is_vodafone_facilitator_onboarding):
+        if doc_obj is None or doc_obj.is_bank_card:
+            for trx in qs:
+                trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
+                        trx.amount, 'C'
+                )
+        elif doc_obj.is_e_wallet:
+            for trx in qs:
+                trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
+                        trx.amount, trx.issuer
+                )
+        elif doc_obj.is_bank_wallet:
+            for trx in qs:
+                trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
+                        trx.amount, trx.issuer_type
+                )
+    return qs

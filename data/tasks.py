@@ -477,7 +477,7 @@ class EWalletsSheetProcessor(Task):
         amount_position, msisdn_position, issuer_position = self.doc_obj.file_category.fields_cols()
         msisdn_header = df.columns[msisdn_position]
         amount_header = df.columns[amount_position]
-        issuer_header = df.columns[issuer_position] if issuer_position or type(issuer_position) else False
+        issuer_header = df.columns[issuer_position] if issuer_position or type(issuer_position) is int else False
 
         return msisdn_header, amount_header, issuer_header
 

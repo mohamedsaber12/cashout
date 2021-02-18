@@ -136,6 +136,10 @@
     $(function () {
         $('[data-toggle="tooltip"]').tooltip()
     })
+    
+    $('#export_e_wallets_sample_file').on('click', function () {
+      window.open('{% url 'disbursement:export_sample_file' %}?type=e_wallets', '_blank');
+    });
 </script>
 
     {% include 'data/document_delete_script.html' %}

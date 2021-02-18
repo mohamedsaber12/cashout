@@ -800,7 +800,21 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
 
     def generate_e_wallets_sample_file(self):
         """"""
-        pass
+        """Generate e-wallets wallets sample data frame"""
+        filename = 'e_wallets_sample_file.xlsx'
+        fake = fake_factory.create()
+        e_wallets_headers = ['mobile number', 'amount', 'issuer']
+        e_wallets_sample_records = []
+
+        for _ in range(9):
+            msisdn_carrier = random.choice(['010########', '011########', '012########'])
+            msisdn = f"{fake.numerify(text=msisdn_carrier)}"
+            amount = round(random.random() * 1000, 2)
+            issuer = random.choice(['vodafone', 'etisalat', 'aman'])
+            e_wallets_sample_records.append([msisdn, amount, issuer])
+
+        e_wallets_df = pd.DataFrame(e_wallets_sample_records, columns=e_wallets_headers)
+        return filename, e_wallets_df
 
     def generate_bank_wallets_sample_df(self):
         """Generate bank wallets sample data frame"""
@@ -848,6 +862,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
                 filename, file_df = self.generate_bank_wallets_sample_df()
             elif file_type == 'bank_cards':
                 filename, file_df = self.generate_bank_cards_sample_df()
+            elif file_type == 'e_wallets':
+                filename, file_df = self.generate_e_wallets_sample_file()
             else:
                 raise Http404
 

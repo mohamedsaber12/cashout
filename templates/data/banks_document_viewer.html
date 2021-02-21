@@ -31,9 +31,12 @@
       color: red;
     }
 
-    ul > li > span {
-      width: 130px;
+    #trxDetailsData > li > span {
+      width: 160px;
       color: #73879C;
+    }
+    #trxDetailsDataRight > li > span {
+      width: 120px;
     }
 
     ul > li > b {
@@ -255,7 +258,7 @@
               {% else %}
                 <thead>
                 <th>{% trans 'Transaction ID' %}</th>
-                <th>{% trans 'Account number' %}</th>
+                <th>{% trans 'Account number / IBAN' %}</th>
                 <th>{% trans 'Amount' %}</th>
                 </thead>
                 <tbody>
@@ -515,7 +518,7 @@
           let uid = $(this).data('id');
           appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
           let creditor_account_number = $(this).data('creditor_account_number');
-          appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
+          appendedTags += `<li><span>Account number / IBAN</span><b>:</b>${creditor_account_number}</li>`;
           let amount = $(this).data('amount');
           appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
           let creditor_name = $(this).data('creditor_name');

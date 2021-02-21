@@ -843,6 +843,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
 
         for _ in range(9):
             account_number = f"{fake.numerify(text='#'*random.randint(6, 20))}"
+            if _ % 3 == 0:
+                account_number = f"{fake.numerify(text='EG'+'#'*random.randint(27, 27))}"
             amount = round(random.random() * 1000, 2)
             full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
             bank_code = random.choice(VALID_BANK_CODES_LIST)

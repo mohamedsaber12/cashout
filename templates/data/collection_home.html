@@ -66,6 +66,7 @@
 
 
 {% block script %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 
 <!-- Dropzone.js -->
 <script src="{% static 'gentella/vendors/dropzone/dist/min/dropzone.min.js' %}"></script>
@@ -85,7 +86,7 @@
 <script>
 
     $(function () {
-        var table = $('#fileTable').DataTable({
+  var table = $('#fileTable').DataTable({
     "bLengthChange" : false,
   });
   

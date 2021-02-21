@@ -219,7 +219,41 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   <script>
-    $('#transaction-table').DataTable();
+
+    var table = $('#transaction-table').DataTable({
+    "bLengthChange" : false,
+  });
+  
+  var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+                extend: 'copy',
+                text : "Copy",
+                exportOptions: {
+                    charSet: "utf-8",
+                }
+            },
+            {
+                extend: 'print',
+                text : "PDF",
+            },
+            {
+                extend: 'excelHtml5',
+                text : "Export",
+                
+                customize: function( xlsx ) {
+
+                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
+				       }
+            }
+        ]
+    });
+  
+  table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
+
 
     $(document).ready(function () {
       $('#export-failed').on('click',function(ev) {

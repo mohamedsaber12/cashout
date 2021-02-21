@@ -126,7 +126,41 @@
   <script>
     $(document).ready(function () {
       $('#default_format_btn').remove();
-      $('#formats-datatable').DataTable();
+
+      var table = $('#formats-datatable').DataTable({
+    "bLengthChange" : false,
+  });
+  
+  var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+                extend: 'copy',
+                text : "Copy",
+                exportOptions: {
+                    charSet: "utf-8",
+                }
+            },
+            {
+                extend: 'print',
+                text : "PDF",
+            },
+            {
+                extend: 'excelHtml5',
+                text : "Export",
+                
+                customize: function( xlsx ) {
+
+                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
+				       }
+            }
+        ]
+    });
+  
+  table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
+
 
       function increase_height() {
         let oldheight = $('.stepContainer').css('height');

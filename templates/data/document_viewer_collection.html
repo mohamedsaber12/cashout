@@ -84,7 +84,40 @@
 <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 <script>
     $(document).ready(function () {
-        $('#collection-doc-detail-datatable').DataTable();
+        
+  var table = $('#collection-doc-detail-datatable').DataTable({
+    "bLengthChange" : false,
+  });
+  
+  var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+                extend: 'copy',
+                text : "Copy",
+                exportOptions: {
+                    charSet: "utf-8",
+                }
+            },
+            {
+                extend: 'print',
+                text : "PDF",
+            },
+            {
+                extend: 'excelHtml5',
+                text : "Export",
+                
+                customize: function( xlsx ) {
+
+                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
+				       }
+            }
+        ]
+    });
+  
+  table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
     });
 </script>
 

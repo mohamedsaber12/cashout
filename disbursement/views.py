@@ -249,9 +249,10 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         start_date = request.GET.get('start_date', None)
         end_date = request.GET.get('end_date', None)
+        status = request.GET.get('status', None)
 
         if request.is_ajax() and not (request.user.is_vodafone_default_onboarding or request.user.is_banks_standard_model_onboaring):
-            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date)
+            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
             return HttpResponse(status=200)
 
         return HttpResponse(status=401)

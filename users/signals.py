@@ -145,6 +145,10 @@ def send_activation_message(root_user, set_password_url):
         if not root_user.client.smsc_sender_name:
             del(payload["SMSSENDER"])
 
+        # delete SMSSENDER from payload if root is_vodafone_default_onboarding
+        if root_user.is_vodafone_default_onboarding:
+            del(payload["SMSSENDER"])
+
         try:
             WALLET_API_LOGGER.debug(f"[request] [activation message] [{root_user}] -- {payload}, url: {msg_env_url}")
             response = requests.post(get_from_env(msg_env_url), json=payload, verify=False)

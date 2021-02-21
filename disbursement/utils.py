@@ -339,7 +339,8 @@ def get_error_description_from_error_code(code):
 def add_fees_and_vat_to_qs(qs, admin, doc_obj):
     """Append fees and vat to the output transactions queryset values"""
     if not (admin.is_vodafone_default_onboarding or
-            admin.is_vodafone_facilitator_onboarding):
+            admin.is_vodafone_facilitator_onboarding or
+            admin.is_banks_standard_model_onboaring):
         if doc_obj is None or doc_obj.is_bank_card:
             for trx in qs:
                 trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(

@@ -127,7 +127,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
             headers = ["mobile number", "amount", "full name", "issuer", "errors"]
         else:
             sheet_data = list(zip(numbers_list, amount_list, names_list, codes_list, purposes_list, errors_list))
-            headers = ["account number", "amount", "full name", "bank swift code", "transaction type", "errors"]
+            headers = ["account number / IBAN", "amount", "full name", "bank swift code", "transaction type", "errors"]
 
         filename = f"failed_validations_{randomword(4)}.xlsx"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
@@ -250,9 +250,9 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 # 1.2 Validate for duplicate account numbers
                 if valid_account and len(list(filter(lambda acc: acc == account, accounts_list))) > 1:
                     if errors_list[index]:
-                        errors_list[index] = "Duplicate account number"
+                        errors_list[index] = "Duplicate account number / IBAN"
                     else:
-                        errors_list[index] = "\nDuplicate account number"
+                        errors_list[index] = "\nDuplicate account number / IBAN"
                         accounts_list.append(record[1])
 
                 # 2. Validate amounts
@@ -365,7 +365,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
             # 1.2 For bank cards: Check if all records has no empty values
             elif doc_obj.is_bank_card:
-                if not (rows_count["account number"] == rows_count["amount"] ==
+                account_number = 0
+                if "account number" in rows_count:
+                    account_number = rows_count["account number"]
+                else:
+                    account_number = rows_count["account number / IBAN"]
+
+                if not (account_number == rows_count["amount"] ==
                         rows_count["full name"] == rows_count["bank swift code"] == rows_count["transaction type"]):
                     self.end_with_failure(doc_obj, MSG_WRONG_FILE_FORMAT)
                     return False

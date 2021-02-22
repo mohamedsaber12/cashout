@@ -838,7 +838,7 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
         """Generate bank cards sample data frame"""
         filename = 'bank_cards_sample_file.xlsx'
         fake = fake_factory.create()
-        bank_cards_headers = ['account number', 'amount', 'full name', 'bank swift code', 'transaction type']
+        bank_cards_headers = ['account number / IBAN', 'amount', 'full name', 'bank swift code', 'transaction type']
         bank_cards_sample_records = []
 
         for _ in range(9):

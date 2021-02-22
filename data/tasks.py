@@ -900,21 +900,31 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                                            checkers_parent_username,
                                            checkers_parent_vf_facilitator_identifier):
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
-        qs = DisbursementData.objects.filter(
+        if self.status == 'failed':
+            qs = DisbursementData.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                ~Q(reason__exact=''),
+                Q(is_disbursed=False),
+                Q(doc__disbursed_by__in=checkers_qs)
+            )
+        else:
+            qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(reason__exact='SUCCESS'),
                 Q(doc__disbursed_by__in=checkers_qs)
-        ).annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer').\
+            )
+        qs = qs.annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer').\
             annotate(total=Sum('amount'), count=Count('id'))
 
         qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
 
         if self.superadmin_user.is_vodafone_facilitator_onboarding:
             qs = self._add_vf_facilitator_identifier_to_qs_values(
-                    qs,
-                    checkers_parent_username,
-                    checkers_parent_vf_facilitator_identifier
+                qs,
+                checkers_parent_username,
+                checkers_parent_vf_facilitator_identifier
             )
         else:
             qs = self._calculate_and_add_fees_to_qs_values(qs)
@@ -922,16 +932,25 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def aggregate_bank_wallets_orange_instant_transactions(self, checkers_qs, checkers_parent_username):
         """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
-        qs = InstantTransaction.objects.filter(
+        if self.status == 'failed':
+            qs = InstantTransaction.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(status=AbstractBaseStatus.FAILED),
+                Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
+            )
+        else:
+            qs = InstantTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
                 Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
-                ).annotate(
-                checker=Case(
-                        When(from_user__isnull=False, then=F('from_user__username')),
-                        default=F('document__disbursed_by__username')
-                )
+            )
+        qs = qs.annotate(
+            checker=Case(
+                When(from_user__isnull=False, then=F('from_user__username')),
+                default=F('document__disbursed_by__username')
+            )
         ).extra(select={'issuer': 'issuer_type'}).values('checker', 'issuer').\
             annotate(total=Sum('amount'), count=Count('uid'))
 
@@ -941,16 +960,25 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def aggregate_bank_cards_transactions(self, checkers_qs, checkers_parent_username):
         """Calculate bank cards transactions details from BankTransaction model"""
-        qs = BankTransaction.objects.filter(
+        if self.status == 'failed':
+            qs = BankTransaction.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(status=AbstractBaseStatus.FAILED),
+                Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
+            )
+        else:
+            qs = BankTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
                 Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
-        ).annotate(
-                checker=Case(
-                        When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__username')),
-                        default=F('user_created__username')
-                )
+            )
+        qs = qs.annotate(
+            checker=Case(
+                When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__username')),
+                default=F('user_created__username')
+            )
         ).extra(select={'issuer': 'transaction_id'}).values('checker', 'issuer').\
             annotate(total=Sum('amount'), count=Count('id'))
 
@@ -985,7 +1013,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
         """Write exported transactions data to excel file"""
-        filename = _(f"clients_monthly_report_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')
@@ -1166,10 +1194,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         )
         deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
 
-    def run(self, user_id, start_date, end_date, *args, **kwargs):
+    def run(self, user_id, start_date, end_date, status, *args, **kwargs):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
+        self.status = status
         report_download_url = self.prepare_transactions_report()
         self.prepare_and_send_report_mail(report_download_url)
         return True

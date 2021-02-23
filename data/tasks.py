@@ -908,11 +908,18 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(is_disbursed=False),
                 Q(doc__disbursed_by__in=checkers_qs)
             )
-        else:
+        elif self.status == 'success':
             qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(reason__exact='SUCCESS'),
+                Q(doc__disbursed_by__in=checkers_qs)
+            )
+        else:
+            qs = DisbursementData.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(reason__exact='SUCCESS') | (~Q(reason__exact='') & Q(is_disbursed=False)),
                 Q(doc__disbursed_by__in=checkers_qs)
             )
         qs = qs.annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer').\
@@ -939,11 +946,18 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(status=AbstractBaseStatus.FAILED),
                 Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
             )
-        else:
+        elif self.status == 'success':
             qs = InstantTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
+                Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
+            )
+        else:
+            qs = InstantTransaction.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
                 Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
             )
         qs = qs.annotate(
@@ -967,11 +981,18 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(status=AbstractBaseStatus.FAILED),
                 Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
             )
-        else:
+        elif self.status == 'success':
             qs = BankTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
+                Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
+            )
+        else:
+            qs = BankTransaction.objects.filter(
+                Q(created_at__gte=self.first_day),
+                Q(created_at__lte=self.last_day),
+                Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
                 Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
             )
         qs = qs.annotate(

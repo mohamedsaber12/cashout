@@ -792,8 +792,6 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
         return render(request, template_name=self.template_name, context=context)
         
 
-
-
 class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):
     """
     View for downloading disbursement sample files

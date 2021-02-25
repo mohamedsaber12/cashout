@@ -873,10 +873,13 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             q['full_date'] = f"{self.start_date} to {self.end_date}"
         return qs
 
-    def _calculate_and_add_fees_to_qs_values(self, qs):
+    def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs_vf_et_aman=False):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
-            q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']).\
+            if failed_qs_vf_et_aman:
+                q['fees'], q['vat'] = 0, 0
+            else:
+                q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']).\
                                       calculate_fees_and_vat_for_amount(q['total'], q['issuer'], q['count'])
         return qs
 
@@ -892,8 +895,16 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                         default_issuer_dict['fees'] = 0
                         default_issuer_dict['vat'] = 0
                     final_data[key].append(default_issuer_dict)
+                issuers_exist[issuer] = False
 
         return final_data
+
+    def _annotate_vf_ets_aman_qs(self, qs, checkers_parent_username):
+        """ Annotate qs then add admin username to qs"""
+        qs = qs.annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer'). \
+            annotate(total=Sum('amount'), count=Count('id'))
+
+        return self._add_admin_username_to_qs_values(qs, checkers_parent_username)
 
     def aggregate_vf_ets_aman_transactions(self,
                                            checkers_qs,
@@ -922,20 +933,35 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(reason__exact='SUCCESS') | (~Q(reason__exact='') & Q(is_disbursed=False)),
                 Q(doc__disbursed_by__in=checkers_qs)
             )
-        qs = qs.annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer').\
-            annotate(total=Sum('amount'), count=Count('id'))
+        if self.superadmin_user.is_vodafone_facilitator_onboarding or \
+           self.status in ['success', 'failed']:
+            qs = self._annotate_vf_ets_aman_qs(qs, checkers_parent_username)
 
-        qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+            if self.superadmin_user.is_vodafone_facilitator_onboarding:
+                qs = self._add_vf_facilitator_identifier_to_qs_values(
+                    qs,
+                    checkers_parent_username,
+                    checkers_parent_vf_facilitator_identifier
+                )
+            else:
+                qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
+            return qs
 
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
-            qs = self._add_vf_facilitator_identifier_to_qs_values(
-                qs,
-                checkers_parent_username,
-                checkers_parent_vf_facilitator_identifier
-            )
-        else:
-            qs = self._calculate_and_add_fees_to_qs_values(qs)
-        return qs
+        # handle if status is all
+        # divide qs into success and failed
+        failed_qs = qs.filter(~Q(reason__exact='') & Q(is_disbursed=False))
+        # annotate failed qs and add admin username
+        failed_qs = self._annotate_vf_ets_aman_qs(failed_qs, checkers_parent_username)
+
+        success_qs = qs.filter(Q(reason__exact='SUCCESS'))
+        # annotate success qs and add admin username
+        success_qs = self._annotate_vf_ets_aman_qs(success_qs, checkers_parent_username)
+
+        # calculate fees and vat for failed qs
+        failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
+        # calculate fees and vat for success qs
+        success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
+        return [*failed_qs, *success_qs]
 
     def aggregate_bank_wallets_orange_instant_transactions(self, checkers_qs, checkers_parent_username):
         """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
@@ -1129,7 +1155,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         # 7. Group all data by admin
         final_data = self.group_result_transactions_data(
-                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
+            vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
         if not self.superadmin_user.is_vodafone_facilitator_onboarding:

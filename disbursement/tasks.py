@@ -165,7 +165,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             "currency": "EGP",
             "debtor_address_1": "EG",
             "creditor_address_1": "EG",
-            "creditor_bank": "MIDG",      # ToDo: Should be "THWL" at the staging environment
+            "creditor_bank": "MIDG" if get_value_from_env("ENVIRONMENT") != "staging" else "THWL",      # ToDo: Should be "THWL" at the staging environment
             "category_code": "MOBI",
             "purpose": "CASH",
             "corporate_code": get_from_env("ACH_CORPORATE_CODE"),

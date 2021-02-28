@@ -16,6 +16,10 @@ from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
                      InstantAPIViewerUser, MakerUser, RootUser, Setup, SupportUser, SupportSetup,
                      SuperAdminUser, User)
 
+from django.shortcuts import render
+from django.http import HttpResponseRedirect
+from data.tasks import ExportClientsTransactionsMonthlyReportTask
+
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 MODIFIED_USERS_LOGGER = logging.getLogger("modified_users")
 DELETED_USERS_LOGGER = logging.getLogger("delete_users")
@@ -62,9 +66,9 @@ class UserAccountAdmin(UserAdmin):
 
             obj.is_active = True
             obj.save()
-
+          
     activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
-
+    
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
         if request.user.is_superuser:
@@ -233,6 +237,10 @@ class RootAdmin(UserAccountAdmin):
 
 @admin.register(SuperAdminUser)
 class SuperAdmin(UserAccountAdmin):
+    
+    actions = ['activate_selected', 'deactivate_selected', "export_report"]
+    extended_actions = ['activate_selected', 'deactivate_selected', "export_report"]
+    
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
         # pop parent field from fieldsets
@@ -251,6 +259,27 @@ class SuperAdmin(UserAccountAdmin):
                     f"[message] [SuperAdmin User Created] [{request.user}] -- Created new super-user: {obj.username}"
             )
         super(SuperAdmin, self).save_model(request, obj, form, change)
+        
+    def export_report(self, request, queryset):
+        """export report for selected list of users"""
+        
+        if 'apply' in request.POST:
+            # queryset.update(env='hard coded response')
+            start_date = request.POST.get("start_date")
+            end_date = request.POST.get("end_date")
+            status = request.POST.get("status")
+            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
+
+            self.message_user(request, f"report sended to the email {request.user.email}")
+
+            return HttpResponseRedirect(request.get_full_path())
+        
+        return render(request,
+                      'admin/all_superadmins_report.html',
+                      context={'superadmins': queryset})
+
+    export_report.short_description = ugettext_lazy("export report selected %(verbose_name_plural)s")
+
 
 
 @admin.register(Setup)

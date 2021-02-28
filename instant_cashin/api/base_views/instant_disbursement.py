@@ -111,7 +111,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
-            creditor_bank = "MIDG"      # ToDo: Should be "THWL" at the staging environment
+            creditor_bank = "MIDG" if get_from_env("ENVIRONMENT") != "staging" else "THWL"     # ToDo: Should be "THWL" at the staging environment
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,

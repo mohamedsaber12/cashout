@@ -824,6 +824,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     """
 
     superadmin_user = None
+    superadmins = None
     start_date = None
     end_date = None
     first_day = None
@@ -1122,7 +1123,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.refine_first_and_end_date_format()
 
         # 2. Get all clients of the current superadmin
-        admins_qs = self.superadmin_user.children()
+        admins_qs = []
+        if self.superadmins:
+            for superAdmin in self.superadmins:
+                admins_qs = [*admins_qs, *superAdmin.children()]
+        else:
+            admins_qs = self.superadmin_user.children()
 
         # 3. Get all children [checkers/api checkers] for every client at the clients list
         checkers_qs = []
@@ -1246,6 +1252,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.start_date = start_date
         self.end_date = end_date
         self.status = status
+        self.superadmins = kwargs.get('superadmins', None)
         report_download_url = self.prepare_transactions_report()
         self.prepare_and_send_report_mail(report_download_url)
         return True

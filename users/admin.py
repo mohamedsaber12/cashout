@@ -268,7 +268,7 @@ class SuperAdmin(UserAccountAdmin):
             start_date = request.POST.get("start_date")
             end_date = request.POST.get("end_date")
             status = request.POST.get("status")
-            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
+            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
 
             self.message_user(request, f"report sended to the email {request.user.email}")
 

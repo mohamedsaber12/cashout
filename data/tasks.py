@@ -1247,12 +1247,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         )
         deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
 
-    def run(self, user_id, start_date, end_date, status, *args, **kwargs):
+    def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
         self.status = status
-        self.superadmins = kwargs.get('superadmins', None)
+        self.superadmins = User.objects.filter(pk__in=super_admins_ids)
         report_download_url = self.prepare_transactions_report()
         self.prepare_and_send_report_mail(report_download_url)
         return True

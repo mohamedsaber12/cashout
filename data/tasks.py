@@ -877,7 +877,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs_vf_et_aman=False):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
-            if failed_qs_vf_et_aman:
+            if failed_qs_vf_et_aman and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
                 q['fees'], q['vat'] = 0, 0
             else:
                 q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']).\
@@ -905,6 +905,17 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         qs = qs.annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer'). \
             annotate(total=Sum('amount'), count=Count('id'))
 
+        return self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+
+    def _annotate_instant_trxs_qs(self, qs, checkers_parent_username):
+        """ Annotate qs then add admin username to qs"""
+        qs = qs.annotate(
+            checker=Case(
+                When(from_user__isnull=False, then=F('from_user__username')),
+                default=F('document__disbursed_by__username')
+            )
+        ).extra(select={'issuer': 'issuer_type'}).values('checker', 'issuer'). \
+            annotate(total=Sum('amount'), count=Count('uid'))
         return self._add_admin_username_to_qs_values(qs, checkers_parent_username)
 
     def aggregate_vf_ets_aman_transactions(self,
@@ -987,17 +998,26 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
                 Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
             )
-        qs = qs.annotate(
-            checker=Case(
-                When(from_user__isnull=False, then=F('from_user__username')),
-                default=F('document__disbursed_by__username')
-            )
-        ).extra(select={'issuer': 'issuer_type'}).values('checker', 'issuer').\
-            annotate(total=Sum('amount'), count=Count('uid'))
+        if self.status in ['success', 'failed']:
+            qs = self._annotate_instant_trxs_qs(qs, checkers_parent_username)
+            qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
+            return qs
 
-        qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
-        qs = self._calculate_and_add_fees_to_qs_values(qs)
-        return qs
+        # handle if status is all
+        # divide qs into success and failed
+        failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
+        # annotate failed qs and add admin username
+        failed_qs = self._annotate_instant_trxs_qs(failed_qs, checkers_parent_username)
+
+        success_qs = qs.filter(Q(status=AbstractBaseStatus.SUCCESSFUL))
+        # annotate success qs and add admin username
+        success_qs = self._annotate_instant_trxs_qs(success_qs, checkers_parent_username)
+
+        # calculate fees and vat for failed qs
+        failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
+        # calculate fees and vat for success qs
+        success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
+        return [*failed_qs, *success_qs]
 
     def aggregate_bank_cards_transactions(self, checkers_qs, checkers_parent_username):
         """Calculate bank cards transactions details from BankTransaction model"""

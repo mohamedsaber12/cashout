@@ -102,6 +102,7 @@
                     data-updated_at="{{ doc_obj.updated_at }}"
                     data-msisdn="{{ record.msisdn }}"
                     data-is_disbursed="{{ record.is_disbursed }}"
+                    data-reason="{{ record.reason }}"
                     {% if record.is_disbursed %}
                       data-reason_description="{{ record.reason }}"
                     {% else %}

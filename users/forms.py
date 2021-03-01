@@ -335,6 +335,10 @@ class RootCreationForm(forms.ModelForm):
 
         user.save()
 
+        # add root field when create root
+        user.root = user
+        user.save()
+
         if self.request.user.is_vodafone_default_onboarding:
             user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
             user.mobile_no = self.cleaned_data['mobile_number'].strip()
@@ -515,6 +519,8 @@ class MakerCreationForm(forms.ModelForm):
             user = self.instance_copy
 
         user.hierarchy = self.request.user.hierarchy
+        # add root to maker
+        user.root = self.request.user
 
         if commit:
             user.save()
@@ -552,6 +558,8 @@ class CheckerCreationForm(forms.ModelForm):
         user.user_type = 2
 
         user.hierarchy = self.request.user.hierarchy
+        # add root to checker
+        user.root = self.request.user
 
         if commit:
             user.save()
@@ -615,6 +623,8 @@ class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.user_type = 7
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
+        # add root to checker
+        user.root = self.request.user
         user.save()
 
         onboarding_permission = Permission.objects.\
@@ -650,6 +660,8 @@ class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.user_type = 6
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
+        # add root to checker
+        user.root = self.request.user
         user.save()
 
         onboarding_permission = Permission.objects.\

@@ -965,7 +965,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # annotate failed qs and add admin username
         failed_qs = self._annotate_vf_ets_aman_qs(failed_qs, checkers_parent_username)
 
-        success_qs = qs.filter(Q(reason__exact='SUCCESS'))
+        success_qs = qs.filter(Q(is_disbursed=True))
         # annotate success qs and add admin username
         success_qs = self._annotate_vf_ets_aman_qs(success_qs, checkers_parent_username)
 

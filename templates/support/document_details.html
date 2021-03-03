@@ -103,7 +103,11 @@
                     data-msisdn="{{ record.msisdn }}"
                     data-is_disbursed="{{ record.is_disbursed }}"
                     data-reason="{{ record.reason }}"
-                    data-reason_description="{{ record.reason | code_description }}"
+                    {% if record.is_disbursed %}
+                      data-reason_description="{{ record.reason }}"
+                    {% else %}
+                      data-reason_description="{{ record.reason | code_description }}"
+                    {% endif %}
                   {% endif %}
                   data-amount="{{ record.amount }}"
                   class="row-hover">

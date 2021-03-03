@@ -935,14 +935,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
-                Q(reason__exact='SUCCESS'),
+                Q(is_disbursed=True),
                 Q(doc__disbursed_by__in=checkers_qs)
             )
         else:
             qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
-                Q(reason__exact='SUCCESS') | (~Q(reason__exact='') & Q(is_disbursed=False)),
+                Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False)),
                 Q(doc__disbursed_by__in=checkers_qs)
             )
         if self.superadmin_user.is_vodafone_facilitator_onboarding or \
@@ -965,7 +965,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # annotate failed qs and add admin username
         failed_qs = self._annotate_vf_ets_aman_qs(failed_qs, checkers_parent_username)
 
-        success_qs = qs.filter(Q(reason__exact='SUCCESS'))
+        success_qs = qs.filter(Q(is_disbursed=True))
         # annotate success qs and add admin username
         success_qs = self._annotate_vf_ets_aman_qs(success_qs, checkers_parent_username)
 

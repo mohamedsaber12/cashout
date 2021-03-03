@@ -43,7 +43,7 @@ from users.mixins import (SuperFinishedSetupMixin,
                           AgentsListPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
                           UserWithDisbursementPermissionRequired)
-from users.models import EntitySetup, Client
+from users.models import EntitySetup, Client, RootUser
 from utilities import messages
 from utilities.models import Budget
 
@@ -735,6 +735,9 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
         user_hierarchy = self.request.user.hierarchy
         if self.request.user.is_support and self.request.GET.get("admin_hierarchy"):
             user_hierarchy = self.request.GET.get("admin_hierarchy")
+            root_user = RootUser.objects.filter(hierarchy=user_hierarchy).first()
+        else:
+            root_user = self.request.user.root
         bank_trx_ids = BankTransaction.objects.\
             filter(user_created__hierarchy=user_hierarchy, is_single_step=True).\
             order_by("parent_transaction__transaction_id", "-id").\
@@ -745,7 +748,7 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
         # add fees and vat to query set in case of accept model
         return add_fees_and_vat_to_qs(
             bank_trxs,
-            self.request.user.root,
+            root_user,
             None
         )
 

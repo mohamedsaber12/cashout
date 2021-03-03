@@ -62,7 +62,7 @@ class AgentForm(forms.ModelForm):
         if not msisdn:
             return msisdn
         import re
-        r = re.compile('(201|01|05|07)[0-2|5]\d{7}')
+        r = re.compile('(201|01|05|07)\d{8}')
         if not r.match(msisdn):
             raise forms.ValidationError(_("Mobile number is not valid"))
         return msisdn

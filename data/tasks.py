@@ -829,6 +829,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     end_date = None
     first_day = None
     last_day = None
+    instant_or_accept_perm = False
+    vf_facilitator_perm = False
+    default_vf__or_bank_perm = False
 
     def refine_first_and_end_date_format(self):
         """
@@ -891,7 +894,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             for issuer in issuers_exist.keys():
                 if not issuers_exist[issuer]:
                     default_issuer_dict = {'issuer': issuer, 'count': 0, 'total': 0}
-                    if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+                    if self.instant_or_accept_perm:
                         default_issuer_dict['fees'] = 0
                         default_issuer_dict['vat'] = 0
                     final_data[key].append(default_issuer_dict)
@@ -901,7 +904,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def _annotate_vf_ets_aman_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.vf_facilitator_perm:
             qs = qs.annotate(
                 admin=F('doc__disbursed_by__root__username'),
                 vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
@@ -949,7 +952,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             )
         if self.status in ['success', 'failed']:
             qs = self._annotate_vf_ets_aman_qs(qs)
-            if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+            if self.instant_or_accept_perm:
                 qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
             return qs
 
@@ -963,7 +966,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # annotate success qs and add admin username
         success_qs = self._annotate_vf_ets_aman_qs(success_qs)
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.instant_or_accept_perm:
             # calculate fees and vat for failed qs
             failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
             # calculate fees and vat for success qs
@@ -1068,7 +1071,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                         if q['issuer'] == admin_q['issuer']:
                             admin_q['total'] += q['total']
                             admin_q['count'] += q['count']
-                            if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+                            if self.instant_or_accept_perm:
                                 admin_q['fees'] += q['fees']
                                 admin_q['vat'] += q['vat']
                             issuer_exist = True
@@ -1099,7 +1102,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         font_style = xlwt.XFStyle()
         row_num += 1
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.instant_or_accept_perm:
             col_nums = {
                 'total': 2,
                 'vodafone': 3,
@@ -1147,13 +1150,28 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         if not self.superadmins:
             self.superadmins = [self.superadmin_user]
 
+        # validate that all super admins have (instant || accept) or vf facilitator permission
+        for super_admin in self.superadmins:
+            if super_admin.is_instant_model_onboarding or \
+                super_admin.is_accept_vodafone_onboarding:
+                self.instant_or_accept_perm = True
+            elif super_admin.is_vodafone_facilitator_onboarding:
+                self.vf_facilitator_perm = True
+            else:
+                self.default_vf__or_bank_perm = True
+
+        if self.default_vf__or_bank_perm or \
+           self.vf_facilitator_perm == self.instant_or_accept_perm:
+            return False
+
+
         # 3. Calculate vodafone, etisalat, aman transactions details
         vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions()
 
         bank_wallets_orange_instant_transactions_qs = []
         bank_cards_transactions_qs = []
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.instant_or_accept_perm:
             # 5. Calculate bank wallets, orange, instant transactions details
             bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions()
 
@@ -1165,7 +1183,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.instant_or_accept_perm:
             # 5. Calculate total volume, count, fees for each admin
             for key in final_data.keys():
                 total_per_admin = {
@@ -1184,7 +1202,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 final_data[key].append(total_per_admin)
 
         # 6. Add issuer with values 0 to final data
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.vf_facilitator_perm:
             issuers_exist = {
                 'default': False,
             }
@@ -1201,10 +1219,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         final_data = self._add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
 
         # 7. Add all admin that have no transactions
-        admins_qs = self.superadmin_user.children()
+        admins_qs = []
+        for super_admin in self.superadmins:
+            admins_qs = [*admins_qs, *super_admin.children()]
         for current_admin in admins_qs:
             if not current_admin.username in final_data.keys():
-                if self.superadmin_user.is_vodafone_facilitator_onboarding:
+                if self.vf_facilitator_perm:
                     final_data[current_admin.username] = [{
                         **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                         'full_date': f"{self.start_date} to {self.end_date}",
@@ -1213,7 +1233,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 else:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
 
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
             for el in vf_ets_aman_qs.values():
@@ -1249,14 +1269,42 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         )
         deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
 
+    def prepare_and_send_error_mail(self, message):
+        """Prepare error mail to be sent"""
+        mail_subject = f' {self.superadmin_user.get_full_name} Clients Transactions Report ' \
+                       f'From {self.start_date} To {self.end_date}'
+
+        deliver_mail(self.superadmin_user, _(mail_subject), message)
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
         self.status = status
+        self.instant_or_accept_perm = False
+        self.vf_facilitator_perm = False
+        self.default_vf__or_bank_perm = False
         self.superadmins = User.objects.filter(pk__in=super_admins_ids)
         report_download_url = self.prepare_transactions_report()
-        self.prepare_and_send_report_mail(report_download_url)
+        if report_download_url == False:
+            if self.default_vf__or_bank_perm:
+                err_messgae_email = _(
+                    f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
+                    f"Error: you have choose some super admins with default vodafone onboarding "
+                    f"or bank onboarding Please choose super admins with integration patch "
+                    f"onboarding or accept onboarding or vodafone facilitator onboarding"
+                )
+                self.prepare_and_send_error_mail(err_messgae_email)
+            elif self.vf_facilitator_perm == self.instant_or_accept_perm:
+                err_messgae_email = _(
+                    f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
+                    f"Error: you have choose some super admins with vodafone facilitator onboarding "
+                    f"and some with other onboarding methods Please choose super admins with "
+                    f"vodafone facilitator onboarding only or choose accept onboarding or "
+                    f"integration patch onboarding together or individual"
+                )
+                self.prepare_and_send_error_mail(err_messgae_email)
+        else:
+            self.prepare_and_send_report_mail(report_download_url)
         return True
 
 

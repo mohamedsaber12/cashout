@@ -216,6 +216,10 @@ class AmanChannel:
         try:
             if is_success and bill_reference:
                 AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
+                
+                # update related transaction to edit updated_at
+                for trn in AmanTransaction.objects.filter(bill_reference=bill_reference):
+                    trn.transaction.save()
                 return True, ""
             raise ValueError(_(f"Transaction payment failed! is_success: {is_success}, bill_ref: {bill_reference}"))
         except (AmanTransaction.DoesNotExist, ValueError, Exception) as e:

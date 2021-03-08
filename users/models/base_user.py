@@ -44,16 +44,21 @@ class User(AbstractUser):
     """
     User model for all the different types of users
     """
+    root = models.ForeignKey(
+        'users.RootUser',
+        on_delete=models.CASCADE,
+        null=True
+    )
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     pin = models.CharField(_('pin'), max_length=128, null=True, default='')
     avatar_thumbnail = ProcessedImageField(
-            upload_to='avatars',
-            processors=[ResizeToFill(100, 100)],
-            format='JPEG',
-            options={'quality': 60}, null=True, default='avatars/user.png'
+        upload_to='avatars',
+        processors=[ResizeToFill(100, 100)],
+        format='JPEG',
+        options={'quality': 60}, null=True, default='avatars/user.png'
     )
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
@@ -130,17 +135,6 @@ class User(AbstractUser):
         if self.has_perm('data.can_disburse'):
             return True
         return False
-
-    @property
-    def root(self):
-        if self.is_root:
-            return self
-        else:
-            # ToDo
-            # return statement doesn't work properly at superadmin calls,
-            #   because superadmin hierarchy is always 0 so it won't match any other incremented root's hierarchy
-            from users.models import RootUser
-            return RootUser.objects.get(hierarchy=self.hierarchy)
 
     @property
     def super_admin(self):

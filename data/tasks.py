@@ -225,6 +225,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
         total_amount = 0
         accounts_list, amount_list, names_list, codes_list, purposes_list, errors_list = [], [], [], [], [], []
         iban_regex = re.compile('^EG\d{27}')
+        name_regex = re.compile('^[a-zA-Z0-9\s]*$')
         try:
             for record in df.itertuples():
                 index = record[0]
@@ -266,13 +267,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "\nInvalid amount"
                     amount_list.append(record[2])
 
-                # 3. Validate for empty names
+                # 3. Validate for empty names or have special character
                 names_list.append(record[3])
-                if not record[3]:
+                if not record[3] or not bool(name_regex.match(str(record[3]))):
                     if errors_list[index]:
-                        errors_list[index] = "Invalid name"
+                        errors_list[index] = "Symbols not allowed in name"
                     else:
-                        errors_list[index] = "\nInvalid name"
+                        errors_list[index] = "\nSymbols not allowed in name"
 
                 # 4. Validate banks swift codes
                 codes_list.append(record[4])
@@ -829,6 +830,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     end_date = None
     first_day = None
     last_day = None
+    instant_or_accept_perm = False
+    vf_facilitator_perm = False
+    default_vf__or_bank_perm = False
 
     def refine_first_and_end_date_format(self):
         """
@@ -853,7 +857,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         )
         self.last_day = make_aware(last_day)
 
-    def _add_admin_username_to_qs_values(self, qs, checkers_parent_username):
+    def _customize_issuer_in_qs_values(self, qs):
         """Append admin username to the output transactions queryset values dict"""
         for q in qs:
             if len(str(q['issuer'])) > 20:
@@ -861,7 +865,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
                 q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
 
-            q['admin'] = checkers_parent_username[q['checker']]
         return qs
 
     def _add_vf_facilitator_identifier_to_qs_values(self,
@@ -892,7 +895,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             for issuer in issuers_exist.keys():
                 if not issuers_exist[issuer]:
                     default_issuer_dict = {'issuer': issuer, 'count': 0, 'total': 0}
-                    if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+                    if self.instant_or_accept_perm:
                         default_issuer_dict['fees'] = 0
                         default_issuer_dict['vat'] = 0
                     final_data[key].append(default_issuer_dict)
@@ -900,28 +903,31 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         return final_data
 
-    def _annotate_vf_ets_aman_qs(self, qs, checkers_parent_username):
+    def _annotate_vf_ets_aman_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
-        qs = qs.annotate(checker=F('doc__disbursed_by__username')).values('checker', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('id'))
+        if self.vf_facilitator_perm:
+            qs = qs.annotate(
+                admin=F('doc__disbursed_by__root__username'),
+                vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
+            ).values('admin', 'issuer', 'vf_identifier'). \
+                annotate(total=Sum('amount'), count=Count('id'))
+        else:
+            qs = qs.annotate(admin=F('doc__disbursed_by__root__username')).values('admin', 'issuer'). \
+                annotate(total=Sum('amount'), count=Count('id'))
+        return self._customize_issuer_in_qs_values(qs)
 
-        return self._add_admin_username_to_qs_values(qs, checkers_parent_username)
-
-    def _annotate_instant_trxs_qs(self, qs, checkers_parent_username):
+    def _annotate_instant_trxs_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
         qs = qs.annotate(
-            checker=Case(
-                When(from_user__isnull=False, then=F('from_user__username')),
-                default=F('document__disbursed_by__username')
+            admin=Case(
+                When(from_user__isnull=False, then=F('from_user__root__username')),
+                default=F('document__disbursed_by__root__username')
             )
-        ).extra(select={'issuer': 'issuer_type'}).values('checker', 'issuer'). \
+        ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
             annotate(total=Sum('amount'), count=Count('uid'))
-        return self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+        return self._customize_issuer_in_qs_values(qs)
 
-    def aggregate_vf_ets_aman_transactions(self,
-                                           checkers_qs,
-                                           checkers_parent_username,
-                                           checkers_parent_vf_facilitator_identifier):
+    def aggregate_vf_ets_aman_transactions(self):
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
         if self.status == 'failed':
             qs = DisbursementData.objects.filter(
@@ -929,33 +935,25 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(created_at__lte=self.last_day),
                 ~Q(reason__exact=''),
                 Q(is_disbursed=False),
-                Q(doc__disbursed_by__in=checkers_qs)
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         elif self.status == 'success':
             qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(is_disbursed=True),
-                Q(doc__disbursed_by__in=checkers_qs)
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         else:
             qs = DisbursementData.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False)),
-                Q(doc__disbursed_by__in=checkers_qs)
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
-        if self.superadmin_user.is_vodafone_facilitator_onboarding or \
-           self.status in ['success', 'failed']:
-            qs = self._annotate_vf_ets_aman_qs(qs, checkers_parent_username)
-
-            if self.superadmin_user.is_vodafone_facilitator_onboarding:
-                qs = self._add_vf_facilitator_identifier_to_qs_values(
-                    qs,
-                    checkers_parent_username,
-                    checkers_parent_vf_facilitator_identifier
-                )
-            else:
+        if self.status in ['success', 'failed']:
+            qs = self._annotate_vf_ets_aman_qs(qs)
+            if self.instant_or_accept_perm:
                 qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
             return qs
 
@@ -963,43 +961,47 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # divide qs into success and failed
         failed_qs = qs.filter(~Q(reason__exact='') & Q(is_disbursed=False))
         # annotate failed qs and add admin username
-        failed_qs = self._annotate_vf_ets_aman_qs(failed_qs, checkers_parent_username)
+        failed_qs = self._annotate_vf_ets_aman_qs(failed_qs)
 
         success_qs = qs.filter(Q(is_disbursed=True))
         # annotate success qs and add admin username
-        success_qs = self._annotate_vf_ets_aman_qs(success_qs, checkers_parent_username)
+        success_qs = self._annotate_vf_ets_aman_qs(success_qs)
 
-        # calculate fees and vat for failed qs
-        failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
-        # calculate fees and vat for success qs
-        success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
+        if self.instant_or_accept_perm:
+            # calculate fees and vat for failed qs
+            failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
+            # calculate fees and vat for success qs
+            success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
         return [*failed_qs, *success_qs]
 
-    def aggregate_bank_wallets_orange_instant_transactions(self, checkers_qs, checkers_parent_username):
+    def aggregate_bank_wallets_orange_instant_transactions(self):
         """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
         if self.status == 'failed':
             qs = InstantTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.FAILED),
-                Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
+                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins)
             )
         elif self.status == 'success':
             qs = InstantTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
-                Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
+                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins)
             )
         else:
             qs = InstantTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
-                Q(document__disbursed_by__in=checkers_qs) | Q(from_user__in=checkers_qs)
+                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins)
             )
         if self.status in ['success', 'failed']:
-            qs = self._annotate_instant_trxs_qs(qs, checkers_parent_username)
+            qs = self._annotate_instant_trxs_qs(qs)
             qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
             return qs
 
@@ -1007,11 +1009,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # divide qs into success and failed
         failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
         # annotate failed qs and add admin username
-        failed_qs = self._annotate_instant_trxs_qs(failed_qs, checkers_parent_username)
+        failed_qs = self._annotate_instant_trxs_qs(failed_qs)
 
         success_qs = qs.filter(Q(status=AbstractBaseStatus.SUCCESSFUL))
         # annotate success qs and add admin username
-        success_qs = self._annotate_instant_trxs_qs(success_qs, checkers_parent_username)
+        success_qs = self._annotate_instant_trxs_qs(success_qs)
 
         # calculate fees and vat for failed qs
         failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
@@ -1019,38 +1021,41 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
         return [*failed_qs, *success_qs]
 
-    def aggregate_bank_cards_transactions(self, checkers_qs, checkers_parent_username):
+    def aggregate_bank_cards_transactions(self):
         """Calculate bank cards transactions details from BankTransaction model"""
         if self.status == 'failed':
             qs = BankTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.FAILED),
-                Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
+                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins)
             )
         elif self.status == 'success':
             qs = BankTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
-                Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
+                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins)
             )
         else:
             qs = BankTransaction.objects.filter(
                 Q(created_at__gte=self.first_day),
                 Q(created_at__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
-                Q(document__disbursed_by__in=checkers_qs) | Q(user_created__in=checkers_qs)
+                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins)
             )
         qs = qs.annotate(
-            checker=Case(
-                When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__username')),
-                default=F('user_created__username')
+            admin=Case(
+                When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
+                default=F('user_created__root__username')
             )
-        ).extra(select={'issuer': 'transaction_id'}).values('checker', 'issuer').\
+        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer').\
             annotate(total=Sum('amount'), count=Count('id'))
 
-        qs = self._add_admin_username_to_qs_values(qs, checkers_parent_username)
+        qs = self._customize_issuer_in_qs_values(qs)
         qs = self._calculate_and_add_fees_to_qs_values(qs)
         return qs
 
@@ -1067,7 +1072,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                         if q['issuer'] == admin_q['issuer']:
                             admin_q['total'] += q['total']
                             admin_q['count'] += q['count']
-                            if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+                            if self.instant_or_accept_perm:
                                 admin_q['fees'] += q['fees']
                                 admin_q['vat'] += q['vat']
                             issuer_exist = True
@@ -1098,7 +1103,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         font_style = xlwt.XFStyle()
         row_num += 1
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.instant_or_accept_perm:
             col_nums = {
                 'total': 2,
                 'vodafone': 3,
@@ -1142,50 +1147,45 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # 1. Format start and end date
         self.refine_first_and_end_date_format()
 
-        # 2. Get all clients of the current superadmin
-        admins_qs = []
-        if self.superadmins:
-            for superAdmin in self.superadmins:
-                admins_qs = [*admins_qs, *superAdmin.children()]
-        else:
-            admins_qs = self.superadmin_user.children()
+        # 2. Prepare current super admins
+        if not self.superadmins:
+            self.superadmins = [self.superadmin_user]
 
-        # 3. Get all children [checkers/api checkers] for every client at the clients list
-        checkers_qs = []
-        checkers_parent_username = {}
-        admins_vf_facilitator_identifier = {}
-        for admin in admins_qs:
-            admins_vf_facilitator_identifier[admin.username] = admin.client.vodafone_facilitator_identifier
-            admin_children_list = admin.children()
-            for child in admin_children_list:
-                if child.is_checker or child.is_instantapichecker:
-                    checkers_qs.append(child)
-                    checkers_parent_username[child.username] = admin.username
+        # validate that all super admins have (instant || accept) or vf facilitator permission
+        for super_admin in self.superadmins:
+            if super_admin.is_instant_model_onboarding or \
+                super_admin.is_accept_vodafone_onboarding:
+                self.instant_or_accept_perm = True
+            elif super_admin.is_vodafone_facilitator_onboarding:
+                self.vf_facilitator_perm = True
+            else:
+                self.default_vf__or_bank_perm = True
 
-        # 4. Calculate vodafone, etisalat, aman transactions details
-        vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions(
-                checkers_qs, checkers_parent_username, admins_vf_facilitator_identifier
-        )
+        if self.default_vf__or_bank_perm or \
+           self.vf_facilitator_perm == self.instant_or_accept_perm:
+            return False
+
+
+        # 3. Calculate vodafone, etisalat, aman transactions details
+        vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions()
 
         bank_wallets_orange_instant_transactions_qs = []
         bank_cards_transactions_qs = []
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
+        if self.instant_or_accept_perm:
             # 5. Calculate bank wallets, orange, instant transactions details
-            bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions(
-                    checkers_qs, checkers_parent_username
-            )
+            bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions()
 
             # 6. Calculate bank cards/accounts transactions details
-            bank_cards_transactions_qs = self.aggregate_bank_cards_transactions(checkers_qs, checkers_parent_username)
+            bank_cards_transactions_qs = self.aggregate_bank_cards_transactions()
 
-        # 7. Group all data by admin
+        # 4. Group all data by admin
         final_data = self.group_result_transactions_data(
             vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
-        if not self.superadmin_user.is_vodafone_facilitator_onboarding:
-            # 8. Calculate total volume, count, fees for each admin
+        if self.instant_or_accept_perm:
+            # 5. Calculate total volume, count, fees for each admin
             for key in final_data.keys():
                 total_per_admin = {
                     'admin': key,
@@ -1202,8 +1202,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     total_per_admin['vat'] += el['vat']
                 final_data[key].append(total_per_admin)
 
-        # 9. Add issuer with values 0 to final data
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
+        # 6. Add issuer with values 0 to final data
+        if self.vf_facilitator_perm:
             issuers_exist = {
                 'default': False,
             }
@@ -1219,28 +1219,31 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         final_data = self._add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
 
-        # 10. Add all admin that have no transactions
+        # 7. Add all admin that have no transactions
+        admins_qs = []
+        for super_admin in self.superadmins:
+            admins_qs = [*admins_qs, *super_admin.children()]
         for current_admin in admins_qs:
             if not current_admin.username in final_data.keys():
-                if self.superadmin_user.is_vodafone_facilitator_onboarding:
+                if self.vf_facilitator_perm:
                     final_data[current_admin.username] = [{
                         **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                         'full_date': f"{self.start_date} to {self.end_date}",
-                        'vf_facilitator_identifier': admins_vf_facilitator_identifier[current_admin.username]
+                        'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
                 else:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
 
-        if self.superadmin_user.is_vodafone_facilitator_onboarding:
-            # 11. calculate distinct msisdn per admin
+        if self.vf_facilitator_perm:
+            # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
             for el in vf_ets_aman_qs.values():
-                if checkers_parent_username[el['checker']] in distinct_msisdn:
-                    distinct_msisdn[checkers_parent_username[el['checker']]].add(el['msisdn'])
+                if el['admin'] in distinct_msisdn:
+                    distinct_msisdn[el['admin']].add(el['msisdn'])
                 else:
-                    distinct_msisdn[checkers_parent_username[el['checker']]] = set([el['msisdn']])
+                    distinct_msisdn[el['admin']] = set([el['msisdn']])
 
-            # 12. Add all admin that have no transactions to distinct msisdn
+            # 9. Add all admin that have no transactions to distinct msisdn
             for current_admin in admins_qs:
                 if not current_admin.username in distinct_msisdn.keys():
                     distinct_msisdn[current_admin.username] = set([])
@@ -1253,7 +1256,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             column_names_list = [
                 'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
             ]
-            # 13. Write final data to excel file
+            # 10. Write final data to excel file
             return self.write_data_to_excel_file(final_data, column_names_list)
 
     def prepare_and_send_report_mail(self, report_download_url):
@@ -1267,14 +1270,42 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         )
         deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
 
+    def prepare_and_send_error_mail(self, message):
+        """Prepare error mail to be sent"""
+        mail_subject = f' {self.superadmin_user.get_full_name} Clients Transactions Report ' \
+                       f'From {self.start_date} To {self.end_date}'
+
+        deliver_mail(self.superadmin_user, _(mail_subject), message)
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
         self.status = status
+        self.instant_or_accept_perm = False
+        self.vf_facilitator_perm = False
+        self.default_vf__or_bank_perm = False
         self.superadmins = User.objects.filter(pk__in=super_admins_ids)
         report_download_url = self.prepare_transactions_report()
-        self.prepare_and_send_report_mail(report_download_url)
+        if report_download_url == False:
+            if self.default_vf__or_bank_perm:
+                err_messgae_email = _(
+                    f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
+                    f"Error: you have choose some super admins with default vodafone onboarding "
+                    f"or bank onboarding Please choose super admins with integration patch "
+                    f"onboarding or accept onboarding or vodafone facilitator onboarding"
+                )
+                self.prepare_and_send_error_mail(err_messgae_email)
+            elif self.vf_facilitator_perm == self.instant_or_accept_perm:
+                err_messgae_email = _(
+                    f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
+                    f"Error: you have choose some super admins with vodafone facilitator onboarding "
+                    f"and some with other onboarding methods Please choose super admins with "
+                    f"vodafone facilitator onboarding only or choose accept onboarding or "
+                    f"integration patch onboarding together or individual"
+                )
+                self.prepare_and_send_error_mail(err_messgae_email)
+        else:
+            self.prepare_and_send_report_mail(report_download_url)
         return True
 
 

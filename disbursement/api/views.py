@@ -34,6 +34,8 @@ from ..tasks import BulkDisbursementThroughOneStepCashin
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
+
 
 DISBURSEMENT_ERR_RESP_DICT = {'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}
 DISBURSEMENT_RUNNING_RESP_DICT = {'message': _(MSG_DISBURSEMENT_IS_RUNNING), 'header': _('Disbursed, Thanks')}
@@ -152,6 +154,47 @@ class DisburseAPIView(APIView):
 
         doc_obj.mark_disbursement_failure()
         return False
+    
+    def check_balance_before_disbursement(self, request, checker,doc_obj ):
+        total_doc_amount = self.get_total_doc_amount(doc_obj)
+        # get balance 
+        superadmin = checker.root.client.creator
+        super_agent = Agent.objects.get(wallet_provider=checker.root, super=True)
+        payload, refined_payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
+
+        try:
+            WALLET_API_LOGGER.debug(f"[request] [BALANCE INQUIRY] [{request.user}] -- {refined_payload}")
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"[message] [BALANCE INQUIRY ERROR] [{request.user}] -- Error: {e.args}")
+            return HttpResponse(
+                json.dumps({'message': MSG_BALANCE_INQUIRY_ERROR}),
+                status=status.HTTP_400_BAD_REQUEST
+                ) 
+        else:
+            WALLET_API_LOGGER.debug(f"[response] [BALANCE INQUIRY] [{request.user}] -- {response.text}")
+        if response.ok:
+            resp_json = response.json()
+            if resp_json["TXNSTATUS"] == '200':
+                    balance = resp_json['BALANCE']
+                    if total_doc_amount > balance :
+                        return HttpResponse(
+                            json.dumps({'message': "Insufficient funds"}),
+                            status=status.HTTP_400_BAD_REQUEST
+                            )
+            else:
+                error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
+                return HttpResponse(
+                    json.dumps({'message': error_message}),
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+        else:
+            error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
+            return HttpResponse(
+                    json.dumps({'message': error_message}),
+                    status=status.HTTP_400_BAD_REQUEST
+                    ) 
 
     def post(self, request, *args, **kwargs):
         """
@@ -189,7 +232,12 @@ class DisburseAPIView(APIView):
                 vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
                 vf_payload, log_payload = superadmin.vmt.\
                     accumulate_bulk_disbursement_payload(vf_agents, vf_recipients, smsc_sender_name)
+                    # check if have balance before disbursement
+                    # if checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring:
+                    #     self.check_balance_before_disbursement(request, checker, doc_obj)
+                        
                 vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, log_payload, True)
+                
 
         # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)
         if checker.is_accept_vodafone_onboarding:

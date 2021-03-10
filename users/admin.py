@@ -270,7 +270,7 @@ class SuperAdmin(UserAccountAdmin):
             status = request.POST.get("status")
             ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
 
-            self.message_user(request, f"report sended to the email {request.user.email}")
+            self.message_user(request, f"Report has been sent successfully to {request.user.email}")
 
             return HttpResponseRedirect(request.get_full_path())
         

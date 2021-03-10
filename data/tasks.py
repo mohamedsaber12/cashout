@@ -225,7 +225,6 @@ class BankWalletsAndCardsSheetProcessor(Task):
         total_amount = 0
         accounts_list, amount_list, names_list, codes_list, purposes_list, errors_list = [], [], [], [], [], []
         iban_regex = re.compile('^EG\d{27}')
-        name_regex = re.compile('^[a-zA-Z0-9\s]*$')
         try:
             for record in df.itertuples():
                 index = record[0]
@@ -269,7 +268,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
                 # 3. Validate for empty names or have special character
                 names_list.append(record[3])
-                if not record[3] or not bool(name_regex.match(str(record[3]))):
+                if not record[3] or any(e in str(record[3]) for e in '!%*+&'):
                     if errors_list[index]:
                         errors_list[index] = "Symbols not allowed in name"
                     else:

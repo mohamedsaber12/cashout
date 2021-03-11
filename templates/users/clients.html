@@ -372,11 +372,17 @@
           type: 'GET',
           url: "{% url 'disbursement:export_clients_transactions_report' %}"+qsOfUrl,
           success: function (data, text, xhr) {
-            if (xhr.responseText == "") {
-              $('#exportTransactionsModal').modal({
+            console.log('data => ', data);
+            console.log('text => ', text);
+            console.log('xhr => ', xhr);
+            if (data != "False") {
+              let a = document.createElement('a');
+              a.href = data;
+              a.click();
+              /*$('#exportTransactionsModal').modal({
                 backdrop: 'static',
                 keyboard: false
-              })
+              })*/
             } else {
               window.location.replace("../user/login")
             }

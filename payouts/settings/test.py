@@ -29,7 +29,7 @@ DATABASES = {
         'USER': 'root',
         'PASSWORD': '018242',
         'HOST': 'localhost',
-        'PORT': '',
+        'PORT': '5432',
         'CONN_MAX_AGE': 600,
         'TEST': {
             'NAME': 'bills_db_test',

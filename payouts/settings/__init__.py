@@ -13,6 +13,10 @@ if environment == 'local':
 elif environment == 'staging':
     from .staging import *
 
+elif environment == 'developement':
+    from .developement import *
+
+
 else:
     from .production import *
 

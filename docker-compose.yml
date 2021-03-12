@@ -10,13 +10,13 @@ services:
     env_file:
       - ./.env
     volumes:
-      - /opt/volumes/payouts/payouts_portal/:/app/payouts_portal
+      - /home/ec2-user/opt/volumes/payouts/payouts_portal/:/app/payouts_portal
       #- /opt/volumes/payouts/static/:/app/staticfiles/static
       #- /opt/volumes/payouts/media/:/app/mediafiles/media
-      - /root/opt3/disbursement_tool/static/:/home/app/static_media/static
-      - /root/opt3/disbursement_tool/media/:/home/app/static_media/media
-      - /opt/volumes/payouts/payout-ssh:/home/payouts_user/.ssh/
-      - /root/opt3/disbursement_tool/.env:/home/app/payouts_portal/.env
+      - /home/ec2-user/Payouts/disbursement_tool/static/:/home/app/static_media/static
+      - /home/ec2-user/Payouts/disbursement_tool/media/:/home/app/static_media/media
+      - /home/ec2-user/Payouts/disbursement_tool/ssh:/home/payouts_user/.ssh/
+      - /home/ec2-user/Payouts/disbursement_tool/.env:/home/app/payouts_portal/.env
     expose:
       - 8000
     command: >
@@ -54,7 +54,7 @@ services:
       POSTGRES_PASSWORD: PayoutsPortalPassword
       #POSTGRES_HOST: postgres
     volumes:
-      - /opt/volumes/payouts/payouts-database:/var/lib/postgresql/data
+      - /home/ec2-user/opt/volumes/payouts/payouts-database:/var/lib/postgresql/data
     networks:
       - payouts_network
 
@@ -62,7 +62,7 @@ services:
     container_name: RabbitMQ
     image: rabbitmq:3.8
     volumes:
-      - /opt/volumes/payouts/rabbitmq:/var/lib/rabbitmq
+      - /home/ec2/opt/volumes/payouts/rabbitmq:/var/lib/rabbitmq
     networks:
       - payouts_network
 
@@ -72,28 +72,28 @@ services:
     command: [ "celery", "worker", "--app", "payouts.settings", "--events", "--beat", "--scheduler", "django", "--loglevel", "info" ]
     #ports: [ ]
     volumes:
-      - /opt/volumes/payouts/payout-ssh:/home/payouts_user/.ssh/
+      - /home/ec2-user/Payouts/disbursement_tool/payouts/payout-ssh:/home/payouts_user/.ssh/
     networks:
       - payouts_network
     depends_on:
       - rabbitmq
     links:
       - payouts
-      
+
   nginx:
     image: nginx:1.16
     ports:
       - 80:80
       - 443:443
     volumes:
-      - /opt/volumes/payouts/nginx/conf.d/default.conf:/etc/nginx/nginx.conf
-      - /opt/volumes/payouts/nginx/conf.d/default2.conf:/etc/nginx/conf.d/default.conf
+      - /home/ec2-user/Payouts/disbursement_tool/nginx/conf.d/default.conf:/etc/nginx/nginx.conf
+      - /home/ec2-user/Payouts/disbursement_tool/nginx/conf.d/default2.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt:/etc/letsencrypt
-      - /root/opt3/disbursement_tool/static:/home/app/payouts_portal/static
-      - /root/opt3/disbursement_tool/media:/home/app/payouts_portal/media
+      - /home/ec2-user/Payouts/disbursement_tool/static:/home/app/payouts_portal/static
+      - /home/ec2-user/Payouts/disbursement_tool/media:/home/app/payouts_portal/media
     networks:
       - payouts_network
-      
+
 volumes:
   static_volume:
   media_volume:
@@ -103,4 +103,3 @@ volumes:
 networks:
   payouts_network:
     driver: bridge
-

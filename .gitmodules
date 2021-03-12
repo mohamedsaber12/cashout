@@ -5,3 +5,7 @@
 	path = smpp
 	url = git@gitlab.com:MISC-PayMob/smpp.git
 	branch = python3-porting
+[submodule "utils"]
+        path = utils
+        url = git@gitlab.com:paymob-nanolending/utils.git
+

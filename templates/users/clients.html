@@ -372,9 +372,6 @@
           type: 'GET',
           url: "{% url 'disbursement:export_clients_transactions_report' %}"+qsOfUrl,
           success: function (data, text, xhr) {
-            console.log('data => ', data);
-            console.log('text => ', text);
-            console.log('xhr => ', xhr);
             if (data != "False") {
               let a = document.createElement('a');
               a.href = data;

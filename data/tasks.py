@@ -593,7 +593,7 @@ class EWalletsSheetProcessor(Task):
                 errors_list.append(None)
 
                 # 1. Validate msisdns
-                msisdn = str(record[msisdn_header])
+                msisdn = str(record[msisdn_header]).strip("\u200e")
                 valid_msisdn = False
                 try:
                     if msisdn.startswith("1") and len(msisdn) == 10:
@@ -610,7 +610,10 @@ class EWalletsSheetProcessor(Task):
                         phonenumber_form_validate(f"+{msisdn}")
                         msisdn = f"00{msisdn}"
                         msisdns_list.append(msisdn)
-                        valid_msisdn = True
+                        valid_msisdn = True    
+                    else:
+                        raise ValidationError('')
+                    
                 except ValidationError:
                     if errors_list[index]:
                         errors_list[index] = "Invalid mobile number"

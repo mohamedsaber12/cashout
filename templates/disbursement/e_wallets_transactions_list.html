@@ -349,13 +349,14 @@
 
         {# Handle disbursement status description based of the record disbursement status #}
         if (reason) {
-          if (reason === 'SUCCESS') {
+          if (is_disbursed === 'True') {
             appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>200</li>`;
+            appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${reason}</li>`;
           } else {
             appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>${reason}</li>`;
+            let reason_description = $(this).data('reason_description');
+            appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${reason_description}</li>`;
           }
-          let reason_description = $(this).data('reason_description');
-          appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${reason_description}</li>`;
         } else {
           appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b> -- </li>`;
           appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>Disbursement process is running</li>`;

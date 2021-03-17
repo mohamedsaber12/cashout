@@ -56,7 +56,9 @@ from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFor
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData
 from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
-                    add_fees_and_vat_to_qs, DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
+                    add_fees_and_vat_to_qs,
+                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                     determine_trx_category_and_purpose)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
@@ -259,7 +261,7 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         end_date = request.GET.get('end_date', None)
         status = request.GET.get('status', None)
 
-        if request.is_ajax() and not (request.user.is_vodafone_default_onboarding or request.user.is_banks_standard_model_onboaring):
+        if request.is_ajax():
             # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
             exportObject = ExportClientsTransactionsMonthlyReport()
             report_download_url = exportObject.run(request.user.id, start_date, end_date, status)
@@ -803,7 +805,7 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
                 return redirect(request.path + '?' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)
-        
+
 
 class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):
     """
@@ -1173,7 +1175,7 @@ class ExportClientsTransactionsMonthlyReport:
         font_style = xlwt.XFStyle()
         row_num += 1
 
-        if self.instant_or_accept_perm:
+        if self.instant_or_accept_perm or self.default_vf__or_bank_perm:
             col_nums = {
                 'total': 2,
                 'vodafone': 3,
@@ -1183,20 +1185,27 @@ class ExportClientsTransactionsMonthlyReport:
                 'B': 7,
                 'C': 8
             }
+            if self.default_vf__or_bank_perm:
+                col_nums['default']= 9
+
             for key in final_data.keys():
                 ws.write(row_num, 0, key, font_style)
                 ws.write(row_num, 1, 'Volume', font_style)
                 ws.write(row_num+1, 1, 'Count', font_style)
-                ws.write(row_num+2, 1, 'Fees', font_style)
-                ws.write(row_num+3, 1, 'Vat', font_style)
+                if self.instant_or_accept_perm:
+                    ws.write(row_num+2, 1, 'Fees', font_style)
+                    ws.write(row_num+3, 1, 'Vat', font_style)
 
                 for el in final_data[key]:
                     ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
                     ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
-                    ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
-                    ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
-
-                row_num += 4
+                    if self.instant_or_accept_perm:
+                        ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+                        ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
+                if self.instant_or_accept_perm:
+                    row_num += 4
+                else:
+                    row_num += 2
         else:
             for key in final_data.keys():
                 current_admin_report = final_data[key][0]
@@ -1230,11 +1239,9 @@ class ExportClientsTransactionsMonthlyReport:
                 self.vf_facilitator_perm = True
             else:
                 self.default_vf__or_bank_perm = True
-
-        if self.default_vf__or_bank_perm or \
-                self.vf_facilitator_perm == self.instant_or_accept_perm:
+        onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
+        if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
             return False
-
 
         # 3. Calculate vodafone, etisalat, aman transactions details
         vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions()
@@ -1254,7 +1261,7 @@ class ExportClientsTransactionsMonthlyReport:
                 vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
-        if self.instant_or_accept_perm:
+        if self.instant_or_accept_perm  or self.default_vf__or_bank_perm:
             # 5. Calculate total volume, count, fees for each admin
             for key in final_data.keys():
                 total_per_admin = {
@@ -1262,14 +1269,17 @@ class ExportClientsTransactionsMonthlyReport:
                     'issuer': 'total',
                     'total': round(Decimal(0), 2),
                     'count': round(Decimal(0), 2),
-                    'fees': round(Decimal(0), 2),
-                    'vat': round(Decimal(0), 2)
                 }
+                if self.instant_or_accept_perm:
+                    total_per_admin['fees'] = round(Decimal(0), 2),
+                    total_per_admin['vat'] = round(Decimal(0), 2)
+
                 for el in final_data[key]:
                     total_per_admin['total'] += round(Decimal(el['total']), 2)
                     total_per_admin['count'] += el['count']
-                    total_per_admin['fees'] += el['fees']
-                    total_per_admin['vat'] += el['vat']
+                    if self.instant_or_accept_perm:
+                        total_per_admin['fees'] += el['fees']
+                        total_per_admin['vat'] += el['vat']
                 final_data[key].append(total_per_admin)
 
         # 6. Add issuer with values 0 to final data
@@ -1286,6 +1296,9 @@ class ExportClientsTransactionsMonthlyReport:
                 'B': False,
                 'C': False
             }
+            if self.default_vf__or_bank_perm:
+                issuers_exist['default'] = False
+
 
         final_data = self._add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
 
@@ -1301,8 +1314,10 @@ class ExportClientsTransactionsMonthlyReport:
                         'full_date': f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
-                else:
+                elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
+                else:
+                    final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf
 
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
@@ -1326,26 +1341,11 @@ class ExportClientsTransactionsMonthlyReport:
             column_names_list = [
                 'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
             ]
+            if self.default_vf__or_bank_perm:
+                column_names_list.append('Default')
+
             # 10. Write final data to excel file
             return self.write_data_to_excel_file(final_data, column_names_list)
-
-    def prepare_and_send_report_mail(self, report_download_url):
-        """Prepare the mail to be sent with the report download link"""
-        mail_subject = f' {self.superadmin_user.get_full_name} Clients Transactions Report ' \
-                       f'From {self.start_date} To {self.end_date}'
-        mail_content_message = _(
-                f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br>You can download "
-                f"transactions report of your clients within the period of {self.start_date} to {self.end_date} "
-                f"from here <a href='{report_download_url}' >Download</a>.<br><br>Best Regards,"
-        )
-        deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
-
-    def prepare_and_send_error_mail(self, message):
-        """Prepare error mail to be sent"""
-        mail_subject = f' {self.superadmin_user.get_full_name} Clients Transactions Report ' \
-                       f'From {self.start_date} To {self.end_date}'
-
-        deliver_mail(self.superadmin_user, _(mail_subject), message)
 
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[]):
         self.superadmin_user = User.objects.get(id=user_id)

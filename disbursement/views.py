@@ -5,6 +5,8 @@ import io
 import logging
 import os
 import random
+import xlwt
+from decimal import Decimal
 
 from faker import Factory as fake_factory
 import pandas as pd
@@ -12,7 +14,6 @@ import requests
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.db.models import Count, Q, Sum
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -20,6 +21,9 @@ from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import ListView, View
+from django.utils.timezone import datetime, make_aware
+from django.db.models import Case, Count, F, Q, Sum, When
+
 import urllib
 
 
@@ -43,16 +47,22 @@ from users.mixins import (SuperFinishedSetupMixin,
                           AgentsListPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
                           UserWithDisbursementPermissionRequired)
-from users.models import EntitySetup, Client, RootUser
+from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
 from utilities.models import Budget
 
 from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
                     BalanceInquiryPinForm, SingleStepTransactionModelForm)
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
-from .models import Agent, BankTransaction
+from .models import Agent, BankTransaction, DisbursementData
 from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
-                    add_fees_and_vat_to_qs)
+                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
+                    add_fees_and_vat_to_qs,
+                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                    determine_trx_category_and_purpose)
+from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
+from data.utils import deliver_mail, export_excel, randomword
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -251,9 +261,11 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         end_date = request.GET.get('end_date', None)
         status = request.GET.get('status', None)
 
-        if request.is_ajax() and not (request.user.is_vodafone_default_onboarding or request.user.is_banks_standard_model_onboaring):
-            ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
-            return HttpResponse(status=200)
+        if request.is_ajax():
+            # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
+            exportObject = ExportClientsTransactionsMonthlyReport()
+            report_download_url = exportObject.run(request.user.id, start_date, end_date, status)
+            return HttpResponse(report_download_url)
 
         return HttpResponse(status=401)
 
@@ -793,7 +805,7 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
                 return redirect(request.path + '?' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)
-        
+
 
 class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View):
     """
@@ -887,3 +899,463 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             return response
         except:
             raise Http404
+
+
+class ExportClientsTransactionsMonthlyReport:
+    """
+    class for export clients transactions monthly reports.
+    """
+    def __init__(self):
+        self.superadmin_user = None
+        self.superadmins = None
+        self.start_date = None
+        self.end_date = None
+        self.first_day = None
+        self.last_day = None
+        self.instant_or_accept_perm = False
+        self.vf_facilitator_perm = False
+        self.default_vf__or_bank_perm = False
+
+    def refine_first_and_end_date_format(self):
+        """
+        Refine start date and end date format using datetime and set values for first and last days.
+        make_aware(): Converts naive datetime object (without timezone info) to the one that has timezone info,
+            using timezone specified in your django settings if you don't specify it explicitly as a second argument.
+        """
+        first_day = datetime(
+                year=int(self.start_date.split('-')[0]),
+                month=int(self.start_date.split('-')[1]),
+                day=int(self.start_date.split('-')[2]),
+        )
+        self.first_day = make_aware(first_day)
+
+        last_day = datetime(
+                year=int(self.end_date.split('-')[0]),
+                month=int(self.end_date.split('-')[1]),
+                day=int(self.end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+        )
+        self.last_day = make_aware(last_day)
+
+    def _customize_issuer_in_qs_values(self, qs):
+        """Append admin username to the output transactions queryset values dict"""
+        for q in qs:
+            if len(str(q['issuer'])) > 20:
+                q['issuer'] = 'C'
+            elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
+                q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
+
+        return qs
+
+    def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs_vf_et_aman=False):
+        """Calculate and append the fees to the output transactions queryset values dict"""
+        for q in qs:
+            if failed_qs_vf_et_aman and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
+                q['fees'], q['vat'] = 0, 0
+            else:
+                q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']). \
+                    calculate_fees_and_vat_for_amount(q['total'], q['issuer'], q['count'])
+        return qs
+
+    def _add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):
+        for key in final_data.keys():
+            for el in final_data[key]:
+                if el['issuer'] != 'total':
+                    issuers_exist[el['issuer']] = True
+            for issuer in issuers_exist.keys():
+                if not issuers_exist[issuer]:
+                    default_issuer_dict = {'issuer': issuer, 'count': 0, 'total': 0}
+                    if self.instant_or_accept_perm:
+                        default_issuer_dict['fees'] = 0
+                        default_issuer_dict['vat'] = 0
+                    final_data[key].append(default_issuer_dict)
+                issuers_exist[issuer] = False
+
+        return final_data
+
+    def _annotate_vf_ets_aman_qs(self, qs):
+        """ Annotate qs then add admin username to qs"""
+        if self.vf_facilitator_perm:
+            qs = qs.annotate(
+                    admin=F('doc__disbursed_by__root__username'),
+                    vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
+            ).values('admin', 'issuer', 'vf_identifier'). \
+                annotate(total=Sum('amount'), count=Count('id'))
+        else:
+            qs = qs.annotate(admin=F('doc__disbursed_by__root__username')).values('admin', 'issuer'). \
+                annotate(total=Sum('amount'), count=Count('id'))
+        return self._customize_issuer_in_qs_values(qs)
+
+    def _annotate_instant_trxs_qs(self, qs):
+        """ Annotate qs then add admin username to qs"""
+        qs = qs.annotate(
+                admin=Case(
+                        When(from_user__isnull=False, then=F('from_user__root__username')),
+                        default=F('document__disbursed_by__root__username')
+                )
+        ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
+            annotate(total=Sum('amount'), count=Count('uid'))
+        return self._customize_issuer_in_qs_values(qs)
+
+    def aggregate_vf_ets_aman_transactions(self):
+        """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
+        if self.status == 'failed':
+            qs = DisbursementData.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    ~Q(reason__exact=''),
+                    Q(is_disbursed=False),
+                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+            )
+        elif self.status == 'success':
+            qs = DisbursementData.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(is_disbursed=True),
+                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+            )
+        else:
+            qs = DisbursementData.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False)),
+                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+            )
+        if self.status in ['success', 'failed']:
+            qs = self._annotate_vf_ets_aman_qs(qs)
+            if self.instant_or_accept_perm:
+                qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
+            return qs
+
+        # handle if status is all
+        # divide qs into success and failed
+        failed_qs = qs.filter(~Q(reason__exact='') & Q(is_disbursed=False))
+        # annotate failed qs and add admin username
+        failed_qs = self._annotate_vf_ets_aman_qs(failed_qs)
+
+        success_qs = qs.filter(Q(is_disbursed=True))
+        # annotate success qs and add admin username
+        success_qs = self._annotate_vf_ets_aman_qs(success_qs)
+
+        if self.instant_or_accept_perm:
+            # calculate fees and vat for failed qs
+            failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
+            # calculate fees and vat for success qs
+            success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
+        return [*failed_qs, *success_qs]
+
+    def aggregate_bank_wallets_orange_instant_transactions(self):
+        """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
+        if self.status == 'failed':
+            qs = InstantTransaction.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(status=AbstractBaseStatus.FAILED),
+                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(from_user__root__client__creator__in=self.superadmins)
+            )
+        elif self.status == 'success':
+            qs = InstantTransaction.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(status=AbstractBaseStatus.SUCCESSFUL),
+                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(from_user__root__client__creator__in=self.superadmins)
+            )
+        else:
+            qs = InstantTransaction.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
+                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(from_user__root__client__creator__in=self.superadmins)
+            )
+        if self.status in ['success', 'failed']:
+            qs = self._annotate_instant_trxs_qs(qs)
+            qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
+            return qs
+
+        # handle if status is all
+        # divide qs into success and failed
+        failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
+        # annotate failed qs and add admin username
+        failed_qs = self._annotate_instant_trxs_qs(failed_qs)
+
+        success_qs = qs.filter(Q(status=AbstractBaseStatus.SUCCESSFUL))
+        # annotate success qs and add admin username
+        success_qs = self._annotate_instant_trxs_qs(success_qs)
+
+        # calculate fees and vat for failed qs
+        failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
+        # calculate fees and vat for success qs
+        success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
+        return [*failed_qs, *success_qs]
+
+    def aggregate_bank_cards_transactions(self):
+        """Calculate bank cards transactions details from BankTransaction model"""
+        if self.status == 'failed':
+            qs = BankTransaction.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(status=AbstractBaseStatus.FAILED),
+                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(user_created__root__client__creator__in=self.superadmins)
+            )
+        elif self.status == 'success':
+            qs = BankTransaction.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(status=AbstractBaseStatus.SUCCESSFUL),
+                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(user_created__root__client__creator__in=self.superadmins)
+            )
+        else:
+            qs = BankTransaction.objects.filter(
+                    Q(created_at__gte=self.first_day),
+                    Q(created_at__lte=self.last_day),
+                    Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
+                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(user_created__root__client__creator__in=self.superadmins)
+            )
+        qs = qs.annotate(
+                admin=Case(
+                        When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
+                        default=F('user_created__root__username')
+                )
+        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
+            annotate(total=Sum('amount'), count=Count('id'))
+
+        qs = self._customize_issuer_in_qs_values(qs)
+        qs = self._calculate_and_add_fees_to_qs_values(qs)
+        return qs
+
+    def group_result_transactions_data(self, vf_ets_aman_qs, bank_wallets_orange_instant_qs, cards_qs):
+        """Group all data by admin"""
+        transactions_details_list = [vf_ets_aman_qs, bank_wallets_orange_instant_qs, cards_qs]
+        final_data = dict()
+
+        for transactions_result_type in transactions_details_list:
+            for q in transactions_result_type:
+                if q['admin'] in final_data:
+                    issuer_exist = False
+                    for admin_q in final_data[q['admin']]:
+                        if q['issuer'] == admin_q['issuer']:
+                            admin_q['total'] += q['total']
+                            admin_q['count'] += q['count']
+                            if self.instant_or_accept_perm:
+                                admin_q['fees'] += q['fees']
+                                admin_q['vat'] += q['vat']
+                            issuer_exist = True
+                            break
+                    if not issuer_exist:
+                        final_data[q['admin']].append(q)
+                else:
+                    final_data[q['admin']] = [q]
+
+        return final_data
+
+    def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
+        """Write exported transactions data to excel file"""
+        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+        ws = wb.add_sheet('report')
+
+        # 1. Write sheet header/column names - first row
+        row_num = 0
+        font_style = xlwt.XFStyle()
+        font_style.font.bold = True
+
+        for col_nums in range(len(column_names_list)):
+            ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+
+        # 2. Write sheet body/data - remaining rows
+        font_style = xlwt.XFStyle()
+        row_num += 1
+
+        if self.instant_or_accept_perm or self.default_vf__or_bank_perm:
+            col_nums = {
+                'total': 2,
+                'vodafone': 3,
+                'etisalat': 4,
+                'aman': 5,
+                'orange': 6,
+                'B': 7,
+                'C': 8
+            }
+            if self.default_vf__or_bank_perm:
+                col_nums['default']= 9
+
+            for key in final_data.keys():
+                ws.write(row_num, 0, key, font_style)
+                ws.write(row_num, 1, 'Volume', font_style)
+                ws.write(row_num+1, 1, 'Count', font_style)
+                if self.instant_or_accept_perm:
+                    ws.write(row_num+2, 1, 'Fees', font_style)
+                    ws.write(row_num+3, 1, 'Vat', font_style)
+
+                for el in final_data[key]:
+                    ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
+                    ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
+                    if self.instant_or_accept_perm:
+                        ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+                        ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
+                if self.instant_or_accept_perm:
+                    row_num += 4
+                else:
+                    row_num += 2
+        else:
+            for key in final_data.keys():
+                current_admin_report = final_data[key][0]
+                ws.write(row_num, 0, key, font_style)
+                ws.write(row_num, 1, current_admin_report['count'], font_style)
+                ws.write(row_num, 2, current_admin_report['total'], font_style)
+                ws.write(row_num, 3, len(distinct_msisdn[key]), font_style)
+                ws.write(row_num, 4, current_admin_report['full_date'], font_style)
+                ws.write(row_num, 5, current_admin_report['vf_facilitator_identifier'], font_style)
+                row_num += 1
+
+        wb.save(file_path)
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
+
+    def prepare_transactions_report(self):
+        """Prepare report for transactions related to client"""
+        # 1. Format start and end date
+        self.refine_first_and_end_date_format()
+
+        # 2. Prepare current super admins
+        if not self.superadmins:
+            self.superadmins = [self.superadmin_user]
+
+        # validate that all super admins have (instant || accept) or vf facilitator permission
+        for super_admin in self.superadmins:
+            if super_admin.is_instant_model_onboarding or \
+                    super_admin.is_accept_vodafone_onboarding:
+                self.instant_or_accept_perm = True
+            elif super_admin.is_vodafone_facilitator_onboarding:
+                self.vf_facilitator_perm = True
+            else:
+                self.default_vf__or_bank_perm = True
+        onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
+        if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
+            return False
+
+        # 3. Calculate vodafone, etisalat, aman transactions details
+        vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions()
+
+        bank_wallets_orange_instant_transactions_qs = []
+        bank_cards_transactions_qs = []
+
+        if self.instant_or_accept_perm:
+            # 5. Calculate bank wallets, orange, instant transactions details
+            bank_wallets_orange_instant_transactions_qs = self.aggregate_bank_wallets_orange_instant_transactions()
+
+            # 6. Calculate bank cards/accounts transactions details
+            bank_cards_transactions_qs = self.aggregate_bank_cards_transactions()
+
+        # 4. Group all data by admin
+        final_data = self.group_result_transactions_data(
+                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
+        )
+
+        if self.instant_or_accept_perm  or self.default_vf__or_bank_perm:
+            # 5. Calculate total volume, count, fees for each admin
+            for key in final_data.keys():
+                total_per_admin = {
+                    'admin': key,
+                    'issuer': 'total',
+                    'total': round(Decimal(0), 2),
+                    'count': round(Decimal(0), 2),
+                }
+                if self.instant_or_accept_perm:
+                    total_per_admin['fees'] = round(Decimal(0), 2),
+                    total_per_admin['vat'] = round(Decimal(0), 2)
+
+                for el in final_data[key]:
+                    total_per_admin['total'] += round(Decimal(el['total']), 2)
+                    total_per_admin['count'] += el['count']
+                    if self.instant_or_accept_perm:
+                        total_per_admin['fees'] += el['fees']
+                        total_per_admin['vat'] += el['vat']
+                final_data[key].append(total_per_admin)
+
+        # 6. Add issuer with values 0 to final data
+        if self.vf_facilitator_perm:
+            issuers_exist = {
+                'default': False,
+            }
+        else:
+            issuers_exist = {
+                'vodafone': False,
+                'etisalat': False,
+                'aman': False,
+                'orange': False,
+                'B': False,
+                'C': False
+            }
+            if self.default_vf__or_bank_perm:
+                issuers_exist['default'] = False
+
+
+        final_data = self._add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
+
+        # 7. Add all admin that have no transactions
+        admins_qs = []
+        for super_admin in self.superadmins:
+            admins_qs = [*admins_qs, *super_admin.children()]
+        for current_admin in admins_qs:
+            if not current_admin.username in final_data.keys():
+                if self.vf_facilitator_perm:
+                    final_data[current_admin.username] = [{
+                        **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                        'full_date': f"{self.start_date} to {self.end_date}",
+                        'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
+                    }]
+                elif self.instant_or_accept_perm:
+                    final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
+                else:
+                    final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf
+
+        if self.vf_facilitator_perm:
+            # 8. calculate distinct msisdn per admin
+            distinct_msisdn = dict()
+            for el in vf_ets_aman_qs.values():
+                if el['admin'] in distinct_msisdn:
+                    distinct_msisdn[el['admin']].add(el['msisdn'])
+                else:
+                    distinct_msisdn[el['admin']] = set([el['msisdn']])
+
+            # 9. Add all admin that have no transactions to distinct msisdn
+            for current_admin in admins_qs:
+                if not current_admin.username in distinct_msisdn.keys():
+                    distinct_msisdn[current_admin.username] = set([])
+
+            column_names_list = [
+                'Account Name ', 'Total Count', 'Total Amount', 'Distinct Receivers', 'Full Date', 'Billing Number'
+            ]
+            return self.write_data_to_excel_file(final_data, column_names_list, distinct_msisdn)
+        else:
+            column_names_list = [
+                'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
+            ]
+            if self.default_vf__or_bank_perm:
+                column_names_list.append('Default')
+
+            # 10. Write final data to excel file
+            return self.write_data_to_excel_file(final_data, column_names_list)
+
+    def run(self, user_id, start_date, end_date, status, super_admins_ids=[]):
+        self.superadmin_user = User.objects.get(id=user_id)
+        self.start_date = start_date
+        self.end_date = end_date
+        self.status = status
+        self.instant_or_accept_perm = False
+        self.vf_facilitator_perm = False
+        self.default_vf__or_bank_perm = False
+        self.superadmins = User.objects.filter(pk__in=super_admins_ids)
+        report_download_url = self.prepare_transactions_report()
+
+        return report_download_url

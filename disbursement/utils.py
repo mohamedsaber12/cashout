@@ -263,6 +263,49 @@ DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [
     }
 ]
 
+DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf = [
+    {
+        'issuer': 'total',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'vodafone',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'etisalat',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'aman',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'orange',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'B',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'C',
+        'total': 0,
+        'count': 0
+    },
+    {
+        'issuer': 'default',
+        'total': 0,
+        'count': 0
+    }
+]
+
 DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT = {
     'issuer': 'default',
     'total': 0,

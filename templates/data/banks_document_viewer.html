@@ -96,7 +96,7 @@
       <div class="col-md-9 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
         {% if doc.is_processed and not doc.can_be_disbursed %}
           <button id="notify_button" class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
-            <span class="glyphicon glyphicon-bell"></span> {% trans 'Notify Chekers' %}
+            <span class="glyphicon glyphicon-bell"></span> {% trans 'Notify Checkers' %}
           </button>
           {% elif doc.can_be_disbursed %}
           <div class="alert alert-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">

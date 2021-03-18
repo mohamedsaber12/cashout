@@ -1278,6 +1278,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                        f'From {self.start_date} To {self.end_date}'
 
         deliver_mail(self.superadmin_user, _(mail_subject), message)
+
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date

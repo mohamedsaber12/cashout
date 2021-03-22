@@ -1271,7 +1271,7 @@ class ExportClientsTransactionsMonthlyReport:
                     'count': round(Decimal(0), 2),
                 }
                 if self.instant_or_accept_perm:
-                    total_per_admin['fees'] = round(Decimal(0), 2),
+                    total_per_admin['fees'] = round(Decimal(0), 2)
                     total_per_admin['vat'] = round(Decimal(0), 2)
 
                 for el in final_data[key]:

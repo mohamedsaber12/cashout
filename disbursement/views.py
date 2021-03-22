@@ -52,7 +52,7 @@ from utilities import messages
 from utilities.models import Budget
 
 from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
-                    BalanceInquiryPinForm, SingleStepTransactionModelForm)
+                    BalanceInquiryPinForm, SingleStepTransactionForm)
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData
 from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
@@ -734,7 +734,7 @@ class AgentsListView(AgentsListPermissionRequired, ListView):
         return Agent.objects.filter(wallet_provider=self.request.user)
 
 
-class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View):
+class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     """
     List/Create view for single step bank transactions over the manual patch
     """
@@ -767,7 +767,7 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""
         context = {
-            'form': SingleStepTransactionModelForm(checker_user=request.user),
+            'form': SingleStepTransactionForm(checker_user=request.user),
             'transactions_list': self.get_queryset()
         }
         return render(request, template_name=self.template_name, context=context)
@@ -775,7 +775,7 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""
         context = {
-            'form': SingleStepTransactionModelForm(request.POST, checker_user=request.user),
+            'form': SingleStepTransactionForm(request.POST, checker_user=request.user),
             'transactions_list': self.get_queryset(),
             'show_add_form': True
         }
@@ -784,7 +784,7 @@ class BankTransactionsSingleStepView(AdminOrCheckerOrSupportRequiredMixin, View)
             form = context['form']
             single_step_bank_transaction = form.save()
             context = {
-                'form': SingleStepTransactionModelForm(checker_user=request.user),
+                'form': SingleStepTransactionForm(checker_user=request.user),
                 'transactions_list': self.get_queryset(),
                 'show_pop_up': True
             }

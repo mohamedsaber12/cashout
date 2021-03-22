@@ -71,7 +71,7 @@
               {% if user.is_checker %}
                 {% if user.root.client.is_active %}
                   <div class="dialogButtonDiv">
-                    <button id="addSingleTransaction" class="btn btn-primary">Make New Bank Transaction</button>
+                    <button id="addSingleTransaction" class="btn btn-primary">Make New Transaction</button>
                   </div>
                 {% else %}
                   <div class="alert alert-danger pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
@@ -139,13 +139,13 @@
   </div>
   {# End of page content #}
 
-  {# Add new single step bank transaction modal #}
+  {# Add new single step transaction modal #}
   <div class="modal fade" id="transactionModel" role="dialog">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4><span class="glyphicon glyphicon-plus"></span> Make New Bank Transaction</h4>
+          <h4><span class="glyphicon glyphicon-plus"></span> Make New Transaction</h4>
         </div>
         <div class="modal-body">
           <div class="waiting-form-respond">
@@ -156,17 +156,7 @@
             <div class="row">
               <div class="form-group col-md-6 col-sm-6 col-xs-12">
                 <label>
-                    <span class="glyphicon glyphicon-user"></span> Account Number *
-                </label>
-                {{form.creditor_account_number}}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{form.creditor_account_number.errors}}
-                </div>
-              </div>
-              <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                <label>
-                    <span class="glyphicon glyphicon-tag"></span> Amount *
+                  <span class="glyphicon glyphicon-tag"></span> Amount *
                 </label>
                 {{form.amount}}
                 <span class="respond-span"></span>
@@ -174,18 +164,40 @@
                   {{form.amount.errors}}
                 </div>
               </div>
-            </div>
-            <div class="row">
-              <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
-                {{ form.creditor_name }}
+              <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                <label>
+                  <span class="glyphicon glyphicon-filter"></span> Issuer Type
+                </label>
+                {{ form.issuer }}
                 <span class="respond-span"></span>
                 <div class="help-block">
-                  {{ form.creditor_name.errors }}
+                  {{ form.issuer.errors }}
                 </div>
               </div>
             </div>
-            <div class="row">
+            <!-- bank card form -->
+            <div id="bank_card_fields">
+              <div class="row">
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-user"></span> Account Number *
+                  </label>
+                  {{form.creditor_account_number}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.creditor_account_number.errors}}
+                  </div>
+                </div>
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
+                  {{ form.creditor_name }}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{ form.creditor_name.errors }}
+                  </div>
+                </div>
+              </div>
+              <div class="row">
               <div class="form-group col-md-6 col-sm-6 col-xs-12">
                 <label>
                     <span class="glyphicon glyphicon-sort"></span> Transaction Type
@@ -207,7 +219,96 @@
                 </div>
               </div>
             </div>
-            <div class="row">
+            </div>
+            <!-- vodafone/etisalat form -->
+            <div id="vodafone_etisalat_fields">
+              <div class="row">
+                <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-user"></span> Msisdn *
+                  </label>
+                  {{form.msisdn}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.msisdn.errors}}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- orange/bank_wallet form -->
+            <div id="orange_bank_wallet_fields">
+              <div class="row">
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-user"></span> Msisdn *
+                  </label>
+                  {{form.msisdn}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.msisdn.errors}}
+                  </div>
+                </div>
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-user"></span> Full Name *
+                  </label>
+                  {{form.full_name}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.full_name.errors}}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- aman form-->
+            <div id="aman_fields">
+              <div class="row">
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-user"></span> Msisdn *
+                  </label>
+                  {{form.msisdn}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.msisdn.errors}}
+                  </div>
+                </div>
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-pencil"></span> First Name *
+                  </label>
+                  {{form.first_name}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.first_name.errors}}
+                  </div>
+                </div>
+              </div>
+              <div class="row">
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-pencil"></span> Last Name *
+                  </label>
+                  {{form.last_name}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.last_name.errors}}
+                  </div>
+                </div>
+                <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                  <label>
+                    <span class="glyphicon glyphicon-envelope"></span> Email *
+                  </label>
+                  {{form.email}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.email.errors}}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <!-- pin row -->
+            <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
                 <label>
                     <span class="glyphicon glyphicon-pushpin"></span> Pin *
@@ -366,116 +467,287 @@
     );
 
 </script>
-  <!--  generate pdf script-->
-  <script src="{% static 'js/html2pdf.bundle.min.js' %}"></script>
-  <script>
-    {% if show_add_form == True %}
+<!--  generate pdf script-->
+<script src="{% static 'js/html2pdf.bundle.min.js' %}"></script>
+<script>
+  {% if show_add_form == True %}
+    $("#transactionModel").modal();
+  {% endif %}
+
+  $("#addSingleTransaction").click(function () {
       $("#transactionModel").modal();
-    {% endif %}
+  });
 
-    $("#addSingleTransaction").click(function () {
-        $("#transactionModel").modal();
-    });
-
-    {% if show_pop_up == True %}
-      {% if status_code != "8000" %}
-        $('#failedModal').modal({
-          backdrop: 'static',
-          keyboard: false
-        });
-      {% else %}
-        $('#successModal').modal({
-          backdrop: 'static',
-          keyboard: false
-        });
-      {% endif %}
-    {% endif %}
-    {% if request.GET.status%}
-    {% if request.GET.status == '8000' %}
-      $("#status_description_success").html('{{request.GET.message}}');
-      $('#successModal').modal({
-            backdrop: 'static',
-            keyboard: false
-          });
-    {% else %}
-    $("#status_description_failed").html('{{request.GET.message}}');
+  {% if show_pop_up == True %}
+    {% if status_code != "8000" %}
       $('#failedModal').modal({
-            backdrop: 'static',
-            keyboard: false
-          });
-
+        backdrop: 'static',
+        keyboard: false
+      });
+    {% else %}
+      $('#successModal').modal({
+        backdrop: 'static',
+        keyboard: false
+      });
     {% endif %}
-    {% endif %}
-  </script>
+  {% endif %}
+  {% if request.GET.status%}
+  {% if request.GET.status == '8000' %}
+    $("#status_description_success").html('{{request.GET.message}}');
+    $('#successModal').modal({
+          backdrop: 'static',
+          keyboard: false
+        });
+  {% else %}
+  $("#status_description_failed").html('{{request.GET.message}}');
+    $('#failedModal').modal({
+          backdrop: 'static',
+          keyboard: false
+        });
 
-  <!-- transaction details script  -->
-  <script>
-    let trx = {};
-    $('#transaction-table tbody').on('click', 'tr', function () {
-      if ($(this).hasClass('selected')) {
-        $(this).removeClass('selected');
-        $("#trxDetails").slideUp().fadeOut();
-      }
-      else {
-        $('tr.selected').removeClass('selected');
-        $(this).addClass('selected');
-        let ul = $('#trxDetailsData');
-        let ulRight = $('#trxDetailsDataRight');
-        let ulLast = $('#trxDetailsDataLast');
-        let appendedTags = '';
-        let appendedTagsRight = '';
-        let appendedTagsBottom = '';
+  {% endif %}
+  {% endif %}
+</script>
 
-        trx.created_at = $(this).data('created_at');
-        trx.updated_at = $(this).data('updated_at');
-        trx.debtor_account = $(this).data('debtor_account');
+<!-- transaction details script  -->
+<script>
+  let trx = {};
+  $('#transaction-table tbody').on('click', 'tr', function () {
+    if ($(this).hasClass('selected')) {
+      $(this).removeClass('selected');
+      $("#trxDetails").slideUp().fadeOut();
+    }
+    else {
+      $('tr.selected').removeClass('selected');
+      $(this).addClass('selected');
+      let ul = $('#trxDetailsData');
+      let ulRight = $('#trxDetailsDataRight');
+      let ulLast = $('#trxDetailsDataLast');
+      let appendedTags = '';
+      let appendedTagsRight = '';
+      let appendedTagsBottom = '';
 
-        trx.id = $(this).data('id')
-        appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
-        trx.creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>Account Number / IBAN</span><b>:</b>${trx.creditor_account_number}</li>`;
-        trx.creditor_name = $(this).data('creditor_name');
-        appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
-        trx.amount = $(this).data('amount');
-        appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
-        trx.status = $(this).data('status');
-        appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
+      trx.created_at = $(this).data('created_at');
+      trx.updated_at = $(this).data('updated_at');
+      trx.debtor_account = $(this).data('debtor_account');
 
-        trx.creditor_bank = $(this).data('creditor_bank');
-        appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
-        trx.bank_name = $(this).data('bank_name');
-        appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
-        trx.type = $(this).data('type');
-        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
-        trx.checker = $(this).data('checker');
-        appendedTagsRight += `<li><span>Checker</span><b>:</b>${trx.checker}</li>`;
-        trx.created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>Created At</span><b>:</b>${trx.created_at}</li>`;
-        trx.updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
+      trx.id = $(this).data('id')
+      appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
+      trx.creditor_account_number = $(this).data('creditor_account_number');
+      appendedTags += `<li><span>Account Number / IBAN</span><b>:</b>${trx.creditor_account_number}</li>`;
+      trx.creditor_name = $(this).data('creditor_name');
+      appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
+      trx.amount = $(this).data('amount');
+      appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
+      trx.status = $(this).data('status');
+      appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
 
-        trx.status_code = $(this).data('status_code');
-        appendedTagsBottom += `<li><span>Status Code</span><b>:</b>${trx.status_code}</li>`;
-        trx.transaction_status_description = $(this).data('transaction_status_description');
-        appendedTagsBottom += `<li><span>Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
+      trx.creditor_bank = $(this).data('creditor_bank');
+      appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
+      trx.bank_name = $(this).data('bank_name');
+      appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
+      trx.type = $(this).data('type');
+      appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
+      trx.checker = $(this).data('checker');
+      appendedTagsRight += `<li><span>Checker</span><b>:</b>${trx.checker}</li>`;
+      trx.created_at = $(this).data('created_at');
+      appendedTagsRight += `<li><span>Created At</span><b>:</b>${trx.created_at}</li>`;
+      trx.updated_at = $(this).data('updated_at');
+      appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
 
-        ul.empty();
-        ul.append(appendedTags);
-        ulRight.empty();
-        ulRight.append(appendedTagsRight);
-        ulLast.empty();
-        ulLast.append(appendedTagsBottom);
+      trx.status_code = $(this).data('status_code');
+      appendedTagsBottom += `<li><span>Status Code</span><b>:</b>${trx.status_code}</li>`;
+      trx.transaction_status_description = $(this).data('transaction_status_description');
+      appendedTagsBottom += `<li><span>Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
 
-        $("#trxDetails").slideDown();
-        $('html,body').animate({
-            scrollTop: $("#trxDetails").offset().top
-        }, 'slow');
-     }
-    });
-  </script>
+      ul.empty();
+      ul.append(appendedTags);
+      ulRight.empty();
+      ulRight.append(appendedTagsRight);
+      ulLast.empty();
+      ulLast.append(appendedTagsBottom);
 
-  <!-- generate pdf script-->
-  <!-- Important Not this script should be after transaction details script because   -->
-  <!-- because it use trx object that exist in  transaction details script above -->
-  {% include 'disbursement/transaction_details_pdf_js.html' %}
+      $("#trxDetails").slideDown();
+      $('html,body').animate({
+          scrollTop: $("#trxDetails").offset().top
+      }, 'slow');
+   }
+  });
+</script>
+
+<!-- generate pdf script-->
+<!-- Important Not this script should be after transaction details script because   -->
+<!-- because it use trx object that exist in  transaction details script above -->
+{% include 'disbursement/transaction_details_pdf_js.html' %}
+
+<script>
+let bankCardForm = `<div id="bank_card_fields">
+  <div class="row">
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-user"></span> Account Number *
+      </label>
+      {{ form.creditor_account_number }}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{ form.creditor_account_number.errors }}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
+      {{ form.creditor_name }}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{ form.creditor_name.errors }}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+        <span class="glyphicon glyphicon-sort"></span> Transaction Type
+    </label>
+    {{ form.transaction_type }}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{ form.transaction_type.errors }}
+    </div>
+  </div>
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+        <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+    </label>
+    {{form.creditor_bank}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.creditor_bank.errors}}
+    </div>
+  </div>
+</div>
+</div>`;
+
+let vodafoneEtisalatForm = `<div id="vodafone_etisalat_fields">
+<div class="row">
+  <div class="form-group col-md-12 col-sm-12 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-user"></span> Msisdn *
+    </label>
+    {{form.msisdn}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.msisdn.errors}}
+    </div>
+  </div>
+</div>
+</div>`;
+
+let orangeBankWalletForm = `<div id="orange_bank_wallet_fields">
+<div class="row">
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-user"></span> Msisdn *
+    </label>
+    {{form.msisdn}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.msisdn.errors}}
+    </div>
+  </div>
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-user"></span> Full Name *
+    </label>
+    {{form.full_name}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.full_name.errors}}
+    </div>
+  </div>
+</div>
+</div>`;
+
+let amanForm = `<div id="aman_fields">
+<div class="row">
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-user"></span> Msisdn *
+    </label>
+    {{form.msisdn}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.msisdn.errors}}
+    </div>
+  </div>
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-pencil"></span> First Name *
+    </label>
+    {{form.first_name}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.first_name.errors}}
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-pencil"></span> Last Name *
+    </label>
+    {{form.last_name}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.last_name.errors}}
+    </div>
+  </div>
+  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    <label>
+      <span class="glyphicon glyphicon-envelope"></span> Email *
+    </label>
+    {{form.email}}
+    <span class="respond-span"></span>
+    <div class="help-block">
+      {{form.email.errors}}
+    </div>
+  </div>
+</div>
+</div>`;
+
+let pinRow = $('#pin_row');
+let issuerType = document.getElementById('id_issuer');
+
+$('#bank_card_fields').remove();
+$('#vodafone_etisalat_fields').remove();
+$('#orange_bank_wallet_fields').remove();
+$('#aman_fields').remove();
+
+if (issuerType.value == 'bank_card') {
+  $(bankCardForm).insertBefore(pinRow);
+} else if (issuerType.value == 'vodafone' || issuerType.value == 'etisalat')  {
+  $(vodafoneEtisalatForm).insertBefore(pinRow);
+} else if (issuerType.value == 'orange' || issuerType.value == 'bank_wallet') {
+  $(orangeBankWalletForm).insertBefore(pinRow);
+} else {
+  $(amanForm).insertBefore(pinRow);
+}
+
+function toggleForm() {
+  $('#bank_card_fields').remove();
+  $('#vodafone_etisalat_fields').remove();
+  $('#orange_bank_wallet_fields').remove();
+  $('#aman_fields').remove();
+
+  if (issuerType.value == 'bank_card') {
+    $(bankCardForm).insertBefore(pinRow);
+  } else if (issuerType.value == 'vodafone' || issuerType.value == 'etisalat')  {
+    $(vodafoneEtisalatForm).insertBefore(pinRow);
+  } else if (issuerType.value == 'orange' || issuerType.value == 'bank_wallet') {
+    $(orangeBankWalletForm).insertBefore(pinRow);
+  } else {
+    $(amanForm).insertBefore(pinRow);
+  }
+}
+
+issuerType.addEventListener('change', toggleForm);
+</script>
 {% endblock %}

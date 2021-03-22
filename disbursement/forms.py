@@ -6,6 +6,7 @@ import requests
 from django import forms
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
+from django.core.validators import MinValueValidator
 
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.utils import get_dot_env
@@ -227,53 +228,127 @@ class BalanceInquiryPinForm(forms.Form):
         return pin
 
 
-class SingleStepTransactionModelForm(forms.ModelForm):
+class SingleStepTransactionForm(forms.Form):
     """
     single step transaction Form by Checker users
     """
-
+    # 1. shared fields between all issuers
+    amount = forms.IntegerField(
+        label=_('Amount'),
+        required=True,
+        validators=[MinValueValidator(round(Decimal(1), 2))],
+        widget=forms.TextInput(attrs={
+            'placeholder': _('Enter Transaction Amount'), 'class': 'form-control',
+            'type': 'number', 'id': 'trxAmount', 'min': 1, 'name': 'trxAmount'
+        })
+    )
     pin = forms.CharField(
         required=True,
         min_length=6,
         max_length=6,
         widget=forms.PasswordInput(attrs={
-            'class': 'form-control', 'id': 'pin', 'name': 'pin', 'placeholder': 'Enter your pin'
+            'class': 'form-control', 'id': 'pin',
+            'name': 'pin', 'placeholder': 'Enter your pin'
         })
     )
-    transaction_type = forms.CharField(
+    issuer = forms.ChoiceField(
+        label=_('Issuer'),
         required=True,
+        choices=[
+            ('bank_card', 'Bank Card'),
+            ('vodafone', 'Vodafone'),
+            ('etisalat', 'Etisalat'),
+            ('orange', 'Orange'),
+            ('bank_wallet', 'Bank Wallet'),
+            ('aman', 'Aman')
+        ],
+        widget=forms.Select(attrs={
+            'class': 'form-control',
+        })
+    )
+    # 2. bank card fields
+    transaction_type = forms.CharField(
+        required=False,
         widget=forms.Select(
-                choices=(
-                    (tx_type, tx_type.replace('_', ' ').capitalize()) for tx_type in VALID_BANK_TRANSACTION_TYPES_LIST
-                ) ,
-                attrs={'class': 'form-control', 'id': 'tx_type', 'name': 'trx_type'}
+            choices=(
+                (tx_type, tx_type.replace('_', ' ').capitalize()) for tx_type in VALID_BANK_TRANSACTION_TYPES_LIST
+            ) ,
+            attrs={'class': 'form-control', 'id': 'tx_type', 'name': 'trx_type'}
         )
     )
-
-    class Meta:
-        model = BankTransaction
-        fields = ['creditor_account_number', 'amount', 'creditor_name', 'creditor_bank']
-
-    def __init__(self, *args, **kwargs):
-        self.checker_user = kwargs.pop('checker_user', None)
-
-        super().__init__(*args, **kwargs)
-
-        self.fields['creditor_account_number'].widget.attrs.update({
+    creditor_account_number = forms.CharField(
+        label=_('acc. number'),
+        required=False,
+        max_length=34,
+        widget=forms.TextInput(attrs={
             'class': 'form-control', 'id': 'accountNumber',
             'name': 'accountNumber', 'placeholder': 'Enter account number'
         })
-        self.fields['amount'].widget.attrs.update({
-            'class': 'form-control', 'id': 'trxAmount', 'min': 1,
-            'name': 'trxAmount', 'placeholder': 'Enter transaction amount'
+    )
+    creditor_name = forms.CharField(
+        label=_('account name'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'full_name',
+            'name': 'full_name', 'placeholder': 'Enter full name'
         })
-        self.fields['creditor_name'].widget.attrs.update({
-            'class': 'form-control', 'id': 'full_name', 'name': 'full_name', 'placeholder': 'Enter full name'
-        })
-        bank_choices = ((dic['code'], dic['name']) for dic in BANK_CODES)
-        self.fields['creditor_bank'].widget = forms.Select(choices=bank_choices, attrs={
+    )
+    creditor_bank = forms.ChoiceField(
+        label=_('Bank Name'),
+        required=False,
+        choices=[(dic['code'], dic['name']) for dic in BANK_CODES],
+        widget=forms.TextInput(attrs={
             'class': 'form-control', 'id': 'bank_name', 'name': 'bank_name'
         })
+    )
+    # 3. shared filed between vodafone, etisalat, aman, orange, bank wallet
+    msisdn = forms.CharField(
+        label=_('Msisdn'),
+        required=False,
+        max_length=11,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'msisdn',
+            'name': 'msisdn', 'placeholder': 'Enter Msisdn'
+        })
+    )
+    # 4. shared fields between orange, bank wallet
+    full_name = forms.CharField(
+        label=_('Full Name'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'full_name',
+            'name': 'full_name', 'placeholder': 'Enter Full Name'
+        })
+    )
+    # aman fields
+    first_name = forms.CharField(
+        label=_('First Name'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'first_name',
+            'name': 'first_name', 'placeholder': 'Enter First Name'
+        })
+    )
+    last_name = forms.CharField(
+        label=_('Last Name'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'last_name',
+            'name': 'last_name', 'placeholder': 'Enter Last Name'
+        })
+    )
+    email = forms.CharField(
+        label=_('Email'),
+        required=False,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'email','type': 'email',
+            'name': 'email', 'placeholder': 'Enter Your Email'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.checker_user = kwargs.pop('checker_user', None)
+        super().__init__(*args, **kwargs)
 
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)

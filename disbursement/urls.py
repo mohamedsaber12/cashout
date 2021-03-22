@@ -4,7 +4,7 @@ from .views import (
     AgentsListView, BalanceInquiry,
     SuperAdminAgentsSetup, disburse, DisbursementDocTransactionsView,
     download_failed_validation_file, ExportClientsTransactionsReportPerSuperAdmin,
-    failed_disbursed_for_download, BankTransactionsSingleStepView,
+    failed_disbursed_for_download, SingleStepTransactionsView,
     DownloadSampleSheetView, download_exported_transactions
 )
 
@@ -18,7 +18,7 @@ client_urls = [
 ]
 
 urlpatterns = [
-    path('disburse/bank-cards/single-step/', BankTransactionsSingleStepView.as_view(), name='single_step_list_create'),
+    path('disburse/single-step/', SingleStepTransactionsView.as_view(), name='single_step_list_create'),
     path('disburse_call/<doc_id>/', disburse, name='disburse'),
     path('disburse/export-sample-file/', DownloadSampleSheetView.as_view(), name='export_sample_file'),
     path('disburse/report/<doc_id>/', DisbursementDocTransactionsView.as_view(), name='disbursed_data'),

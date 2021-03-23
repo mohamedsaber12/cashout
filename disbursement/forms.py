@@ -3,6 +3,9 @@ import logging
 
 import requests
 
+from phonenumber_field.phonenumber import PhoneNumber
+import phonenumbers
+
 from django import forms
 from django.forms import modelformset_factory
 from django.utils.translation import gettext as _
@@ -297,7 +300,7 @@ class SingleStepTransactionForm(forms.Form):
         label=_('Bank Name'),
         required=False,
         choices=[(dic['code'], dic['name']) for dic in BANK_CODES],
-        widget=forms.TextInput(attrs={
+        widget=forms.Select(attrs={
             'class': 'form-control', 'id': 'bank_name', 'name': 'bank_name'
         })
     )
@@ -360,23 +363,6 @@ class SingleStepTransactionForm(forms.Form):
 
         return pin
 
-    def clean_transaction_type(self):
-        transaction_type = self.cleaned_data.get('transaction_type', None)
-
-        if not transaction_type or str(transaction_type).upper() not in VALID_BANK_TRANSACTION_TYPES_LIST:
-            raise forms.ValidationError(_('Invalid transaction purpose'))
-
-        return transaction_type
-
-    def clean_creditor_account_number(self):
-        creditor_account_number = self.cleaned_data.get('creditor_account_number', None)
-        account = get_digits(str(creditor_account_number)) if creditor_account_number else None
-
-        if not (account and  6 <= len(account) <= 20):
-            raise forms.ValidationError(_('Invalid Account number'))
-
-        return account
-
     def clean_amount(self):
         amount = self.cleaned_data.get('amount', None)
 
@@ -389,21 +375,147 @@ class SingleStepTransactionForm(forms.Form):
 
         return round(Decimal(amount), 2)
 
-    def clean_creditor_name(self):
+    def clean_issuer(self):
+        issuer = self.cleaned_data.get('issuer', None)
+        if issuer and issuer \
+            not in ['bank_card', 'Bank Card', 'vodafone', 'etisalat', 'orange', 'bank_wallet', 'aman']:
+            raise forms.ValidationError(_('issuer must be one of these \
+                bank_card / Bank Card / vodafone / etisalat / orange / bank_wallet / aman'))
+        return issuer
+
+    def validate_transaction_type(self):
+        transaction_type = self.cleaned_data.get('transaction_type', None)
+        if not transaction_type or str(transaction_type).upper() not in VALID_BANK_TRANSACTION_TYPES_LIST:
+            return _('Invalid transaction purpose')
+        return True
+
+    def validate_creditor_account_number(self):
+        creditor_account_number = self.cleaned_data.get('creditor_account_number', None)
+        account = get_digits(str(creditor_account_number)) if creditor_account_number else None
+
+        if not (account and  6 <= len(account) <= 20):
+            return _('Invalid Account number')
+
+        return True
+
+    def validate_creditor_name(self):
         creditor_name = self.cleaned_data.get('creditor_name', None)
 
         if not creditor_name:
-            raise forms.ValidationError(_('Invalid name'))
+            return _('Invalid name')
+        elif any(e in str(creditor_name) for e in '!%*+&'):
+            return _("Symbols like !%*+& not allowed in full name")
 
-        return creditor_name
+        return True
 
-    def clean_creditor_bank(self):
+    def validate_creditor_bank(self):
         creditor_bank = self.cleaned_data.get('creditor_bank', None)
 
         if not creditor_bank or str(creditor_bank).upper() not in VALID_BANK_CODES_LIST:
-            raise forms.ValidationError(_('Invalid bank swift code'))
+            return _('Invalid bank swift code')
 
-        return creditor_bank
+        return True
+
+    def phonenumber_form_validate(self, msisdn):
+        """
+        Function to validate an Egyptian phone number.
+        The function raises appropriate validation exceptions for forms usage.
+        """
+        try:
+            number = PhoneNumber.from_string(msisdn)
+        except phonenumbers.NumberParseException as error:
+            return error._msg
+        if (
+                not number.is_valid()
+                or phonenumbers.phonenumberutil.region_code_for_country_code(
+                phonenumbers.parse(number.as_international).country_code
+        )
+                != "EG"
+        ):
+            return _("Phonenumbers entered are incorrect")
+        return True
+
+    def validate_msisdn(self):
+        msisdn = f"+2{self.cleaned_data.get('msisdn', None)}"
+        return self.phonenumber_form_validate(msisdn)
+
+    def validate_full_name(self):
+        full_name = self.cleaned_data.get('full_name', None)
+        if not full_name :
+            return _('This field is required')
+        elif any(e in str(full_name) for e in '!%*+&'):
+            return _("Symbols like !%*+& not allowed in full name")
+        return True
+
+    def validate_first_name(self):
+        first_name = self.cleaned_data.get('first_name', None)
+        if not first_name :
+            return _('This field is required')
+        elif any(e in str(first_name) for e in '!%*+&'):
+            return _("Symbols like !%*+& not allowed in first name")
+        return True
+
+    def validate_last_name(self):
+        last_name = self.cleaned_data.get('last_name', None)
+        if not last_name :
+            return _('This field is required')
+        elif any(e in str(last_name) for e in '!%*+&'):
+            return _("Symbols like !%*+& not allowed in last name")
+        return True
+
+    def validate_email(self):
+        email = self.cleaned_data.get('email', None)
+        if not email :
+            return _('This field is required')
+        return True
+
+    def clean(self):
+        data = self.cleaned_data
+        issuer = data.get('issuer')
+        validationErrors = {}
+        if issuer == 'vodafone' or issuer == 'etisalat':
+            valid_msisdn = self.validate_msisdn()
+            if valid_msisdn != True:
+                validationErrors['msisdn'] = [valid_msisdn]
+        elif issuer == 'orange' or issuer == 'bank_wallet':
+            valid_msisdn = self.validate_msisdn()
+            if valid_msisdn != True:
+                validationErrors['msisdn'] = [valid_msisdn]
+            valid_full_name = self.validate_full_name()
+            if valid_full_name != True:
+                validationErrors['full_name'] = [valid_full_name]
+        elif issuer == 'bank_card':
+            valid_trx_type = self.validate_transaction_type()
+            if valid_trx_type != True:
+                validationErrors['transaction_type'] = [valid_trx_type]
+            valid_cr_ac_num = self.validate_creditor_account_number()
+            if valid_cr_ac_num != True:
+                validationErrors['creditor_account_number'] = [valid_cr_ac_num]
+            valid_cr_name = self.validate_creditor_name()
+            if valid_cr_name != True:
+                validationErrors['creditor_name'] = [valid_cr_name]
+            valid_cr_bank = self.validate_creditor_bank()
+            if valid_cr_bank != True:
+                validationErrors['creditor_bank'] = [valid_cr_bank]
+        elif issuer == 'aman':
+            valid_msisdn = self.validate_msisdn()
+            if valid_msisdn != True:
+                validationErrors['msisdn'] = [valid_msisdn]
+            valid_first_name = self.validate_first_name()
+            if valid_first_name != True:
+                validationErrors['first_name'] = [valid_first_name]
+            valid_last_name = self.validate_last_name()
+            if valid_last_name != True:
+                validationErrors['last_name'] = [valid_last_name]
+            valid_email = self.validate_email()
+            if valid_email != True:
+                validationErrors['email'] = [valid_email]
+
+        if len(validationErrors.keys()) == 0:
+            return data
+        raise forms.ValidationError(validationErrors)
+
+
 
     def save(self, commit=True):
         single_step_bank_transaction = super().save(commit=False)
@@ -424,4 +536,5 @@ class SingleStepTransactionForm(forms.Form):
 
 
 AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)
-ExistingAgentFormSet = modelformset_factory(model=Agent, form=ExistingAgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)
+ExistingAgentFormSet = modelformset_factory(model=Agent, form=ExistingAgentForm, min_num=1, validate_min=True,
+                                            can_delete=True, extra=0)

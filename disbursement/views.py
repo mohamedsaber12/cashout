@@ -741,7 +741,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
     model = BankTransaction
     context_object_name = 'transactions_list'
-    template_name = 'disbursement/banks_single_step_trx_list.html'
+    template_name = 'disbursement/single_step_trx_list.html'
 
     def get_queryset(self):
         user_hierarchy = self.request.user.hierarchy
@@ -750,16 +750,20 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
             root_user = RootUser.objects.filter(hierarchy=user_hierarchy).first()
         else:
             root_user = self.request.user.root
-        bank_trx_ids = BankTransaction.objects.\
-            filter(user_created__hierarchy=user_hierarchy, is_single_step=True).\
-            order_by("parent_transaction__transaction_id", "-id").\
-            distinct("parent_transaction__transaction_id").\
-            values_list("id", flat=True)
+        if self.request.GET.get('issuer', None) == 'wallets':
+            trxs = InstantTransaction.objects.filter(
+                from_user__hierarchy=user_hierarchy, is_single_step=True).order_by("-created_at")
+        else:
+            bank_trx_ids = BankTransaction.objects.\
+                filter(user_created__hierarchy=user_hierarchy, is_single_step=True).\
+                order_by("parent_transaction__transaction_id", "-id").\
+                distinct("parent_transaction__transaction_id").\
+                values_list("id", flat=True)
 
-        bank_trxs = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
+            trxs = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
         # add fees and vat to query set in case of accept model
         return add_fees_and_vat_to_qs(
-            bank_trxs,
+            trxs,
             root_user,
             None
         )
@@ -770,6 +774,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
             'form': SingleStepTransactionForm(checker_user=request.user),
             'transactions_list': self.get_queryset()
         }
+        if self.request.GET.get('issuer', None) == 'wallets':
+            context['wallets'] = True
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):
@@ -779,6 +785,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
             'transactions_list': self.get_queryset(),
             'show_add_form': True
         }
+        if self.request.GET.get('issuer', None) == 'wallets':
+            context['wallets'] = True
 
         if context['form'].is_valid():
             form = context['form']
@@ -788,6 +796,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 'transactions_list': self.get_queryset(),
                 'show_pop_up': True
             }
+            if self.request.GET.get('issuer', None) == 'wallets':
+                context['wallets'] = True
             try:
                 response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {

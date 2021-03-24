@@ -19,7 +19,7 @@
           <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
 
           {% if request.user.is_root or request.user.is_checker %}
-            <li><a href="{% url 'disbursement:single_step_list_create' %}"><i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}</a></li>
+            <li><a href="{% url 'disbursement:single_step_list_create' %}?issuer=wallets"><i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}</a></li>
           {% endif %}
         {% endif %}
 

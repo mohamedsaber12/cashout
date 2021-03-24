@@ -111,7 +111,6 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             related_query_name="aman_instant"
     )
     is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
-
     # Not needed fields
     to_user = None
     external_reference_1 = None

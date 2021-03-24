@@ -62,7 +62,9 @@ from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                     determine_trx_category_and_purpose)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
-from data.utils import deliver_mail, export_excel, randomword
+from data.utils import deliver_mail, export_excel, randomword 
+from instant_cashin.utils import get_from_env
+
 
 DATA_LOGGER = logging.getLogger("disburse")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -92,8 +94,10 @@ def disburse(request, doc_id):
         # request.user.is_verified = False  #TODO
         if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and not doc_obj.is_disbursed:
             DATA_LOGGER.debug(f"[message] [BULK DISBURSEMENT TO INTERNAL API] [{request.user}] -- doc_id: {doc_id}")
+            http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
+            
             response = requests.post(
-                "https://" + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
+                http_or_https + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
                 json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username}
             )
             DATA_LOGGER.debug(f"[response] [BULK DISBURSEMENT VIEW RESPONSE] [{request.user}] -- {response.text}")
@@ -782,17 +786,43 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
         if context['form'].is_valid():
             form = context['form']
-            single_step_bank_transaction = form.save()
             context = {
                 'form': SingleStepTransactionForm(checker_user=request.user),
                 'transactions_list': self.get_queryset(),
                 'show_pop_up': True
             }
             try:
-                response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
+                data = form.cleaned_data
+                payload = {
+                    "is_single_step": True,
+                    "pin": data["pin"],
+                    "user": request.user.username,
+                    "amount": str(data["amount"]),
+                    "issuer": data["issuer"],
+                    "msisdn": data["msisdn"],
+                    
+                    
+                }
+                if data["issuer"] in ["orange", "bank_wallet"]:
+                    payload["full_name"] = data["full_name"]
+                if data["issuer"] == "bank_card":
+                    payload["full_name"] = data["creditor_name"]
+                    payload["bank_card_number"] = data["creditor_account_number"]
+                    payload["bank_code"] =  data["creditor_bank"]
+                    payload["bank_transaction_type"] = data["transaction_type"]
+                    del payload['msisdn']
+                if data["issuer"] == "aman":
+                    payload["first_name"] =  data["first_name"]
+                    payload["last_name"] =  data["last_name"]
+                    payload["email"] =  data["email"]
+                response = requests.post(
+                "http://" + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
+                json=payload
+            )
+                # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {
-                    "status" : response.data.get('status_code'),
-                    "message": response.data.get('status_description')
+                    "status" : response.json().get('status_code'),
+                    "message": response.json().get('status_description')
                 }
                 return redirect(request.path + '?' + urllib.parse.urlencode(data))
             
@@ -1359,3 +1389,4 @@ class ExportClientsTransactionsMonthlyReport:
         report_download_url = self.prepare_transactions_report()
 
         return report_download_url
+    

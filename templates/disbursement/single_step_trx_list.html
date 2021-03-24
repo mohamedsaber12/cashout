@@ -422,10 +422,12 @@
       <div class="x_panel">
         <div class="x_title">
           <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
-          <button id="generate-pdf" class="btn btn-default export-dropdown
-                          pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-            <i class="fa fa-file-pdf-o"></i> Export PDF Report
-          </button>
+          {% if not wallets %}
+            <button id="generate-pdf" class="btn btn-default export-dropdown
+                            pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+              <i class="fa fa-file-pdf-o"></i> Export PDF Report
+            </button>
+          {% endif %}
           <div class="clearfix"></div>
         </div>
 

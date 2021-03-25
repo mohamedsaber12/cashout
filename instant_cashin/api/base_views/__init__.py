@@ -2,4 +2,5 @@ from .aman_transaction_callback_handler import AmanTransactionCallbackHandlerAPI
 from .budget_inquiry import BudgetInquiryAPIView
 from .bulk_transaction_inquiry import BulkTransactionInquiryAPIView
 from .instant_disbursement import InstantDisbursementAPIView
+from .instant_disbursement import SingleStepDisbursementAPIView
 from .user_inquiry import InstantUserInquiryAPIView

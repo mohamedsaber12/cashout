@@ -86,7 +86,7 @@ class InstantTransactionAdmin(admin.ModelAdmin):
     readonly_fields = default_fields + ['uid', 'created_at']
     search_fields = list_display
     ordering = ['-created_at']
-    list_filter = ['status', 'issuer_type', 'anon_sender', 'from_user']
+    list_filter = ['status', 'issuer_type', 'anon_sender', 'from_user', 'is_single_step']
 
     fieldsets = (
         (None, {'fields': ('from_user', )}),

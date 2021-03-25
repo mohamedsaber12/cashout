@@ -825,8 +825,10 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     payload["first_name"] =  data["first_name"]
                     payload["last_name"] =  data["last_name"]
                     payload["email"] =  data["email"]
+                http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
+                
                 response = requests.post(
-                "http://" + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
+                http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
                 json=payload
             )
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)

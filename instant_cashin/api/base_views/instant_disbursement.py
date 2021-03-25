@@ -151,10 +151,10 @@ class InstantDisbursementAPIView(views.APIView):
 
         return api_auth_token, merchant_id
 
-    def aman_issuer_handler(self, request, transaction_object, serializer):
+    def aman_issuer_handler(self, request, transaction_object, serializer, user):
         """Handle aman operations/transactions separately"""
 
-        aman_object = AmanChannel(request, transaction_object)
+        aman_object = AmanChannel(request, transaction_object, user=user)
 
         try:
             api_auth_token, merchant_id = self.aman_api_authentication_params(aman_object)
@@ -259,7 +259,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             try:
                 if issuer == "aman":
-                    return self.aman_issuer_handler(request, transaction, serializer)
+                    return self.aman_issuer_handler(request, transaction, serializer, user)
 
                 trx_response = requests.post(
                         get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,

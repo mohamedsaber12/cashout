@@ -103,6 +103,7 @@
                     data-msisdn="{{ record.msisdn }}"
                     data-is_disbursed="{{ record.is_disbursed }}"
                     data-reason="{{ record.reason }}"
+                    data-issuer="{{ record.issuer }}"
                     {% if record.is_disbursed %}
                       data-reason_description="{{ record.reason }}"
                     {% else %}
@@ -351,6 +352,7 @@ $(document).ready( function () {
           appendedTags += `<li><span>Account Number</span><b>:</b>${trx.creditor_account_number}</li>`;
           trx.creditor_name = $(this).data('creditor_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
+          appendedTagsRight += `<li><span>Issuer</span><b>:</b>bank_card</li>`;
           trx.creditor_bank = $(this).data('creditor_bank');
           appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
           trx.bank_name = $(this).data('bank_name');
@@ -359,6 +361,8 @@ $(document).ready( function () {
           appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
         {% endif %}
         {% if doc_obj.is_e_wallet %}
+          let issuer = $(this).data('issuer');
+          appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
           let msisdn = $(this).data('msisdn');
           appendedTags += `<li><span>Wallet Number</span><b>:</b>${msisdn}</li>`;
 

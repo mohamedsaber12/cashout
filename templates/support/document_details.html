@@ -275,41 +275,43 @@ $(document).ready( function () {
   });
   
   var buttons = new $.fn.dataTable.Buttons( table, {
-        buttons: [
-          {
-                extend: 'copy',
-                text : "Copy",
-                exportOptions: {
-                    charSet: "utf-8",
-                }
-            },
-            {
-                extend: 'print',
-                text : "PDF",
-            },
-            {
-                extend: 'excelHtml5',
-                text : "Export",
-                
-                customize: function( xlsx ) {
+    buttons: [
+      {
+        extend: 'copy',
+        text : "Copy",
+        exportOptions: {
+          charSet: "utf-8",
+        }
+      },
+      {
+        extend: 'print',
+        text : "PDF",
+      },
+      {
+        extend: 'excelHtml5',
+        text : "Export",
 
-                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                  $('row c[r^="A"]', sheet).attr( 's', '0' );
-				       }
-            }
-        ]
-    });
+        customize: function( xlsx ) {
+
+          var sheet = xlsx.xl.worksheets['sheet1.xml'];
+          $('row c[r^="A"]', sheet).attr( 's', '0' );
+       }
+      }
+    ]
+  });
   
   table.buttons( 0, null ).container().prependTo(
-        table.table().container()
-    );
-  
-} );
-
+    table.table().container()
+  );
+  let empty_row = $('.dataTables_empty');
+  if (empty_row) {
+    empty_row.parent().attr('id', 'empty_row');
+  }
+});
   </script>
   <script>
     let trx = {};
-    $('#transaction-table tbody').on('click', 'tr', function () {
+    $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
         $("#trxDetails").slideUp().fadeOut();

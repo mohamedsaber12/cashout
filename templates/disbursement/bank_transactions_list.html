@@ -286,7 +286,10 @@
   table.buttons( 0, null ).container().prependTo(
         table.table().container()
     );
-
+    let empty_row = $('.dataTables_empty');
+    if (empty_row) {
+      empty_row.parent().attr('id', 'empty_row');
+    }
     $(document).ready(function () {
       $('#export-failed').on('click', function (ev) {
         $.ajax({
@@ -332,7 +335,7 @@
   <!-- transaction details script  -->
   <script>
     let trx = {};
-    $('#transaction-table tbody').on('click', 'tr', function () {
+    $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
 
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');

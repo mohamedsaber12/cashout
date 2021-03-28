@@ -193,11 +193,14 @@
         table.table().container()
     );
 
-
+  let empty_row = $('.dataTables_empty');
+  if (empty_row) {
+    empty_row.parent().attr('id', 'empty_row');
+  }
     
   </script>
 <script>
-    $('#transaction-table tbody').on('click', 'tr', function () {
+    $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
         $("#clientDetails").slideUp().fadeOut();

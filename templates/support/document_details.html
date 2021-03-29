@@ -105,6 +105,7 @@
                     data-is_disbursed="{{ record.is_disbursed }}"
                     data-reason="{{ record.reason }}"
                     data-issuer="{{ record.issuer }}"
+                    data-aman_is_paid="{{ record.aman_transaction_is_paid }}"
                     {% if record.is_disbursed %}
                       data-reason_description="{{ record.reason }}"
                     {% else %}
@@ -373,6 +374,15 @@ $(document).ready( function () {
         {% if doc_obj.is_e_wallet %}
           let issuer = $(this).data('issuer');
           appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+          {# Determine is_paid? status for aman transactions #}
+          if (issuer === 'Aman' || issuer === 'aman') {
+            let aman_is_paid = $(this).data('aman_is_paid');
+            if (aman_is_paid === 'True') {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
           let msisdn = $(this).data('msisdn');
           appendedTags += `<li><span>Wallet Number</span><b>:</b>${msisdn}</li>`;
 

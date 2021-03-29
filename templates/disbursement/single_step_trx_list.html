@@ -113,6 +113,7 @@
                           data-transaction_status_description="{{ transaction.transaction_status_description }}"
                           data-created_at="{{ transaction.created_at }}"
                           data-updated_at="{{ transaction.created_at }}"
+                          data-aman_is_paid="{{ transaction.aman_transaction.is_paid }}"
                         class="row-hover">
                         <td>{{ transaction.anon_recipient }}</td>
                         <td>{{ transaction.issuer_choice_verbose }}</td>
@@ -585,10 +586,21 @@
 
         trx.issuer = $(this).data('issuer');
         appendedTagsRight += `<li><span>Issuer</span><b>:</b>${trx.issuer}</li>`;
+        {# Determine is_paid? status for aman transactions #}
+          if (trx.issuer === 'Aman') {
+            let aman_is_paid = $(this).data('aman_is_paid');
+            if (aman_is_paid === 'True') {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
+
         trx.created_at = $(this).data('created_at');
         appendedTagsRight += `<li><span>Created At</span><b>:</b>${trx.created_at}</li>`;
         trx.updated_at = $(this).data('updated_at');
         appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
+
       {% else %}
         trx.debtor_account = $(this).data('debtor_account');
 

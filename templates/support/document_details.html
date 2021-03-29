@@ -65,6 +65,7 @@
                 <th>{% trans 'Wallet Number' %}</th>
               {% endif %}
               <th>{% trans 'Amount' %}</th>
+              <th>{% trans 'Issuer' %}</th>
               {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding and not request.user.is_banks_standard_model_onboaring %}
                 <th>{% trans 'Fees' %}</th>
                 <th>{% trans 'Vat' %}</th>
@@ -122,6 +123,13 @@
                   <td>{{ record.msisdn }}</td>
                 {% endif %}
                 <td>{{ record.amount }}</td>
+                {% if doc_obj.is_e_wallet %}
+                  <td>{{ record.issuer }}</td>
+                {% elif doc_obj.is_bank_wallet %}
+                  <td>{{ record.issuer_choice_verbose }}</td>
+                {% else %}
+                  <td>bank_card</td>
+                {% endif %}
                 {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding and not request.user.is_banks_standard_model_onboaring %}
                   <td>{{ record.fees }}</td>
                   <td>{{ record.vat }}</td>

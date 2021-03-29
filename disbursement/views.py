@@ -780,6 +780,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         }
         if self.request.GET.get('issuer', None) == 'wallets':
             context['wallets'] = True
+        if self.request.GET.get("admin_hierarchy", None) != None:
+            context['admin_hierarchy'] = self.request.GET.get("admin_hierarchy")
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):

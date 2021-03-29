@@ -830,21 +830,25 @@ issuerType.addEventListener('change', toggleForm);
   parent_dev.css('width', '100%');
 
   let BankCardFilter = `<a class="btn btn-default buttons-copy buttons-html5"
-      style="float:right;margin-bottom:10px;" tabindex="0" aria-controls="transaction-table"
-      href="/disburse/single-step/?issuer=bank-card"><span>Bank Card</span></a>`;
+    tabindex="0" aria-controls="transaction-table"`;
   let WalletsFilter = `<a class="btn btn-default buttons-copy buttons-html5"
-      style="float:right;margin-bottom:10px;" tabindex="0" aria-controls="transaction-table"
-      href="/disburse/single-step/?issuer=wallets"><span>Wallets</span></a>`;
-  {% if wallets %}
-    WalletsFilter = `<a class="btn btn-default buttons-copy buttons-html5"
-      style="float:right;margin-bottom:10px;color: #333;background-color: #d4d4d4;
-      border-color: #8c8c8c;" tabindex="0" aria-controls="transaction-table"
-      href="/disburse/single-step/?issuer=wallets"><span>Wallets</span></a>`;
+    tabindex="0" aria-controls="transaction-table"`;
+
+  {% if admin_hierarchy %}
+    BankCardFilter += ` href="/disburse/single-step/?admin_hierarchy={{admin_hierarchy}}&issuer=bank-card"`;
+    WalletsFilter += ` href="/disburse/single-step/?admin_hierarchy={{admin_hierarchy}}&issuer=wallets"`;
   {% else %}
-    BankCardFilter = `<a class="btn btn-default buttons-copy buttons-html5"
-      style="float:right;margin-bottom:10px;color: #333;background-color: #d4d4d4;
-      border-color: #8c8c8c;" tabindex="0" aria-controls="transaction-table"
-      href="/disburse/single-step/?issuer=bank-card"><span>Bank Card</span></a>`;
+    BankCardFilter += ` href="/disburse/single-step/?issuer=bank-card"`;
+    WalletsFilter += ` href="/disburse/single-step/?issuer=wallets"`;
+  {% endif %}
+  {% if wallets %}
+    BankCardFilter += ` style="float:right;margin-bottom:10px;"><span>Bank Card</span></a>`;
+    WalletsFilter +=` style="float:right;margin-bottom:10px;color:#333;
+      background-color:#d4d4d4;border-color:#8c8c8c;"><span>Wallets</span></a>`;
+  {% else %}
+    WalletsFilter +=` style="float:right;margin-bottom:10px;"><span>Wallets</span></a>`;
+    BankCardFilter += ` style="float:right;margin-bottom:10px;color:#333;
+      background-color:#d4d4d4;border-color:#8c8c8c;"><span>Bank Card</span></a>`;
   {% endif %}
   parent_dev.append(WalletsFilter);
   parent_dev.append(BankCardFilter);

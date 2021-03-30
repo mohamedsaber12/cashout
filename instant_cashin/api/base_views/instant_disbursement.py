@@ -192,7 +192,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         try:
             serializer.is_valid(raise_exception=True)
-            if serializer.validated_data['user']:
+            if 'user' in serializer.validated_data:
                 user = User.objects.get(username=serializer.validated_data['user'])
             else:
                 user = request.user

@@ -42,7 +42,7 @@ def custom_exception_handler(exc, context):
             request_data = context['view'].request.data
             logging_message(
                     INSTANT_CASHIN_REQUEST_LOGGER, "[message] [API EXCEPTION]", context['view'].request,
-                    f"{common_logging_msg}Data dictionary: {request_data}"
+                    f"{common_logging_msg} Data dictionary: {request_data}"
             )
         except Exception as error:
             INSTANT_CASHIN_REQUEST_LOGGER.exception(

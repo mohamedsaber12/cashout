@@ -524,7 +524,7 @@
   });
 
   {% if show_pop_up == True %}
-    {% if status_code != "8000" %}
+    {% if status_code != "8000" and status_code != "200" %}
       $('#failedModal').modal({
         backdrop: 'static',
         keyboard: false

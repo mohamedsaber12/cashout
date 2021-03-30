@@ -537,20 +537,19 @@
     {% endif %}
   {% endif %}
   {% if request.GET.status%}
-  {% if request.GET.status == '8000' %}
-    $("#status_description_success").html('{{request.GET.message}}');
-    $('#successModal').modal({
-          backdrop: 'static',
-          keyboard: false
-        });
-  {% else %}
-  $("#status_description_failed").html('{{request.GET.message}}');
-    $('#failedModal').modal({
-          backdrop: 'static',
-          keyboard: false
-        });
-
-  {% endif %}
+    {% if request.GET.status == '8000' or request.GET.status == '200' %}
+      $("#status_description_success").html('{{request.GET.message}}');
+      $('#successModal').modal({
+            backdrop: 'static',
+            keyboard: false
+          });
+    {% else %}
+      $("#status_description_failed").html('{{request.GET.message}}');
+        $('#failedModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            });
+    {% endif %}
   {% endif %}
 </script>
 

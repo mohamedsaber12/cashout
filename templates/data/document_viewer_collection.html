@@ -24,7 +24,7 @@
                 <div class="x_title">
                     <h2>{% trans 'Collection Document data' %} <small>{% trans 'Document name:' %} {{object.filename}}</small></h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        {% if request.user.is_root %}
+                        {% if request.user.is_root and not doc.is_disbursed %}
                             <li>
                                 <button data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
                                 </button>

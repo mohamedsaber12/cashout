@@ -97,7 +97,7 @@ class UserDeleteView(UserOwnsMemberRequiredMixin, View):
                     User.objects.filter(id=support_setup.support_user.id).delete()
                 else:
                     user = User.objects.get(id=int(data['user_id']))
-                    user.delete()
+                    # user.delete()
                 DELETE_USER_VIEW_LOGGER.debug(f"[message] [USER DELETED] [{request.user}] -- user deleted: {user}")
             except (User.DoesNotExist, Client.DoesNotExist, SupportSetup.DoesNotExist) as e:
                 DELETE_USER_VIEW_LOGGER.debug(

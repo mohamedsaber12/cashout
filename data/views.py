@@ -246,6 +246,7 @@ class FileDeleteView(View):
     """
 
     def post(self, request, pk=None, *args, **kwargs):
+        return  JsonResponse(data={}, status=403)
         if not request.is_ajax():
             return JsonResponse(data={}, status=403)
 

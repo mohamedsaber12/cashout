@@ -40,6 +40,7 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'django.contrib.admindocs',
     'log_viewer',
+    'rangefilter',
 ]
 
 SECURITY_THIRD_PARTY_APPS = [

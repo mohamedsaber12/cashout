@@ -40,7 +40,7 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'django.contrib.admindocs',
     'log_viewer',
-    'simple_history'
+    'simple_history',
     'rangefilter',
 ]
 

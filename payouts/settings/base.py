@@ -41,6 +41,7 @@ THIRD_PARTY_APPS = [
     'django.contrib.admindocs',
     'log_viewer',
     'simple_history'
+    'rangefilter',
 ]
 
 SECURITY_THIRD_PARTY_APPS = [

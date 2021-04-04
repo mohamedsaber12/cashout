@@ -40,6 +40,7 @@ THIRD_PARTY_APPS = [
     'django_extensions',
     'django.contrib.admindocs',
     'log_viewer',
+    'simple_history'
     'rangefilter',
 ]
 
@@ -103,6 +104,7 @@ MIDDLEWARE = [
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware'
 
     # ToDo: Request/Response Time Delta Middleware
 ]
@@ -330,3 +332,6 @@ LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
 LOG_VIEWER_MAX_READ_LINES = 1000  # total log lines will be read
 LOG_VIEWER_PAGE_LENGTH = 25       # total log lines per-page
 LOG_VIEWER_PATTERNS = [']OFNI[', ']GUBED[', ']GNINRAW[', ']RORRE[', ']LACITIRC[']
+
+
+SIMPLE_HISTORY_REVERT_DISABLED=True

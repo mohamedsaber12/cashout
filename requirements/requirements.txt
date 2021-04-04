@@ -151,3 +151,5 @@ django-admin-rangefilter==0.7.0
 
 ptvsd == 4.3.2 #vs code debug
 
+
+django-simple-history==2.12.0

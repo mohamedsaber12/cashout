@@ -116,7 +116,8 @@ class InstantDisbursementAPIView(views.APIView):
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
-                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name
+                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
+                    is_single_step=serializer.validated_data["is_single_step"]
             )
         else:
             creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])

@@ -9,6 +9,7 @@ import requests
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext as _
+from django.utils import timezone
 
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
 from rest_framework import status, views
@@ -116,7 +117,8 @@ class InstantDisbursementAPIView(views.APIView):
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
-                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name
+                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
+                    disbursed_date=timezone.now()
             )
         else:
             creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])
@@ -134,7 +136,8 @@ class InstantDisbursementAPIView(views.APIView):
             "creditor_name": full_name,
             "creditor_account_number": creditor_account_number,
             "creditor_bank": creditor_bank,
-            "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid
+            "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid,
+            "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)

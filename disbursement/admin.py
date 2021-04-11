@@ -78,7 +78,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason']
+    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
         ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer', 'created_at', 'updated_at',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),

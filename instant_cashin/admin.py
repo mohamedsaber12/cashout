@@ -101,7 +101,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
             )
         }),
         (_('Important Dates'), {
-            'fields': ('created_at', 'updated_at')
+            'fields': ('created_at', 'updated_at', 'disbursed_date')
         }),
     )
 

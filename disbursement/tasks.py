@@ -174,7 +174,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
             "creditor_account_number": record.anon_recipient,
             "amount": record.amount,
             "creditor_name": record.recipient_name,
-            "end_to_end": record.uid
+            "end_to_end": record.uid,
+            "disbursed_date": record.disbursed_date
         }
         return BankTransaction.objects.create(**transaction_dict)
 
@@ -189,6 +190,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             for instant_trx_obj in bank_wallets_transactions:
                 try:
+                    instant_trx_obj.disbursed_date = timezone.now()
+                    instant_trx_obj.save()
                     bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
                     BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
                 except:

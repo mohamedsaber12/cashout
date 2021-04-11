@@ -166,6 +166,9 @@ class DisbursementData(AbstractTimeStamp):
             content_type_field="transaction_type",
             related_query_name="aman_manual"
     )
+    
+    disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
+
 
     class Meta:
         verbose_name = "Disbursement Data Record"

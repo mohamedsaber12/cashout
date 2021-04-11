@@ -201,6 +201,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             for bank_trx_obj in bank_cards_transactions:
                 try:
+                    bank_trx_obj.disbursed_date = timezone.now()
+                    bank_trx_obj.save()
                     BankTransactionsChannel.send_transaction(bank_trx_obj, False)
                 except:
                     pass

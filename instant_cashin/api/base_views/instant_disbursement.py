@@ -240,7 +240,8 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction = InstantTransaction.objects.create(
                         from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
                         amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
-                        anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"]
+                        anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
+                        disbursed_date=timezone.now()
                 )
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 

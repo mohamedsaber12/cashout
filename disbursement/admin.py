@@ -20,7 +20,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
 
     list_display = [
         'transaction_id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
-        'transaction_status_code', 'created_at'
+        'transaction_status_code', 'created_at', 'disbursed_date'
     ]
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
     list_filter = ['status', 'category_code', 'transaction_status_code', 'is_single_step']

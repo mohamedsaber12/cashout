@@ -17,27 +17,27 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('----------------------------------------'))
         for record in disb_data_records:
            record.disbursed_date = record.updated_at
-           record.save()
+           record.save(update_fields=['disbursed_date'])
         self.stdout.write(self.style.SUCCESS('----------------------------------------'))
         self.stdout.write(self.style.SUCCESS('finish updating Disbursement data records'))
-        
-        
-        
+
+
         self.stdout.write(self.style.SUCCESS('start getting bank transactions records...'))
-        bank_transactions_records = BankTransaction.objects.filter(Q(document__is_disbursed= True) | Q(is_single_step=True)| Q(user_created__user_type=6))
+        bank_transactions_records = BankTransaction.objects.filter(Q(document__is_disbursed= True) | Q(is_single_step=True)| Q(user_created__user_type=6) | ~Q(end_to_end=""))
 
         self.stdout.write(self.style.SUCCESS('getting bank transactions records...'))
 
         self.stdout.write(self.style.SUCCESS('start updating bank transactions records with updated at ...'))
         self.stdout.write(self.style.SUCCESS('----------------------------------------'))
         for record in bank_transactions_records:
-           record.disbursed_date = record.updated_at
-           record.save()
+            date = record.updated_at
+            record.disbursed_date = date
+            record.save(update_fields=['disbursed_date'])
         self.stdout.write(self.style.SUCCESS('----------------------------------------'))
         self.stdout.write(self.style.SUCCESS('finish updating bank transactions records'))
-        
-        
-        
+
+
+
         self.stdout.write(self.style.SUCCESS('start getting instant transactions records...'))
         single_step_transactions_records = InstantTransaction.objects.filter(Q(document__is_disbursed= True) | Q(is_single_step=True)| Q(from_user__user_type=6))
 
@@ -46,7 +46,8 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS('start updating instant transactions records with updated at ...'))
         self.stdout.write(self.style.SUCCESS('----------------------------------------'))
         for record in single_step_transactions_records:
-           record.disbursed_date = record.updated_at
-           record.save()
+            date = record.updated_at
+            record.disbursed_date = date
+            record.save(update_fields=['disbursed_date'])
         self.stdout.write(self.style.SUCCESS('----------------------------------------'))
         self.stdout.write(self.style.SUCCESS('finish updating instant transactions records'))

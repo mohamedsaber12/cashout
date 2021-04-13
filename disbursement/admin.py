@@ -20,7 +20,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
 
     list_display = [
         'transaction_id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
-        'transaction_status_code', 'created_at'
+        'transaction_status_code', 'created_at', 'disbursed_date'
     ]
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
     list_filter = ['status', 'category_code', 'transaction_status_code', 'is_single_step']
@@ -78,7 +78,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason']
+    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
         ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer', 'created_at', 'updated_at',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),

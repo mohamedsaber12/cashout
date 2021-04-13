@@ -7,6 +7,7 @@ import os
 import random
 import xlwt
 from decimal import Decimal
+from django.utils import timezone
 
 from faker import Factory as fake_factory
 import pandas as pd
@@ -811,9 +812,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "user": request.user.username,
                     "amount": str(data["amount"]),
                     "issuer": data["issuer"],
-                    "msisdn": data["msisdn"],
-                    
-                    
+                    "msisdn": data["msisdn"]
                 }
                 if data["issuer"] in ["orange", "bank_wallet"]:
                     payload["full_name"] = data["full_name"]

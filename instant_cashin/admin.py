@@ -83,7 +83,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     default_fields = [
         'uid', 'from_user', 'anon_recipient', 'status', 'transaction_status_code', 'amount', 'issuer_type'
     ]
-    list_display = default_fields + ['updated_at']
+    list_display = default_fields + ['updated_at', 'disbursed_date']
     readonly_fields = default_fields + ['uid', 'created_at']
     search_fields = list_display
     ordering = ['-created_at']
@@ -101,7 +101,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
             )
         }),
         (_('Important Dates'), {
-            'fields': ('created_at', 'updated_at')
+            'fields': ('created_at', 'updated_at', 'disbursed_date')
         }),
     )
 

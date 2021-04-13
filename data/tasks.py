@@ -957,7 +957,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             qs = DisbursementData.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
-                Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False)),
+                (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
                 Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         if self.status in ['success', 'failed']:
@@ -990,16 +990,16 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(status=AbstractBaseStatus.FAILED),
-                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(from_user__root__client__creator__in=self.superadmins)
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         elif self.status == 'success':
             qs = InstantTransaction.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(status=AbstractBaseStatus.SUCCESSFUL),
-                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(from_user__root__client__creator__in=self.superadmins)
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         else:
             qs = InstantTransaction.objects.filter(
@@ -1009,8 +1009,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                               AbstractBaseStatus.PENDING,
                               AbstractBaseStatus.FAILED]),
                 ~Q(transaction_status_code__in=['500', '424']),
-                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(from_user__root__client__creator__in=self.superadmins)
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         if self.status in ['success', 'failed']:
             qs = self._annotate_instant_trxs_qs(qs)
@@ -1044,8 +1044,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__lte=self.last_day),
                 Q(status=AbstractBaseACHTransactionStatus.FAILED),
                 Q(end_to_end=""),
-                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(user_created__root__client__creator__in=self.superadmins)
+                ((Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins)))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id")
         elif self.status == 'success':
@@ -1054,8 +1054,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__lte=self.last_day),
                 Q(status=AbstractBaseACHTransactionStatus.SUCCESSFUL),
                 Q(end_to_end=""),
-                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(user_created__root__client__creator__in=self.superadmins)
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id")
         else:
@@ -1064,8 +1064,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
                 Q(status=AbstractBaseACHTransactionStatus.PENDING),
-                Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(user_created__root__client__creator__in=self.superadmins)
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id")
         qs = qs.annotate(

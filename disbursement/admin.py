@@ -10,6 +10,7 @@ from django.utils.translation import gettext_lazy as _
 from .mixins import AdminSiteOwnerOnlyPermissionMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData
 from .utils import custom_titled_filter
+from rangefilter.filter import DateRangeFilter
 
 
 @admin.register(BankTransaction)
@@ -23,7 +24,15 @@ class BankTransactionAdminModel(admin.ModelAdmin):
         'transaction_status_code', 'created_at', 'disbursed_date'
     ]
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
-    list_filter = ['status', 'category_code', 'transaction_status_code', 'is_single_step']
+    list_filter = [
+                    ('disbursed_date', DateRangeFilter),
+                    'status',
+                    'category_code',
+                    'transaction_status_code',
+                    'is_single_step',
+                    'document__disbursed_by__root',
+                    'user_created__root'
+                   ]
     ordering = ['-id']
     fieldsets = (
         (None, {

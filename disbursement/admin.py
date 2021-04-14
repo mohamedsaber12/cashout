@@ -20,9 +20,10 @@ class BankTransactionAdminModel(admin.ModelAdmin):
     """
 
     list_display = [
-        'transaction_id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
+        'transaction_id', 'parent_transaction', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
         'transaction_status_code', 'created_at', 'disbursed_date'
     ]
+    search_fields = ['transaction_id', 'parent_transaction__transaction_id']
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
                     ('disbursed_date', DateRangeFilter),

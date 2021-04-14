@@ -31,7 +31,6 @@ class BankTransactionAdminModel(admin.ModelAdmin):
                     'category_code',
                     'transaction_status_code',
                     'is_single_step',
-                    'document__disbursed_by__root',
                     'user_created__root'
                    ]
     ordering = ['-id']

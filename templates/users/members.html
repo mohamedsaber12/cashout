@@ -78,9 +78,6 @@
                           <p class="ratings"><a>{% trans 'Active' %}</a></p>
                         </div>
                         <div class="col-xs-12 col-sm-6 emphasis text-right">
-                          <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target=".delete-modal-sm" onclick="update_modal({{ user.id }})">
-                            <i class="fa fa-trash-o" title="Delete User"></i>
-                          </button>
                           {% if user.user_type == 6 %}
                             <button class="btn btn-default btn-xs" title="Authorization Keys">
                               <a href="{% url 'users:oauth2_detail' username=user.username %}" target="_blank"><i class="fa fa-key"></i></a>

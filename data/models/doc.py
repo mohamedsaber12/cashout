@@ -12,12 +12,12 @@ from django.utils.translation import gettext_lazy as _
 from core.models import AbstractBaseStatus
 from disbursement.models import DisbursementDocData, BankTransaction
 from users.models import CheckerUser
-from utilities.models import AbstractBaseDocType
+from utilities.models import AbstractBaseDocType, SoftDeletionModel
 
 from ..utils import pkgen, update_filename
 
 
-class Doc(AbstractBaseDocType):
+class Doc(AbstractBaseDocType, SoftDeletionModel):
     """
     Model for representing uploaded document object
     """

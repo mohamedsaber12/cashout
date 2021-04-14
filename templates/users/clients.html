@@ -156,10 +156,6 @@
                             <p class="ratings"><a>{% trans 'Active' %}</a></p>
                           </div>
                           <div class="col-xs-12 col-sm-6 emphasis text-right">
-                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
-                                    data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
-                              <i class="fa fa-trash-o" title="Delete User"></i>
-                            </button>
                             <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
                                     data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
                               {% ifequal client_setup.is_active True %}

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 import json
 import logging
 
@@ -103,6 +104,14 @@ class DisburseAPIView(APIView):
             extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
 
         return list(vf_recipients)
+    
+    def set_disbursed_date(self, doc_id):
+        """
+        :param doc_id: Id of the document being disbursed
+        set disbursed date for all records related to doc ID
+        """
+        DisbursementData.objects.filter(doc_id=doc_id).update(disbursed_date=datetime.now())
+
 
     @staticmethod
     def disburse_for_recipients(url, payload, username, refined_payload, jsoned_response=False):
@@ -223,6 +232,7 @@ class DisburseAPIView(APIView):
         if doc_obj.is_e_wallet:
             superadmin = checker.root.client.creator
             wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+            self.set_disbursed_date(doc_obj.id)
             vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
             smsc_sender_name = checker.root.client.smsc_sender_name
 

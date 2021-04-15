@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from disbursement.models import VMTData
+from utilities.models import SoftDeletionModel
 
 
 TYPES = (
@@ -40,7 +41,7 @@ class UserManager(AbstractUserManager):
         return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level__level_of_authority')
 
 
-class User(AbstractUser):
+class User(AbstractUser, SoftDeletionModel):
     """
     User model for all the different types of users
     """

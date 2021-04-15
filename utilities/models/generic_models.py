@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractTimeStamp
+from simple_history.models import HistoricalRecords
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -82,6 +83,8 @@ class Budget(AbstractTimeStamp):
             blank=False,
             help_text=_("Updated automatically after any disbursement callback")
     )
+    
+    history = HistoricalRecords()
 
     class Meta:
         verbose_name = "Custom Budget"

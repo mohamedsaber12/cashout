@@ -7,6 +7,7 @@ import os
 import random
 import xlwt
 from decimal import Decimal
+from django.utils import timezone
 
 from faker import Factory as fake_factory
 import pandas as pd
@@ -64,6 +65,7 @@ from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from data.utils import deliver_mail, export_excel, randomword 
 from instant_cashin.utils import get_from_env
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 
 DATA_LOGGER = logging.getLogger("disburse")
@@ -811,9 +813,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "user": request.user.username,
                     "amount": str(data["amount"]),
                     "issuer": data["issuer"],
-                    "msisdn": data["msisdn"],
-                    
-                    
+                    "msisdn": data["msisdn"]
                 }
                 if data["issuer"] in ["orange", "bank_wallet"]:
                     payload["full_name"] = data["full_name"]
@@ -993,10 +993,16 @@ class ExportClientsTransactionsMonthlyReport:
 
         return qs
 
-    def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs_vf_et_aman=False):
+    def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs=False):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
-            if failed_qs_vf_et_aman and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
+            if failed_qs and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
+                q['fees'], q['vat'] = 0, 0
+            elif failed_qs and q.__class__.__name__ == 'InstantTransaction' \
+                    and q.issuer_type in ['orange', 'bank_wallet'] and BankTransaction.objects.filter(
+                    status=AbstractBaseStatus.PENDING,
+                    end_to_end=q.uid
+            ).count() == 0:
                 q['fees'], q['vat'] = 0, 0
             else:
                 q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']). \
@@ -1047,24 +1053,24 @@ class ExportClientsTransactionsMonthlyReport:
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
         if self.status == 'failed':
             qs = DisbursementData.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
                     ~Q(reason__exact=''),
                     Q(is_disbursed=False),
                     Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         elif self.status == 'success':
             qs = DisbursementData.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
                     Q(is_disbursed=True),
                     Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         else:
             qs = DisbursementData.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
-                    Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False)),
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
+                    (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
                     Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         if self.status in ['success', 'failed']:
@@ -1094,27 +1100,30 @@ class ExportClientsTransactionsMonthlyReport:
         """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
         if self.status == 'failed':
             qs = InstantTransaction.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
                     Q(status=AbstractBaseStatus.FAILED),
-                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins)
+                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(from_user__root__client__creator__in=self.superadmins))
             )
         elif self.status == 'success':
             qs = InstantTransaction.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
                     Q(status=AbstractBaseStatus.SUCCESSFUL),
-                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins)
+                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(from_user__root__client__creator__in=self.superadmins))
             )
         else:
             qs = InstantTransaction.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
-                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins)
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
+                    Q(status__in=[AbstractBaseStatus.SUCCESSFUL,
+                                  AbstractBaseStatus.PENDING,
+                                  AbstractBaseStatus.FAILED]),
+                    ~Q(transaction_status_code__in=['500', '424']),
+                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(from_user__root__client__creator__in=self.superadmins))
             )
         if self.status in ['success', 'failed']:
             qs = self._annotate_instant_trxs_qs(qs)
@@ -1122,12 +1131,15 @@ class ExportClientsTransactionsMonthlyReport:
             return qs
 
         # handle if status is all
-        # divide qs into success and failed
+        # divide qs into success and failed and pending
         failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
         # annotate failed qs and add admin username
         failed_qs = self._annotate_instant_trxs_qs(failed_qs)
 
-        success_qs = qs.filter(Q(status=AbstractBaseStatus.SUCCESSFUL))
+        success_qs = qs.filter(Q(status__in=[
+            AbstractBaseStatus.SUCCESSFUL,
+            AbstractBaseStatus.PENDING
+        ]))
         # annotate success qs and add admin username
         success_qs = self._annotate_instant_trxs_qs(success_qs)
 
@@ -1140,30 +1152,36 @@ class ExportClientsTransactionsMonthlyReport:
     def aggregate_bank_cards_transactions(self):
         """Calculate bank cards transactions details from BankTransaction model"""
         if self.status == 'failed':
-            qs = BankTransaction.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.FAILED),
-                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(user_created__root__client__creator__in=self.superadmins)
-            )
+            qs_ids = BankTransaction.objects.filter(
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
+                    Q(status=AbstractBaseACHTransactionStatus.FAILED),
+                    Q(end_to_end=""),
+                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(user_created__root__client__creator__in=self.superadmins))
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id").values('id')
         elif self.status == 'success':
-            qs = BankTransaction.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.SUCCESSFUL),
-                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(user_created__root__client__creator__in=self.superadmins)
-            )
+            qs_ids = BankTransaction.objects.filter(
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
+                    Q(status=AbstractBaseACHTransactionStatus.SUCCESSFUL),
+                    Q(end_to_end=""),
+                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(user_created__root__client__creator__in=self.superadmins))
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id").values('id')
         else:
-            qs = BankTransaction.objects.filter(
-                    Q(created_at__gte=self.first_day),
-                    Q(created_at__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.SUCCESSFUL) | Q(status=AbstractBaseStatus.FAILED),
-                    Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(user_created__root__client__creator__in=self.superadmins)
-            )
-        qs = qs.annotate(
+            qs_ids = BankTransaction.objects.filter(
+                    Q(disbursed_date__gte=self.first_day),
+                    Q(disbursed_date__lte=self.last_day),
+                    Q(end_to_end=""),
+                    Q(status=AbstractBaseACHTransactionStatus.PENDING),
+                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                    Q(user_created__root__client__creator__in=self.superadmins))
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id").values('id')
+        qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
                 admin=Case(
                         When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
                         default=F('user_created__root__username')

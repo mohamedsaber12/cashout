@@ -9,6 +9,7 @@ from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
 from .models import Budget, CallWalletsModerator, FeeSetup
+from simple_history.admin import SimpleHistoryAdmin
 
 
 @admin.register(CallWalletsModerator)
@@ -52,7 +53,7 @@ class FeeSetupAdmin(CustomInlineAdmin):
 
 
 @admin.register(Budget)
-class BudgetAdmin(admin.ModelAdmin):
+class BudgetAdmin(SimpleHistoryAdmin):
     """
     Budget Admin model for the Budget model
     """
@@ -64,6 +65,7 @@ class BudgetAdmin(admin.ModelAdmin):
     readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by', 'current_balance']
     search_fields = ['disburser', 'created_by']
     ordering = ['-updated_at', '-created_at']
+    history_list_display = ["current_balance"]
 
     fieldsets = (
         (_('Users Details'), {'fields': ('disburser', 'created_by')}),
@@ -83,7 +85,7 @@ class BudgetAdmin(admin.ModelAdmin):
         if not request.user.is_superuser or not request.user.is_superadmin:
             raise PermissionError(_("Only super users allowed to add to this table."))
         return True
-
+    
     def save_model(self, request, obj, form, change):
         if not request.user.is_superuser or not request.user.is_superadmin:
             raise PermissionError(_("Only super users allowed to create/update at this table."))
@@ -93,3 +95,4 @@ class BudgetAdmin(admin.ModelAdmin):
                 obj.disburser, f"New added amount: {form.cleaned_data['add_new_amount']} LE",
                 obj.created_by, head="[message] [update from django admin]"
         )
+

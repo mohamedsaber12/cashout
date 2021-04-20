@@ -89,7 +89,10 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
 
     list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
-        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer', 'created_at', 'updated_at',
+        ('created_at', DateRangeFilter),
+        ('updated_at', DateRangeFilter),
+        ('disbursed_date', DateRangeFilter),
+        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
         ('doc__owner', custom_titled_filter('Document Owner/Uploader'))

@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from disbursement.models import DisbursementData
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
+from django.contrib.admin import SimpleListFilter
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
     title = "Transaction Type"
@@ -29,6 +30,7 @@ class AmanTransactionTypeFilter(admin.SimpleListFilter):
             return queryset.filter(transaction_type=ContentType.objects.get_for_model(DisbursementData))
         if self.value() == 'instant_transaction':
             return queryset.filter(transaction_type=ContentType.objects.get_for_model(InstantTransaction))
+
 
 
 @admin.register(AmanTransaction)
@@ -113,3 +115,4 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_change_permission(self, request, obj=None):
         return False
+

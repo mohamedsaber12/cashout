@@ -27,7 +27,7 @@ class DistinctFilter(admin.SimpleListFilter):
             return queryset
         if self.value() == 'distinct':
             # return queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")
-            return queryset.filter().exclude(id__in=[trn.id for trn in queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id")])
+            return queryset.filter(id__in=[trn.id for trn in queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")])
 
 
 @admin.register(BankTransaction)

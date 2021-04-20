@@ -118,7 +118,8 @@ class InstantDisbursementAPIView(views.APIView):
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
                     issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
-                    disbursed_date=timezone.now()
+                    is_single_step=serializer.validated_data["is_single_step"],
+                    #disbursed_date=timezone.now()
             )
         else:
             creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])

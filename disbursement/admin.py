@@ -125,7 +125,11 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     """
 
     list_display = ['doc', 'doc_status', 'txn_id', 'txn_status', 'has_callback', 'updated_at']
-    list_filter = ['doc_status', ('doc__owner', custom_titled_filter('Document Owner/Uploader'))]
+    list_filter = [
+        ('created_at', DateRangeFilter),
+        'doc_status',
+        ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
+        ]
     search_fields = ['doc__id', 'txn_id']
     fieldsets = (
         (None, {'fields': ('doc', 'txn_id', 'txn_status', 'doc_status', 'has_callback')}),

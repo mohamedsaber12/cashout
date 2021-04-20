@@ -13,6 +13,23 @@ from .utils import custom_titled_filter
 from rangefilter.filter import DateRangeFilter
 
 
+class DistinctFilter(admin.SimpleListFilter):
+    title = "Distinct"
+    parameter_name = "Distinct"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("distinct", "Distinct"),
+        )
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == 'distinct':
+            # return queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")
+            return queryset.filter().exclude(id__in=[trn.id for trn in queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id")])
+
+
 @admin.register(BankTransaction)
 class BankTransactionAdminModel(admin.ModelAdmin):
     """
@@ -27,6 +44,8 @@ class BankTransactionAdminModel(admin.ModelAdmin):
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
                     ('disbursed_date', DateRangeFilter),
+                    ('created_at', DateRangeFilter),
+                    DistinctFilter,
                     'status',
                     'category_code',
                     'transaction_status_code',

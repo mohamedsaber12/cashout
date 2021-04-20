@@ -13,7 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from disbursement.models import DisbursementData
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
-from django.contrib.admin import SimpleListFilter
+
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
     title = "Transaction Type"

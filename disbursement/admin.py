@@ -98,6 +98,7 @@ class AgentAdmin(admin.ModelAdmin):
 
     list_display = ['msisdn', 'wallet_provider', 'super', 'pin', 'type']
     list_filter = ['pin', 'super', 'wallet_provider', 'type']
+    search_fields = ['msisdn']
 
 
 @admin.register(DisbursementData)
@@ -108,15 +109,15 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
 
     list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
+        ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         ('updated_at', DateRangeFilter),
-        ('disbursed_date', DateRangeFilter),
         ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
         ('doc__owner', custom_titled_filter('Document Owner/Uploader'))
     ]
-    search_fields = ['doc__id', 'msisdn', 'reason']
+    search_fields = ['id', 'doc__id', 'msisdn', 'reason']
     ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
@@ -145,11 +146,12 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
 
     list_display = ['doc', 'doc_status', 'txn_id', 'txn_status', 'has_callback', 'updated_at']
     list_filter = [
+        'has_callback',
         ('created_at', DateRangeFilter),
         'doc_status',
         ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
         ]
-    search_fields = ['doc__id', 'txn_id']
+    search_fields = ['doc__file', 'doc__id', 'txn_id']
     fieldsets = (
         (None, {'fields': ('doc', 'txn_id', 'txn_status', 'doc_status', 'has_callback')}),
         (_('Important Dates'), {'fields': ('created_at', 'updated_at')})

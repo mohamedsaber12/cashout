@@ -63,7 +63,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
     list_filter = ['updated_at', 'created_at', 'created_by']
     list_display = ['disburser', 'current_balance', 'total_disbursed_amount', 'updated_at']
     readonly_fields = ['total_disbursed_amount', 'updated_at', 'created_at', 'created_by', 'current_balance']
-    search_fields = ['disburser', 'created_by']
+    search_fields = ['disburser__username', 'created_by__username']
     ordering = ['-updated_at', '-created_at']
     history_list_display = ["current_balance"]
 

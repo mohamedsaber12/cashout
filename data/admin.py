@@ -50,6 +50,8 @@ class DocReviewAdmin(admin.ModelAdmin):
 
     list_display = ['doc', 'user_created', 'is_ok', 'comment', 'timestamp']
     readonly_fields = list_display
+    search_fields = ['doc__file']
+    list_filter = ['is_ok', 'user_created']
 
 
 # @admin.register(FileCategory)

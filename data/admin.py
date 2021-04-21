@@ -17,7 +17,8 @@ class DocAdmin(admin.ModelAdmin):
     list_display = [
         'id', 'type_of', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at'
     ]
-    list_filter = ['created_at']
+    list_filter = ['is_disbursed', 'has_change_profile_callback', 'is_processed', 'type_of', 'created_at', 'owner']
+    search_fields = ['id']
     readonly_fields = ['file']
     fieldsets = (
         (None, {

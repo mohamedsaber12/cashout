@@ -41,7 +41,7 @@ class AmanTransactionAdmin(admin.ModelAdmin):
 
     list_display = ['transaction_id', 'transaction_type', 'disburser', 'bill_reference', 'is_paid']
     readonly_fields = list_display + ['original_transaction_url']
-    search_fields = list_display
+    search_fields = ['transaction_id']
     list_filter = ['is_paid', AmanTransactionTypeFilter]
 
     def disburser(self, instance):
@@ -87,9 +87,10 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     ]
     list_display = default_fields + ['updated_at', 'disbursed_date']
     readonly_fields = default_fields + ['uid', 'created_at']
-    search_fields = list_display
+    search_fields = ['uid', 'anon_recipient']
     ordering = ['-created_at']
     list_filter = [
+        ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         'status', 'issuer_type', 'anon_sender', 'from_user', 'is_single_step',
     ]

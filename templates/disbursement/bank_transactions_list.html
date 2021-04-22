@@ -4,7 +4,7 @@
 {% load custom_tags %}
 {% load banks_tags %}
 
-{% block title %} Transactions {% endblock %}
+{% block title %} {% trans 'Transactions' %} {% endblock %}
 
 {% block gentellacss %}
   <!-- Datatables -->
@@ -148,7 +148,7 @@
             <button id="generate-pdf" class="btn btn-default export-dropdown
                     pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
                     style="width:16rem !important">
-              <i class="fa fa-file-pdf-o"></i> Export PDF Report
+              <i class="fa fa-file-pdf-o"></i> {% trans 'Export PDF Report' %}
             </button>
           {% endif %}
           <div class="clearfix"></div>
@@ -182,13 +182,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Report Exported Successfully</h4>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
         </div>
         <div class="modal-body">
           {% trans 'You will receive an email shortly with the file to download' %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
       </div>
     </div>
@@ -201,13 +201,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Report Exported Successfully</h4>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
         </div>
         <div class="modal-body">
           {% trans 'You will receive an email shortly with the success data file to download' %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
       </div>
     </div>
@@ -220,13 +220,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Report Exported Successfully</h4>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
         </div>
         <div class="modal-body">
           {% trans 'You will receive an email shortly with the failed data file to download' %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
       </div>
     </div>

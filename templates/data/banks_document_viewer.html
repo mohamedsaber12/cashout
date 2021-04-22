@@ -69,9 +69,9 @@
   {# Button #}
   <div class="row dashboard-row">
     <div class="col-md-3 col-sm-3 col-xs-3 data_element">
-      <span class="count_top">All</span>
+      <span class="count_top">{% trans 'All' %}</span>
       <div class="count">{{ doc.total_count }}</div>
-      <span>Total {{ doc.total_amount }} LE</span>
+      <span>Total {{ doc.total_amount }} {% trans 'LE' %}</span>
     </div>
     {# checker buttons #}
     {% if request.user.is_checker %}

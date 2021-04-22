@@ -57,7 +57,7 @@
     <div class="col-md-3 col-sm-3 col-xs-3 data_element">
       <span class="count_top">All</span>
       <div class="count">{{ doc.total_count }}</div>
-      <span>Total {{ doc.total_amount }} LE</span>
+      <span>Total {{ doc.total_amount }} {% trans 'LE' %}</span>
     </div>
     {# checker buttons #}
     {% if request.user.is_checker %}
@@ -170,7 +170,7 @@
                     <h4 class="heading">{{ review.user_created.username }}
                       {% if review.user_created.first_name %}
                         <small >({{ review.user_created.first_name }})</small>
-                      {%endif%}
+                      {% endif %}
 
                       {% if review.is_ok %}
                         <span style="color:green" class="alignright glyphicon glyphicon-ok" aria-hidden="true"></span>

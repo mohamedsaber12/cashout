@@ -69,15 +69,15 @@
                     <td>{{ document.file_category.name }}</td>
                     <td>
                       {% if document.disbursement_txn.doc_status == '1' %}
-                        Uploaded successfully
+                        {% trans 'Uploaded successfully' %}
                       {% elif document.disbursement_txn.doc_status == '3' %}
-                        Processed successfully
+                        {% trans 'Processed successfully' %}
                       {% elif document.disbursement_txn.doc_status == '4' %}
-                        Disbursement failure
+                        {% trans 'Disbursement failure' %}
                       {% elif document.disbursement_txn.doc_status == '5' %}
-                        Disbursed successfully
+                        {% trans 'Disbursed successfully' %}
                       {% else %}
-                        Processing failure
+                        {% trans 'Processing failure' %}
                       {% endif %}
                     </td>
                   </tr>

@@ -65,7 +65,7 @@
     <div id="flash_success_message" class="row">
       <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
         <div class="alert alert-success" role="alert">
-          Your Request Has Been Received Successfully
+          {% trans 'Your Request Has Been Received Successfully' %}
         </div>
       </div>
     </div>
@@ -73,7 +73,7 @@
       <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
         <h4>
           <span class="glyphicon glyphicon-plus"></span>
-          <span style="font-weight:bold;font-size:23px;">Increase Your Balance</span>
+          <span style="font-weight:bold;font-size:23px;">{% trans 'Increase Your Balance' %}</span>
         </h4>
       </div>
     </div>
@@ -85,7 +85,7 @@
           <div class="row">
             <div class="form-group col-md-6 col-sm-6 col-xs-12">
               <label>
-                <span class="glyphicon glyphicon-sort"></span> Type *
+                <span class="glyphicon glyphicon-sort"></span> {% trans 'Type' %} *
               </label>
               {{ form.type }}
               <span class="respond-span"></span>
@@ -95,7 +95,7 @@
             </div>
             <div class="form-group col-md-6 col-sm-6 col-xs-12">
               <label>
-                <span class="glyphicon glyphicon-tag"></span> Amount To Be Added * (EGP)
+                <span class="glyphicon glyphicon-tag"></span> {% trans 'Amount To Be Added' %} * (EGP)
               </label>
               {{form.amount}}
               <span class="respond-span"></span>

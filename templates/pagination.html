@@ -1,8 +1,8 @@
 <ul class="pagination">
   {% if is_paginated %}
     {% if page_obj.has_previous %}
-        <li><a class="btn btn-outline-info mb-4" href="?page=1">First</a></li>
-        <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+        <li><a class="btn btn-outline-info mb-4" href="?page=1">{% trans 'First' %}</a></li>
+        <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">{% trans 'Previous' %}</a></li>
     {% endif %}
 
     {% for num in page_obj.paginator.page_range %}
@@ -14,8 +14,8 @@
     {% endfor %}
 
     {% if page_obj.has_next %}
-        <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-       <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a></li>
+        <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">{% trans 'Next' %}</a></li>
+       <li><a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">{% trans 'Last' %}</a></li>
     {% endif %}
   {% endif %}
 </ul>

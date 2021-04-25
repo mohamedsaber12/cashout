@@ -73,26 +73,26 @@
 
                       <div class="x_content">
                         <div class="col-md-3 col-sm-3 col-xs-3 text-left">
-                          <label style="width:30%;">Start Date</label>
+                          <label style="width:30%;">{% trans 'Start Date' %}</label>
                           <input style="width:68%;" onchange="toggle_export_button()" id="start_date" type="date">
                         </div>
                         <div class="col-md-3 col-sm-3 col-xs-3 text-left">
-                          <label style="width:30%;">End Date</label>
+                          <label style="width:30%;">{% trans 'End Date' %}</label>
                           <input style="width:68%;" onchange="toggle_export_button()" id="end_date" type="date">
                         </div>
                         <div class="col-md-3 col-sm-3 col-xs-3">
-                          <label style="width:30%;">Status</label>
+                          <label style="width:30%;">{% trans 'Status' %}</label>
                           <select id="status" class="form-control">
-                            <option value="all">All</option>
-                            <option value="success">Success</option>
-                            <option value="failed">Failed</option>
+                            <option value="all">{% trans 'All' %}</option>
+                            <option value="success">{% trans 'Success' %}</option>
+                            <option value="failed">{% trans 'Failed' %}</option>
                           </select>
                         </div>
                         <div class="col-md-2 col-sm-2 col-xs-2">
                           <button id="export-report" type="button" onclick="export_clients_transactions_report()"
                                   disabled="true" class="btn btn-default pull-right">
                             <i class="fa fa-file-excel-o" title="Export Transactions"></i>
-                            Export Report
+                            {% trans 'Export Report' %}
                           </button>
                         </div>
                       </div>
@@ -125,15 +125,15 @@
                             </i>
                             <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               {% if client_setup.client.is_instant_model_onboarding %}
-                                Integration Disbursement Model
+                                {% trans 'Integration Disbursement Model' %}
                               {% elif client_setup.client.is_accept_vodafone_onboarding %}
-                                Send Disbursement Model
+                                {% trans 'Send Disbursement Model' %}
                               {% elif client_setup.client.is_vodafone_facilitator_onboarding %}
-                                Vodafone Facilitator Disbursement Model
+                                {% trans 'Vodafone Facilitator Disbursement Model' %}
                               {% elif client_setup.client.is_banks_standard_model_onboaring %}
-                              Banks PSP Disbursement Model
+                                {% trans 'Banks PSP Disbursement Model' %}' %}
                               {% else %}
-                                Vodafone PSP Disbursement Model
+                                {% trans 'Vodafone PSP Disbursement Model' %}
                               {% endif %}
                             </i>
                           </h4>
@@ -159,13 +159,13 @@
                             <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
                                     data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
                               {% ifequal client_setup.is_active True %}
-                              <i class="fa fa-times" title="Deactivate User"></i>
+                              <i class="fa fa-times" title="{% trans 'Deactivate User' %}"></i>
                               {% else %}
-                              <i class="fa fa-check" title="Activate User"></i>
+                              <i class="fa fa-check" title="{% trans 'Activate User' %}"></i>
                               {% endifequal %}
                             </button>
                             {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
-                              <button class="btn btn-default btn-xs" title="Update Budget">
+                              <button class="btn btn-default btn-xs" title="{% trans 'Update Budget' %}">
                                 <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
                               </button>
                             {% endif %}
@@ -201,7 +201,7 @@
             <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
           </div>
           <div class="modal-body">
-            <h4 id="modal-body-header">Delete User?</h4>
+            <h4 id="modal-body-header">{% trans 'Delete User' %}?</h4>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
@@ -263,13 +263,13 @@
         <div class="modal-content">
           <div class="modal-header">
             <button type="button" class="close" data-dismiss="modal">&times;</button>
-            <h4 class="modal-title">Report Exported Successfully</h4>
+            <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
           </div>
           <div class="modal-body">
             {% trans 'You will receive an email shortly with the file to download' %}
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
           </div>
         </div>
       </div>
@@ -282,12 +282,12 @@
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal">&times;</button>
-        <h4 class="modal-title">Error</h4>
+        <h4 class="modal-title">{% trans 'Error<' %}/h4>
       </div>
       <div class="modal-body">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
       </div>
     </div>
   </div>

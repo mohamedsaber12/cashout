@@ -5,7 +5,7 @@
 {% load banks_tags %}
 {% load error_codes_tags %}
 
-{% block title %} Transactions {% endblock %}
+{% block title %} {% trans 'Transactions' %} {% endblock %}
 
 {% block gentellacss %}
   <!-- Datatables -->
@@ -172,43 +172,43 @@
         <div class="panel panel-default">
           <div class="panel-heading">
             <h4 class="panel-title">
-              <a data-toggle="collapse" href="#collapse1">Document Details</a>
+              <a data-toggle="collapse" href="#collapse1">{% trans 'Document Details' %}</a>
             </h4>
           </div>
           <div id="collapse1" class="panel-collapse collapse">
             <div class="row">
               <div class="col-md-8 col-sm-8 col-xs-8">
                 <ul id="docDetailsLeft" class="list-group">
-                  <li class="list-group-item"><span>ID</span><b>:</b>{{ doc_obj.id }}</li>
-                  <li class="list-group-item"><span>Name</span><b>:</b>{{ doc_obj.filename }}</li>
-                  <li class="list-group-item"><span>Status</span><b>:</b>{{ doc_status }}</li>
-                  <li class="list-group-item"><span>Uploaded By</span><b>:</b>{{ doc_obj.owner }}</li>
-                  <li class="list-group-item"><span>Disbursed By</span><b>:</b>{{ doc_obj.disbursed_by }}</li>
-                  <li class="list-group-item"><span>Specs Used</span><b>:</b>{{ doc_obj.file_category.name }}</li>
+                  <li class="list-group-item"><span>{% trans 'ID' %}</span><b>:</b>{{ doc_obj.id }}</li>
+                  <li class="list-group-item"><span>{% trans 'Name' %}</span><b>:</b>{{ doc_obj.filename }}</li>
+                  <li class="list-group-item"><span>{% trans 'Status' %}</span><b>:</b>{{ doc_status }}</li>
+                  <li class="list-group-item"><span>{% trans 'Uploaded By' %}</span><b>:</b>{{ doc_obj.owner }}</li>
+                  <li class="list-group-item"><span>{% trans 'Disbursed By' %}</span><b>:</b>{{ doc_obj.disbursed_by }}</li>
+                  <li class="list-group-item"><span>{% trans 'Specs Used' %}</span><b>:</b>{{ doc_obj.file_category.name }}</li>
                 </ul>
               </div>
               <div class="col-md-4 col-sm-4 col-xs-4">
                 <ul id="docDetailsRight" class="list-group">
-                  <li class="list-group-item"><span>Total Amount</span><b>:</b>{{ doc_obj.total_amount }}</li>
-                  <li class="list-group-item"><span>Total Records</span><b>:</b>{{ doc_obj.total_count }}</li>
-                  <li class="list-group-item"><span>Can Be Disbursed?</span><b>:</b>{{ doc_obj.can_be_disbursed }}</li>
-                  <li class="list-group-item"><span>Disbursement Ratio</span><b>:</b>{{ disbursement_ratio }} %</li>
-                  <li class="list-group-item"><span>Created At</span><b>:</b>{{ disbursement_doc_data.created_at }}</li>
-                  <li class="list-group-item"><span>Updated At</span><b>:</b>{{ disbursement_doc_data.updated_at }}</li>
+                  <li class="list-group-item"><span>{% trans 'Total Amount' %}</span><b>:</b>{{ doc_obj.total_amount }}</li>
+                  <li class="list-group-item"><span>{% trans 'Total Records' %}</span><b>:</b>{{ doc_obj.total_count }}</li>
+                  <li class="list-group-item"><span>{% trans 'Can Be Disbursed' %}?</span><b>:</b>{{ doc_obj.can_be_disbursed }}</li>
+                  <li class="list-group-item"><span>{% trans 'Disbursement Ratio' %}</span><b>:</b>{{ disbursement_ratio }} %</li>
+                  <li class="list-group-item"><span>{% trans 'Created At' %}</span><b>:</b>{{ disbursement_doc_data.created_at }}</li>
+                  <li class="list-group-item"><span>{% trans 'Updated At' %}</span><b>:</b>{{ disbursement_doc_data.updated_at }}</li>
                 </ul>
               </div>
             </div>
             <div class="row">
               <div class="col-md-12 col-sm-12 col-xs-12">
                 <ul class="list-group">
-                  <li class="list-group-item"><span>Processing Failure Reason</span><b>:</b>{{ doc_obj.processing_failure_reason }}</li>
-                  <li class="list-group-item"><span>Number of reviews required?</span><b>:</b>{{ doc_obj.file_category.no_of_reviews_required }}</li>
-                  <li class="list-group-item"><span>Is reviews completed?</span><b>:</b>{% if is_reviews_completed %} Yes {% else %} No {% endif %}</li>
+                  <li class="list-group-item"><span>{% trans 'Processing Failure Reason' %}</span><b>:</b>{{ doc_obj.processing_failure_reason }}</li>
+                  <li class="list-group-item"><span>{% trans 'Number of reviews required' %}?</span><b>:</b>{{ doc_obj.file_category.no_of_reviews_required }}</li>
+                  <li class="list-group-item"><span>{% trans 'Is reviews completed' %}?</span><b>:</b>{% if is_reviews_completed %} Yes {% else %} No {% endif %}</li>
                   {% for review in reviews %}
-                    <li class="list-group-item"><span>Reviewed By</span><b>:</b>{{ review.user_created }}</li>
-                    <li class="list-group-item"><span>Is Ok?</span><b>:</b>{{ review.is_ok }}</li>
-                    <li class="list-group-item"><span>Timestamp</span><b>:</b>{{ review.timestamp }}</li>
-                    <li class="list-group-item"><span>Comment</span><b>:</b>{{ review.comment }}</li>
+                    <li class="list-group-item"><span>{% trans 'Reviewed By' %}</span><b>:</b>{{ review.user_created }}</li>
+                    <li class="list-group-item"><span>{% trans 'Is Ok' %}?</span><b>:</b>{{ review.is_ok }}</li>
+                    <li class="list-group-item"><span>{% trans 'Timestamp' %}</span><b>:</b>{{ review.timestamp }}</li>
+                    <li class="list-group-item"><span>{% trans 'Comment' %}</span><b>:</b>{{ review.comment }}</li>
                   {% empty %}
                   {% endfor %}
                 </ul>

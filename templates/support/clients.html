@@ -77,6 +77,7 @@
                       {% endif %}
 
                       {% if user.client.is_vodafone_default_onboarding %}
+                        data-fees_profile="{{user.get_fees}}"
                         data-agent_list="{% url 'disbursement:agents_list' %}?admin={{ user.client.username }}"
                       {% else %}
                         data-current_balance="{{ user.client.budget.current_balance }}"
@@ -253,6 +254,10 @@
             let single_step_trxs = $(this).data('single_step_trxs');
             appendedTagsRight += `<li><span>Single Step Transactions</span><b>:</b><a href=${single_step_trxs} >{% trans 'Transactions' %}</a></li>`;
           {% endif %}
+        {% endif %}
+        {% if request.user.is_vodafone_default_onboarding %}
+          let fees_profile = $(this).data('fees_profile');
+          appendedTagsRight += `<li><span>Fees Profile</span><b>:</b>${fees_profile}</li>`;
         {% endif %}
 
         ulLeft.empty();

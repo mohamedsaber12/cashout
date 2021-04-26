@@ -22,6 +22,10 @@ class CallWalletsModeratorAdmin(admin.ModelAdmin):
         "user_created", "disbursement", "instant_disbursement", "change_profile", "set_pin", "user_inquiry",
         "balance_inquiry"
     ]
+    list_filter = [
+        "change_profile", "set_pin", "user_inquiry", "balance_inquiry","disbursement", "instant_disbursement"
+    ]
+    search_fields= ["user_created__username"]
 
 
 @admin.register(LogEntry)

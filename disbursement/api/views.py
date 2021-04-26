@@ -407,3 +407,22 @@ class AllowDocDisburse(APIView):
             return Response(status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_403_FORBIDDEN)
+    
+    
+class CancelAmanTransactionView(APIView):
+    
+    permission_classes = (IsAuthenticated,)
+    authentication_classes = (SessionAuthentication,)
+    http_method_names = ['post']
+    
+    def post(self, request, *args, **kwargs):
+        
+        if not request.is_ajax():
+            return JsonResponse(data={}, status=status.HTTP_403_FORBIDDEN)
+     
+        if not request.user.is_root:
+            return JsonResponse(data={}, status=status.HTTP_403_FORBIDDEN)
+
+        return JsonResponse(data={"canceled": True}, status=200)
+
+

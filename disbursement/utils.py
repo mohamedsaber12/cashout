@@ -60,7 +60,8 @@ VALID_BANK_CODES_LIST = [
     "ARIB",
     "PDAC",
     "NBG",
-    "CBE"
+    "CBE",
+    "BCBIEGCX"
 ]
 
 VALID_BANK_TRANSACTION_TYPES_LIST = [
@@ -129,7 +130,8 @@ BANK_CODES = [
     {'name': 'Arab International Bank'                    , 'code':  'ARIB'},
     {'name': 'Agricultural Bank of Egypt'                 , 'code':  'PDAC'},
     {'name': 'National Bank of Greece'                    , 'code':  'NBG' },
-    {'name': 'Central Bank Of Egypt'                      , 'code':  'CBE' }
+    {'name': 'Central Bank Of Egypt'                      , 'code':  'CBE' },
+    {'name': 'Attijariwafa Bank'                          , 'code':  'BCBIEGCX' }
   ]
 
 ERROR_CODES_MESSAGES = {

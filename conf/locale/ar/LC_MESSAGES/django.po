@@ -410,7 +410,7 @@ msgstr ""
 #: templates/collection-sidebar.html:23 templates/disbursement-sidebar.html:23
 #: templates/superadmin_sidebar.html:23
 msgid "Welcome,"
-msgstr ""
+msgstr "مرحبا"
 
 #: templates/collection-sidebar.html:43 templates/disbursement-sidebar.html:43
 #: templates/users/password_reset_confirm.html:41
@@ -768,19 +768,19 @@ msgstr ""
 #: templates/data/login.html:3 templates/data/login.html:7
 #: templates/data/login.html:20
 msgid "Login"
-msgstr ""
+msgstr "تسجيل الدخول"
 
 #: templates/data/login.html:9
 msgid "Username"
-msgstr ""
+msgstr "إسم المستخدم"
 
 #: templates/data/login.html:12
 msgid "Password"
-msgstr ""
+msgstr "كلمة المرور"
 
 #: templates/data/login.html:21
-msgid "Lost your password?"
-msgstr ""
+msgid "Forgot your password?"
+msgstr "نسيت كلمة السر"
 
 #: templates/data/upload-response-modals.html:10
 msgid "Thank you"

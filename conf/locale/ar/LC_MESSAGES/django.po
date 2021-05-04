@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-04 13:25+0200\n"
+"POT-Creation-Date: 2021-05-04 17:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1631,7 +1631,7 @@ msgstr ""
 #: templates/data/document_collection_list.html:15
 #: templates/data/document_disbursement_list.html:47
 msgid "Documents list"
-msgstr ""
+msgstr "قائمة الملفات"
 
 #: templates/data/document_collection_list.html:27
 msgid "Document Name"
@@ -1707,13 +1707,13 @@ msgstr "كود الملف"
 #: templates/support/document_details.html:186
 #: templates/support/documents_list.html:53
 msgid "Disbursed By"
-msgstr ""
+msgstr "الصارف"
 
 #: templates/data/document_disbursement_list.html:62
 msgid "Disbursement Progress"
 msgstr "نجاح الصرف"
 
-
+#: templates/data/document_disbursement_list.html:63
 #: templates/disbursement/bank_transactions_list.html:63
 #: templates/disbursement/bank_transactions_list.html:102
 #: templates/disbursement/e_wallets_transactions_list.html:63
@@ -1724,13 +1724,9 @@ msgstr "نجاح الصرف"
 #: templates/instant_cashin/wallets_transactions.html:11
 #: templates/support/clients.html:59
 #: templates/support/document_details.html:184
-msgid "Status"
-msgstr "حالة"
-
-#: templates/data/document_disbursement_list.html:63
 #: templates/support/documents_list.html:55 templates/users/clients.html:84
 msgid "Status"
-msgstr "حالة الملف"
+msgstr "حالة"
 
 #: templates/data/document_disbursement_list.html:90
 msgid "No reviews yet"
@@ -1793,7 +1789,7 @@ msgstr ""
 #: templates/data/document_disbursement_list.html:175
 #: templates/pagination.html:4
 msgid "First"
-msgstr ""
+msgstr "الاول"
 
 #: templates/data/document_disbursement_list.html:176
 #: templates/pagination.html:5
@@ -1806,7 +1802,7 @@ msgstr ""
 #: templates/users/setting-up-disbursement/makers.html:102
 #: templates/users/setting-up-disbursement/pin.html:98
 msgid "Previous"
-msgstr ""
+msgstr "السابق"
 
 #: templates/data/document_disbursement_list.html:189
 #: templates/pagination.html:17 templates/two_factor/_wizard_actions.html:17
@@ -1824,7 +1820,7 @@ msgstr ""
 #: templates/data/document_disbursement_list.html:190
 #: templates/pagination.html:18
 msgid "Last"
-msgstr ""
+msgstr "الاخير"
 
 #: templates/data/document_viewer_collection.html:22
 msgid "Collection Document data"
@@ -1853,7 +1849,7 @@ msgstr ""
 
 #: templates/data/e_wallets_home.html:7
 msgid "Vodafone/Etisalat/Aman Disbursement Files"
-msgstr ""
+msgstr "ملفات الصرف فودافون/اتصالات/أمان"
 
 #: templates/data/e_wallets_home.html:9 templates/disbursement_sidebar.html:14
 msgid "Disbursement Files"
@@ -2107,10 +2103,8 @@ msgid "Checker"
 msgstr ""
 
 #: templates/disbursement_sidebar.html:41
-#: templates/instant_cashin/sidebar.html:31
-#: templates/utilities/transfer_request.html:61
-msgid "Transfer Request"
-msgstr ""
+msgid "Top Up Balance"
+msgstr "إضافة رصيد"
 
 #: templates/disbursement_sidebar.html:47
 #: templates/instant_cashin/sidebar.html:35
@@ -2345,6 +2339,11 @@ msgstr ""
 msgid "API Checker"
 msgstr ""
 
+#: templates/instant_cashin/sidebar.html:31
+#: templates/utilities/transfer_request.html:61
+msgid "Transfer Request"
+msgstr ""
+
 #: templates/instant_cashin/sidebar.html:33
 #: templates/superadmin_sidebar.html:29
 msgid "API Documentation"
@@ -2504,7 +2503,7 @@ msgstr ""
 #: templates/support/documents_list.html:5
 #: templates/support/documents_list.html:37
 msgid "Documents List"
-msgstr ""
+msgstr "قائمة الملفات"
 
 #: templates/support/documents_list.html:10
 msgid "Entity Members' Documents"

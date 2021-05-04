@@ -292,7 +292,7 @@ msgstr ""
 
 #: data/models/doc.py:53
 msgid "Disbursed by/Checker"
-msgstr ""
+msgstr "الصارف"
 
 #: data/models/doc.py:145 data/tasks.py:53
 msgid ""
@@ -1270,12 +1270,12 @@ msgstr ""
 #: templates/collection-sidebar.html:50 templates/disbursement_sidebar.html:27
 #: templates/instant_cashin/sidebar.html:16
 msgid "Members"
-msgstr ""
+msgstr "المستخدمين"
 
 #: templates/collection-sidebar.html:52 templates/disbursement_sidebar.html:35
 #: templates/instant_cashin/sidebar.html:24
 msgid "All members"
-msgstr ""
+msgstr "جميع المستخدمين"
 
 #: templates/collection-sidebar.html:58 templates/disbursement_sidebar.html:50
 #: templates/top_navigation.html:34 templates/users/add_levels.html:15
@@ -1288,7 +1288,7 @@ msgstr ""
 #: templates/users/setting-up-disbursement/makers.html:19
 #: templates/users/setting-up-disbursement/pin.html:19
 msgid "Settings"
-msgstr ""
+msgstr "الاعدادات"
 
 #: templates/collection-sidebar.html:61
 msgid "Setup"
@@ -1298,7 +1298,7 @@ msgstr ""
 #: templates/instant_cashin/sidebar.html:34
 #: templates/superadmin_sidebar.html:32 templates/support/sidebar.html:14
 msgid "Profile"
-msgstr ""
+msgstr "الملف الشخصي"
 
 #: templates/collection-sidebar.html:66 templates/data/formats.html:31
 #: templates/disbursement_sidebar.html:54
@@ -1424,7 +1424,7 @@ msgstr ""
 #: templates/data/document_disbursement_list.html:60
 #: templates/data/e_wallets_document_viewer.html:158
 msgid "Reviews"
-msgstr ""
+msgstr "المراجعات"
 
 #: templates/data/banks_document_viewer.html:217
 msgid "Bank wallets/Orange Document Transactions"
@@ -1445,7 +1445,7 @@ msgstr ""
 #: templates/support/list.html:104 templates/users/clients.html:209
 #: templates/users/members.html:118
 msgid "Delete"
-msgstr ""
+msgstr "حذف"
 
 #: templates/data/banks_document_viewer.html:237
 msgid "Wallet number"
@@ -1654,7 +1654,7 @@ msgstr ""
 #: templates/data/document_disbursement_list.html:154
 #: templates/data/document_disbursement_list.html:156
 msgid "View"
-msgstr ""
+msgstr "عرض"
 
 #: templates/data/document_collection_list.html:41
 #: templates/data/document_disbursement_list.html:76
@@ -1679,7 +1679,7 @@ msgstr ""
 
 #: templates/data/document_disbursement_list.html:12
 msgid " Disbursement Files"
-msgstr ""
+msgstr "ملفات الصرف"
 
 #: templates/data/document_disbursement_list.html:17
 #: templates/data/document_disbursement_list.html:30
@@ -1696,12 +1696,12 @@ msgstr ""
 
 #: templates/data/document_disbursement_list.html:36
 msgid "Download Default Sample File"
-msgstr ""
+msgstr "تحميل الملف المستخدم"
 
 #: templates/data/document_disbursement_list.html:59
 #: templates/support/documents_list.html:50
 msgid "Document ID"
-msgstr ""
+msgstr "كود الملف"
 
 #: templates/data/document_disbursement_list.html:61
 #: templates/support/document_details.html:186
@@ -1711,9 +1711,9 @@ msgstr ""
 
 #: templates/data/document_disbursement_list.html:62
 msgid "Disbursement Progress"
-msgstr ""
+msgstr "نجاح الصرف"
 
-#: templates/data/document_disbursement_list.html:63
+
 #: templates/disbursement/bank_transactions_list.html:63
 #: templates/disbursement/bank_transactions_list.html:102
 #: templates/disbursement/e_wallets_transactions_list.html:63
@@ -1724,22 +1724,26 @@ msgstr ""
 #: templates/instant_cashin/wallets_transactions.html:11
 #: templates/support/clients.html:59
 #: templates/support/document_details.html:184
+msgid "Status"
+msgstr "حالة"
+
+#: templates/data/document_disbursement_list.html:63
 #: templates/support/documents_list.html:55 templates/users/clients.html:84
 msgid "Status"
-msgstr ""
+msgstr "حالة الملف"
 
 #: templates/data/document_disbursement_list.html:90
 msgid "No reviews yet"
-msgstr ""
+msgstr "لم يتم المراجعة"
 
 #: templates/data/document_disbursement_list.html:102
 msgid "Complete"
-msgstr ""
+msgstr "نجاح"
 
 #: templates/data/document_disbursement_list.html:106
 #: utilities/models/abstract_models.py:32
 msgid "Disbursed Successfully"
-msgstr ""
+msgstr "تم تنفيذ الصرف"
 
 #: templates/data/document_disbursement_list.html:108
 msgid "Waiting Disbursement Callback"
@@ -1751,7 +1755,7 @@ msgstr ""
 
 #: templates/data/document_disbursement_list.html:112
 msgid "Ready for Disbursement"
-msgstr ""
+msgstr "جاهز للصرف"
 
 #: templates/data/document_disbursement_list.html:114
 #: templates/data/document_disbursement_list.html:151
@@ -1764,11 +1768,11 @@ msgstr ""
 
 #: templates/data/document_disbursement_list.html:118
 msgid "Validation Failed"
-msgstr ""
+msgstr "فشل التعريف"
 
 #: templates/data/document_disbursement_list.html:120
 msgid "Validated Successfully"
-msgstr ""
+msgstr "نجاح التعريف"
 
 #: templates/data/document_disbursement_list.html:122
 msgid "Internal Error"
@@ -1853,7 +1857,7 @@ msgstr ""
 
 #: templates/data/e_wallets_home.html:9 templates/disbursement_sidebar.html:14
 msgid "Disbursement Files"
-msgstr ""
+msgstr "ملفات الصرف"
 
 #: templates/data/e_wallets_home.html:42
 msgid "Select Format"
@@ -1956,7 +1960,7 @@ msgstr ""
 #: templates/disbursement_sidebar.html:38
 #: templates/instant_cashin/sidebar.html:27
 msgid "Balance Inquiry"
-msgstr ""
+msgstr "إستعلام عن الرصيد"
 
 #: templates/disbursement/balance_inquiry.html:22
 msgid "Your current budget is: "
@@ -2058,7 +2062,7 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:61
 #: templates/disbursement_sidebar.html:22
 msgid "Single Step Transactions"
-msgstr ""
+msgstr "إنشاء معاملة واحدة"
 
 #: templates/disbursement/single_step_trx_list.html:70
 #: templates/instant_cashin/instant_viewer.html:43
@@ -2077,7 +2081,7 @@ msgstr ""
 
 #: templates/disbursement_sidebar.html:16
 msgid "Vodafone/Etisalat/Aman"
-msgstr ""
+msgstr "فودافون/اتصالات/أمان"
 
 #: templates/disbursement_sidebar.html:18
 msgid "Bank Wallets/Orange Cash"
@@ -2090,7 +2094,7 @@ msgstr ""
 #: templates/disbursement_sidebar.html:29
 #: templates/instant_cashin/sidebar.html:18
 msgid "Add member"
-msgstr ""
+msgstr "أضف مستخدم"
 
 #: templates/disbursement_sidebar.html:31 templates/users/members.html:51
 #: templates/users/members.html:59 templates/users/profile.html:53

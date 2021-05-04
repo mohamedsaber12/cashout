@@ -16,8 +16,8 @@ RESPONSE_CODES = (
     (re.compile('583'), _('Transaction above 6000 EGP')),
     (re.compile('604'), _('Transaction below 5 EGP')),
     (re.compile('610'), _('User suspended')),
-    (re.compile('615'), _('')),
-    (re.compile('618'), _('')),
+    (re.compile('615'), ''),
+    (re.compile('618'), ''),
 )
 
 

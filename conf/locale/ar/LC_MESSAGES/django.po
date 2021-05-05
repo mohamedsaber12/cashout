@@ -586,7 +586,7 @@ msgstr ""
 #: disbursement/forms.py:51 disbursement/forms.py:79 disbursement/models.py:63
 #: users/forms.py:249
 msgid "Mobile number"
-msgstr ""
+msgstr "رقم الموبايل"
 
 #: disbursement/forms.py:71 disbursement/forms.py:100
 msgid "Mobile number is not valid"
@@ -628,13 +628,13 @@ msgstr ""
 
 #: disbursement/forms.py:292 utilities/forms.py:162
 msgid "account name"
-msgstr ""
+msgstr "اسم الحساب"
 
 #: disbursement/forms.py:300
 #: templates/disbursement/single_step_trx_list.html:252 utilities/forms.py:131
 #: utilities/forms.py:139
 msgid "Bank Name"
-msgstr ""
+msgstr "اسم البنك"
 
 #: disbursement/forms.py:309
 #: templates/disbursement/single_step_trx_list.html:267
@@ -652,12 +652,12 @@ msgstr "الإسم بالكامل"
 #: disbursement/forms.py:328
 #: templates/disbursement/single_step_trx_list.html:317
 msgid "First Name"
-msgstr ""
+msgstr "الإسم الأول"
 
 #: disbursement/forms.py:336
 #: templates/disbursement/single_step_trx_list.html:329
 msgid "Last Name"
-msgstr ""
+msgstr "الإسم الأخير"
 
 #: disbursement/forms.py:344
 #: templates/disbursement/single_step_trx_list.html:339
@@ -778,7 +778,7 @@ msgstr "المبلغ"
 #: disbursement/models.py:154 templates/utilities/new_entities_report.html:84
 #: users/models/base_user.py:53
 msgid "Mobile Number"
-msgstr ""
+msgstr "رقم الموبايل"
 
 #: disbursement/models.py:155
 msgid "Issuer Option"
@@ -929,19 +929,19 @@ msgstr ""
 
 #: disbursement/templatetags/banks_tags.py:29
 msgid "Salary"
-msgstr ""
+msgstr "المرتب"
 
 #: disbursement/templatetags/banks_tags.py:31
 msgid "Credit card"
-msgstr ""
+msgstr "البطاقة الائتمانية"
 
 #: disbursement/templatetags/banks_tags.py:33
 msgid "Prepaid card"
-msgstr ""
+msgstr "كروت مسبقة الدفع"
 
 #: disbursement/templatetags/banks_tags.py:35
 msgid "Cash transfer"
-msgstr ""
+msgstr "تحويل نقدي"
 
 #: disbursement/templatetags/callback_code_tags.py:12
 #: disbursement/templatetags/callback_code_tags.py:13
@@ -1341,7 +1341,7 @@ msgstr ""
 
 #: templates/data/bank_sheets_home.html:123
 msgid "Transactions Types"
-msgstr ""
+msgstr "أنواع المعاملات"
 
 #: templates/data/banks_document_viewer.html:8
 #: templates/data/document_viewer_collection.html:7
@@ -1418,7 +1418,7 @@ msgstr ""
 #: templates/users/add_levels.html:26 templates/users/forget-password.html:17
 #: templates/users/password_reset_confirm.html:23
 msgid "Submit"
-msgstr ""
+msgstr "إرسال"
 
 #: templates/data/banks_document_viewer.html:173
 #: templates/data/document_disbursement_list.html:60
@@ -1942,7 +1942,7 @@ msgstr ""
 #: templates/utilities/transfer_request.html:88 utilities/forms.py:108
 #: utilities/models/abstract_models.py:61
 msgid "Type"
-msgstr ""
+msgstr "الطريقة"
 
 #: templates/disbursement/agents.html:35
 msgid "Is Pin Registered?"
@@ -1960,13 +1960,13 @@ msgstr "إستعلام عن الرصيد"
 
 #: templates/disbursement/balance_inquiry.html:22
 msgid "Your current budget is: "
-msgstr ""
+msgstr "الرصيد المتاح هو"
 
 #: templates/disbursement/balance_inquiry.html:45
 #: templates/two_factor/login.html:20 templates/users/entity_branding.html:63
 #: templates/users/profile_update.html:53
 msgid "submit"
-msgstr ""
+msgstr "إرسال"
 
 #: templates/disbursement/balance_inquiry.html:54
 #, python-format
@@ -2073,7 +2073,7 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:222
 #: templates/support/document_details.html:63
 msgid "Account Number"
-msgstr ""
+msgstr "رقم الحساب"
 
 #: templates/disbursement_sidebar.html:16
 msgid "Vodafone/Etisalat/Aman"
@@ -2342,7 +2342,7 @@ msgstr ""
 #: templates/instant_cashin/sidebar.html:31
 #: templates/utilities/transfer_request.html:61
 msgid "Transfer Request"
-msgstr ""
+msgstr "طلب تحويل رصيد"
 
 #: templates/instant_cashin/sidebar.html:33
 #: templates/superadmin_sidebar.html:29
@@ -2945,11 +2945,11 @@ msgstr ""
 
 #: templates/users/profile.html:36
 msgid "First Name:"
-msgstr ""
+msgstr "الإسم الأول"
 
 #: templates/users/profile.html:40
 msgid "Last Name:"
-msgstr ""
+msgstr "الإسم الأخير"
 
 #: templates/users/profile.html:44
 msgid "Join date:"
@@ -2973,7 +2973,7 @@ msgstr ""
 
 #: templates/users/profile.html:71
 msgid "Phone Number"
-msgstr ""
+msgstr "رقم الهاتف"
 
 #: templates/users/profile_update.html:7
 #: templates/users/setting-up-disbursement/category.html:59
@@ -3208,11 +3208,11 @@ msgstr ""
 
 #: templates/utilities/transfer_request.html:76
 msgid "Increase Your Balance"
-msgstr ""
+msgstr "لزيادة رصيدك"
 
 #: templates/utilities/transfer_request.html:98
 msgid "Amount To Be Added"
-msgstr ""
+msgstr "المبلغ المراد اضافته"
 
 #: users/admin.py:55
 #, python-format
@@ -3319,15 +3319,15 @@ msgstr ""
 
 #: users/forms.py:477 users/forms.py:533 users/forms.py:676
 msgid "First name"
-msgstr ""
+msgstr "الإسم الأول"
 
 #: users/forms.py:478 users/forms.py:534 users/forms.py:677
 msgid "Last name"
-msgstr ""
+msgstr "الإسم الأخير"
 
 #: users/forms.py:544
 msgid "Level"
-msgstr ""
+msgstr "حد الصرف"
 
 #: users/forms.py:580
 msgid "The two password fields didn't match."
@@ -3343,7 +3343,7 @@ msgstr ""
 
 #: users/models/base_user.py:56
 msgid "Email address"
-msgstr ""
+msgstr "البريد الالكتروني"
 
 #: users/models/client.py:37
 msgid "Existing superagent and existing agents"
@@ -3655,7 +3655,7 @@ msgstr ""
 
 #: utilities/forms.py:18
 msgid "Amount to be added"
-msgstr ""
+msgstr "المبلغ المراد اضافته"
 
 #: utilities/forms.py:21 utilities/forms.py:102
 msgid "New budget, ex: 100"
@@ -3675,7 +3675,7 @@ msgstr ""
 
 #: utilities/forms.py:98
 msgid "Amount To Be Added "
-msgstr ""
+msgstr "المبلغ المراد اضافته"
 
 #: utilities/forms.py:120
 #, fuzzy
@@ -3687,7 +3687,7 @@ msgstr "إسم المستخدم"
 #, fuzzy
 #| msgid "Username"
 msgid "Accept Username"
-msgstr "إسم المستخدم"
+msgstr "إسم المستخدم في اكسبت"
 
 #: utilities/forms.py:128 utilities/forms.py:136
 msgid "bank"
@@ -3707,7 +3707,7 @@ msgstr ""
 
 #: utilities/forms.py:170
 msgid "account number"
-msgstr ""
+msgstr "رقم الحساب"
 
 #: utilities/forms.py:173
 msgid "To Account Name"
@@ -3723,7 +3723,7 @@ msgstr ""
 
 #: utilities/forms.py:186
 msgid "Attach Proof"
-msgstr ""
+msgstr "ارفق إثبات التحويل"
 
 #: utilities/management/commands/generate_certificate.py:48
 #, python-brace-format

@@ -30,7 +30,7 @@ msgstr ""
 #: templates/support/document_details.html:74
 #: templates/support/document_details.html:197
 msgid "Updated At"
-msgstr ""
+msgstr "تم التحديث في"
 
 #: core/models.py:53 core/models.py:87
 #: templates/support/document_details.html:183
@@ -45,7 +45,7 @@ msgstr ""
 #: templates/users/clients.html:247 templates/users/members.html:131
 #: utilities/models/abstract_models.py:437
 msgid "Successful"
-msgstr ""
+msgstr "الناجحة"
 
 #: core/models.py:74
 #: templates/disbursement/disbursement_transactions_dashboard.html:15
@@ -56,7 +56,7 @@ msgstr ""
 #: templates/support/document_details.html:400 templates/users/clients.html:88
 #: utilities/models/abstract_models.py:440
 msgid "Failed"
-msgstr ""
+msgstr "الغير ناجحة"
 
 #: core/models.py:75 templates/data/banks_document_viewer.html:111
 #: templates/data/document_disbursement_list.html:151
@@ -67,7 +67,7 @@ msgstr ""
 #: templates/support/document_details.html:397
 #: utilities/models/abstract_models.py:441
 msgid "Pending"
-msgstr ""
+msgstr "المعلقة"
 
 #: core/models.py:76 utilities/models/abstract_models.py:27
 #: utilities/models/abstract_models.py:442
@@ -121,7 +121,7 @@ msgstr ""
 #: templates/instant_cashin/wallets_transactions.html:9
 #: templates/support/document_details.html:67
 msgid "Amount"
-msgstr ""
+msgstr "المبلغ"
 
 #: core/models.py:120 templates/disbursement/single_step_trx_list.html:242
 msgid "Transaction Type"
@@ -620,7 +620,7 @@ msgstr ""
 #: templates/instant_cashin/wallets_transactions.html:10
 #: templates/support/document_details.html:68
 msgid "Issuer"
-msgstr ""
+msgstr "جهة الصرف"
 
 #: disbursement/forms.py:283 utilities/forms.py:144 utilities/forms.py:153
 msgid "acc. number"
@@ -647,7 +647,7 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:231
 #: templates/disbursement/single_step_trx_list.html:292
 msgid "Full Name"
-msgstr ""
+msgstr "الإسم بالكامل"
 
 #: disbursement/forms.py:328
 #: templates/disbursement/single_step_trx_list.html:317
@@ -773,7 +773,7 @@ msgstr ""
 
 #: disbursement/models.py:153
 msgid "AMOUNT"
-msgstr ""
+msgstr "المبلغ"
 
 #: disbursement/models.py:154 templates/utilities/new_entities_report.html:84
 #: users/models/base_user.py:53
@@ -824,7 +824,7 @@ msgstr ""
 #: templates/support/document_details.html:59
 #: templates/support/document_details.html:62
 msgid "Transaction ID"
-msgstr ""
+msgstr "كود المعاملة"
 
 #: disbursement/models.py:232
 msgid "New one generated everytime send_trx request made to EBC"
@@ -997,7 +997,7 @@ msgstr ""
 #: templates/instant_cashin/instant_viewer.html:68
 #: templates/support/document_details.html:228
 msgid "Transaction Details"
-msgstr ""
+msgstr "تفاصيل المعاملة"
 
 #: instant_cashin/api/base_views/aman_transaction_callback_handler.py:19
 #: instant_cashin/api/base_views/budget_inquiry.py:17
@@ -1123,7 +1123,7 @@ msgstr ""
 
 #: instant_cashin/models/instant_transactions.py:28
 msgid "Bank_Wallet"
-msgstr ""
+msgstr "محفظة بنكية"
 
 #: instant_cashin/models/instant_transactions.py:29
 msgid "Bank_Card"
@@ -1355,7 +1355,7 @@ msgstr ""
 #: templates/disbursement/disbursement_transactions_dashboard.html:38
 #: templates/users/clients.html:86
 msgid "All"
-msgstr ""
+msgstr "الكل"
 
 #: templates/data/banks_document_viewer.html:74
 #: templates/data/e_wallets_document_viewer.html:60
@@ -1449,7 +1449,7 @@ msgstr "حذف"
 
 #: templates/data/banks_document_viewer.html:237
 msgid "Wallet number"
-msgstr ""
+msgstr "رقم المحفظة"
 
 #: templates/data/banks_document_viewer.html:261
 msgid "Account number / IBAN"
@@ -1845,7 +1845,7 @@ msgstr ""
 #: templates/support/document_details.html:60
 #: templates/support/document_details.html:65
 msgid "Wallet Number"
-msgstr ""
+msgstr "رقم المحفظة"
 
 #: templates/data/e_wallets_home.html:7
 msgid "Vodafone/Etisalat/Aman Disbursement Files"
@@ -1981,7 +1981,7 @@ msgstr ""
 #: templates/instant_cashin/instant_viewer.html:7
 #: templates/support/clients.html:255 templates/support/document_details.html:8
 msgid "Transactions"
-msgstr ""
+msgstr "المعاملات"
 
 #: templates/disbursement/bank_transactions_list.html:59
 #: templates/disbursement/bank_transactions_list.html:99
@@ -1990,7 +1990,7 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:134
 #: templates/support/document_details.html:70 users/forms.py:861
 msgid "Fees"
-msgstr ""
+msgstr "الرسوم"
 
 #: templates/disbursement/bank_transactions_list.html:60
 #: templates/disbursement/bank_transactions_list.html:100
@@ -1999,7 +1999,7 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:135
 #: templates/support/document_details.html:71
 msgid "Vat"
-msgstr ""
+msgstr "ضريبة القيمة المضافة"
 
 #: templates/disbursement/bank_transactions_list.html:96
 #: templates/disbursement/single_step_trx_list.html:131
@@ -2047,7 +2047,7 @@ msgstr ""
 
 #: templates/disbursement/disbursement_transactions_dashboard.html:28
 msgid "Export"
-msgstr ""
+msgstr "تحميل الملف"
 
 #: templates/disbursement/disbursement_transactions_dashboard.html:48
 #: templates/disbursement/single_step_trx_list.html:378

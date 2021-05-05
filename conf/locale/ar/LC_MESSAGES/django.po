@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-04 17:09+0200\n"
+"POT-Creation-Date: 2021-05-05 15:37+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -968,6 +968,210 @@ msgstr ""
 msgid "User suspended"
 msgstr ""
 
+#: disbursement/utils.py:84
+#, fuzzy
+#| msgid "Salary"
+msgid "salary"
+msgstr "المرتب"
+
+#: disbursement/utils.py:84
+msgid "For concurrent or repeated payments"
+msgstr "للمدفوعات المتزامنة أو المتكررة"
+
+#: disbursement/utils.py:85
+#, fuzzy
+#| msgid "Credit card"
+msgid "credit_card"
+msgstr "البطاقة الائتمانية"
+
+#: disbursement/utils.py:85
+msgid "For credit cards payments"
+msgstr "لمدفوعات بطاقات الائتمان"
+
+#: disbursement/utils.py:86
+#, fuzzy
+#| msgid "Prepaid card"
+msgid "prepaid_card"
+msgstr "كروت مسبقة الدفع"
+
+#: disbursement/utils.py:86
+msgid "For prepaid cards and Meeza cards payments"
+msgstr "للكروت مسبقة الدفع و بطاقات ميزة"
+
+#: disbursement/utils.py:87
+#, fuzzy
+#| msgid "Cash transfer"
+msgid "cash_transfer"
+msgstr "تحويل نقدي"
+
+#: disbursement/utils.py:87
+msgid "For bank accounts, debit cards etc.."
+msgstr "للحسابات البنكية وبطاقات الخصم المباشر و ما إلى ذلك"
+
+#: disbursement/utils.py:91
+msgid "Ahli United Bank"
+msgstr "البنك الأهلي المتحد"
+
+#: disbursement/utils.py:92
+msgid "Citi Bank N.A. Egypt"
+msgstr "سيتي بنك"
+
+#: disbursement/utils.py:93
+msgid "MIDBANK"
+msgstr "ميد-بنك"
+
+#: disbursement/utils.py:94
+msgid "Banque Du Caire"
+msgstr "بنك القاهرة"
+
+#: disbursement/utils.py:95
+msgid "HSBC Bank Egypt S.A.E"
+msgstr "HSBC بنك"
+
+#: disbursement/utils.py:96
+msgid "Credit Agricole Egypt S.A.E"
+msgstr "كريدي أجريكول"
+
+#: disbursement/utils.py:97
+msgid "Egyptian Gulf Bank (EG-Bank)"
+msgstr "EG بنك"
+
+#: disbursement/utils.py:98
+msgid "The United Bank"
+msgstr "المصرف المتحد "
+
+#: disbursement/utils.py:99
+msgid "Qatar National Bank Alahli"
+msgstr "بنك قطر الوطني"
+
+#: disbursement/utils.py:100 disbursement/utils.py:132
+msgid "Central Bank Of Egypt"
+msgstr "البنك المركزي المصري"
+
+#: disbursement/utils.py:101
+msgid "Arab Bank PLC"
+msgstr "البنك العربي"
+
+#: disbursement/utils.py:102
+msgid "Emirates National Bank of Dubai"
+msgstr "بنك الإمارات دبي الوطني"
+
+#: disbursement/utils.py:103
+msgid "Al Ahli Bank of Kuwait – Egypt"
+msgstr "البنك الاهلى الكويتى_مصر"
+
+#: disbursement/utils.py:104
+msgid "National Bank of Kuwait – Egypt"
+msgstr "بنك الكويت الوطني_مصر"
+
+#: disbursement/utils.py:105
+msgid "Arab Banking Corporation - Egypt S.A.E (ABC)"
+msgstr "ABC بنك"
+
+#: disbursement/utils.py:106
+msgid "First Abu Dhabi Bank"
+msgstr "بنك أبوظبي الأول"
+
+#: disbursement/utils.py:107
+msgid "Abu Dhabi Islamic Bank – Egypt"
+msgstr "مصرف أبو ظبي الإسلامي"
+
+#: disbursement/utils.py:108
+msgid "Commercial International Bank - Egypt S.A.E"
+msgstr "البنك التجاري الدولي"
+
+#: disbursement/utils.py:109
+msgid "Housing And Development Bank"
+msgstr "بنك التعمير والاسكان"
+
+#: disbursement/utils.py:110
+msgid "Banque Misr"
+msgstr "بنك مصر"
+
+#: disbursement/utils.py:111
+msgid "Arab African International Bank"
+msgstr "البنك العربي الإفريقي الدولي"
+
+#: disbursement/utils.py:112
+msgid "Egyptian Arab Land Bank"
+msgstr "البنك العقاري المصري"
+
+#: disbursement/utils.py:113
+msgid "Export Development Bank of Egypt"
+msgstr "البنك المصري لتنمية الصادرات "
+
+#: disbursement/utils.py:114
+msgid "Faisal Islamic Bank of Egypt"
+msgstr "بنك فيصل الإسلامي المصري"
+
+#: disbursement/utils.py:115
+msgid "Blom Bank"
+msgstr "بنك بلوم "
+
+#: disbursement/utils.py:116
+msgid "Abu Dhabi Commercial Bank – Egypt"
+msgstr "بنك أبوظبي التجاري"
+
+#: disbursement/utils.py:117
+msgid "Alex Bank Egypt"
+msgstr "بنك الإسكندرية"
+
+#: disbursement/utils.py:118
+msgid "Societe Arabe Internationale De Banque (SAIB)"
+msgstr "SAIB بنك"
+
+#: disbursement/utils.py:119
+msgid "National Bank of Egypt"
+msgstr "البنك الأهلي المصري"
+
+#: disbursement/utils.py:120
+msgid "Al Baraka Bank Egypt B.S.C"
+msgstr "بنك البركة مصر"
+
+#: disbursement/utils.py:121
+msgid "Egypt Post"
+msgstr "البريد المصري "
+
+#: disbursement/utils.py:122
+msgid "Nasser Social Bank"
+msgstr "بنك ناصر الاجتماعى"
+
+#: disbursement/utils.py:123
+msgid "Industrial Development Bank"
+msgstr "بنك التنمية الصناعية"
+
+#: disbursement/utils.py:124
+msgid "Suez Canal Bank"
+msgstr "بنك قناة السويس"
+
+#: disbursement/utils.py:125
+msgid "Mashreq Bank"
+msgstr "بنك المشرق"
+
+#: disbursement/utils.py:126
+msgid "Arab Investment Bank"
+msgstr "بنك الإستثمار العربي"
+
+#: disbursement/utils.py:127
+msgid "Audi Bank"
+msgstr "بنك عودة"
+
+#: disbursement/utils.py:128
+msgid "General Authority For Supply Commodities"
+msgstr "الهيئة العامة للسلع التموينية"
+
+#: disbursement/utils.py:129
+msgid "Arab International Bank"
+msgstr "المصرف العربي الدولي"
+
+#: disbursement/utils.py:130
+msgid "Agricultural Bank of Egypt"
+msgstr "البنك الزراعي المصري"
+
+#: disbursement/utils.py:131
+msgid "National Bank of Greece"
+msgstr "البنك الأهلي اليوناني"
+
 #: disbursement/utils.py:379
 msgid "External error, please contact your support team for further details"
 msgstr ""
@@ -1787,12 +1991,12 @@ msgid "No checkers notified yet"
 msgstr ""
 
 #: templates/data/document_disbursement_list.html:175
-#: templates/pagination.html:4
+#: templates/pagination.html:5
 msgid "First"
 msgstr "الاول"
 
 #: templates/data/document_disbursement_list.html:176
-#: templates/pagination.html:5
+#: templates/pagination.html:6
 #: templates/users/setting-up-collection/collection.html:71
 #: templates/users/setting-up-collection/formats.html:70
 #: templates/users/setting-up-collection/uploader.html:70
@@ -1805,7 +2009,7 @@ msgid "Previous"
 msgstr "السابق"
 
 #: templates/data/document_disbursement_list.html:189
-#: templates/pagination.html:17 templates/two_factor/_wizard_actions.html:17
+#: templates/pagination.html:18 templates/two_factor/_wizard_actions.html:17
 #: templates/users/setting-up-collection/collection.html:70
 #: templates/users/setting-up-collection/formats.html:69
 #: templates/users/setting-up-collection/uploader.html:69
@@ -1818,7 +2022,7 @@ msgid "Next"
 msgstr ""
 
 #: templates/data/document_disbursement_list.html:190
-#: templates/pagination.html:18
+#: templates/pagination.html:19
 msgid "Last"
 msgstr "الاخير"
 
@@ -1870,7 +2074,7 @@ msgstr ""
 #: templates/data/formats.html:101
 msgid ""
 "Please make sure if you will delete any format all of its corresponding "
-"documents won"
+"documents won\\"
 msgstr ""
 
 #: templates/data/formats.html:104

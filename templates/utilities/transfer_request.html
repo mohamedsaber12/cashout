@@ -141,10 +141,10 @@
     </div>`;
     let bankTransferForm = `<div id="bank_transfer_form_row" class="row">
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
+        <h5><span style="font-weight:bold;font-size:18px;">{% trans 'From' %}</span></h5>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
+        <h5><span style="font-weight:bold;font-size:18px;">{% trans 'To' %}</span></h5>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
         <label>
@@ -203,7 +203,7 @@
         </div>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+        <label><span class="glyphicon glyphicon-calendar"></span> {% trans 'Date (YYYY-MM-DD) EX:- 2006-10-25 *' %}</label>
         {{ form.from_date }}
         <span class="respond-span"></span>
         <div class="help-block">
@@ -228,7 +228,7 @@
       <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-briefcase"></span> Depositor Name *</label>
+      <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Depositor Name *' %}</label>
       {{ form.from_account_name }}
       <span class="respond-span" style="color:red;">
         **Please note that only deposits submitted in your company's/entity's name will be accepted.
@@ -248,7 +248,7 @@
       </div>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+      <label><span class="glyphicon glyphicon-calendar"></span> {% trans 'Date (YYYY-MM-DD) EX:- 2006-10-25 *' %}</label>
       {{ form.from_date }}
       <span class="respond-span"></span>
       <div class="help-block">

@@ -6,16 +6,16 @@ from django.utils.translation import ugettext_lazy as _
 
 from utilities.models.generic_models import Budget
 
-INSTANT_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the carrier"
-INSTANT_TRX_BEING_PROCESSED = "Transaction received by the carrier and being processed now"
-INSTANT_TRX_IS_ACCEPTED = "Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now"
-INSTANT_TRX_IS_REJECTED = "Transaction rejected by the carrier. Please try again or contact your support team"
-BANK_TRX_RECEIVED = "Transaction received and validated successfully. Dispatched for being processed by the bank"
-BANK_TRX_BEING_PROCESSED = "Transaction received by the bank and being processed now"
-BANK_TRX_IS_SUCCESSFUL_1 = "Successful with warning, A transfer will take place once authorized by the receiver bank"
-BANK_TRX_IS_SUCCESSFUL_2 = "Successful, transaction is settled by the receiver bank"
-INTERNAL_ERROR_MSG = "Process stopped during an internal error, can you try again or contact your support team"
-EXTERNAL_ERROR_MSG = "Process stopped during an external error, can you try again or contact your support team"
+INSTANT_TRX_RECEIVED = _("Transaction received and validated successfully. Dispatched for being processed by the carrier")
+INSTANT_TRX_BEING_PROCESSED = _("Transaction received by the carrier and being processed now")
+INSTANT_TRX_IS_ACCEPTED = _("Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now")
+INSTANT_TRX_IS_REJECTED = _("Transaction rejected by the carrier. Please try again or contact your support team")
+BANK_TRX_RECEIVED = _("Transaction received and validated successfully. Dispatched for being processed by the bank")
+BANK_TRX_BEING_PROCESSED = _("Transaction received by the bank and being processed now")
+BANK_TRX_IS_SUCCESSFUL_1 = _("Successful with warning, A transfer will take place once authorized by the receiver bank")
+BANK_TRX_IS_SUCCESSFUL_2 = _("Successful, transaction is settled by the receiver bank")
+INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team")
+EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
 
 
 VALID_BANK_CODES_LIST = [
@@ -134,81 +134,81 @@ BANK_CODES = [
 
 ERROR_CODES_MESSAGES = {
     # Vodafone Cash Codes
-    '403' : 'Channel Authentication Failed',
-    '404' : 'Undefined request type',
-    '406' : 'Incorrect input given to request',
-    '501' : 'Internal Error',
-    '583' : 'Exceeded Maximum Limit Per Single Transaction',
-    '604' : 'Below Minimum Transaction Limit Per Single Transaction',
-    '610' : 'User Not Eligible To Perform Transaction',
-    '615' : 'Sender and Recipient Accounts are the Same',
-    '618' : 'Recipient Is Unregistered',
-    '1051':	'MSISDN Does Not Exist',
-    '1056':	'Invalid Consumer PIN',
-    '1033':	'Initial MPIN has not been changed',
-    '1069':	'Sender and Recipient Accounts are the Same',
-    '1102':	'M-PIN is Empty',
-    '1118':	'MSISDN is Locked',
-    '1301':	'Invalid Client ID',
-    '1996':	'Catch All SE Errors',
-    '1997':	'Inactive Service',
-    '4011':	'Initial MPIN has not been changed.',
-    '4037':	'Consumer MSISDN Does Not Exist',
-    '4051':	'Agent MSISDN Does Not Exist',
-    '4055':	'Consumer Account Status is Not Active',
-    '4056':	'Invalid Agent M-PIN',
-    '4070':	'Agent Type is Invalid',
-    '4081':	'Consumer has No Default Funding Account',
-    '4139':	'Agent MSISDN does not exist',
-    '4140':	'Agent ID Does Not Exist',
-    '4333':	"Recipient Consumer's MPIN has not been changed",
-    '4334':	"Recipient Consumer's has exceeded transaction count limit",
-    '5465':	'Service Call Failed',
-    '6001':	'Funding Account Status is Referral',
-    '6003':	'Invalid Agent',
-    '6004':	'Funding Account Status is Pick-up CR Problem or Fraud/Capture Card',
-    '6005':	'Funding Account was not Honored/General Decline',
-    '6012':	'Invalid Transaction',
-    '6013':	'Invalid Amount',
-    '6014':	'Invalid Funding Account Card Number',
-    '6015':	'Invalid Issuer',
-    '6030':	'Format Error',
-    '6041':	'Funding Account Status is Lost',
-    '6043':	'Funding Account Status is Stolen',
-    '6051':	'Funding Account has Insufficient Funds',
-    '6054':	'Funding Account is Expired',
-    '6055':	'Invalid C-PIN',
-    '6057':	'Transaction Not Permitted to Issuer/Card Holder',
-    '6058':	'Transaction Not Permitted to Acquirer/Terminal',
-    '6061':	'Exceeded Transaction Amount Limit',
-    '6062':	'Restricted Card',
-    '6063':	'Security Violation',
-    '6065':	'Exceeded Transaction Count Limit',
-    '6070':	'Contact Card Issuer',
-    '6071':	'C-PIN Not Changed',
-    '6075':	'Allowable Number of C-PIN Tries Exceeded',
-    '6076':	'Invalid/Non-Existent "To Account"',
-    '6077':	'Invalid/Non-Existent "From Account"',
-    '6078':	'Invalid/Non-Existent Account',
-    '6084':	'Invalid Authorization Life Cycle',
-    '6086':	'C-PIN Validation Not Possible',
-    '6088':	'Cryptographic Failure',
-    '6089':	'Unacceptable C-PIN',
-    '6091':	'Authorization System/Issuer System Inoperative',
-    '6092':	'Unable to Route Transaction',
-    '6094':	'Duplicate Authorization Request',
-    '6096':	'General System Error',
-    '6097':	'MIP is Down/Not Connected',
-    '6098':	'No Response from MIP',
-    '6099':	'Catch All Acquirer SE Error',
+    '403' : _('Channel Authentication Failed'),
+    '404' : _('Undefined request type'),
+    '406' : _('Incorrect input given to request'),
+    '501' : _('Internal Error'),
+    '583' : _('Exceeded Maximum Limit Per Single Transaction'),
+    '604' : _('Below Minimum Transaction Limit Per Single Transaction'),
+    '610' : _('User Not Eligible To Perform Transaction'),
+    '615' : _('Sender and Recipient Accounts are the Same'),
+    '618' : _('Recipient Is Unregistered'),
+    '1051':	_('MSISDN Does Not Exist'),
+    '1056':	_('Invalid Consumer PIN'),
+    '1033':	_('Initial MPIN has not been changed'),
+    '1069':	_('Sender and Recipient Accounts are the Same'),
+    '1102':	_('M-PIN is Empty'),
+    '1118':	_('MSISDN is Locked'),
+    '1301':	_('Invalid Client ID'),
+    '1996':	_('Catch All SE Errors'),
+    '1997':	_('Inactive Service'),
+    '4011':	_('Initial MPIN has not been changed.'),
+    '4037':	_('Consumer MSISDN Does Not Exist'),
+    '4051':	_('Agent MSISDN Does Not Exist'),
+    '4055':	_('Consumer Account Status is Not Active'),
+    '4056':	_('Invalid Agent M-PIN'),
+    '4070':	_('Agent Type is Invalid'),
+    '4081':	_('Consumer has No Default Funding Account'),
+    '4139':	_('Agent MSISDN does not exist'),
+    '4140':	_('Agent ID Does Not Exist'),
+    '4333':	_("Recipient Consumer's MPIN has not been changed"),
+    '4334':	_("Recipient Consumer's has exceeded transaction count limit"),
+    '5465':	_('Service Call Failed'),
+    '6001':	_('Funding Account Status is Referral'),
+    '6003':	_('Invalid Agent'),
+    '6004':	_('Funding Account Status is Pick-up CR Problem or Fraud/Capture Card'),
+    '6005':	_('Funding Account was not Honored/General Decline'),
+    '6012':	_('Invalid Transaction'),
+    '6013':	_('Invalid Amount'),
+    '6014':	_('Invalid Funding Account Card Number'),
+    '6015':	_('Invalid Issuer'),
+    '6030':	_('Format Error'),
+    '6041':	_('Funding Account Status is Lost'),
+    '6043':	_('Funding Account Status is Stolen'),
+    '6051':	_('Funding Account has Insufficient Funds'),
+    '6054':	_('Funding Account is Expired'),
+    '6055':	_('Invalid C-PIN'),
+    '6057':	_('Transaction Not Permitted to Issuer/Card Holder'),
+    '6058':	_('Transaction Not Permitted to Acquirer/Terminal'),
+    '6061':	_('Exceeded Transaction Amount Limit'),
+    '6062':	_('Restricted Card'),
+    '6063':	_('Security Violation'),
+    '6065':	_('Exceeded Transaction Count Limit'),
+    '6070':	_('Contact Card Issuer'),
+    '6071':	_('C-PIN Not Changed'),
+    '6075':	_('Allowable Number of C-PIN Tries Exceeded'),
+    '6076':	_('Invalid/Non-Existent "To Account"'),
+    '6077':	_('Invalid/Non-Existent "From Account"'),
+    '6078':	_('Invalid/Non-Existent Account'),
+    '6084':	_('Invalid Authorization Life Cycle'),
+    '6086':	_('C-PIN Validation Not Possible'),
+    '6088':	_('Cryptographic Failure'),
+    '6089':	_('Unacceptable C-PIN'),
+    '6091':	_('Authorization System/Issuer System Inoperative'),
+    '6092':	_('Unable to Route Transaction'),
+    '6094':	_('Duplicate Authorization Request'),
+    '6096':	_('General System Error'),
+    '6097':	_('MIP is Down/Not Connected'),
+    '6098':	_('No Response from MIP'),
+    '6099':	_('Catch All Acquirer SE Error'),
 
     # Etisalat Cash Codes
-    '0'    : 'Successful transaction',
-    '90002': 'Invalid disbursement request',
-    '90003': 'Invalid or missing parameters',
-    '90007': 'Invalid or missing parameters',
-    '90005': 'Service is down',
-    '90006': 'Service is down'
+    '0'    : _('Successful transaction'),
+    '90002': _('Invalid disbursement request'),
+    '90003': _('Invalid or missing parameters'),
+    '90007': _('Invalid or missing parameters'),
+    '90005': _('Service is down'),
+    '90006': _('Service is down')
 }
 
 DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [

@@ -398,9 +398,9 @@
         appendedTagsRight += `<li><span>Checker</span><b>:</b>${doc_checker}</li>`;
 
         trx.transaction_status_code = $(this).data('transaction_status_code');
-        appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>${trx.transaction_status_code}</li>`;
+        appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>${trx.transaction_status_code}</li>`;
         trx.transaction_status_description = $(this).data('transaction_status_description');
-        appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
+        appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>${trx.transaction_status_description}</li>`;
 
         ul.empty();
         ul.append(appendedTags);

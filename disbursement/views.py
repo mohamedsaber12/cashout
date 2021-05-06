@@ -1176,7 +1176,7 @@ class ExportClientsTransactionsMonthlyReport:
                     Q(disbursed_date__gte=self.first_day),
                     Q(disbursed_date__lte=self.last_day),
                     Q(end_to_end=""),
-                    Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL]),
+                    Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL, AbstractBaseACHTransactionStatus.RETURNED]),
                     (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                     Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \

@@ -61,7 +61,7 @@
                           </i>
                         </h4>
                         <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-                          <h2 style="font-size:18px;"><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.get_full_name|truncatechars:26 }}</h2>
+                          <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.get_full_name|truncatechars:26 }}</h2>
                           <p><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {{ user.title|truncatechars:24 }}</p>
                           <ul class="list-unstyled">
                               <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ user.username }}</li></ul></li>
@@ -74,10 +74,10 @@
                         </div>
                       </div>
                       <div class="col-xs-12 bottom text-center">
-                        <div class="col-xs-12 col-sm-6 emphasis" style="padding-right:10px;padding-left:10px;">
+                        <div class="col-xs-12 col-sm-4 emphasis" style="padding-right:10px;padding-left:10px;">
                           <p class="ratings pull-{{'left'|invert_dir:LANGUAGE_CODE}}"><a>{% trans 'Active' %}</a></p>
                         </div>
-                        <div class="col-xs-12 col-sm-6 emphasis text-right" style="padding-right:10px;padding-left:10px;">
+                        <div class="col-xs-12 col-sm-8 emphasis text-right" style="padding-right:10px;padding-left:10px;">
                           {% if user.user_type == 6 %}
                             <button class="btn btn-default btn-xs" title="Authorization Keys">
                               <a href="{% url 'users:oauth2_detail' username=user.username %}" target="_blank"><i class="fa fa-key"></i></a>

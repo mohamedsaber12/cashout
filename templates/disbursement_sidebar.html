@@ -16,7 +16,7 @@
         {% elif request.user.is_accept_vodafone_onboarding %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
           <li><a href="{% url 'data:bank_wallets_home' %}">
-            <img style="width: 20px;margin-right: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+            <img style="width: 20px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
           <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
 
           {% if request.user.is_root or request.user.is_checker %}

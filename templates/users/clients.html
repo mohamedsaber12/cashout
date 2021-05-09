@@ -137,8 +137,8 @@
                               {% endif %}
                             </i>
                           </h4>
-                          <div class="left col-xs-7">
-                            <h2><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.get_full_name|truncatechars:26 }}</h2>
+                          <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+                            <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.get_full_name|truncatechars:26 }}</h2>
                             <h5><i class="fa fa-info-circle"></i> <strong>{% trans 'About:' %} </strong> {{ client_setup.client.title|truncatechars:24 }}</h5>
                             <ul class="list-unstyled">
                               <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ client_setup.client.username }}</li></ul></li>
@@ -147,16 +147,16 @@
                               
                             </ul>
                           </div>
-                          <div class="right col-xs-5 text-center">
+                          <div class="right col-xs-5 text-center pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                             <img src="{{ client_setup.client.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
                           </div>
                         </div>
                         <div class="col-xs-12 bottom text-center">
-                          <div class="col-xs-12 col-sm-6 emphasis">
-                            <p class="ratings"><a>{% trans 'Active' %}</a></p>
+                          <div class="col-xs-12 col-sm-3 emphasis" style="padding-right:10px;padding-left:10px;">
+                            <p class="ratings pull-{{'left'|invert_dir:LANGUAGE_CODE}}"><a>{% trans 'Active' %}</a></p>
                           </div>
-                          <div class="col-xs-12 col-sm-6 emphasis text-right">
-                            <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
+                          <div class="col-xs-12 col-sm-9 emphasis text-right" style="padding-right:10px;padding-left:10px;">
+                            <button type="button" class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
                                     data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
                               {% ifequal client_setup.is_active True %}
                               <i class="fa fa-times" title="{% trans 'Deactivate User' %}"></i>
@@ -165,11 +165,12 @@
                               {% endifequal %}
                             </button>
                             {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
-                              <button class="btn btn-default btn-xs" title="{% trans 'Update Budget' %}">
+                              <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Update Budget' %}">
                                 <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
                               </button>
                             {% endif %}
-                            <a href="{% url 'users:profile' client_setup.client.username %}" type="button" class="btn btn-primary btn-xs">
+                            <a href="{% url 'users:profile' client_setup.client.username %}" type="button"
+                               class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                             </a>
                           </div>

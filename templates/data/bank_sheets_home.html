@@ -36,7 +36,7 @@
       <div class="x_content">
         <form id="fileUpload" class="dropzone" action="{{ request.path }}" method="post"
               enctype="multipart/form-data">{% csrf_token %}
-        </form>
+        </form>{% include 'data/document_disbursement_list.html'
       </div>
     </div>
   {% endif %}

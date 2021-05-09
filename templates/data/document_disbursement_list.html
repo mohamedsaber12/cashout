@@ -1,4 +1,5 @@
 {% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 <style>
   .list-group {
@@ -9,7 +10,11 @@
 </style>
 <div class="page-title">
   <div class="title_left">
-    <h3>{% trans list_header %} {% trans ' Disbursement Files' %}</h3>
+    {% if LANGUAGE_CODE == 'en' %}
+      <h3>{% trans list_header %} {% trans 'Disbursement Files' %}</h3>
+    {% else %}
+      <h3>{% trans 'Disbursement Files' %} {% trans list_header %} </h3>
+    {% endif %}
   </div>
   {% if list_header == 'Bank Accounts/Cards' %}
     <div class="title_right">

@@ -481,7 +481,7 @@
         buttons: [
           {
                 extend: 'copy',
-                text : "Copy",
+                text : "{% trans 'Copy' %}",
                 exportOptions: {
                     charSet: "utf-8",
                 }
@@ -492,7 +492,7 @@
             },
             {
                 extend: 'excelHtml5',
-                text : "Export",
+                text : "{% trans 'Export' %}",
                 
                 customize: function( xlsx ) {
 
@@ -841,12 +841,12 @@ issuerType.addEventListener('change', toggleForm);
     WalletsFilter += ` href="/disburse/single-step/?issuer=wallets"`;
   {% endif %}
   {% if wallets %}
-    BankCardFilter += ` style="float:right;margin-bottom:10px;"><span>Bank Card</span></a>`;
-    WalletsFilter +=` style="float:right;margin-bottom:10px;color:#333;
+    BankCardFilter += ` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>Bank Card</span></a>`;
+    WalletsFilter +=` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;color:#333;
       background-color:#d4d4d4;border-color:#8c8c8c;"><span>Wallets</span></a>`;
   {% else %}
-    WalletsFilter +=` style="float:right;margin-bottom:10px;"><span>Wallets</span></a>`;
-    BankCardFilter += ` style="float:right;margin-bottom:10px;color:#333;
+    WalletsFilter +=` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>Wallets</span></a>`;
+    BankCardFilter += ` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;color:#333;
       background-color:#d4d4d4;border-color:#8c8c8c;"><span>Bank Card</span></a>`;
   {% endif %}
   parent_dev.append(WalletsFilter);

@@ -25,7 +25,8 @@
   <div class="col-md-2 col-sm-2 col-xs-2">
     <div class="dropdown">
       <button class="btn btn-default dropdown-toggle export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
-              type="button" id="menu1" data-toggle="dropdown">
+              type="button" id="menu1" data-toggle="dropdown"
+              style="{% if LANGUAGE_CODE == 'ar' %} width: 11rem!important;{% endif %}">
         <span class="glyphicon glyphicon-download-alt"></span> {% trans 'Export' %}
       </button>
       <div class="dropdown-menu dropdown-menu-right">

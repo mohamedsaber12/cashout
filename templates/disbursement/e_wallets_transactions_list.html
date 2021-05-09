@@ -233,7 +233,7 @@
             },
             {
                 extend: 'excelHtml5',
-                text : "Export",
+                text : "{% trans 'Export' %}",
                 
                 customize: function( xlsx ) {
 
@@ -312,40 +312,40 @@
 
         {% if not is_normal_flow %}
           let trx_id = $(this).data('trx_id')
-          appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx_id}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx_id}</li>`;
         {% endif %}
 
         let msisdn = $(this).data('msisdn');
-        appendedTags += `<li><span>Wallet Number</span><b>:</b>${msisdn}</li>`;
+        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${msisdn}</li>`;
 
         let amount = $(this).data('amount');
-        appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${amount}</li>`;
 
         let is_disbursed = $(this).data('is_disbursed');
         let reason = $(this).data('reason');
 
         {# Handle is_disbursed icon based of the record disbursement status #}
         if (is_disbursed === 'True') {
-          appendedTags += `<li><span>Status</span><b>:</b>{% trans "Successful" %}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Successful" %}</li>`;
         }
         else if (!reason) {
-          appendedTags += `<li><span>Status</span><b>:</b>{% trans "Pending" %}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Pending" %}</li>`;
         }
         else {
-          appendedTags += `<li><span>Status</span><b>:</b>{% trans "Failed" %}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Failed" %}</li>`;
         }
 
         {% if not is_normal_flow %}
           let issuer = $(this).data('issuer');
-          appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
           let aman_is_paid = $(this).data('aman_is_paid');
 
           {# Determine is_paid? status for aman transactions #}
           if (issuer === 'Aman') {
             if (aman_is_paid === 'True') {
-              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
             }
           }
         {% endif %}
@@ -366,10 +366,10 @@
         }
 
         let created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${created_at}</li>`;
 
         let updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${updated_at}</li>`;
 
         ul.empty();
         ul.append(appendedTags);

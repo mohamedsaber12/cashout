@@ -140,19 +140,19 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         """Retrieve doc status given doc object"""
 
         if doc_obj.validation_process_is_running:
-            return 'Validation process is running'
+            return _('Validation process is running')
         elif doc_obj.validated_successfully:
-            return 'Validated successfully'
+            return _('Validated successfully')
         elif doc_obj.validation_failed:
-            return 'Validation failure'
+            return _('Validation failure')
         elif doc_obj.disbursement_failed:
-            return 'Disbursement failure'
+            return _('Disbursement failure')
         elif doc_obj.waiting_disbursement:
-            return 'Ready for disbursement'
+            return _('Ready for disbursement')
         elif doc_obj.waiting_disbursement_callback:
-            return 'Disbursed successfully and waiting for the disbursement callback'
+            return _('Disbursed successfully and waiting for the disbursement callback')
         elif doc_obj.disbursed_successfully:
-            return 'Disbursed successfully'
+            return _('Disbursed successfully')
 
     def dispatch(self, request, *args, **kwargs):
         """Shared attributes between GET and POST methods"""

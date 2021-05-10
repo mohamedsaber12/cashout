@@ -55,7 +55,7 @@
   {# Button #}
   <div class="row dashboard-row">
     <div class="col-md-3 col-sm-3 col-xs-3 data_element">
-      <span class="count_top">All</span>
+      <span class="count_top">{% trans 'All' %}</span>
       <div class="count">{{ doc.total_count }}</div>
       <span>Total {{ doc.total_amount }} {% trans 'LE' %}</span>
     </div>
@@ -199,7 +199,13 @@
     <div class="col-md-12 col-sm-12 col-xs-12">
       <div class="x_panel">
         <div class="x_title">
-          <h2>{% if request.user.is_accept_vodafone_onboarding %}{% trans 'Vodafone/Etisalat/Aman Document Transactions' %}{% else %}{% trans 'Document Transactions' %}{% endif %}</h2>
+          <h2>
+            {% if request.user.is_accept_vodafone_onboarding %}
+              {% trans 'Vodafone/Etisalat/Aman Document Transactions' %}
+            {% else %}
+              {% trans 'Document Transactions' %}
+            {% endif %}
+          </h2>
           <ul class="nav navbar-right panel_toolbox">
             {% if request.user.is_root and not doc.is_disbursed %}
               <li>
@@ -305,7 +311,7 @@
         buttons: [
           {
                 extend: 'copy',
-                text : "Copy",
+                text : "{% trans 'Copy' %}",
                 exportOptions: {
                     charSet: "utf-8",
                 }
@@ -316,7 +322,7 @@
             },
             {
                 extend: 'excelHtml5',
-                text : "Export",
+                text : "{% trans 'Export' %}",
                 
                 customize: function( xlsx ) {
 

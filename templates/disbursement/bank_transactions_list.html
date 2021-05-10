@@ -364,7 +364,7 @@
           trx.recipient_name = $(this).data('recipient_name');
           appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.recipient_name}</li>`;
           trx.status = $(this).data('status');
-          appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
         {% else %}
           trx.id = $(this).data('id');
           appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;

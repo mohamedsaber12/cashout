@@ -70,7 +70,7 @@
               <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
               {% if user.is_checker %}
                 {% if user.root.client.is_active %}
-                  <div class="dialogButtonDiv">
+                  <div class="dialogButtonDiv pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                     <button id="addSingleTransaction" class="btn btn-primary">{% trans 'Make New Transaction' %}</button>
                   </div>
                 {% else %}
@@ -573,64 +573,64 @@
 
       {% if wallets %}
         trx.id = $(this).data('id')
-        appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
+        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
         trx.anon_recipient = $(this).data('anon_recipient');
-        appendedTags += `<li><span>Wallet Number</span><b>:</b>${trx.anon_recipient}</li>`;
+        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${trx.anon_recipient}</li>`;
         trx.amount = $(this).data('amount');
-        appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
         trx.recipient_name = $(this).data('recipient_name');
-        appendedTags += `<li><span>Full Name</span><b>:</b>${trx.recipient_name}</li>`;
+        appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.recipient_name}</li>`;
         trx.status = $(this).data('status');
-        appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
+        appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
 
         trx.issuer = $(this).data('issuer');
-        appendedTagsRight += `<li><span>Issuer</span><b>:</b>${trx.issuer}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${trx.issuer}</li>`;
         {# Determine is_paid? status for aman transactions #}
           if (trx.issuer === 'Aman') {
             let aman_is_paid = $(this).data('aman_is_paid');
             if (aman_is_paid === 'True') {
-              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
             }
           }
 
         trx.created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>Created At</span><b>:</b>${trx.created_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${trx.created_at}</li>`;
         trx.updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${trx.updated_at}</li>`;
 
       {% else %}
         trx.debtor_account = $(this).data('debtor_account');
 
         trx.id = $(this).data('id')
-        appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
+        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
         trx.creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>Account Number / IBAN</span><b>:</b>${trx.creditor_account_number}</li>`;
+        appendedTags += `<li><span>{% trans 'Account Number / IBAN' %}</span><b>:</b>${trx.creditor_account_number}</li>`;
         trx.creditor_name = $(this).data('creditor_name');
-        appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
+        appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.creditor_name}</li>`;
         trx.amount = $(this).data('amount');
-        appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
         trx.status = $(this).data('status');
-        appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
+        appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
 
         trx.creditor_bank = $(this).data('creditor_bank');
-        appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Bank Swift Code' %}</span><b>:</b>${trx.creditor_bank}</li>`;
         trx.bank_name = $(this).data('bank_name');
-        appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Bank Name' %}</span><b>:</b>${trx.bank_name}</li>`;
         trx.type = $(this).data('type');
-        appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Transaction Type' %}</span><b>:</b>${trx.type}</li>`;
         trx.checker = $(this).data('checker');
-        appendedTagsRight += `<li><span>Checker</span><b>:</b>${trx.checker}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Checker' %}</span><b>:</b>${trx.checker}</li>`;
         trx.created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>Created At</span><b>:</b>${trx.created_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${trx.created_at}</li>`;
         trx.updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${trx.updated_at}</li>`;
       {% endif %}
       trx.status_code = $(this).data('status_code');
-      appendedTagsBottom += `<li><span>Status Code</span><b>:</b>${trx.status_code}</li>`;
+      appendedTagsBottom += `<li><span>{% trans 'Status Code' %}</span><b>:</b>${trx.status_code}</li>`;
       trx.transaction_status_description = $(this).data('transaction_status_description');
-      appendedTagsBottom += `<li><span>Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
+      appendedTagsBottom += `<li><span>{% trans 'Status Description' %}</span><b>:</b>${trx.transaction_status_description}</li>`;
 
       ul.empty();
       ul.append(appendedTags);
@@ -657,7 +657,7 @@ let bankCardForm = `<div id="bank_card_fields">
   <div class="row">
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
       <label>
-        <span class="glyphicon glyphicon-user"></span> Account Number *
+        <span class="glyphicon glyphicon-user"></span> {% trans 'Account Number' %} *
       </label>
       {{ form.creditor_account_number }}
       <span class="respond-span"></span>
@@ -666,7 +666,7 @@ let bankCardForm = `<div id="bank_card_fields">
       </div>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-briefcase"></span> Full Name *</label>
+      <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Full Name' %} *</label>
       {{ form.creditor_name }}
       <span class="respond-span"></span>
       <div class="help-block">
@@ -677,7 +677,7 @@ let bankCardForm = `<div id="bank_card_fields">
   <div class="row">
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-        <span class="glyphicon glyphicon-sort"></span> Transaction Type
+        <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Type' %}
     </label>
     {{ form.transaction_type }}
     <span class="respond-span"></span>
@@ -687,7 +687,7 @@ let bankCardForm = `<div id="bank_card_fields">
   </div>
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-        <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+        <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
     </label>
     {{form.creditor_bank}}
     <span class="respond-span"></span>
@@ -702,7 +702,7 @@ let vodafoneEtisalatForm = `<div id="vodafone_etisalat_fields">
 <div class="row">
   <div class="form-group col-md-12 col-sm-12 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-user"></span> Msisdn *
+      <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
     </label>
     {{form.msisdn}}
     <span class="respond-span"></span>
@@ -717,7 +717,7 @@ let orangeBankWalletForm = `<div id="orange_bank_wallet_fields">
 <div class="row">
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-user"></span> Msisdn *
+      <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
     </label>
     {{form.msisdn}}
     <span class="respond-span"></span>
@@ -727,7 +727,7 @@ let orangeBankWalletForm = `<div id="orange_bank_wallet_fields">
   </div>
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-user"></span> Full Name *
+      <span class="glyphicon glyphicon-user"></span> {% trans 'Full Name' %} *
     </label>
     {{form.full_name}}
     <span class="respond-span"></span>
@@ -742,7 +742,7 @@ let amanForm = `<div id="aman_fields">
 <div class="row">
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-user"></span> Msisdn *
+      <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
     </label>
     {{form.msisdn}}
     <span class="respond-span"></span>
@@ -752,7 +752,7 @@ let amanForm = `<div id="aman_fields">
   </div>
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-pencil"></span> First Name *
+      <span class="glyphicon glyphicon-pencil"></span> {% trans 'First Name' %} *
     </label>
     {{form.first_name}}
     <span class="respond-span"></span>
@@ -764,7 +764,7 @@ let amanForm = `<div id="aman_fields">
 <div class="row">
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-pencil"></span> Last Name *
+      <span class="glyphicon glyphicon-pencil"></span> {% trans 'Last Name' %} *
     </label>
     {{form.last_name}}
     <span class="respond-span"></span>
@@ -774,7 +774,7 @@ let amanForm = `<div id="aman_fields">
   </div>
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-      <span class="glyphicon glyphicon-envelope"></span> Email *
+      <span class="glyphicon glyphicon-envelope"></span> {% trans 'Email' %} *
     </label>
     {{form.email}}
     <span class="respond-span"></span>
@@ -841,13 +841,13 @@ issuerType.addEventListener('change', toggleForm);
     WalletsFilter += ` href="/disburse/single-step/?issuer=wallets"`;
   {% endif %}
   {% if wallets %}
-    BankCardFilter += ` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>Bank Card</span></a>`;
+    BankCardFilter += ` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>{% trans 'Bank Card' %}</span></a>`;
     WalletsFilter +=` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;color:#333;
-      background-color:#d4d4d4;border-color:#8c8c8c;"><span>Wallets</span></a>`;
+      background-color:#d4d4d4;border-color:#8c8c8c;"><span>{% trans 'Wallets' %}</span></a>`;
   {% else %}
-    WalletsFilter +=` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>Wallets</span></a>`;
+    WalletsFilter +=` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>{% trans 'Wallets' %}</span></a>`;
     BankCardFilter += ` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;color:#333;
-      background-color:#d4d4d4;border-color:#8c8c8c;"><span>Bank Card</span></a>`;
+      background-color:#d4d4d4;border-color:#8c8c8c;"><span>{% trans 'Bank Card' %}</span></a>`;
   {% endif %}
   parent_dev.append(WalletsFilter);
   parent_dev.append(BankCardFilter);

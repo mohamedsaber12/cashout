@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-09 18:02+0200\n"
+"POT-Creation-Date: 2021-05-10 14:55+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,6 +20,8 @@ msgstr ""
 
 #: core/models.py:15
 #: templates/disbursement/e_wallets_transactions_list.html:369
+#: templates/disbursement/single_step_trx_list.html:599
+#: templates/disbursement/single_step_trx_list.html:626
 #: templates/support/document_details.html:196
 msgid "Created At"
 msgstr "تم الانشاء في"
@@ -28,6 +30,8 @@ msgstr "تم الانشاء في"
 #: templates/disbursement/e_wallets_transactions_list.html:372
 #: templates/disbursement/single_step_trx_list.html:100
 #: templates/disbursement/single_step_trx_list.html:137
+#: templates/disbursement/single_step_trx_list.html:601
+#: templates/disbursement/single_step_trx_list.html:628
 #: templates/instant_cashin/banks_transactions.html:12
 #: templates/instant_cashin/wallets_transactions.html:12
 #: templates/support/document_details.html:74
@@ -115,7 +119,7 @@ msgstr ""
 #: templates/data/banks_document_viewer.html:262
 #: templates/data/banks_document_viewer.html:512
 #: templates/data/banks_document_viewer.html:523
-#: templates/data/e_wallets_document_viewer.html:221
+#: templates/data/e_wallets_document_viewer.html:227
 #: templates/disbursement/bank_transactions_list.html:57
 #: templates/disbursement/bank_transactions_list.html:97
 #: templates/disbursement/bank_transactions_list.html:363
@@ -125,6 +129,8 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:96
 #: templates/disbursement/single_step_trx_list.html:133
 #: templates/disbursement/single_step_trx_list.html:198
+#: templates/disbursement/single_step_trx_list.html:580
+#: templates/disbursement/single_step_trx_list.html:613
 #: templates/instant_cashin/banks_transactions.html:10
 #: templates/instant_cashin/wallets_transactions.html:9
 #: templates/support/document_details.html:67
@@ -134,6 +140,8 @@ msgstr "المبلغ"
 #: core/models.py:120 templates/data/banks_document_viewer.html:531
 #: templates/disbursement/bank_transactions_list.html:390
 #: templates/disbursement/single_step_trx_list.html:242
+#: templates/disbursement/single_step_trx_list.html:622
+#: templates/disbursement/single_step_trx_list.html:680
 msgid "Transaction Type"
 msgstr "نوع العمليه"
 
@@ -633,11 +641,12 @@ msgstr ""
 
 #: disbursement/forms.py:258 templates/data/banks_document_viewer.html:239
 #: templates/data/banks_document_viewer.html:540
-#: templates/data/e_wallets_document_viewer.html:222
+#: templates/data/e_wallets_document_viewer.html:228
 #: templates/disbursement/bank_transactions_list.html:62
 #: templates/disbursement/bank_transactions_list.html:386
 #: templates/disbursement/e_wallets_transactions_list.html:62
 #: templates/disbursement/e_wallets_transactions_list.html:340
+#: templates/disbursement/single_step_trx_list.html:587
 #: templates/instant_cashin/wallets_transactions.html:10
 #: templates/support/document_details.html:68
 msgid "Issuer"
@@ -654,6 +663,8 @@ msgstr "اسم الحساب"
 #: disbursement/forms.py:300 templates/data/banks_document_viewer.html:529
 #: templates/disbursement/bank_transactions_list.html:389
 #: templates/disbursement/single_step_trx_list.html:252
+#: templates/disbursement/single_step_trx_list.html:620
+#: templates/disbursement/single_step_trx_list.html:690
 #: templates/utilities/transfer_request.html:151
 #: templates/utilities/transfer_request.html:161
 #: templates/utilities/transfer_request.html:242 utilities/forms.py:131
@@ -665,6 +676,9 @@ msgstr "اسم البنك"
 #: templates/disbursement/single_step_trx_list.html:267
 #: templates/disbursement/single_step_trx_list.html:282
 #: templates/disbursement/single_step_trx_list.html:307
+#: templates/disbursement/single_step_trx_list.html:705
+#: templates/disbursement/single_step_trx_list.html:720
+#: templates/disbursement/single_step_trx_list.html:745
 msgid "Msisdn"
 msgstr ""
 
@@ -674,21 +688,28 @@ msgstr ""
 #: templates/disbursement/bank_transactions_list.html:376
 #: templates/disbursement/single_step_trx_list.html:231
 #: templates/disbursement/single_step_trx_list.html:292
+#: templates/disbursement/single_step_trx_list.html:582
+#: templates/disbursement/single_step_trx_list.html:611
+#: templates/disbursement/single_step_trx_list.html:669
+#: templates/disbursement/single_step_trx_list.html:730
 msgid "Full Name"
 msgstr "الإسم بالكامل"
 
 #: disbursement/forms.py:328
 #: templates/disbursement/single_step_trx_list.html:317
+#: templates/disbursement/single_step_trx_list.html:755
 msgid "First Name"
 msgstr "الإسم الأول"
 
 #: disbursement/forms.py:336
 #: templates/disbursement/single_step_trx_list.html:329
+#: templates/disbursement/single_step_trx_list.html:767
 msgid "Last Name"
 msgstr "الإسم الأخير"
 
 #: disbursement/forms.py:344
 #: templates/disbursement/single_step_trx_list.html:339
+#: templates/disbursement/single_step_trx_list.html:777
 #: templates/users/profile.html:68
 #: templates/utilities/new_entities_report.html:83 users/forms.py:817
 msgid "Email"
@@ -857,6 +878,8 @@ msgstr ""
 #: templates/disbursement/bank_transactions_list.html:359
 #: templates/disbursement/bank_transactions_list.html:370
 #: templates/disbursement/e_wallets_transactions_list.html:315
+#: templates/disbursement/single_step_trx_list.html:576
+#: templates/disbursement/single_step_trx_list.html:607
 #: templates/instant_cashin/wallets_transactions.html:7
 #: templates/support/document_details.html:59
 #: templates/support/document_details.html:62
@@ -1695,7 +1718,7 @@ msgstr ""
 #: instant_cashin/models/instant_transactions.py:26
 #: utilities/models/generic_models.py:283
 msgid "Orange"
-msgstr ""
+msgstr "اورانج"
 
 #: instant_cashin/models/instant_transactions.py:27
 #: utilities/models/generic_models.py:284
@@ -1746,10 +1769,12 @@ msgid "Agent used from Root's agents list"
 msgstr ""
 
 #: instant_cashin/models/instant_transactions.py:82
+#: templates/disbursement/single_step_trx_list.html:631
 msgid "Status Code"
 msgstr ""
 
 #: instant_cashin/models/instant_transactions.py:88
+#: templates/disbursement/single_step_trx_list.html:633
 msgid "Status Description"
 msgstr ""
 
@@ -1932,6 +1957,7 @@ msgid "Document details"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:72
+#: templates/data/e_wallets_document_viewer.html:58
 #: templates/disbursement/disbursement_transactions_dashboard.html:6
 #: templates/disbursement/disbursement_transactions_dashboard.html:40
 #: templates/users/clients.html:86
@@ -1960,7 +1986,7 @@ msgstr ""
 #: templates/data/banks_document_viewer.html:103
 #: templates/data/banks_document_viewer.html:478
 #: templates/data/e_wallets_document_viewer.html:89
-#: templates/data/e_wallets_document_viewer.html:397
+#: templates/data/e_wallets_document_viewer.html:403
 msgid "Checkers Notified"
 msgstr ""
 
@@ -1993,7 +2019,7 @@ msgstr ""
 #: templates/data/banks_document_viewer.html:352
 #: templates/data/change_password.html:29
 #: templates/data/e_wallets_document_viewer.html:143
-#: templates/data/e_wallets_document_viewer.html:271
+#: templates/data/e_wallets_document_viewer.html:277
 #: templates/data/formats.html:43 templates/data/formats.html:45
 #: templates/disbursement/single_step_trx_list.html:363
 #: templates/users/add_levels.html:26 templates/users/forget-password.html:17
@@ -2022,7 +2048,7 @@ msgstr ""
 #: templates/data/document_disbursement_list.html:71
 #: templates/data/document_disbursement_list.html:168
 #: templates/data/document_viewer_collection.html:26
-#: templates/data/e_wallets_document_viewer.html:206
+#: templates/data/e_wallets_document_viewer.html:212
 #: templates/support/list.html:106 templates/users/clients.html:210
 #: templates/users/members.html:119
 msgid "Delete"
@@ -2040,7 +2066,7 @@ msgstr "رقم الحساب / IBAN"
 #: templates/data/banks_document_viewer.html:332
 #: templates/data/document_delete_modal.html:19
 #: templates/data/document_disbursement_list.html:236
-#: templates/data/e_wallets_document_viewer.html:251
+#: templates/data/e_wallets_document_viewer.html:257
 #: templates/data/upload-response-modals.html:17
 #: templates/data/upload-response-modals.html:39
 #: templates/disbursement/bank_transactions_list.html:191
@@ -2059,23 +2085,25 @@ msgid "Close"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:342
-#: templates/data/e_wallets_document_viewer.html:261
+#: templates/data/e_wallets_document_viewer.html:267
 msgid "Enter Agent Pin"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:348
-#: templates/data/e_wallets_document_viewer.html:267
+#: templates/data/e_wallets_document_viewer.html:273
 #: templates/disbursement/single_step_trx_list.html:353
 msgid "Pin"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:349
-#: templates/data/e_wallets_document_viewer.html:268
+#: templates/data/e_wallets_document_viewer.html:274
 #: users/models/base_user.py:57
 msgid "pin"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:388
+#: templates/data/e_wallets_document_viewer.html:314
+#: templates/data/formats.html:139
 #: templates/disbursement/bank_transactions_list.html:264
 #: templates/disbursement/e_wallets_transactions_list.html:225
 #: templates/disbursement/single_step_trx_list.html:484
@@ -2083,6 +2111,8 @@ msgid "Copy"
 msgstr "نسخ"
 
 #: templates/data/banks_document_viewer.html:399
+#: templates/data/e_wallets_document_viewer.html:325
+#: templates/data/formats.html:150
 #: templates/disbursement/bank_transactions_list.html:275
 #: templates/disbursement/disbursement_transactions_dashboard.html:30
 #: templates/disbursement/e_wallets_transactions_list.html:236
@@ -2091,73 +2121,74 @@ msgid "Export"
 msgstr "تحميل الملف"
 
 #: templates/data/banks_document_viewer.html:423
-#: templates/data/e_wallets_document_viewer.html:343
+#: templates/data/e_wallets_document_viewer.html:349
 msgid "Disbursed, Thanks!"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:424
-#: templates/data/e_wallets_document_viewer.html:344
+#: templates/data/e_wallets_document_viewer.html:350
 msgid "Disbursement process is running, you can check reports later"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:428
-#: templates/data/e_wallets_document_viewer.html:348
+#: templates/data/e_wallets_document_viewer.html:354
 msgid "Error occurred, We are sorry!"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:429
-#: templates/data/e_wallets_document_viewer.html:349
+#: templates/data/e_wallets_document_viewer.html:355
 msgid ""
 "Disbursement process stopped during an internal error, can you try again or "
 "contact you support team"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:433
-#: templates/data/e_wallets_document_viewer.html:353
+#: templates/data/e_wallets_document_viewer.html:359
 msgid "Error occurred from your side!"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:434
-#: templates/data/e_wallets_document_viewer.html:354
+#: templates/data/e_wallets_document_viewer.html:360
 msgid ""
 "Pin you entered is not correct, can you try again or contact you support "
 "team."
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:438
-#: templates/data/e_wallets_document_viewer.html:358
+#: templates/data/e_wallets_document_viewer.html:364
 msgid "Error occurred from your side"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:440
-#: templates/data/e_wallets_document_viewer.html:360
+#: templates/data/e_wallets_document_viewer.html:366
 msgid ""
 "This document is disbursed before, if there is any error, please return back "
 "to the support team"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:444
-#: templates/data/e_wallets_document_viewer.html:364
+#: templates/data/e_wallets_document_viewer.html:370
 msgid "You can not disburse this document"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:483
-#: templates/data/e_wallets_document_viewer.html:403
+#: templates/data/e_wallets_document_viewer.html:409
 msgid "Error Occurred!"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:484
-#: templates/data/e_wallets_document_viewer.html:404
+#: templates/data/e_wallets_document_viewer.html:410
 msgid "It seems that you do not have access or request a wrong document"
 msgstr ""
 
 #: templates/data/banks_document_viewer.html:510
-#: templates/data/e_wallets_document_viewer.html:220
+#: templates/data/e_wallets_document_viewer.html:226
 #: templates/disbursement/bank_transactions_list.html:56
 #: templates/disbursement/bank_transactions_list.html:361
 #: templates/disbursement/e_wallets_transactions_list.html:56
 #: templates/disbursement/e_wallets_transactions_list.html:319
 #: templates/disbursement/single_step_trx_list.html:94
+#: templates/disbursement/single_step_trx_list.html:578
 #: templates/support/document_details.html:60
 #: templates/support/document_details.html:65
 msgid "Wallet Number"
@@ -2165,6 +2196,7 @@ msgstr "رقم المحفظة"
 
 #: templates/data/banks_document_viewer.html:527
 #: templates/disbursement/bank_transactions_list.html:388
+#: templates/disbursement/single_step_trx_list.html:618
 msgid "Bank Swift Code"
 msgstr ""
 
@@ -2341,6 +2373,7 @@ msgstr "نجاح الصرف"
 #: templates/data/document_disbursement_list.html:68
 #: templates/disbursement/bank_transactions_list.html:63
 #: templates/disbursement/bank_transactions_list.html:102
+#: templates/disbursement/bank_transactions_list.html:367
 #: templates/disbursement/bank_transactions_list.html:381
 #: templates/disbursement/e_wallets_transactions_list.html:63
 #: templates/disbursement/e_wallets_transactions_list.html:329
@@ -2348,6 +2381,8 @@ msgstr "نجاح الصرف"
 #: templates/disbursement/e_wallets_transactions_list.html:335
 #: templates/disbursement/single_step_trx_list.html:99
 #: templates/disbursement/single_step_trx_list.html:136
+#: templates/disbursement/single_step_trx_list.html:584
+#: templates/disbursement/single_step_trx_list.html:615
 #: templates/instant_cashin/banks_transactions.html:11
 #: templates/instant_cashin/pending_orange_trx_list.html:34
 #: templates/instant_cashin/wallets_transactions.html:11
@@ -2455,11 +2490,11 @@ msgstr ""
 msgid "Document name:"
 msgstr ""
 
-#: templates/data/e_wallets_document_viewer.html:202
+#: templates/data/e_wallets_document_viewer.html:204
 msgid "Vodafone/Etisalat/Aman Document Transactions"
 msgstr ""
 
-#: templates/data/e_wallets_document_viewer.html:202
+#: templates/data/e_wallets_document_viewer.html:206
 msgid "Document Transactions"
 msgstr ""
 
@@ -2616,6 +2651,7 @@ msgstr "ضريبة القيمة المضافة"
 #: templates/disbursement/bank_transactions_list.html:96
 #: templates/disbursement/bank_transactions_list.html:372
 #: templates/disbursement/single_step_trx_list.html:131
+#: templates/disbursement/single_step_trx_list.html:609
 msgid "Account Number / IBAN"
 msgstr "رقم الحساب / IBAN"
 
@@ -2652,6 +2688,7 @@ msgid "You will receive an email shortly with the failed data file to download"
 msgstr ""
 
 #: templates/disbursement/bank_transactions_list.html:398
+#: templates/disbursement/single_step_trx_list.html:624
 #: templates/disbursement_sidebar.html:33 templates/users/members.html:53
 #: templates/users/profile.html:55
 msgid "Checker"
@@ -2689,10 +2726,12 @@ msgstr ""
 #: templates/disbursement/single_step_trx_list.html:378
 #: templates/users/clients.html:87
 msgid "Success"
-msgstr ""
+msgstr "الناجحه"
 
 #: templates/disbursement/e_wallets_transactions_list.html:346
 #: templates/disbursement/e_wallets_transactions_list.html:348
+#: templates/disbursement/single_step_trx_list.html:592
+#: templates/disbursement/single_step_trx_list.html:594
 msgid "Cashed Out?"
 msgstr ""
 
@@ -2712,12 +2751,24 @@ msgid "Make New Transaction"
 msgstr ""
 
 #: templates/disbursement/single_step_trx_list.html:222
+#: templates/disbursement/single_step_trx_list.html:660
 #: templates/support/document_details.html:63
 #: templates/utilities/transfer_request.html:171
 #: templates/utilities/transfer_request.html:181
 #: templates/utilities/transfer_request.html:260
 msgid "Account Number"
 msgstr "رقم الحساب"
+
+#: templates/disbursement/single_step_trx_list.html:844
+#: templates/disbursement/single_step_trx_list.html:850
+#: utilities/models/generic_models.py:285
+msgid "Bank Card"
+msgstr "كروت بنكيه"
+
+#: templates/disbursement/single_step_trx_list.html:846
+#: templates/disbursement/single_step_trx_list.html:848
+msgid "Wallets"
+msgstr "محافظ"
 
 #: templates/disbursement_sidebar.html:17
 msgid "Vodafone/Etisalat/Aman"
@@ -4636,10 +4687,6 @@ msgstr ""
 msgid ""
 "Error adding to the current balance and cutting from the total disbursed "
 "amount"
-msgstr ""
-
-#: utilities/models/generic_models.py:285
-msgid "Bank Card"
 msgstr ""
 
 #: utilities/models/generic_models.py:286

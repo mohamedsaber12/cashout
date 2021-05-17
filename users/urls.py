@@ -6,6 +6,7 @@ from django.urls import path
 from oauth2_provider import views as oauth2_views
 
 from . import views
+from payouts.views import no_agent_error_view
 
 app_name = 'users'
 
@@ -86,6 +87,7 @@ sessions_urls = [
 urlpatterns = [
     path('user/login/', views.login_view, name='user_login_view'),
     path('user/logout/', views.ourlogout, name='logout'),
+    path('user/no-agent/', no_agent_error_view, name='no_agent_error'),
     path('account/token/', views.OTPLoginView.as_view(), name='otp_login'),
     path('redirect/', views.RedirectPageView.as_view(), name='redirect'),
 

@@ -99,6 +99,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'users.middleware.EntitySetupCompletionMiddleWare',
     'users.middleware.AdministrativeTwoFactorAuthMiddleWare',
+    'users.middleware.AgentAndSuperAgentForAdminMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 

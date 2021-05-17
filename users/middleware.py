@@ -7,6 +7,7 @@ from django.shortcuts import redirect
 from django_otp import user_has_device
 
 from .views import ourlogout
+from disbursement.models import Agent
 
 
 engine = import_module(settings.SESSION_ENGINE)
@@ -120,3 +121,36 @@ class AdministrativeTwoFactorAuthMiddleWare:
 
             if not is_verified and not path in urls:
                 return redirect(reverse("two_factor:profile"))
+            
+            
+class AgentAndSuperAgentForAdminMiddleware:
+    """
+    Force checkers to do two factor authentication once per device.
+    """
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        return response
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        path = request.path_info
+        media_path = settings.MEDIA_URL
+        is_media_path = True if media_path in path and f'{media_path}documents/' not in path else False
+        urls = [
+            reverse("two_factor:profile"),
+            reverse("users:otp_login"),
+            reverse("two_factor:setup"),
+            '/account/two_factor/qrcode/',
+            reverse("set_language"),
+            reverse("users:no_agent_error")
+        ]
+
+        if request.user.is_authenticated and not is_media_path and not request.user.is_superuser and \
+                    request.user.is_vodafone_default_onboarding and \
+                (request.user.is_checker or request.user.is_root or request.user.is_maker):
+                    has_agent = Agent.objects.filter(wallet_provider=request.user.root).exists()
+                    print(has_agent)
+                    if not has_agent and not path in urls:
+                        return redirect(reverse("users:no_agent_error"))

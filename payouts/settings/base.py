@@ -110,6 +110,11 @@ MIDDLEWARE = [
     # ToDo: Request/Response Time Delta Middleware
 ]
 
+# disable AdministrativeTwoFactorAuthMiddleWare on local 
+if env.str('ENVIRONMENT') == "local":
+    MIDDLEWARE.remove("users.middleware.AdministrativeTwoFactorAuthMiddleWare")
+
+
 AUTHENTICATION_BACKENDS = [
     # OAuth2.0 Provider
     'oauth2_provider.backends.OAuth2Backend',

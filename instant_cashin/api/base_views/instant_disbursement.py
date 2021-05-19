@@ -138,7 +138,8 @@ class InstantDisbursementAPIView(views.APIView):
             "creditor_account_number": creditor_account_number,
             "creditor_bank": creditor_bank,
             "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid,
-            "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date
+            "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date,
+            "is_single_step":serializer.validated_data["is_single_step"]
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)

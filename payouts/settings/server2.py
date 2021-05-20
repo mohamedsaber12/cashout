@@ -19,7 +19,7 @@ DEBUG = False
 # Mailing Configs
 #BASE_URL = 'https://payouts-ci.paymobsolutions.com'
 BASE_URL = 'http://localhost:8000'
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'payouts-ci.paymobsolutions.com']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', 'payouts-ci.paymobsolutions.com', '18.220.63.67']
 if DEBUG:
     # SERVER_EMAIL = 'django.core.mail.backends.console.EmailBackend'
     # SERVER_EMAIL = 'django.core.mail.backends.smtp.EmailBackend'

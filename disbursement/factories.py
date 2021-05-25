@@ -4,7 +4,10 @@ from __future__ import unicode_literals
 import factory
 from faker import Factory as fakeFactory
 
-from .models import Agent, VMTData
+from .models import (
+    Agent, VMTData, DisbursementDocData, DisbursementData, BankTransaction
+)
+from .utils import VALID_BANK_CODES_LIST
 
 
 fake = fakeFactory.create()
@@ -69,3 +72,98 @@ class VariousAgentFactory:
         VariousAgentFactory.super_agent(agent_provider=agent_provider)
         VariousAgentFactory.vodafone_agent(agent_provider=agent_provider)
         VariousAgentFactory.etisalat_agent(agent_provider=agent_provider)
+
+
+class DisbursementDocDataFactory(factory.django.DjangoModelFactory):
+    """
+    factory model for Disbursement Doc Data model
+    """
+    # doc = models.OneToOneField('data.Doc', null=True, related_name='disbursement_txn', on_delete=models.CASCADE)
+    txn_id = factory.Sequence(lambda  id: id)
+    doc_status = factory.Iterator(DisbursementDocData.STATUS_CHOICES)
+    has_callback = factory.LazyAttribute(
+            lambda obj: True if obj.doc_status == DisbursementDocData.DISBURSED_SUCCESSFULLY else False
+    )
+    txn_status = factory.LazyAttribute(
+            lambda obj: '200' if obj.doc_status == DisbursementDocData.DISBURSED_SUCCESSFULLY else None
+    )
+
+    class Meta:
+        model = DisbursementDocData
+
+
+class DisbursementDataFactory(factory.django.DjangoModelFactory):
+    """
+    factory model for Disbursement Data model
+    """
+
+    # doc = models.ForeignKey('data.Doc', null=True, related_name='disbursement_data', on_delete=models.CASCADE)
+    is_disbursed = factory.LazyFunction(fake.boolean)
+    amount = factory.LazyFunction(fake.numerify)
+    msisdn = factory.Sequence(lambda obj: fake.numerify(text="010########"))
+    issuer = factory.Iterator(['default', 'vodafone', 'etisalat', 'aman', 'orange'])
+    reason = factory.LazyAttribute(
+            lambda obj: 'SUCCESS' if obj.is_disbursed else fake.text()
+    )
+    reference_id = factory.LazyFunction(fake.numerify)
+    # aman_obj = GenericRelation(
+    #         "instant_cashin.AmanTransaction",
+    #         object_id_field="transaction_id",
+    #         content_type_field="transaction_type",
+    #         related_query_name="aman_manual"
+    # )
+
+
+    class Meta:
+        model = DisbursementData
+
+
+class BankTransactionFactory(factory.django.DjangoModelFactory):
+    """
+    factory model for bank transaction model
+    """
+    # user_created = models.ForeignKey(
+    #         settings.AUTH_USER_MODEL,
+    #         on_delete=models.CASCADE,
+    #         related_name=_('bank_transactions'),
+    #         verbose_name=_('Disburser')
+    # )
+    # document = models.ForeignKey(
+    #         'data.Doc',
+    #         on_delete=models.CASCADE,
+    #         related_name=_('bank_cards_transactions'),
+    #         verbose_name=_('Bank Cards Document'),
+    #         null=True
+    # )
+    # parent_transaction = models.ForeignKey(
+    #         'self',
+    #         on_delete=models.CASCADE,
+    #         related_name=_('children_transactions'),
+    #         verbose_name=_('Parent Transaction'),
+    #         null=True
+    # )
+    transaction_id = factory.LazyFunction(fake.uuid4)
+    message_id = factory.LazyFunction(fake.uuid4)
+
+    # transaction_status_code = models.CharField(
+    #         _('Transaction Status Code'),
+    #         max_length=6,
+    #         blank=True,
+    #         null=True
+    # )
+    transaction_status_description = factory.LazyFunction(fake.text)
+    debtor_account = factory.Sequence(lambda obj: fake.numerify(text="1###########"))
+    amount = factory.LazyFunction(fake.numerify)
+
+    creditor_name = factory.LazyFunction(fake.first_name)
+    creditor_account_number = factory.Sequence(lambda obj: fake.numerify(text="1###############"))
+    creditor_bank = factory.Iterator(VALID_BANK_CODES_LIST)
+    creditor_email = factory.LazyFunction(fake.email)
+    creditor_mobile_number = factory.Sequence(lambda obj: fake.numerify(text="010########"))
+
+    corporate_code = 'PAYMOBCO'
+
+    is_single_step = factory.LazyFunction(fake.boolean)
+
+    class Meta:
+        model = BankTransaction

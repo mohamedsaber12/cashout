@@ -19,7 +19,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
 
     model = InstantTransaction
     context_object_name = 'instant_transactions'
-    paginate_by = 11
+    # paginate_by = 11
     template_name = 'instant_cashin/instant_viewer.html'
     queryset = InstantTransaction.objects.all()
 
@@ -55,7 +55,7 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
 
     model = BankTransaction
     context_object_name = 'bank_transactions'
-    paginate_by = 11
+    # paginate_by = 11
     template_name = 'instant_cashin/instant_viewer.html'
     queryset = BankTransaction.objects.all()
 

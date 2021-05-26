@@ -15,7 +15,7 @@ class CurrentRequest(object):
         self.user=user
 
 
-class DistinctFilterTest(TestCase):
+class DistinctFilterTests(TestCase):
     def setUp(self):
         self.distinctFilter = DistinctFilter(CurrentRequest, {}, BankTransaction, BankTransactionAdminModel)
     # test lookups for distinct filter
@@ -23,7 +23,7 @@ class DistinctFilterTest(TestCase):
         self.assertEqual(self.distinctFilter.lookups(
             CurrentRequest, BankTransactionAdminModel), (('distinct', 'Distinct'),))
 
-class BankTransactionAdminModelTest(TestCase):
+class BankTransactionAdminModelTests(TestCase):
 
     def setUp(self):
         self.bankTransactionAdmin = BankTransactionAdminModel(
@@ -42,7 +42,7 @@ class BankTransactionAdminModelTest(TestCase):
         self.assertEqual(self.bankTransactionAdmin.has_change_permission(CurrentRequest), False)
 
 
-class DisbursementDataAdminTest(TestCase):
+class DisbursementDataAdminTests(TestCase):
     def setUp(self):
         self.disbursementDataAdmin = DisbursementDataAdmin(
             model=DisbursementData, admin_site=AdminSite()
@@ -68,7 +68,7 @@ class DisbursementDataAdminTest(TestCase):
 
 
 
-class VMTDataAdminTest(TestCase):
+class VMTDataAdminTests(TestCase):
 
     def setUp(self):
         self.VMTDataAdmin = VMTDataAdmin(

@@ -7,6 +7,7 @@ from disbursement.models import (Agent, DisbursementDocData, DisbursementData,
                                  BankTransaction)
 from users.models import User
 from data.models import Doc
+from instant_cashin.models import AmanTransaction
 
 
 class AgentModelTests(TestCase):
@@ -64,10 +65,29 @@ class DisbursementDataModelTests(TestCase):
         self.disbursement_data.is_disbursed = True
         self.assertEqual(self.disbursement_data.get_is_disbursed, "Successful")
 
+    # test aman transaction is paid property is none
+    def test_aman_transaction_is_paid_property_is_None(self):
+        self.assertEqual(self.disbursement_data.aman_transaction_is_paid, None)
+
+    # test aman transaction is paid property is none
+    def test_aman_transaction_is_paid(self):
+        aman_trx = AmanTransaction(transaction=self.disbursement_data)
+        aman_trx.save()
+        self.assertEqual(self.disbursement_data.aman_transaction_is_paid, False)
+
+
+
 class BankTransactionModelTests(TestCase):
     def setUp(self):
-        self.bank_transaction = BankTransaction()
+        self.user = User(id=1, username='test_user')
+        self.user.save()
+        self.bank_transaction = BankTransaction(amount='100', user_created=self.user)
+        self.bank_transaction.save()
 
     # test create Bank Transaction
     def test_create_bank_Transaction(self):
         self.assertEqual(self.bank_transaction.__str__(), str(self.bank_transaction.transaction_id))
+
+    # test  update parent transaction if its empty
+    def test_update_parent_transaction_if_its_empty(self):
+        self.assertEqual(self.bank_transaction, self.bank_transaction.parent_transaction)

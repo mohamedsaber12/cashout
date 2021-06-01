@@ -46,11 +46,11 @@ class TestUserAccountAdmin(TestCase):
             self.assertFalse(user.is_active)
             
     def test_activate_selected_permission_denied(self):
-            self.request.user = self.normal_user
-            has_change_permission = self.model_admin.has_change_permission(self.request)
-            self.assertFalse(has_change_permission)
-            with self.assertRaises(PermissionDenied):
-                self.model_admin.activate_selected(self.request, [])
+        self.request.user = self.normal_user
+        has_change_permission = self.model_admin.has_change_permission(self.request)
+        self.assertFalse(has_change_permission)
+        with self.assertRaises(PermissionDenied):
+            self.model_admin.activate_selected(self.request, [])
             
     def test_activate_selected_success_scenario(self):
         self.request.user = self.superuser

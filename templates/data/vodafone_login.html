@@ -1,6 +1,6 @@
 {% extends 'head_base.html' %}
 {% load static %}
-
+{% load i18n %}
 {% block customcss %}
 <link href="{% static 'css/vodafone_login.css' %}" rel="stylesheet">
 {% endblock %}
@@ -46,6 +46,13 @@
                             <h2>Lost your password?</h2>
                           </a>
                         </div>
+                      </div>
+                      <div style="text-align: center;">
+                        {% if error_invalid %}
+                        <span style="color: #761c19">{{ error_invalid }}</span>
+                        {% elif failure_limit is not None %}
+                        <span style="color: #761c19">{% trans 'Too many login attempts.' %}</span>
+                        {% endif %}
                       </div>
                       <div class="col-sm-12 col-md-12 col-lg-12">
                         <div class="loader_signin_btn">

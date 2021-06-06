@@ -1,0 +1,90 @@
+{% extends 'head_base.html' %}
+{% load static %}
+
+{% block customcss %}
+<link href="{% static 'css/vodafone_login.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body_content %}
+<body class="login">
+  <div id="root">
+    <div class="app en">
+      <section class="login">
+        <div class="row mainRow row">
+          <div class="col-sm-12 col-md-4 remove-padding">
+            <img id="left-side-logo" src="{% static 'img/vf_logo.png' %}">
+          </div>
+          <div class="col-sm-12 col-md-8 remove-padding">
+            <div class="rightBgSignIn">
+              <div class="signInContent">
+                <div class="titleAlign alignSign">
+                  <h3 class="titlepage">Sign in</h3>
+                </div>
+                <p class="creatTitle"></p>
+                <div class="formBg">
+                  <form class="loginForm" action="." method="post">
+                    {% csrf_token %}
+                    <div class="row">
+                      <div class="input-field col-sm-12 col-md-12 col-lg-12">
+                        <label>Username</label>
+                        <div>
+                          <input type="text" placeholder="Enter Your Username"
+                                  id="userName" class="form-control" required name="username">
+                        </div>
+                      </div>
+                      <div class="input-field passwordMargin col-sm-12 col-md-12 col-lg-12">
+                        <div class="passwordTitle">
+                          <label>Password</label>
+                        </div>
+                        <div>
+                          <input type="password" placeholder="Enter Your Password" autocomplete="current-password"
+                            id="password" class="form-control" required name="password">
+                        </div>
+                        <div class="passwordTitle">
+                          <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                          <a href="{% url 'users:forgot_password' %}">
+                            <h2>Lost your password?</h2>
+                          </a>
+                        </div>
+                      </div>
+                      <div class="col-sm-12 col-md-12 col-lg-12">
+                        <div class="loader_signin_btn">
+                          <button id="login" class="signBtn" type="submit">
+                            Sign in
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <!-- start js section  -->
+  <script src="{% static 'gentella/jquery.min.js' %}"></script>
+  <!-- handle loading stuff -->
+  <script>
+    console.log('loading shown')
+    $('.loading').show();
+    $(window).load(function () {
+      // PAGE IS FULLY LOADED
+      $(".loading").hide();
+      console.log('loading hidden')
+    });
+
+    $(document).ajaxStart(function () {
+      console.log('start ajax loading')
+      $('.loading').show();
+    });
+    $(document).ajaxStop(function () {
+       console.log('end ajax loading')
+
+      $(".loading").hide();
+    });
+  </script>
+</body>
+{% endblock %}

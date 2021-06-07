@@ -279,8 +279,7 @@ class SuperAdmin(UserAccountAdmin):
             if report_download_url == False:
                 self.message_user(request, f"Error Choosing super admins")
                 return HttpResponseRedirect(request.get_full_path())
-            else:
-                self.message_user(request, f"Report exported successfully")
+
             filename = report_download_url.split('filename=')[1]
             file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
             if os.path.exists(file_path):

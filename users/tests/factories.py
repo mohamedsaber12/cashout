@@ -11,7 +11,7 @@ from django.contrib.auth.models import Permission
 
 from disbursement.factories import VariousAgentFactory, VMTDataFactory
 
-from .models import SuperAdminUser, RootUser, MakerUser, CheckerUser, Client
+from users.models import SuperAdminUser, RootUser, MakerUser, CheckerUser, Client
 
 
 fake = fakeFactory.create()

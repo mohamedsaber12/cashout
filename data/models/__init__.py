@@ -1,4 +1,4 @@
-from .doc import Doc
+from data.doc import Doc
 from .doc_review import DocReview
 from .filecategory import FileCategory
 from .category_data import Format, CollectionData

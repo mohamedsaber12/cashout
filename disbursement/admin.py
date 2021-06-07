@@ -10,6 +10,24 @@ from django.utils.translation import gettext_lazy as _
 from .mixins import AdminSiteOwnerOnlyPermissionMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData
 from .utils import custom_titled_filter
+from rangefilter.filter import DateRangeFilter
+
+
+class DistinctFilter(admin.SimpleListFilter):
+    title = "Distinct"
+    parameter_name = "Distinct"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("distinct", "Distinct"),
+        )
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == 'distinct':
+            # return queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")
+            return queryset.filter(id__in=[trn.id for trn in queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")])
 
 
 @admin.register(BankTransaction)
@@ -19,11 +37,21 @@ class BankTransactionAdminModel(admin.ModelAdmin):
     """
 
     list_display = [
-        'transaction_id', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
-        'transaction_status_code', 'created_at'
+        'transaction_id', 'parent_transaction', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
+        'transaction_status_code', 'created_at', 'disbursed_date'
     ]
+    search_fields = ['transaction_id', 'parent_transaction__transaction_id']
     readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
-    list_filter = ['status', 'category_code', 'transaction_status_code', 'is_single_step']
+    list_filter = [
+                    ('disbursed_date', DateRangeFilter),
+                    ('created_at', DateRangeFilter),
+                    DistinctFilter,
+                    'status',
+                    'category_code',
+                    'transaction_status_code',
+                    'is_single_step',
+                    'user_created__root'
+                   ]
     ordering = ['-id']
     fieldsets = (
         (None, {
@@ -70,6 +98,7 @@ class AgentAdmin(admin.ModelAdmin):
 
     list_display = ['msisdn', 'wallet_provider', 'super', 'pin', 'type']
     list_filter = ['pin', 'super', 'wallet_provider', 'type']
+    search_fields = ['msisdn']
 
 
 @admin.register(DisbursementData)
@@ -78,14 +107,17 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason']
+    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
-        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer', 'created_at', 'updated_at',
+        ('disbursed_date', DateRangeFilter),
+        ('created_at', DateRangeFilter),
+        ('updated_at', DateRangeFilter),
+        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer',
         ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
         ('doc__owner', custom_titled_filter('Document Owner/Uploader'))
     ]
-    search_fields = ['doc__id', 'msisdn', 'reason']
+    search_fields = ['id', 'doc__id', 'msisdn', 'reason']
     ordering = ['-updated_at', '-created_at']
 
     fieldsets = (
@@ -113,8 +145,13 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     """
 
     list_display = ['doc', 'doc_status', 'txn_id', 'txn_status', 'has_callback', 'updated_at']
-    list_filter = ['doc_status', ('doc__owner', custom_titled_filter('Document Owner/Uploader'))]
-    search_fields = ['doc__id', 'txn_id']
+    list_filter = [
+        'has_callback',
+        ('created_at', DateRangeFilter),
+        'doc_status',
+        ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
+        ]
+    search_fields = ['doc__file', 'doc__id', 'txn_id']
     fieldsets = (
         (None, {'fields': ('doc', 'txn_id', 'txn_status', 'doc_status', 'has_callback')}),
         (_('Important Dates'), {'fields': ('created_at', 'updated_at')})

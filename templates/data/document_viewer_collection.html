@@ -24,7 +24,7 @@
                 <div class="x_title">
                     <h2>{% trans 'Collection Document data' %} <small>{% trans 'Document name:' %} {{object.filename}}</small></h2>
                     <ul class="nav navbar-right panel_toolbox">
-                        {% if request.user.is_root %}
+                        {% if request.user.is_root and not doc.is_disbursed %}
                             <li>
                                 <button data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
                                 </button>
@@ -70,6 +70,7 @@
 {% block script %}
 
 <!-- Datatables -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
 <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
 <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
@@ -84,7 +85,40 @@
 <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 <script>
     $(document).ready(function () {
-        $('#collection-doc-detail-datatable').DataTable();
+        
+  var table = $('#collection-doc-detail-datatable').DataTable({
+    "bLengthChange" : false,
+  });
+  
+  var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+                extend: 'copy',
+                text : "Copy",
+                exportOptions: {
+                    charSet: "utf-8",
+                }
+            },
+            {
+                extend: 'print',
+                text : "PDF",
+            },
+            {
+                extend: 'excelHtml5',
+                text : "Export",
+                
+                customize: function( xlsx ) {
+
+                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
+				       }
+            }
+        ]
+    });
+  
+  table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
     });
 </script>
 

@@ -250,7 +250,11 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
     :return: Action of sending the mail to the user.
     """
     from_email = settings.SERVER_EMAIL
-    subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+    subject = None
+    if user_obj.is_instantapiviewer:
+        subject = f'[{user_obj.root.brand.mail_subject}]' + subject_tail
+    else:
+        subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
     recipient_list = [recipient.get('email') for recipient in recipients]
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")

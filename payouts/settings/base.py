@@ -39,6 +39,9 @@ THIRD_PARTY_APPS = [
     'imagekit',
     'django_extensions',
     'django.contrib.admindocs',
+    'log_viewer',
+    'simple_history',
+    'rangefilter',
 ]
 
 SECURITY_THIRD_PARTY_APPS = [
@@ -96,14 +99,21 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'users.middleware.EntitySetupCompletionMiddleWare',
     'users.middleware.AdministrativeTwoFactorAuthMiddleWare',
+    'users.middleware.AgentAndSuperAgentForAdminMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
+    'simple_history.middleware.HistoryRequestMiddleware'
 
     # ToDo: Request/Response Time Delta Middleware
 ]
+
+# disable AdministrativeTwoFactorAuthMiddleWare on local 
+if env.str('ENVIRONMENT') == "local":
+    MIDDLEWARE.remove("users.middleware.AdministrativeTwoFactorAuthMiddleWare")
+
 
 AUTHENTICATION_BACKENDS = [
     # OAuth2.0 Provider
@@ -318,3 +328,16 @@ ADMIN_INDEX_TITLE = 'Payouts Administration'
 TIMEOUT_CONSTANTS = {
     'CENTRAL_UIG': 33
 }
+
+
+# log viewer settings
+
+LOG_VIEWER_FILES = ['wallet_api.log', 'custom_budgets.log']
+LOG_VIEWER_FILES_PATTERN = '*.log'
+LOG_VIEWER_FILES_DIR = os.path.join(BASE_DIR, 'logs')
+LOG_VIEWER_MAX_READ_LINES = 1000  # total log lines will be read
+LOG_VIEWER_PAGE_LENGTH = 25       # total log lines per-page
+LOG_VIEWER_PATTERNS = [']OFNI[', ']GUBED[', ']GNINRAW[', ']RORRE[', ']LACITIRC[']
+
+
+SIMPLE_HISTORY_REVERT_DISABLED=True

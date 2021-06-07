@@ -166,6 +166,9 @@ class DisbursementData(AbstractTimeStamp):
             content_type_field="transaction_type",
             related_query_name="aman_manual"
     )
+    
+    disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
+
 
     class Meta:
         verbose_name = "Disbursement Data Record"
@@ -334,6 +337,7 @@ class BankTransaction(AbstractTimeStamp,
             default=''
     )
     is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
+    disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
 
     class Meta:
         verbose_name = 'Bank Transaction'

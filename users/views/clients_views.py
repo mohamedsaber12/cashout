@@ -76,7 +76,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def get_success_url(self):
 
-        if not self.object.is_vodafone_default_onboarding:
+        if not self.object.is_vodafone_default_onboarding or\
+           not self.object.is_banks_standard_model_onboaring:
             return reverse('data:main_view')
 
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
@@ -102,7 +103,8 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             "client": self.object,
         }
 
-        if not self.object.is_vodafone_default_onboarding:
+        if not self.object.is_vodafone_default_onboarding and\
+           not self.object.is_banks_standard_model_onboaring:
             entity_dict['agents_setup'] = True
             entity_dict['fees_setup'] = True
             Budget.objects.create(disburser=self.object, created_by=self.request.user)
@@ -131,7 +133,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
             client_dict['smsc_sender_name'] = self.object.smsc_sender_name
             client_dict['agents_onboarding_choice'] = self.object.agents_onboarding_choice
             Setup.objects.create(user=self.object)
-            CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
+            if self.object.is_banks_standard_model_onboaring:
+                CallWalletsModerator.objects.create(user_created=self.object,
+                                                    instant_disbursement=False,
+                                                    change_profile=False
+                                                    )
+            else:
+                CallWalletsModerator.objects.create(user_created=self.object, instant_disbursement=False)
 
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
@@ -156,7 +164,7 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
         username = self.kwargs.get('username')
 
         try:
-            User.objects.get(username=username).delete()
+            User.objects.get(username=username).hard_delete()
             DELETE_USER_VIEW_LOGGER.debug(f"[message] [USER DELETED] [{request.user}] -- Deleted user: {username}")
         except User.DoesNotExist:
             DELETE_USER_VIEW_LOGGER.debug(

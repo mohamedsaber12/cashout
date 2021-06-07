@@ -17,7 +17,8 @@ class DocAdmin(admin.ModelAdmin):
     list_display = [
         'id', 'type_of', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at'
     ]
-    list_filter = ['created_at']
+    list_filter = ['is_disbursed', 'has_change_profile_callback', 'is_processed', 'type_of', 'created_at', 'owner']
+    search_fields = ['id']
     readonly_fields = ['file']
     fieldsets = (
         (None, {
@@ -50,6 +51,8 @@ class DocReviewAdmin(admin.ModelAdmin):
 
     list_display = ['doc', 'user_created', 'is_ok', 'comment', 'timestamp']
     readonly_fields = list_display
+    search_fields = ['doc__file']
+    list_filter = ['is_ok', 'user_created']
 
 
 # @admin.register(FileCategory)

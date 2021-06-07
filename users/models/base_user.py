@@ -14,6 +14,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from disbursement.models import VMTData
+from utilities.models import SoftDeletionModel
 
 
 TYPES = (
@@ -40,20 +41,25 @@ class UserManager(AbstractUserManager):
         return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level__level_of_authority')
 
 
-class User(AbstractUser):
+class User(AbstractUser, SoftDeletionModel):
     """
     User model for all the different types of users
     """
+    root = models.ForeignKey(
+        'users.RootUser',
+        on_delete=models.CASCADE,
+        null=True
+    )
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
     email = models.EmailField(blank=False, unique=True, verbose_name=_('Email address'))
     pin = models.CharField(_('pin'), max_length=128, null=True, default='')
     avatar_thumbnail = ProcessedImageField(
-            upload_to='avatars',
-            processors=[ResizeToFill(100, 100)],
-            format='JPEG',
-            options={'quality': 60}, null=True, default='avatars/user.png'
+        upload_to='avatars',
+        processors=[ResizeToFill(100, 100)],
+        format='JPEG',
+        options={'quality': 60}, null=True, default='avatars/user.png'
     )
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
@@ -80,6 +86,10 @@ class User(AbstractUser):
             (
                 "vodafone_facilitator_accept_vodafone_onboarding",
                 "like our send business model but can only disburse for vodafone"
+            ),
+            (
+                "banks_standard_model_onboaring",
+                "like the vodafone_default_onboarding but with different issuers"
             ),
         )
         ordering = ['-id', '-hierarchy']
@@ -126,17 +136,6 @@ class User(AbstractUser):
         if self.has_perm('data.can_disburse'):
             return True
         return False
-
-    @property
-    def root(self):
-        if self.is_root:
-            return self
-        else:
-            # ToDo
-            # return statement doesn't work properly at superadmin calls,
-            #   because superadmin hierarchy is always 0 so it won't match any other incremented root's hierarchy
-            from users.models import RootUser
-            return RootUser.objects.get(hierarchy=self.hierarchy)
 
     @property
     def super_admin(self):
@@ -290,5 +289,15 @@ class User(AbstractUser):
     def is_vodafone_facilitator_onboarding(self):
         """Check if the current user belongs the vodafone facilitator accept vodafone onboarding setups"""
         if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
+            return True
+        return False
+    
+    @cached_property
+    def is_banks_standard_model_onboaring(self):
+        """
+        Check if the current user belongs to
+        the banks standard model onboaring setups
+        """
+        if self.has_perm('users.banks_standard_model_onboaring'):
             return True
         return False

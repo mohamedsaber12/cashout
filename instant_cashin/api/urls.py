@@ -2,7 +2,8 @@ from django.urls import path
 
 from .base_views import (
     AmanTransactionCallbackHandlerAPIView, BudgetInquiryAPIView,
-    BulkTransactionInquiryAPIView, InstantDisbursementAPIView
+    BulkTransactionInquiryAPIView, InstantDisbursementAPIView,
+    SingleStepDisbursementAPIView
 )
 
 
@@ -16,4 +17,6 @@ urlpatterns = [
     path('transaction/aman-callback/', AmanTransactionCallbackHandlerAPIView.as_view(), name='aman_trx_callback'),
     path('transaction/inquire/', BulkTransactionInquiryAPIView.as_view(), name='bulk_transaction_inquiry'),
     path('disburse/', InstantDisbursementAPIView.as_view(), name='instant_disburse'),
+    path('disburse/single-step/', SingleStepDisbursementAPIView.as_view(), name='disburse_single_step'),
+    
 ]

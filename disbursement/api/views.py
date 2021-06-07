@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import datetime
 import json
 import logging
 
@@ -34,6 +35,8 @@ from ..tasks import BulkDisbursementThroughOneStepCashin
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
+
 
 DISBURSEMENT_ERR_RESP_DICT = {'message': _(MSG_DISBURSEMENT_ERROR), 'header': _('Error occurred, We are sorry')}
 DISBURSEMENT_RUNNING_RESP_DICT = {'message': _(MSG_DISBURSEMENT_IS_RUNNING), 'header': _('Disbursed, Thanks')}
@@ -70,7 +73,7 @@ class DisburseAPIView(APIView):
         :param raw_pin: the raw pin used at disbursement
         :return: tuple of vodafone agent, etisalat agents lists
         """
-        if not provider.is_vodafone_default_onboarding:
+        if not (provider.is_vodafone_default_onboarding or provider.is_banks_standard_model_onboaring):
             agents = Agent.objects.filter(wallet_provider=provider.super_admin, super=False)
         else:
             agents = Agent.objects.filter(wallet_provider=provider)
@@ -79,6 +82,9 @@ class DisburseAPIView(APIView):
 
         vodafone_agents = agents.filter(type=Agent.VODAFONE)
         etisalat_agents = agents.filter(type=Agent.ETISALAT)
+
+        if agents.first().type == Agent.P2M and not vodafone_agents:
+            vodafone_agents = agents.filter(type=Agent.P2M)
 
         vodafone_agents = vodafone_agents.extra(select={'MSISDN': 'msisdn'}).values('MSISDN')
         etisalat_agents = etisalat_agents.values_list('msisdn', flat=True)
@@ -98,6 +104,14 @@ class DisburseAPIView(APIView):
             extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
 
         return list(vf_recipients)
+    
+    def set_disbursed_date(self, doc_id):
+        """
+        :param doc_id: Id of the document being disbursed
+        set disbursed date for all records related to doc ID
+        """
+        DisbursementData.objects.filter(doc_id=doc_id).update(disbursed_date=datetime.now())
+
 
     @staticmethod
     def disburse_for_recipients(url, payload, username, refined_payload, jsoned_response=False):
@@ -149,6 +163,47 @@ class DisburseAPIView(APIView):
 
         doc_obj.mark_disbursement_failure()
         return False
+    
+    def check_balance_before_disbursement(self, request, checker,doc_obj ):
+        total_doc_amount = self.get_total_doc_amount(doc_obj)
+        # get balance 
+        superadmin = checker.root.client.creator
+        super_agent = Agent.objects.get(wallet_provider=checker.root, super=True)
+        payload, refined_payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
+
+        try:
+            WALLET_API_LOGGER.debug(f"[request] [BALANCE INQUIRY] [{request.user}] -- {refined_payload}")
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"[message] [BALANCE INQUIRY ERROR] [{request.user}] -- Error: {e.args}")
+            return HttpResponse(
+                json.dumps({'message': MSG_BALANCE_INQUIRY_ERROR}),
+                status=status.HTTP_400_BAD_REQUEST
+                ) 
+        else:
+            WALLET_API_LOGGER.debug(f"[response] [BALANCE INQUIRY] [{request.user}] -- {response.text}")
+        if response.ok:
+            resp_json = response.json()
+            if resp_json["TXNSTATUS"] == '200':
+                    balance = resp_json['BALANCE']
+                    if total_doc_amount > balance :
+                        return HttpResponse(
+                            json.dumps({'message': "Insufficient funds"}),
+                            status=status.HTTP_400_BAD_REQUEST
+                            )
+            else:
+                error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
+                return HttpResponse(
+                    json.dumps({'message': error_message}),
+                    status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+        else:
+            error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
+            return HttpResponse(
+                    json.dumps({'message': error_message}),
+                    status=status.HTTP_400_BAD_REQUEST
+                    ) 
 
     def post(self, request, *args, **kwargs):
         """
@@ -177,16 +232,22 @@ class DisburseAPIView(APIView):
         if doc_obj.is_e_wallet:
             superadmin = checker.root.client.creator
             wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+            self.set_disbursed_date(doc_obj.id)
             vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
             smsc_sender_name = checker.root.client.smsc_sender_name
 
             if vf_recipients:
-                if not checker.is_vodafone_default_onboarding:
+                if not ( checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring):
                     pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
                 vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
                 vf_payload, log_payload = superadmin.vmt.\
                     accumulate_bulk_disbursement_payload(vf_agents, vf_recipients, smsc_sender_name)
+                    # check if have balance before disbursement
+                    # if checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring:
+                    #     self.check_balance_before_disbursement(request, checker, doc_obj)
+                        
                 vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, log_payload, True)
+                
 
         # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)
         if checker.is_accept_vodafone_onboarding:
@@ -217,6 +278,7 @@ class DisburseCallBack(UpdateAPIView):
         DATA_LOGGER.debug(f"[response] [automatic bulk disbursement callback] [{request.user}] -- {str(request.data)}")
         total_disbursed_amount = 0
         last_doc_record_id = successfully_disbursed_obj = None
+        num_of_trns = 0
 
         if len(request.data['transactions']) == 0:
             return JsonResponse({'message': 'Transactions are empty'}, status=status.HTTP_404_NOT_FOUND)
@@ -232,6 +294,7 @@ class DisburseCallBack(UpdateAPIView):
 
                 # If data['status'] = 0, it means this record amount is disbursed successfully
                 if data['status'] == '0':
+                    num_of_trns = num_of_trns + 1
                     successfully_disbursed_obj = DisbursementData.objects.get(id=int(data['id']))
                     total_disbursed_amount += round(Decimal(successfully_disbursed_obj.amount), 2)
             except DisbursementData.DoesNotExist:
@@ -239,7 +302,7 @@ class DisburseCallBack(UpdateAPIView):
 
         if successfully_disbursed_obj is not None and successfully_disbursed_obj.doc.owner.root.has_custom_budget:
             successfully_disbursed_obj.doc.owner.root.budget.\
-                update_disbursed_amount_and_current_balance(total_disbursed_amount, "vodafone")
+                update_disbursed_amount_and_current_balance(total_disbursed_amount, "vodafone", num_of_trns)
             custom_budget_logger(
                     successfully_disbursed_obj.doc.owner.root.username,
                     f"Total disbursed amount: {total_disbursed_amount} LE",

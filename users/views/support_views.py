@@ -11,6 +11,7 @@ from django.views.generic import CreateView, ListView, TemplateView
 
 from data.models import Doc
 from disbursement.views import DisbursementDocTransactionsView
+from disbursement.utils import add_fees_and_vat_to_qs
 
 from ..forms import SupportUserCreationForm
 from ..mixins import (
@@ -173,10 +174,15 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
 
         doc_obj = doc.first()
         doc_transactions = doc_obj.disbursement_data.all()
+        doc_transactions_qs = doc_obj.disbursement_data.all()
         if doc_obj.is_bank_wallet:
             doc_transactions = doc_obj.bank_wallets_transactions.all()
+            doc_transactions_qs = doc_obj.bank_wallets_transactions.all()
         elif doc_obj.is_bank_card:
-            doc_transactions = doc_obj.bank_cards_transactions.all()
+            doc_transactions = doc_obj.bank_cards_transactions.all()\
+                .order_by('parent_transaction__transaction_id', '-created_at')\
+                .distinct('parent_transaction__transaction_id')
+            doc_transactions_qs = doc_obj.bank_cards_transactions.all()
 
         context = {
             'doc_obj': doc_obj,
@@ -184,10 +190,10 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             'doc_status': self.retrieve_doc_status(doc_obj),
             'disbursement_ratio': doc_obj.disbursement_ratio(),
             'is_reviews_completed': doc_obj.is_reviews_completed(),
-            'disbursement_records': doc_transactions,
+            'disbursement_records': add_fees_and_vat_to_qs(doc_transactions, admin, doc_obj),
             'disbursement_doc_data': doc_obj.disbursement_txn,
             'doc_transactions_totals':
-                DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions),
+                DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions_qs),
         }
 
         return render(request, 'support/document_details.html', context=context)

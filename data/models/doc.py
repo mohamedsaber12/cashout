@@ -12,12 +12,12 @@ from django.utils.translation import gettext_lazy as _
 from core.models import AbstractBaseStatus
 from disbursement.models import DisbursementDocData, BankTransaction
 from users.models import CheckerUser
-from utilities.models import AbstractBaseDocType
+from utilities.models import AbstractBaseDocType, SoftDeletionModel
 
 from ..utils import pkgen, update_filename
 
 
-class Doc(AbstractBaseDocType):
+class Doc(AbstractBaseDocType, SoftDeletionModel):
     """
     Model for representing uploaded document object
     """
@@ -132,7 +132,7 @@ class Doc(AbstractBaseDocType):
                 all_categories = self.owner.root.file_category.all()
                 reviews_required = min([cat.no_of_reviews_required for cat in all_categories])
 
-            if not checker.is_vodafone_default_onboarding:
+            if not checker.is_vodafone_default_onboarding and not checker.is_banks_standard_model_onboaring:
                 if self.is_e_wallet:
                     within_threshold = True if self.total_amount_with_fees_vat <= checker.root.budget.current_balance \
                         else False

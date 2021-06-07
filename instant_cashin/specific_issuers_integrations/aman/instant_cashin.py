@@ -28,9 +28,10 @@ class AmanChannel:
     Handles AMAN one-step cashin request
     """
 
-    def __init__(self, request, transaction_object=False, amount=0.0):
+    def __init__(self, request, transaction_object=False, amount=0.0, user=None):
         """Instantiates Aman channel object by setting ACCEPT endpoints urls"""
         self.request = request
+        self.user = user
         self.transaction = transaction_object
         self.amount = self.transaction.amount if transaction_object else amount
         self.aman_logger = logging.getLogger('aman_channel')
@@ -177,7 +178,8 @@ class AmanChannel:
                     self.transaction.reference_id = bill_reference
                     self.transaction.mark_successful(status.HTTP_200_OK, msg)
                     AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
-                    self.request.user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
+                    user = self.request.user if not self.request.user.is_anonymous else self.user
+                    user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
                     return Response(InstantTransactionResponseModelSerializer(self.transaction).data)
 
                 return Response({
@@ -216,6 +218,10 @@ class AmanChannel:
         try:
             if is_success and bill_reference:
                 AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
+                
+                # update related transaction to edit updated_at
+                for trn in AmanTransaction.objects.filter(bill_reference=bill_reference):
+                    trn.transaction.save()
                 return True, ""
             raise ValueError(_(f"Transaction payment failed! is_success: {is_success}, bill_ref: {bill_reference}"))
         except (AmanTransaction.DoesNotExist, ValueError, Exception) as e:

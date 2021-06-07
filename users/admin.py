@@ -2,8 +2,10 @@
 from __future__ import unicode_literals
 
 import logging
+import os
 
 from django import forms
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
@@ -15,6 +17,11 @@ from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreatio
 from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
                      InstantAPIViewerUser, MakerUser, RootUser, Setup, SupportUser, SupportSetup,
                      SuperAdminUser, User)
+
+from django.shortcuts import render
+from django.http import HttpResponseRedirect, HttpResponse
+from data.tasks import ExportClientsTransactionsMonthlyReportTask
+from disbursement.views import ExportClientsTransactionsMonthlyReport
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 MODIFIED_USERS_LOGGER = logging.getLogger("modified_users")
@@ -62,9 +69,9 @@ class UserAccountAdmin(UserAdmin):
 
             obj.is_active = True
             obj.save()
-
+          
     activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
-
+    
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
         if request.user.is_superuser:
@@ -233,6 +240,10 @@ class RootAdmin(UserAccountAdmin):
 
 @admin.register(SuperAdminUser)
 class SuperAdmin(UserAccountAdmin):
+    
+    actions = ['activate_selected', 'deactivate_selected', "export_report"]
+    extended_actions = ['activate_selected', 'deactivate_selected', "export_report"]
+    
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
         # pop parent field from fieldsets
@@ -251,6 +262,43 @@ class SuperAdmin(UserAccountAdmin):
                     f"[message] [SuperAdmin User Created] [{request.user}] -- Created new super-user: {obj.username}"
             )
         super(SuperAdmin, self).save_model(request, obj, form, change)
+        
+    def export_report(self, request, queryset):
+        """export report for selected list of users"""
+        
+        if 'apply' in request.POST:
+            # queryset.update(env='hard coded response')
+            start_date = request.POST.get("start_date")
+            end_date = request.POST.get("end_date")
+            status = request.POST.get("status")
+            # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
+
+            exportObject = ExportClientsTransactionsMonthlyReport()
+            report_download_url = exportObject.run(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
+
+            if report_download_url == False:
+                self.message_user(request, f"Error Choosing super admins")
+                return HttpResponseRedirect(request.get_full_path())
+            else:
+                self.message_user(request, f"Report exported successfully")
+            filename = report_download_url.split('filename=')[1]
+            file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+            if os.path.exists(file_path):
+                with open(file_path, 'rb') as fh:
+                    response = HttpResponse(
+                            fh.read(),
+                            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    )
+                    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+                    return response
+            return HttpResponseRedirect(request.get_full_path())
+        
+        return render(request,
+                      'admin/all_superadmins_report.html',
+                      context={'superadmins': queryset})
+
+    export_report.short_description = ugettext_lazy("export report selected %(verbose_name_plural)s")
+
 
 
 @admin.register(Setup)
@@ -292,8 +340,25 @@ class SupportSetupModelAdmin(admin.ModelAdmin):
 
     list_display = ['user_created', 'support_user', 'can_onboard_entities']
     list_filter = ['user_created']
+    
+@admin.register(User)
+class UserAdmin(UserAdmin):
+
+    form = UserChangeForm
+
+    list_display = ('email', )
+    fieldsets = (
+        (None, {'fields': ('email', 'password')}),
+        ('Important dates', {'fields': ('last_login',)}),
+    )
+    add_fieldsets = (
+        (None, {
+            'classes': ('wide',),
+            'fields': ('email', 'password1', 'password2')}
+        ),
+    )
 
 
 # ToDo: Custom general user model
-admin.site.register(User)
+# admin.site.register(User)
 admin.site.register(Client)

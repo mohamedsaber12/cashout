@@ -3,11 +3,13 @@ from __future__ import unicode_literals
 
 import copy
 import logging
+from users.models.base_user import User
 
 import requests
 
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.translation import gettext as _
+from django.utils import timezone
 
 from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
 from rest_framework import status, views
@@ -111,11 +113,13 @@ class InstantDisbursementAPIView(views.APIView):
 
         if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
-            creditor_bank = "MIDG"      # ToDo: Should be "THWL" at the staging environment
+            creditor_bank = "MIDG" if get_from_env("ENVIRONMENT") != "staging" else "THWL"     # ToDo: Should be "THWL" at the staging environment
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
-                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name
+                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
+                    is_single_step=serializer.validated_data["is_single_step"],
+                    #disbursed_date=timezone.now()
             )
         else:
             creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])
@@ -133,7 +137,9 @@ class InstantDisbursementAPIView(views.APIView):
             "creditor_name": full_name,
             "creditor_account_number": creditor_account_number,
             "creditor_bank": creditor_bank,
-            "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid
+            "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid,
+            "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date,
+            "is_single_step":serializer.validated_data["is_single_step"]
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
@@ -150,10 +156,10 @@ class InstantDisbursementAPIView(views.APIView):
 
         return api_auth_token, merchant_id
 
-    def aman_issuer_handler(self, request, transaction_object, serializer):
+    def aman_issuer_handler(self, request, transaction_object, serializer, user):
         """Handle aman operations/transactions separately"""
 
-        aman_object = AmanChannel(request, transaction_object)
+        aman_object = AmanChannel(request, transaction_object, user=user)
 
         try:
             api_auth_token, merchant_id = self.aman_api_authentication_params(aman_object)
@@ -191,8 +197,12 @@ class InstantDisbursementAPIView(views.APIView):
 
         try:
             serializer.is_valid(raise_exception=True)
+            if 'user' in serializer.validated_data:
+                user = User.objects.get(username=serializer.validated_data['user'])
+            else:
+                user = request.user
 
-            if not request.user.root.\
+            if not user.root.\
                     budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):
                 raise ValidationError(BUDGET_EXCEEDED_MSG)
         except (ValidationError, ValueError, Exception) as e:
@@ -214,7 +224,7 @@ class InstantDisbursementAPIView(views.APIView):
             transaction = None
 
             try:
-                instant_user = request.user
+                instant_user = user
                 vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
                 data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
                 data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
@@ -230,9 +240,10 @@ class InstantDisbursementAPIView(views.APIView):
                     full_name = ""
 
                 transaction = InstantTransaction.objects.create(
-                        from_user=request.user, anon_recipient=data_dict['MSISDN2'], status="P",
+                        from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
                         amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
-                        anon_sender=data_dict['MSISDN'], recipient_name=full_name
+                        anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
+                        disbursed_date=timezone.now()
                 )
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
@@ -254,7 +265,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             try:
                 if issuer == "aman":
-                    return self.aman_issuer_handler(request, transaction, serializer)
+                    return self.aman_issuer_handler(request, transaction, serializer, user)
 
                 trx_response = requests.post(
                         get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
@@ -291,7 +302,7 @@ class InstantDisbursementAPIView(views.APIView):
                         INSTANT_CASHIN_SUCCESS_LOGGER, "[response] [SUCCESSFUL TRX]", request, f"{json_trx_response}"
                 )
                 transaction.mark_successful(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
-                request.user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_trx_response}")
@@ -301,7 +312,7 @@ class InstantDisbursementAPIView(views.APIView):
         elif issuer in ["bank_wallet", "bank_card", "orange"]:
 
             try:
-                bank_trx_obj, instant_trx_obj = self.create_bank_transaction(request.user, serializer)
+                bank_trx_obj, instant_trx_obj = self.create_bank_transaction(user, serializer)
             except Exception as e:
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [ACH EXCEPTION]", request, e.args)
                 return default_response_structure(
@@ -310,3 +321,8 @@ class InstantDisbursementAPIView(views.APIView):
                 )
 
             return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
+
+
+class SingleStepDisbursementAPIView(InstantDisbursementAPIView):
+   
+    permission_classes = []

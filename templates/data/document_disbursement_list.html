@@ -34,6 +34,14 @@
         <span class="glyphicon glyphicon-download"></span> Download Sample File
       </a>
     </div>
+  
+  {% elif list_header == 'Vodafone/Etisalat/Aman' %}
+    <div class="title_right">
+      <a class="btn btn-default desc-list pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="button" id="export_e_wallets_sample_file">
+        <span class="glyphicon glyphicon-download"></span> Download Default Sample File
+      </a>
+    </div>
+
   {% endif %}
 </div>
 
@@ -159,9 +167,11 @@
               </td>
               {% if request.user.is_root %}
                 <td>
-                  <a data-uri="{{ doc.get_delete_url }}" class="btn btn-danger btn-md" onclick="delete_func(this)">
-                    {% trans 'Delete' %}
-                  </a>
+                  {% if not doc.is_disbursed %}
+                    <a data-uri="{{ doc.get_delete_url }}" class="btn btn-danger btn-md" onclick="delete_func(this)">
+                      {% trans 'Delete' %}
+                    </a>
+                  {% endif %}
                 </td>
               {% endif %}
             </tr>

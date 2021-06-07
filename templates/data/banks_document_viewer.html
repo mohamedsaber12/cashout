@@ -31,9 +31,12 @@
       color: red;
     }
 
-    ul > li > span {
-      width: 130px;
+    #trxDetailsData > li > span {
+      width: 160px;
       color: #73879C;
+    }
+    #trxDetailsDataRight > li > span {
+      width: 120px;
     }
 
     ul > li > b {
@@ -93,7 +96,7 @@
       <div class="col-md-9 pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
         {% if doc.is_processed and not doc.can_be_disbursed %}
           <button id="notify_button" class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-url="{% url 'disbursement_api:allow_doc_disburse' doc.id %}">
-            <span class="glyphicon glyphicon-bell"></span> {% trans 'Notify Chekers' %}
+            <span class="glyphicon glyphicon-bell"></span> {% trans 'Notify Checkers' %}
           </button>
           {% elif doc.can_be_disbursed %}
           <div class="alert alert-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}" role="alert">
@@ -213,19 +216,12 @@
         <div class="x_title">
           <h2>{% if doc.is_bank_wallet %}{% trans 'Bank wallets/Orange Document Transactions' %}{% else %}{% trans 'Bank Accounts/Cards Document Transactions' %}{% endif %}</h2>
           <ul class="nav navbar-right panel_toolbox">
-            {% if request.user.is_root %}
+            {% if request.user.is_root and not doc.is_disbursed %}
               <li>
                 <button data-uri="{{ doc.get_delete_url }}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
                 </button>
               </li>
             {% endif %}
-            <li>
-              <a class="btn btn-default export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
-                 target="_blank" type="button" id="download-doc"
-                 href="{% url 'data:download_doc' doc.id %}">
-                <span class="glyphicon glyphicon-download"></span> Download Document
-              </a>
-            </li>
             <li>
               <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
             </li>
@@ -262,7 +258,7 @@
               {% else %}
                 <thead>
                 <th>{% trans 'Transaction ID' %}</th>
-                <th>{% trans 'Account number' %}</th>
+                <th>{% trans 'Account number / IBAN' %}</th>
                 <th>{% trans 'Amount' %}</th>
                 </thead>
                 <tbody>
@@ -367,6 +363,7 @@
 
 {% block script %}
   {# Datatables #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
   <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
@@ -380,7 +377,39 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   <script>
-    $('#doc-datatable').DataTable();
+    var table = $('#doc-datatable').DataTable({
+    "bLengthChange" : false,
+  });
+  
+  var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+                extend: 'copy',
+                text : "Copy",
+                exportOptions: {
+                    charSet: "utf-8",
+                }
+            },
+            {
+                extend: 'print',
+                text : "PDF",
+            },
+            {
+                extend: 'excelHtml5',
+                text : "Export",
+                
+                customize: function( xlsx ) {
+
+                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                  $('row c[r^="A"]', sheet).attr( 's', '0' );
+				       }
+            }
+        ]
+    });
+  
+  table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
 
     $(document).ready(function () {
 
@@ -489,7 +518,7 @@
           let uid = $(this).data('id');
           appendedTags += `<li><span>Transaction ID</span><b>:</b>${uid}</li>`;
           let creditor_account_number = $(this).data('creditor_account_number');
-          appendedTags += `<li><span>Account number</span><b>:</b>${creditor_account_number}</li>`;
+          appendedTags += `<li><span>Account number / IBAN</span><b>:</b>${creditor_account_number}</li>`;
           let amount = $(this).data('amount');
           appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
           let creditor_name = $(this).data('creditor_name');

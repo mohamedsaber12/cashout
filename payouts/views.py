@@ -23,3 +23,7 @@ def bad_request_view(request, exception, **kwargs):
 
 def file_too_large_view(request, exception, **kwargs):
     return render(request, 'error-pages/413.html', status=413)
+
+
+def no_agent_error_view(request, **kwargs):
+    return render(request, 'error-pages/no-agent.html', status=400)

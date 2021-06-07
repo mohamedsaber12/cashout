@@ -24,6 +24,14 @@
       font-size: 14px;
       padding: 5px;
     }
+    #status {
+      width: 68%;
+      display: inline-block;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      background-color: #eee;
+      color: rgb(22, 56, 88);
+    }
   </style>
 {% endblock customcss %}
 {% block body %}
@@ -52,39 +60,45 @@
               <div class="x_content">
 
                 {# Export clients transactions report sections #}
-                {% if not request.user.is_vodafone_default_onboarding %}
-                  <div class="row">
-                    <div class="col-md-12 col-sm-12 col-xs-12">
-                      <div class="x_panel">
-                        <div class="x_title">
-                          <h2>{% trans 'Export Clients Transactions Report' %}</h2>
-                          <ul class="nav navbar-right panel_toolbox">
-                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
-                          </ul>
-                          <div class="clearfix"></div>
-                        </div>
+                <div class="row">
+                  <div class="col-md-12 col-sm-12 col-xs-12">
+                    <div class="x_panel">
+                      <div class="x_title">
+                        <h2>{% trans 'Export Clients Transactions Report' %}</h2>
+                        <ul class="nav navbar-right panel_toolbox">
+                          <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                        </ul>
+                        <div class="clearfix"></div>
+                      </div>
 
-                        <div class="x_content">
-                          <div class="col-md-5 col-sm-5 col-xs-5 text-left">
-                            <label style="width:20%;">Start Date</label>
-                            <input onchange="toggle_export_button()" id="start_date" type="date">
-                          </div>
-                          <div class="col-md-5 col-sm-5 col-xs-5 text-left">
-                            <label style="width:20%;">End Date</label>
-                            <input onchange="toggle_export_button()" id="end_date" type="date">
-                          </div>
-                          <div class="col-md-2 col-sm-2 col-xs-2">
-                            <button id="export-report" type="button" onclick="export_clients_transactions_report()"
-                                    disabled="true" class="btn btn-default pull-right">
-                              <i class="fa fa-file-excel-o" title="Export Transactions"></i>
-                              Export Report
-                            </button>
-                          </div>
+                      <div class="x_content">
+                        <div class="col-md-3 col-sm-3 col-xs-3 text-left">
+                          <label style="width:30%;">Start Date</label>
+                          <input style="width:68%;" onchange="toggle_export_button()" id="start_date" type="date">
+                        </div>
+                        <div class="col-md-3 col-sm-3 col-xs-3 text-left">
+                          <label style="width:30%;">End Date</label>
+                          <input style="width:68%;" onchange="toggle_export_button()" id="end_date" type="date">
+                        </div>
+                        <div class="col-md-3 col-sm-3 col-xs-3">
+                          <label style="width:30%;">Status</label>
+                          <select id="status" class="form-control">
+                            <option value="all">All</option>
+                            <option value="success">Success</option>
+                            <option value="failed">Failed</option>
+                          </select>
+                        </div>
+                        <div class="col-md-2 col-sm-2 col-xs-2">
+                          <button id="export-report" type="button" onclick="export_clients_transactions_report()"
+                                  disabled="true" class="btn btn-default pull-right">
+                            <i class="fa fa-file-excel-o" title="Export Transactions"></i>
+                            Export Report
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
-                {% endif%}
+                </div>
                 {# End of export clients transactions report sections #}
 
                 <div class="row">
@@ -116,6 +130,8 @@
                                 Send Disbursement Model
                               {% elif client_setup.client.is_vodafone_facilitator_onboarding %}
                                 Vodafone Facilitator Disbursement Model
+                              {% elif client_setup.client.is_banks_standard_model_onboaring %}
+                              Banks PSP Disbursement Model
                               {% else %}
                                 Vodafone PSP Disbursement Model
                               {% endif %}
@@ -140,10 +156,6 @@
                             <p class="ratings"><a>{% trans 'Active' %}</a></p>
                           </div>
                           <div class="col-xs-12 col-sm-6 emphasis text-right">
-                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal"
-                                    data-target="#delete-user-modal" onclick="delete_modal({{ client_setup.id }})">
-                              <i class="fa fa-trash-o" title="Delete User"></i>
-                            </button>
                             <button type="button" class="btn btn-primary btn-xs" data-toggle="modal"
                                     data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
                               {% ifequal client_setup.is_active True %}
@@ -152,7 +164,7 @@
                               <i class="fa fa-check" title="Activate User"></i>
                               {% endifequal %}
                             </button>
-                            {% if not request.user.is_vodafone_default_onboarding %}
+                            {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
                               <button class="btn btn-default btn-xs" title="Update Budget">
                                 <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
                               </button>
@@ -347,17 +359,21 @@
     function export_clients_transactions_report() {
       let startDateElement = document.getElementById('start_date');
       let endDateElement = document.getElementById('end_date');
+      let statusElement = document.getElementById('status');
       if(!(startDateElement.value == '' || endDateElement.value == '')) {
-        let qsOfUrl = `?start_date=${startDateElement.value}&end_date=${endDateElement.value}`;
+        let qsOfUrl = `?start_date=${startDateElement.value}&end_date=${endDateElement.value}&status=${statusElement.value}`;
         $.ajax({
           type: 'GET',
           url: "{% url 'disbursement:export_clients_transactions_report' %}"+qsOfUrl,
           success: function (data, text, xhr) {
-            if (xhr.responseText == "") {
-              $('#exportTransactionsModal').modal({
+            if (data != "False") {
+              let a = document.createElement('a');
+              a.href = data;
+              a.click();
+              /*$('#exportTransactionsModal').modal({
                 backdrop: 'static',
                 keyboard: false
-              })
+              })*/
             } else {
               window.location.replace("../user/login")
             }

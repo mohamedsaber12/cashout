@@ -31,6 +31,9 @@
       #download-doc span {
           color: #333;
       }
+      #menu1 {
+        display:none;
+      }
   </style>
 {% endblock %}
 
@@ -53,15 +56,20 @@
             <thead>
             <tr>
               {% if doc_obj.is_bank_wallet %}
-                <th>{% trans 'Transaction ID' %}</th>
+                <th style="display:none;">{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Wallet Number' %}</th>
               {% elif doc_obj.is_bank_card %}
-                <th>{% trans 'Transaction ID' %}</th>
+                <th style="display:none;">{% trans 'Transaction ID' %}</th>
                 <th>{% trans 'Account Number' %}</th>
               {% else %}
                 <th>{% trans 'Wallet Number' %}</th>
               {% endif %}
               <th>{% trans 'Amount' %}</th>
+              <th>{% trans 'Issuer' %}</th>
+              {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding and not request.user.is_banks_standard_model_onboaring %}
+                <th>{% trans 'Fees' %}</th>
+                <th>{% trans 'Vat' %}</th>
+              {% endif %}
               <th>{% trans 'Is Disbursed?' %}</th>
               <th>{% trans 'Updated At' %}</th>
             </tr>
@@ -96,20 +104,37 @@
                     data-msisdn="{{ record.msisdn }}"
                     data-is_disbursed="{{ record.is_disbursed }}"
                     data-reason="{{ record.reason }}"
-                    data-reason_description="{{ record.reason | code_description }}"
+                    data-issuer="{{ record.issuer }}"
+                    data-aman_is_paid="{{ record.aman_transaction_is_paid }}"
+                    {% if record.is_disbursed %}
+                      data-reason_description="{{ record.reason }}"
+                    {% else %}
+                      data-reason_description="{{ record.reason | code_description }}"
+                    {% endif %}
                   {% endif %}
                   data-amount="{{ record.amount }}"
                   class="row-hover">
                 {% if doc_obj.is_bank_wallet %}
-                  <td>{{ record.uid }}</td>
+                  <td style="display:none;">{{ record.uid }}</td>
                   <td>{{ record.anon_recipient }}</td>
                 {% elif doc_obj.is_bank_card %}
-                  <td>{{ record.parent_transaction.transaction_id }}</td>
+                  <td style="display:none;">{{ record.parent_transaction.transaction_id }}</td>
                   <td>{{ record.creditor_account_number }}</td>
                 {% else %}
                   <td>{{ record.msisdn }}</td>
                 {% endif %}
                 <td>{{ record.amount }}</td>
+                {% if doc_obj.is_e_wallet %}
+                  <td>{{ record.issuer }}</td>
+                {% elif doc_obj.is_bank_wallet %}
+                  <td>{{ record.issuer_choice_verbose }}</td>
+                {% else %}
+                  <td>bank_card</td>
+                {% endif %}
+                {% if not request.user.is_vodafone_default_onboarding and not request.user.is_vodafone_facilitator_onboarding and not request.user.is_banks_standard_model_onboaring %}
+                  <td>{{ record.fees }}</td>
+                  <td>{{ record.vat }}</td>
+                {% endif %}
                 {% if doc_obj.disbursed_successfully %}
                   <td style="text-align: center; font-size: 20px; padding-top: 3px; padding-bottom: 3px;">
                     {% if doc_obj.is_bank_card or doc_obj.is_bank_wallet %}
@@ -226,10 +251,17 @@
     </div>
   </div>
   {# End of transaction details #}
+
+          
+
+  {# End of modal for export failed file transactions #}
+
 {% endblock %}
 
 {% block script %}
   <!-- Datatables -->
+  
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
   <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
@@ -242,12 +274,53 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+
   <script>
-    $('#transaction-table').DataTable();
+
+
+$(document).ready( function () {
+  var table = $('#transaction-table').DataTable({
+    "bLengthChange" : false,
+  });
+  
+  var buttons = new $.fn.dataTable.Buttons( table, {
+    buttons: [
+      {
+        extend: 'copy',
+        text : "Copy",
+        exportOptions: {
+          charSet: "utf-8",
+        }
+      },
+      {
+        extend: 'print',
+        text : "PDF",
+      },
+      {
+        extend: 'excelHtml5',
+        text : "Export",
+
+        customize: function( xlsx ) {
+
+          var sheet = xlsx.xl.worksheets['sheet1.xml'];
+          $('row c[r^="A"]', sheet).attr( 's', '0' );
+       }
+      }
+    ]
+  });
+  
+  table.buttons( 0, null ).container().prependTo(
+    table.table().container()
+  );
+  let empty_row = $('.dataTables_empty');
+  if (empty_row) {
+    empty_row.parent().attr('id', 'empty_row');
+  }
+});
   </script>
   <script>
     let trx = {};
-    $('#transaction-table tbody').on('click', 'tr', function () {
+    $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
         $("#trxDetails").slideUp().fadeOut();
@@ -290,6 +363,7 @@
           appendedTags += `<li><span>Account Number</span><b>:</b>${trx.creditor_account_number}</li>`;
           trx.creditor_name = $(this).data('creditor_name');
           appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
+          appendedTagsRight += `<li><span>Issuer</span><b>:</b>bank_card</li>`;
           trx.creditor_bank = $(this).data('creditor_bank');
           appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
           trx.bank_name = $(this).data('bank_name');
@@ -298,6 +372,17 @@
           appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
         {% endif %}
         {% if doc_obj.is_e_wallet %}
+          let issuer = $(this).data('issuer');
+          appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+          {# Determine is_paid? status for aman transactions #}
+          if (issuer === 'Aman' || issuer === 'aman') {
+            let aman_is_paid = $(this).data('aman_is_paid');
+            if (aman_is_paid === 'True') {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
           let msisdn = $(this).data('msisdn');
           appendedTags += `<li><span>Wallet Number</span><b>:</b>${msisdn}</li>`;
 

@@ -275,10 +275,15 @@ class RootCreationForm(forms.ModelForm):
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
 
-        if not self.request.user.is_vodafone_default_onboarding:
+        if not self.request.user.is_vodafone_default_onboarding and\
+           not self.request.user.is_banks_standard_model_onboaring:
             self.fields['smsc_sender_name'].widget = forms.HiddenInput()
             self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
             self.fields['mobile_number'].widget = forms.HiddenInput()
+                         
+        if self.request.user.is_banks_standard_model_onboaring:
+            self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
+            self.fields['smsc_sender_name'].widget = forms.HiddenInput()
 
         if self.request.user.is_vodafone_facilitator_onboarding:
             self.fields['vodafone_facilitator_identifier'].required = True
@@ -330,6 +335,10 @@ class RootCreationForm(forms.ModelForm):
 
         user.save()
 
+        # add root field when create root
+        user.root = user
+        user.save()
+
         if self.request.user.is_vodafone_default_onboarding:
             user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
             user.mobile_no = self.cleaned_data['mobile_number'].strip()
@@ -343,6 +352,13 @@ class RootCreationForm(forms.ModelForm):
             user.vodafone_facilitator_identifier = self.cleaned_data['vodafone_facilitator_identifier'].strip()
             user.user_permissions.add(Permission.objects.get(
                     content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding'
+            ))
+        elif self.request.user.is_banks_standard_model_onboaring:
+            user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
+            user.mobile_no = self.cleaned_data['mobile_number'].strip()
+            user.agents_onboarding_choice = 0
+            user.user_permissions.add(Permission.objects.get(
+                    content_type__app_label='users', codename='banks_standard_model_onboaring'
             ))
         else:
             user.user_permissions.add(
@@ -387,6 +403,9 @@ class SupportUserCreationForm(forms.ModelForm):
         elif self.request.user.is_vodafone_facilitator_onboarding:
             onboarding_permission = Permission.objects.\
                 get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
+        elif self.request.user.is_banks_standard_model_onboaring:
+            onboarding_permission = Permission.objects.\
+                get(content_type__app_label='users', codename='banks_standard_model_onboaring')
         else:
             onboarding_permission = Permission.objects.\
                 get(content_type__app_label='users', codename='instant_model_onboarding')
@@ -500,6 +519,8 @@ class MakerCreationForm(forms.ModelForm):
             user = self.instance_copy
 
         user.hierarchy = self.request.user.hierarchy
+        # add root to maker
+        user.root = self.request.user
 
         if commit:
             user.save()
@@ -537,6 +558,8 @@ class CheckerCreationForm(forms.ModelForm):
         user.user_type = 2
 
         user.hierarchy = self.request.user.hierarchy
+        # add root to checker
+        user.root = self.request.user
 
         if commit:
             user.save()
@@ -600,6 +623,8 @@ class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.user_type = 7
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
+        # add root to checker
+        user.root = self.request.user
         user.save()
 
         onboarding_permission = Permission.objects.\
@@ -635,6 +660,8 @@ class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.user_type = 6
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
+        # add root to checker
+        user.root = self.request.user
         user.save()
 
         onboarding_permission = Permission.objects.\

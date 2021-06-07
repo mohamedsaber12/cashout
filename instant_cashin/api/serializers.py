@@ -18,6 +18,8 @@ from .validators import (
     fees_validator, issuer_validator, msisdn_validator, bank_transaction_type_validator,
 )
 
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
@@ -57,6 +59,8 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     last_name = serializers.CharField(max_length=254, required=False)
     email = serializers.EmailField(max_length=254, required=False)
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
+    user = serializers.CharField(max_length=254, required=False, allow_blank=False)
+    is_single_step = serializers.BooleanField(required=False, default=False)
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""
@@ -86,6 +90,10 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                         _("You must pass valid values for fields [bank_code, bank_card_number, bank_transaction_type, "
                           "full_name]")
                 )
+            if any(e in str(full_name) for e in '!%*+&'):
+                raise serializers.ValidationError(
+                        _("Symbols like !%*+& not allowed in full_name")
+                )
         elif issuer in ['bank_wallet', 'orange']:
             if not msisdn or not full_name:
                 raise serializers.ValidationError(
@@ -102,7 +110,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
 
     transaction_id = serializers.SerializerMethodField()
     issuer = serializers.SerializerMethodField()
-    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseACHTransactionStatus.STATUS_CHOICES)
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     bank_card_number = serializers.SerializerMethodField()

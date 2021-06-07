@@ -138,11 +138,18 @@ class FileDocumentForm(forms.ModelForm):
                     valid_headers = ['mobile number', 'amount', 'full name', 'issuer']
                 else:
                     valid_headers = ['account number', 'amount', 'full name', 'bank swift code', 'transaction type']
+                    valid_headersWithIban = ['account number / IBAN', 'amount', 'full name', 'bank swift code', 'transaction type']
                 HEADERS_ERR_MSG = f"File headers are not proper, the valid headers naming and order is {valid_headers}"
 
                 try:
                     df = pd.read_excel(file)
-                    error = False if df.columns.tolist() == valid_headers else HEADERS_ERR_MSG
+                    error = False
+                    if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
+                        if df.columns.tolist() != valid_headers:
+                            error = HEADERS_ERR_MSG
+                    else:
+                        if df.columns.tolist() != valid_headers and df.columns.tolist() != valid_headersWithIban:
+                            error = HEADERS_ERR_MSG
                     if min(df.count()) < 1: raise ValueError
                 except (ValueError, Exception):
                     error = "File data is not proper, check it and upload it again."
@@ -217,9 +224,17 @@ class FileCategoryForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['issuer_field'].required = True
         self.fields['name'].initial = 'Default Format'
+        self.fields['name'].widget.attrs['readonly'] = True
+        
         self.fields['unique_field'].initial = 'A-1'
+        self.fields['unique_field'].widget.attrs['readonly'] = True
+        
         self.fields['amount_field'].initial = 'B-1'
+        self.fields['amount_field'].widget.attrs['readonly'] = True
+        
         self.fields['issuer_field'].initial = 'C-1'
+        self.fields['issuer_field'].widget.attrs['readonly'] = True
+        
         self.fields['no_of_reviews_required'].initial = '1'
         self.request = request
 

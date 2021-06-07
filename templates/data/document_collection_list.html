@@ -51,8 +51,10 @@
                                         </td>
                                         {% if request.user.is_root %}
                                         <td>
-                                            <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
-                                            </a>
+                                            {% if not doc.is_disbursed %}
+                                                <a data-uri="{{doc.get_delete_url}}" class="btn btn-danger btn-md" onclick="delete_func(this)"> {% trans 'Delete' %}
+                                                </a>
+                                            {% endif %}
                                         </td>
                                         {%endif%}
                                     </tr>

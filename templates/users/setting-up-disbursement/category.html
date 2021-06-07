@@ -14,6 +14,13 @@
             background: red !important;
         }
     {% endif %}
+    input:read-only {
+      background: #CCC; 
+    color: #333; 
+    border: 1px solid #666 
+
+
+      }
   </style>
 {% endblock %}
 
@@ -83,7 +90,7 @@
     </ul>
     {% include "users/formset_form.html" with btn_title='Add format' step_1_index=5 formset=form action='users:setting-disbursement-formats' is_normal_flow=is_normal_flow %}
 
-    {% if not request.user.is_vodafone_default_onboarding %}
+    {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
       <button id="default_format_btn" class="btn btn-success">{% trans "Save default format" %}</button>
     {% endif %}
   </div>
@@ -137,7 +144,15 @@
       $('#add_btn').click(function () {
         let form_idx = $('#id_category-TOTAL_FORMS').val();
 
-        $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+        new_fields = $('#empty_form tbody').html().replace(/__prefix__/g, form_idx)
+        new_fields = new_fields.replace(/readonly/g, '')
+        new_fields = new_fields.replace(/Default Format/g, '')
+        new_fields = new_fields.replace(/A-1/g, '')
+        new_fields = new_fields.replace(/B-1/g, '')
+        new_fields = new_fields.replace(/C-1/g, '')
+        console.log(new_fields)
+
+        $('form table tbody').append(new_fields);
         $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
         increase_height()

@@ -165,7 +165,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             "currency": "EGP",
             "debtor_address_1": "EG",
             "creditor_address_1": "EG",
-            "creditor_bank": "MIDG",      # ToDo: Should be "THWL" at the staging environment
+            "creditor_bank": "MIDG" if get_value_from_env("ENVIRONMENT") != "staging" else "THWL",      # ToDo: Should be "THWL" at the staging environment
             "category_code": "MOBI",
             "purpose": "CASH",
             "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
@@ -174,7 +174,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
             "creditor_account_number": record.anon_recipient,
             "amount": record.amount,
             "creditor_name": record.recipient_name,
-            "end_to_end": record.uid
+            "end_to_end": record.uid,
+            "disbursed_date": record.disbursed_date
         }
         return BankTransaction.objects.create(**transaction_dict)
 
@@ -189,6 +190,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             for instant_trx_obj in bank_wallets_transactions:
                 try:
+                    instant_trx_obj.disbursed_date = timezone.now()
+                    instant_trx_obj.save()
                     bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
                     BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
                 except:
@@ -198,6 +201,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             for bank_trx_obj in bank_cards_transactions:
                 try:
+                    bank_trx_obj.disbursed_date = timezone.now()
+                    bank_trx_obj.save()
                     BankTransactionsChannel.send_transaction(bank_trx_obj, False)
                 except:
                     pass

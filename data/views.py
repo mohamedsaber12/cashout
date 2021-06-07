@@ -250,6 +250,8 @@ class FileDeleteView(View):
             return JsonResponse(data={}, status=403)
 
         file_obj = get_object_or_404(Doc, pk=pk, owner__hierarchy=request.user.hierarchy)
+        if file_obj.is_disbursed:
+            return  JsonResponse(data={}, status=403)
         file_obj.delete()
         msg = f"deleted a file with doc_name: {file_obj.filename()}"
         DELETED_FILES_LOGGER.debug(f"[message] [FILE DELETED] [{request.user}] -- {msg}")

@@ -126,7 +126,7 @@
   <script>
     $(document).ready(function () {
       $('#default_format_btn').remove();
-      $('#formats-datatable').DataTable();
+
 
       function increase_height() {
         let oldheight = $('.stepContainer').css('height');
@@ -144,17 +144,23 @@
           $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
           $('#id_format-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
-          increase_height()
 
         });
       } else {
         $('#add_btn').click(function () {
           let form_idx = $('#id_category-TOTAL_FORMS').val();
 
-          $('form table tbody').append($('#empty_form tbody').html().replace(/__prefix__/g, form_idx));
+        new_fields = $('#empty_form tbody').html().replace(/__prefix__/g, form_idx)
+        new_fields = new_fields.replace(/readonly/g, '')
+        new_fields = new_fields.replace(/Default Format/g, '')
+        new_fields = new_fields.replace(/A-1/g, '')
+        new_fields = new_fields.replace(/B-1/g, '')
+        new_fields = new_fields.replace(/C-1/g, '')
+        $('form table tbody').append(new_fields);
+        $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
+
           $('#id_category-TOTAL_FORMS').val(parseInt(form_idx) + 1);
 
-          increase_height()
         });
       }
 

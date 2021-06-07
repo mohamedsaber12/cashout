@@ -11,7 +11,7 @@ from django.contrib.auth.models import Permission
 
 from disbursement.factories import VariousAgentFactory, VMTDataFactory
 
-from .models import SuperAdminUser
+from .models import SuperAdminUser, RootUser, MakerUser, CheckerUser, Client
 
 
 fake = fakeFactory.create()
@@ -32,7 +32,7 @@ class BaseUserFactory(factory.django.DjangoModelFactory):
 
 class SuperAdminUserFactory(BaseUserFactory):
     """
-    Factory model for creating superadmin users
+    Factory model for creating super admin users
     """
 
     class Meta:
@@ -56,7 +56,7 @@ class VariousOnboardingSuperAdminUserFactory:
         """Create superadmin user with the default vodafone onboarding setups permission"""
         superadmin_user = VariousOnboardingSuperAdminUserFactory.create_new_superadmin()
         superadmin_user.user_permissions.add(
-                Permission.objects.get(content_type__app_label="users", codename="vodafone_default_onboarding")
+            Permission.objects.get(content_type__app_label="users", codename="vodafone_default_onboarding")
         )
         return superadmin_user
 
@@ -67,7 +67,7 @@ class VariousOnboardingSuperAdminUserFactory:
         VariousAgentFactory.mandatory_agents(agent_provider=superadmin_user)
         superadmin_user.wallet_fees_profile = random.choice(["Full", "Half", "No fees"])
         superadmin_user.user_permissions.add(
-                Permission.objects.get(content_type__app_label="users", codename="accept_vodafone_onboarding")
+            Permission.objects.get(content_type__app_label="users", codename="accept_vodafone_onboarding")
         )
         superadmin_user.save()
         return superadmin_user
@@ -78,7 +78,81 @@ class VariousOnboardingSuperAdminUserFactory:
         superadmin_user = VariousOnboardingSuperAdminUserFactory.create_new_superadmin()
         VariousAgentFactory.mandatory_agents(agent_provider=superadmin_user)
         superadmin_user.user_permissions.add(
-                Permission.objects.get(content_type__app_label="users", codename="instant_model_onboarding")
+            Permission.objects.get(content_type__app_label="users", codename="instant_model_onboarding")
         )
         superadmin_user.save()
         return superadmin_user
+
+    @staticmethod
+    def vodafone_facilitator():
+        """Create superadmin user with vodafone facilitator onboarding setups permission"""
+        superadmin_user = VariousOnboardingSuperAdminUserFactory.create_new_superadmin()
+        VariousAgentFactory.mandatory_agents(agent_provider=superadmin_user)
+        superadmin_user.wallet_fees_profile = random.choice(["Full", "Half", "No fees"])
+        superadmin_user.user_permissions.add(
+            Permission.objects.get(content_type__app_label="users", codename="vodafone_facilitator_accept_vodafone_onboarding")
+        )
+        superadmin_user.save()
+        return superadmin_user
+
+    @staticmethod
+    def banks_standard():
+        """Create superadmin user with the bank standard onboarding setups permission"""
+        superadmin_user = VariousOnboardingSuperAdminUserFactory.create_new_superadmin()
+        VariousAgentFactory.mandatory_agents(agent_provider=superadmin_user)
+        superadmin_user.wallet_fees_profile = random.choice(["Full", "Half", "No fees"])
+        superadmin_user.user_permissions.add(
+                Permission.objects.get(content_type__app_label="users", codename="banks_standard_model_onboaring")
+        )
+        superadmin_user.save()
+        return superadmin_user
+
+
+class AdminUserFactory(BaseUserFactory):
+    """
+    Factory model for creating admin users
+    """
+
+    class Meta:
+        model = RootUser
+        abstract = False
+
+
+class MakerUserFactory(BaseUserFactory):
+    """
+    Factory model for creating maker users
+    """
+
+    class Meta:
+        model = MakerUser
+        abstract = False
+
+
+class CheckerUserFactory(BaseUserFactory):
+    """
+    Factory model for creating checker users
+    """
+
+    class Meta:
+        model = CheckerUser
+        abstract = False
+
+
+class ClientUserFactory(factory.django.DjangoModelFactory):
+
+    is_active = factory.LazyFunction(fake.boolean)
+    fees_percentage = factory.LazyFunction(fake.numerify)
+    vodafone_facilitator_identifier = factory.Sequence(lambda obj: fake.numerify(text="##########"))
+    custom_profile = ''
+    smsc_sender_name = factory.LazyFunction(fake.first_name)
+    agents_onboarding_choice = factory.Iterator(Client.AGENTS_ONBOARDING_CHOICES)
+
+
+    client = factory.RelatedFactory(
+        AdminUserFactory,
+        factory_related_name='client',
+    )
+    creator = factory.RelatedFactory(
+        SuperAdminUserFactory,
+        factory_related_name='clients'
+    )

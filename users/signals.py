@@ -141,6 +141,13 @@ def send_activation_message(root_user, set_password_url):
             ),
             "SMSSENDER": f"{root_user.client.smsc_sender_name}"
         }
+        # delete SMSSENDER from payload if it's empty
+        if not root_user.client.smsc_sender_name:
+            del(payload["SMSSENDER"])
+
+        # delete SMSSENDER from payload if root is_vodafone_default_onboarding
+        if root_user.is_vodafone_default_onboarding:
+            del(payload["SMSSENDER"])
 
         try:
             WALLET_API_LOGGER.debug(f"[request] [activation message] [{root_user}] -- {payload}, url: {msg_env_url}")
@@ -165,7 +172,7 @@ def notify_user(instance, created):
         uid = urlsafe_base64_encode(force_bytes(instance.pk))
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
 
-        if instance.is_root and instance.is_vodafone_default_onboarding:
+        if instance.is_root and (instance.is_vodafone_default_onboarding or instance.is_banks_standard_model_onboaring):
             send_activation_message(instance, url)
 
         from_email = settings.SERVER_EMAIL

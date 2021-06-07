@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
+
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.contenttypes.models import ContentType
@@ -9,8 +11,8 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from disbursement.models import DisbursementData
-
 from .models import AmanTransaction, InstantTransaction
+from .mixins import ExportCsvMixin
 
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
@@ -30,6 +32,7 @@ class AmanTransactionTypeFilter(admin.SimpleListFilter):
             return queryset.filter(transaction_type=ContentType.objects.get_for_model(InstantTransaction))
 
 
+
 @admin.register(AmanTransaction)
 class AmanTransactionAdmin(admin.ModelAdmin):
     """
@@ -38,7 +41,7 @@ class AmanTransactionAdmin(admin.ModelAdmin):
 
     list_display = ['transaction_id', 'transaction_type', 'disburser', 'bill_reference', 'is_paid']
     readonly_fields = list_display + ['original_transaction_url']
-    search_fields = list_display
+    search_fields = ['transaction_id']
     list_filter = ['is_paid', AmanTransactionTypeFilter]
 
     def disburser(self, instance):
@@ -74,7 +77,7 @@ class AmanTransactionAdmin(admin.ModelAdmin):
 
 
 @admin.register(InstantTransaction)
-class InstantTransactionAdmin(admin.ModelAdmin):
+class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     """
     Instant Transaction Admin model for the Instant Transaction model
     """
@@ -82,12 +85,16 @@ class InstantTransactionAdmin(admin.ModelAdmin):
     default_fields = [
         'uid', 'from_user', 'anon_recipient', 'status', 'transaction_status_code', 'amount', 'issuer_type'
     ]
-    list_display = default_fields + ['updated_at']
+    list_display = default_fields + ['updated_at', 'disbursed_date']
     readonly_fields = default_fields + ['uid', 'created_at']
-    search_fields = list_display
+    search_fields = ['uid', 'anon_recipient']
     ordering = ['-created_at']
-    list_filter = ['status', 'issuer_type', 'anon_sender', 'from_user']
-
+    list_filter = [
+        ('disbursed_date', DateRangeFilter),
+        ('created_at', DateRangeFilter),
+        'status', 'issuer_type', 'anon_sender', 'from_user', 'is_single_step',
+    ]
+    actions = ["export_as_csv"]
     fieldsets = (
         (None, {'fields': ('from_user', )}),
         (_('Transaction Details'), {
@@ -97,7 +104,7 @@ class InstantTransactionAdmin(admin.ModelAdmin):
             )
         }),
         (_('Important Dates'), {
-            'fields': ('created_at', 'updated_at')
+            'fields': ('created_at', 'updated_at', 'disbursed_date')
         }),
     )
 
@@ -109,3 +116,4 @@ class InstantTransactionAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+

@@ -69,7 +69,6 @@ class Doc(AbstractBaseDocType, SoftDeletionModel):
     )
 
     class Meta:
-        app_label='payouts_portal.data'
         permissions = (
             ("upload_file", "upload file"),
             ("delete_file", "delete file"),

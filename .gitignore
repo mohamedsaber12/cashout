@@ -1,2 +1,100 @@
-.env
-.git
+.idea
+*.pyc
+*/migrations/
+*.log
+db.sqlite3
+*/local.py
+local.py
+static/debug_toolbar/
+static_root
+todo.txt
+*.csv
+*.orig
+data/cronjobs/smpp
+.env*
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# C extensions
+*.so
+
+# Distribution / packaging
+bin/
+develop-eggs/
+eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+*bower.json
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+.tox/
+.coverage
+.cache
+nosetests.xml
+coverage.xml
+
+# Translations
+*.mo
+
+# Mr Developer
+.mr.developer.cfg
+.project
+.pydevproject
+.vscode
+
+# Rope
+.ropeproject
+
+# Django stuff:
+*.log
+*.pot
+
+# Sphinx documentation
+docs/_build/
+
+# Ignore media files but keep the directories themselves
+/media/avatars/*
+!/media/avatars/.gitkeep
+!/media/avatars/user.png
+
+/media/certificates/*
+!/media/certificates/.gitkeep
+
+/media/entities_logo/*
+!/media/entities_logo/.gitkeep
+!/media/entities_logo/pm_name.png
+
+!/media/documents/.gitkeep
+/media/documents/disbursement/*
+!/media/documents/disbursement/.gitkeep
+
+/media/documents/files_uploaded/*
+!/media/documents/files_uploaded/.gitkeep
+
+/media/documents/instant_transactions/*
+!/media/documents/instant_transactions/.gitkeep
+
+/media/documents/weekly_reports/*
+!/media/documents/weekly_reports/.gitkeep
+
+# Ignore logging files but keep their directories
+/logs/celery_logs/*
+!/logs/celery_logs/.gitkeep
+
+/logs/uwsgi_logs/*
+!/logs/uwsgi_logs/.gitkeep
+
+!/logs/.gitkeep
+/logs/*

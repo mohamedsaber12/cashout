@@ -69,6 +69,7 @@ class Doc(AbstractBaseDocType, SoftDeletionModel):
     )
 
     class Meta:
+        app_label='data'
         permissions = (
             ("upload_file", "upload file"),
             ("delete_file", "delete file"),

@@ -1,2 +1,2 @@
-from .instant_transactions import AbstractBaseIssuer, InstantTransaction
-from .specific_issuers import AmanTransaction
+from instant_cashin.models.instant_transactions import AbstractBaseIssuer, InstantTransaction
+from instant_cashin.models.specific_issuers import AmanTransaction

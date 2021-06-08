@@ -37,17 +37,17 @@ class Format(models.Model):
         identifiers = self.identifiers()
         return all(i in identifiers for i in headers if i)
 
-    def validate_collection_unique(self):
-        collection = CollectionData.objects.filter(
-            user__hierarchy=self.hierarchy).first()
-        unique_field = collection.unique_field
-        unique_field2 = collection.unique_field2
-        identifiers = self.identifiers()
-        if unique_field2 and not all(i in identifiers for i in [unique_field, unique_field2]):
-            return False
-        if unique_field not in identifiers:
-            return False
-        return True
+    # def validate_collection_unique(self):
+    #     collection = CollectionData.objects.filter(
+    #         user__hierarchy=self.hierarchy).first()
+    #     unique_field = collection.unique_field
+    #     unique_field2 = collection.unique_field2
+    #     identifiers = self.identifiers()
+    #     if unique_field2 and not all(i in identifiers for i in [unique_field, unique_field2]):
+    #         return False
+    #     if unique_field not in identifiers:
+    #         return False
+    #     return True
 
     def format_owner(self):
         return RootUser.objects.get(hierarchy=self.hierarchy)

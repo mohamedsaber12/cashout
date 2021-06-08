@@ -22,13 +22,12 @@ class FileDataManager(models.Manager):
             result &= Q(created_at__gte=from_datetime)
         if to_datetime:
             result &= Q(created_at__lte=to_datetime)
-        compound_statement = (Q(phone_no=value) | Q(
-            payment_status=value) | Q(transaction_id=value))
+        compound_statement = (Q(doc__txn_id=value))
         return super(FileDataManager, self).get_queryset().filter(
             Q(doc=file_obj) &
             compound_statement &
             result
-        ).order_by('-created_at')
+        ).order_by('-date')
 
     def transactions_in_range(self, user, start_date=None, end_date=None):
         """
@@ -49,9 +48,8 @@ class FileDataManager(models.Manager):
             start_date = end_date - timedelta(days=45)
 
         client_data = query.filter(
-            file_category__user_created=user.parent,
+            doc__file_category__user_created=user.root,
             transactions__datetime__date__range=(start_date, end_date),
-            has_transaction=True
         )
 
         # Append all dates between start and end dates to user's seen days.
@@ -75,9 +73,7 @@ class FileDataManager(models.Manager):
             days = []
 
         clients_data = query.filter(
-            Q(file_category__user_created=user),
-            Q(has_transaction=True) |
-            Q(has_partial_transaction=True)
+            Q(doc__file_category__user_created=user),
         )
         today_clients_data = clients_data.filter(
             transactions__datetime__day=now().date().day,

@@ -1391,7 +1391,7 @@ class ExportClientsTransactionsMonthlyReport:
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
-            for el in vf_ets_aman_qs.values():
+            for el in vf_ets_aman_qs:
                 if el['admin'] in distinct_msisdn:
                     distinct_msisdn[el['admin']].add(el['msisdn'])
                 else:

@@ -21,6 +21,8 @@ from users.models import EntitySetup, User
 from .functions import render_to_pdf
 from .models import AbstractBaseDocStatus
 
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
+
 
 def retrieve_onboarded_entities_and_disbursement_records_over_week(superadmin_username):
     """Retrieve the newly onboarded entities and the disbursement trx over the last week for superadmin"""
@@ -103,4 +105,7 @@ def send_transfer_request_email(admin_username, message, attachment_file_name=No
                 admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team
         )
 
+    BUDGET_LOGGER.debug(
+            f"[message] [transfer request Email] from :- [{admin_username}]  to:- {business_team}"
+    )
     return True

@@ -1176,7 +1176,7 @@ class ExportClientsTransactionsMonthlyReport:
                     Q(disbursed_date__gte=self.first_day),
                     Q(disbursed_date__lte=self.last_day),
                     Q(end_to_end=""),
-                    Q(status=AbstractBaseACHTransactionStatus.PENDING),
+                    Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL, AbstractBaseACHTransactionStatus.RETURNED]),
                     (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                     Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
@@ -1376,6 +1376,11 @@ class ExportClientsTransactionsMonthlyReport:
                         'full_date': f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
+            else:
+                if self.vf_facilitator_perm:
+                    final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
+                    final_data[current_admin.username][0]["vf_facilitator_identifier"] =  current_admin.client.vodafone_facilitator_identifier
+                    
                 elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
                 else:
@@ -1384,11 +1389,11 @@ class ExportClientsTransactionsMonthlyReport:
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
-            for el in vf_ets_aman_qs.values():
-                if el['admin'] in distinct_msisdn:
-                    distinct_msisdn[el['admin']].add(el['msisdn'])
-                else:
-                    distinct_msisdn[el['admin']] = set([el['msisdn']])
+            # for el in vf_ets_aman_qs:
+            #     if el['admin'] in distinct_msisdn:
+            #         distinct_msisdn[el['admin']].add(el['msisdn'])
+            #     else:
+            #         distinct_msisdn[el['admin']] = set([el['msisdn']])
 
             # 9. Add all admin that have no transactions to distinct msisdn
             for current_admin in admins_qs:

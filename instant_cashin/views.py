@@ -7,6 +7,7 @@ from django.shortcuts import get_object_or_404
 from django.views.generic import ListView
 
 from disbursement.models import BankTransaction
+from disbursement.utils import add_fees_and_vat_to_qs
 
 from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction
@@ -19,7 +20,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
 
     model = InstantTransaction
     context_object_name = 'instant_transactions'
-    paginate_by = 11
+    # paginate_by = 11
     template_name = 'instant_cashin/instant_viewer.html'
     queryset = InstantTransaction.objects.all()
 
@@ -55,7 +56,7 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
 
     model = BankTransaction
     context_object_name = 'bank_transactions'
-    paginate_by = 11
+    # paginate_by = 11
     template_name = 'instant_cashin/instant_viewer.html'
     queryset = BankTransaction.objects.all()
 
@@ -84,5 +85,8 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
                     Q(creditor_account_number__in=search_keys)|
                     Q(creditor_bank__in=search_keys)
             ).prefetch_related("children_transactions").distinct().order_by("-created_at")
-
-        return queryset
+        return add_fees_and_vat_to_qs(
+                queryset,
+                self.request.user.root,
+                None
+        )

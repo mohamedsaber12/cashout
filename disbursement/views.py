@@ -1391,11 +1391,11 @@ class ExportClientsTransactionsMonthlyReport:
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
-            for el in vf_ets_aman_qs:
-                if el['admin'] in distinct_msisdn:
-                    distinct_msisdn[el['admin']].add(el['msisdn'])
-                else:
-                    distinct_msisdn[el['admin']] = set([el['msisdn']])
+            # for el in vf_ets_aman_qs:
+            #     if el['admin'] in distinct_msisdn:
+            #         distinct_msisdn[el['admin']].add(el['msisdn'])
+            #     else:
+            #         distinct_msisdn[el['admin']] = set([el['msisdn']])
 
             # 9. Add all admin that have no transactions to distinct msisdn
             for current_admin in admins_qs:

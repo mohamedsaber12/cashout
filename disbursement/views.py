@@ -1378,8 +1378,10 @@ class ExportClientsTransactionsMonthlyReport:
                     }]
             else:
                 if self.vf_facilitator_perm:
-                    final_data[current_admin.username]["full_date"] = f"{self.start_date} to {self.end_date}"
-                    final_data[current_admin.username]["vf_facilitator_identifier"] = current_admin.client.vodafone_facilitator_identifier
+                    final_data[current_admin.username] = [{
+                        'full_date': f"{self.start_date} to {self.end_date}",
+                        'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
+                    }]
                     
                 elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT

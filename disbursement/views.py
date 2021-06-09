@@ -771,7 +771,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         return add_fees_and_vat_to_qs(
             trxs,
             root_user,
-            None
+            self.request.GET.get('issuer', None)
         )
 
     def get(self, request, *args, **kwargs):

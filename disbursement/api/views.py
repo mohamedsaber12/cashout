@@ -31,6 +31,8 @@ from ..models import Agent, DisbursementData, DisbursementDocData
 from .permission_classes import BlacklistPermission
 from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
 from ..tasks import BulkDisbursementThroughOneStepCashin
+import requests
+import json
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -411,18 +413,48 @@ class AllowDocDisburse(APIView):
     
 class CancelAmanTransactionView(APIView):
     
-    permission_classes = (IsAuthenticated,)
-    authentication_classes = (SessionAuthentication,)
     http_method_names = ['post']
+    
+    def __init__(self):
+        self.req_headers = {'Content-Type': 'application/json'}
+        self.authentication_url = "https://accept.paymobsolutions.com/api/auth/tokens"
+        self.api_key = get_value_from_env("ACCEPT_API_KEY")
+        self.payload = {'api_key': self.api_key}
+        self.void_url = "https://accept.paymob.com/api/acceptance/void_refund/void?token="
+        
     
     def post(self, request, *args, **kwargs):
         
         if not request.is_ajax():
             return JsonResponse(data={}, status=status.HTTP_403_FORBIDDEN)
      
-        if not request.user.is_root:
-            return JsonResponse(data={}, status=status.HTTP_403_FORBIDDEN)
-
-        return JsonResponse(data={"canceled": True}, status=200)
+        trn_id = request.data.get('transaction_id', None)
+        if not trn_id:
+            return JsonResponse(data={"canceled": False, "message": "missed transaction ID"}, status=401)
+        token = self.create_auth_token()
+        resp = self.void_transaction(trn_id, token)
+        
+        if resp.get("success") == True:
+            disb_trn = DisbursementData.objects.get(reference_id=trn_id)
+            disb_trn.aman_obj.all()[0].is_cancelled = True
+            disb_trn.aman_obj.all()[0].save()
+            disb_trn.doc.owner.root.budget.return_disbursed_amount_for_cancelled_trx(disb_trn.amount)
+            return JsonResponse(data={"canceled": True}, status=200)
+        else:
+            return JsonResponse(data={"canceled": False, "message":"request error"}, status=401)
+        
+        
+    
+    def create_auth_token(self):
+        response = requests.post(self.authentication_url, data=json.dumps(self.payload), headers=self.req_headers)
+        token = response.json().get("token")
+        return token
+    
+    def void_transaction(self,trn_id, token):
+        payload = {
+            "transaction_id": trn_id
+        }
+        resp = requests.post(f"{self.void_url}{token}", data=json.dumps(payload), headers=self.req_headers)
+        return resp
 
 

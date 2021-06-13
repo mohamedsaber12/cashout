@@ -7,6 +7,8 @@
         <th class="trxTableHeader">{% trans 'Transaction ID' %}</th>
         <th class="trxTableHeader">{% trans 'Recipient' %}</th>
         <th class="trxTableHeader">{% trans 'Amount' %}</th>
+        <th class="trxTableHeader">{% trans 'Fees' %}</th>
+        <th class="trxTableHeader">{% trans 'Vat' %}</th>
         <th class="trxTableHeader">{% trans 'Issuer' %}</th>
         <th class="trxTableHeader">{% trans 'Status' %}</th>
         <th class="trxTableHeader">{% trans 'Updated At' %}</th>
@@ -31,6 +33,8 @@
           <td>{{ transaction.uid }}</td>
           <td>{{ transaction.anon_recipient }}</td>
           <td>{{ transaction.amount }}</td>
+          <td>{{ transaction.fees }}</td>
+          <td>{{ transaction.vat }}</td>
           <td>{{ transaction.issuer_choice_verbose }}</td>
           <td>{{ transaction.status_choice_verbose }}</td>
           <td>{{ transaction.updated_at }}</td>

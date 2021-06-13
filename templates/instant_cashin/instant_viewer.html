@@ -27,7 +27,7 @@
     <div class="">
       <div class="page-title">
         <div class="title_left">
-          {% if bank_transactions %}
+          {% if is_bank_transactions == 'yes' %}
             <h3>Bank Accounts/Cards Transactions{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
           {% else %}
             <h3>Wallets/Aggregators Transactions{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
@@ -48,7 +48,7 @@
               <div class="clearfix"></div>
             </div>
 
-            {% if bank_transactions %}
+            {% if is_bank_transactions == 'yes' %}
               {% include 'instant_cashin/banks_transactions.html' with transactions=bank_transactions %}
             {% else %}
               {% include 'instant_cashin/wallets_transactions.html' with transactions=instant_transactions %}

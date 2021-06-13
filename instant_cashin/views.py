@@ -46,7 +46,11 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                     Q(transaction_status_description__icontains=search_keys)
             )
 
-        return queryset
+        return add_fees_and_vat_to_qs(
+                queryset,
+                self.request.user.root,
+                'wallets'
+        )
 
 
 class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
@@ -63,6 +67,7 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['admin'] = self.request.GET.get('client')
+        context['is_bank_transactions'] = 'yes'
         return context
 
     def get_queryset(self):

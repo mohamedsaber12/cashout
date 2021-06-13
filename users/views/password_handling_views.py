@@ -19,6 +19,14 @@ class ForgotPasswordView(FormView):
     form_class = ForgotPasswordForm
     template_name = 'users/forget-password.html'
 
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Common attributes between GET and POST methods
+        """
+        self.template_name = 'users/vodafone_forgot_password.html' \
+            if "vodafone" in request.get_host() else 'users/forget-password.html'
+        return super().dispatch(request, *args, **kwargs)
+
     def form_valid(self, form):
         """called when form is valid"""
         if form.user:

@@ -959,6 +959,7 @@ class ExportClientsTransactionsMonthlyReport:
         self.instant_or_accept_perm = False
         self.vf_facilitator_perm = False
         self.default_vf__or_bank_perm = False
+        self.temp_vf_ets_aman_qs = []
 
     def refine_first_and_end_date_format(self):
         """
@@ -1073,6 +1074,15 @@ class ExportClientsTransactionsMonthlyReport:
                     (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
                     Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
+        
+        # if super admins are vodafone facilitator onboarding save qs
+        # for calculate distinct msisdn count
+        if self.vf_facilitator_perm:
+            self.temp_vf_ets_aman_qs = qs
+            self.temp_vf_ets_aman_qs = self.temp_vf_ets_aman_qs.annotate(
+                admin=F('doc__disbursed_by__root__username')
+            )
+
         if self.status in ['success', 'failed']:
             qs = self._annotate_vf_ets_aman_qs(qs)
             if self.instant_or_accept_perm:
@@ -1301,6 +1311,7 @@ class ExportClientsTransactionsMonthlyReport:
                 self.vf_facilitator_perm = True
             else:
                 self.default_vf__or_bank_perm = True
+        # validate that some super admins data will export fine together and others not
         onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
         if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
             return False
@@ -1389,11 +1400,11 @@ class ExportClientsTransactionsMonthlyReport:
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
-            # for el in vf_ets_aman_qs:
-            #     if el['admin'] in distinct_msisdn:
-            #         distinct_msisdn[el['admin']].add(el['msisdn'])
-            #     else:
-            #         distinct_msisdn[el['admin']] = set([el['msisdn']])
+            for el in self.temp_vf_ets_aman_qs.values():
+                if el['admin'] in distinct_msisdn:
+                    distinct_msisdn[el['admin']].add(el['msisdn'])
+                else:
+                    distinct_msisdn[el['admin']] = set([el['msisdn']])
 
             # 9. Add all admin that have no transactions to distinct msisdn
             for current_admin in admins_qs:

@@ -75,6 +75,7 @@
                     data-reason_description="{{ transaction.reason | code_description }}"
                     {% if not is_normal_flow %}
                       data-trx_id="{{ transaction.reference_id }}"
+                      data-is_canceled="{{ transaction.aman_transaction_is_canceled }}"
                       data-issuer="{{ transaction.issuer|title }}"
                       data-aman_is_paid="{{ transaction.aman_transaction_is_paid }}"
                     {% endif %}
@@ -322,6 +323,7 @@
         appendedTags += `<li><span>Amount</span><b>:</b>${amount}</li>`;
 
         let is_disbursed = $(this).data('is_disbursed');
+        let is_canceled = $(this).data('is_canceled');
         let reason = $(this).data('reason');
 
         {# Handle is_disbursed icon based of the record disbursement status #}
@@ -347,6 +349,12 @@
             } else {
               appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
             }
+
+            if (is_canceled === 'True') {
+              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
           }
         {% endif %}
 
@@ -364,6 +372,11 @@
           appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b> -- </li>`;
           appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>Disbursement process is running</li>`;
         }
+          if (issuer === 'Aman') {
+            if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
+              appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx_id})" class="btn btn-danger btn-md">Cancel</button></center>`;
+            }
+          }
 
         let created_at = $(this).data('created_at');
         appendedTagsRight += `<li><span>Created At</span><b>:</b>${created_at}</li>`;
@@ -386,5 +399,25 @@
         }, 'slow');
      }
     });
+
+    function cancel_transaction(trn_id){
+      conf = confirm("Are you sure you want to cancel this transaction ?");
+      if (conf){
+        $.ajax({
+          url: "{% url 'disb_api:cancel_aman_transaction' %}",
+          type: "POST",
+            headers: {'Content-Type': 'application/json'},
+
+          'data': JSON.stringify({ 'transaction_id': trn_id }),
+          success: function (data, text, xhr) {
+            if (data.canceled == false)
+                alert("Transaction can't be canceled");
+            else
+                location.reload();
+          },
+        });
+
+      }
+    }
   </script>
 {% endblock %}

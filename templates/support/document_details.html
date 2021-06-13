@@ -105,7 +105,9 @@
                     data-is_disbursed="{{ record.is_disbursed }}"
                     data-reason="{{ record.reason }}"
                     data-issuer="{{ record.issuer }}"
+                    data-trx_id="{{ record.reference_id }}"
                     data-aman_is_paid="{{ record.aman_transaction_is_paid }}"
+                    data-aman_is_canceled="{{ record.aman_transaction_is_canceled }}"
                     {% if record.is_disbursed %}
                       data-reason_description="{{ record.reason }}"
                     {% else %}
@@ -373,6 +375,7 @@ $(document).ready( function () {
         {% endif %}
         {% if doc_obj.is_e_wallet %}
           let issuer = $(this).data('issuer');
+          let is_canceled = $(this).data('aman_is_canceled');
           appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
           {# Determine is_paid? status for aman transactions #}
           if (issuer === 'Aman' || issuer === 'aman') {
@@ -381,6 +384,12 @@ $(document).ready( function () {
               appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
               appendedTagsRight += `<li><span>Cashed Out?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+            }
+
+            if (is_canceled === 'True') {
+              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
             }
           }
           let msisdn = $(this).data('msisdn');
@@ -418,6 +427,15 @@ $(document).ready( function () {
         {% endif %}
         trx.updated_at = $(this).data('updated_at');
         appendedTagsRight += `<li><span>Updated At</span><b>:</b>${trx.updated_at}</li>`;
+        if (issuer === 'aman') {
+          let aman_is_paid = $(this).data('aman_is_paid');
+          let is_canceled = $(this).data('aman_is_canceled');
+          console.log(is_canceled)
+            if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
+              trx.id = $(this).data('trx_id');
+              appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx.id})" class="btn btn-danger btn-md">Cancel</button></center>`;
+            }
+          }
 
         ul.empty();
         ul.append(appendedTags);
@@ -434,5 +452,26 @@ $(document).ready( function () {
         }, 'slow');
      }
     });
+
+    function cancel_transaction(trn_id){
+      conf = confirm("Are you sure you want to cancel this transaction ?");
+      if (conf){
+        $.ajax({
+          url: "{% url 'disb_api:cancel_aman_transaction' %}",
+          type: "POST",
+            headers: {'Content-Type': 'application/json'},
+
+          'data': JSON.stringify({ 'transaction_id': trn_id }),
+          success: function (data, text, xhr) {
+            if (data.canceled == false)
+                alert("Transaction can't be canceled");
+            else
+                location.reload();
+          },
+        });
+
+      }
+    }
+
   </script>
 {% endblock %}

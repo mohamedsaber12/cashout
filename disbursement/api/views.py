@@ -432,16 +432,18 @@ class CancelAmanTransactionView(APIView):
         if not trn_id:
             return JsonResponse(data={"canceled": False, "message": "missed transaction ID"}, status=401)
         token = self.create_auth_token()
-        resp = self.void_transaction(trn_id, token)
+        resp = self.void_transaction(trn_id, token)        
         
-        if resp.get("success") == True:
+        
+        if resp.json().get("success") == True:
             disb_trn = DisbursementData.objects.get(reference_id=trn_id)
-            disb_trn.aman_obj.all()[0].is_cancelled = True
-            disb_trn.aman_obj.all()[0].save()
+            aman_obj = disb_trn.aman_obj.first()
+            aman_obj.is_cancelled = True
+            aman_obj.save()
             disb_trn.doc.owner.root.budget.return_disbursed_amount_for_cancelled_trx(disb_trn.amount)
             return JsonResponse(data={"canceled": True}, status=200)
         else:
-            return JsonResponse(data={"canceled": False, "message":"request error"}, status=401)
+            return JsonResponse(data={"canceled": False, "message":"request error"}, status=200)
         
         
     

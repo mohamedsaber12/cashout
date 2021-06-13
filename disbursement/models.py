@@ -191,6 +191,14 @@ class DisbursementData(AbstractTimeStamp):
             return self.aman_obj.first().is_paid
         except AttributeError:
             return None
+    
+    @property
+    def aman_transaction_is_canceled(self):
+        """Property for retrieving is_canceled status for disbursement records through Aman"""
+        try:
+            return self.aman_obj.first().is_cancelled
+        except AttributeError:
+            return None
 
 
 class BankTransaction(AbstractTimeStamp,

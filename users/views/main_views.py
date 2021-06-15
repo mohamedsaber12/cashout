@@ -124,6 +124,12 @@ def login_view(request):
     user = None
 
     if request.user.is_authenticated:
+
+        # this is special case based on business demand for prevent \
+        # two factor authentication for this admin => Careem_Admin
+        if request.user.username == 'Careem_Admin':
+            return redirect('data:main_view')
+
         if request.user.is_vodafone_default_onboarding or \
                 request.user.is_banks_standard_model_onboaring or\
                 request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
@@ -140,6 +146,12 @@ def login_view(request):
             if user.is_active:
                 login(request, user)
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
+
+                # this is special case based on business demand for prevent \
+                # two factor authentication for this admin => Careem_Admin
+                if request.user.username == 'Careem_Admin':
+                    return HttpResponseRedirect(reverse('data:main_view'))
+
                 if request.user.is_vodafone_default_onboarding or \
                         request.user.is_banks_standard_model_onboaring or\
                         request.user.is_accept_vodafone_onboarding and request.user.is_checker or \

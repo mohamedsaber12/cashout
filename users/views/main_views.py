@@ -118,7 +118,9 @@ def login_view(request):
     Non active users can't login.
     """
     context = {}
-    login_template = 'data/vodafone_login.html' if "vodafone" in request.get_host() else 'data/login.html'
+    # make it for now until business say deploy vodafone login page on production
+    login_template = 'data/login.html'
+    # login_template = 'data/vodafone_login.html' if "vodafone" in request.get_host() else 'data/login.html'
     user = None
 
     if request.user.is_authenticated:

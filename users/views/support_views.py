@@ -182,7 +182,9 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             doc_transactions = doc_obj.bank_cards_transactions.all()\
                 .order_by('parent_transaction__transaction_id', '-created_at')\
                 .distinct('parent_transaction__transaction_id')
-            doc_transactions_qs = doc_obj.bank_cards_transactions.all()
+            doc_transactions_qs = doc_obj.bank_cards_transactions.all() \
+                .order_by('parent_transaction__transaction_id', '-created_at') \
+                .distinct('parent_transaction__transaction_id')
 
         context = {
             'doc_obj': doc_obj,

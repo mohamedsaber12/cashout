@@ -102,7 +102,11 @@ class AdministrativeTwoFactorAuthMiddleWare:
             reverse("set_language")
         ]
 
+        # Note this condition ==> request.user.username != 'Careem_Admin' \
+        # is special case based on business demand for prevent \
+        # two factor authentication for this admin => Careem_Admin
         if request.user.is_authenticated and not is_media_path and not request.user.is_superuser and \
+                request.user.username != 'Careem_Admin' and \
                 (
                         request.user.is_vodafone_default_onboarding or
                         request.user.is_banks_standard_model_onboaring or

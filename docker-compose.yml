@@ -91,6 +91,8 @@ services:
       - /etc/letsencrypt:/etc/letsencrypt
       - /home/ec2-user/Payouts/disbursement_tool/static:/home/app/payouts_portal/static
       - /home/ec2-user/Payouts/disbursement_tool/media:/home/app/payouts_portal/media
+    depends_on:
+      - payouts
     networks:
       - payouts_network
 

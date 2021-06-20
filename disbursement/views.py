@@ -159,11 +159,26 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                 annotate(total_amount=Sum('amount'), number=Count(trx_id)).order_by()
 
             doc_transactions_totals = { agg_dict['status']: agg_dict for agg_dict in doc_transactions_totals }
+            # add default transactions to pending transactions
             if doc_transactions_totals.get('d') and doc_transactions_totals.get('P'):
                 doc_transactions_totals['P']['total_amount'] += doc_transactions_totals.get('d').get('total_amount')
                 doc_transactions_totals['P']['number'] += doc_transactions_totals.get('d').get('number')
             elif doc_transactions_totals.get('d'):
                 doc_transactions_totals['P'] = doc_transactions_totals.get('d')
+
+            # put failed transaction equal to 0 if not exist
+            if doc_transactions_totals.get('F') == None:
+                doc_transactions_totals['F'] = {'status': 'F', 'total_amount': Decimal('0'), 'number': 0}
+
+            # add returned transaction to failed transactions if exist
+            if doc_transactions_totals.get('R') != None:
+                doc_transactions_totals['F']['total_amount'] += doc_transactions_totals.get('R').get('total_amount')
+                doc_transactions_totals['F']['number'] += doc_transactions_totals.get('R').get('number')
+
+            # add rejected transaction to failed transactions if exist
+            if doc_transactions_totals.get('J') != None:
+                doc_transactions_totals['F']['total_amount'] += doc_transactions_totals.get('J').get('total_amount')
+                doc_transactions_totals['F']['number'] += doc_transactions_totals.get('J').get('number')
 
         doc_transactions_totals['all'] = {
             'total_amount' : doc_obj.total_amount,

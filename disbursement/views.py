@@ -159,11 +159,26 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                 annotate(total_amount=Sum('amount'), number=Count(trx_id)).order_by()
 
             doc_transactions_totals = { agg_dict['status']: agg_dict for agg_dict in doc_transactions_totals }
+            # add default transactions to pending transactions
             if doc_transactions_totals.get('d') and doc_transactions_totals.get('P'):
                 doc_transactions_totals['P']['total_amount'] += doc_transactions_totals.get('d').get('total_amount')
                 doc_transactions_totals['P']['number'] += doc_transactions_totals.get('d').get('number')
             elif doc_transactions_totals.get('d'):
                 doc_transactions_totals['P'] = doc_transactions_totals.get('d')
+
+            # put failed transaction equal to 0 if not exist
+            if doc_transactions_totals.get('F') == None:
+                doc_transactions_totals['F'] = {'status': 'F', 'total_amount': Decimal('0'), 'number': 0}
+
+            # add returned transaction to failed transactions if exist
+            if doc_transactions_totals.get('R') != None:
+                doc_transactions_totals['F']['total_amount'] += doc_transactions_totals.get('R').get('total_amount')
+                doc_transactions_totals['F']['number'] += doc_transactions_totals.get('R').get('number')
+
+            # add rejected transaction to failed transactions if exist
+            if doc_transactions_totals.get('J') != None:
+                doc_transactions_totals['F']['total_amount'] += doc_transactions_totals.get('J').get('total_amount')
+                doc_transactions_totals['F']['number'] += doc_transactions_totals.get('J').get('number')
 
         doc_transactions_totals['all'] = {
             'total_amount' : doc_obj.total_amount,
@@ -771,7 +786,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         return add_fees_and_vat_to_qs(
             trxs,
             root_user,
-            None
+            self.request.GET.get('issuer', None)
         )
 
     def get(self, request, *args, **kwargs):
@@ -959,6 +974,7 @@ class ExportClientsTransactionsMonthlyReport:
         self.instant_or_accept_perm = False
         self.vf_facilitator_perm = False
         self.default_vf__or_bank_perm = False
+        self.temp_vf_ets_aman_qs = []
 
     def refine_first_and_end_date_format(self):
         """
@@ -1073,6 +1089,15 @@ class ExportClientsTransactionsMonthlyReport:
                     (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
                     Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
+        
+        # if super admins are vodafone facilitator onboarding save qs
+        # for calculate distinct msisdn count
+        if self.vf_facilitator_perm:
+            self.temp_vf_ets_aman_qs = qs
+            self.temp_vf_ets_aman_qs = self.temp_vf_ets_aman_qs.annotate(
+                admin=F('doc__disbursed_by__root__username')
+            )
+
         if self.status in ['success', 'failed']:
             qs = self._annotate_vf_ets_aman_qs(qs)
             if self.instant_or_accept_perm:
@@ -1301,6 +1326,7 @@ class ExportClientsTransactionsMonthlyReport:
                 self.vf_facilitator_perm = True
             else:
                 self.default_vf__or_bank_perm = True
+        # validate that some super admins data will export fine together and others not
         onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
         if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
             return False
@@ -1376,6 +1402,11 @@ class ExportClientsTransactionsMonthlyReport:
                         'full_date': f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
+            else:
+                if self.vf_facilitator_perm:
+                    final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
+                    final_data[current_admin.username][0]["vf_facilitator_identifier"] =  current_admin.client.vodafone_facilitator_identifier
+                    
                 elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
                 else:
@@ -1384,7 +1415,7 @@ class ExportClientsTransactionsMonthlyReport:
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
-            for el in vf_ets_aman_qs.values():
+            for el in self.temp_vf_ets_aman_qs.values():
                 if el['admin'] in distinct_msisdn:
                     distinct_msisdn[el['admin']].add(el['msisdn'])
                 else:

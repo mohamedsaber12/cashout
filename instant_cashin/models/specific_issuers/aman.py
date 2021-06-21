@@ -25,6 +25,11 @@ class AmanTransaction(models.Model):
             default=0,
             verbose_name=_("Bill Reference")
     )
+    
+    is_cancelled = models.BooleanField(
+            default=False,
+            verbose_name=_("Is Canceled?")
+    )
 
     class Meta:
         verbose_name = "Aman Transaction"

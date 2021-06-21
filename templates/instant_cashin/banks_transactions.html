@@ -8,6 +8,8 @@
       <th class="trxTableHeader">{% trans 'Reference ID' %}</th>
       <th class="trxTableHeader">{% trans 'Recipient' %}</th>
       <th class="trxTableHeader">{% trans 'Amount' %}</th>
+      <th class="trxTableHeader">{% trans 'Fees' %}</th>
+      <th class="trxTableHeader">{% trans 'Vat' %}</th>
       <th class="trxTableHeader">{% trans 'Status' %}</th>
       <th class="trxTableHeader">{% trans 'Updated At' %}</th>
     </tr>
@@ -32,6 +34,8 @@
         <td>{{ trx.parent_transaction.transaction_id }}</td>
         <td>{{ trx.creditor_account_number }}</td>
         <td>{{ trx.amount }}</td>
+        <td>{{ trx.fees }}</td>
+        <td>{{ trx.vat }}</td>
         <td>{{ trx.status_choice_verbose }}</td>
         <td>{{ trx.updated_at }}</td>
       </tr>

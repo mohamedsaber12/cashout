@@ -329,6 +329,12 @@ class SupportUserModelAdmin(UserAccountAdmin):
     """
 
     list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+    
+    def get_fieldsets(self, request, obj):
+        return ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+    
+    def get_fields(self):
+        return ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
 
 
 @admin.register(SupportSetup)

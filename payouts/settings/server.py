@@ -12,8 +12,8 @@ DATABASES = {
         'NAME': env.str('DB_NAME'),
         'USER': env.str('DB_USER'),
         'PASSWORD': env.str('DB_PASSWORD'),
-        'HOST': 'localhost',
-        'PORT': '',
+        'HOST': 'postgres',
+        'PORT': '5432',
         'CONN_MAX_AGE': 600,
     }
 }

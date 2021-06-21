@@ -22,7 +22,7 @@ fi
 # python manage.py makemigrations data
 # python manage.py migrate data
 
-# Migrate disbursement app
+ #Migrate disbursement app
 # python manage.py makemigrations disbursement
 # python manage.py migrate disbursement
 

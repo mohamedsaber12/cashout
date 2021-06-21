@@ -1,4 +1,4 @@
-from .aman import AmanTransaction
+from instant_cashin.models.specific_issuers.aman import AmanTransaction
 
 
 __all__ = [

@@ -2,10 +2,8 @@ from __future__ import unicode_literals
 import operator
 from datetime import datetime
 from functools import reduce
-
 from django.db import models
 from django.conf import settings
-
 from users.models import RootUser
 
 # Create your models here.

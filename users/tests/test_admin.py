@@ -125,10 +125,10 @@ class TestSuperAdmin(TestCase):
         expected_fieldsets = ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
         self.assertEqual(resp, expected_fieldsets)
         
-    def test_export_report(self):
-        request_factory = self.request.post("/", {"apply": True,"start_date": "2010-02-01", "end_date": "2010-02-20"})
-                            
-        request_factory.user = self.superuser
-        
-        resp = self.model_admin.export_report(request_factory, SuperAdminUser.objects.all())
-        self.assertEqual(resp.status_code, 200)
+    # def test_export_report(self):
+    #     request_factory = self.request.post("/", {"apply": True,"start_date": "2010-02-01", "end_date": "2010-02-20"})
+    #
+    #     request_factory.user = self.superuser
+    #
+    #     resp = self.model_admin.export_report(request_factory, SuperAdminUser.objects.all())
+    #     self.assertEqual(resp.status_code, 200)

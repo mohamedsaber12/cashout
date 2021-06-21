@@ -3,16 +3,13 @@ from .server import *
 
 
 ALLOWED_HOSTS += [
-    'payouts.paymobsolutions.com',
-    'vodafonepayouts.paymob.com',
-    '52.8.5.130',
-    '172.30.1.74',
+    'payouts-ci.paymobsolutions.com',
 ]
 
 # Email Reporting
-ADMINS += [
-    ('Omar Nawar', 'omarnawar@paymob.com'),
-]
+#ADMINS += [
+ #   ('Omar Nawar', 'omarnawar@paymob.com'),
+#]
 
 # base url
-BASE_URL = 'https://payouts.paymobsolutions.com'
+BASE_URL = 'https://payouts-ci.paymobsolutions.com'

@@ -15,7 +15,7 @@ class Value:
 class MockRequest:
     def get(self):
         request_factory = RequestFactory()
-        return request_factory.get("/")
+        return request_factory.get("/", {}, HTTP_USER_AGENT='Mozilla/5.0')
             
             
 class TestUtils(TestCase):
@@ -28,8 +28,8 @@ class TestUtils(TestCase):
             print(context.exception)
             
     def test_get_client_ip(self):
-        req = RequestFactory()
-        req.META["HTTP_X_FORWARDED_FOR"] = "test"
+        req = MockRequest()
+        req.META = {"test": "test"}
         resp = get_client_ip(req)
         
         

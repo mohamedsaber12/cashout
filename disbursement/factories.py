@@ -79,14 +79,10 @@ class DisbursementDocDataFactory(factory.django.DjangoModelFactory):
     factory model for Disbursement Doc Data model
     """
     # doc = models.OneToOneField('data.Doc', null=True, related_name='disbursement_txn', on_delete=models.CASCADE)
-    txn_id = factory.Sequence(lambda  id: id)
-    doc_status = factory.Iterator(DisbursementDocData.STATUS_CHOICES)
-    has_callback = factory.LazyAttribute(
-            lambda obj: True if obj.doc_status == DisbursementDocData.DISBURSED_SUCCESSFULLY else False
-    )
-    txn_status = factory.LazyAttribute(
-            lambda obj: '200' if obj.doc_status == DisbursementDocData.DISBURSED_SUCCESSFULLY else None
-    )
+    txn_id = "dmf9023mlsad"
+    # doc_status = factory.Iterator(DisbursementDocData.STATUS_CHOICES)
+    has_callback = True
+    txn_status = True
 
     class Meta:
         model = DisbursementDocData

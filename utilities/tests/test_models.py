@@ -26,6 +26,18 @@ BALANCE_INQUIRY_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GA
 DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY = 7
 DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE',
                                                         'REQUEST_GATEWAY_TYPE', 'WALLETISSUER', 'BATCH_ID', 'TYPE']
+BULK_DISBURSEMENT_PAYLOAD_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GATEWAY_TYPE', 'WALLETISSUER',
+                                  'SENDERS', 'RECIPIENTS', 'PIN', 'SERVICETYPE', 'SOURCE', 'TYPE']
+INSTANT_DISBURSEMENT_PAYLOAD_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GATEWAY_TYPE',
+                                     'WALLETISSUER', 'MSISDN', 'MSISDN2', 'AMOUNT', 'PIN', 'IS_REVERSED', 'TYPE']
+CHANGE_PROFILE_PAYLOAD_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GATEWAY_TYPE', 'WALLETISSUER',
+                                'USERS', 'NEWPROFILE', 'TYPE']
+USER_INQUIRY_PAYLOAD_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GATEWAY_TYPE',
+                             'WALLETISSUER', 'USERS', 'TYPE']
+SET_PIN_PAYLOAD_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GATEWAY_TYPE', 'WALLETISSUER',
+                        'USERS', 'PIN', 'TYPE']
+BALANCE_INQUIRY_PAYLOAD_KEYS = ['LOGIN', 'PASSWORD', 'REQUEST_GATEWAY_CODE', 'REQUEST_GATEWAY_TYPE', 'WALLETISSUER',
+                                'MSISDN', 'PIN', 'TYPE']
 
 
 class AbstractBaseVMTDataTests(TestCase):
@@ -88,4 +100,124 @@ class AbstractBaseVMTDataTests(TestCase):
             ValueError,
             self.vmt_data_obj.accumulate_disbursement_or_change_profile_callback_inquiry_payload,
             None
+        )
+
+    # test accumulate_bulk_disbursement_payload
+    def test_accumulate_bulk_disbursement_payload_without_agents_attr(self):
+        self.assertRaises(
+            ValueError,
+            self.vmt_data_obj.accumulate_bulk_disbursement_payload,
+            None, None, 'test'
+        )
+
+    # test accumulate_bulk_disbursement_payload
+    def test_accumulate_bulk_disbursement_payload(self):
+        payload, payload_without_pin = self.vmt_data_obj.accumulate_bulk_disbursement_payload(
+            [{'MSISDN': '01021469732', 'PIN': '123456'}], ['01111451253'], None)
+        self.assertEqual(
+            list(payload.keys()),
+            BULK_DISBURSEMENT_PAYLOAD_KEYS
+        )
+        self.assertEqual(
+            list(payload_without_pin.keys()),
+            BULK_DISBURSEMENT_PAYLOAD_KEYS
+        )
+
+    # test accumulate_instant_disbursement_payload
+    def test_accumulate_instant_disbursement_payload_with_None_parameters(self):
+        self.assertRaises(
+            ValueError,
+            self.vmt_data_obj.accumulate_instant_disbursement_payload,
+            None, None, None, None, None
+        )
+    # test accumulate_instant_disbursement_payload
+    def test_accumulate_instant_disbursement_payload(self):
+        payload, payload_without_pin = self.vmt_data_obj.accumulate_instant_disbursement_payload(
+            [{'MSISDN': '01021469732', 'PIN': '123456'}],
+            ['01111451253'], 200, '123456', 'vodafone')
+        self.assertEqual(
+            list(payload.keys()),
+            INSTANT_DISBURSEMENT_PAYLOAD_KEYS
+        )
+        self.assertEqual(
+            list(payload_without_pin.keys()),
+            INSTANT_DISBURSEMENT_PAYLOAD_KEYS
+        )
+
+    # test accumulate_change_profile_payload
+    def test_accumulate_change_profile_payload_with_None_parameters(self):
+        self.assertRaises(
+            ValueError,
+            self.vmt_data_obj.accumulate_change_profile_payload,
+            None, None
+        )
+
+    # test accumulate_change_profile_payload
+    def test_accumulate_change_profile_payload(self):
+        payload = self.vmt_data_obj.accumulate_change_profile_payload(
+            [{'MSISDN': '01021469732'}],
+           'No fees')
+        self.assertEqual(
+            list(payload.keys()),
+            CHANGE_PROFILE_PAYLOAD_KEYS
+        )
+
+    # test accumulate_user_inquiry_payload
+    def test_accumulate_user_inquiry_payload_with_None_parameters(self):
+        self.assertRaises(
+            ValueError,
+            self.vmt_data_obj.accumulate_user_inquiry_payload,
+            None
+        )
+
+    # test accumulate_user_inquiry_payload
+    def test_accumulate_user_inquiry_payload(self):
+        payload = self.vmt_data_obj.accumulate_user_inquiry_payload(
+            [{'MSISDN': '01021469732'}])
+        self.assertEqual(
+            list(payload.keys()),
+            USER_INQUIRY_PAYLOAD_KEYS
+        )
+
+    # test accumulate_set_pin_payload
+    def test_accumulate_set_pin_payload_with_None_parameters(self):
+        self.assertRaises(
+            ValueError,
+            self.vmt_data_obj.accumulate_set_pin_payload,
+            None, None
+        )
+
+    # test accumulate_set_pin_payload
+    def test_accumulate_set_pin_payload(self):
+        payload, payload_without_pin = self.vmt_data_obj.accumulate_set_pin_payload(
+                [{'MSISDN': '01021469732', 'PIN': '123456'}],
+                '123456')
+        self.assertEqual(
+            list(payload.keys()),
+            SET_PIN_PAYLOAD_KEYS
+        )
+        self.assertEqual(
+            list(payload_without_pin.keys()),
+            SET_PIN_PAYLOAD_KEYS
+        )
+
+    # test accumulate_balance_inquiry_payload
+    def test_accumulate_balance_inquiry_payload_with_None_parameters(self):
+        self.assertRaises(
+            ValueError,
+            self.vmt_data_obj.accumulate_balance_inquiry_payload,
+            None, None
+        )
+
+    # test accumulate_balance_inquiry_payload
+    def test_accumulate_balance_inquiry_payload(self):
+        payload, payload_without_pin = self.vmt_data_obj.accumulate_balance_inquiry_payload(
+                '01021469732', '123456')
+        self.assertEqual(
+            list(payload.keys()),
+            BALANCE_INQUIRY_PAYLOAD_KEYS
+        )
+        self.assertEqual(
+            list(payload_without_pin.keys()),
+            BALANCE_INQUIRY_PAYLOAD_KEYS
         )

@@ -1,7 +1,7 @@
-from django.urls import path
-from .views import TransactionCallbackAPIView
+# from django.urls import path
+# from .views import TransactionCallbackAPIView
 
-app_name = 'payment_api'
-urlpatterns = [
-    path('trx/', TransactionCallbackAPIView.as_view())
-]
+# app_name = 'payment_api'
+# urlpatterns = [
+#     path('trx/', TransactionCallbackAPIView.as_view(), name='trn_callback_api')
+# ]

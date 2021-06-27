@@ -12,44 +12,6 @@ from data.models import FileData
 
 class TransactionManager(models.Manager):
 
-    def get_queryset_and_total(self, request, **kwargs):
-        """
-        Returns the filtered queryset upon request specs.
-        :return: (Int, QuerySet)
-        """
-        search_value = request.GET.get('search[value]', None)
-        start = int(request.GET.get('start', 0))
-        length = int(request.GET.get('length', 10))
-        filters = []
-
-        try:
-            account_id = int(kwargs['account_id'])
-            if account_id == request.user.id:
-                request_user = RootUser.objects.get(id=account_id)
-                filters.append(('biller__hierarchy_id', request_user.hierarchy))
-            else:
-                return 0, self.model.objects.none()
-        except ValueError:
-            pass
-
-        from_datetime_str = request.GET.get('from_datetime')
-        to_datetime_str = request.GET.get('to_datetime')
-
-        if search_value:
-            filters.append(('to_user', search_value))
-
-        if from_datetime_str and to_datetime_str:
-            from_datetime_obj = datetime.strptime(from_datetime_str, "%d-%m-%Y")
-            to_datetime_obj = datetime.strptime(to_datetime_str, "%d-%m-%Y")
-            filters.append(('datetime__range', (from_datetime_obj, to_datetime_obj)))
-
-        qs = [models.Q(expression) for expression in filters]
-        qs = self.model.objects.filter(reduce(operator.and_, qs))
-        total = qs.count()
-        qs = qs[start:start + length]
-
-        return total, qs
-
     def search_transactions(self, search_value):
         """
         Returns all transactions related to someuser.

@@ -99,6 +99,7 @@ MIDDLEWARE = [
     'django_otp.middleware.OTPMiddleware',
     'users.middleware.EntitySetupCompletionMiddleWare',
     'users.middleware.AdministrativeTwoFactorAuthMiddleWare',
+    'users.middleware.AgentAndSuperAgentForAdminMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
@@ -108,6 +109,11 @@ MIDDLEWARE = [
 
     # ToDo: Request/Response Time Delta Middleware
 ]
+
+# disable AdministrativeTwoFactorAuthMiddleWare on local 
+if env.str('ENVIRONMENT') == "local":
+    MIDDLEWARE.remove("users.middleware.AdministrativeTwoFactorAuthMiddleWare")
+
 
 AUTHENTICATION_BACKENDS = [
     # OAuth2.0 Provider

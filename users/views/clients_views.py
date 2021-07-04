@@ -164,7 +164,7 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
         username = self.kwargs.get('username')
 
         try:
-            User.objects.get(username=username).delete()
+            User.objects.get(username=username).hard_delete()
             DELETE_USER_VIEW_LOGGER.debug(f"[message] [USER DELETED] [{request.user}] -- Deleted user: {username}")
         except User.DoesNotExist:
             DELETE_USER_VIEW_LOGGER.debug(

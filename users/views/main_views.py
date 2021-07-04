@@ -118,10 +118,18 @@ def login_view(request):
     Non active users can't login.
     """
     context = {}
-    context["is_vodafone_url"] = True if "vodafone" in request.get_host() else False
+    # make it for now until business say deploy vodafone login page on production
+    login_template = 'data/login.html'
+    # login_template = 'data/vodafone_login.html' if "vodafone" in request.get_host() else 'data/login.html'
     user = None
 
     if request.user.is_authenticated:
+
+        # this is special case based on business demand for prevent \
+        # two factor authentication for this admin => Careem_Admin
+        if request.user.username == 'Careem_Admin':
+            return redirect('data:main_view')
+
         if request.user.is_vodafone_default_onboarding or \
                 request.user.is_banks_standard_model_onboaring or\
                 request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
@@ -138,6 +146,12 @@ def login_view(request):
             if user.is_active:
                 login(request, user)
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
+
+                # this is special case based on business demand for prevent \
+                # two factor authentication for this admin => Careem_Admin
+                if request.user.username == 'Careem_Admin':
+                    return HttpResponseRedirect(reverse('data:main_view'))
+
                 if request.user.is_vodafone_default_onboarding or \
                         request.user.is_banks_standard_model_onboaring or\
                         request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
@@ -162,16 +176,16 @@ def login_view(request):
                     f"[message] [API USER LOGIN ATTEMPT] [{username}] -- "
                     f"Failed Attempt from instant API user with username: {username}")
             context['error_invalid'] = "You're not permitted to login."
-            return render(request, 'data/login.html', context=context)
+            return render(request, login_template, context=context)
         else:
             # Bad login details were provided. So we can't log the user in.
             FAILED_LOGIN_LOGGER.debug(
                     f"[message] [FAILED LOGIN] [anonymous] -- Failed Login Attempt from user with username: {username}"
             )
             context['error_invalid'] = 'Invalid login details supplied.'
-            return render(request, 'data/login.html', context=context)
+            return render(request, login_template, context=context)
     else:
-        return render(request, 'data/login.html', context=context)
+        return render(request, login_template, context=context)
 
 
 def ourlogout(request):

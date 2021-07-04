@@ -19,7 +19,7 @@ ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 
 @app.task()
 @respects_language
-def check_for_status_updates_for_latest_bank_transactions(days_delta=5, **kwargs):
+def check_for_status_updates_for_latest_bank_transactions(days_delta=10, **kwargs):
     """Task for updating pending bank transactions from EBC for the last 5 days at max"""
     try:
         five_days_ago = timezone.now() - datetime.timedelta(int(days_delta))

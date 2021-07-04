@@ -12,6 +12,7 @@ from django.views.generic import CreateView, ListView, TemplateView
 from data.models import Doc
 from disbursement.views import DisbursementDocTransactionsView
 from disbursement.utils import add_fees_and_vat_to_qs
+from disbursement.models import BankTransaction
 
 from ..forms import SupportUserCreationForm
 from ..mixins import (
@@ -182,7 +183,9 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             doc_transactions = doc_obj.bank_cards_transactions.all()\
                 .order_by('parent_transaction__transaction_id', '-created_at')\
                 .distinct('parent_transaction__transaction_id')
-            doc_transactions_qs = doc_obj.bank_cards_transactions.all()
+            doc_transactions_qs = BankTransaction.objects.filter(
+                id__in=doc_transactions.values('id')
+            )
 
         context = {
             'doc_obj': doc_obj,

@@ -380,6 +380,7 @@ $(document).ready( function () {
         {% endif %}
         {% if doc_obj.is_e_wallet %}
           let issuer = $(this).data('issuer');
+          let is_canceled = $(this).data('aman_is_canceled');
           appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
           {# Determine is_paid? status for aman transactions #}
           if (issuer === 'Aman' || issuer === 'aman') {
@@ -425,6 +426,14 @@ $(document).ready( function () {
         {% endif %}
         trx.updated_at = $(this).data('updated_at');
         appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${trx.updated_at}</li>`;
+        if (issuer === 'aman') {
+          let aman_is_paid = $(this).data('aman_is_paid');
+          let is_canceled = $(this).data('aman_is_canceled');
+          if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
+              trx.id = $(this).data('trx_id');
+              appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx.id})" class="btn btn-danger btn-md">Cancel</button></center>`;
+          }
+        }
 
         ul.empty();
         ul.append(appendedTags);

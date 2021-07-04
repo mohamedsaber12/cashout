@@ -129,7 +129,8 @@ BANK_CODES = [
     {'name': _('Arab International Bank')                       , 'code':  'ARIB'},
     {'name': _('Agricultural Bank of Egypt')                    , 'code':  'PDAC'},
     {'name': _('National Bank of Greece')                       , 'code':  'NBG' },
-    {'name': _('Central Bank Of Egypt')                         , 'code':  'CBE' }
+    {'name': _('Central Bank Of Egypt')                         , 'code':  'CBE' },
+    {'name': _('Attijariwafa Bank')                             , 'code':  'BCBIEGCX' }
   ]
 
 ERROR_CODES_MESSAGES = {

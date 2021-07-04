@@ -47,8 +47,8 @@
                     <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ support_setup.id }}">
                       <div class="well profile_view" style="width: 100%;">
                         <div class="col-sm-12">
-                          <div class="left col-xs-7">
-                            <h2><i class="fa fa-user"></i> {{ support_setup.support_user.get_full_name|truncatechars:26 }}</h2><br>
+                          <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+                            <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user"></i> {{ support_setup.support_user.get_full_name|truncatechars:26 }}</h2><br>
                             <h5><strong>{% trans 'About:' %} </strong> {{ support_setup.support_user.title }} </h5>
                             <ul class="list-unstyled">
                               <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ support_setup.support_user.username }}</li></ul></li>
@@ -56,20 +56,22 @@
                               <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ support_setup.support_user.mobile_no }}</li></ul></li>
                             </ul>
                           </div>
-                          <div class="right col-xs-5 text-center">
+                          <div class="right col-xs-5 text-center pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                             <img src="{{ support_setup.support_user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
                           </div>
                         </div>
                         <div class="col-xs-12 bottom text-center">
-                          <div class="col-xs-12 col-sm-6 emphasis">
+                          <div class="col-xs-12 col-sm-4 emphasis">
                             <p class="ratings">
                             </p>
                           </div>
-                          <div class="col-xs-12 col-sm-6 emphasis text-right">
-                            <button type="button" class="btn btn-danger btn-xs" data-toggle="modal" data-target=".delete-modal-sm" onclick="delete_modal({{ support_setup.id }})">
+                          <div class="col-xs-12 col-sm-8 emphasis text-right" style="padding-right:10px;padding-left:10px;">
+                            <button type="button" class="btn btn-danger btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
+                                    data-target=".delete-modal-sm" onclick="delete_modal({{ support_setup.id }})">
                               <i class="fa fa-trash-o"></i>
                             </button>
-                            <a href="{% url 'users:profile' support_setup.support_user.username %}" type="button" class="btn btn-primary btn-xs pull-right">
+                            <a href="{% url 'users:profile' support_setup.support_user.username %}" type="button"
+                               class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                             </a>
                           </div>

@@ -68,20 +68,20 @@
 <body>
 <div class='wrapper'>
   <div class='header'>
-    <h1 class='title'>On-boarded Entities Weekly Report</h1>
+    <h1 class='title'>{% trans 'On-boarded Entities Weekly Report' %}</h1>
   </div>
   <div>
     <div>
-      <h3>Total newly on-boarded entities over the last week: {{ onboarded_entities_count }} entity(ies)</h3>
+      <h3>{% trans 'Total newly on-boarded entities over the last week' %}: {{ onboarded_entities_count }} {% trans 'entity' %}(ies)</h3>
     </div>
 
 
       <div class='details'>
         <table>
           <tr>
-            <th class="invert_header">Admin Username</th>
-            <th class="invert_header">Email</th>
-            <th class="invert_header">Mobile Number</th>
+            <th class="invert_header">{% trans 'Admin Username' %}</th>
+            <th class="invert_header">{% trans 'Email' %}</th>
+            <th class="invert_header">{% trans 'Mobile Number' %}</th>
           </tr>
           {% for entity_admin in onboarded_entities %}
             <tr>
@@ -99,14 +99,14 @@
 
     <div>
       <br>
-      <h3>Entities disbursement records over the last week</h3>
+      <h3>{% trans 'Entities disbursement records over the last week' %}</h3>
     </div>
     <div class='details'>
       <table>
         <tr>
-          <th class="invert_header">Admin Username</th>
-          <th class="invert_header">Successful Records Number</th>
-          <th class="invert_header">Total Disbursed Amount</th>
+          <th class="invert_header">{% trans 'Admin Username' %}</th>
+          <th class="invert_header">{% trans 'Successful Records Number' %}</th>
+          <th class="invert_header">{% trans 'Total Disbursed Amount' %}</th>
         </tr>
         {% for record in records_result %}
           <tr>

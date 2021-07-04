@@ -1,6 +1,6 @@
 {% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
-
 <style>
   .list-group {
     max-height: 300px;
@@ -8,45 +8,43 @@
     overflow: auto;
   }
 </style>
-
 <div class="page-title">
   <div class="title_left">
-    <h3>{{ list_header }}{% trans ' Disbursement Files' %}</h3>
+    {% if LANGUAGE_CODE == 'en' %}
+      <h3>{% trans list_header %} {% trans 'Disbursement Files' %}</h3>
+    {% else %}
+      <h3>{% trans 'Disbursement Files' %} {% trans list_header %} </h3>
+    {% endif %}
   </div>
-
   {% if list_header == 'Bank Accounts/Cards' %}
     <div class="title_right">
       <a class="btn btn-default desc-list" type="button" id="export_bank_cards_sample_file">
-        <span class="glyphicon glyphicon-download"></span> Download Sample File
+        <span class="glyphicon glyphicon-download"></span> {% trans 'Download Sample File' %}
       </a>
-
       <a class="btn btn-default desc-list" type="button" id="bank_codes_btn">
-        <span class="glyphicon glyphicon-info-sign"></span> Banks Swift Codes List
+        <span class="glyphicon glyphicon-info-sign"></span> {% trans 'Banks Swift Codes List' %}
       </a>
 
       <a class="btn btn-default desc-list" type="button" id="transaction_types_btn">
-        <span class="glyphicon glyphicon-info-sign"></span> Transactions Types List
+        <span class="glyphicon glyphicon-info-sign"></span> {% trans 'Transactions Types List' %}
       </a>
     </div>
   {% elif list_header == 'Bank wallets/Orange cash' %}
     <div class="title_right">
       <a class="btn btn-default desc-list pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="button" id="export_bank_wallets_sample_file">
-        <span class="glyphicon glyphicon-download"></span> Download Sample File
+        <span class="glyphicon glyphicon-download"></span> {% trans 'Download Sample File' %}
       </a>
     </div>
-  
   {% elif list_header == 'Vodafone/Etisalat/Aman' %}
     <div class="title_right">
       <a class="btn btn-default desc-list pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="button" id="export_e_wallets_sample_file">
-        <span class="glyphicon glyphicon-download"></span> Download Default Sample File
+        <span class="glyphicon glyphicon-download"></span> {% trans 'Download Default Sample File' %}
       </a>
     </div>
-
   {% endif %}
 </div>
 
 <div class="clearfix"></div>
-
 <div class="row">
   <div class="col-md-12">
     <div class="x_panel">
@@ -58,7 +56,6 @@
         </ul>
         <div class="clearfix"></div>
       </div>
-
       <div class="x_content">
         <!-- start doc list -->
         <table class="table table-striped projects">
@@ -97,7 +94,6 @@
                 {% else %}
                   <p>{% trans 'No reviews yet' %}</p>
                 {% endif %}
-
               </td>
               <td>
                 {% if doc.is_disbursed %}
@@ -181,8 +177,8 @@
         <!-- end doc list -->
         <ul class="pagination">
           {% if object_list.has_previous %}
-            <li><a class="btn btn-outline-info mb-4" href="?page=1">First</a></li>
-            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.previous_page_number }}">Previous</a>
+            <li><a class="btn btn-outline-info mb-4" href="?page=1"> {% trans 'First' %}</a></li>
+            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.previous_page_number }}">{% trans 'Previous' %}</a>
             </li>
           {% endif %}
 
@@ -195,12 +191,11 @@
           {% endfor %}
 
           {% if object_list.has_next %}
-            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.next_page_number }}">Next</a></li>
-            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.paginator.num_pages }}">Last</a></li>
+            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.next_page_number }}">{% trans 'Next' %}</a></li>
+            <li><a class="btn btn-outline-info mb-4" href="?page={{ object_list.paginator.num_pages }}">{% trans 'Last' %}</a></li>
           {% endif %}
         </ul>
       </div>
-
     </div>
   </div>
 </div>
@@ -238,7 +233,7 @@
         </div>
       </div>
       <div class="modal-footer" id="addFooter">
-        <button type="submit" class="btn btn-default btn-default pull-right" data-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-default btn-default pull-right" data-dismiss="modal">{% trans 'Close' %}</button>
         <!-- Error div for modal goes here -->
       </div>
     </div>

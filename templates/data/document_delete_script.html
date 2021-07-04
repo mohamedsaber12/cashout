@@ -1,49 +1,42 @@
 <script>
-    
-        function delete_func(elem){
-        
-            let deleteModal = $('#doc-delete-modal');
-            deleteModal.modal('show');  
-            let url = elem.getAttribute('data-uri');
-            url_path = '{{ request.path }}',
-            $('#doc-delete-submit').click(function () {
-                $.ajax({
-                    type: "POST",
-                    url: url,
-                    success: function (result, xhr, message) {
-                        $('#doc-delete-submit').attr('disabled',true)
-                        $('#message').hide();
-                        $('.modal-header').hide();
-                        $('.modal-footer').hide()
-                        $('#myModalLabel').hide();
-                        $('#succ-message').html("Document deleted Successfully  <br> <img src='https://image.flaticon.com/icons/svg/148/148767.svg' style='margin-left:35%;margin-top:6%' width = '30%'/>").show();
-                        setTimeout(function () {
-                            if (url_path.includes('documents')) {
-                              window.location = "{% url 'data:main_view' %}";
-                            } else {
-                              window.location = url_path;
-                            }
-                        }, 500);
-
-                    },
-                    error: function (xhr, error, reason) {    
-                        $('#doc-delete-submit').attr('disabled', true)                
-                        $('#message').hide();
-                        $('#myModalLabel').hide();
-                        $('#fail-message').show();
-                        setTimeout(function () {
-                          if (url_path.includes('documents')) {
-                            window.location = "{% url 'data:main_view' %}";
-                          } else {
-                            window.location = url_path;
-                          }
-                        }, 1500);
-                        
-                    }
-                });
-
-
+    function delete_func(elem){
+        let deleteModal = $('#doc-delete-modal');
+        deleteModal.modal('show');
+        let url = elem.getAttribute('data-uri');
+        url_path = '{{ request.path }}',
+        $('#doc-delete-submit').click(function () {
+            $.ajax({
+                type: "POST",
+                url: url,
+                success: function (result, xhr, message) {
+                    $('#doc-delete-submit').attr('disabled',true)
+                    $('#message').hide();
+                    $('.modal-header').hide();
+                    $('.modal-footer').hide()
+                    $('#myModalLabel').hide();
+                    $('#succ-message').html("Document deleted Successfully  <br> <img src='https://image.flaticon.com/icons/svg/148/148767.svg' style='margin-left:35%;margin-top:6%' width = '30%'/>").show();
+                    setTimeout(function () {
+                        if (url_path.includes('documents')) {
+                          window.location = "{% url 'data:main_view' %}";
+                        } else {
+                          window.location = url_path;
+                        }
+                    }, 500);
+                },
+                error: function (xhr, error, reason) {
+                    $('#doc-delete-submit').attr('disabled', true)
+                    $('#message').hide();
+                    $('#myModalLabel').hide();
+                    $('#fail-message').show();
+                    setTimeout(function () {
+                      if (url_path.includes('documents')) {
+                        window.location = "{% url 'data:main_view' %}";
+                      } else {
+                        window.location = url_path;
+                      }
+                    }, 1500);
+                }
             });
-        };
-
+        });
+    };
 </script>

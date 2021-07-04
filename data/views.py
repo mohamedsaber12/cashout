@@ -136,10 +136,10 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
         """
         if "bank-wallets" in request.path:
             self.doc_type = AbstractBaseDocType.BANK_WALLETS
-            self.doc_list_header = "Bank wallets/Orange cash"
+            self.doc_list_header = _("Bank wallets/Orange cash")
         elif "bank-cards" in request.path:
             self.doc_type = AbstractBaseDocType.BANK_CARDS
-            self.doc_list_header = "Bank Accounts/Cards"
+            self.doc_list_header = _("Bank Accounts/Cards")
         else:
             return HttpResponseRedirect(request.path)
         self.admin_is_active = request.user.root.client.is_active

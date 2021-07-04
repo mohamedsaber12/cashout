@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-05-29 17:19+0200\n"
+"POT-Creation-Date: 2021-07-02 18:03+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -16,458 +16,2241 @@ msgstr ""
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
 
-#: data/forms.py:57
-msgid "Rejection reason is required"
+#: core/models.py:15
+#: templates/disbursement/e_wallets_transactions_list.html:369
+#: templates/disbursement/single_step_trx_list.html:599
+#: templates/disbursement/single_step_trx_list.html:626
+#: templates/support/document_details.html:203
+#: templates/support/document_details.html:424
+msgid "Created At"
+msgstr "تم الانشاء في"
+
+#: core/models.py:22 templates/disbursement/e_wallets_transactions_list.html:64
+#: templates/disbursement/e_wallets_transactions_list.html:372
+#: templates/disbursement/single_step_trx_list.html:100
+#: templates/disbursement/single_step_trx_list.html:137
+#: templates/disbursement/single_step_trx_list.html:601
+#: templates/disbursement/single_step_trx_list.html:628
+#: templates/instant_cashin/banks_transactions.html:12
+#: templates/instant_cashin/wallets_transactions.html:12
+#: templates/support/document_details.html:81
+#: templates/support/document_details.html:204
+#: templates/support/document_details.html:427
+msgid "Updated At"
+msgstr "تم التحديث في"
+
+#: core/models.py:53 core/models.py:87
+#: templates/support/document_details.html:190
+msgid "Name"
+msgstr "الاسم"
+
+#: core/models.py:73
+#: templates/disbursement/disbursement_transactions_dashboard.html:11
+#: templates/disbursement/e_wallets_transactions_list.html:92
+#: templates/disbursement/e_wallets_transactions_list.html:329
+#: templates/support/document_details.html:401 templates/support/list.html:119
+#: templates/users/clients.html:248 templates/users/members.html:132
+#: utilities/models/abstract_models.py:437
+msgid "Successful"
+msgstr "الناجحة"
+
+#: core/models.py:74
+#: templates/disbursement/disbursement_transactions_dashboard.html:16
+#: templates/disbursement/disbursement_transactions_dashboard.html:61
+#: templates/disbursement/e_wallets_transactions_list.html:96
+#: templates/disbursement/e_wallets_transactions_list.html:335
+#: templates/disbursement/single_step_trx_list.html:402
+#: templates/support/document_details.html:407 templates/users/clients.html:88
+#: utilities/models/abstract_models.py:440
+msgid "Failed"
+msgstr "الغير ناجحة"
+
+#: core/models.py:75 templates/data/banks_document_viewer.html:111
+#: templates/data/document_disbursement_list.html:156
+#: templates/data/e_wallets_document_viewer.html:97
+#: templates/disbursement/disbursement_transactions_dashboard.html:21
+#: templates/disbursement/e_wallets_transactions_list.html:94
+#: templates/disbursement/e_wallets_transactions_list.html:332
+#: templates/support/document_details.html:404
+#: utilities/models/abstract_models.py:441
+msgid "Pending"
+msgstr "المعلقة"
+
+#: core/models.py:76 utilities/models/abstract_models.py:27
+#: utilities/models/abstract_models.py:442
+msgid "Default"
 msgstr ""
 
-#: data/forms.py:67
+#: core/models.py:79 utilities/models/abstract_models.py:36
+#: utilities/models/abstract_models.py:445
+msgid "status"
+msgstr ""
+
+#: core/models.py:88
+msgid "Percentage"
+msgstr ""
+
+#: core/models.py:89
+msgid "Min Charge"
+msgstr ""
+
+#: core/models.py:90
+msgid "Max Charge"
+msgstr ""
+
+#: core/models.py:102
+msgid "from_user_related"
+msgstr ""
+
+#: core/models.py:109
+msgid "to_user_related"
+msgstr ""
+
+#: core/models.py:113
+msgid "Anonymous Sender"
+msgstr ""
+
+#: core/models.py:116
+msgid "Anonymous Recipient"
+msgstr ""
+
+#: core/models.py:118 disbursement/forms.py:240 disbursement/models.py:261
+#: templates/data/banks_document_viewer.html:238
+#: templates/data/banks_document_viewer.html:262
+#: templates/data/banks_document_viewer.html:512
+#: templates/data/banks_document_viewer.html:523
+#: templates/data/e_wallets_document_viewer.html:227
+#: templates/disbursement/bank_transactions_list.html:57
+#: templates/disbursement/bank_transactions_list.html:97
+#: templates/disbursement/bank_transactions_list.html:363
+#: templates/disbursement/bank_transactions_list.html:374
+#: templates/disbursement/e_wallets_transactions_list.html:57
+#: templates/disbursement/e_wallets_transactions_list.html:322
+#: templates/disbursement/single_step_trx_list.html:96
+#: templates/disbursement/single_step_trx_list.html:133
+#: templates/disbursement/single_step_trx_list.html:198
+#: templates/disbursement/single_step_trx_list.html:580
+#: templates/disbursement/single_step_trx_list.html:613
+#: templates/instant_cashin/banks_transactions.html:10
+#: templates/instant_cashin/wallets_transactions.html:9
+#: templates/support/document_details.html:74
+#: templates/support/document_details.html:346
+msgid "Amount"
+msgstr "المبلغ"
+
+#: core/models.py:120 templates/data/banks_document_viewer.html:531
+#: templates/disbursement/bank_transactions_list.html:390
+#: templates/disbursement/single_step_trx_list.html:242
+#: templates/disbursement/single_step_trx_list.html:622
+#: templates/disbursement/single_step_trx_list.html:680
+#: templates/support/document_details.html:379
+msgid "Transaction Type"
+msgstr "نوع المعاملة"
+
+#: core/models.py:128
+msgid "External Reference 1"
+msgstr ""
+
+#: core/models.py:135
+msgid "External Reference 2"
+msgstr ""
+
+#: core/models.py:142
+msgid "External Reference 3"
+msgstr ""
+
+#: core/models.py:149
+msgid "External Reference 4"
+msgstr ""
+
+#: core/utils/validations.py:24
+msgid "Phonenumbers entered are incorrect"
+msgstr ""
+
+#: data/admin.py:31 disbursement/admin.py:78 disbursement/admin.py:125
+#: disbursement/admin.py:157 instant_cashin/admin.py:106
+msgid "Important Dates"
+msgstr ""
+
+#: data/forms.py:49
 msgid "Select a file"
 msgstr ""
 
-#: data/forms.py:68
+#: data/forms.py:50
 msgid "max. 42 megabytes"
 msgstr ""
 
-#: data/forms.py:101
-msgid "This Format doesn't contain the Collection unique fields"
+#: data/forms.py:211
+msgid "Mobile number header position. ex: A-1"
 msgstr ""
 
-#: data/forms.py:108 data/forms.py:129 data/forms.py:136
-msgid "File type is not supported"
+#: data/forms.py:212
+msgid "Amount header position. ex: B-1"
 msgstr ""
 
-#: data/forms.py:113
-msgid "File name is not proper"
+#: data/forms.py:213
+msgid "Issuers header position. ex: C-1"
 msgstr ""
 
-#: data/forms.py:118
-msgid "Please keep file size under 5242880"
+#: data/forms.py:268 data/forms.py:273
+msgid "This name already exist"
 msgstr ""
 
-#: data/forms.py:121
-msgid "Filename must be less than 255 characters"
+#: data/forms.py:283
+msgid "Number of reviews must be greater than zero"
 msgstr ""
 
-#: data/forms.py:139
-msgid ""
-"Filename should not include any unicode characters ex: :, >, <, \\, /, $, * "
+#: data/forms.py:285
+msgid "Number of reviews must be less than or equal the number of checkers"
 msgstr ""
 
-#: data/forms.py:150 data/forms.py:155 data/forms.py:168 data/forms.py:173
-msgid "File uploaded in not in proper form"
+#: data/forms.py:302 data/forms.py:322
+#, python-brace-format
+msgid "{self.three_headers} {self.col_row_format}"
 msgstr ""
 
-#: data/forms.py:161
-msgid "File headers doesn't match the format identifiers"
+#: data/forms.py:304 data/forms.py:312
+#, python-brace-format
+msgid "{self.two_headers} {self.col_row_format}"
 msgstr ""
 
-#: data/forms.py:225
-#, python-format
-msgid "amount header position %s"
+#: data/forms.py:315
+#, python-brace-format
+msgid "{self.two_headers} must be on the same row"
 msgstr ""
 
-#: data/forms.py:227
-#, python-format
-msgid "mobile number header position %s"
+#: data/forms.py:317
+#, python-brace-format
+msgid "{self.two_headers} can not be on the same column"
 msgstr ""
 
-#: data/forms.py:253 data/forms.py:259
-msgid "this name already exist"
+#: data/forms.py:324
+#, python-brace-format
+msgid "{self.three_headers} must be on the same row"
 msgstr ""
 
-#: data/forms.py:269
-msgid "number of reviews must be greater than zero"
+#: data/forms.py:326
+#, python-brace-format
+msgid "{self.three_headers} can not be on the same column"
 msgstr ""
 
-#: data/forms.py:272
-msgid "number of reviews must be less than or equal the number of checkers"
+#: data/forms.py:356
+msgid "Rejection reason is required"
 msgstr ""
 
-#: data/forms.py:282
-msgid ""
-"Mobile number and Amount fields must be in the following format col-row ex: "
-"A-1 "
-msgstr ""
-
-#: data/forms.py:287
-msgid "Mobile number and Amount fields must be in the form letter-number "
-msgstr ""
-
-#: data/forms.py:289
-msgid "Mobile number and Amount fields must be on the same row"
-msgstr ""
-
-#: data/forms.py:292
-msgid "Mobile number and Amount fields can not be on the same column"
-msgstr ""
-
-#: data/forms.py:338
+#: data/forms.py:368
 msgid "You will recieve a message on your phone within 30 seconds"
 msgstr ""
 
-#: data/forms.py:351
+#: data/forms.py:379
 msgid "Code is not valid"
 msgstr ""
 
-#: data/forms.py:384 data/forms.py:386
+#: data/forms.py:412 data/forms.py:414
 msgid "Can't be blank"
 msgstr ""
 
-#: data/models/category_data.py:13
+#: data/models/category_data.py:12
 msgid "Header 1"
 msgstr ""
 
-#: data/models/category_data.py:15
+#: data/models/category_data.py:13
 msgid "Header 2"
 msgstr ""
 
-#: data/models/category_data.py:17
+#: data/models/category_data.py:14
 msgid "Header 3"
 msgstr ""
 
-#: data/models/category_data.py:19
+#: data/models/category_data.py:15
 msgid "Header 4"
 msgstr ""
 
-#: data/models/category_data.py:21
+#: data/models/category_data.py:16
 msgid "Header 5"
 msgstr ""
 
-#: data/models/category_data.py:23
+#: data/models/category_data.py:17
 msgid "Header 6"
 msgstr ""
 
-#: data/models/category_data.py:25
+#: data/models/category_data.py:18
 msgid "Header 7"
 msgstr ""
 
-#: data/models/category_data.py:27
+#: data/models/category_data.py:19
 msgid "Header 8"
 msgstr ""
 
-#: data/models/category_data.py:29
+#: data/models/category_data.py:20
 msgid "Header 9"
 msgstr ""
 
-#: data/models/category_data.py:31
+#: data/models/category_data.py:21
 msgid "Header 10"
 msgstr ""
 
-#: data/models/category_data.py:33
+#: data/models/category_data.py:23
 msgid "Number of identifiers filled"
 msgstr ""
 
-#: data/models/category_data.py:38 data/models/filecategory.py:21
+#: data/models/category_data.py:25 data/models/filecategory.py:25
 msgid "Description"
 msgstr ""
 
-#: data/models/doc.py:99
-msgid "Not Permitted to disburse"
+#: data/models/doc.py:34
+msgid "Total amount plus fees and VAT"
 msgstr ""
 
-#: data/models/doc.py:102
+#: data/models/doc.py:42
+msgid "Has change profile callback?"
+msgstr ""
+
+#: data/models/doc.py:47
+msgid "Owner/Maker"
+msgstr ""
+
+#: data/models/doc.py:53
+msgid "Disbursed by/Checker"
+msgstr "الصارف"
+
+#: data/models/doc.py:145 data/tasks.py:53
+msgid ""
+"File's total amount exceeds your current balance, please contact your "
+"support team"
+msgstr ""
+
+#: data/models/doc.py:155
+msgid "Not Permitted to disburse because the file's total amount exceeds your "
+msgstr ""
+
+#: data/models/doc.py:160
 msgid "Document is still suspended due to shortage of checking"
-msgstr ""
+msgstr "مازالت الملفات قيد المراجعة"
 
-#: data/models/doc.py:105
+#: data/models/doc.py:163
 msgid "Issues are submitted by some users, please resolve any conflict first"
 msgstr ""
 
-#: data/models/doc.py:108
+#: data/models/doc.py:166 templates/disbursement/single_step_trx_list.html:78
 msgid "Your Entity is deactivated"
 msgstr ""
 
-#: data/models/filecategory.py:26
+#: data/models/doc_review.py:9
+msgid "Document is ok to be disbursed"
+msgstr ""
+
+#: data/models/doc_review.py:12
+msgid "Empty if the review is ok"
+msgstr ""
+
+#: data/models/filecategory.py:33
 msgid "mobile number header position"
 msgstr ""
 
-#: data/models/filecategory.py:28
+#: data/models/filecategory.py:36
 msgid "amount header position"
 msgstr ""
 
-#: data/models/filecategory.py:29
-msgid "for ex: loan_field"
+#: data/models/filecategory.py:37
+msgid "For ex: loan_field"
 msgstr ""
 
-#: data/models/filecategory.py:31
-msgid "Number of reviews"
+#: data/models/filecategory.py:43
+msgid "issuer option header position"
 msgstr ""
 
-#: data/models/filecategory.py:32
-msgid "Number of reviews required to be disbursed"
+#: data/models/filecategory.py:44
+msgid "Only activated at sheets with multiple issuers"
 msgstr ""
 
-#: data/tasks.py:134
+#: data/models/filecategory.py:48
+msgid "number of reviews"
+msgstr ""
+
+#: data/models/filecategory.py:49
+msgid ""
+"Number of reviews required for a doc with this file category to be disbursed"
+msgstr ""
+
+#: data/tasks.py:54
+msgid "File's total amount exceeds your maximum amount that can be disbursed,"
+msgstr ""
+
+#: data/tasks.py:56
+#, python-brace-format
+msgid ""
+"Registration process stopped during an internal error, {MSG_TRY_OR_CONTACT}"
+msgstr ""
+
+#: data/tasks.py:57
+#, python-brace-format
+msgid "Internal error while trying to apply the fees, {MSG_TRY_OR_CONTACT}"
+msgstr ""
+
+#: data/tasks.py:135
 msgid "File validation error"
-msgstr ""
+msgstr "خطأ في التحقق من صحة الملف"
 
-#: data/tasks.py:154
-msgid "Failed to make registration"
-msgstr ""
+#: data/tasks.py:513
+msgid "Validation error, file with errors sent to the maker user."
+msgstr " maker خطأ في التحقق  ، تم إرسال ملف بالأخطاء إلى "
 
-#: data/tasks.py:157
+#: data/tasks.py:1110 disbursement/views.py:1223
 msgid ""
-"Registration process stopped during an internal error,                 can "
-"you try again or contact your support team"
+"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}"
+"_{randomword(4)}.xls"
 msgstr ""
 
-#: data/tasks.py:212
-msgid "Mobile numbers validation error"
+#: data/tasks.py:1288
+#, python-brace-format
+msgid ""
+"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br>You can "
+"download "
 msgstr ""
 
-#: data/tasks.py:224
+#: data/tasks.py:1314 data/tasks.py:1322
+#, python-brace-format
+msgid "Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
+msgstr ""
+
+#: data/tasks.py:1387
 #, python-format
-msgid "failed_disbursed_%s_%s.xlsx"
+msgid "disbursed_data_%s_%s.xlsx"
 msgstr ""
 
-#: data/tasks.py:244
+#: data/tasks.py:1390
+msgid "success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx"
+msgstr ""
+
+#: data/tasks.py:1393
+msgid "failed_disbursed_{str(doc_id)}_{randomword(4)}.xlsx"
+msgstr ""
+
+#: data/tasks.py:1428
 msgid ""
-"Dear {} \n"
+"Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>\n"
 "        You can download the failed disbursement data related to this "
 "document\n"
-"        <a href='{}'>{}</a>\n"
-"        from here <a href=\"{}\" >Download</a>\n"
+"        <a href=\"{report_view_url}\" >{doc_obj.filename()}</a>\n"
+"        from here <a href=\"{report_download_url}\" >Download</a><br><br>\n"
 "        Thanks, BR"
 msgstr ""
 
-#: data/tasks.py:255
+#: data/tasks.py:1433
 msgid " Failed Disbursement File Download"
 msgstr ""
 
-#: data/tasks.py:367
+#: data/tasks.py:1448
 msgid ""
-"Dear Checker \n"
-"        The file named <a href='{}'>{}</a> is ready for disbursement\n"
+"Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>\n"
+"        You can download the success disbursement data related to this "
+"document\n"
+"        <a href=\"{report_view_url}\" >{doc_obj.filename()}</a>\n"
+"        from here <a href=\"{report_download_url}\" >Download</a><br><br>\n"
 "        Thanks, BR"
 msgstr ""
 
-#: data/tasks.py:376
+#: data/tasks.py:1453
+msgid " Success Disbursement File Download"
+msgstr ""
+
+#: data/tasks.py:1465
+msgid ""
+"Dear <strong>{str(user.first_name).capitalize()}</strong><br><br>\n"
+"        You can download the disbursement data related to this document\n"
+"        <a href=\"{report_view_url}\" >{doc_obj.filename()}</a>\n"
+"        from here <a href=\"{report_download_url}\" >Download</a><br><br>\n"
+"        Thanks, BR"
+msgstr ""
+
+#: data/tasks.py:1470
+msgid " Disbursement Data File Download"
+msgstr ""
+
+#: data/tasks.py:1582
+msgid ""
+"Dear <strong>Checker</strong><br><br>\n"
+"        The file named <a href=\"{doc_view_url}\" >{doc_obj.filename()}</a> "
+"is ready for review<br><br>\n"
+"        Thanks, BR"
+msgstr ""
+
+#: data/tasks.py:1585
+msgid " Review Notification"
+msgstr ""
+
+#: data/tasks.py:1612
+msgid ""
+"Dear <strong>Checker</strong><br><br>\n"
+"        The file named <a href=\"{doc_view_url}\" >{doc_obj.filename()}</a> "
+"is ready for disbursement<br><br>\n"
+"        Thanks, BR"
+msgstr ""
+
+#: data/tasks.py:1615
 msgid " Disbursement Notification"
 msgstr ""
 
-#: data/tasks.py:390
+#: data/tasks.py:1646
 msgid ""
-"Dear {}\n"
-"            The file named <a href='{}'>{}</a> passed the review \n"
-"            number {} out of {} by\n"
-"            the checker: {} {}\n"
+"Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>\n"
+"            The file named <a href=\"{doc_view_url}\" >{doc.filename()}</a> "
+"passed the review\n"
+"             number {doc.reviews.filter(is_ok=True).count()} out of "
+"{reviews_required} by\n"
+"            the checker: {review.user_created.first_name} {review."
+"user_created.last_name}<br><br>\n"
 "            Thanks, BR"
 msgstr ""
 
-#: data/tasks.py:404
+#: data/tasks.py:1652
 msgid ""
-"Dear {}\n"
-"            The file named <a href='{}'>{}</a> didn't pass the review by\n"
-"            the checker: {} {}\n"
-"            and the reason is: {}\n"
-"            Thanks, BR"
+"Dear <strong>{str(maker.first_name).capitalize()}</strong><br><br>\n"
+"                    The file named <a href=\"{doc_view_url}\" >{doc."
+"filename()}</a> did not pass the review by\n"
+"                    the checker: {review.user_created.first_name} {review."
+"user_created.last_name}\n"
+"                    and the reason is: {review.comment}<br><br>\n"
+"                    Thanks, BR"
 msgstr ""
 
-#: data/tasks.py:422 data/tasks.py:459
+#: data/tasks.py:1657
+msgid " File Review Notification"
+msgstr ""
+
+#: data/tasks.py:1673
+#, python-brace-format
+msgid ""
+"{message_intro} validated successfully. You can notify checkers now."
+"<br><br>Thanks, BR"
+msgstr ""
+
+#: data/tasks.py:1675
+#, python-brace-format
+msgid ""
+"{message_intro} failed validations.<br><br>The reason is: {doc."
+"processing_failure_reason}.<br><br>"
+msgstr ""
+
+#: data/tasks.py:1678
+#, python-brace-format
+msgid ""
+"{MSG}You can download the file containing errors from <a "
+"href='{download_url}'>here.</a><br><br>"
+msgstr ""
+
+#: data/tasks.py:1679
+#, python-brace-format
+msgid "{MSG}Thanks, BR"
+msgstr ""
+
+#: data/tasks.py:1681
 msgid " File Upload Notification"
 msgstr ""
 
-#: data/tasks.py:433
+#: data/tasks.py:1687
 msgid ""
-"Dear {} \n"
-"            The file named <a href='{}'>{}</a> was validated successfully \n"
-"            You can now notify checkers, \n"
-"            Thanks, BR"
-msgstr ""
-
-#: data/tasks.py:438
-msgid ""
-"Dear {}\n"
-"                The file named <a href='{}'>{}</a> failed validation\n"
-"                The reason is: {}"
-msgstr ""
-
-#: data/tasks.py:447
-msgid ""
-"{}\n"
-"                You can download the file containing errors from <a href="
-"\"{}\" >here</a>\n"
-"                Thanks, BR"
-msgstr ""
-
-#: data/tasks.py:451
-msgid ""
-"{}\n"
-"                Thanks, BR"
-msgstr ""
-
-#: data/tasks.py:468
-msgid ""
-"Dear Maker \n"
-"        The file named <a href='{}'>{}</a> was validated successfully \n"
+"Dear <strong>Maker</strong><br><br>\n"
+"        The file named <a href=\"{doc_view_url}\" >{doc.filename()}</a> was "
+"validated successfully<br><br>\n"
 "        Thanks, BR"
 msgstr ""
 
-#: data/tasks.py:477
+#: data/tasks.py:1690
 msgid " Collection File Upload Notification"
 msgstr ""
 
-#: disb/api/views.py:105
-msgid ""
-"Disbursement process stopped during an internal "
-"error,                        can you try again or contact your support team"
+#: data/views.py:139
+msgid "Bank wallets/Orange cash"
+msgstr "محافظ بنكيه/اورانج كاش"
+
+#: data/views.py:142 templates/disbursement_sidebar.html:20
+msgid "Bank Accounts/Cards"
+msgstr "حسابات/كروت بنكيه"
+
+#: data/views.py:310
+msgid "You still do not have the right to review this document."
 msgstr ""
 
-#: disb/api/views.py:107 disb/api/views.py:121
+#: disbursement/admin.py:64
+msgid "Creditor/Beneficiary Data"
+msgstr ""
+
+#: disbursement/admin.py:70
+msgid "Debtor Data"
+msgstr ""
+
+#: disbursement/admin.py:75
+msgid "Additional Transaction Info"
+msgstr ""
+
+#: disbursement/api/views.py:41
 msgid "Error occurred, We are sorry"
 msgstr ""
 
-#: disb/api/views.py:116 templates/data/document_viewer_disbursement.html:309
-msgid "Disbursement process is running, you can check reports later"
-msgstr ""
-
-#: disb/api/views.py:117
+#: disbursement/api/views.py:42
 msgid "Disbursed, Thanks"
 msgstr ""
 
-#: disb/api/views.py:119
-msgid ""
-"Disbursement process stopped during an internal error,                can "
-"you try again or contact you support team"
-msgstr ""
-
-#: disb/api/views.py:186
-msgid "Document is not found"
-msgstr ""
-
-#: disb/api/views.py:218
-msgid "Checkers already notified"
-msgstr ""
-
-#: disb/forms.py:38 disb/models.py:95
-msgid "Mobile number"
-msgstr ""
-
-#: disb/forms.py:54
-msgid "Mobile number is not valid"
-msgstr ""
-
-#: disb/forms.py:60
-msgid "Add new pin"
-msgstr ""
-
-#: disb/forms.py:76 disb/forms.py:136
-msgid "Pin must be numeric"
-msgstr ""
-
-#: disb/forms.py:115 disb/forms.py:126
-msgid "Failed to set pin"
-msgstr ""
-
-#: disb/forms.py:118
-msgid ""
-"Set pin process stopped during an internal error,                 can you "
-"try again or contact you support team"
-msgstr ""
-
-#: disb/forms.py:131
-msgid "Enter pin"
-msgstr ""
-
-#: disb/models.py:119
-msgid "AMOUNT"
-msgstr ""
-
-#: disb/models.py:120 users/models/base_user.py:41
-msgid "Mobile Number"
-msgstr ""
-
-#: disb/views.py:285
-msgid "Agents creation failed"
-msgstr ""
-
-#: disb/views.py:288
-msgid ""
-"Agents creation process stopped during an internal error,                can "
-"you try again or contact you support team"
-msgstr ""
-
-#: disb/views.py:388
+#: disbursement/api/views.py:195 disbursement/api/views.py:202
+#: disbursement/views.py:718
 msgid "Balance inquiry failed"
 msgstr ""
 
-#: disb/views.py:390
-msgid ""
-"Balance inquiry process stopped during an internal error,                can "
-"you try again or contact you support team"
+#: disbursement/api/views.py:356
+msgid "Document is not found"
 msgstr ""
 
-#: disbursement/settings/base.py:148 disbursement/settings/test.py:109
+#: disbursement/api/views.py:394
+msgid "Checkers already notified"
+msgstr ""
+
+#: disbursement/forms.py:27
+#, python-brace-format
+msgid "Set pin process stopped during an internal error, {MSG_TRY_OR_CONTACT}"
+msgstr ""
+
+#: disbursement/forms.py:51 disbursement/forms.py:79 disbursement/models.py:63
+#: users/forms.py:249
+msgid "Mobile number"
+msgstr "رقم الموبايل"
+
+#: disbursement/forms.py:71 disbursement/forms.py:100
+msgid "Mobile number is not valid"
+msgstr ""
+
+#: disbursement/forms.py:112
+msgid "Add new pin"
+msgstr ""
+
+#: disbursement/forms.py:137 disbursement/forms.py:230
+#: disbursement/forms.py:360
+msgid "Pin must be numeric"
+msgstr ""
+
+#: disbursement/forms.py:183
+msgid "Failed to set pin"
+msgstr ""
+
+#: disbursement/forms.py:220
+msgid "Enter pin"
+msgstr ""
+
+#: disbursement/forms.py:244
+msgid "Enter Transaction Amount"
+msgstr ""
+
+#: disbursement/forms.py:258 templates/data/banks_document_viewer.html:239
+#: templates/data/banks_document_viewer.html:540
+#: templates/data/e_wallets_document_viewer.html:228
+#: templates/disbursement/bank_transactions_list.html:62
+#: templates/disbursement/bank_transactions_list.html:386
+#: templates/disbursement/e_wallets_transactions_list.html:62
+#: templates/disbursement/e_wallets_transactions_list.html:340
+#: templates/disbursement/single_step_trx_list.html:587
+#: templates/instant_cashin/wallets_transactions.html:10
+#: templates/support/document_details.html:75
+#: templates/support/document_details.html:365
+#: templates/support/document_details.html:373
+#: templates/support/document_details.html:383
+msgid "Issuer"
+msgstr "جهة الصرف"
+
+#: disbursement/forms.py:283 utilities/forms.py:144 utilities/forms.py:153
+msgid "acc. number"
+msgstr ""
+
+#: disbursement/forms.py:292 utilities/forms.py:162
+msgid "account name"
+msgstr "اسم الحساب"
+
+#: disbursement/forms.py:300 templates/data/banks_document_viewer.html:529
+#: templates/disbursement/bank_transactions_list.html:389
+#: templates/disbursement/single_step_trx_list.html:252
+#: templates/disbursement/single_step_trx_list.html:620
+#: templates/disbursement/single_step_trx_list.html:690
+#: templates/support/document_details.html:377
+#: templates/utilities/transfer_request.html:151
+#: templates/utilities/transfer_request.html:161
+#: templates/utilities/transfer_request.html:242 utilities/forms.py:131
+#: utilities/forms.py:139
+msgid "Bank Name"
+msgstr "اسم البنك"
+
+#: disbursement/forms.py:309
+#: templates/disbursement/single_step_trx_list.html:267
+#: templates/disbursement/single_step_trx_list.html:282
+#: templates/disbursement/single_step_trx_list.html:307
+#: templates/disbursement/single_step_trx_list.html:705
+#: templates/disbursement/single_step_trx_list.html:720
+#: templates/disbursement/single_step_trx_list.html:745
+msgid "Msisdn"
+msgstr "رقم الموبايل"
+
+#: disbursement/forms.py:319 templates/data/banks_document_viewer.html:514
+#: templates/data/banks_document_viewer.html:525
+#: templates/disbursement/bank_transactions_list.html:365
+#: templates/disbursement/bank_transactions_list.html:376
+#: templates/disbursement/single_step_trx_list.html:231
+#: templates/disbursement/single_step_trx_list.html:292
+#: templates/disbursement/single_step_trx_list.html:582
+#: templates/disbursement/single_step_trx_list.html:611
+#: templates/disbursement/single_step_trx_list.html:669
+#: templates/disbursement/single_step_trx_list.html:730
+#: templates/support/clients.html:220
+#: templates/support/document_details.html:363
+#: templates/support/document_details.html:372
+msgid "Full Name"
+msgstr "الإسم بالكامل"
+
+#: disbursement/forms.py:328
+#: templates/disbursement/single_step_trx_list.html:317
+#: templates/disbursement/single_step_trx_list.html:755
+msgid "First Name"
+msgstr "الإسم الأول"
+
+#: disbursement/forms.py:336
+#: templates/disbursement/single_step_trx_list.html:329
+#: templates/disbursement/single_step_trx_list.html:767
+msgid "Last Name"
+msgstr "الإسم الأخير"
+
+#: disbursement/forms.py:344
+#: templates/disbursement/single_step_trx_list.html:339
+#: templates/disbursement/single_step_trx_list.html:777
+#: templates/support/clients.html:58 templates/support/clients.html:226
+#: templates/users/profile.html:68
+#: templates/utilities/new_entities_report.html:83 users/forms.py:817
+msgid "Email"
+msgstr ""
+
+#: disbursement/forms.py:362
+msgid "Invalid pin"
+msgstr ""
+
+#: disbursement/forms.py:370
+msgid "Invalid amount"
+msgstr ""
+
+#: disbursement/forms.py:372
+msgid "Entered amount exceeds your maximum amount that can be disbursed"
+msgstr ""
+
+#: disbursement/forms.py:374
+msgid "Entered amount exceeds your current balance"
+msgstr ""
+
+#: disbursement/forms.py:382
+msgid ""
+"issuer must be one of these                 bank_card / Bank Card / "
+"vodafone / etisalat / orange / bank_wallet / aman"
+msgstr ""
+
+#: disbursement/forms.py:389
+msgid "Invalid transaction purpose"
+msgstr ""
+
+#: disbursement/forms.py:397
+msgid "Invalid Account number"
+msgstr ""
+
+#: disbursement/forms.py:405
+msgid "Invalid name"
+msgstr ""
+
+#: disbursement/forms.py:407 disbursement/forms.py:447
+msgid "Symbols like !%*+& not allowed in full name"
+msgstr ""
+
+#: disbursement/forms.py:415
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:212
+msgid "Invalid bank swift code"
+msgstr ""
+
+#: disbursement/forms.py:435
+msgid "Phone numbers entered are incorrect"
+msgstr "ارقام الهاتف المدخله غير صحيحه"
+
+#: disbursement/forms.py:445 disbursement/forms.py:453
+#: disbursement/forms.py:461 disbursement/forms.py:469
+msgid "This field is required"
+msgstr ""
+
+#: disbursement/forms.py:455
+msgid "Symbols like !%*+& not allowed in first name"
+msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاول"
+
+#: disbursement/forms.py:463
+msgid "Symbols like !%*+& not allowed in last name"
+msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاخير"
+
+#: disbursement/mixins.py:20
+msgid ""
+"Only admin family member users allowed to delete records from this table."
+msgstr ""
+
+#: disbursement/models.py:27 instant_cashin/api/base_views/budget_inquiry.py:16
+#: instant_cashin/api/base_views/bulk_transaction_inquiry.py:26
+#: instant_cashin/api/base_views/user_inquiry.py:29
+msgid ""
+"Process stopped during an internal error, can you try again or contact your "
+"support team."
+msgstr ""
+
+#: disbursement/models.py:39 utilities/models/abstract_models.py:98
+msgid "VMT Credentials Owner"
+msgstr ""
+
+#: disbursement/models.py:57
+msgid "vodafone"
+msgstr "فودافون"
+
+#: disbursement/models.py:58
+msgid "etisalat"
+msgstr "اتصالات"
+
+#: disbursement/models.py:59
+msgid "orange"
+msgstr "اورانج"
+
+#: disbursement/models.py:60
+msgid "P2M"
+msgstr ""
+
+#: disbursement/models.py:67
+msgid "agent type"
+msgstr ""
+
+#: disbursement/models.py:77
+msgid "Each super-agent or agent MUST be related to specific Root user"
+msgstr ""
+
+#: disbursement/models.py:102
+msgid "Has Callback?"
+msgstr ""
+
+#: disbursement/models.py:104
+msgid "Document disbursement status"
+msgstr ""
+
+#: disbursement/models.py:153
+msgid "AMOUNT"
+msgstr "المبلغ"
+
+#: disbursement/models.py:154 templates/support/clients.html:229
+#: templates/utilities/new_entities_report.html:84 users/models/base_user.py:53
+msgid "Mobile Number"
+msgstr "رقم الموبايل"
+
+#: disbursement/models.py:155
+msgid "Issuer Option"
+msgstr ""
+
+#: disbursement/models.py:159 instant_cashin/models/instant_transactions.py:94
+#: templates/instant_cashin/banks_transactions.html:8
+msgid "Reference ID"
+msgstr ""
+
+#: disbursement/models.py:170 disbursement/models.py:340
+#: instant_cashin/models/instant_transactions.py:114
+msgid "Disbursed At"
+msgstr ""
+
+#: disbursement/models.py:208
+msgid "bank_transactions"
+msgstr ""
+
+#: disbursement/models.py:209
+msgid "Disburser"
+msgstr ""
+
+#: disbursement/models.py:214
+msgid "bank_cards_transactions"
+msgstr ""
+
+#: disbursement/models.py:215
+msgid "Bank Cards Document"
+msgstr ""
+
+#: disbursement/models.py:221
+msgid "children_transactions"
+msgstr ""
+
+#: disbursement/models.py:222
+msgid "Parent Transaction"
+msgstr ""
+
+#: disbursement/models.py:226 templates/data/banks_document_viewer.html:236
+#: templates/data/banks_document_viewer.html:260
+#: templates/data/banks_document_viewer.html:508
+#: templates/data/banks_document_viewer.html:519
+#: templates/disbursement/bank_transactions_list.html:359
+#: templates/disbursement/bank_transactions_list.html:370
+#: templates/disbursement/e_wallets_transactions_list.html:315
+#: templates/disbursement/single_step_trx_list.html:576
+#: templates/disbursement/single_step_trx_list.html:607
+#: templates/instant_cashin/wallets_transactions.html:7
+#: templates/support/document_details.html:66
+#: templates/support/document_details.html:69
+#: templates/support/document_details.html:350
+msgid "Transaction ID"
+msgstr "كود المعاملة"
+
+#: disbursement/models.py:232
+msgid "New one generated everytime send_trx request made to EBC"
+msgstr ""
+
+#: disbursement/models.py:235
+msgid "Message ID"
+msgstr ""
+
+#: disbursement/models.py:241
+msgid ""
+"New one generated everytime send_trx or get_trx_status request made to EBC"
+msgstr ""
+
+#: disbursement/models.py:244
+msgid "Transaction Status Code"
+msgstr ""
+
+#: disbursement/models.py:250
+msgid "Transaction Status Description"
+msgstr ""
+
+#: disbursement/models.py:256
+msgid "Corporate Account Number"
+msgstr ""
+
+#: disbursement/models.py:258
+msgid "The company/service provider account number"
+msgstr ""
+
+#: disbursement/models.py:266
+msgid "Beneficiary Name"
+msgstr ""
+
+#: disbursement/models.py:268
+msgid "The customer/receiver name"
+msgstr ""
+
+#: disbursement/models.py:271
+msgid "Beneficiary Account Number"
+msgstr ""
+
+#: disbursement/models.py:273
+msgid "The customer/receiver bank account"
+msgstr ""
+
+#: disbursement/models.py:276
+msgid "Beneficiary Bank"
+msgstr ""
+
+#: disbursement/models.py:278
+msgid "The bank where the customer/receiver maintains its accounts"
+msgstr ""
+
+#: disbursement/models.py:281
+msgid "Beneficiary Bank Branch"
+msgstr ""
+
+#: disbursement/models.py:287
+msgid "Optional Transaction Identifier 1"
+msgstr ""
+
+#: disbursement/models.py:293
+msgid "Beneficiary Email"
+msgstr ""
+
+#: disbursement/models.py:299
+msgid "Beneficiary Mobile Number"
+msgstr ""
+
+#: disbursement/models.py:305
+msgid "Corporate Code"
+msgstr ""
+
+#: disbursement/models.py:307
+msgid "Corporate Code to identify corporate"
+msgstr ""
+
+#: disbursement/models.py:310
+msgid "Sender ID"
+msgstr ""
+
+#: disbursement/models.py:316
+msgid "Creditor ID"
+msgstr ""
+
+#: disbursement/models.py:322
+msgid "Creditor Address 1"
+msgstr ""
+
+#: disbursement/models.py:328
+msgid "Debtor Address 1"
+msgstr ""
+
+#: disbursement/models.py:334
+msgid "Remittance Info 1"
+msgstr ""
+
+#: disbursement/models.py:339 instant_cashin/models/instant_transactions.py:113
+msgid "Is manual patch single step transaction?"
+msgstr ""
+
+#: disbursement/templatetags/banks_tags.py:29
+msgid "Salary"
+msgstr "المرتب"
+
+#: disbursement/templatetags/banks_tags.py:31
+msgid "Credit card"
+msgstr "البطاقة الائتمانية"
+
+#: disbursement/templatetags/banks_tags.py:33
+msgid "Prepaid card"
+msgstr "كروت مسبقة الدفع"
+
+#: disbursement/templatetags/banks_tags.py:35
+msgid "Cash transfer"
+msgstr "تحويل نقدي"
+
+#: disbursement/templatetags/callback_code_tags.py:12
+#: disbursement/templatetags/callback_code_tags.py:13
+msgid "Internal system error"
+msgstr ""
+
+#: disbursement/templatetags/callback_code_tags.py:14
+msgid "User input incorrect data"
+msgstr ""
+
+#: disbursement/templatetags/callback_code_tags.py:15
+msgid "Transaction time out"
+msgstr ""
+
+#: disbursement/templatetags/callback_code_tags.py:16
+msgid "Transaction above 6000 EGP"
+msgstr ""
+
+#: disbursement/templatetags/callback_code_tags.py:17
+msgid "Transaction below 5 EGP"
+msgstr ""
+
+#: disbursement/templatetags/callback_code_tags.py:18
+msgid "User suspended"
+msgstr ""
+
+#: disbursement/utils.py:9
+msgid ""
+"Transaction received and validated successfully. Dispatched for being "
+"processed by the carrier"
+msgstr ""
+
+#: disbursement/utils.py:10
+msgid "Transaction received by the carrier and being processed now"
+msgstr ""
+
+#: disbursement/utils.py:11
+msgid ""
+"Transaction processed and accepted by the carrier. Your transfer is ready "
+"for exchanging now"
+msgstr ""
+
+#: disbursement/utils.py:12
+msgid ""
+"Transaction rejected by the carrier. Please try again or contact your "
+"support team"
+msgstr "تم رفض المعاملة. الرجاء المحاولة مرة أخرى أو الاتصال بخدمة العملاء"
+
+#: disbursement/utils.py:13
+msgid ""
+"Transaction received and validated successfully. Dispatched for being "
+"processed by the bank"
+msgstr ""
+
+#: disbursement/utils.py:14
+msgid "Transaction received by the bank and being processed now"
+msgstr ""
+
+#: disbursement/utils.py:15
+msgid ""
+"Successful with warning, A transfer will take place once authorized by the "
+"receiver bank"
+msgstr ""
+
+#: disbursement/utils.py:16
+msgid "Successful, transaction is settled by the receiver bank"
+msgstr ""
+
+#: disbursement/utils.py:17
+#: instant_cashin/api/base_views/instant_disbursement.py:33
+msgid ""
+"Process stopped during an internal error, can you try again or contact your "
+"support team"
+msgstr ""
+
+#: disbursement/utils.py:18
+#: instant_cashin/api/base_views/instant_disbursement.py:34
+msgid ""
+"Process stopped during an external error, can you try again or contact your "
+"support team"
+msgstr ""
+
+#: disbursement/utils.py:84
+#, fuzzy
+#| msgid "Salary"
+msgid "salary"
+msgstr "المرتب"
+
+#: disbursement/utils.py:84
+msgid "For concurrent or repeated payments"
+msgstr "للمدفوعات المتزامنة أو المتكررة"
+
+#: disbursement/utils.py:85
+#, fuzzy
+#| msgid "Credit card"
+msgid "credit_card"
+msgstr "البطاقة الائتمانية"
+
+#: disbursement/utils.py:85
+msgid "For credit cards payments"
+msgstr "لمدفوعات بطاقات الائتمان"
+
+#: disbursement/utils.py:86
+#, fuzzy
+#| msgid "Prepaid card"
+msgid "prepaid_card"
+msgstr "كروت مسبقة الدفع"
+
+#: disbursement/utils.py:86
+msgid "For prepaid cards and Meeza cards payments"
+msgstr "للكروت مسبقة الدفع و بطاقات ميزة"
+
+#: disbursement/utils.py:87
+#, fuzzy
+#| msgid "Cash transfer"
+msgid "cash_transfer"
+msgstr "تحويل نقدي"
+
+#: disbursement/utils.py:87
+msgid "For bank accounts, debit cards etc.."
+msgstr "للحسابات البنكية وبطاقات الخصم المباشر و ما إلى ذلك"
+
+#: disbursement/utils.py:91
+msgid "Ahli United Bank"
+msgstr "البنك الأهلي المتحد"
+
+#: disbursement/utils.py:92
+msgid "Citi Bank N.A. Egypt"
+msgstr "سيتي بنك"
+
+#: disbursement/utils.py:93
+msgid "MIDBANK"
+msgstr "ميد-بنك"
+
+#: disbursement/utils.py:94
+msgid "Banque Du Caire"
+msgstr "بنك القاهرة"
+
+#: disbursement/utils.py:95
+msgid "HSBC Bank Egypt S.A.E"
+msgstr "HSBC بنك"
+
+#: disbursement/utils.py:96
+msgid "Credit Agricole Egypt S.A.E"
+msgstr "كريدي أجريكول"
+
+#: disbursement/utils.py:97
+msgid "Egyptian Gulf Bank (EG-Bank)"
+msgstr "EG بنك"
+
+#: disbursement/utils.py:98
+msgid "The United Bank"
+msgstr "المصرف المتحد "
+
+#: disbursement/utils.py:99
+msgid "Qatar National Bank Alahli"
+msgstr "بنك قطر الوطني"
+
+#: disbursement/utils.py:100 disbursement/utils.py:132
+msgid "Central Bank Of Egypt"
+msgstr "البنك المركزي المصري"
+
+#: disbursement/utils.py:101
+msgid "Arab Bank PLC"
+msgstr "البنك العربي"
+
+#: disbursement/utils.py:102
+msgid "Emirates National Bank of Dubai"
+msgstr "بنك الإمارات دبي الوطني"
+
+#: disbursement/utils.py:103
+msgid "Al Ahli Bank of Kuwait – Egypt"
+msgstr "البنك الاهلى الكويتى_مصر"
+
+#: disbursement/utils.py:104
+msgid "National Bank of Kuwait – Egypt"
+msgstr "بنك الكويت الوطني_مصر"
+
+#: disbursement/utils.py:105
+msgid "Arab Banking Corporation - Egypt S.A.E (ABC)"
+msgstr "ABC بنك"
+
+#: disbursement/utils.py:106
+msgid "First Abu Dhabi Bank"
+msgstr "بنك أبوظبي الأول"
+
+#: disbursement/utils.py:107
+msgid "Abu Dhabi Islamic Bank – Egypt"
+msgstr "مصرف أبو ظبي الإسلامي"
+
+#: disbursement/utils.py:108
+msgid "Commercial International Bank - Egypt S.A.E"
+msgstr "البنك التجاري الدولي"
+
+#: disbursement/utils.py:109
+msgid "Housing And Development Bank"
+msgstr "بنك التعمير والاسكان"
+
+#: disbursement/utils.py:110
+msgid "Banque Misr"
+msgstr "بنك مصر"
+
+#: disbursement/utils.py:111
+msgid "Arab African International Bank"
+msgstr "البنك العربي الإفريقي الدولي"
+
+#: disbursement/utils.py:112
+msgid "Egyptian Arab Land Bank"
+msgstr "البنك العقاري المصري"
+
+#: disbursement/utils.py:113
+msgid "Export Development Bank of Egypt"
+msgstr "البنك المصري لتنمية الصادرات "
+
+#: disbursement/utils.py:114
+msgid "Faisal Islamic Bank of Egypt"
+msgstr "بنك فيصل الإسلامي المصري"
+
+#: disbursement/utils.py:115
+msgid "Blom Bank"
+msgstr "بنك بلوم "
+
+#: disbursement/utils.py:116
+msgid "Abu Dhabi Commercial Bank – Egypt"
+msgstr "بنك أبوظبي التجاري"
+
+#: disbursement/utils.py:117
+msgid "Alex Bank Egypt"
+msgstr "بنك الإسكندرية"
+
+#: disbursement/utils.py:118
+msgid "Societe Arabe Internationale De Banque (SAIB)"
+msgstr "SAIB بنك"
+
+#: disbursement/utils.py:119
+msgid "National Bank of Egypt"
+msgstr "البنك الأهلي المصري"
+
+#: disbursement/utils.py:120
+msgid "Al Baraka Bank Egypt B.S.C"
+msgstr "بنك البركة مصر"
+
+#: disbursement/utils.py:121
+msgid "Egypt Post"
+msgstr "البريد المصري "
+
+#: disbursement/utils.py:122
+msgid "Nasser Social Bank"
+msgstr "بنك ناصر الاجتماعى"
+
+#: disbursement/utils.py:123
+msgid "Industrial Development Bank"
+msgstr "بنك التنمية الصناعية"
+
+#: disbursement/utils.py:124
+msgid "Suez Canal Bank"
+msgstr "بنك قناة السويس"
+
+#: disbursement/utils.py:125
+msgid "Mashreq Bank"
+msgstr "بنك المشرق"
+
+#: disbursement/utils.py:126
+msgid "Arab Investment Bank"
+msgstr "بنك الإستثمار العربي"
+
+#: disbursement/utils.py:127
+msgid "Audi Bank"
+msgstr "بنك عودة"
+
+#: disbursement/utils.py:128
+msgid "General Authority For Supply Commodities"
+msgstr "الهيئة العامة للسلع التموينية"
+
+#: disbursement/utils.py:129
+msgid "Arab International Bank"
+msgstr "المصرف العربي الدولي"
+
+#: disbursement/utils.py:130
+msgid "Agricultural Bank of Egypt"
+msgstr "البنك الزراعي المصري"
+
+#: disbursement/utils.py:131
+msgid "National Bank of Greece"
+msgstr "البنك الأهلي اليوناني"
+
+#: disbursement/utils.py:137
+#, fuzzy
+#| msgid "Validation Failed"
+msgid "Channel Authentication Failed"
+msgstr "فشل التعريف"
+
+#: disbursement/utils.py:138
+msgid "Undefined request type"
+msgstr ""
+
+#: disbursement/utils.py:139
+msgid "Incorrect input given to request"
+msgstr ""
+
+#: disbursement/utils.py:140 templates/data/document_disbursement_list.html:127
+msgid "Internal Error"
+msgstr ""
+
+#: disbursement/utils.py:141
+msgid "Exceeded Maximum Limit Per Single Transaction"
+msgstr ""
+
+#: disbursement/utils.py:142
+msgid "Below Minimum Transaction Limit Per Single Transaction"
+msgstr ""
+
+#: disbursement/utils.py:143
+msgid "User Not Eligible To Perform Transaction"
+msgstr ""
+
+#: disbursement/utils.py:144 disbursement/utils.py:149
+msgid "Sender and Recipient Accounts are the Same"
+msgstr ""
+
+#: disbursement/utils.py:145
+msgid "Recipient Is Unregistered"
+msgstr ""
+
+#: disbursement/utils.py:146
+msgid "MSISDN Does Not Exist"
+msgstr ""
+
+#: disbursement/utils.py:147
+msgid "Invalid Consumer PIN"
+msgstr ""
+
+#: disbursement/utils.py:148
+msgid "Initial MPIN has not been changed"
+msgstr ""
+
+#: disbursement/utils.py:150
+msgid "M-PIN is Empty"
+msgstr ""
+
+#: disbursement/utils.py:151
+msgid "MSISDN is Locked"
+msgstr ""
+
+#: disbursement/utils.py:152
+msgid "Invalid Client ID"
+msgstr ""
+
+#: disbursement/utils.py:153
+msgid "Catch All SE Errors"
+msgstr ""
+
+#: disbursement/utils.py:154
+msgid "Inactive Service"
+msgstr ""
+
+#: disbursement/utils.py:155
+msgid "Initial MPIN has not been changed."
+msgstr ""
+
+#: disbursement/utils.py:156
+msgid "Consumer MSISDN Does Not Exist"
+msgstr ""
+
+#: disbursement/utils.py:157
+msgid "Agent MSISDN Does Not Exist"
+msgstr ""
+
+#: disbursement/utils.py:158
+msgid "Consumer Account Status is Not Active"
+msgstr ""
+
+#: disbursement/utils.py:159
+msgid "Invalid Agent M-PIN"
+msgstr ""
+
+#: disbursement/utils.py:160
+msgid "Agent Type is Invalid"
+msgstr ""
+
+#: disbursement/utils.py:161
+msgid "Consumer has No Default Funding Account"
+msgstr ""
+
+#: disbursement/utils.py:162
+msgid "Agent MSISDN does not exist"
+msgstr ""
+
+#: disbursement/utils.py:163
+msgid "Agent ID Does Not Exist"
+msgstr ""
+
+#: disbursement/utils.py:164
+msgid "Recipient Consumer's MPIN has not been changed"
+msgstr ""
+
+#: disbursement/utils.py:165
+msgid "Recipient Consumer's has exceeded transaction count limit"
+msgstr ""
+
+#: disbursement/utils.py:166
+msgid "Service Call Failed"
+msgstr ""
+
+#: disbursement/utils.py:167
+msgid "Funding Account Status is Referral"
+msgstr ""
+
+#: disbursement/utils.py:168
+msgid "Invalid Agent"
+msgstr ""
+
+#: disbursement/utils.py:169
+msgid "Funding Account Status is Pick-up CR Problem or Fraud/Capture Card"
+msgstr ""
+
+#: disbursement/utils.py:170
+msgid "Funding Account was not Honored/General Decline"
+msgstr ""
+
+#: disbursement/utils.py:171
+#, fuzzy
+#| msgid "Transactions"
+msgid "Invalid Transaction"
+msgstr "المعاملات"
+
+#: disbursement/utils.py:172
+#, fuzzy
+#| msgid "Amount"
+msgid "Invalid Amount"
+msgstr "المبلغ"
+
+#: disbursement/utils.py:173
+msgid "Invalid Funding Account Card Number"
+msgstr ""
+
+#: disbursement/utils.py:174
+#, fuzzy
+#| msgid "Issuer"
+msgid "Invalid Issuer"
+msgstr "جهة الصرف"
+
+#: disbursement/utils.py:175
+msgid "Format Error"
+msgstr ""
+
+#: disbursement/utils.py:176
+msgid "Funding Account Status is Lost"
+msgstr ""
+
+#: disbursement/utils.py:177
+msgid "Funding Account Status is Stolen"
+msgstr ""
+
+#: disbursement/utils.py:178
+msgid "Funding Account has Insufficient Funds"
+msgstr ""
+
+#: disbursement/utils.py:179
+msgid "Funding Account is Expired"
+msgstr ""
+
+#: disbursement/utils.py:180
+msgid "Invalid C-PIN"
+msgstr ""
+
+#: disbursement/utils.py:181
+msgid "Transaction Not Permitted to Issuer/Card Holder"
+msgstr ""
+
+#: disbursement/utils.py:182
+msgid "Transaction Not Permitted to Acquirer/Terminal"
+msgstr ""
+
+#: disbursement/utils.py:183
+msgid "Exceeded Transaction Amount Limit"
+msgstr ""
+
+#: disbursement/utils.py:184
+msgid "Restricted Card"
+msgstr ""
+
+#: disbursement/utils.py:185
+msgid "Security Violation"
+msgstr ""
+
+#: disbursement/utils.py:186
+msgid "Exceeded Transaction Count Limit"
+msgstr ""
+
+#: disbursement/utils.py:187
+msgid "Contact Card Issuer"
+msgstr ""
+
+#: disbursement/utils.py:188
+msgid "C-PIN Not Changed"
+msgstr ""
+
+#: disbursement/utils.py:189
+msgid "Allowable Number of C-PIN Tries Exceeded"
+msgstr ""
+
+#: disbursement/utils.py:190
+msgid "Invalid/Non-Existent \"To Account\""
+msgstr ""
+
+#: disbursement/utils.py:191
+msgid "Invalid/Non-Existent \"From Account\""
+msgstr ""
+
+#: disbursement/utils.py:192
+msgid "Invalid/Non-Existent Account"
+msgstr ""
+
+#: disbursement/utils.py:193
+msgid "Invalid Authorization Life Cycle"
+msgstr ""
+
+#: disbursement/utils.py:194
+#, fuzzy
+#| msgid "Validation Failed"
+msgid "C-PIN Validation Not Possible"
+msgstr "فشل التعريف"
+
+#: disbursement/utils.py:195
+msgid "Cryptographic Failure"
+msgstr ""
+
+#: disbursement/utils.py:196
+msgid "Unacceptable C-PIN"
+msgstr ""
+
+#: disbursement/utils.py:197
+msgid "Authorization System/Issuer System Inoperative"
+msgstr ""
+
+#: disbursement/utils.py:198
+#, fuzzy
+#| msgid "Single Step Transactions"
+msgid "Unable to Route Transaction"
+msgstr "إنشاء معاملة واحدة"
+
+#: disbursement/utils.py:199
+msgid "Duplicate Authorization Request"
+msgstr ""
+
+#: disbursement/utils.py:200
+msgid "General System Error"
+msgstr ""
+
+#: disbursement/utils.py:201
+msgid "MIP is Down/Not Connected"
+msgstr ""
+
+#: disbursement/utils.py:202
+msgid "No Response from MIP"
+msgstr ""
+
+#: disbursement/utils.py:203
+msgid "Catch All Acquirer SE Error"
+msgstr ""
+
+#: disbursement/utils.py:206
+#, fuzzy
+#| msgid "Successful"
+msgid "Successful transaction"
+msgstr "الناجحة"
+
+#: disbursement/utils.py:207
+#, fuzzy
+#| msgid " Disbursement Files"
+msgid "Invalid disbursement request"
+msgstr "ملفات الصرف"
+
+#: disbursement/utils.py:208 disbursement/utils.py:209
+msgid "Invalid or missing parameters"
+msgstr ""
+
+#: disbursement/utils.py:210 disbursement/utils.py:211
+msgid "Service is down"
+msgstr ""
+
+#: disbursement/utils.py:379
+msgid "External error, please contact your support team for further details"
+msgstr ""
+
+#: disbursement/views.py:78
+#, python-brace-format
+msgid ""
+"Agents creation process stopped during an internal error, "
+"{MSG_TRY_OR_CONTACT}"
+msgstr ""
+
+#: disbursement/views.py:79
+#, python-brace-format
+msgid ""
+"Balance inquiry process stopped during an internal error, "
+"{MSG_TRY_OR_CONTACT}"
+msgstr ""
+
+#: disbursement/views.py:385
+msgid "Agents creation failed"
+msgstr ""
+
+#: instant_cashin/admin.py:100 templates/data/banks_document_viewer.html:295
+#: templates/disbursement/bank_transactions_list.html:146
+#: templates/disbursement/e_wallets_transactions_list.html:115
+#: templates/disbursement/single_step_trx_list.html:425
+#: templates/instant_cashin/instant_viewer.html:68
+#: templates/support/document_details.html:235
+msgid "Transaction Details"
+msgstr "تفاصيل المعاملة"
+
+#: instant_cashin/api/base_views/aman_transaction_callback_handler.py:19
+#: instant_cashin/api/base_views/budget_inquiry.py:17
+#: instant_cashin/api/base_views/user_inquiry.py:30
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:23
+msgid ""
+"Process stopped during an external error, can you try again or contact your "
+"support team."
+msgstr ""
+
+#: instant_cashin/api/base_views/aman_transaction_callback_handler.py:71
+msgid "Hmac value mismatch!"
+msgstr ""
+
+#: instant_cashin/api/base_views/instant_disbursement.py:35
+msgid ""
+"Your transaction will be process the soonest, wait for a response at the "
+"next 24 hours"
+msgstr ""
+
+#: instant_cashin/api/base_views/instant_disbursement.py:36
+msgid ""
+"Sorry, the amount to be disbursed exceeds you budget limit, please contact "
+"your support team"
+msgstr ""
+
+#: instant_cashin/api/base_views/instant_disbursement.py:216
+#: instant_cashin/api/exceptions.py:30
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:203
+msgid "failed"
+msgstr ""
+
+#: instant_cashin/api/base_views/user_inquiry.py:49
+#, python-brace-format
+msgid "{head_message}"
+msgstr ""
+
+#: instant_cashin/api/serializers.py:80
+msgid "You must pass valid msisdn"
+msgstr ""
+
+#: instant_cashin/api/serializers.py:85
+msgid "You must pass valid values for fields [first_name, last_name, email]"
+msgstr ""
+
+#: instant_cashin/api/serializers.py:90
+msgid ""
+"You must pass valid values for fields [bank_code, bank_card_number, "
+"bank_transaction_type, full_name]"
+msgstr ""
+
+#: instant_cashin/api/serializers.py:95
+msgid "Symbols like !%*+& not allowed in full_name"
+msgstr ""
+
+#: instant_cashin/api/serializers.py:100
+msgid "You must pass valid values for fields [msisdn, full_name]"
+msgstr ""
+
+#: instant_cashin/api/validators.py:21
+msgid "Invalid phone number"
+msgstr ""
+
+#: instant_cashin/api/validators.py:32
+msgid "You are not permitted to inquire at an issuer other that 'VodafoneCash'"
+msgstr ""
+
+#: instant_cashin/api/validators.py:45
+msgid ""
+"The fee flag passed to be applied is incorrect, please pass one of ['Full', "
+"'Half', 'No fees']"
+msgstr ""
+
+#: instant_cashin/api/validators.py:58
+msgid ""
+"The passed issuer is not valid, please make sure that the passed issuer "
+"value is one of"
+msgstr ""
+
+#: instant_cashin/api/validators.py:68
+msgid ""
+"The passed bank code is not valid, please make sure that the passed code "
+"value is one of"
+msgstr ""
+
+#: instant_cashin/api/validators.py:78
+msgid ""
+"The passed bank transaction type is not valid, please make sure that the "
+"passed type value is one of"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:24
+#: utilities/models/generic_models.py:281
+msgid "Vodafone"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:25
+#: utilities/models/generic_models.py:282
+msgid "Etisalat"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:26
+#: utilities/models/generic_models.py:283
+msgid "Orange"
+msgstr "اورانج"
+
+#: instant_cashin/models/instant_transactions.py:27
+#: utilities/models/generic_models.py:284
+msgid "Aman"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:28
+msgid "Bank_Wallet"
+msgstr "محفظة بنكية"
+
+#: instant_cashin/models/instant_transactions.py:29
+msgid "Bank_Card"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:33
+#: templates/disbursement/single_step_trx_list.html:95
+#: templates/disbursement/single_step_trx_list.html:132
+#: templates/disbursement/single_step_trx_list.html:208
+msgid "Issuer Type"
+msgstr "نوع المُصدر"
+
+#: instant_cashin/models/instant_transactions.py:53
+msgid "bank_wallets_transactions"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:54
+msgid "Bank Wallets Document"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:62
+msgid "Transaction Reference"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:70
+msgid "instant_transaction"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:71
+msgid "Instant API Checker"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:74
+msgid "Sender"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:79
+msgid "Agent used from Root's agents list"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:82
+#: templates/disbursement/single_step_trx_list.html:631
+msgid "Status Code"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:88
+#: templates/disbursement/single_step_trx_list.html:633
+msgid "Status Description"
+msgstr "شرح الحالة"
+
+#: instant_cashin/models/instant_transactions.py:101
+msgid "Recipient Name"
+msgstr ""
+
+#: instant_cashin/models/instant_transactions.py:103
+msgid "The customer/recipient name"
+msgstr ""
+
+#: instant_cashin/models/specific_issuers/aman.py:20
+msgid "Is Paid?"
+msgstr ""
+
+#: instant_cashin/models/specific_issuers/aman.py:21
+msgid ""
+"Updated at every notify_merchant_callback if the transaction is successfully "
+"paid"
+msgstr ""
+
+#: instant_cashin/models/specific_issuers/aman.py:26
+msgid "Bill Reference"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:134
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:162
+#, python-brace-format
+msgid "[request] [{log_header}] [{bank_trx_obj.user_created}] -- {payload}"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:153
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:181
+#, python-brace-format
+msgid ""
+"[response] [{log_header}] [{bank_trx_obj.user_created}] -- "
+"{response_log_message}"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:284
+#: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:307
+#, python-brace-format
+msgid "[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:46
+#, python-brace-format
+msgid "{head} {user_portion} -- {message}"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:175
+#, python-brace-format
+msgid ""
+"برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص "
+"{bill_reference}. لصرف مبلغ {self.amount} جنيه. شكراً لاختيارك مدفوعات أكسبت."
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:186
+msgid "success"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:191
+#, python-brace-format
+msgid "{bill_reference}"
+msgstr ""
+
+#: instant_cashin/specific_issuers_integrations/aman/instant_cashin.py:226
+#, python-brace-format
+msgid ""
+"Transaction payment failed! is_success: {is_success}, bill_ref: "
+"{bill_reference}"
+msgstr ""
+
+#: payouts/settings/base.py:209 payouts/settings/test.py:109
 msgid "English"
 msgstr ""
 
-#: disbursement/settings/base.py:149 disbursement/settings/test.py:110
+#: payouts/settings/base.py:210 payouts/settings/test.py:110
 msgid "Arabic"
 msgstr ""
 
-#: templates/collection-sidebar.html:23 templates/disbursement-sidebar.html:23
-#: templates/superadmin_sidebar.html:23
+#: templates/collection-sidebar.html:23 templates/sidebar_logo.html:54
 msgid "Welcome,"
-msgstr ""
+msgstr "مرحبا"
 
-#: templates/collection-sidebar.html:43 templates/disbursement-sidebar.html:43
+#: templates/collection-sidebar.html:43 templates/support/home.html:6
 #: templates/users/password_reset_confirm.html:41
 msgid "Home"
 msgstr ""
 
-#: templates/collection-sidebar.html:45 templates/disbursement-sidebar.html:45
-#: templates/superadmin_sidebar.html:43
+#: templates/collection-sidebar.html:45
 msgid "Dashboard"
 msgstr ""
 
-#: templates/collection-sidebar.html:46 templates/disbursement-sidebar.html:46
+#: templates/collection-sidebar.html:46
 msgid "Files"
 msgstr ""
 
-#: templates/collection-sidebar.html:50 templates/disbursement-sidebar.html:52
+#: templates/collection-sidebar.html:50 templates/disbursement_sidebar.html:28
+#: templates/instant_cashin/sidebar.html:16
 msgid "Members"
-msgstr ""
+msgstr "المستخدمين"
 
-#: templates/collection-sidebar.html:52 templates/disbursement-sidebar.html:63
+#: templates/collection-sidebar.html:52 templates/disbursement_sidebar.html:36
+#: templates/instant_cashin/sidebar.html:24
 msgid "All members"
-msgstr ""
+msgstr "جميع المستخدمين"
 
-#: templates/collection-sidebar.html:58 templates/disbursement-sidebar.html:69
+#: templates/collection-sidebar.html:58 templates/disbursement_sidebar.html:51
 #: templates/top_navigation.html:34 templates/users/add_levels.html:15
-#: templates/users/settings-up-collection.html:14
-#: templates/users/settings-up-disbursement.html:14
+#: templates/users/setting-up-collection/collection.html:14
+#: templates/users/setting-up-collection/formats.html:14
+#: templates/users/setting-up-collection/uploader.html:14
+#: templates/users/setting-up-disbursement/category.html:27
+#: templates/users/setting-up-disbursement/checkers.html:19
+#: templates/users/setting-up-disbursement/levels.html:19
+#: templates/users/setting-up-disbursement/makers.html:19
+#: templates/users/setting-up-disbursement/pin.html:19
 msgid "Settings"
-msgstr ""
+msgstr "الاعدادات"
 
-#: templates/collection-sidebar.html:61 templates/disbursement-sidebar.html:72
+#: templates/collection-sidebar.html:61
 msgid "Setup"
 msgstr ""
 
-#: templates/collection-sidebar.html:63 templates/disbursement-sidebar.html:75
-#: templates/superadmin_sidebar.html:55
+#: templates/collection-sidebar.html:63 templates/disbursement_sidebar.html:47
+#: templates/instant_cashin/sidebar.html:34
+#: templates/superadmin_sidebar.html:32 templates/support/sidebar.html:14
 msgid "Profile"
+msgstr "الملف الشخصي"
+
+#: templates/collection-sidebar.html:66 templates/data/formats.html:31
+#: templates/disbursement_sidebar.html:55
+#: templates/disbursement_sidebar.html:57 templates/support/clients.html:251
+msgid "Formats"
+msgstr "بيانات"
+
+#: templates/data/bank_sheets_home.html:5
+msgid " | Disbursement Files"
 msgstr ""
 
-#: templates/collection-sidebar.html:66 templates/data/formats.html:32
-#: templates/disbursement-sidebar.html:77
-msgid "Formats"
+#: templates/data/bank_sheets_home.html:21
+#: templates/data/e_wallets_home.html:26
+msgid "Account is suspended due to uncompleted setups of your Admin!"
+msgstr ""
+
+#: templates/data/bank_sheets_home.html:27
+#: templates/data/e_wallets_home.html:32
+msgid "You're not active any more!"
+msgstr ""
+
+#: templates/data/bank_sheets_home.html:29
+#: templates/data/e_wallets_home.html:34
+msgid "Your Admin is no longer active!"
+msgstr ""
+
+#: templates/data/bank_sheets_home.html:35
+#: templates/data/collection_home.html:21 templates/data/e_wallets_home.html:40
+msgid "Upload Form"
+msgstr "تحميل الاستمارة"
+
+#: templates/data/bank_sheets_home.html:73
+#: templates/data/collection_home.html:89 templates/data/e_wallets_home.html:95
+msgid "Drop a file here to upload or click to browse one"
+msgstr "قم بإدراج ملف هنا للتحميل أو إضغط لتصفح ملف"
+
+#: templates/data/bank_sheets_home.html:114
+msgid "Banks Swift Codes"
+msgstr ""
+
+#: templates/data/bank_sheets_home.html:123
+msgid "Transactions Types"
+msgstr "أنواع المعاملات"
+
+#: templates/data/banks_document_viewer.html:8
+#: templates/data/document_viewer_collection.html:7
+#: templates/data/e_wallets_document_viewer.html:7
+#: templates/data/formats.html:7
+msgid "Document details"
+msgstr " تفاصيل الملف "
+
+#: templates/data/banks_document_viewer.html:72
+#: templates/data/e_wallets_document_viewer.html:58
+#: templates/disbursement/disbursement_transactions_dashboard.html:6
+#: templates/disbursement/disbursement_transactions_dashboard.html:40
+#: templates/users/clients.html:86
+msgid "All"
+msgstr "الكل"
+
+#: templates/data/banks_document_viewer.html:74
+#: templates/data/e_wallets_document_viewer.html:60
+#: templates/disbursement/disbursement_transactions_dashboard.html:8
+#: templates/disbursement/disbursement_transactions_dashboard.html:13
+#: templates/disbursement/disbursement_transactions_dashboard.html:18
+#: templates/disbursement/disbursement_transactions_dashboard.html:23
+msgid "LE"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:81
+#: templates/data/e_wallets_document_viewer.html:67
+msgid "Disburse"
+msgstr "صرف"
+
+#: templates/data/banks_document_viewer.html:99
+#: templates/data/e_wallets_document_viewer.html:85
+msgid "Notify Checkers"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:103
+#: templates/data/banks_document_viewer.html:478
+#: templates/data/e_wallets_document_viewer.html:89
+#: templates/data/e_wallets_document_viewer.html:403
+msgid "Checkers Notified"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:124
+#: templates/data/e_wallets_document_viewer.html:110
+msgid "Review"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:137
+#: templates/data/e_wallets_document_viewer.html:123
+msgid "Accept or Reject"
+msgstr "قبول أو رفض "
+
+#: templates/data/banks_document_viewer.html:140
+#: templates/data/e_wallets_document_viewer.html:126
+msgid "Accept"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:141
+#: templates/data/e_wallets_document_viewer.html:127
+msgid "Reject"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:147
+#: templates/data/e_wallets_document_viewer.html:133
+msgid "Rejection reason"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:158
+#: templates/data/banks_document_viewer.html:352
+#: templates/data/change_password.html:29
+#: templates/data/e_wallets_document_viewer.html:143
+#: templates/data/e_wallets_document_viewer.html:277
+#: templates/data/formats.html:43 templates/data/formats.html:45
+#: templates/disbursement/single_step_trx_list.html:363
+#: templates/users/add_levels.html:26 templates/users/forget-password.html:17
+#: templates/users/password_reset_confirm.html:23
+msgid "Submit"
+msgstr "إرسال"
+
+#: templates/data/banks_document_viewer.html:173
+#: templates/data/document_disbursement_list.html:65
+#: templates/data/e_wallets_document_viewer.html:158
+msgid "Reviews"
+msgstr "المراجعات"
+
+#: templates/data/banks_document_viewer.html:217
+msgid "Bank wallets/Orange Document Transactions"
+msgstr "ملف معاملات Bank wallets/Orange"
+
+#: templates/data/banks_document_viewer.html:217
+msgid "Bank Accounts/Cards Document Transactions"
+msgstr "ملف معاملات Bank Accounts/Cards"
+
+#: templates/data/banks_document_viewer.html:221
+#: templates/data/document_collection_list.html:31
+#: templates/data/document_collection_list.html:53
+#: templates/data/document_delete_modal.html:18
+#: templates/data/document_disbursement_list.html:71
+#: templates/data/document_disbursement_list.html:168
+#: templates/data/document_viewer_collection.html:26
+#: templates/data/e_wallets_document_viewer.html:212
+#: templates/support/list.html:106 templates/users/clients.html:210
+#: templates/users/members.html:119
+msgid "Delete"
+msgstr "حذف"
+
+#: templates/data/banks_document_viewer.html:237
+msgid "Wallet number"
+msgstr "رقم المحفظة"
+
+#: templates/data/banks_document_viewer.html:261
+#: templates/data/banks_document_viewer.html:521
+msgid "Account number / IBAN"
+msgstr "رقم الحساب / IBAN"
+
+#: templates/data/banks_document_viewer.html:332
+#: templates/data/document_delete_modal.html:19
+#: templates/data/document_disbursement_list.html:236
+#: templates/data/e_wallets_document_viewer.html:257
+#: templates/data/upload-response-modals.html:17
+#: templates/data/upload-response-modals.html:39
+#: templates/disbursement/bank_transactions_list.html:191
+#: templates/disbursement/bank_transactions_list.html:210
+#: templates/disbursement/bank_transactions_list.html:229
+#: templates/disbursement/e_wallets_transactions_list.html:154
+#: templates/disbursement/e_wallets_transactions_list.html:192
+#: templates/disbursement/single_step_trx_list.html:389
+#: templates/disbursement/single_step_trx_list.html:413
+#: templates/support/list.html:105 templates/support/list.html:125
+#: templates/users/clients.html:208 templates/users/clients.html:232
+#: templates/users/clients.html:254 templates/users/clients.html:273
+#: templates/users/clients.html:291 templates/users/members.html:118
+#: templates/users/members.html:138
+msgid "Close"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:342
+#: templates/data/e_wallets_document_viewer.html:267
+msgid "Enter Agent Pin"
+msgstr "أدخل رمز/ رقم التعريف الشخصي"
+
+#: templates/data/banks_document_viewer.html:348
+#: templates/data/e_wallets_document_viewer.html:273
+#: templates/disbursement/single_step_trx_list.html:353
+msgid "Pin"
+msgstr " رقم /رمز التعريف الشخصي"
+
+#: templates/data/banks_document_viewer.html:349
+#: templates/data/e_wallets_document_viewer.html:274
+#: users/models/base_user.py:57
+msgid "pin"
+msgstr " رقم /رمز التعريف الشخصي"
+
+#: templates/data/banks_document_viewer.html:388
+#: templates/data/e_wallets_document_viewer.html:314
+#: templates/data/formats.html:139
+#: templates/disbursement/bank_transactions_list.html:264
+#: templates/disbursement/e_wallets_transactions_list.html:225
+#: templates/disbursement/single_step_trx_list.html:484
+#: templates/support/clients.html:171
+#: templates/support/document_details.html:297
+#: templates/users/session_list.html:108
+msgid "Copy"
+msgstr "نسخ"
+
+#: templates/data/banks_document_viewer.html:399
+#: templates/data/e_wallets_document_viewer.html:325
+#: templates/data/formats.html:150
+#: templates/disbursement/bank_transactions_list.html:275
+#: templates/disbursement/disbursement_transactions_dashboard.html:30
+#: templates/disbursement/e_wallets_transactions_list.html:236
+#: templates/disbursement/single_step_trx_list.html:495
+#: templates/support/clients.html:182
+#: templates/support/document_details.html:308
+#: templates/users/session_list.html:119
+msgid "Export"
+msgstr "تحميل الملف"
+
+#: templates/data/banks_document_viewer.html:423
+#: templates/data/e_wallets_document_viewer.html:349
+msgid "Disbursed, Thanks!"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:424
+#: templates/data/e_wallets_document_viewer.html:350
+msgid "Disbursement process is running, you can check reports later"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:428
+#: templates/data/e_wallets_document_viewer.html:354
+msgid "Error occurred, We are sorry!"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:429
+#: templates/data/e_wallets_document_viewer.html:355
+msgid ""
+"Disbursement process stopped during an internal error, can you try again or "
+"contact you support team"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:433
+#: templates/data/e_wallets_document_viewer.html:359
+msgid "Error occurred from your side!"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:434
+#: templates/data/e_wallets_document_viewer.html:360
+msgid ""
+"Pin you entered is not correct, can you try again or contact you support "
+"team."
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:438
+#: templates/data/e_wallets_document_viewer.html:364
+msgid "Error occurred from your side"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:440
+#: templates/data/e_wallets_document_viewer.html:366
+msgid ""
+"This document is disbursed before, if there is any error, please return back "
+"to the support team"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:444
+#: templates/data/e_wallets_document_viewer.html:370
+msgid "You can not disburse this document"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:483
+#: templates/data/e_wallets_document_viewer.html:409
+msgid "Error Occurred!"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:484
+#: templates/data/e_wallets_document_viewer.html:410
+msgid "It seems that you do not have access or request a wrong document"
+msgstr ""
+
+#: templates/data/banks_document_viewer.html:510
+#: templates/data/e_wallets_document_viewer.html:226
+#: templates/disbursement/bank_transactions_list.html:56
+#: templates/disbursement/bank_transactions_list.html:361
+#: templates/disbursement/e_wallets_transactions_list.html:56
+#: templates/disbursement/e_wallets_transactions_list.html:319
+#: templates/disbursement/single_step_trx_list.html:94
+#: templates/disbursement/single_step_trx_list.html:578
+#: templates/support/document_details.html:67
+#: templates/support/document_details.html:72
+#: templates/support/document_details.html:361
+#: templates/support/document_details.html:394
+msgid "Wallet Number"
+msgstr "رقم المحفظة"
+
+#: templates/data/banks_document_viewer.html:527
+#: templates/disbursement/bank_transactions_list.html:388
+#: templates/disbursement/single_step_trx_list.html:618
+#: templates/support/document_details.html:375
+msgid "Bank Swift Code"
+msgstr "Swift Code البنك"
+
+#: templates/data/banks_document_viewer.html:544
+#: templates/data/document_disbursement_list.html:64
+#: templates/disbursement/bank_transactions_list.html:394
+#: templates/support/documents_list.html:50
+msgid "Document ID"
+msgstr "كود الملف"
+
+#: templates/data/banks_document_viewer.html:546
+#: templates/disbursement/bank_transactions_list.html:396
+#: templates/disbursement_sidebar.html:32 templates/users/members.html:51
+#: templates/users/members.html:59 templates/users/profile.html:53
+msgid "Maker"
 msgstr ""
 
 #: templates/data/change_password.html:3
 msgid "Change"
 msgstr ""
 
-#: templates/data/change_password.html:6 templates/entity/add_root.html:41
+#: templates/data/change_password.html:6 templates/entity/add_root.html:49
+#: templates/instant_cashin/add_member.html:32
+#: templates/support/add_support.html:41
 #: templates/two_factor/_wizard_actions.html:12
 #: templates/two_factor/_wizard_actions.html:15
 msgid "Back"
 msgstr ""
 
-#: templates/data/change_password.html:12
+#: templates/data/change_password.html:12 templates/users/profile.html:96
 msgid "Change Password"
-msgstr ""
+msgstr "تغير كلمه المرور"
 
 #: templates/data/change_password.html:16
 msgid "Old Password"
@@ -483,47 +2266,44 @@ msgstr ""
 msgid "New Passowrd Confirmation"
 msgstr ""
 
-#: templates/data/change_password.html:29
-#: templates/data/document_viewer_disbursement.html:158
-#: templates/data/document_viewer_disbursement.html:264
-#: templates/data/formats.html:115 templates/users/add_levels.html:92
-#: templates/users/forget-password.html:17
-#: templates/users/password_reset_confirm.html:23
-msgid "Submit"
-msgstr ""
-
-#: templates/data/change_password.html:38 templates/data/login.html:32
+#: templates/data/change_password.html:38 templates/data/login.html:40
 #: templates/users/forget-password.html:31
 #: templates/users/password_reset_confirm.html:32
 #: templates/users/password_reset_confirm.html:48
-msgid "Payroll Dashboard"
+msgid "Payouts Dashboard"
 msgstr ""
 
-#: templates/data/change_password.html:39 templates/data/login.html:33
+#: templates/data/change_password.html:39 templates/data/login.html:41
 #: templates/users/forget-password.html:32
 #: templates/users/password_reset_confirm.html:33
 #: templates/users/password_reset_confirm.html:49
 msgid ""
-"©2019 All Rights Reserved. Payroll Dashoard! is a Paymob solution. Privacy "
-"and Terms"
+" All Rights Reserved. Payouts Dashoard! is a Paymob solution. Privacy and "
+"Terms"
 msgstr ""
 
-#: templates/data/collection_home.html:21
-#: templates/data/disbursement_home.html:21
-msgid "Upload Form"
+#: templates/data/collection_home.html:4
+msgid "Collection Files"
 msgstr ""
 
-#: templates/data/collection_home.html:45
+#: templates/data/collection_home.html:23
+#: templates/users/setting-up-collection/collection.html:35
+#: templates/users/setting-up-collection/formats.html:35
+#: templates/users/setting-up-collection/uploader.html:35
+#: templates/users/setting-up-disbursement/category.html:83
+#: templates/users/setting-up-disbursement/checkers.html:77
+#: templates/users/setting-up-disbursement/levels.html:77
+#: templates/users/setting-up-disbursement/makers.html:77
+#: templates/users/setting-up-disbursement/pin.html:74
+msgid "Format"
+msgstr ""
+
+#: templates/data/collection_home.html:43
 msgid "Please Add Collection first"
 msgstr ""
 
-#: templates/data/collection_home.html:93
-#: templates/data/disbursement_home.html:89
-msgid "Drop a file here to upload or click to browse one"
-msgstr ""
-
-#: templates/data/disbursement_home.html:43
-msgid "Please Add Disbursement first"
+#: templates/data/collection_home.html:51
+msgid "No Documents uploaded yet"
 msgstr ""
 
 #: templates/data/document_collection_list.html:4
@@ -531,362 +2311,567 @@ msgid "Collection Documents"
 msgstr ""
 
 #: templates/data/document_collection_list.html:15
-#: templates/data/document_disbursement_list.html:15
+#: templates/data/document_disbursement_list.html:52
 msgid "Documents list"
-msgstr ""
+msgstr "قائمة الملفات"
 
-#: templates/data/document_collection_list.html:29
-#: templates/data/document_disbursement_list.html:29
+#: templates/data/document_collection_list.html:27
 msgid "Document Name"
 msgstr ""
 
-#: templates/data/document_collection_list.html:30
+#: templates/data/document_collection_list.html:28
+#: templates/support/document_details.html:192
+#: templates/support/documents_list.html:52
 msgid "Uploaded By"
-msgstr ""
+msgstr "تم الرفع بواسطة"
 
-#: templates/data/document_collection_list.html:31
-#: templates/data/document_collection_list.html:49
-#: templates/data/document_disbursement_list.html:34
-#: templates/data/document_disbursement_list.html:90
+#: templates/data/document_collection_list.html:29
+#: templates/data/document_collection_list.html:47
+#: templates/data/document_disbursement_list.html:69
+#: templates/data/document_disbursement_list.html:139
+#: templates/data/document_disbursement_list.html:142
+#: templates/data/document_disbursement_list.html:145
+#: templates/data/document_disbursement_list.html:148
+#: templates/data/document_disbursement_list.html:152
+#: templates/data/document_disbursement_list.html:159
+#: templates/data/document_disbursement_list.html:161
 msgid "View"
-msgstr ""
+msgstr "عرض"
 
-#: templates/data/document_collection_list.html:33
-#: templates/data/document_collection_list.html:54
-#: templates/data/document_delete_modal.html:19
-#: templates/data/document_disbursement_list.html:36
-#: templates/data/document_disbursement_list.html:95
-#: templates/data/document_viewer_collection.html:29
-#: templates/data/document_viewer_disbursement.html:82
-#: templates/users/clients.html:123 templates/users/members.html:122
-msgid "Delete"
-msgstr ""
-
-#: templates/data/document_collection_list.html:43
-#: templates/data/document_disbursement_list.html:46
+#: templates/data/document_collection_list.html:41
+#: templates/data/document_disbursement_list.html:81
 msgid "Created"
 msgstr ""
 
-#: templates/data/document_delete_modal.html:11
+#: templates/data/document_delete_modal.html:10
 msgid "Delete document?"
 msgstr ""
 
-#: templates/data/document_delete_modal.html:14
+#: templates/data/document_delete_modal.html:13
 msgid "Are you sure you want to delete this document?"
 msgstr ""
 
-#: templates/data/document_delete_modal.html:15
+#: templates/data/document_delete_modal.html:14
 msgid "Document deleted successfully"
 msgstr ""
 
-#: templates/data/document_delete_modal.html:16
+#: templates/data/document_delete_modal.html:15
 msgid "Error occured, please try again later"
 msgstr ""
 
-#: templates/data/document_delete_modal.html:20
-#: templates/data/document_viewer_disbursement.html:241
-#: templates/data/upload-response-modals.html:17
-#: templates/data/upload-response-modals.html:39
-#: templates/users/clients.html:122 templates/users/clients.html:143
-#: templates/users/clients.html:163 templates/users/members.html:121
-#: templates/users/members.html:141
-msgid "Close"
+#: templates/data/document_disbursement_list.html:14
+#: templates/data/document_disbursement_list.html:16
+#: templates/data/e_wallets_home.html:9 templates/disbursement_sidebar.html:15
+msgid "Disbursement Files"
+msgstr "ملفات الصرف"
+
+#: templates/data/document_disbursement_list.html:22
+#: templates/data/document_disbursement_list.html:35
+msgid "Download Sample File"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:4
-msgid "Disbursement Documents"
+#: templates/data/document_disbursement_list.html:25
+msgid "Banks Swift Codes List"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:30
-#: templates/data/document_viewer_disbursement.html:176
-msgid "Reviews"
+#: templates/data/document_disbursement_list.html:29
+msgid "Transactions Types List"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:31
+#: templates/data/document_disbursement_list.html:41
+msgid "Download Default Sample File"
+msgstr "تحميل الملف المستخدم"
+
+#: templates/data/document_disbursement_list.html:66
+#: templates/support/document_details.html:193
+#: templates/support/documents_list.html:53
 msgid "Disbursed By"
-msgstr ""
+msgstr "الصارف"
 
-#: templates/data/document_disbursement_list.html:32
+#: templates/data/document_disbursement_list.html:67
 msgid "Disbursement Progress"
-msgstr ""
+msgstr "نجاح الصرف"
 
-#: templates/data/document_disbursement_list.html:33
+#: templates/data/document_disbursement_list.html:68
+#: templates/disbursement/bank_transactions_list.html:63
+#: templates/disbursement/bank_transactions_list.html:102
+#: templates/disbursement/bank_transactions_list.html:367
+#: templates/disbursement/bank_transactions_list.html:381
+#: templates/disbursement/e_wallets_transactions_list.html:63
+#: templates/disbursement/e_wallets_transactions_list.html:329
+#: templates/disbursement/e_wallets_transactions_list.html:332
+#: templates/disbursement/e_wallets_transactions_list.html:335
+#: templates/disbursement/single_step_trx_list.html:99
+#: templates/disbursement/single_step_trx_list.html:136
+#: templates/disbursement/single_step_trx_list.html:584
+#: templates/disbursement/single_step_trx_list.html:615
+#: templates/instant_cashin/banks_transactions.html:11
+#: templates/instant_cashin/pending_orange_trx_list.html:34
+#: templates/instant_cashin/wallets_transactions.html:11
+#: templates/support/clients.html:59 templates/support/clients.html:233
+#: templates/support/document_details.html:191
+#: templates/support/document_details.html:352
+#: templates/support/document_details.html:401
+#: templates/support/document_details.html:404
+#: templates/support/document_details.html:407
+#: templates/support/documents_list.html:55 templates/users/clients.html:84
 msgid "Status"
-msgstr ""
+msgstr "حالة"
 
-#: templates/data/document_disbursement_list.html:61
+#: templates/data/document_disbursement_list.html:95
 msgid "No reviews yet"
-msgstr ""
+msgstr "لم يتم المراجعة"
 
-#: templates/data/document_disbursement_list.html:72
+#: templates/data/document_disbursement_list.html:107
 msgid "Complete"
+msgstr "نجاح"
+
+#: templates/data/document_disbursement_list.html:111
+#: utilities/models/abstract_models.py:32
+msgid "Disbursed Successfully"
+msgstr "تم تنفيذ الصرف"
+
+#: templates/data/document_disbursement_list.html:113
+msgid "Waiting Disbursement Callback"
+msgstr "انتظار الرد على عمليه الصرف"
+
+#: templates/data/document_disbursement_list.html:115
+msgid "Disbursement Failed"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:77
-msgid "Failed"
+#: templates/data/document_disbursement_list.html:117
+msgid "Ready for Disbursement"
+msgstr "جاهز للصرف"
+
+#: templates/data/document_disbursement_list.html:119
+#: templates/data/document_disbursement_list.html:156
+msgid "Not ready for disbursement yet"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:82
-#: templates/disbursement/list.html:48
-msgid "Disbursed"
+#: templates/data/document_disbursement_list.html:121
+msgid "Validation Process Running"
+msgstr "عمليه التعريف قيد التنفيذ"
+
+#: templates/data/document_disbursement_list.html:123
+msgid "Validation Failed"
+msgstr "فشل التعريف"
+
+#: templates/data/document_disbursement_list.html:125
+msgid "Validated Successfully"
+msgstr "نجاح التعريف"
+
+#: templates/data/document_disbursement_list.html:134
+msgid "Can not be viewed. File format has been deleted"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:84
-msgid "Waiting disbursement"
+#: templates/data/document_disbursement_list.html:135
+msgid "Can not be viewed"
 msgstr ""
 
-#: templates/data/document_disbursement_list.html:86
-msgid "Proccessed"
+#: templates/data/document_disbursement_list.html:152
+msgid "No checkers notified yet"
 msgstr ""
 
-#: templates/data/document_viewer_collection.html:7
-#: templates/data/document_viewer_disbursement.html:7
-#: templates/data/formats.html:7
-msgid "Document details"
+#: templates/data/document_disbursement_list.html:180
+#: templates/pagination.html:5
+msgid "First"
+msgstr "الاول"
+
+#: templates/data/document_disbursement_list.html:181
+#: templates/pagination.html:6
+#: templates/users/setting-up-collection/collection.html:71
+#: templates/users/setting-up-collection/formats.html:70
+#: templates/users/setting-up-collection/uploader.html:70
+#: templates/users/setting-up-disbursement/category.html:113
+#: templates/users/setting-up-disbursement/checkers.html:102
+#: templates/users/setting-up-disbursement/levels.html:107
+#: templates/users/setting-up-disbursement/makers.html:102
+#: templates/users/setting-up-disbursement/pin.html:98
+msgid "Previous"
+msgstr "السابق"
+
+#: templates/data/document_disbursement_list.html:194
+#: templates/pagination.html:18 templates/two_factor/_wizard_actions.html:17
+#: templates/users/setting-up-collection/collection.html:70
+#: templates/users/setting-up-collection/formats.html:69
+#: templates/users/setting-up-collection/uploader.html:69
+#: templates/users/setting-up-disbursement/category.html:112
+#: templates/users/setting-up-disbursement/checkers.html:101
+#: templates/users/setting-up-disbursement/levels.html:106
+#: templates/users/setting-up-disbursement/makers.html:101
+#: templates/users/setting-up-disbursement/pin.html:97
+msgid "Next"
 msgstr ""
 
-#: templates/data/document_viewer_collection.html:25
+#: templates/data/document_disbursement_list.html:195
+#: templates/pagination.html:19
+msgid "Last"
+msgstr "الاخير"
+
+#: templates/data/document_viewer_collection.html:22
 msgid "Collection Document data"
 msgstr ""
 
-#: templates/data/document_viewer_collection.html:25
-#: templates/data/document_viewer_disbursement.html:78
+#: templates/data/document_viewer_collection.html:22
 msgid "Document name:"
 msgstr ""
 
-#: templates/data/document_viewer_disbursement.html:38
-#: templates/data/document_viewer_disbursement.html:40
-msgid "Disburse"
+#: templates/data/e_wallets_document_viewer.html:204
+msgid "Vodafone/Etisalat/Aman Document Transactions"
+msgstr "ملف معاملات Vodafone/Etisalat/Aman"
+
+#: templates/data/e_wallets_document_viewer.html:206
+msgid "Document Transactions"
+msgstr "توثيق المعاملات"
+
+#: templates/data/e_wallets_home.html:7
+msgid "Vodafone/Etisalat/Aman Disbursement Files"
+msgstr "ملفات الصرف فودافون/اتصالات/أمان"
+
+#: templates/data/e_wallets_home.html:42
+msgid "Select Format"
 msgstr ""
 
-#: templates/data/document_viewer_disbursement.html:53
-msgid "Notify Checkers"
+#: templates/data/formats.html:51
+msgid "Admin file format setups are not completed yet!"
+msgstr "لم تكتمل إعدادات تنسيق ملف المسؤول"
+
+#: templates/data/formats.html:98
+msgid "File Format Changes"
 msgstr ""
 
-#: templates/data/document_viewer_disbursement.html:57
-#: templates/data/document_viewer_disbursement.html:360
-msgid "Checkers Notified"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:61
-msgid ", fix it and upload again! Thanks"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:65
-msgid "Pending"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:78
-msgid "Disbursement Document data"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:94
-msgid "Count:"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:94
-msgid "Total Amount:"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:98
-msgid "Msisdn"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:99
-#: templates/disbursement/list.html:47
-msgid "Amount"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:123
-msgid "Review"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:138
-msgid "Accept or Reject"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:141
-msgid "Accept"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:142
-msgid "Reject"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:148
-msgid "Rejection reason"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:254
-msgid "Enter Agent Pin"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:260
-msgid "Pin"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:261
-msgid "pin"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:308
-msgid "Disbursed, Thanks!"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:313
-msgid "Error occurred, We are sorry!"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:314
+#: templates/data/formats.html:101
 msgid ""
-"Disbursement process stopped during an internal error, can you try again or "
-"contact you support team"
+"Please make sure if you will delete any format all of its corresponding "
+"documents won\\"
 msgstr ""
 
-#: templates/data/document_viewer_disbursement.html:318
-msgid "Error occurred from your side"
+#: templates/data/formats.html:104
+msgid "Save changes"
 msgstr ""
 
-#: templates/data/document_viewer_disbursement.html:320
-msgid ""
-"This document is disbursed before, if there is any error, please return back "
-"to the support team"
+#: templates/data/formats.html:105
+#: templates/disbursement/single_step_trx_list.html:364
+#: templates/two_factor/_wizard_actions.html:7
+msgid "Cancel"
 msgstr ""
 
-#: templates/data/document_viewer_disbursement.html:324
-msgid "You can not disburse this document"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:365
-msgid "Error Occurred!"
-msgstr ""
-
-#: templates/data/document_viewer_disbursement.html:366
-msgid "It seems that you do not have access or request a wrong document"
-msgstr ""
-
-#: templates/data/login.html:3 templates/data/login.html:7
-#: templates/data/login.html:20
+#: templates/data/login.html:4 templates/data/login.html:8
+#: templates/data/login.html:23
 msgid "Login"
-msgstr ""
+msgstr "تسجيل الدخول"
 
-#: templates/data/login.html:9
+#: templates/data/login.html:10 templates/support/clients.html:57
+#: templates/support/clients.html:223
 msgid "Username"
-msgstr ""
+msgstr "إسم المستخدم"
 
-#: templates/data/login.html:12
+#: templates/data/login.html:13 users/admin.py:205 users/forms.py:583
 msgid "Password"
+msgstr "كلمة المرور"
+
+#: templates/data/login.html:19
+msgid "Too many login attempts."
 msgstr ""
 
-#: templates/data/login.html:21
-msgid "Lost your password?"
-msgstr ""
+#: templates/data/login.html:24
+msgid "Forgot your password?"
+msgstr "نسيت كلمة السر"
 
 #: templates/data/upload-response-modals.html:10
 msgid "Thank you"
 msgstr ""
 
 #: templates/data/upload-response-modals.html:13
-msgid "File uploaded successfully"
+msgid "File is being validated"
 msgstr ""
 
 #: templates/data/upload-response-modals.html:14
-msgid "An Email will be sent shortly with file status."
+msgid ""
+"File uploaded and validation process is running now.<br>An Email will be "
+"sent shortly with file status."
 msgstr ""
 
 #: templates/data/upload-response-modals.html:32
 msgid "Upload Failed"
 msgstr ""
 
-#: templates/disbursement-sidebar.html:50
-msgid "Balance inquiry"
+#: templates/disbursement/agents.html:6 templates/support/clients.html:238
+msgid "Agents List"
 msgstr ""
 
-#: templates/disbursement-sidebar.html:55
-msgid "Add member"
+#: templates/disbursement/agents.html:11
+msgid "You do not have any agents yet!"
 msgstr ""
 
-#: templates/disbursement-sidebar.html:57 templates/users/members.html:58
-#: templates/users/profile.html:49
-msgid "Checker"
+#: templates/disbursement/agents.html:22
+msgid "Agents list for client:"
 msgstr ""
 
-#: templates/disbursement-sidebar.html:59 templates/users/members.html:56
-#: templates/users/members.html:64 templates/users/profile.html:49
-msgid "Maker"
+#: templates/disbursement/agents.html:33
+msgid "Agent Number"
 msgstr ""
 
-#: templates/disbursement-sidebar.html:73
-msgid "levels"
+#: templates/disbursement/agents.html:34
+#: templates/utilities/transfer_request.html:88 utilities/forms.py:108
+#: utilities/models/abstract_models.py:61
+msgid "Type"
+msgstr "الطريقة"
+
+#: templates/disbursement/agents.html:35
+msgid "Is Pin Registered?"
+msgstr "هل رقم التعريف الشخصي مسجل؟"
+
+#: templates/disbursement/agents.html:36
+msgid "Is Super Agent?"
 msgstr ""
 
 #: templates/disbursement/balance_inquiry.html:13
+#: templates/disbursement_sidebar.html:39
+#: templates/instant_cashin/sidebar.html:27
 msgid "Balance Inquiry"
-msgstr ""
+msgstr "إستعلام عن الرصيد"
 
-#: templates/disbursement/balance_inquiry.html:23
-#, python-format
-msgid " Balance is %(balance)s "
-msgstr ""
+#: templates/disbursement/balance_inquiry.html:22
+msgid "Your current budget is: "
+msgstr "الرصيد المتاح هو"
 
-#: templates/disbursement/balance_inquiry.html:49
-#: templates/two_factor/login.html:16 templates/users/entity_branding.html:63
+#: templates/disbursement/balance_inquiry.html:45
+#: templates/two_factor/login.html:20 templates/users/entity_branding.html:63
 #: templates/users/profile_update.html:53
 msgid "submit"
+msgstr "إرسال"
+
+#: templates/disbursement/balance_inquiry.html:54
+#, python-format
+msgid " Balance is %(balance)s LE "
 msgstr ""
 
-#: templates/disbursement/list.html:20
+#: templates/disbursement/bank_transactions_list.html:7
+#: templates/disbursement/bank_transactions_list.html:43
+#: templates/disbursement/e_wallets_transactions_list.html:7
+#: templates/disbursement/e_wallets_transactions_list.html:42
+#: templates/disbursement/single_step_trx_list.html:8
+#: templates/instant_cashin/instant_viewer.html:7
+#: templates/support/clients.html:255
+#: templates/support/document_details.html:10
+msgid "Transactions"
+msgstr "المعاملات"
+
+#: templates/disbursement/bank_transactions_list.html:59
+#: templates/disbursement/bank_transactions_list.html:99
+#: templates/disbursement/e_wallets_transactions_list.html:59
+#: templates/disbursement/single_step_trx_list.html:97
+#: templates/disbursement/single_step_trx_list.html:134
+#: templates/support/document_details.html:77 users/forms.py:861
+msgid "Fees"
+msgstr "الرسوم"
+
+#: templates/disbursement/bank_transactions_list.html:60
+#: templates/disbursement/bank_transactions_list.html:100
+#: templates/disbursement/e_wallets_transactions_list.html:60
+#: templates/disbursement/single_step_trx_list.html:98
+#: templates/disbursement/single_step_trx_list.html:135
+#: templates/support/document_details.html:78
+msgid "Vat"
+msgstr "ضريبة القيمة المضافة"
+
+#: templates/disbursement/bank_transactions_list.html:96
+#: templates/disbursement/bank_transactions_list.html:372
+#: templates/disbursement/single_step_trx_list.html:131
+#: templates/disbursement/single_step_trx_list.html:609
+msgid "Account Number / IBAN"
+msgstr "رقم الحساب / IBAN"
+
+#: templates/disbursement/bank_transactions_list.html:151
+#: templates/disbursement/single_step_trx_list.html:429
+msgid "Export PDF Report"
+msgstr ""
+
+#: templates/disbursement/bank_transactions_list.html:185
+#: templates/disbursement/bank_transactions_list.html:204
+#: templates/disbursement/bank_transactions_list.html:223
+#: templates/disbursement/e_wallets_transactions_list.html:148
+#: templates/disbursement/e_wallets_transactions_list.html:167
+#: templates/disbursement/e_wallets_transactions_list.html:186
+#: templates/users/clients.html:267
+msgid "Report Exported Successfully"
+msgstr ""
+
+#: templates/disbursement/bank_transactions_list.html:188
+#: templates/disbursement/e_wallets_transactions_list.html:151
+#: templates/users/clients.html:270
+msgid "You will receive an email shortly with the file to download"
+msgstr ""
+
+#: templates/disbursement/bank_transactions_list.html:207
+#: templates/disbursement/e_wallets_transactions_list.html:170
+msgid ""
+"You will receive an email shortly with the success data file to download"
+msgstr ""
+
+#: templates/disbursement/bank_transactions_list.html:226
+#: templates/disbursement/e_wallets_transactions_list.html:189
 msgid "You will receive an email shortly with the failed data file to download"
 msgstr ""
 
-#: templates/disbursement/list.html:24
-msgid "Export Failed"
+#: templates/disbursement/bank_transactions_list.html:398
+#: templates/disbursement/single_step_trx_list.html:624
+#: templates/disbursement_sidebar.html:33 templates/users/members.html:53
+#: templates/users/profile.html:55
+msgid "Checker"
 msgstr ""
 
-#: templates/disbursement/list.html:34
-msgid "Transactions"
+#: templates/disbursement/bank_transactions_list.html:401
+#: templates/disbursement/e_wallets_transactions_list.html:356
+#: templates/disbursement/e_wallets_transactions_list.html:359
+#: templates/disbursement/e_wallets_transactions_list.html:364
+#: templates/support/document_details.html:354
+#: templates/support/document_details.html:413
+#: templates/support/document_details.html:415
+#: templates/support/document_details.html:420
+msgid "Disbursement Status Code"
+msgstr "كود صرف المعاملة"
+
+#: templates/disbursement/bank_transactions_list.html:403
+#: templates/disbursement/e_wallets_transactions_list.html:357
+#: templates/disbursement/e_wallets_transactions_list.html:361
+#: templates/disbursement/e_wallets_transactions_list.html:365
+#: templates/support/document_details.html:356
+#: templates/support/document_details.html:418
+#: templates/support/document_details.html:421
+msgid "Disbursement Status Description"
+msgstr "تفاصيل حالة المعاملة"
+
+#: templates/disbursement/disbursement_transactions_dashboard.html:8
+#: templates/disbursement/disbursement_transactions_dashboard.html:13
+#: templates/disbursement/disbursement_transactions_dashboard.html:18
+#: templates/disbursement/disbursement_transactions_dashboard.html:23
+msgid "Total"
 msgstr ""
 
-#: templates/disbursement/list.html:46
-msgid "MSISDN"
+#: templates/disbursement/disbursement_transactions_dashboard.html:50
+#: templates/disbursement/single_step_trx_list.html:378
+#: templates/users/clients.html:87
+msgid "Success"
+msgstr "الناجحه"
+
+#: templates/disbursement/e_wallets_transactions_list.html:346
+#: templates/disbursement/e_wallets_transactions_list.html:348
+#: templates/disbursement/single_step_trx_list.html:592
+#: templates/disbursement/single_step_trx_list.html:594
+#: templates/support/document_details.html:388
+#: templates/support/document_details.html:390
+msgid "Cashed Out?"
+msgstr "تم الصرف?"
+
+#: templates/disbursement/single_step_trx_list.html:61
+#: templates/disbursement_sidebar.html:23 templates/support/clients.html:255
+msgid "Single Step Transactions"
+msgstr "إنشاء معاملة واحدة"
+
+#: templates/disbursement/single_step_trx_list.html:70
+#: templates/instant_cashin/instant_viewer.html:43
+msgid "Transactions Summary"
+msgstr " ملخص المعاملات"
+
+#: templates/disbursement/single_step_trx_list.html:74
+#: templates/disbursement/single_step_trx_list.html:187
+msgid "Make New Transaction"
 msgstr ""
 
-#: templates/disbursement/list.html:49
-msgid "Reason"
+#: templates/disbursement/single_step_trx_list.html:222
+#: templates/disbursement/single_step_trx_list.html:660
+#: templates/support/document_details.html:70
+#: templates/support/document_details.html:370
+#: templates/utilities/transfer_request.html:171
+#: templates/utilities/transfer_request.html:181
+#: templates/utilities/transfer_request.html:260
+msgid "Account Number"
+msgstr "رقم الحساب"
+
+#: templates/disbursement/single_step_trx_list.html:844
+#: templates/disbursement/single_step_trx_list.html:850
+#: utilities/models/generic_models.py:285
+msgid "Bank Card"
+msgstr "كروت بنكيه"
+
+#: templates/disbursement/single_step_trx_list.html:846
+#: templates/disbursement/single_step_trx_list.html:848
+msgid "Wallets"
+msgstr "محافظ"
+
+#: templates/disbursement_sidebar.html:17
+msgid "Vodafone/Etisalat/Aman"
+msgstr "فودافون/اتصالات/أمان"
+
+#: templates/disbursement_sidebar.html:19
+msgid "Bank Wallets/Orange Cash"
+msgstr "محافظ بنكيه/اورانج كاش"
+
+#: templates/disbursement_sidebar.html:30
+#: templates/instant_cashin/sidebar.html:18
+msgid "Add member"
+msgstr "أضف مستخدم"
+
+#: templates/disbursement_sidebar.html:42
+msgid "Top Up Balance"
+msgstr "إضافة رصيد"
+
+#: templates/disbursement_sidebar.html:48
+#: templates/instant_cashin/sidebar.html:35
+#: templates/superadmin_sidebar.html:33 templates/support/sidebar.html:13
+msgid "Active Sessions"
 msgstr ""
 
-#: templates/entity/add_agent.html:14 templates/entity/add_agent.html:40
+#: templates/disbursement_sidebar.html:54
+msgid "levels"
+msgstr ""
+
+#: templates/entity/add_agent.html:20 templates/entity/add_agent.html:54
+#: templates/superadmin_sidebar.html:25 templates/superadmin_sidebar.html:28
+#: templates/support/clients.html:238
 msgid "Agents"
 msgstr ""
 
-#: templates/entity/add_agent.html:17
+#: templates/entity/add_agent.html:25
 msgid "Add Agents"
 msgstr ""
 
-#: templates/entity/add_agent.html:26
+#: templates/entity/add_agent.html:27
+msgid "Add P2M Agent"
+msgstr ""
+
+#: templates/entity/add_agent.html:38
 msgid "Super agent"
 msgstr ""
 
-#: templates/entity/add_agent.html:84 templates/entity/add_client_fees.html:30
-#: templates/entity/add_root.html:42 templates/entity/add_vmt.html:29
+#: templates/entity/add_agent.html:95 templates/entity/add_client_fees.html:30
+#: templates/entity/add_root.html:50 templates/entity/add_vmt.html:29
+#: templates/instant_cashin/add_member.html:33
+#: templates/support/add_support.html:42
 msgid "Create"
 msgstr ""
 
-#: templates/entity/add_agent.html:104
+#: templates/entity/add_agent.html:109
+msgid "Cancel On-boarding Process?"
+msgstr ""
+
+#: templates/entity/add_agent.html:119
 msgid "add another agent"
 msgstr ""
 
 #: templates/entity/add_client_fees.html:5
 #: templates/entity/add_client_fees.html:9
-msgid "Add client fees"
+msgid "Add Client Fees"
 msgstr ""
 
-#: templates/entity/add_root.html:5
-msgid "Root"
-msgstr ""
+#: templates/entity/add_root.html:6 templates/superadmin_sidebar.html:15
+msgid "New Client"
+msgstr "عميل جديد"
 
-#: templates/entity/add_root.html:11
-msgid "Add Entity User"
+#: templates/entity/add_root.html:19
+msgid "Add Client User"
 msgstr ""
 
 #: templates/entity/add_vmt.html:4
@@ -897,9 +2882,23 @@ msgstr ""
 msgid "VMT Credentials"
 msgstr ""
 
+#: templates/entity/update_fees.html:7 templates/superadmin_sidebar.html:26
+#: templates/support/clients.html:260 templates/users/fees_profile.html:6
+#: templates/users/fees_profile.html:33
+msgid "Fees Profile"
+msgstr "ملف الرسوم"
+
+#: templates/entity/update_fees.html:12
+msgid " Fees Profile"
+msgstr "ملف الرسوم"
+
+#: templates/entity/update_fees.html:34 templates/utilities/budget.html:35
+msgid "Update"
+msgstr ""
+
 #: templates/error-pages/400.html:4 templates/error-pages/401.html:4
 #: templates/error-pages/403.html:4 templates/error-pages/404.html:4
-#: templates/error-pages/500.html:4
+#: templates/error-pages/413.html:4 templates/error-pages/500.html:4
 msgid "Page"
 msgstr ""
 
@@ -914,8 +2913,8 @@ msgid ""
 msgstr ""
 
 #: templates/error-pages/400.html:15 templates/error-pages/401.html:15
-#: templates/error-pages/403.html:15 templates/error-pages/404.html:15
-#: templates/error-pages/500.html:16
+#: templates/error-pages/403.html:15 templates/error-pages/404.html:14
+#: templates/error-pages/413.html:15 templates/error-pages/500.html:15
 msgid "Back to home"
 msgstr ""
 
@@ -943,8 +2942,22 @@ msgstr ""
 msgid "This page you are looking for does not exist."
 msgstr ""
 
+#: templates/error-pages/413.html:12
+msgid "File size error"
+msgstr ""
+
+#: templates/error-pages/413.html:13
+msgid "The file you trying to upload is too large"
+msgstr ""
+
 #: templates/error-pages/500.html:12
 msgid "Internal Server Error"
+msgstr ""
+
+#: templates/error-pages/500.html:13
+msgid ""
+"We track these errors automatically, but if the problem persists feel free "
+"to contact us. In the meantime, try refreshing."
 msgstr ""
 
 #: templates/footer.html:6
@@ -952,24 +2965,344 @@ msgid "Paymob"
 msgstr ""
 
 #: templates/footer.html:6
-msgid "Payroll Solution"
+msgid "Payouts Solution"
 msgstr ""
 
-#: templates/superadmin_sidebar.html:46 templates/users/clients.html:7
+#: templates/instant_cashin/admin_home.html:5
+#: templates/instant_cashin/pending_orange_trx_list.html:5
+msgid "Orange Pending Transactions"
+msgstr ""
+
+#: templates/instant_cashin/admin_home.html:10
+msgid "No pending Orange transactions"
+msgstr ""
+
+#: templates/instant_cashin/auth_keys.html:15
+msgid "Auth Keys"
+msgstr ""
+
+#: templates/instant_cashin/auth_keys.html:19
+msgid "User Authorization Keys"
+msgstr ""
+
+#: templates/instant_cashin/auth_keys.html:31
+msgid "Client ID:"
+msgstr ""
+
+#: templates/instant_cashin/auth_keys.html:48
+msgid "Client Secret:"
+msgstr ""
+
+#: templates/instant_cashin/banks_transactions.html:9
+#: templates/instant_cashin/wallets_transactions.html:8
+msgid "Recipient"
+msgstr ""
+
+#: templates/instant_cashin/instant_viewer.html:31
+msgid "Bank Accounts/Cards Transactions"
+msgstr ""
+
+#: templates/instant_cashin/instant_viewer.html:33
+msgid "Wallets/Aggregators Transactions"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:11
+msgid ""
+"You will receive an email shortly with Orange pending instant transaction "
+"file to download"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:19
+msgid "Transactions Per Days List"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:32
+msgid "Day"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:33
+msgid "Total Transactions Count"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:35
+#: templates/instant_cashin/pending_orange_trx_list.html:46
+msgid "Download"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:36
+msgid "Upload Callback"
+msgstr ""
+
+#: templates/instant_cashin/pending_orange_trx_list.html:37
+msgid "Callback Status"
+msgstr ""
+
+#: templates/instant_cashin/sidebar.html:12 templates/support/clients.html:246
+msgid "Wallets Transactions"
+msgstr "معاملات المحافظ"
+
+#: templates/instant_cashin/sidebar.html:13 templates/support/clients.html:247
+msgid "Banks Transactions"
+msgstr "معاملات البنوك "
+
+#: templates/instant_cashin/sidebar.html:20
+msgid "Viewer"
+msgstr ""
+
+#: templates/instant_cashin/sidebar.html:21 templates/users/profile.html:59
+msgid "API Checker"
+msgstr ""
+
+#: templates/instant_cashin/sidebar.html:31
+#: templates/utilities/transfer_request.html:61
+msgid "Transfer Request"
+msgstr "طلب تحويل رصيد"
+
+#: templates/instant_cashin/sidebar.html:33
+#: templates/superadmin_sidebar.html:29
+msgid "API Documentation"
+msgstr ""
+
+#: templates/search_bar.html:9 templates/support/clients.html:39
+#: templates/support/documents_list.html:21 templates/support/list.html:28
+msgid "Go!"
+msgstr ""
+
+#: templates/superadmin_sidebar.html:13 templates/support/clients.html:7
+#: templates/users/clients.html:6
 msgid "Clients"
-msgstr ""
+msgstr "العملاء"
 
-#: templates/superadmin_sidebar.html:49 templates/users/add_member.html:14
-#: templates/users/clients.html:97 templates/users/profile_update.html:14
-msgid "Add"
-msgstr ""
-
-#: templates/superadmin_sidebar.html:50
+#: templates/superadmin_sidebar.html:16 templates/support/clients.html:30
+#: templates/support/sidebar.html:12
 msgid "All Clients"
+msgstr "كل العملاء"
+
+#: templates/superadmin_sidebar.html:18
+msgid "New Support Member"
+msgstr "عضو دعم جديد"
+
+#: templates/superadmin_sidebar.html:19
+msgid "All Support Members"
+msgstr "كل أعضاء الدعم"
+
+#: templates/superadmin_sidebar.html:34 templates/users/entity_branding.html:7
+msgid "Branding"
+msgstr "العلامه التجارية"
+
+#: templates/support/add_support.html:6 templates/support/list.html:6
+#: templates/users/profile.html:63
+msgid "Support"
 msgstr ""
 
-#: templates/superadmin_sidebar.html:58 templates/users/entity_branding.html:7
-msgid "Branding"
+#: templates/support/add_support.html:15
+msgid "Add Support User"
+msgstr ""
+
+#: templates/support/clients.html:56
+msgid "Image"
+msgstr ""
+
+#: templates/support/clients.html:69 templates/support/clients.html:95
+#: templates/users/clients.html:107 templates/users/clients.html:121
+#: templates/users/clients.html:156 templates/users/members.html:78
+msgid "Active"
+msgstr ""
+
+#: templates/support/clients.html:69 templates/support/clients.html:97
+#: templates/users/clients.html:108 templates/users/clients.html:123
+msgid "InActive"
+msgstr "غير مفعل"
+
+#: templates/support/clients.html:102 templates/users/clients.html:181
+msgid "No clients are set here..."
+msgstr ""
+
+#: templates/support/clients.html:117
+msgid "Client Details"
+msgstr ""
+
+#: templates/support/clients.html:240 utilities/models/generic_models.py:69
+msgid "Current Balance"
+msgstr "الرصيد الحالي"
+
+#: templates/support/clients.html:246 templates/support/clients.html:247
+msgid "Transactions List"
+msgstr ""
+
+#: templates/support/clients.html:252
+#, fuzzy
+#| msgid "Disbursement Progress"
+msgid "Disbursement Documents List"
+msgstr "نجاح الصرف"
+
+#: templates/support/clients.html:252
+msgid "Documents"
+msgstr "ملفات"
+
+#: templates/support/clients.html:270
+#, fuzzy
+#| msgid "About:"
+msgid "About"
+msgstr "عن:"
+
+#: templates/support/document_details.html:54
+msgid "Transactions of document: "
+msgstr "معاملات الملفات"
+
+#: templates/support/document_details.html:80
+msgid "Is Disbursed?"
+msgstr "هل تم الصرف"
+
+#: templates/support/document_details.html:166
+msgid "Not Yet!"
+msgstr ""
+
+#: templates/support/document_details.html:168
+msgid "Failed Disbursement"
+msgstr ""
+
+#: templates/support/document_details.html:182
+msgid "Document Details"
+msgstr " تفاصيل الملف "
+
+#: templates/support/document_details.html:189
+msgid "ID"
+msgstr ""
+
+#: templates/support/document_details.html:194
+msgid "Specs Used"
+msgstr "المواصفات المستخدمة"
+
+#: templates/support/document_details.html:199
+msgid "Total Amount"
+msgstr "إجمالي المبلغ"
+
+#: templates/support/document_details.html:200
+msgid "Total Records"
+msgstr "إجمالي السجلات"
+
+#: templates/support/document_details.html:201
+msgid "Can Be Disbursed"
+msgstr "يمكن صرفها"
+
+#: templates/support/document_details.html:202
+msgid "Disbursement Ratio"
+msgstr "نسبة الصرف"
+
+#: templates/support/document_details.html:211
+msgid "Processing Failure Reason"
+msgstr "سبب فشل التنفيذ"
+
+#: templates/support/document_details.html:212
+msgid "Number of reviews required"
+msgstr "عدد المراجعات المطلوبة"
+
+#: templates/support/document_details.html:213
+msgid "Is reviews completed"
+msgstr "هل اكتملت المراجعات"
+
+#: templates/support/document_details.html:215
+msgid "Reviewed By"
+msgstr ""
+
+#: templates/support/document_details.html:216
+msgid "Is Ok"
+msgstr ""
+
+#: templates/support/document_details.html:217
+msgid "Timestamp"
+msgstr ""
+
+#: templates/support/document_details.html:218
+msgid "Comment"
+msgstr ""
+
+#: templates/support/documents_list.html:5
+#: templates/support/documents_list.html:37
+msgid "Documents List"
+msgstr "قائمة الملفات"
+
+#: templates/support/documents_list.html:10
+msgid "Entity Members' Documents"
+msgstr ""
+
+#: templates/support/documents_list.html:51
+msgid "Date Created"
+msgstr "تاريخ الإنشاء"
+
+#: templates/support/documents_list.html:54
+msgid "Sheet Specs"
+msgstr "مواصفات الملف"
+
+#: templates/support/documents_list.html:72
+msgid "Uploaded successfully"
+msgstr "تم الرفع بنجاح"
+
+#: templates/support/documents_list.html:74
+msgid "Processed successfully"
+msgstr "تمت بنجاح"
+
+#: templates/support/documents_list.html:76 users/views/support_views.py:149
+msgid "Disbursement failure"
+msgstr "فشل الصرف"
+
+#: templates/support/documents_list.html:78 users/views/support_views.py:155
+msgid "Disbursed successfully"
+msgstr "تم الصرف بنجاح"
+
+#: templates/support/documents_list.html:80
+msgid "Processing failure"
+msgstr "فشل التنفيذ"
+
+#: templates/support/documents_list.html:95
+msgid "No documents uploaded by this entity members"
+msgstr "لم يتم تحميل أي مستندات من قبل الاعضاء"
+
+#: templates/support/home.html:10
+msgid "Welcome home ..."
+msgstr ""
+
+#: templates/support/list.html:11
+msgid "No support users are set here ..."
+msgstr ""
+
+#: templates/support/list.html:20
+msgid "Support Users"
+msgstr ""
+
+#: templates/support/list.html:52 templates/users/clients.html:142
+#: templates/users/members.html:65
+msgid "About:"
+msgstr "عن:"
+
+#: templates/support/list.html:54 templates/users/clients.html:144
+#: templates/users/members.html:67
+msgid "username:"
+msgstr "إسم المستخدم:"
+
+#: templates/support/list.html:55 templates/users/clients.html:146
+#: templates/users/members.html:69
+msgid "Email:"
+msgstr "البريد الالكترونى:"
+
+#: templates/support/list.html:56 templates/users/clients.html:145
+#: templates/users/members.html:68
+msgid "Phone:"
+msgstr "الهاتف:"
+
+#: templates/support/list.html:75 templates/users/clients.html:174
+#: templates/users/members.html:88
+msgid "View Profile"
+msgstr "رؤيه الملف الشخصي"
+
+#: templates/support/list.html:99 templates/users/clients.html:202
+#: templates/users/clients.html:226 templates/users/members.html:112
+msgid "Confirmation"
+msgstr ""
+
+#: templates/support/list.html:122 templates/users/clients.html:251
+msgid "Done Successfully"
 msgstr ""
 
 #: templates/top_navigation.html:38
@@ -982,16 +3315,6 @@ msgstr ""
 
 #: templates/top_navigation.html:55
 msgid "Log Out"
-msgstr ""
-
-#: templates/two_factor/_wizard_actions.html:7
-msgid "Cancel"
-msgstr ""
-
-#: templates/two_factor/_wizard_actions.html:17
-#: templates/users/settings-up-collection.html:147
-#: templates/users/settings-up-disbursement.html:322
-msgid "Next"
 msgstr ""
 
 #: templates/two_factor/core/setup.html:10
@@ -1065,6 +3388,10 @@ msgid ""
 "To identify and verify your YubiKey, please insert a\n"
 "              token in the field below. Your YubiKey will be linked to your\n"
 "              account."
+msgstr ""
+
+#: templates/two_factor/login.html:14
+msgid "Two Factor Authentication"
 msgstr ""
 
 #: templates/two_factor/profile/profile.html:8
@@ -1148,75 +3475,93 @@ msgid ""
 "              security."
 msgstr ""
 
-#: templates/users/add_levels.html:91
-#: templates/users/settings-up-disbursement.html:217
-msgid "Add another level"
-msgstr ""
-
 #: templates/users/add_member.html:7
 msgid "Add new family member"
 msgstr ""
 
-#: templates/users/clients.html:15 templates/users/members.html:14
-#: users/forms.py:138
+#: templates/users/add_member.html:14 templates/users/clients.html:182
+#: templates/users/profile_update.html:14
+msgid "Add"
+msgstr ""
+
+#: templates/users/clients.html:40
+msgid "Account is suspended due to uncompleted setups!"
+msgstr ""
+
+#: templates/users/clients.html:49 templates/users/members.html:14
+#: users/forms.py:124
 msgid "Users"
+msgstr "المستخدمين"
+
+#: templates/users/clients.html:67
+msgid "Export Clients Transactions Report"
 msgstr ""
 
-#: templates/users/clients.html:25 templates/users/members.html:24
-msgid "Go!"
+#: templates/users/clients.html:76
+msgid "Start Date"
 msgstr ""
 
-#: templates/users/clients.html:42 templates/users/clients.html:53
-#: templates/users/members.html:82
-msgid "Active"
+#: templates/users/clients.html:80
+msgid "End Date"
 msgstr ""
 
-#: templates/users/clients.html:43 templates/users/clients.html:53
-msgid "InActive"
+#: templates/users/clients.html:95
+msgid "Export Report"
 msgstr ""
 
-#: templates/users/clients.html:66 templates/users/members.html:69
-msgid "About:"
+#: templates/users/clients.html:128
+msgid "Integration Disbursement Model"
 msgstr ""
 
-#: templates/users/clients.html:68 templates/users/members.html:71
-msgid "Email:"
+#: templates/users/clients.html:130
+msgid "Send Disbursement Model"
 msgstr ""
 
-#: templates/users/clients.html:69 templates/users/members.html:72
-msgid "Phone #:"
+#: templates/users/clients.html:132
+msgid "Vodafone Facilitator Disbursement Model"
 msgstr ""
 
-#: templates/users/clients.html:96
-msgid "No clients are set here..."
+#: templates/users/clients.html:134
+msgid "Banks PSP Disbursement Model"
 msgstr ""
 
-#: templates/users/clients.html:116 templates/users/clients.html:137
-#: templates/users/members.html:115
-msgid "Confirmation"
+#: templates/users/clients.html:136
+msgid "Vodafone PSP Disbursement Model"
 msgstr ""
 
-#: templates/users/clients.html:157 templates/users/members.html:135
-msgid "Successful"
+#: templates/users/clients.html:162
+msgid "Deactivate User"
 msgstr ""
 
-#: templates/users/clients.html:160
-msgid "Done Successfully"
+#: templates/users/clients.html:164
+msgid "Activate User"
 msgstr ""
 
-#: templates/users/clients.html:175
+#: templates/users/clients.html:168
+msgid "Update Budget"
+msgstr ""
+
+#: templates/users/clients.html:205
+msgid "Delete User"
+msgstr ""
+
+#: templates/users/clients.html:286
+msgid "Error<"
+msgstr ""
+
+#: templates/users/clients.html:317
 msgid "Do you want to deactivate?"
 msgstr ""
 
-#: templates/users/clients.html:176
+#: templates/users/clients.html:318
 msgid "Deactivate?"
 msgstr ""
 
-#: templates/users/clients.html:179
+#: templates/users/clients.html:320
 msgid "Do you want to activate?"
 msgstr ""
 
-#: templates/users/clients.html:180
+#: templates/users/clients.html:321
 msgid "Activate?"
 msgstr ""
 
@@ -1226,7 +3571,19 @@ msgstr ""
 
 #: templates/users/entity_branding.html:35
 msgid "Color"
+msgstr "اللون"
+
+#: templates/users/fees_profile.html:11
+msgid "You do not have any fees profile setups yet!"
 msgstr ""
+
+#: templates/users/fees_profile.html:21
+msgid "Fees Profile Setup"
+msgstr "إعدادات ملف الرسوم"
+
+#: templates/users/fees_profile.html:32
+msgid "Has Fees Profile?"
+msgstr "هل يوجد ملف تعريف بالرسوم؟"
 
 #: templates/users/forget-password.html:3
 #: templates/users/forget-password.html:7
@@ -1234,44 +3591,54 @@ msgid "Forgot Password"
 msgstr ""
 
 #: templates/users/forget-password.html:10
-msgid "Email has been sent to reset password."
+msgid ""
+"An email with recovery steps has been sent to the user's Email.<br>If the "
+"user is registered on the System."
 msgstr ""
 
 #: templates/users/members.html:6
 msgid "Family members"
 msgstr ""
 
-#: templates/users/members.html:22
-msgid "Search for..."
+#: templates/users/members.html:32
+msgid "Viewer Users"
 msgstr ""
 
-#: templates/users/members.html:43
-#: templates/users/settings-up-disbursement.html:37
+#: templates/users/members.html:33
+msgid "API Checkers"
+msgstr ""
+
+#: templates/users/members.html:35
+#: templates/users/setting-up-disbursement/category.html:48
+#: templates/users/setting-up-disbursement/checkers.html:41
+#: templates/users/setting-up-disbursement/levels.html:41
+#: templates/users/setting-up-disbursement/makers.html:41
+#: templates/users/setting-up-disbursement/pin.html:40
 msgid "Makers"
 msgstr ""
 
-#: templates/users/members.html:44
-#: templates/users/settings-up-disbursement.html:59
+#: templates/users/members.html:36
+#: templates/users/setting-up-disbursement/category.html:69
+#: templates/users/setting-up-disbursement/checkers.html:63
+#: templates/users/setting-up-disbursement/levels.html:63
+#: templates/users/setting-up-disbursement/makers.html:63
+#: templates/users/setting-up-disbursement/pin.html:60
 msgid "Checkers"
 msgstr ""
 
-#: templates/users/members.html:60 templates/users/members.html:62
+#: templates/users/members.html:55 templates/users/members.html:57
 msgid "Uploader"
 msgstr ""
 
-#: templates/users/members.html:90
-msgid "View Profile"
-msgstr ""
-
-#: templates/users/members.html:97
+#: templates/users/members.html:95
 msgid "No users are set here..."
 msgstr ""
 
-#: templates/users/members.html:118
+#: templates/users/members.html:115
 msgid "Are you sure to delete?"
 msgstr ""
 
-#: templates/users/members.html:138
+#: templates/users/members.html:135
 msgid "Deleted Successfully"
 msgstr ""
 
@@ -1290,38 +3657,50 @@ msgstr ""
 
 #: templates/users/profile.html:32
 msgid "Title:"
-msgstr ""
+msgstr "اللقب:"
 
 #: templates/users/profile.html:36
 msgid "First Name:"
-msgstr ""
+msgstr "الإسم الأول"
 
 #: templates/users/profile.html:40
 msgid "Last Name:"
-msgstr ""
+msgstr "الإسم الأخير"
 
 #: templates/users/profile.html:44
 msgid "Join date:"
-msgstr ""
+msgstr "تاريخ الالتحاق:"
 
 #: templates/users/profile.html:48
 msgid "Account Type:"
+msgstr "نوع الحساب:"
+
+#: templates/users/profile.html:51
+msgid "Super"
 msgstr ""
 
-#: templates/users/profile.html:49
+#: templates/users/profile.html:57
 msgid "Admin"
 msgstr ""
 
-#: templates/users/profile.html:52 users/forms.py:582
-msgid "Email"
+#: templates/users/profile.html:61
+msgid "API Viewer"
 msgstr ""
 
-#: templates/users/profile.html:55
+#: templates/users/profile.html:71
 msgid "Phone Number"
-msgstr ""
+msgstr "رقم الهاتف"
+
+#: templates/users/profile.html:94
+msgid "Edit Data"
+msgstr "تعديل الملف الشخصي"
 
 #: templates/users/profile_update.html:7
-#: templates/users/settings-up-disbursement.html:49
+#: templates/users/setting-up-disbursement/category.html:59
+#: templates/users/setting-up-disbursement/checkers.html:53
+#: templates/users/setting-up-disbursement/levels.html:53
+#: templates/users/setting-up-disbursement/makers.html:53
+#: templates/users/setting-up-disbursement/pin.html:50
 msgid "Levels"
 msgstr ""
 
@@ -1330,7 +3709,10 @@ msgid "Choose Portal"
 msgstr ""
 
 #: templates/users/redirect_page.html:7
-#: templates/users/settings-up-collection.html:27
+#: templates/users/setting-up-collection/collection.html:26
+#: templates/users/setting-up-collection/formats.html:26
+#: templates/users/setting-up-collection/uploader.html:26
+#: utilities/models/abstract_models.py:56
 msgid "Collection"
 msgstr ""
 
@@ -1338,212 +3720,1210 @@ msgstr ""
 msgid "Disbursement"
 msgstr ""
 
-#: templates/users/setting_up_pin_form.html:27
-msgid "Pin has been created"
+#: templates/users/session_list.html:6
+msgid "Sessions Details"
 msgstr ""
 
-#: templates/users/settings-up-collection.html:19
-msgid "Please follow the steps to setup your collection settings."
+#: templates/users/session_list.html:33
+msgid "Current Sessions Details"
 msgstr ""
 
-#: templates/users/settings-up-collection.html:28
+#: templates/users/session_list.html:40
+msgid "Location"
+msgstr ""
+
+#: templates/users/session_list.html:41
+msgid "Device"
+msgstr ""
+
+#: templates/users/session_list.html:42
+msgid "Last Activity"
+msgstr ""
+
+#: templates/users/session_list.html:43
+msgid "End Sessions"
+msgstr ""
+
+#: templates/users/session_list.html:53
+#, python-format
+msgid "%(time)s ago (this session)"
+msgstr ""
+
+#: templates/users/session_list.html:55
+#, python-format
+msgid "%(time)s ago"
+msgstr ""
+
+#: templates/users/session_list.html:61
+msgid "End Session"
+msgstr ""
+
+#: templates/users/session_list.html:72
+msgid ""
+"You can also end all other sessions but the current. This will log you out "
+"on all other devices."
+msgstr ""
+
+#: templates/users/session_list.html:75
+msgid "End All Other Sessions"
+msgstr ""
+
+#: templates/users/setting-up-collection/collection.html:18
+#: templates/users/setting-up-collection/formats.html:18
+#: templates/users/setting-up-collection/uploader.html:18
+#: templates/users/setting-up-disbursement/category.html:30
+#: templates/users/setting-up-disbursement/checkers.html:23
+#: templates/users/setting-up-disbursement/levels.html:23
+#: templates/users/setting-up-disbursement/makers.html:23
+#: templates/users/setting-up-disbursement/pin.html:23
+msgid "Please follow the steps to setup your payouts settings."
+msgstr "يرجى اتباع الخطوات لإتمام إعدادات ال payouts"
+
+#: templates/users/setting-up-collection/collection.html:27
+#: templates/users/setting-up-collection/formats.html:27
+#: templates/users/setting-up-collection/uploader.html:27
 msgid "Add Collection Data"
 msgstr ""
 
-#: templates/users/settings-up-collection.html:36
-#: templates/users/settings-up-disbursement.html:69
-msgid "Format"
-msgstr ""
-
-#: templates/users/settings-up-collection.html:37
-#: templates/users/settings-up-disbursement.html:70
+#: templates/users/setting-up-collection/collection.html:36
+#: templates/users/setting-up-collection/formats.html:36
+#: templates/users/setting-up-collection/uploader.html:36
+#: templates/users/setting-up-disbursement/category.html:81
+#: templates/users/setting-up-disbursement/category.html:84
+#: templates/users/setting-up-disbursement/checkers.html:75
+#: templates/users/setting-up-disbursement/checkers.html:78
+#: templates/users/setting-up-disbursement/levels.html:75
+#: templates/users/setting-up-disbursement/levels.html:78
+#: templates/users/setting-up-disbursement/makers.html:75
+#: templates/users/setting-up-disbursement/makers.html:78
+#: templates/users/setting-up-disbursement/pin.html:72
+#: templates/users/setting-up-disbursement/pin.html:75
 msgid "Add File Formats"
 msgstr ""
 
-#: templates/users/settings-up-collection.html:45
+#: templates/users/setting-up-collection/collection.html:44
+#: templates/users/setting-up-collection/formats.html:44
+#: templates/users/setting-up-collection/uploader.html:44
 msgid "Uploaders"
 msgstr ""
 
-#: templates/users/settings-up-collection.html:46
+#: templates/users/setting-up-collection/collection.html:45
+#: templates/users/setting-up-collection/formats.html:45
+#: templates/users/setting-up-collection/uploader.html:45
 msgid "Add Uploaders"
 msgstr ""
 
-#: templates/users/settings-up-collection.html:126
-msgid "Add Uploader"
-msgstr ""
-
-#: templates/users/settings-up-collection.html:148
-#: templates/users/settings-up-disbursement.html:323
-msgid "Previous"
-msgstr ""
-
-#: templates/users/settings-up-collection.html:149
-#: templates/users/settings-up-disbursement.html:324
+#: templates/users/setting-up-collection/collection.html:72
+#: templates/users/setting-up-collection/formats.html:71
+#: templates/users/setting-up-collection/uploader.html:71
+#: templates/users/setting-up-disbursement/category.html:114
+#: templates/users/setting-up-disbursement/checkers.html:103
+#: templates/users/setting-up-disbursement/levels.html:108
+#: templates/users/setting-up-disbursement/makers.html:103
+#: templates/users/setting-up-disbursement/pin.html:99
 msgid "Finish"
 msgstr ""
 
-#: templates/users/settings-up-disbursement.html:19
-msgid "Please follow the steps to setup your payroll settings."
-msgstr ""
-
-#: templates/users/settings-up-disbursement.html:27
-#: templates/users/settings-up-disbursement.html:28
+#: templates/users/setting-up-disbursement/category.html:38
+#: templates/users/setting-up-disbursement/category.html:39
+#: templates/users/setting-up-disbursement/checkers.html:31
+#: templates/users/setting-up-disbursement/checkers.html:32
+#: templates/users/setting-up-disbursement/levels.html:31
+#: templates/users/setting-up-disbursement/levels.html:32
+#: templates/users/setting-up-disbursement/makers.html:31
+#: templates/users/setting-up-disbursement/makers.html:32
+#: templates/users/setting-up-disbursement/pin.html:30
+#: templates/users/setting-up-disbursement/pin.html:31
 msgid "Add Pin"
-msgstr ""
+msgstr "إضافة الرقم السري"
 
-#: templates/users/settings-up-disbursement.html:38
+#: templates/users/setting-up-disbursement/category.html:49
+#: templates/users/setting-up-disbursement/checkers.html:42
+#: templates/users/setting-up-disbursement/levels.html:42
+#: templates/users/setting-up-disbursement/makers.html:42
+#: templates/users/setting-up-disbursement/pin.html:41
 msgid "Add Maker users"
 msgstr ""
 
-#: templates/users/settings-up-disbursement.html:50
+#: templates/users/setting-up-disbursement/category.html:60
+#: templates/users/setting-up-disbursement/checkers.html:54
+#: templates/users/setting-up-disbursement/levels.html:54
+#: templates/users/setting-up-disbursement/makers.html:54
+#: templates/users/setting-up-disbursement/pin.html:51
 msgid "Add levels for checkers"
-msgstr ""
+msgstr "إضافة حد الصرف لل-checkers"
 
-#: templates/users/settings-up-disbursement.html:60
+#: templates/users/setting-up-disbursement/category.html:70
+#: templates/users/setting-up-disbursement/checkers.html:64
+#: templates/users/setting-up-disbursement/levels.html:64
+#: templates/users/setting-up-disbursement/makers.html:64
+#: templates/users/setting-up-disbursement/pin.html:61
 msgid "Add Checker users"
 msgstr ""
 
-#: templates/users/settings-up-disbursement.html:143
-#: templates/users/settings-up-disbursement.html:284
-msgid "Add family member"
+#: templates/users/setting-up-disbursement/category.html:80
+#: templates/users/setting-up-disbursement/checkers.html:74
+#: templates/users/setting-up-disbursement/levels.html:74
+#: templates/users/setting-up-disbursement/makers.html:74
+#: templates/users/setting-up-disbursement/pin.html:71
+msgid "VF/ET/Aman Format"
 msgstr ""
 
-#: templates/users/settings_up_category_form.html:76
-#: templates/users/settings_up_format_form.html:75
-msgid "Add format"
+#: templates/users/setting-up-disbursement/category.html:94
+msgid "Save default format"
 msgstr ""
 
-#: users/admin.py:47
-#, python-format
-msgid "Delete selected %(verbose_name_plural)s"
+#: templates/users/setting-up-disbursement/pin_form.html:28
+#: templates/users/setting-up-disbursement/pin_form.html:30
+msgid "Pin has been created"
 msgstr ""
 
-#: users/admin.py:74
+#: templates/utilities/budget.html:7
+msgid "Manage Budget"
+msgstr ""
+
+#: templates/utilities/budget.html:12
+msgid "Update "
+msgstr ""
+
+#: templates/utilities/budget.html:12
+msgid " Entity Budget"
+msgstr ""
+
+#: templates/utilities/new_entities_report.html:71
+msgid "On-boarded Entities Weekly Report"
+msgstr ""
+
+#: templates/utilities/new_entities_report.html:75
+msgid "Total newly on-boarded entities over the last week"
+msgstr ""
+
+#: templates/utilities/new_entities_report.html:75
+msgid "entity"
+msgstr ""
+
+#: templates/utilities/new_entities_report.html:82
+#: templates/utilities/new_entities_report.html:107
+#, fuzzy
+#| msgid "Username"
+msgid "Admin Username"
+msgstr "إسم المستخدم"
+
+#: templates/utilities/new_entities_report.html:102
+msgid "Entities disbursement records over the last week"
+msgstr ""
+
+#: templates/utilities/new_entities_report.html:108
+msgid "Successful Records Number"
+msgstr ""
+
+#: templates/utilities/new_entities_report.html:109
+#: utilities/models/generic_models.py:78
+msgid "Total Disbursed Amount"
+msgstr ""
+
+#: templates/utilities/transfer_request.html:68
+msgid "Your Request Has Been Received Successfully"
+msgstr ""
+
+#: templates/utilities/transfer_request.html:76
+msgid "Increase Your Balance"
+msgstr "لزيادة رصيدك"
+
+#: templates/utilities/transfer_request.html:98
+msgid "Amount To Be Added"
+msgstr "المبلغ المراد اضافته"
+
+#: templates/utilities/transfer_request.html:133 utilities/forms.py:123
+msgid "Accept Username"
+msgstr "إسم المستخدم في اكسبت"
+
+#: templates/utilities/transfer_request.html:144
+#: templates/utilities/transfer_request.html:225
+msgid "From"
+msgstr "من"
+
+#: templates/utilities/transfer_request.html:147
+#: templates/utilities/transfer_request.html:228
+msgid "To"
+msgstr "إلى"
+
+#: templates/utilities/transfer_request.html:190
+#: templates/utilities/transfer_request.html:198
+#: templates/utilities/transfer_request.html:271
+msgid "Account Name"
+msgstr "اسم الحساب"
+
+#: templates/utilities/transfer_request.html:206
+#: templates/utilities/transfer_request.html:251
+msgid "Date (YYYY-MM-DD) EX:- 2006-10-25"
+msgstr "التاريخ"
+
+#: templates/utilities/transfer_request.html:214
+#: templates/utilities/transfer_request.html:281 utilities/forms.py:186
+msgid "Attach Proof"
+msgstr "ارفق إثبات التحويل"
+
+#: templates/utilities/transfer_request.html:231
+msgid "Depositor Name *"
+msgstr "* إسم المودع "
+
+#: templates/utilities/transfer_request.html:234
+msgid "Please note that only deposits submitted in your company\\"
+msgstr ""
+
+#: users/admin.py:55
 #, python-format
 msgid "Deactivate selected %(verbose_name_plural)s"
 msgstr ""
 
-#: users/admin.py:101
+#: users/admin.py:73
 #, python-format
 msgid "Activate selected %(verbose_name_plural)s"
 msgstr ""
 
-#: users/admin.py:143 users/admin.py:157
+#: users/admin.py:105 users/admin.py:119
 msgid "Personal info"
 msgstr ""
 
-#: users/admin.py:145 users/admin.py:159
+#: users/admin.py:107 users/admin.py:121
 msgid "Permissions"
 msgstr ""
 
-#: users/admin.py:146 users/admin.py:160
+#: users/admin.py:108 users/admin.py:122
 msgid "Important dates"
 msgstr ""
 
-#: users/forms.py:34
+#: users/admin.py:211 users/forms.py:589
+msgid "Password confirmation"
+msgstr ""
+
+#: users/admin.py:214 users/forms.py:592
+msgid "Enter the same password as before, for verification."
+msgstr ""
+
+#: users/admin.py:300
+#, python-format
+msgid "export report selected %(verbose_name_plural)s"
+msgstr ""
+
+#: users/forms.py:41
 msgid "The two passwords fields didn't match."
 msgstr ""
 
-#: users/forms.py:35
+#: users/forms.py:42
 msgid "Password must contain at least 8 characters"
 msgstr ""
 
-#: users/forms.py:38
+#: users/forms.py:45
 msgid "New password"
 msgstr ""
 
-#: users/forms.py:45
+#: users/forms.py:52
 msgid "New password confirmation"
 msgstr ""
 
-#: users/forms.py:87
+#: users/forms.py:89
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr ""
 
-#: users/forms.py:88
+#: users/forms.py:90
 msgid "Your old password is similar to the new password. "
 msgstr ""
 
-#: users/forms.py:91
+#: users/forms.py:92
 msgid "Old password"
 msgstr ""
 
-#: users/forms.py:333
+#: users/forms.py:233 users/models/client.py:35
+msgid "New superagent and new agents"
+msgstr ""
+
+#: users/forms.py:234 users/models/client.py:36
+msgid "Existing superagent and new agents"
+msgstr ""
+
+#: users/forms.py:236 users/models/client.py:38
+msgid "P2M Agent"
+msgstr ""
+
+#: users/forms.py:240
+msgid "Unique identifier ex: 5.10593.00.00.100000"
+msgstr ""
+
+#: users/forms.py:255
+msgid "SMSC sender name"
+msgstr ""
+
+#: users/forms.py:261
+msgid "Agent Onboarding Choice"
+msgstr ""
+
+#: users/forms.py:302
+msgid "Identifier already exists!"
+msgstr ""
+
+#: users/forms.py:377 users/models/support.py:53
+msgid "Can On-board Entities?"
+msgstr ""
+
+#: users/forms.py:457
 msgid "Amount must be greater than 0"
 msgstr ""
 
-#: users/forms.py:342
+#: users/forms.py:464
 msgid "Level with this amount already exist"
 msgstr ""
 
-#: users/forms.py:354 users/forms.py:407 users/forms.py:445
+#: users/forms.py:477 users/forms.py:533 users/forms.py:676
 msgid "First name"
-msgstr ""
+msgstr "الإسم الأول"
 
-#: users/forms.py:355 users/forms.py:408 users/forms.py:446
+#: users/forms.py:478 users/forms.py:534 users/forms.py:677
 msgid "Last name"
-msgstr ""
+msgstr "الإسم الأخير"
 
-#: users/forms.py:418
+#: users/forms.py:544
 msgid "Level"
+msgstr "حد الصرف"
+
+#: users/forms.py:580
+msgid "The two password fields didn't match."
 msgstr ""
 
-#: users/forms.py:583
+#: users/forms.py:818
 msgid "Confirm Email"
 msgstr ""
 
-#: users/forms.py:615 users/signals.py:120
+#: users/forms.py:847 users/signals.py:180
 msgid " Password Notification"
 msgstr ""
 
-#: users/forms.py:622
-msgid "Fees"
-msgstr ""
-
-#: users/models/base_user.py:48
+#: users/models/base_user.py:56
 msgid "Email address"
+msgstr "البريد الالكتروني"
+
+#: users/models/client.py:37
+msgid "Existing superagent and existing agents"
 msgstr ""
 
-#: users/models/levels.py:19
+#: users/models/client.py:44
+msgid "Vodafone facilitator unique identifier"
+msgstr ""
+
+#: users/models/client.py:56
+msgid "Custom profile name/constant ONLY for clients with custom budgets"
+msgstr ""
+
+#: users/models/client.py:63
+msgid ""
+"SMSC sender name for naming the header of the sms sent at every vf bulk "
+"disbursement request"
+msgstr ""
+
+#: users/models/client.py:66
+msgid "Agents Onboarding Choice"
+msgstr ""
+
+#: users/models/entity_setup.py:26
+msgid "Is agent setup completed for the entity?"
+msgstr ""
+
+#: users/models/entity_setup.py:27
+msgid "Is fees setup completed for the entity?"
+msgstr ""
+
+#: users/models/entity_setup.py:28
+msgid "Is the regular Vodafone flow setup/disb?"
+msgstr ""
+
+#: users/models/entity_setup.py:33
+msgid "Root user, the admin of the entity"
+msgstr ""
+
+#: users/models/entity_setup.py:39
+msgid "SuperAdmin"
+msgstr ""
+
+#: users/models/entity_setup.py:40
+msgid "The owner who on-board entities. ex: PayMob"
+msgstr ""
+
+#: users/models/levels.py:18
 msgid "Max amount can be disbursed"
+msgstr "الحد الأقصى للصرف"
+
+#: users/models/levels.py:24
+msgid ""
+"Root user who created the levels, and have the ability to modify their "
+"values."
 msgstr ""
 
-#: users/signals.py:16
+#: users/models/support.py:45
+msgid "Support User"
+msgstr ""
+
+#: users/models/support.py:51
+msgid "Super Admin User"
+msgstr ""
+
+#: users/signals.py:27
 #, python-brace-format
 msgid ""
-"Dear {0}\n"
-"Your account is created on the panel with email: {2} and username: {3} \n"
-"Please follow <a href=\"{1}\">this link</a> to reset password as soon as "
-"possible, \n"
+"Dear <strong>{0}</strong><br><br>\n"
+"Your account is created on the panel with email: <strong>{2}</strong> and "
+"username: <strong>{3}</strong> <br>\n"
+"Please follow <a href=\"{1}\" ><strong>this link</strong></a> to reset "
+"password as soon as possible, <br><br>\n"
 "Thanks, BR"
 msgstr ""
 
-#: users/validators.py:10
-msgid "This password must contain a special character."
+#: users/signals.py:32
+#, python-brace-format
+msgid ""
+"Your payroll account has been registered successfully. Please open your "
+"email to activate your payroll account, or you can activate your account by "
+"using the following credentials: username: {0} and the link to set your "
+"password: {1}. To learn more about the usage method, click on {2} or view {3}"
 msgstr ""
 
-#: users/validators.py:15
-msgid "This password must contain an upper case letter."
+#: users/tasks.py:23
+msgid ""
+"Dear {}\n"
+"\n"
+"Please ask your wallet provider to reset pin for these mobile numbers: {}\n"
+"\n"
+"Thanks, BR"
 msgstr ""
 
-#: users/validators.py:20
-msgid "This password must contain a lower case letter."
+#: users/templatetags/sessions_tags.py:13
+msgid "Edge"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:14
+msgid "Chrome"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:15
+msgid "Safari"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:16
+msgid "Firefox"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:17
+msgid "Opera"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:18
+msgid "Internet Explorer"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:21
+msgid "Windows Mobile"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:22
+msgid "Android"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:23
+msgid "Linux"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:24
+msgid "iPhone"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:25
+msgid "iPad"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:26
+msgid "OS X Mavericks"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:27
+msgid "OS X Yosemite"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:28
+msgid "OS X El Capitan"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:29
+msgid "macOS Sierra"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:30
+msgid "macOS High Sierra"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:31
+msgid "macOS Mojave"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:32
+msgid "macOS Catalina"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:33
+msgid "macOS"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:34
+msgid "Windows XP"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:35
+msgid "Windows Vista"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:36
+msgid "Windows 7"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:37
+msgid "Windows 8"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:38
+msgid "Windows 8.1"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:39
+msgid "Windows 10"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:40
+msgid "Windows"
+msgstr ""
+
+#: users/templatetags/sessions_tags.py:70
+#, python-format
+msgid "%(browser)s on %(device)s"
+msgstr ""
+
+#: users/validators.py:21
+#, python-brace-format
+msgid "The password must contain at least {self.min_digits} digit(s), 0-9."
 msgstr ""
 
 #: users/validators.py:25
+#, python-brace-format
+msgid "Your password must contain at least {self.min_digits} digit(s), 0-9."
+msgstr ""
+
+#: users/validators.py:39
+#, python-brace-format
+msgid ""
+"The password must contain at least {self.min_chars} uppercase letter(s), A-Z."
+msgstr ""
+
+#: users/validators.py:44
+#, python-brace-format
+msgid ""
+"Your password must contain at least {self.min_chars} uppercase letter(s), A-"
+"Z."
+msgstr ""
+
+#: users/validators.py:58
+#, python-brace-format
+msgid ""
+"The password must contain at least {self.min_chars} lowercase letter(s), a-z."
+msgstr ""
+
+#: users/validators.py:63
+#, python-brace-format
+msgid ""
+"Your password must contain at least {self.min_chars} lowercase letter(s), a-"
+"z."
+msgstr ""
+
+#: users/validators.py:74
+msgid ""
+"The password must contain at least 1 symbol: ()[]{}|\\`~!@#$%^&*_-+=;:'\","
+"<>./?"
+msgstr ""
+
+#: users/validators.py:79
+msgid ""
+"Your password must contain at least 1 symbol: ()[]{}|\\`~!@#$%^&*_-+=;:'\","
+"<>./?"
+msgstr ""
+
+#: users/validators.py:85
+msgid "This password must contain a special character."
+msgstr ""
+
+#: users/validators.py:90
+msgid "This password must contain an upper case letter."
+msgstr ""
+
+#: users/validators.py:95
+msgid "This password must contain a lower case letter."
+msgstr ""
+
+#: users/validators.py:100
 msgid "This password must contain a digit."
 msgstr ""
 
-#: users/validators.py:31
+#: users/validators.py:106
 msgid ""
 "Your password must contain an upper case letter, a lower case letter, a "
 "special character, and a digit."
 msgstr ""
 
-#: users/views.py:676
+#: users/views/disbursement_setups_views.py:256
+msgid "maker"
+msgstr ""
+
+#: users/views/disbursement_setups_views.py:278
 msgid "checker"
 msgstr ""
 
-#: users/views.py:690
-msgid "maker"
+#: users/views/support_views.py:143
+#, fuzzy
+#| msgid "Validation Process Running"
+msgid "Validation process is running"
+msgstr "عمليه التعريف قيد التنفيذ"
+
+#: users/views/support_views.py:145
+#, fuzzy
+#| msgid "Validated Successfully"
+msgid "Validated successfully"
+msgstr "نجاح التعريف"
+
+#: users/views/support_views.py:147
+#, fuzzy
+#| msgid "Validation Failed"
+msgid "Validation failure"
+msgstr "فشل التعريف"
+
+#: users/views/support_views.py:151
+#, fuzzy
+#| msgid "Ready for Disbursement"
+msgid "Ready for disbursement"
+msgstr "جاهز للصرف"
+
+#: users/views/support_views.py:153
+msgid "Disbursed successfully and waiting for the disbursement callback"
 msgstr ""
+
+#: users/views/support_views.py:173
+#, python-brace-format
+msgid ""
+"Document with id: {self.doc_id} for {self.admin_username} entity members not "
+"found."
+msgstr ""
+
+#: utilities/admin.py:75
+msgid "Users Details"
+msgstr ""
+
+#: utilities/admin.py:77
+msgid "Budget Amount Details"
+msgstr ""
+
+#: utilities/admin.py:90
+msgid "Only super users allowed to add to this table."
+msgstr ""
+
+#: utilities/admin.py:95
+msgid "Only super users allowed to create/update at this table."
+msgstr ""
+
+#: utilities/custom_requests.py:26 utilities/logging.py:16
+#, python-brace-format
+msgid "{head} [{request.user}] -- {message}"
+msgstr ""
+
+#: utilities/forms.py:18
+msgid "Amount to be added"
+msgstr "المبلغ المراد اضافته"
+
+#: utilities/forms.py:21 utilities/forms.py:102
+msgid "New budget, ex: 100"
+msgstr ""
+
+#: utilities/forms.py:29
+msgid "Last update done by"
+msgstr ""
+
+#: utilities/forms.py:59 utilities/forms.py:84
+msgid "New amount must be a valid integer, please check and try again."
+msgstr ""
+
+#: utilities/forms.py:72
+msgid "Add New budget, ex: 100"
+msgstr ""
+
+#: utilities/forms.py:98
+msgid "Amount To Be Added "
+msgstr "المبلغ المراد اضافته"
+
+#: utilities/forms.py:111
+#, fuzzy
+#| msgid "Cash transfer"
+msgid "Bank Transfer"
+msgstr "تحويل بنكي"
+
+#: utilities/forms.py:112
+#, fuzzy
+#| msgid "Top Up Balance"
+msgid "From Accept Balance"
+msgstr "من رصيد اكسبت"
+
+#: utilities/forms.py:113
+msgid "Bank Deposit"
+msgstr "إيداع بنكي"
+
+#: utilities/forms.py:120
+#, fuzzy
+#| msgid "Username"
+msgid "username"
+msgstr "إسم المستخدم"
+
+#: utilities/forms.py:128 utilities/forms.py:136
+msgid "bank"
+msgstr ""
+
+#: utilities/forms.py:148
+msgid "From Account Number"
+msgstr ""
+
+#: utilities/forms.py:157
+msgid "To Account Number"
+msgstr ""
+
+#: utilities/forms.py:165
+msgid "From Account Name"
+msgstr ""
+
+#: utilities/forms.py:170
+msgid "account number"
+msgstr "رقم الحساب"
+
+#: utilities/forms.py:173
+msgid "To Account Name"
+msgstr ""
+
+#: utilities/forms.py:178
+msgid "date"
+msgstr ""
+
+#: utilities/forms.py:181
+msgid "Enter Date"
+msgstr ""
+
+#: utilities/management/commands/generate_certificate.py:48
+#, python-brace-format
+msgid ""
+"SSL Certificate generated successfully!\n"
+"Used private key: {pk_name}\n"
+msgstr ""
+
+#: utilities/management/commands/generate_certificate.py:53
+#, python-brace-format
+msgid "Error: {e.args[0]}"
+msgstr ""
+
+#: utilities/models/abstract_models.py:28
+msgid "Uploaded Successfully"
+msgstr "تم الرفع بنجاح"
+
+#: utilities/models/abstract_models.py:29
+msgid "Processing Failure"
+msgstr "فشل التنفيذ"
+
+#: utilities/models/abstract_models.py:30
+msgid "Processed Successfully"
+msgstr "تمت بنجاح"
+
+#: utilities/models/abstract_models.py:31
+msgid "Disbursement Failure"
+msgstr "فشل الصرف"
+
+#: utilities/models/abstract_models.py:55
+msgid "E-wallets"
+msgstr ""
+
+#: utilities/models/abstract_models.py:57
+msgid "Bank wallets"
+msgstr ""
+
+#: utilities/models/abstract_models.py:58
+msgid "Bank cards"
+msgstr ""
+
+#: utilities/models/abstract_models.py:80
+#, fuzzy
+#| msgid "Username"
+msgid "UIG Login Username"
+msgstr "إسم المستخدم"
+
+#: utilities/models/abstract_models.py:81
+#, fuzzy
+#| msgid "Password"
+msgid "UIG Login Password"
+msgstr "كلمة المرور"
+
+#: utilities/models/abstract_models.py:82
+msgid "UIG Request Gateway Code"
+msgstr ""
+
+#: utilities/models/abstract_models.py:83
+msgid "UIG Request Gateway Type"
+msgstr ""
+
+#: utilities/models/abstract_models.py:84
+msgid "UIG Wallet Issuer"
+msgstr ""
+
+#: utilities/models/abstract_models.py:86
+msgid "VMT Environment"
+msgstr ""
+
+#: utilities/models/abstract_models.py:206
+msgid ""
+"Agents and consumers are required parameters for the bulk disbursement "
+"dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:240
+msgid ""
+"Parameters' values are not proper for the instant disbursement dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:260
+msgid ""
+"MSISDNS and a new profile are required parameters for the change profile "
+"dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:276
+msgid "MSISDNS and a pin are required parameters for the set pin dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:292
+msgid "Agents are required parameter for the user inquiry dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:305
+msgid ""
+"Super agent and a pin are required parameters for the balance inquiry "
+"dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:321
+msgid "Batch ID parameter is required for the callback inquiry dictionary"
+msgstr ""
+
+#: utilities/models/abstract_models.py:339
+msgid "Currency"
+msgstr ""
+
+#: utilities/models/abstract_models.py:371
+msgid "Category Code"
+msgstr ""
+
+#: utilities/models/abstract_models.py:375
+msgid "Type of the sending remittance"
+msgstr ""
+
+#: utilities/models/abstract_models.py:400
+msgid "حوالات - Cash Transfer"
+msgstr ""
+
+#: utilities/models/abstract_models.py:401
+msgid "أقساط - Installment"
+msgstr ""
+
+#: utilities/models/abstract_models.py:402
+msgid "مرتبات - Payroll"
+msgstr ""
+
+#: utilities/models/abstract_models.py:403
+msgid "موردين - Supplier Payment"
+msgstr ""
+
+#: utilities/models/abstract_models.py:404
+msgid "كمبيالات - Collection"
+msgstr ""
+
+#: utilities/models/abstract_models.py:405
+msgid "بطاقة إئتمان - Credit Card"
+msgstr ""
+
+#: utilities/models/abstract_models.py:406
+msgid "متحصلات - COLT"
+msgstr ""
+
+#: utilities/models/abstract_models.py:407
+msgid "Transaction is the payment of pension - معاشات - Pension"
+msgstr ""
+
+#: utilities/models/abstract_models.py:408
+msgid "Transaction moves funds between 2 accounts of same account holder"
+msgstr ""
+
+#: utilities/models/abstract_models.py:409
+msgid "Transaction is the payment of salaries"
+msgstr ""
+
+#: utilities/models/abstract_models.py:410
+msgid "Other payment purpose"
+msgstr ""
+
+#: utilities/models/abstract_models.py:414
+msgid "Purpose"
+msgstr ""
+
+#: utilities/models/abstract_models.py:438
+msgid "Returned"
+msgstr ""
+
+#: utilities/models/abstract_models.py:439
+msgid "Rejected"
+msgstr ""
+
+#: utilities/models/generic_models.py:33
+msgid "callwallets_moderator"
+msgstr ""
+
+#: utilities/models/generic_models.py:34
+msgid "The moderator admin"
+msgstr ""
+
+#: utilities/models/generic_models.py:56
+msgid "Owner/Admin of the Disburser"
+msgstr ""
+
+#: utilities/models/generic_models.py:57
+msgid ""
+"Before every cashin transaction, the amount to be disbursed will be "
+"validated against the current balance of the (API)-Checker owner"
+msgstr ""
+
+#: utilities/models/generic_models.py:64
+msgid "Maintainer - Super Admin"
+msgstr ""
+
+#: utilities/models/generic_models.py:66
+msgid "Super Admin who created/updated this budget values"
+msgstr ""
+
+#: utilities/models/generic_models.py:75
+msgid ""
+"Updated automatically after any disbursement callback or any addition from "
+"add_new_amount"
+msgstr ""
+
+#: utilities/models/generic_models.py:84
+msgid "Updated automatically after any disbursement callback"
+msgstr ""
+
+#: utilities/models/generic_models.py:150
+#: utilities/models/generic_models.py:202
+#, python-brace-format
+msgid ""
+"Fees type and value for the passed issuer -{issuer_type}- does not exist!"
+msgstr ""
+
+#: utilities/models/generic_models.py:218
+#, python-brace-format
+msgid ""
+"Error while checking the amount to be disbursed if within threshold - {e."
+"args}"
+msgstr ""
+
+#: utilities/models/generic_models.py:241
+msgid ""
+"Error updating the total disbursed amount and the current balance, please "
+"retry again later, "
+msgstr ""
+
+#: utilities/models/generic_models.py:263
+msgid ""
+"Error adding to the current balance and cutting from the total disbursed "
+"amount"
+msgstr ""
+
+#: utilities/models/generic_models.py:286
+msgid "Bank Wallet"
+msgstr ""
+
+#: utilities/models/generic_models.py:294
+msgid "Fixed Fee"
+msgstr ""
+
+#: utilities/models/generic_models.py:295
+msgid "Percentage Fee"
+msgstr ""
+
+#: utilities/models/generic_models.py:296
+msgid "Mixed Fee"
+msgstr ""
+
+#: utilities/models/generic_models.py:303
+msgid "Budget"
+msgstr ""
+
+#: utilities/models/generic_models.py:306
+msgid "Issuer type"
+msgstr "نوع المُصدر"
+
+#: utilities/models/generic_models.py:313
+msgid "Fee type"
+msgstr ""
+
+#: utilities/models/generic_models.py:320
+msgid "Fixed value"
+msgstr ""
+
+#: utilities/models/generic_models.py:330
+msgid "Applied with transactions of type fixed or mixed fees"
+msgstr ""
+
+#: utilities/models/generic_models.py:333
+msgid "Percentage value"
+msgstr ""
+
+#: utilities/models/generic_models.py:343
+msgid "Applied with transactions of type percentage or mixed fees"
+msgstr ""
+
+#: utilities/models/generic_models.py:346
+msgid "Minimum value"
+msgstr ""
+
+#: utilities/models/generic_models.py:357
+#, python-format
+msgid ""
+"Fees value to be added instead of the fixed/percentage fees when the total "
+"calculated fees before 14% is less than this min value"
+msgstr ""
+
+#: utilities/models/generic_models.py:362
+msgid "Maximum value"
+msgstr ""
+
+#: utilities/models/generic_models.py:373
+#, python-format
+msgid ""
+"Fees value to be added instead of the fixed/percentage fees when the total "
+"calculated fees before 14% is greater than this max value"
+msgstr ""
+
+#: utilities/ssl_certificate.py:39
+msgid "Key name and size are mandatory parameters."
+msgstr ""
+
+#: utilities/ssl_certificate.py:83 utilities/ssl_certificate.py:179
+msgid "Provided private key name is not valid"
+msgstr ""
+
+#: utilities/ssl_certificate.py:85 utilities/ssl_certificate.py:181
+#, python-brace-format
+msgid "No private key found with the name: {private_key_name}"
+msgstr ""
+
+#: utilities/ssl_certificate.py:99
+msgid "Fields provided are not in a proper format"
+msgstr ""
+
+#: utilities/ssl_certificate.py:183
+#, python-brace-format
+msgid "{e.args[0]}"
+msgstr ""
+
+#: utilities/tasks.py:78
+msgid "Payouts Weekly Report"
+msgstr ""
+
+#: utilities/tasks.py:79
+msgid ""
+"Dear Team,\n"
+"\n"
+"Kindly find the weekly report attached.\n"
+"\n"
+"Best Regards,"
+msgstr ""
+
+#: utilities/tasks.py:99 utilities/tasks.py:103
+#, python-brace-format
+msgid " Transfer Request By User {admin_username}"
+msgstr ""
+
+#: utilities/views.py:35
+msgid "Budget updated successfully!"
+msgstr ""
+
+#: utilities/views.py:36
+msgid "Adding new budget failure, check below errors and try again!"
+msgstr ""
+
+#: utilities/views.py:69
+msgid ""
+"Dear All,<br><br>\n"
+"            <label>Admin Username: </label> {request.user}<br/>\n"
+"            <label>Admin E-mail: </label> {request.user.email}<br/>\n"
+"            <label>Request Date/Time: </label> {datetime.now().strftime(\"%d-"
+"%m-%Y %H:%M:%S\")}<br/>\n"
+"            <label>Amount To Be Added: </label>{form.cleaned_data['amount']}"
+"<br/>\n"
+"            <label>Transfer Type: </label> {form.cleaned_data['type']."
+"replace(\"_\", \" \")} <br/><br/>\n"
+"            "
+msgstr ""
+
+#: utilities/views.py:79
+msgid ""
+"<label>Accept username:  </label> {form.cleaned_data['username']} <br/><br/"
+">Best Regards,"
+msgstr ""
+
+#: utilities/views.py:82
+msgid ""
+"<h4>From: </h4>\n"
+"                <label> Bank Name:  </label> {form."
+"cleaned_data['from_bank']} <br/>\n"
+"                <label> Account Number:  </label> {form."
+"cleaned_data['from_account_number']} <br/>\n"
+"                <label> Account Name:  </label> {form."
+"cleaned_data['from_account_name']} <br/>\n"
+"                <label> Date: </label> {form.cleaned_data['from_date']} <br/"
+"><br/>\n"
+"                <h4>To: </h4>\n"
+"                <label> Bank Name:  </label> {form.cleaned_data['to_bank']} "
+"<br/>\n"
+"                <label> Account Number:  </label> {form."
+"cleaned_data['to_account_number']} <br/>\n"
+"                <label> Account Name:  </label> {form."
+"cleaned_data['to_account_name']} <br/><br/>\n"
+"                Best Regards,"
+msgstr ""
+
+#: utilities/views.py:93
+msgid ""
+"<h4>From: </h4>\n"
+"                <label> Depositor:  </label> {form."
+"cleaned_data['from_account_name']} <br/>\n"
+"                <label> Date: </label> {form.cleaned_data['from_date']} <br/"
+"><br/>\n"
+"                <h4>To: </h4>\n"
+"                <label> Bank Name:  </label> {form.cleaned_data['to_bank']} "
+"<br/>\n"
+"                <label> Account Number:  </label> {form."
+"cleaned_data['to_account_number']} <br/>\n"
+"                <label> Account Name:  </label> {form."
+"cleaned_data['to_account_name']} <br/><br/>\n"
+"                Best Regards,"
+msgstr ""
+
+#~ msgid "Current Balance:"
+#~ msgstr "الرصيد الحالي"
+
+#~ msgid " Disbursement Files"
+#~ msgstr "ملفات الصرف"

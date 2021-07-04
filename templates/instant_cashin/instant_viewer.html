@@ -28,9 +28,9 @@
       <div class="page-title">
         <div class="title_left">
           {% if is_bank_transactions == 'yes' %}
-            <h3>Bank Accounts/Cards Transactions{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
+            <h3>{% trans 'Bank Accounts/Cards Transactions' %}{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
           {% else %}
-            <h3>Wallets/Aggregators Transactions{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
+            <h3>{% trans 'Wallets/Aggregators Transactions' %}{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
           {% endif %}
         </div>
         {% include 'search_bar.html' %}

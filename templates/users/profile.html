@@ -86,14 +86,17 @@
               
 
             <div class="panel-footer">
-                  <a data-original-title="Broadcast Message" data-toggle="tooltip" type="button" class="btn btn-sm btn-primary disabled" href="#"><i class="glyphicon glyphicon-envelope"></i></a>
-                  <span class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                      <a href="{% url 'users:edit_profile' object.username %}" data-original-title="Edit Data" data-toggle="tooltip" type="button" class="btn btn-sm btn-warning"><i class="glyphicon glyphicon-edit"></i></a>
-                      {% ifequal request.user.username object.username %}
-                      <a href="{% url 'users:change_password' request.user.username %}" data-original-title="Change Password" data-toggle="tooltip" type="button" class="btn btn-sm btn-danger"><i class="fa fa-key"></i></a>
-                      {% endifequal %}
-                  </span>
-              </div>
+              <a data-original-title="Broadcast Message" data-toggle="tooltip" type="button"
+                 class="btn btn-sm btn-primary disabled" href="#">
+                <i class="glyphicon glyphicon-envelope"></i>
+              </a>
+              <span class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                <a href="{% url 'users:edit_profile' object.username %}" data-original-title="{% trans 'Edit Data' %}" data-toggle="tooltip" type="button" class="btn btn-sm btn-warning"><i class="glyphicon glyphicon-edit"></i></a>
+                {% ifequal request.user.username object.username %}
+                <a href="{% url 'users:change_password' request.user.username %}" data-original-title="{% trans 'Change Password' %}" data-toggle="tooltip" type="button" class="btn btn-sm btn-danger"><i class="fa fa-key"></i></a>
+                {% endifequal %}
+              </span>
+            </div>
             
             </div>
             

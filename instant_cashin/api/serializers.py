@@ -37,7 +37,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     amount = serializers.DecimalField(
             required=True,
             decimal_places=2,
-            max_digits=7,
+            max_digits=9,
             validators=[MinValueValidator(Decimal(1.0))],
     )
     bank_transaction_type = serializers.CharField(

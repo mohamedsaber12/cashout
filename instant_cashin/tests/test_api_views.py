@@ -191,5 +191,32 @@ class AmanTransactionCallbackHandlerAPIViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
+class BudgetInquiryAPIViewTests(APITestCase):
+    def setUp(self):
+        super().setUp()
+        # create api checker
+        self.api_checker = InstantAPICheckerFactory()
+        # create auth data
+        Application.objects.create(
+            client_type=Application.CLIENT_CONFIDENTIAL, authorization_grant_type=Application.GRANT_PASSWORD,
+            name=f"{self.api_checker.username} OAuth App", user=self.api_checker
+        )
+        # set password for api checker
+        self.api_checker.set_password('fiA#EmkjLBh9VSXy6XvFKxnR9jXt')
+        self.api_checker.save()
+        # get client_secret and client_id
+        auth_data = Application.objects.get(user=self.api_checker)
+        # get auth_token
+        url = api_reverse("users:oauth2_token")
+        data = urlencode({
+            "client_id": auth_data.client_id,
+            "client_secret": auth_data.client_secret,
+            "username": self.api_checker.username,
+            "password": "fiA#EmkjLBh9VSXy6XvFKxnR9jXt",
+            "grant_type": "password"
+        })
+        response = self.client.post(url, data, content_type="application/x-www-form-urlencoded")
+        self.auth_token = response.json()['access_token']
+
 
 

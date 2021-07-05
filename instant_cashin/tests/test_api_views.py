@@ -1,11 +1,17 @@
+import json
+
 from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.reverse import reverse as api_reverse
 from urllib.parse import urlencode
 from oauth2_provider.models import Application
 
-from users.tests.factories import InstantAPICheckerFactory
-from utilities.models import Budget
+from users.tests.factories import (
+    InstantAPICheckerFactory, AdminUserFactory, SuperAdminUserFactory,
+    VMTDataFactory)
+from utilities.models import Budget, FeeSetup
+from users.models import Client
+from disbursement.models import Agent
 from instant_cashin.models import AmanTransaction, InstantTransaction
 
 class CurrentRequest(object):
@@ -194,8 +200,10 @@ class AmanTransactionCallbackHandlerAPIViewTests(APITestCase):
 class BudgetInquiryAPIViewTests(APITestCase):
     def setUp(self):
         super().setUp()
+        # create root
+        self.root = AdminUserFactory(user_type=3)
         # create api checker
-        self.api_checker = InstantAPICheckerFactory()
+        self.api_checker = InstantAPICheckerFactory(user_type=6, root=self.root)
         # create auth data
         Application.objects.create(
             client_type=Application.CLIENT_CONFIDENTIAL, authorization_grant_type=Application.GRANT_PASSWORD,
@@ -216,7 +224,172 @@ class BudgetInquiryAPIViewTests(APITestCase):
             "grant_type": "password"
         })
         response = self.client.post(url, data, content_type="application/x-www-form-urlencoded")
-        self.auth_token = response.json()['access_token']
+        self.access_token = response.json()['access_token']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+
+    # test root has budget
+    def test_disburser_has_no_custom_budget(self):
+        url = api_reverse("instant_api:budget_inquiry")
+        response = self.client.get(url, {}, content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    # test get budget balance
+    def test_get_budget_balance(self):
+        self.budget = Budget(disburser=self.root)
+        self.budget.save()
+        url = api_reverse("instant_api:budget_inquiry")
+        response = self.client.get(url, {}, content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
+class BulkTransactionInquiryAPIViewTests(APITestCase):
+    def setUp(self):
+        super().setUp()
+        # create root
+        self.root = AdminUserFactory(user_type=3)
+        # create api checker
+        self.api_checker = InstantAPICheckerFactory(user_type=6, root=self.root)
+        # create auth data
+        Application.objects.create(
+            client_type=Application.CLIENT_CONFIDENTIAL, authorization_grant_type=Application.GRANT_PASSWORD,
+            name=f"{self.api_checker.username} OAuth App", user=self.api_checker
+        )
+        # set password for api checker
+        self.api_checker.set_password('fiA#EmkjLBh9VSXy6XvFKxnR9jXt')
+        self.api_checker.save()
+        # get client_secret and client_id
+        auth_data = Application.objects.get(user=self.api_checker)
+        # get auth_token
+        url = api_reverse("users:oauth2_token")
+        data = urlencode({
+            "client_id": auth_data.client_id,
+            "client_secret": auth_data.client_secret,
+            "username": self.api_checker.username,
+            "password": "fiA#EmkjLBh9VSXy6XvFKxnR9jXt",
+            "grant_type": "password"
+        })
+        response = self.client.post(url, data, content_type="application/x-www-form-urlencoded")
+        self.access_token = response.json()['access_token']
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+
+    # test bulk transaction inquiry for bank transactions
+    def test_get_bulk_of_bank_transaction_validation(self):
+        url = api_reverse("instant_api:bulk_transaction_inquiry")
+        data = {
+            "transactions_ids_list": [],
+            "bank_transactions": True
+        }
+        response = self.client.get(url, data, content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # test bulk transaction inquiry for bank transactions
+    def test_get_bulk_of_bank_transaction(self):
+        url = api_reverse("instant_api:bulk_transaction_inquiry")
+        data = {
+            "transactions_ids_list": ["e09dfa9d-c2eb-4a42-b226-adb59d5b8847"],
+            "bank_transactions": True
+        }
+        response = self.client.generic(
+            method="GET", path=url, data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    # test bulk transaction inquiry for wallet transactions
+    def test_get_bulk_of_wallet_transaction(self):
+        url = api_reverse("instant_api:bulk_transaction_inquiry")
+        data = {
+            "transactions_ids_list": ["e09dfa9d-c2eb-4a42-b226-adb59d5b8847"]
+        }
+        response = self.client.generic(
+            method="GET", path=url, data=json.dumps(data),
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class InstantDisbursementAPIViewTests(APITestCase):
+    def setUp(self):
+        super().setUp()
+        # create root
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.root.save()
+        # create budget
+        self.budget = Budget(disburser=self.root, current_balance=100)
+        self.budget.save()
+        # create api checker
+        self.api_checker = InstantAPICheckerFactory(user_type=6, root=self.root)
+        # create auth data
+        Application.objects.create(
+                client_type=Application.CLIENT_CONFIDENTIAL, authorization_grant_type=Application.GRANT_PASSWORD,
+                name=f"{self.api_checker.username} OAuth App", user=self.api_checker
+        )
+        # set password for api checker
+        self.api_checker.set_password('fiA#EmkjLBh9VSXy6XvFKxnR9jXt')
+        self.api_checker.save()
+        # get client_secret and client_id
+        auth_data = Application.objects.get(user=self.api_checker)
+        # get auth_token
+        url = api_reverse("users:oauth2_token")
+        data = urlencode({
+            "client_id": auth_data.client_id,
+            "client_secret": auth_data.client_secret,
+            "username": self.api_checker.username,
+            "password": "fiA#EmkjLBh9VSXy6XvFKxnR9jXt",
+            "grant_type": "password"
+        })
+        response = self.client.post(url, data, content_type="application/x-www-form-urlencoded")
+        self.access_token = response.json()['access_token']
+
+    # test instant Cashin
+    def test_instant_cashin_UNAUTHORIZED(self):
+        url = api_reverse("instant_api:instant_disburse")
+        response = self.client.post(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    # test instant Cashin validation
+    def test_instant_cashin_validation(self):
+        url = api_reverse("instant_api:instant_disburse")
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        response = self.client.post(url, {}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # test instant Cashin exceeded budget current balance
+    def test_instant_cashin_exceeded_current_balance(self):
+        fees_setup_vodafone = FeeSetup(
+            budget_related=self.budget, issuer='vf',
+            fee_type='p', percentage_value=2.25)
+        fees_setup_vodafone.save()
+        url = api_reverse("instant_api:instant_disburse")
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        data = {
+            "amount": "100.50",
+            "issuer": "vodafone",
+            "msisdn": "01003764686"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # test instant Cashin on vodafone
+    def test_instant_cashin_on_vodafone(self):
+        fees_setup_vodafone = FeeSetup(
+            budget_related=self.budget, issuer='vf',
+            fee_type='p', percentage_value=2.25)
+        fees_setup_vodafone.save()
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.client_user = Client(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
+        self.agent.save()
+        url = api_reverse("instant_api:instant_disburse")
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        data = {
+            "amount": "20.50",
+            "issuer": "vodafone",
+            "msisdn": "01003764686"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
 

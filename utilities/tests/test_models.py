@@ -280,8 +280,8 @@ class BudgetTests(TestCase):
                                         fee_type='p', percentage_value=2.25)
         fees_setup_aman.save()
         self.assertEqual(
-                self.budget.accumulate_amount_with_fees_and_vat(200, 'A'),
-                Decimal('205.13')
+            self.budget.accumulate_amount_with_fees_and_vat(200, 'A'),
+            Decimal('205.13')
         )
 
     # test accumulate_amount_with_fees_and_vat with issuer bank wallet
@@ -290,8 +290,8 @@ class BudgetTests(TestCase):
                                        fee_type='p', percentage_value=2.25)
         fees_setup_bank_wallet.save()
         self.assertEqual(
-                self.budget.accumulate_amount_with_fees_and_vat(200, 'B'),
-                Decimal('205.13')
+            self.budget.accumulate_amount_with_fees_and_vat(200, 'B'),
+            Decimal('205.13')
         )
     # test accumulate_amount_with_fees_and_vat with fake fees
     def test_accumulate_amount_with_fees_and_vat_fake_fees(self):

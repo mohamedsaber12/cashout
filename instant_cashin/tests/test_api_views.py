@@ -471,7 +471,7 @@ class InstantDisbursementAPIViewTests(APITestCase):
             "msisdn": "01112131415",
             "first_name": "awad",
             "last_name": "mohamed",
-            "email": "mohamedawad@paymob.com"
+            "email": "mfake@paymob.com"
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)

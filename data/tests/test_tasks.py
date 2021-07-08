@@ -24,4 +24,3 @@ class TestBankWalletsAndCardsSheetProcessor(TestCase):
         self.disb_trn = DisbursementDocDataFactory(doc=self.doc)
         obj = BankWalletsAndCardsSheetProcessor(self.doc.id)
         resp = obj
-        print(resp)

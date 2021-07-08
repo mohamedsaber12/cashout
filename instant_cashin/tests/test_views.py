@@ -24,7 +24,6 @@ class InstantTransactionsListViewTests(TestCase):
         self.dashboard_user.user_permissions. \
             add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
 
-
         self.request = RequestFactory()
         self.client = Client()
 
@@ -62,7 +61,6 @@ class BankTransactionsListViewTests(TestCase):
         self.dashboard_user.save()
         self.dashboard_user.user_permissions. \
             add(Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'))
-
 
         self.request = RequestFactory()
         self.client = Client()

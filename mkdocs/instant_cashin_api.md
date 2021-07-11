@@ -99,6 +99,7 @@
             |  Agricultural Bank of Egypt                   |   PDAC        |
             |  National Bank of Greece                      |   NBG         |
             |  Central Bank Of Egypt                        |   CBE         |
+            |  ATTIJARIWAFA BANK Egypt                      |   BCBIEGCX    |
 
 
 ### Response

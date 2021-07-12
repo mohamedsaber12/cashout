@@ -127,7 +127,7 @@ class UserAccountAdmin(UserAdmin):
 
     def get_queryset(self, request):
         qs = super(UserAccountAdmin, self).get_queryset(request)
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.is_finance:
             return qs
         elif request.user.is_root:
             qs = qs.filter(hierarchy=request.user.hierarchy)
@@ -243,6 +243,29 @@ class SuperAdmin(UserAccountAdmin):
     
     actions = ['activate_selected', 'deactivate_selected', "export_report"]
     extended_actions = ['activate_selected', 'deactivate_selected', "export_report"]
+    
+    def get_actions(self, request):
+        actions = super(UserAccountAdmin, self).get_actions(request)
+        if request.user.is_finance:
+            if 'activate_selected' in actions:
+                del actions['activate_selected']
+            if 'deactivate_selected' in actions:
+                del actions['deactivate_selected']
+        return actions
+    
+    # def get_extended_actions(self, request):
+    #     ext_actions = super(UserAccountAdmin, self).get_extended_actions(request)
+    #     if request.user.is_finance:
+    #         del ext_actions['activate_selected', 'deactivate_selected']
+    #     return ext_actions
+    
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_finance:
+            return True
+        
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_finance:
+            return True
     
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)

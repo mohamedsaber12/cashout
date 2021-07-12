@@ -49,6 +49,8 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 def redirect_home(request):
     if request.user.is_superuser:
         return redirect(reverse('admin:index'))
+    if request.user.is_finance:
+        return redirect(reverse('admin:index'))
     elif request.user.is_support:
         return redirect(reverse('users:support_home'))
     elif request.user.is_instant_model_onboarding:

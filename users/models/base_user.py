@@ -197,6 +197,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_support(self):
         return self.user_type == 8
+    
+    @cached_property
+    def is_finance(self):
+        return self.user_type == 10
 
     @cached_property
     def is_instant_member(self):

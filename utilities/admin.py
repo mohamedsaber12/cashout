@@ -87,8 +87,17 @@ class BudgetAdmin(SimpleHistoryAdmin):
 
     def has_add_permission(self, request):
         if not request.user.is_superuser or not request.user.is_superadmin:
-            raise PermissionError(_("Only super users allowed to add to this table."))
+            return False
         return True
+    
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_finance:
+            return True
+        
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_finance:
+            return True
+
     
     def save_model(self, request, obj, form, change):
         if not request.user.is_superuser or not request.user.is_superadmin:

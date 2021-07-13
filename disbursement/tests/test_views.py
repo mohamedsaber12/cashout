@@ -10,8 +10,10 @@ from users.tests.factories import (
     SuperAdminUserFactory, AdminUserFactory, VMTDataFactory
 )
 from users.models import (
-    Setup, Client as ClientModel, Brand, EntitySetup, CheckerUser, Levels
+    Setup, Client as ClientModel, Brand, EntitySetup, CheckerUser, Levels,
+    MakerUser
 )
+from data.models import Doc
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
 from disbursement.models import Agent
 
@@ -266,17 +268,16 @@ class SingleStepTransactionsViewTests(TestCase):
         self.client = Client()
         self.budget = Budget(disburser=self.root, current_balance=150)
         self.budget.save()
-        fees_setup_vodafone = FeeSetup(budget_related=self.budget, issuer='vf',
-                                       fee_type='p', percentage_value=2.25)
-        fees_setup_vodafone.save()
         fees_setup_bank_wallet = FeeSetup(budget_related=self.budget, issuer='bc',
                                           fee_type='f', fixed_value=20)
         fees_setup_bank_wallet.save()
+
     def test_redirect_if_not_logged_in(self):
         response = self.client.get(
-            reverse('disbursement:add_agents',
+            reverse(
+                'disbursement:add_agents',
                 kwargs={'token':'token'}
-                )
+            )
         )
         self.assertRedirects(response, '/user/login/')
 
@@ -300,7 +301,10 @@ class SingleStepTransactionsViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, 'disbursement/single_step_trx_list.html')
 
-    def test_post_method(self):
+    def test_post_method_on_vodafone(self):
+        fees_setup_vodafone = FeeSetup(budget_related=self.budget, issuer='vf',
+                                       fee_type='p', percentage_value=2.25)
+        fees_setup_vodafone.save()
         self.client.force_login(self.checker_user)
         data = {
             "amount": 100,
@@ -317,3 +321,123 @@ class SingleStepTransactionsViewTests(TestCase):
             redirect_url,
             '/disburse/single-step/'
         )
+
+    def test_post_method_on_bank_card(self):
+        self.client.force_login(self.checker_user)
+        data = {
+            "amount": 100,
+            "issuer": "bank_card",
+            "creditor_account_number": '4665543567987643',
+            "creditor_name": "test test",
+            "creditor_bank": "AUB",
+            "transaction_type": "CASH_TRANSFER",
+            "pin": "123456",
+        }
+        response = self.client.post(
+            '%s?issuer=wallets' % (reverse('disbursement:single_step_list_create')),
+            data
+        )
+        redirect_url = str(response.url).split('?')[0]
+        self.assertEqual(
+            redirect_url,
+            '/disburse/single-step/'
+        )
+
+    def test_post_method_on_aman(self):
+        fees_setup_aman = FeeSetup(budget_related=self.budget, issuer='am',
+                                   fee_type='p', percentage_value=2.25)
+        fees_setup_aman.save()
+        self.client.force_login(self.checker_user)
+        data = {
+            "amount": 100,
+            "issuer": "aman",
+            "msisdn": '01021469732',
+            "first_name": "test",
+            "last_name": "test",
+            "email": "test@p.com",
+            "pin": "123456",
+        }
+        response = self.client.post(
+            '%s?issuer=wallets' % (reverse('disbursement:single_step_list_create')),
+            data
+        )
+        redirect_url = str(response.url).split('?')[0]
+        self.assertEqual(
+            redirect_url,
+            '/disburse/single-step/'
+        )
+
+
+class DisbursementTests(TestCase):
+
+    def Setup(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.set_pin('123456')
+        self.root.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='accept_vodafone_onboarding')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.checker_user = CheckerUser(
+                id=15,
+                username='test_checker_user',
+                root=self.root,
+                user_type=2
+        )
+        self.checker_user.save()
+        self.level = Levels(
+                max_amount_can_be_disbursed=1200,
+                created=self.root
+        )
+        self.level.save()
+        self.checker_user.level = self.level
+        self.checker_user.save()
+        self.checker_user.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.checker_user.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='accept_vodafone_onboarding')
+        )
+        self.maker_user = MakerUser(
+            id=14,
+            username='test_maker_user',
+            root=self.root,
+            user_type=1
+        )
+        self.maker_user.save()
+        self.request = RequestFactory()
+        self.client = Client()
+        self.budget = Budget(disburser=self.root, current_balance=150)
+        self.budget.save()
+        fees_setup_bank_wallet = FeeSetup(budget_related=self.budget, issuer='bc',
+                                          fee_type='f', fixed_value=20)
+        fees_setup_bank_wallet.save()
+        fees_setup_vodafone = FeeSetup(budget_related=self.budget, issuer='vf',
+                                       fee_type='p', percentage_value=2.25)
+        fees_setup_vodafone.save()
+
+        # create doc
+        # self.doc = Doc.objects.create(owner=maker, disbursed_by=checker, is_disbursed=True, can_be_disbursed=True, is_processed=True, txn_id=batch_id, file_category=file_category)
+
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(
+            reverse('disbursement:disburse',
+                kwargs={'doc_id':'fake_doc_id'}
+            )
+        )
+        self.assertRedirects(response, '/user/login/')

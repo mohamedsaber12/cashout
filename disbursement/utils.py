@@ -28,7 +28,6 @@ VALID_BANK_CODES_LIST = [
     "EGB",
     "UB",
     "QNB",
-    "BBE",
     "ARAB",
     "ENBD",
     "ABK",
@@ -61,7 +60,7 @@ VALID_BANK_CODES_LIST = [
     "PDAC",
     "NBG",
     "CBE",
-    "BCBIEGCX"
+    "BBE"
 ]
 
 VALID_BANK_TRANSACTION_TYPES_LIST = [
@@ -98,7 +97,6 @@ BANK_CODES = [
     {'name': _('Egyptian Gulf Bank (EG-Bank)')                  , 'code':  'EGB' },
     {'name': _('The United Bank')                               , 'code':  'UB'  },
     {'name': _('Qatar National Bank Alahli')                    , 'code':  'QNB' },
-    {'name': _('Central Bank Of Egypt')                         , 'code':  'BBE' },
     {'name': _('Arab Bank PLC')                                 , 'code':  'ARAB'},
     {'name': _('Emirates National Bank of Dubai')               , 'code':  'ENBD'},
     {'name': _('Al Ahli Bank of Kuwait – Egypt')                , 'code':  'ABK' },
@@ -131,7 +129,7 @@ BANK_CODES = [
     {'name': _('Agricultural Bank of Egypt')                    , 'code':  'PDAC'},
     {'name': _('National Bank of Greece')                       , 'code':  'NBG' },
     {'name': _('Central Bank Of Egypt')                         , 'code':  'CBE' },
-    {'name': _('Attijariwafa Bank')                             , 'code':  'BCBIEGCX' }
+    {'name': _('Attijariwafa Bank')                             , 'code':  'BBE' }
   ]
 
 ERROR_CODES_MESSAGES = {

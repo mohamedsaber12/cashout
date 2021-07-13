@@ -13,9 +13,9 @@ from users.models import (
     Setup, Client as ClientModel, Brand, EntitySetup, CheckerUser, Levels,
     MakerUser
 )
-from data.models import Doc
+from data.models import Doc, DocReview, FileCategory
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
-from disbursement.models import Agent
+from disbursement.models import Agent, DisbursementDocData
 
 
 class AgentsListViewTests(TestCase):
@@ -361,16 +361,15 @@ class SingleStepTransactionsViewTests(TestCase):
             '%s?issuer=wallets' % (reverse('disbursement:single_step_list_create')),
             data
         )
-        redirect_url = str(response.url).split('?')[0]
         self.assertEqual(
-            redirect_url,
+            str(response.url).split('?')[0],
             '/disburse/single-step/'
         )
 
 
 class DisbursementTests(TestCase):
 
-    def Setup(self):
+    def setUp(self):
         self.super_admin = SuperAdminUserFactory()
         self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
         self.root = AdminUserFactory(user_type=3)
@@ -391,15 +390,15 @@ class DisbursementTests(TestCase):
         self.client_user = ClientModel(client=self.root, creator=self.super_admin)
         self.client_user.save()
         self.checker_user = CheckerUser(
-                id=15,
-                username='test_checker_user',
-                root=self.root,
-                user_type=2
+            id=15,
+            username='test_checker_user',
+            root=self.root,
+            user_type=2
         )
         self.checker_user.save()
         self.level = Levels(
-                max_amount_can_be_disbursed=1200,
-                created=self.root
+            max_amount_can_be_disbursed=1200,
+            created=self.root
         )
         self.level.save()
         self.checker_user.level = self.level
@@ -415,12 +414,11 @@ class DisbursementTests(TestCase):
         self.maker_user = MakerUser(
             id=14,
             username='test_maker_user',
+            email='t@mk.com',
             root=self.root,
             user_type=1
         )
         self.maker_user.save()
-        self.request = RequestFactory()
-        self.client = Client()
         self.budget = Budget(disburser=self.root, current_balance=150)
         self.budget.save()
         fees_setup_bank_wallet = FeeSetup(budget_related=self.budget, issuer='bc',
@@ -430,9 +428,30 @@ class DisbursementTests(TestCase):
                                        fee_type='p', percentage_value=2.25)
         fees_setup_vodafone.save()
 
-        # create doc
-        # self.doc = Doc.objects.create(owner=maker, disbursed_by=checker, is_disbursed=True, can_be_disbursed=True, is_processed=True, txn_id=batch_id, file_category=file_category)
-
+        # create doc, doc_review, DisbursementDocData, file category
+        file_category = FileCategory.objects.create(
+            user_created=self.root
+        )
+        self.doc = Doc.objects.create(
+            owner=self.maker_user,
+            file_category=file_category,
+            is_disbursed=False,
+            can_be_disbursed=True,
+            is_processed=True,
+        )
+        doc_review = DocReview.objects.create(
+            is_ok=True,
+            doc=self.doc,
+            user_created=self.checker_user,
+        )
+        disb_data_doc = DisbursementDocData.objects.create(
+            doc=self.doc,
+            txn_status = "200",
+            has_callback = True,
+            doc_status = "5"
+        )
+        self.request = RequestFactory()
+        self.client = Client()
 
     def test_redirect_if_not_logged_in(self):
         response = self.client.get(
@@ -441,3 +460,16 @@ class DisbursementTests(TestCase):
             )
         )
         self.assertRedirects(response, '/user/login/')
+
+    def test_disburse_document(self):
+        self.client.force_login(self.checker_user)
+        response = self.client.post(
+            reverse('disbursement:disburse',
+                kwargs={'doc_id':self.doc.id}
+            ),
+            {'pin': '123456'}
+        )
+        self.assertEqual(
+            str(response.url).split('?')[0],
+            f'/documents/{self.doc.id}/'
+        )

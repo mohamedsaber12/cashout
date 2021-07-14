@@ -790,13 +790,13 @@ class FailedDisbursedForDownloadTests(TestCase):
 
     def test_redirect_if_not_logged_in(self):
         response = self.client.get(
-            reverse('disbursement:export_sample_file',
+            reverse('disbursement:download_failed',
                 kwargs={'doc_id':self.doc.id}
             )
         )
         self.assertRedirects(response, '/user/login/')
 
-    def test_view_url_exists_at_desired_location(self):
+    def test_file_not_exist(self):
         self.client.force_login(self.root)
-        response = self.client.get(f'disburse/export_failed_download/{self.doc.id}/')
-        self.assertEqual(response.status_code, 200)
+        response = self.client.get(f'/disburse/export_failed_download/{self.doc.id}/')
+        self.assertEqual(response.status_code, 404)

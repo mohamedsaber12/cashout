@@ -461,6 +461,18 @@ class DisbursementTests(TestCase):
         )
         self.assertRedirects(response, '/user/login/')
 
+    def test_disburse_document_with_get_method(self):
+        self.client.force_login(self.checker_user)
+        response = self.client.get(
+            reverse('disbursement:disburse',
+                kwargs={'doc_id': self.doc.id}
+            )
+        )
+        self.assertEqual(
+            str(response.url).split('?')[0],
+            f'/documents/{self.doc.id}/'
+        )
+
     def test_disburse_document(self):
         self.client.force_login(self.checker_user)
         response = self.client.post(
@@ -652,12 +664,50 @@ class DisbursementDocTransactionsViewTests(TestCase):
         response = self.client.get(f'/disburse/report/{self.doc.id}/')
         self.assertEqual(response.status_code, 200)
 
+    def test_forbidden_sheet_transactions_view(self):
+        self.client.force_login(self.root)
+        self.doc.is_disbursed = False
+        self.doc.save()
+        response = self.client.get(
+            reverse('disbursement:disbursed_data',
+                kwargs={'doc_id':self.doc.id}
+            )
+        )
+        self.assertEqual(response.status_code, 401)
+
     def test_e_wallets_sheet_transactions_view(self):
         self.client.force_login(self.root)
         response = self.client.get(
             reverse('disbursement:disbursed_data',
                 kwargs={'doc_id':self.doc.id}
             )
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_sheet_transactions_view_with_ajax_export_failed(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?export_failed=true' % (reverse('disbursement:disbursed_data',
+                kwargs={'doc_id':self.doc.id}
+            )), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_sheet_transactions_view_with_ajax_export_success(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?export_success=true' % (reverse('disbursement:disbursed_data',
+                kwargs={'doc_id':self.doc.id}
+            )), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest'
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_sheet_transactions_view_with_ajax_export_all(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?export_all=true' % (reverse('disbursement:disbursed_data',
+                kwargs={'doc_id':self.doc.id}
+            )), {}, HTTP_X_REQUESTED_WITH='XMLHttpRequest'
         )
         self.assertEqual(response.status_code, 200)
 
@@ -795,6 +845,17 @@ class FailedDisbursedForDownloadTests(TestCase):
             )
         )
         self.assertRedirects(response, '/user/login/')
+
+    def test_forbidden_download(self):
+        self.client.force_login(self.root)
+        self.doc.is_disbursed = False
+        self.doc.save()
+        response = self.client.get(
+            reverse('disbursement:download_failed',
+                kwargs={'doc_id':self.doc.id}
+            )
+        )
+        self.assertEqual(response.status_code, 401)
 
     def test_file_not_exist(self):
         self.client.force_login(self.root)

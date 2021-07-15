@@ -809,7 +809,11 @@ class EWalletsSheetProcessor(Task):
                 DisbursementData.objects.bulk_create(objs=objs)
 
             self.doc_obj.save()
-            notify_maker(self.doc_obj)
+            if self.is_normal_sheet_specs:
+                if not self.doc_obj.validation_process_is_running:
+                    notify_maker(self.doc_obj)
+            else:
+                notify_maker(self.doc_obj)
             UPLOAD_LOGGER.debug(f"[message] [e wallets file passed processing] [celery_task] -- Doc id: {doc_id}")
             return True
         except Doc.DoesNotExist:

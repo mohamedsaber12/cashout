@@ -373,6 +373,7 @@ $(document).ready( function () {
           appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
         {% endif %}
         {% if doc_obj.is_bank_card %}
+          let issuer = $(this).data('issuer');
           trx.debtor_account = $(this).data('debtor_account');
           trx.creditor_account_number = $(this).data('creditor_account_number');
           appendedTags += `<li><span>{% trans 'Account Number' %}</span><b>:</b>${trx.creditor_account_number}</li>`;

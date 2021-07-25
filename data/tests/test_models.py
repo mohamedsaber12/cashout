@@ -46,13 +46,13 @@ class TestModelFileData(TestCase):
         resp = FileData.objects.search_file_data(self.doc, self.doc.txn_id)
         self.assertEqual(resp.first(), self.file_data1)
         
-    # @mock.patch("users.signals.notify_user")  
+    # @mock.patch("users.signals.notify_user")
     # def test_transactions_in_range(self, mocked_notify_user):
     #     checker = CheckerUserFactory()
     #     resp = FileData.objects.transactions_in_range(checker)
     #     self.assertEqual(list(resp), [])
    
-    # @mock.patch("users.signals.notify_user")  
+    # @mock.patch("users.signals.notify_user")
     # def test_unseen_transactions(self, mocked_notify_user):
     #     checker = CheckerUserFactory()
     #     resp = FileData.objects.unseen_transactions(checker)

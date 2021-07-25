@@ -11,7 +11,10 @@ from django.contrib.auth.models import Permission
 
 from disbursement.factories import VariousAgentFactory, VMTDataFactory
 
-from users.models import SuperAdminUser, RootUser, MakerUser, CheckerUser, Client
+from users.models import (
+    SuperAdminUser, RootUser, MakerUser, CheckerUser, Client,
+    InstantAPICheckerUser, InstantAPIViewerUser
+)
 
 
 fake = fakeFactory.create()
@@ -135,6 +138,25 @@ class CheckerUserFactory(BaseUserFactory):
 
     class Meta:
         model = CheckerUser
+        abstract = False
+
+
+class InstantAPICheckerFactory(BaseUserFactory):
+    """
+    Factory model for creating checker users
+    """
+
+    class Meta:
+        model = InstantAPICheckerUser
+        abstract = False
+
+class InstantAPIViewerUserFactory(BaseUserFactory):
+    """
+    Factory model for creating checker users
+    """
+
+    class Meta:
+        model = InstantAPIViewerUser
         abstract = False
 
 

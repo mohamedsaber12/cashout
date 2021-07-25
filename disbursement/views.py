@@ -845,9 +845,9 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
                 
                 response = requests.post(
-                http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
-                json=payload
-            )
+                    http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
+                    json=payload
+                )
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {
                     "status" : response.json().get('status_code'),

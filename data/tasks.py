@@ -814,7 +814,7 @@ class EWalletsSheetProcessor(Task):
             return True
         except Doc.DoesNotExist:
             UPLOAD_LOGGER.\
-                debug(f"[message] [ewallets file processing error] [celery_task] -- Doc id: {doc_id} not found")
+                debug(f"[message] [e wallets file processing error] [celery_task] -- Doc id: {doc_id} not found")
             return False
         except Exception as err:
             self.end_with_failure(MSG_REGISTRATION_PROCESS_ERROR)

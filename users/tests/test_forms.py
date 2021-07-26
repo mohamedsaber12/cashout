@@ -7,9 +7,11 @@ from django.contrib.auth.models import Permission
 from users.tests.factories import SuperAdminUserFactory, AdminUserFactory
 from users.forms import (
     SetPasswordForm, PasswordChangeForm, UserForm, RootCreationForm,
-    SupportUserCreationForm, LevelForm
+    SupportUserCreationForm, LevelForm, MakerCreationForm, CheckerCreationForm,
+    ViewerUserCreationModelForm, APICheckerUserCreationModelForm,
+    BrandForm, ForgotPasswordForm, ClientFeesForm
 )
-from users.models import RootUser, User
+from users.models import RootUser, User, Client as ClientModel, Brand, Levels
 
 REQUIRED_FIELD_ERROR = 'This field is required.'
 PASSWORD_MISMATCH_ERROR = "The two passwords fields didn't match."
@@ -17,6 +19,7 @@ WEAK_PASSWORD_ERROR = "Password must contain at least 8 characters"
 SIMILAR_PASSWORD_ERROR = "Your old password is similar to the new password. "
 INCORRECT_PASSWORD_ERROR = "Your old password was entered incorrectly. Please enter it again."
 MAX_AMOUNT_CAN_BE_DISBURSED_ERROR = "Amount must be greater than 0"
+
 
 class PasswordFormTests(TestCase):
     def setUp(self):
@@ -328,9 +331,6 @@ class LevelFormTests(TestCase):
         form_data = {}
         form = LevelForm(data=form_data, request=self.request)
         self.assertEqual(form.is_valid(), False)
-        print('==============================')
-        print(form.errors)
-        print('==============================')
         self.assertEqual(form.errors['max_amount_can_be_disbursed'], [REQUIRED_FIELD_ERROR])
 
     def test_max_amount_can_be_disbursed_negative(self):
@@ -340,3 +340,182 @@ class LevelFormTests(TestCase):
         form = LevelForm(data=form_data, request=self.request)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['max_amount_can_be_disbursed'], [MAX_AMOUNT_CAN_BE_DISBURSED_ERROR])
+
+    def test_max_amount_can_be_disbursed_exist(self):
+        form_data = {
+            'max_amount_can_be_disbursed': 100
+        }
+        form = LevelForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), True)
+        form.save()
+
+
+class MakerCreationFormTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.root.save()
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.request = RequestFactory()
+        self.request.user = self.root
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+
+    def test_email_not_exist(self):
+        form_data = {}
+        form = MakerCreationForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(form.errors['email'], [REQUIRED_FIELD_ERROR])
+
+    def test_maker_creation_form(self):
+        form_data = {
+            'first_name': 'test',
+            'last_name': 'test',
+            'email': 'mk@mk.com',
+            'mobile_no': '01023456782'
+        }
+        form = MakerCreationForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), True)
+        form.save()
+
+
+class CheckerCreationFormTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.root.save()
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.level = Levels.objects.create(
+            id=1,
+            max_amount_can_be_disbursed=100,
+            level_of_authority=1,
+            created=self.root
+        )
+        self.request = RequestFactory()
+        self.request.user = self.root
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+
+    def test_email_not_exist(self):
+        form_data = {}
+        form = CheckerCreationForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(form.errors['email'], [REQUIRED_FIELD_ERROR])
+
+    def test_maker_creation_form(self):
+        form_data = {
+            'first_name': 'test',
+            'last_name': 'test',
+            'email': 'ch@ch.com',
+            'mobile_no': '01023456782',
+            'level': 1
+        }
+        form = CheckerCreationForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), True)
+        form.save()
+
+
+class ViewerUserCreationModelFormTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.root.save()
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.request = RequestFactory()
+        self.request.user = self.root
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+
+
+    def test_create_viewer_user(self):
+        form_data = {
+            'username': 'test_instant',
+            'first_name': 'test',
+            'last_name': 'test',
+            'email': 'ch@ch.com',
+            'password1': 'pass#1MwYord1',
+            'password2': 'pass#1MwYord1'
+        }
+        form = ViewerUserCreationModelForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), True)
+        form.save()
+
+
+class APICheckerUserCreationModelFormTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.root.save()
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.request = RequestFactory()
+        self.request.user = self.root
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+
+
+    def test_create_viewer_user(self):
+        form_data = {
+            'username': 'test_instant',
+            'first_name': 'test',
+            'last_name': 'test',
+            'email': 'ch@ch.com',
+            'password1': 'pass#1MwYord1',
+            'password2': 'pass#1MwYord1'
+        }
+        form = APICheckerUserCreationModelForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), True)
+        form.save()
+
+
+class BrandFormTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.request = RequestFactory()
+        self.request.user = self.super_admin
+
+    def test_brand_form(self):
+        form_data = {'color': 'red'}
+        form = BrandForm(data=form_data, request=self.request)
+        self.assertEqual(form.is_valid(), True)
+        form.save()
+
+
+class ForgotPasswordFormTests(TestCase):
+
+    def test_email_mismatch(self):
+        form_data = {
+            'email': 'test@email.com',
+            'email2': 'test2@email.com',
+        }
+        form = ForgotPasswordForm(data=form_data)
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(form.errors['__all__'], ["Emails don't match"])
+
+    def test_forget_password_form(self):
+        form_data = {
+            'email': 'test@email.com',
+            'email2': 'test@email.com',
+        }
+        form = ForgotPasswordForm(data=form_data)
+        self.assertEqual(form.is_valid(), True)

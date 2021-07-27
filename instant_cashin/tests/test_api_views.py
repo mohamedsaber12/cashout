@@ -399,7 +399,7 @@ class InstantDisbursementAPIViewTests(APITestCase):
                 "msisdn": "01003764686"
             }
             response = self.client.post(url, data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # test instant Cashin on etisalat with internal server error
     def test_instant_cashin_on_etisalat_with_internal_server_error(self):
@@ -453,7 +453,7 @@ class InstantDisbursementAPIViewTests(APITestCase):
                 "msisdn": "01003764686"
             }
             response = self.client.post(url, data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
+            self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # test instant Cashin on aman
     def test_instant_cashin_on_aman(self):

@@ -9,9 +9,11 @@ from users.tests.factories import (
     SuperAdminUserFactory, VMTDataFactory, AdminUserFactory
 )
 from users.models import (
-    SuperAdminUser, Client as ClientModel, Brand, Setup, EntitySetup
+    SuperAdminUser, Client as ClientModel, Brand, Setup, EntitySetup,
+    SupportUser, SupportSetup, CheckerUser, MakerUser, Levels
 )
-from disbursement.models import Agent
+from disbursement.models import Agent, DisbursementDocData
+from data.models import Doc, DocReview, FileCategory
 
 
 class ClientsTests(TestCase):
@@ -610,6 +612,7 @@ class AddCheckerViewTests(TestCase):
 
 
 class LevelsViewTests(TestCase):
+
     def setUp(self):
         self.super_admin = SuperAdminUserFactory()
         self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
@@ -824,3 +827,552 @@ class APICheckerCreateViewTests(TestCase):
         }
         response = self.client.post(reverse('users:add_api_checker'), data)
         self.assertEqual(response.status_code, 200)
+
+
+class EntityBrandingTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(reverse('users:entity_branding'))
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get('/settings/branding/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get(reverse('users:entity_branding'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get(reverse('users:entity_branding'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/entity_branding.html')
+
+    def test_post_method(self):
+        self.client.force_login(self.super_admin)
+        data = {
+            'color': 'red'
+        }
+        response = self.client.post(reverse('users:entity_branding'), data)
+        self.assertEqual(response.status_code, 302)
+
+
+class LoginViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
+        self.agent.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='instant_model_onboarding')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.root.set_password('o1tw#JLKyAKi#URO3')
+        self.root.save()
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_view_url_exists_at_desired_location(self):
+        response = self.client.get('/user/login/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        response = self.client.get(reverse('users:user_login_view'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('users:user_login_view'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'data/login.html')
+
+    def test_post_method(self):
+        data = {
+            'username': self.root.username,
+            'password': 'o1tw#JLKyAKi#URO3'
+        }
+        response = self.client.post(reverse('users:user_login_view'), data)
+        self.assertEqual(response.status_code, 302)
+
+
+class ForgotPasswordViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
+        self.agent.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='instant_model_onboarding')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.root.set_password('o1tw#JLKyAKi#URO3')
+        self.root.save()
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_view_url_exists_at_desired_location(self):
+        response = self.client.get('/forgot-password/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        response = self.client.get(reverse('users:forgot_password'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        response = self.client.get(reverse('users:forgot_password'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/forget-password.html')
+
+    def test_post_method(self):
+        data = {
+            'email': self.root.email,
+            'email2': self.root.email
+        }
+        response = self.client.post(reverse('users:forgot_password'), data)
+        self.assertEqual(response.status_code, 200)
+
+
+class MembersTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
+        self.agent.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.setup = Setup.objects.create(
+            user=self.root,
+            levels_setup=True,
+            maker_setup=True,
+            checker_setup=True,
+            category_setup=True,
+            pin_setup=True
+        )
+        self.entity_setup = EntitySetup.objects.create(
+            user=self.super_admin,
+            entity=self.root,
+            agents_setup=False,
+            fees_setup=False
+        )
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(reverse('users:members'))
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.root)
+        response = self.client.get('/members/?search=test_u')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?q=maker' % (reverse('users:members'))
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_members_filter_by_apichecker(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?q=apichecker' % (reverse('users:members'))
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_members_filter_by_viewer(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?q=viewer' % (reverse('users:members'))
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_members_filter_by_fake_data(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?q=fake' % (reverse('users:members'))
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.root)
+        response = self.client.get(
+            '%s?q=checker' % (reverse('users:members'))
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'users/members.html')
+
+
+class SuperAdminSupportSetupCreateViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(reverse('users:add_support'))
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get('/support/creation/')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get(reverse('users:add_support'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get(reverse('users:add_support'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'support/add_support.html')
+
+    def test_post_method(self):
+        self.client.force_login(self.super_admin)
+        data = {
+            'username': 'test_support',
+            'email': 'test@support.com',
+            'can_onboard_entities': False
+        }
+        response = self.client.post(reverse('users:add_support'), data)
+        self.assertEqual(response.status_code, 302)
+
+
+class SupportUsersListViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(reverse('users:support'))
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get('/support/?search=test_support')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get(reverse('users:support'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.super_admin)
+        response = self.client.get(reverse('users:support'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'support/list.html')
+
+
+class ClientsForSupportListViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.support_user = SupportUser.objects.create(
+            username="test_support_user",
+            id=112,
+            user_type=8
+        )
+        self.support_setup = SupportSetup.objects.create(
+            support_user=self.support_user,
+            user_created=self.super_admin
+        )
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(reverse('users:support_clients_list'))
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get('/support/clients/?search=test_client')
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(reverse('users:support_clients_list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(reverse('users:support_clients_list'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'support/clients.html')
+
+
+class DocumentsForSupportListViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.support_user = SupportUser.objects.create(
+                username="test_support_user",
+                id=112,
+                user_type=8
+        )
+        self.support_setup = SupportSetup.objects.create(
+                support_user=self.support_user,
+                user_created=self.super_admin
+        )
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
+        self.agent.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.setup = Setup.objects.create(
+                user=self.root,
+                levels_setup=True,
+                maker_setup=True,
+                checker_setup=True,
+                category_setup=True,
+                pin_setup=True
+        )
+        self.entity_setup = EntitySetup.objects.create(
+                user=self.super_admin,
+                entity=self.root,
+                agents_setup=False,
+                fees_setup=False
+        )
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(
+            reverse('users:documents_list', kwargs={'username': self.root.username})
+        )
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(
+            f'/support/documents/{self.root.username}/?search=hghdygtd'
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(
+            reverse('users:documents_list', kwargs={'username': self.root.username})
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(
+            reverse('users:documents_list', kwargs={'username': self.root.username})
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'support/documents_list.html')
+
+
+class DocumentForSupportDetailViewTests(TestCase):
+
+    def setUp(self):
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.support_user = SupportUser.objects.create(
+                username="test_support_user",
+                id=112,
+                user_type=8
+        )
+        self.support_setup = SupportSetup.objects.create(
+                support_user=self.support_user,
+                user_created=self.super_admin
+        )
+        self.root = AdminUserFactory(user_type=3)
+        self.root.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
+        self.agent.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.setup = Setup.objects.create(
+            user=self.root,
+            levels_setup=True,
+            maker_setup=True,
+            checker_setup=True,
+            category_setup=True,
+            pin_setup=True
+        )
+        self.entity_setup = EntitySetup.objects.create(
+            user=self.super_admin,
+            entity=self.root,
+            agents_setup=False,
+            fees_setup=False
+        )
+        self.checker_user = CheckerUser.objects.create(
+            id=15,
+            username='test_checker_user',
+            email='ch@checkersd.com',
+            root=self.root,
+            user_type=2
+        )
+        self.level = Levels.objects.create(
+            max_amount_can_be_disbursed=1200,
+            created=self.root
+        )
+        self.checker_user.level = self.level
+        self.checker_user.save()
+        self.checker_user.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement'
+        )
+        )
+        self.checker_user.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='accept_vodafone_onboarding'
+        )
+        )
+        self.maker_user = MakerUser.objects.create(
+            id=14,
+            username='test_maker_user',
+            email='t@mk.com',
+            root=self.root,
+            user_type=1
+        )
+        # create doc, doc_review, DisbursementDocData, file category
+        file_category = FileCategory.objects.create(
+            user_created=self.root
+        )
+        self.doc = Doc.objects.create(
+            owner=self.maker_user,
+            file_category=file_category,
+            is_disbursed=True,
+            can_be_disbursed=True,
+            is_processed=True,
+        )
+        doc_review = DocReview.objects.create(
+            is_ok=True,
+            doc=self.doc,
+            user_created=self.checker_user,
+        )
+        disb_data_doc = DisbursementDocData.objects.create(
+            doc=self.doc,
+            txn_status = "200",
+            has_callback = True,
+            doc_status = "5"
+        )
+        self.request = RequestFactory()
+        self.client = Client()
+
+    def test_redirect_if_not_logged_in(self):
+        response = self.client.get(
+            reverse(
+                'users:doc_detail',
+                kwargs={
+                    'username': self.root.username,
+                    'doc_id': self.doc.id
+                }
+            )
+        )
+        self.assertRedirects(response, '/user/login/')
+
+    def test_view_url_exists_at_desired_location(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(
+            f'/support/documents/{self.root.username}/{self.doc.id}/'
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_url_accessible_by_name(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(
+            reverse(
+                'users:doc_detail',
+                kwargs={
+                    'username': self.root.username,
+                    'doc_id': self.doc.id
+                }
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+
+    def test_view_uses_correct_template(self):
+        self.client.force_login(self.support_user)
+        response = self.client.get(
+            reverse(
+                'users:doc_detail',
+                kwargs={
+                    'username': self.root.username,
+                    'doc_id': self.doc.id
+                }
+            )
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'support/document_details.html')

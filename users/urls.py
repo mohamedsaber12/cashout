@@ -6,6 +6,7 @@ from django.urls import path
 from oauth2_provider import views as oauth2_views
 
 from . import views
+from users.views.main_views import CallbackURLEdit
 from payouts.views import no_agent_error_view
 
 app_name = 'users'
@@ -93,6 +94,8 @@ urlpatterns = [
 
     path('profile/<username>/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/<username>/', views.ProfileUpdateView.as_view(), name='edit_profile'),
+    path('callback/edit/<username>/', CallbackURLEdit.as_view(), name='api_viewer_callback'),
+    
 ]
 
 urlpatterns += collection_setups_urls

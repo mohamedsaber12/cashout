@@ -436,6 +436,13 @@ class ProfileEditForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name', 'mobile_no', 'email', 'title', 'avatar_thumbnail']
 
+       
+class CallbackURLEditForm(forms.ModelForm):
+    
+    class Meta:
+        model = User
+        fields = ['callback_url', ]
+
 
 class LevelForm(forms.ModelForm):
 

@@ -227,7 +227,6 @@ class AmanChannel:
                 if aman_trn.transaction_type.name == "Instant Transaction" and aman_trn.transaction.from_user.root.root.callback_url:
                     callback_url = aman_trn.transaction.from_user.root.root.callback_url
                     req_body = InstantTransactionResponseModelSerializer(aman_trn.transaction)
-                    headers = {'Content-Type': 'application/json'}
                     requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
                 
                 # update related transaction to edit updated_at

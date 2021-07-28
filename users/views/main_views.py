@@ -15,7 +15,7 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
 
-from ..forms import OTPTokenForm, ProfileEditForm
+from ..forms import OTPTokenForm, ProfileEditForm, CallbackURLEditForm
 from ..mixins import ProfileOwnerOrMemberRequiredMixin
 from ..models import User
 
@@ -203,3 +203,19 @@ def ourlogout(request):
     logout(request)
 
     return HttpResponseRedirect(reverse('users:user_login_view'))
+
+
+class CallbackURLEdit(UpdateView):
+        
+    model = User
+    template_name = 'users/callback_url.html'
+    form_class = CallbackURLEditForm
+
+    def get_object(self, queryset=None):
+        user = get_object_or_404(User, username=self.kwargs['username'])
+        return user.root.root
+    
+    def form_valid(self, form):
+        self.object = form.save(commit=False)
+        self.object.save()
+        return redirect(reverse("users:api_viewer_callback", kwargs={'username': self.request.user.username}))

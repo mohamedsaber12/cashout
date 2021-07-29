@@ -22,7 +22,8 @@ class DisbursementFileCategoryFactory(factory.django.DjangoModelFactory):
     name = 'test'
     unique_field = 'MSISDN'
     amount_field = 'Amount'
-    category_type = 2
+    issuer_field = 'Issuer'
+    no_of_reviews_required = 1
     
     
 class FormarFactory(factory.DjangoModelFactory):

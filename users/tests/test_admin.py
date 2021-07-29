@@ -1,7 +1,7 @@
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase, RequestFactory
 
-from users.admin import UserAccountAdmin, SuperAdmin
+from users.admin import UserAccountAdmin, SuperAdmin, RootAdmin
 from users.tests.factories import SuperAdminUserFactory, AdminUserFactory
 from users.models import User, SuperAdminUser
 from django.test.client import RequestFactory
@@ -125,10 +125,27 @@ class TestSuperAdmin(TestCase):
         expected_fieldsets = ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
         self.assertEqual(resp, expected_fieldsets)
         
-    # def test_export_report(self):
-    #     request_factory = self.request.post("/", {"apply": True,"start_date": "2010-02-01", "end_date": "2010-02-20"})
-    #
-    #     request_factory.user = self.superuser
-    #
-    #     resp = self.model_admin.export_report(request_factory, SuperAdminUser.objects.all())
-    #     self.assertEqual(resp.status_code, 200)
+    def test_export_report(self):
+        request_factory = self.request.post("/", {"apply": True,"start_date": "2010-02-01", "end_date": "2010-02-20"})
+
+        request_factory.user = self.superuser
+
+        resp = self.model_admin.export_report(request_factory, SuperAdminUser.objects.all())
+        self.assertEqual(resp.status_code, 200)
+
+
+class TestRootAdmin(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.site = AdminSite()
+        self.request = RequestFactory()
+        self.model_admin = RootAdmin(User, self.site)
+        self.superuser = SuperAdminUserFactory(is_superuser=True)
+
+    def test_get_fieldsets_root_user(self):
+        self.request.user = self.superuser
+
+        resp = self.model_admin.get_fieldsets(self.request)
+        expected_fieldsets = ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+        self.assertEqual(resp, expected_fieldsets)

@@ -1,5 +1,7 @@
 version: "3.7"
+
 services:
+
   payouts: &payouts
     container_name: PayoutsPortal
     build:
@@ -8,72 +10,98 @@ services:
     env_file:
       - ./.env
     volumes:
-      - .:/app/payouts_portal
-      - static_volume:/app/staticfiles/static
-      - media_volume:/app/mediafiles/media
-    ports:
-      - 8000:8000
-      - 3000:3000
+      - /home/ec2-user/opt/volumes/payouts/payouts_portal/:/app/payouts_portal
+      #- /opt/volumes/payouts/static/:/app/staticfiles/static
+      #- /opt/volumes/payouts/media/:/app/mediafiles/media
+      - /home/ec2-user/Payouts/disbursement_tool/static/:/home/app/static_media/static
+      - /home/ec2-user/Payouts/disbursement_tool/media/:/home/app/static_media/media
+      - /home/ec2-user/Payouts/disbursement_tool/ssh:/home/payouts_user/.ssh/
+      - /home/ec2-user/Payouts/disbursement_tool/.env:/home/app/payouts_portal/.env
+    expose:
+      - 8000
     command: >
-      sh -c "
-             python manage.py makemigrations users &&
-             python manage.py migrate users &&
-             python manage.py makemigrations data &&
-             python manage.py migrate data &&
-             python manage.py makemigrations disbursement &&
-             python manage.py migrate disbursement &&
-             python manage.py makemigrations instant_cashin &&
-             python manage.py migrate instant_cashin &&
-             python manage.py makemigrations payment &&
-             python manage.py migrate payment &&
-             python manage.py makemigrations utilities &&
-             python manage.py migrate utilities &&
-             python manage.py makemigrations &&
-             python manage.py migrate &&
-             mkdocs build &&
-             python manage.py runserver_plus 0.0.0.0:8000"
+      bash -c "
+               python manage.py makemigrations users &&
+               python manage.py migrate users &&
+               python manage.py makemigrations data &&
+               python manage.py migrate data &&
+               python manage.py makemigrations disbursement &&
+               python manage.py migrate disbursement &&
+               python manage.py makemigrations instant_cashin &&
+               python manage.py migrate instant_cashin &&
+               python manage.py makemigrations payment &&
+               python manage.py migrate payment &&
+               python manage.py makemigrations utilities &&
+               python manage.py migrate utilities &&
+               python manage.py makemigrations &&
+               python manage.py migrate &&
+               mkdocs build &&
+               python manage.py runserver_plus 0.0.0.0:8000"
     networks:
       - payouts_network
     depends_on:
       - postgres
       - rabbitmq
+
   postgres:
     container_name: PostgreSQL
     image: postgres:11
+      #env_file:
+    #- ./.env
     environment:
       POSTGRES_USER: payouts_user
       POSTGRES_DB: payouts_database
       POSTGRES_PASSWORD: PayoutsPortalPassword
+      #POSTGRES_HOST: postgres
     volumes:
-      - .:/var/lib/postgresql
-      - postgresql_volume:/var/lib/postgresql/data
+      - /home/ec2-user/opt/volumes/payouts/payouts-database:/var/lib/postgresql/data
     networks:
       - payouts_network
+
   rabbitmq:
     container_name: RabbitMQ
     image: rabbitmq:3.8
     volumes:
-      - rabbit_volume:/var/lib/rabbitmq
+      - /home/ec2/opt/volumes/payouts/rabbitmq:/var/lib/rabbitmq
     networks:
       - payouts_network
+
   celery_worker:
     <<: *payouts
     container_name: Celery_Worker
     command: [ "celery", "worker", "--app", "payouts.settings", "--events", "--beat", "--scheduler", "django", "--loglevel", "info" ]
-    ports: [ ]
+    #ports: [ ]
+    volumes:
+      - /home/ec2-user/Payouts/disbursement_tool/payouts/payout-ssh:/home/payouts_user/.ssh/
     networks:
       - payouts_network
     depends_on:
       - rabbitmq
     links:
       - payouts
+
+  nginx:
+    image: nginx:1.16
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /home/ec2-user/Payouts/disbursement_tool/nginx/conf.d/default.conf:/etc/nginx/nginx.conf
+      - /home/ec2-user/Payouts/disbursement_tool/nginx/conf.d/default2.conf:/etc/nginx/conf.d/default.conf
+      - /etc/letsencrypt:/etc/letsencrypt
+      - /home/ec2-user/Payouts/disbursement_tool/static:/home/app/payouts_portal/static
+      - /home/ec2-user/Payouts/disbursement_tool/media:/home/app/payouts_portal/media
+    depends_on:
+      - payouts
+    networks:
+      - payouts_network
+
 volumes:
   static_volume:
   media_volume:
   postgresql_volume:
   rabbit_volume:
+
 networks:
   payouts_network:
     driver: bridge
-# Use bind volumes for log files of every service
-# Use bind volumes for media & static & DB

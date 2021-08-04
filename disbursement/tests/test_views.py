@@ -316,11 +316,7 @@ class SingleStepTransactionsViewTests(TestCase):
             '%s?issuer=wallets' % (reverse('disbursement:single_step_list_create')),
             data
         )
-        redirect_url = str(response.url).split('?')[0]
-        self.assertEqual(
-            redirect_url,
-            '/disburse/single-step/'
-        )
+        self.assertEqual(response.status_code, 302)
 
     def test_post_method_on_bank_card(self):
         self.client.force_login(self.checker_user)
@@ -337,11 +333,7 @@ class SingleStepTransactionsViewTests(TestCase):
             '%s?issuer=wallets' % (reverse('disbursement:single_step_list_create')),
             data
         )
-        redirect_url = str(response.url).split('?')[0]
-        self.assertEqual(
-            redirect_url,
-            '/disburse/single-step/'
-        )
+        self.assertEqual(response.status_code, 302)
 
     def test_post_method_on_aman(self):
         fees_setup_aman = FeeSetup(budget_related=self.budget, issuer='am',
@@ -361,10 +353,7 @@ class SingleStepTransactionsViewTests(TestCase):
             '%s?issuer=wallets' % (reverse('disbursement:single_step_list_create')),
             data
         )
-        self.assertEqual(
-            str(response.url).split('?')[0],
-            '/disburse/single-step/'
-        )
+        self.assertEqual(response.status_code, 302)
 
 
 class DisbursementTests(TestCase):
@@ -481,10 +470,7 @@ class DisbursementTests(TestCase):
             ),
             {'pin': '123456'}
         )
-        self.assertEqual(
-            str(response.url).split('?')[0],
-            f'/documents/{self.doc.id}/'
-        )
+        self.assertEqual(response.status_code, 302)
 
 
 class DownloadSampleSheetViewTests(TestCase):

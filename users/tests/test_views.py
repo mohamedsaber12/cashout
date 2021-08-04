@@ -140,8 +140,7 @@ class SuperAdminRootSetupTests(TestCase):
             "agents_onboarding_choice": "0"
         }
         response = self.client.post(reverse('users:add_client'), data)
-        redirect_url = str(response.url).split('?')[0]
-        self.assertEqual(redirect_url, '/')
+        self.assertEqual(response.status_code, 302)
 
 
 class PinFormViewTests(TestCase):

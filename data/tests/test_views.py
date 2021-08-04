@@ -359,7 +359,7 @@ class DocumentViewTests(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_view_url_accessible_by_name(self):
-        self.client.force_login(self.checker_user)
+        self.client.force_login(self.maker_user)
         response = self.client.get(
             reverse('data:doc_viewer', kwargs={'doc_id': self.doc.id})
         )
@@ -482,7 +482,7 @@ class DocumentDownloadTests(TestCase):
         self.assertEqual(response.status_code, 404)
 
     def test_view_url_accessible_by_name(self):
-        self.client.force_login(self.checker_user)
+        self.client.force_login(self.maker_user)
         response = self.client.get(
                 reverse('data:download_doc', kwargs={'doc_id': self.doc.id})
         )

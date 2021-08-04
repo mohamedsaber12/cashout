@@ -457,10 +457,7 @@ class DisbursementTests(TestCase):
                 kwargs={'doc_id': self.doc.id}
             )
         )
-        self.assertEqual(
-            str(response.url).split('?')[0],
-            f'/documents/{self.doc.id}/'
-        )
+        self.assertEqual(response.status_code, 302)
 
     def test_disburse_document(self):
         self.client.force_login(self.checker_user)

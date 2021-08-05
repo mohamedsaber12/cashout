@@ -6,16 +6,58 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
-from django.views.generic import CreateView, FormView
+from django.views.generic import CreateView, FormView, TemplateView
 
 from data.forms import FileCategoryFormSet
 from data.models import FileCategory
 from disbursement.forms import PinForm
 
-from . import BaseFormsetView
 from ..forms import CheckerCreationForm, CheckerMemberFormSet, LevelFormSet, MakerCreationForm, MakerMemberFormSet
 from ..mixins import DisbursementRootRequiredMixin
 from ..models import CheckerUser, Levels, MakerUser, Setup
+
+
+class BaseFormsetView(TemplateView):
+    """
+    BaseView for setup Formsets
+    """
+
+    manual_setup = None
+
+    def get_context_data(self, **kwargs):
+        """update context data"""
+        data = super().get_context_data(**kwargs)
+        form = kwargs.get('form', None)
+        data['form'] = form or self.form_class(
+                queryset=self.get_queryset(),
+                prefix=self.prefix,
+                form_kwargs={'request': self.request}
+        )
+        data['enabled_steps'] = '-'.join(getattr(self.get_setup(), f'{self.data_type}_enabled_steps')())
+        return data
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(
+                request.POST,
+                prefix=self.prefix,
+                form_kwargs={'request': self.request}
+        )
+        if form.is_valid():
+            return self.form_valid(form)
+
+        return self.render_to_response(self.get_context_data(form=form))
+
+    def get_setup(self):
+        if self.manual_setup is None:
+            self.manual_setup = Setup.objects.get(user__hierarchy=self.request.user.hierarchy)
+        return self.manual_setup
+
+    def form_valid(self, form):
+        form.save()
+        manual_setup = self.get_setup()
+        setattr(manual_setup, f'{self.setup_key}_setup', True)
+        manual_setup.save()
+        return redirect(self.get_success_url())
 
 
 class BaseAddMemberView(DisbursementRootRequiredMixin, CreateView):

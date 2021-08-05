@@ -678,53 +678,6 @@ class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
         return user
 
 
-class UploaderCreationForm(forms.ModelForm):
-
-    first_name = forms.CharField(label=_('First name'))
-    last_name = forms.CharField(label=_('Last name'))
-
-    def __init__(self, *args, request, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        for field in iter(self.fields):
-            # get current classes from Meta
-            classes = self.fields[field].widget.attrs.get("class")
-            if classes is not None:
-                classes += " form-control"
-            else:
-                classes = "form-control"
-            self.fields[field].widget.attrs.update({'class': classes})
-        self.request = request
-
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        maker = MakerUser.objects.filter(email=email).first()
-        if maker and maker.data_type() == 3:
-            maker.user_type = 5
-            self.instance_copy = copy.copy(maker)
-            self.instance = maker
-
-        return email
-
-    def save(self, commit=True):
-        user = super().save(commit=False)
-        if user.user_type != 5:
-            user.user_type = 4
-        else:
-            user = self.instance_copy
-
-        user.hierarchy = self.request.user.hierarchy
-
-        if commit:
-            user.save()
-            user.user_permissions.add(*Permission.objects.filter(user=self.request.user))
-        return user
-
-    class Meta:
-        model = UploaderUser
-        fields = ['first_name', 'last_name', 'email', 'mobile_no']
-
-
 class BrandForm(forms.ModelForm):
 
     def __init__(self, *args, request, **kwargs):
@@ -757,10 +710,6 @@ MakerMemberFormSet = modelformset_factory(
 
 CheckerMemberFormSet = modelformset_factory(
         model=CheckerUser, form=CheckerCreationForm, min_num=1, validate_min=True, can_delete=True, extra=0
-)
-
-UploaderMemberFormSet = modelformset_factory(
-        model=UploaderUser, form=UploaderCreationForm, min_num=1, validate_min=True, can_delete=True, extra=0
 )
 
 

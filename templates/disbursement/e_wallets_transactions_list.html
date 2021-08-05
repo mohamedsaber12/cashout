@@ -336,9 +336,8 @@
         else {
           appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Failed" %}</li>`;
         }
-
+        let issuer = $(this).data('issuer');
         {% if not is_normal_flow %}
-          let issuer = $(this).data('issuer');
           appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
           let aman_is_paid = $(this).data('aman_is_paid');
 
@@ -372,11 +371,11 @@
           appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b> -- </li>`;
           appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>Disbursement process is running</li>`;
         }
-          if (issuer === 'Aman') {
-            if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
-              appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx_id})" class="btn btn-danger btn-md">Cancel</button></center>`;
-            }
+        if (issuer === 'Aman') {
+          if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
+            appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx_id})" class="btn btn-danger btn-md">Cancel</button></center>`;
           }
+        }
 
         let created_at = $(this).data('created_at');
         appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${created_at}</li>`;

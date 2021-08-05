@@ -12,13 +12,6 @@ from payouts.views import no_agent_error_view
 app_name = 'users'
 
 
-collection_setups_urls = [
-    path('setting-up/collection-collectiondata',
-         views.CollectionFormView.as_view(), name='setting-collection-collectiondata'),
-    path('setting-up/collection-formats', views.FormatFormView.as_view(), name='setting-collection-formats'),
-    path('setting-up/collection-uploader', views.UploaderFormView.as_view(), name='setting-collection-uploader'),
-]
-
 client_urls = [
     path('clients/', views.Clients.as_view(), name='clients'),
     path('client/creation/', views.SuperAdminRootSetup.as_view(), name='add_client'),
@@ -98,7 +91,7 @@ urlpatterns = [
     
 ]
 
-urlpatterns += collection_setups_urls
+
 urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += support_urls

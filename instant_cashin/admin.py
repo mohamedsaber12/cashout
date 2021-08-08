@@ -108,6 +108,14 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         }),
     )
 
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_finance_with_instant_transaction_view:
+            return True
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_finance_with_instant_transaction_view:
+            return True
+
     def has_add_permission(self, request):
         return False
 

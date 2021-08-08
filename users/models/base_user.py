@@ -204,6 +204,10 @@ class User(AbstractUser, SoftDeletionModel):
         return self.user_type == 10
 
     @cached_property
+    def is_finance_with_instant_transaction_view(self):
+        return self.user_type == 11
+
+    @cached_property
     def is_instant_member(self):
         """Check if current user belongs to instant cashin family"""
         if self.is_instantapichecker or self.is_instantapiviewer \

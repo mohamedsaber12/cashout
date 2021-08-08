@@ -127,7 +127,8 @@ class UserAccountAdmin(UserAdmin):
 
     def get_queryset(self, request):
         qs = super(UserAccountAdmin, self).get_queryset(request)
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser or request.user.is_finance \
+                or request.user.is_finance_with_instant_transaction_view:
             return qs
         elif request.user.is_root:
             qs = qs.filter(hierarchy=request.user.hierarchy)
@@ -260,11 +261,13 @@ class SuperAdmin(UserAccountAdmin):
     #     return ext_actions
     
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser or request.user.is_finance \
+                or request.user.is_finance_with_instant_transaction_view:
             return True
         
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser or request.user.is_finance \
+                or request.user.is_finance_with_instant_transaction_view:
             return True
     
     def get_fieldsets(self, request, obj=None):

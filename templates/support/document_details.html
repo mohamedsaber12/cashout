@@ -291,47 +291,45 @@
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 
   <script>
+    $(document).ready( function () {
+      var table = $('#transaction-table').DataTable({
+        "bLengthChange" : false,
+      });
 
+      var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+            extend: 'copy',
+            text : "{% trans 'Copy' %}",
+            exportOptions: {
+              charSet: "utf-8",
+            }
+          },
+          {
+            extend: 'print',
+            text : "PDF",
+          },
+          {
+            extend: 'excelHtml5',
+            text : "{% trans 'Export' %}",
 
-$(document).ready( function () {
-  var table = $('#transaction-table').DataTable({
-    "bLengthChange" : false,
-  });
-  
-  var buttons = new $.fn.dataTable.Buttons( table, {
-    buttons: [
-      {
-        extend: 'copy',
-        text : "{% trans 'Copy' %}",
-        exportOptions: {
-          charSet: "utf-8",
-        }
-      },
-      {
-        extend: 'print',
-        text : "PDF",
-      },
-      {
-        extend: 'excelHtml5',
-        text : "{% trans 'Export' %}",
+            customize: function( xlsx ) {
 
-        customize: function( xlsx ) {
+              var sheet = xlsx.xl.worksheets['sheet1.xml'];
+              $('row c[r^="A"]', sheet).attr( 's', '0' );
+           }
+          }
+        ]
+      });
 
-          var sheet = xlsx.xl.worksheets['sheet1.xml'];
-          $('row c[r^="A"]', sheet).attr( 's', '0' );
-       }
+      table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+      );
+      let empty_row = $('.dataTables_empty');
+      if (empty_row) {
+        empty_row.parent().attr('id', 'empty_row');
       }
-    ]
-  });
-  
-  table.buttons( 0, null ).container().prependTo(
-    table.table().container()
-  );
-  let empty_row = $('.dataTables_empty');
-  if (empty_row) {
-    empty_row.parent().attr('id', 'empty_row');
-  }
-});
+    });
   </script>
   <script>
     let trx = {};

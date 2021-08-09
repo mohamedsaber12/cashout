@@ -1,31 +1,33 @@
+{% load i18n %}
 {% load custom_tags %}
 
 <div class="row dashboard-row">
   <div class="col-md-2 col-sm-2 col-xs-2 data_element">
-    <span class="count_top">All</span>
+    <span class="count_top">{% trans 'All' %}</span>
     <div class="count">{{ doc_transactions_totals.all.number|default:0 }}</div>
-    <span>Total {{ doc_transactions_totals.all.total_amount|default:0 }} LE</span>
+    <span>{% trans 'Total' %} {{ doc_transactions_totals.all.total_amount|default:0 }} {% trans 'LE' %}</span>
   </div>
   <div class="col-md-3 col-sm-3 col-xs-3 data_element">
-    <span class="count_top">Successful</span>
+    <span class="count_top">{% trans 'Successful' %}</span>
     <div class="count">{{ doc_transactions_totals.S.number|default:0 }}</div>
-    <span>Total: {{ doc_transactions_totals.S.total_amount|default:0 }} LE</span>
+    <span>{% trans 'Total' %}: {{ doc_transactions_totals.S.total_amount|default:0 }} {% trans 'LE' %}</span>
   </div>
   <div class="col-md-3 col-sm-3 col-xs-3 data_element">
-    <span class="count_top">Failed</span>
+    <span class="count_top">{% trans 'Failed' %}</span>
     <div class="count">{{ doc_transactions_totals.F.number|default:0 }}</div>
-    <span>Total: {{ doc_transactions_totals.F.total_amount|default:0 }} LE</span>
+    <span>{% trans 'Total' %}: {{ doc_transactions_totals.F.total_amount|default:0 }} {% trans 'LE' %}</span>
   </div>
   <div class="col-md-2 col-sm-2 col-xs-2">
-    <span class="count_top">Pending</span>
+    <span class="count_top">{% trans 'Pending' %}</span>
     <div class="count">{{ doc_transactions_totals.P.number|default:0 }}</div>
-    <span>Total: {{ doc_transactions_totals.P.total_amount|default:0 }} LE</span>
+    <span>{% trans 'Total' %}: {{ doc_transactions_totals.P.total_amount|default:0 }} {% trans 'LE' %}</span>
   </div>
   <div class="col-md-2 col-sm-2 col-xs-2">
     <div class="dropdown">
       <button class="btn btn-default dropdown-toggle export-dropdown pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
-              type="button" id="menu1" data-toggle="dropdown">
-        <span class="glyphicon glyphicon-download-alt"></span> Export
+              type="button" id="menu1" data-toggle="dropdown"
+              style="{% if LANGUAGE_CODE == 'ar' %} width: 11rem!important;{% endif %}">
+        <span class="glyphicon glyphicon-download-alt"></span> {% trans 'Export' %}
       </button>
       <div class="dropdown-menu dropdown-menu-right">
         <div class="vs-dropdown--menu--after" style="bottom: -50px;right:30px;transform: rotate(225deg);"></div>
@@ -35,7 +37,7 @@
               <span class="flex items-center">
                 <span class="glyphicon glyphicon-download-alt"
                       style="margin-right: .5rem!important;"></span>
-                <span>All</span>
+                <span>{% trans 'All' %}</span>
               </span>
             </a>
           </li>
@@ -45,7 +47,7 @@
                   <span class="flex items-center">
                     <span class="glyphicon glyphicon-ok"
                           style="margin-right: .5rem!important;"></span>
-                    <span>Success</span>
+                    <span>{% trans 'Success' %}</span>
                   </span>
               </a>
             </li>
@@ -56,7 +58,7 @@
                   <span class="flex items-center">
                     <span class="glyphicon glyphicon-remove"
                           style="margin-right: .5rem!important;"></span>
-                    <span>Failed</span>
+                    <span>{% trans 'Failed' %}</span>
                   </span>
               </a>
             </li>

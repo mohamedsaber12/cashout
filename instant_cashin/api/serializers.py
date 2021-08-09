@@ -32,12 +32,12 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
     issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])
     msisdn = serializers.CharField(max_length=11, required=False, allow_blank=False, validators=[msisdn_validator])
-    bank_code = serializers.CharField(max_length=4, required=False, allow_blank=False, validators=[bank_code_validator])
+    bank_code = serializers.CharField(max_length=10, required=False, allow_blank=False, validators=[bank_code_validator])
     bank_card_number = CardNumberField(required=False, allow_blank=False)
     amount = serializers.DecimalField(
             required=True,
             decimal_places=2,
-            max_digits=7,
+            max_digits=9,
             validators=[MinValueValidator(Decimal(1.0))],
     )
     bank_transaction_type = serializers.CharField(

@@ -65,7 +65,7 @@
     <div id="flash_success_message" class="row">
       <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
         <div class="alert alert-success" role="alert">
-          Your Request Has Been Received Successfully
+          {% trans 'Your Request Has Been Received Successfully' %}
         </div>
       </div>
     </div>
@@ -73,7 +73,7 @@
       <div style="padding:10px;" class="col-md-12 col-sm-12 col-xs-12">
         <h4>
           <span class="glyphicon glyphicon-plus"></span>
-          <span style="font-weight:bold;font-size:23px;">Increase Your Balance</span>
+          <span style="font-weight:bold;font-size:23px;">{% trans 'Increase Your Balance' %}</span>
         </h4>
       </div>
     </div>
@@ -85,7 +85,7 @@
           <div class="row">
             <div class="form-group col-md-6 col-sm-6 col-xs-12">
               <label>
-                <span class="glyphicon glyphicon-sort"></span> Type *
+                <span class="glyphicon glyphicon-sort"></span> {% trans 'Type' %} *
               </label>
               {{ form.type }}
               <span class="respond-span"></span>
@@ -95,7 +95,7 @@
             </div>
             <div class="form-group col-md-6 col-sm-6 col-xs-12">
               <label>
-                <span class="glyphicon glyphicon-tag"></span> Amount To Be Added * (EGP)
+                <span class="glyphicon glyphicon-tag"></span> {% trans 'Amount To Be Added' %} * (EGP)
               </label>
               {{form.amount}}
               <span class="respond-span"></span>
@@ -130,7 +130,7 @@
     let acceptForm = `<div id="accept_form_row" class="row">
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
         <label>
-          <span class="glyphicon glyphicon-user"></span> Accept Username *
+          <span class="glyphicon glyphicon-user"></span> {% trans 'Accept Username' %} *
         </label>
           {{ form.username }}
         <span class="respond-span"></span>
@@ -141,14 +141,14 @@
     </div>`;
     let bankTransferForm = `<div id="bank_transfer_form_row" class="row">
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
+        <h5><span style="font-weight:bold;font-size:18px;">{% trans 'From' %}</span></h5>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
+        <h5><span style="font-weight:bold;font-size:18px;">{% trans 'To' %}</span></h5>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
         <label>
-          <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+          <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
         </label>
         {{form.from_bank}}
         <span class="respond-span"></span>
@@ -158,7 +158,7 @@
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
         <label>
-          <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+          <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
         </label>
         {{form.to_bank}}
         <span class="respond-span"></span>
@@ -168,7 +168,7 @@
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
         <label>
-          <span class="glyphicon glyphicon-user"></span> Account Number *
+          <span class="glyphicon glyphicon-user"></span> {% trans 'Account Number' %} *
         </label>
         {{form.from_account_number}}
         <span class="respond-span"></span>
@@ -178,7 +178,7 @@
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
         <label>
-          <span class="glyphicon glyphicon-user"></span> Account Number *
+          <span class="glyphicon glyphicon-user"></span> {% trans 'Account Number' %} *
         </label>
         {{form.to_account_number}}
         <span class="respond-span"></span>
@@ -187,7 +187,7 @@
         </div>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+        <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Account Name' %} *</label>
         {{ form.from_account_name }}
         <span class="respond-span"></span>
         <div class="help-block">
@@ -195,7 +195,7 @@
         </div>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+        <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Account Name' %} *</label>
         {{ form.to_account_name }}
         <span class="respond-span"></span>
         <div class="help-block">
@@ -203,7 +203,7 @@
         </div>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12">
-        <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+        <label><span class="glyphicon glyphicon-calendar"></span> {% trans 'Date (YYYY-MM-DD) EX:- 2006-10-25' %} *</label>
         {{ form.from_date }}
         <span class="respond-span"></span>
         <div class="help-block">
@@ -211,9 +211,9 @@
         </div>
       </div>
       <div class="form-group col-md-6 col-sm-6 col-xs-12 custom-file">
-        <label><span class="glyphicon glyphicon-import"></span> Attach Proof *</label>
+        <label><span class="glyphicon glyphicon-import"></span> {% trans 'Attach Proof' %} *</label>
         {{ form.to_attach_proof }}
-        <label class="custom-file-label">Choose File</label>
+        <label class="custom-file-label" style="text-align:left;">Choose File</label>
         <span class="respond-span"></span>
         <div class="help-block">
           {{ form.to_attach_proof.errors }}
@@ -222,16 +222,16 @@
     </div>`;
     let bankDepositForm = `<div id="bank_deposit_form_row" class="row">
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <h5><span style="font-weight:bold;font-size:18px;">From</span></h5>
+      <h5><span style="font-weight:bold;font-size:18px;"> {% trans 'From' %}</span></h5>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <h5><span style="font-weight:bold;font-size:18px;">To</span></h5>
+      <h5><span style="font-weight:bold;font-size:18px;"> {% trans 'To' %}</span></h5>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-briefcase"></span> Depositor Name *</label>
+      <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Depositor Name *' %}</label>
       {{ form.from_account_name }}
       <span class="respond-span" style="color:red;">
-        **Please note that only deposits submitted in your company's/entity's name will be accepted.
+        **{% trans 'Please note that only deposits submitted in your company\'s/entity\'s name will be accepted' %}.
       </span>
       <div class="help-block">
         {{ form.from_account_name.errors }}
@@ -239,7 +239,7 @@
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12" style="margin-bottom: 50px;">
       <label>
-        <span class="glyphicon glyphicon-briefcase"></span> Bank Name *
+        <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
       </label>
       {{form.to_bank}}
       <span class="respond-span"></span>
@@ -248,7 +248,7 @@
       </div>
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-calendar"></span> Date (YYYY-MM-DD) EX:- 2006-10-25 *</label>
+      <label><span class="glyphicon glyphicon-calendar"></span> {% trans 'Date (YYYY-MM-DD) EX:- 2006-10-25' %} *</label>
       {{ form.from_date }}
       <span class="respond-span"></span>
       <div class="help-block">
@@ -257,7 +257,7 @@
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
       <label>
-        <span class="glyphicon glyphicon-user"></span> Account Number *
+        <span class="glyphicon glyphicon-user"></span> {% trans 'Account Number' %} *
       </label>
       {{form.to_account_number}}
       <span class="respond-span"></span>
@@ -268,7 +268,7 @@
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
-      <label><span class="glyphicon glyphicon-briefcase"></span> Account Name *</label>
+      <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Account Name' %} *</label>
       {{ form.to_account_name }}
       <span class="respond-span"></span>
       <div class="help-block">
@@ -278,9 +278,9 @@
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
     </div>
     <div class="form-group col-md-6 col-sm-6 col-xs-12 custom-file">
-      <label><span class="glyphicon glyphicon-import"></span> Attach Proof *</label>
+      <label><span class="glyphicon glyphicon-import"></span> {% trans 'Attach Proof' %} *</label>
       {{ form.to_attach_proof }}
-      <label class="custom-file-label">Choose File</label>
+      <label class="custom-file-label" style="text-align:left;">Choose File</label>
       <span class="respond-span"></span>
       <div class="help-block">
         {{ form.to_attach_proof.errors }}

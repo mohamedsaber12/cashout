@@ -66,7 +66,6 @@
             |  Egyptian Gulf Bank                           |   EGB         |
             |  The United Bank                              |   UB          |
             |  Qatar National Bank Alahli                   |   QNB         |
-            |  Central Bank Of Egypt                        |   BBE         |
             |  Arab Bank PLC                                |   ARAB        |
             |  Emirates National Bank of Dubai              |   ENBD        |
             |  Al Ahli Bank of Kuwait – Egypt               |   ABK         |
@@ -99,6 +98,7 @@
             |  Agricultural Bank of Egypt                   |   PDAC        |
             |  National Bank of Greece                      |   NBG         |
             |  Central Bank Of Egypt                        |   CBE         |
+            |  ATTIJARIWAFA BANK Egypt                      |   BBE         |
 
 
 ### Response

@@ -49,6 +49,10 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 def redirect_home(request):
     if request.user.is_superuser:
         return redirect(reverse('admin:index'))
+    if request.user.is_finance:
+        return redirect(reverse('admin:index'))
+    if request.user.is_finance_with_instant_transaction_view:
+        return redirect(reverse('admin:index'))
     elif request.user.is_support:
         return redirect(reverse('users:support_home'))
     elif request.user.is_instant_model_onboarding:
@@ -136,10 +140,10 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
         """
         if "bank-wallets" in request.path:
             self.doc_type = AbstractBaseDocType.BANK_WALLETS
-            self.doc_list_header = "Bank wallets/Orange cash"
+            self.doc_list_header = _("Bank wallets/Orange cash")
         elif "bank-cards" in request.path:
             self.doc_type = AbstractBaseDocType.BANK_CARDS
-            self.doc_list_header = "Bank Accounts/Cards"
+            self.doc_list_header = _("Bank Accounts/Cards")
         else:
             return HttpResponseRedirect(request.path)
         self.admin_is_active = request.user.root.client.is_active

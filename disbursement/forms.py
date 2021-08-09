@@ -432,7 +432,7 @@ class SingleStepTransactionForm(forms.Form):
         )
                 != "EG"
         ):
-            return _("Phonenumbers entered are incorrect")
+            return _("Phone numbers entered are incorrect")
         return True
 
     def validate_msisdn(self):

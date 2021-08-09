@@ -12,9 +12,7 @@
             {% elif request.user.is_support %}
                 {% include 'support/sidebar.html' %}
             {% else %}
-                {% if current_status == 'collection' %}
-                  {% include "collection-sidebar.html" %}
-                {% elif current_status == 'disbursement' and not request.user.is_instant_member %}
+                {% if current_status == 'disbursement' and not request.user.is_instant_member %}
                   {% include "disbursement_sidebar.html" %}
                 {% else %}
                   {% include "instant_cashin/sidebar.html" %}

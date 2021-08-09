@@ -6,17 +6,11 @@ from django.urls import path
 from oauth2_provider import views as oauth2_views
 
 from . import views
+from users.views.main_views import CallbackURLEdit
 from payouts.views import no_agent_error_view
 
 app_name = 'users'
 
-
-collection_setups_urls = [
-    path('setting-up/collection-collectiondata',
-         views.CollectionFormView.as_view(), name='setting-collection-collectiondata'),
-    path('setting-up/collection-formats', views.FormatFormView.as_view(), name='setting-collection-formats'),
-    path('setting-up/collection-uploader', views.UploaderFormView.as_view(), name='setting-collection-uploader'),
-]
 
 client_urls = [
     path('clients/', views.Clients.as_view(), name='clients'),
@@ -93,9 +87,11 @@ urlpatterns = [
 
     path('profile/<username>/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/<username>/', views.ProfileUpdateView.as_view(), name='edit_profile'),
+    path('callback/edit/<username>/', CallbackURLEdit.as_view(), name='api_viewer_callback'),
+    
 ]
 
-urlpatterns += collection_setups_urls
+
 urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += support_urls

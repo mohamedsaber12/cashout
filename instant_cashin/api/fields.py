@@ -66,5 +66,5 @@ class CardNumberField(serializers.CharField):
 
     default_validators = [
         CustomMinLengthValidator(6),
-        CustomMaxLengthValidator(20),
+        CustomMaxLengthValidator(29),
     ]

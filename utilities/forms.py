@@ -108,9 +108,9 @@ class IncreaseBalanceRequestForm(forms.Form):
         label=_('Type'),
         required=True,
         choices=[
-            ('from_bank_transfer', 'Bank Transfer'),
-            ('from_accept_balance', 'From Accept Balance'),
-            ('from_bank_deposit', 'Bank Deposit')
+            ('from_bank_transfer', _('Bank Transfer')),
+            ('from_accept_balance', _('From Accept Balance')),
+            ('from_bank_deposit', _('Bank Deposit'))
         ],
         widget=forms.Select(attrs={
             'class': 'form-control',

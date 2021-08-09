@@ -1402,15 +1402,15 @@ class ExportClientsTransactionsMonthlyReport:
                         'full_date': f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
-            else:
-                if self.vf_facilitator_perm:
-                    final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
-                    final_data[current_admin.username][0]["vf_facilitator_identifier"] =  current_admin.client.vodafone_facilitator_identifier
                     
                 elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
                 else:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf
+            else:
+                if self.vf_facilitator_perm:
+                    final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
+                    final_data[current_admin.username][0]["vf_facilitator_identifier"] =  current_admin.client.vodafone_facilitator_identifier
 
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin

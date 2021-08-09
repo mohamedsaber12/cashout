@@ -18,6 +18,9 @@ from data.utils import get_client_ip
 from ...api.serializers import InstantTransactionResponseModelSerializer
 from ...models import AmanTransaction
 from ...utils import get_from_env
+import json
+from uuid import UUID
+
 
 
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
@@ -219,6 +222,13 @@ class AmanChannel:
             if is_success and bill_reference:
                 AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
                 
+                # send callback 
+                aman_trn = AmanTransaction.objects.get(bill_reference=bill_reference)
+                if aman_trn.transaction_type.name == "Instant Transaction" and aman_trn.transaction.from_user.root.root.callback_url:
+                    callback_url = aman_trn.transaction.from_user.root.root.callback_url
+                    req_body = InstantTransactionResponseModelSerializer(aman_trn.transaction)
+                    requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
+                
                 # update related transaction to edit updated_at
                 for trn in AmanTransaction.objects.filter(bill_reference=bill_reference):
                     trn.transaction.save()
@@ -226,3 +236,11 @@ class AmanChannel:
             raise ValueError(_(f"Transaction payment failed! is_success: {is_success}, bill_ref: {bill_reference}"))
         except (AmanTransaction.DoesNotExist, ValueError, Exception) as e:
             return False, e.args[0]
+
+
+class UUIDEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, UUID):
+            # if the obj is uuid, we simply return the value of uuid
+            return str(obj)
+        return json.JSONEncoder.default(self, obj)

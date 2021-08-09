@@ -4,7 +4,7 @@
 {% load custom_tags %}
 {% load banks_tags %}
 
-{% block title %} Transactions {% endblock %}
+{% block title %} {% trans 'Transactions' %} {% endblock %}
 
 {% block gentellacss %}
   <!-- Datatables -->
@@ -148,7 +148,7 @@
             <button id="generate-pdf" class="btn btn-default export-dropdown
                     pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
                     style="width:16rem !important">
-              <i class="fa fa-file-pdf-o"></i> Export PDF Report
+              <i class="fa fa-file-pdf-o"></i> {% trans 'Export PDF Report' %}
             </button>
           {% endif %}
           <div class="clearfix"></div>
@@ -182,13 +182,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Report Exported Successfully</h4>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
         </div>
         <div class="modal-body">
           {% trans 'You will receive an email shortly with the file to download' %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
       </div>
     </div>
@@ -201,13 +201,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Report Exported Successfully</h4>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
         </div>
         <div class="modal-body">
           {% trans 'You will receive an email shortly with the success data file to download' %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
       </div>
     </div>
@@ -220,13 +220,13 @@
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal">&times;</button>
-          <h4 class="modal-title">Report Exported Successfully</h4>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
         </div>
         <div class="modal-body">
           {% trans 'You will receive an email shortly with the failed data file to download' %}
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
         </div>
       </div>
     </div>
@@ -261,7 +261,7 @@
         buttons: [
           {
                 extend: 'copy',
-                text : "Copy",
+                text : "{% trans 'Copy' %}",
                 exportOptions: {
                     charSet: "utf-8",
                 }
@@ -272,7 +272,7 @@
             },
             {
                 extend: 'excelHtml5',
-                text : "Export",
+                text : "{% trans 'Export' %}",
                 
                 customize: function( xlsx ) {
 
@@ -356,51 +356,51 @@
 
         {% if doc_obj.is_bank_wallet %}
           trx.id = $(this).data('id');
-          appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
           trx.anon_recipient = $(this).data('anon_recipient');
-          appendedTags += `<li><span>Wallet Number</span><b>:</b>${trx.anon_recipient}</li>`;
+          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${trx.anon_recipient}</li>`;
           trx.amount = $(this).data('amount');
-          appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
+          appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
           trx.recipient_name = $(this).data('recipient_name');
-          appendedTags += `<li><span>Full Name</span><b>:</b>${trx.recipient_name}</li>`;
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.recipient_name}</li>`;
           trx.status = $(this).data('status');
-          appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
         {% else %}
           trx.id = $(this).data('id');
-          appendedTags += `<li><span>Transaction ID</span><b>:</b>${trx.id}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
           trx.creditor_account_number = $(this).data('creditor_account_number');
-          appendedTags += `<li><span>Account Number / IBAN</span><b>:</b>${trx.creditor_account_number}</li>`;
+          appendedTags += `<li><span>{% trans 'Account Number / IBAN' %}</span><b>:</b>${trx.creditor_account_number}</li>`;
           trx.amount = $(this).data('amount');
-          appendedTags += `<li><span>Amount</span><b>:</b>${trx.amount}</li>`;
+          appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
           trx.creditor_name = $(this).data('creditor_name');
-          appendedTags += `<li><span>Full Name</span><b>:</b>${trx.creditor_name}</li>`;
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.creditor_name}</li>`;
           trx.creditor_bank = $(this).data('creditor_bank');
           trx.bank_name = $(this).data('bank_name');
           trx.type = $(this).data('type');
           trx.status = $(this).data('status');
-          appendedTags += `<li><span>Status</span><b>:</b>${trx.status}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
         {% endif %}
 
         {% if doc_obj.is_bank_wallet %}
           let issuer = $(this).data('issuer');
-          appendedTagsRight += `<li><span>Issuer</span><b>:</b>${issuer}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
         {% else %}
-          appendedTagsRight += `<li><span>Bank Swift Code</span><b>:</b>${trx.creditor_bank}</li>`;
-          appendedTagsRight += `<li><span>Bank Name</span><b>:</b>${trx.bank_name}</li>`;
-          appendedTagsRight += `<li><span>Transaction Type</span><b>:</b>${trx.type}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Bank Swift Code' %}</span><b>:</b>${trx.creditor_bank}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Bank Name' %}</span><b>:</b>${trx.bank_name}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Transaction Type' %}</span><b>:</b>${trx.type}</li>`;
         {% endif %}
 
         let doc_id = $(this).data('doc_id');
-        appendedTagsRight += `<li><span>Document ID</span><b>:</b>${doc_id}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Document ID' %}</span><b>:</b>${doc_id}</li>`;
         let doc_maker = $(this).data('doc_maker');
-        appendedTagsRight += `<li><span>Maker</span><b>:</b>${doc_maker}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Maker' %}</span><b>:</b>${doc_maker}</li>`;
         let doc_checker = $(this).data('doc_checker');
-        appendedTagsRight += `<li><span>Checker</span><b>:</b>${doc_checker}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Checker' %}</span><b>:</b>${doc_checker}</li>`;
 
         trx.transaction_status_code = $(this).data('transaction_status_code');
-        appendedTagsBottom += `<li><span>Disbursement Status Code</span><b>:</b>${trx.transaction_status_code}</li>`;
+        appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>${trx.transaction_status_code}</li>`;
         trx.transaction_status_description = $(this).data('transaction_status_description');
-        appendedTagsBottom += `<li><span>Disbursement Status Description</span><b>:</b>${trx.transaction_status_description}</li>`;
+        appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>${trx.transaction_status_description}</li>`;
 
         ul.empty();
         ul.append(appendedTags);

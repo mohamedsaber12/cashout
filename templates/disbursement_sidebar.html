@@ -1,5 +1,6 @@
 {% load static %}
 {% load i18n %}
+{% load custom_tags %}
 
 <div class="left_col scroll-view">
 
@@ -15,7 +16,7 @@
         {% elif request.user.is_accept_vodafone_onboarding %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
           <li><a href="{% url 'data:bank_wallets_home' %}">
-            <img style="width: 20px;margin-right: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+            <img style="width: 20px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
           <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
 
           {% if request.user.is_root or request.user.is_checker %}
@@ -38,7 +39,7 @@
           <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}"><i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}</a></li>
           {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring%}
             <li><a href="{% url 'utilities:transfer_request' %}">
-              <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Transfer Request' %}</a>
+              <img style="width: 19px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Top Up Balance' %}</a>
             </li>
           {% endif %}
         {% endif %}

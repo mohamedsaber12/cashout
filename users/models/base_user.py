@@ -66,6 +66,7 @@ class User(AbstractUser, SoftDeletionModel):
     level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
     brand = models.ForeignKey('users.Brand', on_delete=models.SET_NULL, null=True)
     wallet_fees_profile = models.CharField(max_length=30, default='', null=True, blank=True)
+    callback_url = models.CharField(max_length=128, default='', null=True, blank=True)
 
     objects = UserManager()
 
@@ -197,6 +198,14 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_support(self):
         return self.user_type == 8
+    
+    @cached_property
+    def is_finance(self):
+        return self.user_type == 10
+
+    @cached_property
+    def is_finance_with_instant_transaction_view(self):
+        return self.user_type == 11
 
     @cached_property
     def is_instant_member(self):

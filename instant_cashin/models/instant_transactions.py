@@ -21,12 +21,12 @@ class AbstractBaseIssuer(models.Model):
     BANK_WALLET = "B"
     BANK_CARD = "C"
     ISSUER_TYPE_CHOICES = [
-        (VODAFONE, _("Vodafone")),
-        (ETISALAT, _("Etisalat")),
-        (ORANGE, _("Orange")),
-        (AMAN, _("Aman")),
-        (BANK_WALLET, _("Bank_Wallet")),
-        (BANK_CARD, _("Bank_Card")),
+        (VODAFONE, "Vodafone"),
+        (ETISALAT, "Etisalat"),
+        (ORANGE, "Orange"),
+        (AMAN, "Aman"),
+        (BANK_WALLET, "Bank_Wallet"),
+        (BANK_CARD, "Bank_Card"),
     ]
 
     issuer_type = models.CharField(

@@ -217,7 +217,7 @@ class SuperOrRootOwnsCustomizedBudgetClientRequiredMixin(UserPassesTestMixin, Lo
                     if client_obj.client.has_custom_budget:
                         return True
 
-        return self.request.user.is_root
+        return self.request.user.is_root or self.request.user.is_instantapiviewer
 
 
 class SuperOwnsCustomizedBudgetClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):

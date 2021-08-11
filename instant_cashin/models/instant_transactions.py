@@ -94,8 +94,8 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             _('Reference ID'),
             max_length=30,
             default='',
-            blank=False,
-            null=False
+            blank=True,
+            null=True
     )
     recipient_name = models.CharField(
             _('Recipient Name'),

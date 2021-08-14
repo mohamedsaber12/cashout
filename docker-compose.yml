@@ -10,33 +10,15 @@ services:
     env_file:
       - ./.env
     volumes:
-      - /home/ec2-user/opt/volumes/payouts/payouts_portal/:/app/payouts_portal
+      - /home/ec2-user/opt/volumes/payouts/payouts_portal/:/payouts_portal
       #- /opt/volumes/payouts/static/:/app/staticfiles/static
       #- /opt/volumes/payouts/media/:/app/mediafiles/media
-      - /home/ec2-user/Payouts/disbursement_tool/static/:/home/app/static_media/static
-      - /home/ec2-user/Payouts/disbursement_tool/media/:/home/app/static_media/media
+      - /home/ec2-user/Payouts/disbursement_tool/static/:/payouts_portal/staticfiles/
+      - /home/ec2-user/Payouts/disbursement_tool/media/:/payouts_portal/mediafiles/
       - /home/ec2-user/Payouts/disbursement_tool/ssh:/home/payouts_user/.ssh/
-      - /home/ec2-user/Payouts/disbursement_tool/.env:/home/app/payouts_portal/.env
+      - /home/ec2-user/Payouts/disbursement_tool/.env:/payouts_portal/.env
     expose:
       - 8000
-    command: >
-      bash -c "
-               python manage.py makemigrations users &&
-               python manage.py migrate users &&
-               python manage.py makemigrations data &&
-               python manage.py migrate data &&
-               python manage.py makemigrations disbursement &&
-               python manage.py migrate disbursement &&
-               python manage.py makemigrations instant_cashin &&
-               python manage.py migrate instant_cashin &&
-               python manage.py makemigrations payment &&
-               python manage.py migrate payment &&
-               python manage.py makemigrations utilities &&
-               python manage.py migrate utilities &&
-               python manage.py makemigrations &&
-               python manage.py migrate &&
-               mkdocs build &&
-               python manage.py runserver_plus 0.0.0.0:8000"
     networks:
       - payouts_network
     depends_on:
@@ -58,6 +40,7 @@ services:
     networks:
       - payouts_network
 
+
   rabbitmq:
     container_name: RabbitMQ
     image: rabbitmq:3.8
@@ -65,6 +48,7 @@ services:
       - /home/ec2/opt/volumes/payouts/rabbitmq:/var/lib/rabbitmq
     networks:
       - payouts_network
+
 
   celery_worker:
     <<: *payouts
@@ -89,8 +73,8 @@ services:
       - /home/ec2-user/Payouts/disbursement_tool/nginx/conf.d/default.conf:/etc/nginx/nginx.conf
       - /home/ec2-user/Payouts/disbursement_tool/nginx/conf.d/default2.conf:/etc/nginx/conf.d/default.conf
       - /etc/letsencrypt:/etc/letsencrypt
-      - /home/ec2-user/Payouts/disbursement_tool/static:/home/app/payouts_portal/static
-      - /home/ec2-user/Payouts/disbursement_tool/media:/home/app/payouts_portal/media
+      - /home/ec2-user/Payouts/disbursement_tool/static:/payouts_portal/static
+      - /home/ec2-user/Payouts/disbursement_tool/media:/payouts_portal/media
     depends_on:
       - payouts
     networks:

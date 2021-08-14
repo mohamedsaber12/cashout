@@ -11,6 +11,24 @@ then
     echo "PostgreSQL started"
 fi
 
+python manage.py makemigrations users &&
+python manage.py migrate users &&
+python manage.py makemigrations data &&
+python manage.py migrate data &&
+python manage.py makemigrations disbursement &&
+python manage.py migrate disbursement &&
+python manage.py migrate instant_cashin &&
+python manage.py makemigrations instant_cashi
+python manage.py makemigrations payment &&
+python manage.py migrate payment &&
+python manage.py makemigrations utilities &&
+python manage.py migrate utilities &&
+python manage.py makemigrations &&
+python manage.py migrate &&
+mkdocs build &&
+python manage.py runserver_plus 0.0.0.0:8000
+
+exec "$@"
 # Switch to payouts_user
 # su - payouts_user
 
@@ -44,5 +62,3 @@ fi
 
 # Generate the API documentation static files
 # mkdocs build
-
-exec "$@"

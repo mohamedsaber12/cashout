@@ -169,13 +169,13 @@ class BulkDisbursementThroughOneStepCashinTests(TestCase):
         )
 
 
-class LateChangeProfileCallBack(TestCase):
+class LateChangeProfileCallBackTests(TestCase):
 
     def test_check_for_late_change_profile_callback(self):
         self.assertFalse(check_for_late_change_profile_callback())
 
 
-class LateDisbursementCallBack(TestCase):
+class LateDisbursementCallBackTests(TestCase):
 
     def test_check_for_late_disbursement_callback(self):
         self.assertFalse(check_for_late_disbursement_callback())

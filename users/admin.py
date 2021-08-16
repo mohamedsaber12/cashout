@@ -20,7 +20,6 @@ from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
-from data.tasks import ExportClientsTransactionsMonthlyReportTask
 from disbursement.views import ExportClientsTransactionsMonthlyReport
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -297,7 +296,6 @@ class SuperAdmin(UserAccountAdmin):
             start_date = request.POST.get("start_date")
             end_date = request.POST.get("end_date")
             status = request.POST.get("status")
-            # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
 
             exportObject = ExportClientsTransactionsMonthlyReport()
             report_download_url = exportObject.run(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))

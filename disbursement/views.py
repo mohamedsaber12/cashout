@@ -34,8 +34,7 @@ from rest_framework_expiring_authtoken.models import ExpiringToken
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (ExportClientsTransactionsMonthlyReportTask,
-                        generate_all_disbursed_data,
+from data.tasks import (generate_all_disbursed_data,
                         generate_failed_disbursed_data,
                         generate_success_disbursed_data)
 from data.utils import redirect_params
@@ -283,7 +282,6 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         status = request.GET.get('status', None)
 
         if request.is_ajax():
-            # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
             exportObject = ExportClientsTransactionsMonthlyReport()
             report_download_url = exportObject.run(request.user.id, start_date, end_date, status)
             return HttpResponse(report_download_url)

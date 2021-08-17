@@ -200,5 +200,3 @@ class StatusChoicesReverseQueryModelAdminMixin(object):
                 )
         return queryset, use_distinct
 
-
-# test take new code

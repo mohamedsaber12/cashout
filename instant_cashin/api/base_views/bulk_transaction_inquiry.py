@@ -84,3 +84,27 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
         except Exception as err:
             logging_message(BULK_TRX_INQUIRY_LOGGER, "[message] [GENERAL ERROR]", request, f"{err.args}")
             return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+    def post(self, request, *args, **kwargs):
+        """
+        Handles POST requests to retrieve list of detailed instant transactions corresponding to the uuid inputs
+        """
+        serializer = self.read_serializer(data=request.data)
+
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.kwargs["trx_ids_list"] = [record for record in serializer.validated_data["transactions_ids_list"]]
+            logging_message(
+                    BULK_TRX_INQUIRY_LOGGER, "[request] [PASSED UUIDS LIST]", request, f"{serializer.validated_data}"
+            )
+            return self.list(request, serializer, *args, **kwargs)
+
+        except ValidationError:
+            logging_message(
+                    BULK_TRX_INQUIRY_LOGGER, "[message] [VALIDATION ERROR]", request, f"{serializer.errors}"
+            )
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        except Exception as err:
+            logging_message(BULK_TRX_INQUIRY_LOGGER, "[message] [GENERAL ERROR]", request, f"{err.args}")
+            return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

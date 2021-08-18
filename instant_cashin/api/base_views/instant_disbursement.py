@@ -34,6 +34,7 @@ INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try ag
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
 ORANGE_PENDING_MSG = _("Your transaction will be process the soonest, wait for a response at the next 24 hours")
 BUDGET_EXCEEDED_MSG = _("Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team")
+TIMEOUT_ERROR_MSG = _('Request timeout error')
 
 
 class InstantDisbursementAPIView(views.APIView):
@@ -287,9 +288,9 @@ class InstantDisbursementAPIView(views.APIView):
 
             except (requests.Timeout, TimeoutError) as e:
                 logging_message(
-                        INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
+                    INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )
-                transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+                transaction.mark_unknown(status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (ImproperlyConfigured, Exception) as e:

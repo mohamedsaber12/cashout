@@ -12,6 +12,8 @@ from django.utils.translation import gettext_lazy as _
 
 from core.models import AbstractTimeStamp
 from simple_history.models import HistoricalRecords
+from django.db import transaction
+
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -225,17 +227,20 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower(), num_of_trns)
-            current_balance_before = self.current_balance
-            applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
-            self.total_disbursed_amount += amount_plus_fees_vat
-            self.current_balance -= amount_plus_fees_vat
-            self.save()
-            BUDGET_LOGGER.debug(
-                    f"[message] [CUSTOM BUDGET UPDATE] [{self.disburser.username}] -- disbursed amount: {amount}, "
-                    f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
-                    f"current balance before: {current_balance_before}, current balance after: {self.current_balance}"
-            )
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                print("===============ATOMIC=================")
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower(), num_of_trns)
+                current_balance_before = budget_obj.current_balance
+                applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
+                budget_obj.total_disbursed_amount += amount_plus_fees_vat
+                budget_obj.current_balance -= amount_plus_fees_vat
+                budget_obj.save()
+                BUDGET_LOGGER.debug(
+                        f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- disbursed amount: {amount}, "
+                        f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
+                        f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                )
         except Exception as e:
             raise ValueError(_(
                     f"Error updating the total disbursed amount and the current balance, please retry again later, "

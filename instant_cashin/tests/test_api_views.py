@@ -1,5 +1,6 @@
 import json
 from unittest.mock import patch
+from requests.exceptions import ReadTimeout
 
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -373,6 +374,40 @@ class InstantDisbursementAPIViewTests(APITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    # test instant Cashin on vodafone with timeout
+    def test_instant_cashin_on_vodafone_with_timeout(self):
+        fees_setup_vodafone = FeeSetup(
+                budget_related=self.budget, issuer='vf',
+                fee_type='p', percentage_value=2.25)
+        fees_setup_vodafone.save()
+        # set super_admin pin
+        self.env = patch.dict(
+            'os.environ', {
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
+            },
+        )
+        self.client_user = Client(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
+        self.agent.save()
+        # raise timeout exception for mock
+        # def raise_timeout_exception(*args, **kwargs):
+        #     raise ReadTimeout()
+
+        with self.env:
+            with patch('instant_cashin.api.base_views.instant_disbursement.requests') as mock_requests:
+                mock_requests.post.side_effect = ReadTimeout()
+                url = api_reverse("instant_api:instant_disburse")
+                self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+                data = {
+                    "amount": "20.50",
+                    "issuer": "vodafone",
+                    "msisdn": "01003764686",
+                    "pin": None
+                }
+                response = self.client.post(url, data, format='json')
+                self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # test instant Cashin on vodafone
     def test_instant_cashin_on_vodafone(self):

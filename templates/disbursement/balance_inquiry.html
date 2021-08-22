@@ -17,9 +17,9 @@
 <div class="row">
     <div class="col-lg-12">
         <div class="panel panel-default">
-          {% if request.user.has_custom_budget %}
+          {% if request.user.has_custom_budget or  request.user.root.has_custom_budget%}
             <div class="well col-xs-12">
-              <h4>{% trans 'Your current budget is: ' %} {{ request.user.budget.current_balance }} EG</h4>
+              <h4>{% trans 'Your current budget is: ' %} {{ request.user.root.budget.current_balance }} EG</h4>
             </div>
           {% else %}
             <div class="panel-body">

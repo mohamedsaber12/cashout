@@ -46,6 +46,8 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     """
     Model for instant transactions
     """
+    # new status for timeout transactions
+    UNKNOWN = 'U'
 
     document = models.ForeignKey(
             'data.Doc',
@@ -94,8 +96,8 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             _('Reference ID'),
             max_length=30,
             default='',
-            blank=False,
-            null=False
+            blank=True,
+            null=True
     )
     recipient_name = models.CharField(
             _('Recipient Name'),
@@ -151,6 +153,12 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         self.status = self.SUCCESSFUL
         self.save()
 
+    def mark_unknown(self, status_code="", failure_reason=""):
+        """Mark transaction status as unknown and add the status code and description if provided"""
+        self.update_status_code_and_description(str(status_code), failure_reason)
+        self.status = self.UNKNOWN
+        self.save()
+
     @property
     def aman_transaction(self):
         """Property for retrieving aman object details for transaction records made through Aman"""
@@ -167,4 +175,6 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     @property
     def status_choice_verbose(self):
         """Return the corresponding verbose name of the transaction status type"""
+        if self.status == self.UNKNOWN:
+            return 'Unknown'
         return dict(self.STATUS_CHOICES)[self.status]

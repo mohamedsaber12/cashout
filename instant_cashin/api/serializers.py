@@ -185,7 +185,12 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     transaction_id = serializers.SerializerMethodField()
     issuer = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
     msisdn = serializers.SerializerMethodField()
-    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    disbursement_status = CustomChoicesField(
+        source='status', choices=[
+            *AbstractBaseStatus.STATUS_CHOICES,
+            ("U", _("Unknown")),
+        ]
+    )
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()

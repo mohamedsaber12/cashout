@@ -286,7 +286,7 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            except (requests.Timeout, TimeoutError) as e:
+            except TimeoutError as e:
                 logging_message(
                     INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )

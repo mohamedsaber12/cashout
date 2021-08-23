@@ -11,6 +11,8 @@ from disbursement.utils import add_fees_and_vat_to_qs
 
 from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction
+from django.core.paginator import Paginator
+
 
 
 class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
@@ -45,6 +47,10 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                     Q(anon_recipient__iexact=search_keys)|
                     Q(transaction_status_description__icontains=search_keys)
             )
+        paginator = Paginator(queryset, 10)
+        page = self.request.GET.get('page')
+        queryset = paginator.get_page(page)
+
 
         return add_fees_and_vat_to_qs(
                 queryset,

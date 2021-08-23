@@ -1,6 +1,5 @@
 import json
 from unittest.mock import patch
-from requests.exceptions import ReadTimeout
 
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -15,6 +14,7 @@ from utilities.models import Budget, FeeSetup
 from users.models import Client
 from disbursement.models import Agent
 from instant_cashin.models import AmanTransaction, InstantTransaction
+
 
 class CurrentRequest(object):
     def __init__(self, user=None):
@@ -391,13 +391,10 @@ class InstantDisbursementAPIViewTests(APITestCase):
         self.client_user.save()
         self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
         self.agent.save()
-        # raise timeout exception for mock
-        # def raise_timeout_exception(*args, **kwargs):
-        #     raise ReadTimeout()
 
         with self.env:
             with patch('instant_cashin.api.base_views.instant_disbursement.requests') as mock_requests:
-                mock_requests.post.side_effect = ReadTimeout()
+                mock_requests.post.side_effect = TimeoutError()
                 url = api_reverse("instant_api:instant_disburse")
                 self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
                 data = {

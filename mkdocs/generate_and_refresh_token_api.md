@@ -105,14 +105,18 @@
 
 5. **Generate new access token using Postman**
 
-    2.1) Create new request page and open the **Authorization** tab:
-        ![step_1](https://user-images.githubusercontent.com/13325802/102062023-e18b7c80-3dfc-11eb-965e-9f75e730138e.jpg)
+    2.1) Create new request page :
+      ![step1](https://user-images.githubusercontent.com/24698814/131247658-5d1d6f92-b132-499c-a088-52e49150db87.png)
 
-    2.2) Click at the **TYPE** tab, choose **OAuth 2.0** and fill in your credentials at **Configure New Token** then press **Get New Access Token**:
-        ![step_2](https://user-images.githubusercontent.com/13325802/102062077-f1a35c00-3dfc-11eb-830e-a5f1adced1a9.jpg)
+    2.2) Change request method from **GET** to **POST** :
+      ![step2](https://user-images.githubusercontent.com/24698814/131247666-11d8119f-97ed-4c8c-8f7c-6077a9a1356b.png)
 
-    2.3) Click **Proceed** to go to your generated credentials:
-        ![step_3](https://user-images.githubusercontent.com/13325802/102062112-fbc55a80-3dfc-11eb-8291-6a5a9b766a06.jpg)
+    2.3) Add access token **url** to the request page :
+      ![step3](https://user-images.githubusercontent.com/24698814/131247673-487eee7a-40ae-4a88-a23e-ea8c3c1950d2.png)
 
-    2.4) Copy the **Access Token** and start using the other API endpoints:
-        ![step_4](https://user-images.githubusercontent.com/13325802/102062136-01bb3b80-3dfd-11eb-9118-05bb6825f8ce.jpg)
+    2.4) Open **body** tab and choose body type to **x-www-form-urlencoded** then add your **Credentials**:
+      ![step4](https://user-images.githubusercontent.com/24698814/131247675-132633f1-7832-4423-a61b-6607e81c8f00.png)
+
+   2.5) Click on **Send Button** to get your **access token** and start using the other API endpoints:
+      ![step5](https://user-images.githubusercontent.com/24698814/131248111-38a6c3b6-f0eb-48f0-a2f1-95f2c09e3c5d.png)
+

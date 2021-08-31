@@ -29,6 +29,7 @@ from disbursement.resources import (DisbursementDataResourceForBankCards,
                                     DisbursementDataResourceForBankWallet,
                                     DisbursementDataResourceForEWallets)
 from disbursement.utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                                DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
                                 DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                                 VALID_BANK_CODES_LIST,
                                 VALID_BANK_TRANSACTION_TYPES_LIST,
@@ -840,6 +841,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     instant_or_accept_perm = False
     vf_facilitator_perm = False
     default_vf__or_bank_perm = False
+    temp_vf_ets_aman_qs = []
 
     def refine_first_and_end_date_format(self):
         """
@@ -874,16 +876,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         return qs
 
-    def _add_vf_facilitator_identifier_to_qs_values(self,
-                                                    qs,
-                                                    checkers_parent_username,
-                                                    admins_vf_facilitator_identifier):
-        """Append vodafone facilitator identifier to the output transactions queryset values dict"""
-        for q in qs:
-            q['vf_facilitator_identifier'] = admins_vf_facilitator_identifier[checkers_parent_username[q['checker']]]
-            q['full_date'] = f"{self.start_date} to {self.end_date}"
-        return qs
-
     def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs=False):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
@@ -896,8 +888,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             ).count() == 0:
                 q['fees'], q['vat'] = 0, 0
             else:
-                q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']).\
-                                      calculate_fees_and_vat_for_amount(q['total'], q['issuer'], q['count'])
+                q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']). \
+                    calculate_fees_and_vat_for_amount(q['total'], q['issuer'], q['count'])
         return qs
 
     def _add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):
@@ -925,7 +917,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             ).values('admin', 'issuer', 'vf_identifier'). \
                 annotate(total=Sum('amount'), count=Count('id'))
         else:
-            qs = qs.annotate(admin=F('doc__disbursed_by__root__username')).values('admin', 'issuer'). \
+            qs = qs.annotate(
+                admin=F('doc__disbursed_by__root__username')
+            ).values('admin', 'issuer'). \
                 annotate(total=Sum('amount'), count=Count('id'))
         return self._customize_issuer_in_qs_values(qs)
 
@@ -964,6 +958,15 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
                 Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
+
+        # if super admins are vodafone facilitator onboarding save qs
+        # for calculate distinct msisdn count
+        if self.vf_facilitator_perm:
+            self.temp_vf_ets_aman_qs = qs
+            self.temp_vf_ets_aman_qs = self.temp_vf_ets_aman_qs.annotate(
+                    admin=F('doc__disbursed_by__root__username')
+            )
+
         if self.status in ['success', 'failed']:
             qs = self._annotate_vf_ets_aman_qs(qs)
             if self.instant_or_accept_perm:
@@ -1043,17 +1046,17 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def aggregate_bank_cards_transactions(self):
         """Calculate bank cards transactions details from BankTransaction model"""
         if self.status == 'failed':
-            qs = BankTransaction.objects.filter(
+            qs_ids = BankTransaction.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(status=AbstractBaseACHTransactionStatus.FAILED),
                 Q(end_to_end=""),
-                ((Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                Q(user_created__root__client__creator__in=self.superadmins)))
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
-                distinct("parent_transaction__transaction_id")
+                distinct("parent_transaction__transaction_id").values('id')
         elif self.status == 'success':
-            qs = BankTransaction.objects.filter(
+            qs_ids = BankTransaction.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(status=AbstractBaseACHTransactionStatus.SUCCESSFUL),
@@ -1061,23 +1064,23 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                 Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
-                distinct("parent_transaction__transaction_id")
+                distinct("parent_transaction__transaction_id").values('id')
         else:
-            qs = BankTransaction.objects.filter(
+            qs_ids = BankTransaction.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
-                Q(status=AbstractBaseACHTransactionStatus.PENDING),
+                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL, AbstractBaseACHTransactionStatus.RETURNED]),
                 (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                 Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
-                distinct("parent_transaction__transaction_id")
-        qs = qs.annotate(
+                distinct("parent_transaction__transaction_id").values('id')
+        qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
             admin=Case(
                 When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
                 default=F('user_created__root__username')
             )
-        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer').\
+        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
             annotate(total=Sum('amount'), count=Count('id'))
 
         qs = self._customize_issuer_in_qs_values(qs)
@@ -1128,7 +1131,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         font_style = xlwt.XFStyle()
         row_num += 1
 
-        if self.instant_or_accept_perm:
+        if self.instant_or_accept_perm or self.default_vf__or_bank_perm:
             col_nums = {
                 'total': 2,
                 'vodafone': 3,
@@ -1138,20 +1141,27 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 'B': 7,
                 'C': 8
             }
+            if self.default_vf__or_bank_perm:
+                col_nums['default']= 9
+
             for key in final_data.keys():
                 ws.write(row_num, 0, key, font_style)
                 ws.write(row_num, 1, 'Volume', font_style)
                 ws.write(row_num+1, 1, 'Count', font_style)
-                ws.write(row_num+2, 1, 'Fees', font_style)
-                ws.write(row_num+3, 1, 'Vat', font_style)
+                if self.instant_or_accept_perm:
+                    ws.write(row_num+2, 1, 'Fees', font_style)
+                    ws.write(row_num+3, 1, 'Vat', font_style)
 
                 for el in final_data[key]:
                     ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
                     ws.write(row_num+1, col_nums[el['issuer']], el['count'], font_style)
-                    ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
-                    ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
-
-                row_num += 4
+                    if self.instant_or_accept_perm:
+                        ws.write(row_num+2, col_nums[el['issuer']], el['fees'], font_style)
+                        ws.write(row_num+3, col_nums[el['issuer']], el['vat'], font_style)
+                if self.instant_or_accept_perm:
+                    row_num += 4
+                else:
+                    row_num += 2
         else:
             for key in final_data.keys():
                 current_admin_report = final_data[key][0]
@@ -1179,15 +1189,16 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # validate that all super admins have (instant || accept) or vf facilitator permission
         for super_admin in self.superadmins:
             if super_admin.is_instant_model_onboarding or \
-                super_admin.is_accept_vodafone_onboarding:
+                    super_admin.is_accept_vodafone_onboarding:
                 self.instant_or_accept_perm = True
             elif super_admin.is_vodafone_facilitator_onboarding:
                 self.vf_facilitator_perm = True
             else:
                 self.default_vf__or_bank_perm = True
 
-        if self.default_vf__or_bank_perm or \
-           self.vf_facilitator_perm == self.instant_or_accept_perm:
+        # validate that some super admins data will export fine together and others not
+        onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
+        if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
             return False
 
 
@@ -1209,7 +1220,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
-        if self.instant_or_accept_perm:
+        if self.instant_or_accept_perm  or self.default_vf__or_bank_perm:
             # 5. Calculate total volume, count, fees for each admin
             for key in final_data.keys():
                 total_per_admin = {
@@ -1217,14 +1228,17 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     'issuer': 'total',
                     'total': round(Decimal(0), 2),
                     'count': round(Decimal(0), 2),
-                    'fees': round(Decimal(0), 2),
-                    'vat': round(Decimal(0), 2)
                 }
+                if self.instant_or_accept_perm:
+                    total_per_admin['fees'] = round(Decimal(0), 2)
+                    total_per_admin['vat'] = round(Decimal(0), 2)
+
                 for el in final_data[key]:
                     total_per_admin['total'] += round(Decimal(el['total']), 2)
                     total_per_admin['count'] += el['count']
-                    total_per_admin['fees'] += el['fees']
-                    total_per_admin['vat'] += el['vat']
+                    if self.instant_or_accept_perm:
+                        total_per_admin['fees'] += el['fees']
+                        total_per_admin['vat'] += el['vat']
                 final_data[key].append(total_per_admin)
 
         # 6. Add issuer with values 0 to final data
@@ -1241,6 +1255,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 'B': False,
                 'C': False
             }
+            if self.default_vf__or_bank_perm:
+                issuers_exist['default'] = False
 
         final_data = self._add_issuers_with_values_0_to_final_data(final_data, issuers_exist)
 
@@ -1256,13 +1272,20 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                         'full_date': f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
-                else:
+
+                elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
+                else:
+                    final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf
+            else:
+                if self.vf_facilitator_perm:
+                    final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
+                    final_data[current_admin.username][0]["vf_facilitator_identifier"] =  current_admin.client.vodafone_facilitator_identifier
 
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
             distinct_msisdn = dict()
-            for el in vf_ets_aman_qs.values():
+            for el in self.temp_vf_ets_aman_qs.values():
                 if el['admin'] in distinct_msisdn:
                     distinct_msisdn[el['admin']].add(el['msisdn'])
                 else:
@@ -1281,6 +1304,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             column_names_list = [
                 'Clients', '', 'Total', 'Vodafone', 'Etisalat', 'Aman', 'Orange', 'Bank Wallets', 'Bank Accounts/Cards'
             ]
+            if self.default_vf__or_bank_perm:
+                column_names_list.append('Default')
+
             # 10. Write final data to excel file
             return self.write_data_to_excel_file(final_data, column_names_list)
 
@@ -1313,23 +1339,15 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.superadmins = User.objects.filter(pk__in=super_admins_ids)
         report_download_url = self.prepare_transactions_report()
         if report_download_url == False:
-            if self.default_vf__or_bank_perm:
-                err_messgae_email = _(
-                    f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
-                    f"Error: you have choose some super admins with default vodafone onboarding "
-                    f"or bank onboarding Please choose super admins with integration patch "
-                    f"onboarding or accept onboarding or vodafone facilitator onboarding"
-                )
-                self.prepare_and_send_error_mail(err_messgae_email)
-            elif self.vf_facilitator_perm == self.instant_or_accept_perm:
-                err_messgae_email = _(
-                    f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
-                    f"Error: you have choose some super admins with vodafone facilitator onboarding "
-                    f"and some with other onboarding methods Please choose super admins with "
-                    f"vodafone facilitator onboarding only or choose accept onboarding or "
-                    f"integration patch onboarding together or individual"
-                )
-                self.prepare_and_send_error_mail(err_messgae_email)
+            err_messgae_email = _(
+                f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
+                f"Error Choosing super admins "
+                f"Please choose super admins with vodafone facilitator onboarding only "
+                f"Or choose super admins with Default Vodafone onboarding only "
+                f"Or choose super admins with accept vodafone onboarding  "
+                f"Or integration patch onboarding together or individual"
+            )
+            self.prepare_and_send_error_mail(err_messgae_email)
         else:
             self.prepare_and_send_report_mail(report_download_url)
         return True

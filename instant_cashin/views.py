@@ -91,11 +91,16 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
 
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
-            queryset.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).filter(
-                    Q(parent_transaction__transaction_id__in=search_keys)|
+            queryset = queryset.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).filter(
+                    Q(parent_transaction__transaction_id__iexact=search_keys)|
                     Q(creditor_account_number__in=search_keys)|
                     Q(creditor_bank__in=search_keys)
             ).prefetch_related("children_transactions").distinct().order_by("-created_at")
+            
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page')
+        queryset = paginator.get_page(page)
+
         return add_fees_and_vat_to_qs(
                 queryset,
                 self.request.user.root,

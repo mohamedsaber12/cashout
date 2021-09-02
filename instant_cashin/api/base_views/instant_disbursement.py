@@ -58,7 +58,7 @@ class InstantDisbursementAPIView(views.APIView):
         """
         if wallet_issuer.lower() in self.specific_issuers: return True
 
-        if not serializer.data['pin']:
+        if serializer.data['is_single_step'] or not serializer.data['pin']:
             return get_from_env(f"{instant_user.root.super_admin.username}_{wallet_issuer}_PIN")
 
         return serializer.validated_data['pin']

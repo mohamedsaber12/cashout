@@ -944,7 +944,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(is_disbursed=False),
                 Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
-        elif self.status == 'success':
+        elif self.status == 'success' or self.status == 'invoices':
             qs = DisbursementData.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
@@ -967,7 +967,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     admin=F('doc__disbursed_by__root__username')
             )
 
-        if self.status in ['success', 'failed']:
+        if self.status in ['success', 'failed', 'invoices']:
             qs = self._annotate_vf_ets_aman_qs(qs)
             if self.instant_or_accept_perm:
                 qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
@@ -1027,6 +1027,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # handle if status is all
         # divide qs into success and failed and pending
         failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
+
+        # remove instant transactions with issuer vodafone, etisalat, aman
+        # in case status is invoices
+        if self.status == 'invoices':
+            failed_qs = failed_qs.filter(
+                    issuer_type__in=[InstantTransaction.ORANGE, InstantTransaction.BANK_WALLET]
+            )
+
         # annotate failed qs and add admin username
         failed_qs = self._annotate_instant_trxs_qs(failed_qs)
 

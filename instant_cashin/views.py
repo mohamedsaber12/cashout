@@ -43,9 +43,9 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
             queryset = queryset.filter(
-                    Q(uid__iexact=search_keys)|
-                    Q(anon_recipient__iexact=search_keys)|
-                    Q(transaction_status_description__icontains=search_keys)
+                Q(uid__iexact=search_keys)|
+                Q(anon_recipient__iexact=search_keys)|
+                Q(transaction_status_description__icontains=search_keys)
             )
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
@@ -53,9 +53,9 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
 
 
         return add_fees_and_vat_to_qs(
-                queryset,
-                self.request.user.root,
-                'wallets'
+            queryset,
+            self.request.user.root,
+            'wallets'
         )
 
 

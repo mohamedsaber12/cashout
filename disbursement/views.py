@@ -24,6 +24,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import ListView, View
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
+from django.core.paginator import Paginator
 
 import urllib
 
@@ -791,9 +792,13 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""
+        paginator = Paginator(self.get_queryset(), 10)
+        page = self.request.GET.get('page')
+        queryset = paginator.get_page(page)
+
         context = {
             'form': SingleStepTransactionForm(checker_user=request.user),
-            'transactions_list': self.get_queryset()
+            'transactions_list': queryset
         }
         if self.request.GET.get('issuer', None) == 'wallets':
             context['wallets'] = True
@@ -845,15 +850,15 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
                 
                 response = requests.post(
-                http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
-                json=payload
-            )
+                    http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
+                    json=payload
+                )
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {
                     "status" : response.json().get('status_code'),
                     "message": response.json().get('status_description')
                 }
-                return redirect(request.path + '?' + urllib.parse.urlencode(data))
+                return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
             
             except:
                 error_msg = "Process stopped during an internal error, please can you try again."
@@ -861,7 +866,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "message": error_msg
                 }
-                return redirect(request.path + '?' + urllib.parse.urlencode(data))
+                return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)
 
@@ -1015,9 +1020,9 @@ class ExportClientsTransactionsMonthlyReport:
             if failed_qs and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
                 q['fees'], q['vat'] = 0, 0
             elif failed_qs and q.__class__.__name__ == 'InstantTransaction' \
-                    and q.issuer_type in ['orange', 'bank_wallet'] and BankTransaction.objects.filter(
-                    status=AbstractBaseStatus.PENDING,
-                    end_to_end=q.uid
+                and q.issuer_type in ['orange', 'bank_wallet'] and BankTransaction.objects.filter(
+                status=AbstractBaseStatus.PENDING,
+                end_to_end=q.uid
             ).count() == 0:
                 q['fees'], q['vat'] = 0, 0
             else:
@@ -1045,22 +1050,24 @@ class ExportClientsTransactionsMonthlyReport:
         """ Annotate qs then add admin username to qs"""
         if self.vf_facilitator_perm:
             qs = qs.annotate(
-                    admin=F('doc__disbursed_by__root__username'),
-                    vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
+                admin=F('doc__disbursed_by__root__username'),
+                vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
             ).values('admin', 'issuer', 'vf_identifier'). \
                 annotate(total=Sum('amount'), count=Count('id'))
         else:
-            qs = qs.annotate(admin=F('doc__disbursed_by__root__username')).values('admin', 'issuer'). \
+            qs = qs.annotate(
+                admin=F('doc__disbursed_by__root__username')
+            ).values('admin', 'issuer'). \
                 annotate(total=Sum('amount'), count=Count('id'))
         return self._customize_issuer_in_qs_values(qs)
 
     def _annotate_instant_trxs_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
         qs = qs.annotate(
-                admin=Case(
-                        When(from_user__isnull=False, then=F('from_user__root__username')),
-                        default=F('document__disbursed_by__root__username')
-                )
+            admin=Case(
+                When(from_user__isnull=False, then=F('from_user__root__username')),
+                default=F('document__disbursed_by__root__username')
+            )
         ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
             annotate(total=Sum('amount'), count=Count('uid'))
         return self._customize_issuer_in_qs_values(qs)
@@ -1069,25 +1076,25 @@ class ExportClientsTransactionsMonthlyReport:
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
         if self.status == 'failed':
             qs = DisbursementData.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    ~Q(reason__exact=''),
-                    Q(is_disbursed=False),
-                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                ~Q(reason__exact=''),
+                Q(is_disbursed=False),
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         elif self.status == 'success':
             qs = DisbursementData.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(is_disbursed=True),
-                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(is_disbursed=True),
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         else:
             qs = DisbursementData.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
-                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         
         # if super admins are vodafone facilitator onboarding save qs
@@ -1125,30 +1132,30 @@ class ExportClientsTransactionsMonthlyReport:
         """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
         if self.status == 'failed':
             qs = InstantTransaction.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.FAILED),
-                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins))
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(status=AbstractBaseStatus.FAILED),
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         elif self.status == 'success':
             qs = InstantTransaction.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.SUCCESSFUL),
-                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins))
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(status=AbstractBaseStatus.SUCCESSFUL),
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         else:
             qs = InstantTransaction.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(status__in=[AbstractBaseStatus.SUCCESSFUL,
-                                  AbstractBaseStatus.PENDING,
-                                  AbstractBaseStatus.FAILED]),
-                    ~Q(transaction_status_code__in=['500', '424']),
-                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins))
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(status__in=[AbstractBaseStatus.SUCCESSFUL,
+                              AbstractBaseStatus.PENDING,
+                              AbstractBaseStatus.FAILED]),
+                ~Q(transaction_status_code__in=['500', '424']),
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         if self.status in ['success', 'failed']:
             qs = self._annotate_instant_trxs_qs(qs)
@@ -1346,7 +1353,7 @@ class ExportClientsTransactionsMonthlyReport:
 
         # 4. Group all data by admin
         final_data = self.group_result_transactions_data(
-                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
+            vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
         if self.instant_or_accept_perm  or self.default_vf__or_bank_perm:

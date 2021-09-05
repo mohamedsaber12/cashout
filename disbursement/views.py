@@ -258,9 +258,15 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                             status=AbstractBaseStatus.SUCCESSFUL
                     ).count() != 0,
                 }
+
+            # add server side pagination
+            paginator = Paginator(context['doc_transactions'], 10)
+            page = self.request.GET.get('page', 1)
+            queryset = paginator.get_page(page)
+
             # add fees and vat to query set in case of accept model
             context['doc_transactions'] = add_fees_and_vat_to_qs(
-                context['doc_transactions'],
+                queryset,
                 request.user.root,
                 doc_obj
             )
@@ -793,7 +799,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""
         paginator = Paginator(self.get_queryset(), 10)
-        page = self.request.GET.get('page')
+        page = self.request.GET.get('page', 1)
         queryset = paginator.get_page(page)
 
         context = {

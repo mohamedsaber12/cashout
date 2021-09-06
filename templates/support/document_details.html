@@ -19,28 +19,31 @@
   <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
   <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
   <style>
-      #docDetailsLeft > li > span{
-          width: 90px;
+    #docDetailsLeft > li > span{
+        width: 90px;
+    }
+    #docDetailsRight > li > span{
+        width: 130px;
+    }
+    #download-doc {
+        width: 17rem!important;
+        margin-right: 10px;
+        color: #333;
+    }
+    #download-doc span {
+        color: #333;
+    }
+    #menu1 {
+      display:none;
+    }
+    {% if LANGUAGE_CODE == 'ar' %}
+      ul > li > span{
+        width: 120px;
       }
-      #docDetailsRight > li > span{
-          width: 130px;
-      }
-      #download-doc {
-          width: 17rem!important;
-          margin-right: 10px;
-          color: #333;
-      }
-      #download-doc span {
-          color: #333;
-      }
-      #menu1 {
-        display:none;
-      }
-      {% if LANGUAGE_CODE == 'ar' %}
-        ul > li > span{
-          width: 120px;
-        }
-      {% endif %}
+    {% endif %}
+    .pagination > li > span {
+      width: 33px;
+    }
   </style>
 {% endblock %}
 
@@ -58,7 +61,6 @@
           <div class="clearfix"></div>
         </div>
         <div class="x_content">
-
           <table class="table table-bordered" id="transaction-table">
             <thead>
             <tr>
@@ -180,6 +182,39 @@
             {% endfor %}
             </tbody>
           </table>
+          <ul class="pagination">
+            {% if disbursement_records.has_previous %}
+              <li>
+                <a href="?page={{ disbursement_records.previous_page_number }}">
+                  <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="disabled"><span><i class="fa fa-chevron-left" aria-hidden="true"></i></span></li>
+            {% endif %}
+
+            {% if disbursement_records.number|add:'-4' > 1 %}
+              <li><a href="?page={{ disbursement_records.number|add:'-5' }}">&hellip;</a></li>
+            {% endif %}
+
+            {% for i in disbursement_records.paginator.page_range %}
+              {% if disbursement_records.number == i %}
+                <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+              {% elif i > disbursement_records.number|add:'-5' and i < disbursement_records.number|add:'5' %}
+                <li><a href="?page={{ i }}">{{ i }}</a></li>
+              {% endif %}
+            {% endfor %}
+
+            {% if disbursement_records.paginator.num_pages > disbursement_records.number|add:'4' %}
+              <li><a href="?page={{ disbursement_records.number|add:'5' }}">&hellip;</a></li>
+            {% endif %}
+
+            {% if disbursement_records.has_next %}
+              <li><a href="?page={{ disbursement_records.next_page_number }}"><i class="fa fa-chevron-right" aria-hidden="true"></i></a></li>
+            {% else %}
+              <li class="disabled"><span><i class="fa fa-chevron-right" aria-hidden="true"></i></span></li>
+            {% endif %}
+          </ul>
         </div>
       </div>
       <!--   Document Details   -->
@@ -267,8 +302,6 @@
   </div>
   {# End of transaction details #}
 
-          
-
   {# End of modal for export failed file transactions #}
 
 {% endblock %}
@@ -294,6 +327,8 @@
     $(document).ready( function () {
       var table = $('#transaction-table').DataTable({
         "bLengthChange" : false,
+        "bPaginate": false,
+        "bInfo" : false
       });
 
       var buttons = new $.fn.dataTable.Buttons( table, {

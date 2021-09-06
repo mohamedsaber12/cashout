@@ -8,6 +8,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
+from django.core.paginator import Paginator
 
 from data.models import Doc
 from disbursement.views import DisbursementDocTransactionsView
@@ -187,13 +188,18 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
                 id__in=doc_transactions.values('id')
             )
 
+        # add server side pagination
+        paginator = Paginator(doc_transactions, 10)
+        page = self.request.GET.get('page', 1)
+        queryset = paginator.get_page(page)
+
         context = {
             'doc_obj': doc_obj,
             'reviews': doc_obj.reviews.all() ,
             'doc_status': self.retrieve_doc_status(doc_obj),
             'disbursement_ratio': doc_obj.disbursement_ratio(),
             'is_reviews_completed': doc_obj.is_reviews_completed(),
-            'disbursement_records': add_fees_and_vat_to_qs(doc_transactions, admin, doc_obj),
+            'disbursement_records': add_fees_and_vat_to_qs(queryset, admin, doc_obj),
             'disbursement_doc_data': doc_obj.disbursement_txn,
             'doc_transactions_totals':
                 DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions_qs),

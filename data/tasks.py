@@ -1032,7 +1032,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         # in case status is invoices
         if self.status == 'invoices':
             failed_qs = failed_qs.filter(
-                    issuer_type__in=[InstantTransaction.ORANGE, InstantTransaction.BANK_WALLET]
+                issuer_type__in=[InstantTransaction.ORANGE, InstantTransaction.BANK_WALLET]
             )
 
         # annotate failed qs and add admin username
@@ -1042,6 +1042,18 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             AbstractBaseStatus.SUCCESSFUL,
             AbstractBaseStatus.PENDING
         ]))
+
+        # remove pending transaction with issuer [vodafone, etisalat, aman]
+        success_qs = success_qs.filter(
+            ~Q(Q(status=AbstractBaseStatus.PENDING) &
+                Q(issuer_type__in=[
+                    InstantTransaction.VODAFONE,
+                    InstantTransaction.ETISALAT,
+                    InstantTransaction.AMAN
+                ])
+            )
+        )
+
         # annotate success qs and add admin username
         success_qs = self._annotate_instant_trxs_qs(success_qs)
 

@@ -4,3 +4,4 @@ from .bulk_transaction_inquiry import BulkTransactionInquiryAPIView
 from .instant_disbursement import InstantDisbursementAPIView
 from .instant_disbursement import SingleStepDisbursementAPIView
 from .user_inquiry import InstantUserInquiryAPIView
+from .cancel_aman_transaction import CancelAmanTransactionAPIView

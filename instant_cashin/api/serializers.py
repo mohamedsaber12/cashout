@@ -19,6 +19,7 @@ from .validators import (
 )
 
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+import uuid
 
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
@@ -220,7 +221,8 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         if aman_cashing_details:
             return {
                 'bill_reference': aman_cashing_details.bill_reference,
-                'is_paid': aman_cashing_details.is_paid
+                'is_paid': aman_cashing_details.is_paid,
+                'is_cancelled': aman_cashing_details.is_cancelled
             }
 
     def get_created_at(self, transaction):
@@ -255,3 +257,9 @@ class InstantUserInquirySerializer(serializers.Serializer):
     msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
     issuer = serializers.CharField(max_length=12, required=True, validators=[issuer_validator])
     unique_identifier = serializers.CharField(max_length=255, required=True)    # Add validations/rate limit
+
+
+class CancelAmanTransactionSerializer(serializers.Serializer):
+    
+    transaction_id = serializers.UUIDField(required=True)
+    

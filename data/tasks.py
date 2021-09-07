@@ -6,6 +6,7 @@ import json
 import logging
 import re
 from decimal import Decimal
+from celery.app import task
 
 import pandas as pd
 import requests
@@ -46,6 +47,8 @@ from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 from .decorators import respects_language
 from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
+
+from django.core.paginator import Paginator
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -1359,11 +1362,65 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         else:
             self.prepare_and_send_report_mail(report_download_url)
         return True
+    
+class ExportDashboardUserTransactions(task):
+    
+    def create_transactions_report():
+        filename = f"transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+
+
+        paginator = Paginator(self.data, 65535)
+        for page_number in paginator.page_range:
+            queryset = paginator.page(page_number)
+            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At"]                                
+            ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
+
+        # 1. Write sheet header/column names - first row
+            row_num = 0
+            font_style = xlwt.XFStyle()
+            font_style.font.bold = True
+
+            for col_nums in range(len(column_names_list)):
+                ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+                
+            row_num = row_num + 1
+
+            for row in queryset:
+                ws.write(row_num, 0, str(row.uid))
+                ws.write(row_num, 1, str(row.anon_recipient))
+                ws.write(row_num, 2, str(row.amount))
+                ws.write(row_num, 3, str(row.fees))
+                ws.write(row_num, 4, str(row.vat))
+                ws.write(row_num, 5, str(row.issuer_choice_verbose))
+                ws.write(row_num, 6, str(row.status_choice_verbose))
+                ws.write(row_num, 7, str(row.updated_at))
+                row_num = row_num + 1
+
+        wb.save(file_path)  
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
+
+    def run(self, user, queryset, start_date, end_date):
+        self.user = user
+        self.data = queryset
+        self.start_date = start_date
+        self.end_date = end_date
+        download_url = self.create_transactions_report()
+        mail_content = _(
+                f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
+                f"transactions report within the period of {self.start_date} to {self.end_date} "
+                f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+        )
+        mail_subject = "Test Email"
+        deliver_mail(self.user, _(mail_subject), mail_content)
 
 
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
 EWalletsSheetProcessor = app.register_task(EWalletsSheetProcessor())
 ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
+ExportDashboardUserTransactions = app.register_task(ExportDashboardUserTransactions())
 
 
 @app.task()

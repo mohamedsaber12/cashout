@@ -19,6 +19,7 @@ from .validators import (
 )
 
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+import uuid
 
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
@@ -185,7 +186,12 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     transaction_id = serializers.SerializerMethodField()
     issuer = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
     msisdn = serializers.SerializerMethodField()
-    disbursement_status = CustomChoicesField(source='status', choices=AbstractBaseStatus.STATUS_CHOICES)
+    disbursement_status = CustomChoicesField(
+        source='status', choices=[
+            *AbstractBaseStatus.STATUS_CHOICES,
+            ("U", _("Unknown")),
+        ]
+    )
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
@@ -220,7 +226,8 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         if aman_cashing_details:
             return {
                 'bill_reference': aman_cashing_details.bill_reference,
-                'is_paid': aman_cashing_details.is_paid
+                'is_paid': aman_cashing_details.is_paid,
+                'is_cancelled': aman_cashing_details.is_cancelled
             }
 
     def get_created_at(self, transaction):
@@ -255,3 +262,9 @@ class InstantUserInquirySerializer(serializers.Serializer):
     msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
     issuer = serializers.CharField(max_length=12, required=True, validators=[issuer_validator])
     unique_identifier = serializers.CharField(max_length=255, required=True)    # Add validations/rate limit
+
+
+class CancelAmanTransactionSerializer(serializers.Serializer):
+    
+    transaction_id = serializers.UUIDField(required=True)
+    

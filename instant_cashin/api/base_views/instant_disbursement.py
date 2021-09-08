@@ -34,6 +34,7 @@ INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try ag
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
 ORANGE_PENDING_MSG = _("Your transaction will be process the soonest, wait for a response at the next 24 hours")
 BUDGET_EXCEEDED_MSG = _("Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team")
+TIMEOUT_ERROR_MSG = _('Request timeout error')
 
 
 class InstantDisbursementAPIView(views.APIView):
@@ -294,11 +295,11 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            except (requests.Timeout, TimeoutError) as e:
+            except TimeoutError as e:
                 logging_message(
-                        INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
+                    INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )
-                transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+                transaction.mark_unknown(status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (ImproperlyConfigured, Exception) as e:
@@ -313,6 +314,11 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_successful(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
                 user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
+            elif json_trx_response["TXNSTATUS"] == "501":
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"timeout, {json_trx_response}")
+                transaction.mark_unknown(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
+                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
+
 
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_trx_response}")
             transaction.mark_failed(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])

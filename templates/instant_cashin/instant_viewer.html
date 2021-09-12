@@ -10,6 +10,22 @@
   <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
   <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
   <style>
+    .export-dropdown {
+      position: relative;
+      display: inline-block;
+      border: 0;
+      background: transparent;
+      border-radius: 1.25rem!important;
+      width: 8rem!important;
+      padding: .75rem!important;
+      padding-bottom: .5rem!important;
+      -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+    }
+    .input_date {
+      border-radius: 1.25rem!important;
+      width: 80%!important;
+    }
     #trxDetailsDataRight > li > span{
       {% if bank_transactions %}
         width: 120px;

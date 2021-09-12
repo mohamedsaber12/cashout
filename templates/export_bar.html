@@ -1,20 +1,21 @@
 {% load custom_tags i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 
-<div >
-  <form action="." method="get">
-    <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-      <h4> Export transactions </h4>
-      <div class="input-group">
-        <span> Start Date </span><input required type="date" class="form-control" name="export_start_date" >
-        <br>
-        <span> End Date </span><input required type="date" class="form-control" name="export_end_date" >
-        <br>
-        <br>
-        <br>
-          <button class="btn btn-default" type="submit" value="search">{% trans 'Export!'%}</button>
-
-          {% if 'export_message' in request.GET %}
-          {% endif %}
+<div>
+  <form class="form-inline" action="." method="get">
+    <h4> Export transactions </h4>
+    <div class="row">
+      <div class="col-md-4 col-sm-4 col-xs-12 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        <span> Start Date </span><input required type="date" class="form-control input_date" name="export_start_date" >
+      </div>
+      <div class="col-md-4 col-sm-4 col-xs-12 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        <span> End Date </span><input required type="date" class="form-control input_date" name="export_end_date">
+      </div>
+      <div class="col-md-4 col-sm-4 col-xs-12 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        <button type="submit" class="btn btn-default export-dropdown
+                  pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+          <i class="glyphicon glyphicon-download-alt"></i> {% trans 'Export' %}
+        </button>
       </div>
     </div>
   </form>

@@ -1363,9 +1363,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             self.prepare_and_send_report_mail(report_download_url)
         return True
     
-class ExportDashboardUserTransactions(task):
+class ExportDashboardUserTransactionsEwallets(Task):
     
-    def create_transactions_report():
+    def create_transactions_report(self):
         filename = f"transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
@@ -1413,14 +1413,14 @@ class ExportDashboardUserTransactions(task):
                 f"transactions report within the period of {self.start_date} to {self.end_date} "
                 f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
         )
-        mail_subject = "Test Email"
+        mail_subject = "Ewallets Report"
         deliver_mail(self.user, _(mail_subject), mail_content)
 
 
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
 EWalletsSheetProcessor = app.register_task(EWalletsSheetProcessor())
 ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
-ExportDashboardUserTransactions = app.register_task(ExportDashboardUserTransactions())
+ExportDashboardUserTransactionsEwallets = app.register_task(ExportDashboardUserTransactionsEwallets())
 
 
 @app.task()

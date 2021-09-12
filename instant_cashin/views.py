@@ -14,7 +14,7 @@ from disbursement.utils import add_fees_and_vat_to_qs
 from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction
 from django.core.paginator import Paginator
-from data.tasks import ExportDashboardUserTransactions
+from data.tasks import ExportDashboardUserTransactionsEwallets
 
 
 
@@ -53,6 +53,8 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
         queryset = paginator.get_page(page)
+        
+        print("HEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEERE")
 
 
         return add_fees_and_vat_to_qs(
@@ -66,7 +68,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         export_end_date = request.GET.get('export_end_date')
         if export_start_date and export_end_date:
             EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            ExportDashboardUserTransactions.delay(self.request.user, self.queryset,export_start_date, export_end_date )
+            ExportDashboardUserTransactionsEwallets.run(self.request.user, self.get_queryset(),export_start_date, export_end_date )
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
         else:
             return super().get(self,request)

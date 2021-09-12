@@ -258,7 +258,7 @@
             }
 
 
-6. **Instant cashin request through Bank Cards as an issuer**
+6. **Instant cashin request through Bank Cards / Accounts as an issuer**
 
     * > request
 

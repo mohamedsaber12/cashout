@@ -59,7 +59,8 @@ class InstantDisbursementAPIView(views.APIView):
         """
         if wallet_issuer.lower() in self.specific_issuers: return True
 
-        if serializer.data['is_single_step'] or not serializer.data['pin']:
+        if serializer.data.get('is_single_step', None) or \
+            not serializer.data.get('pin', None):
             return get_from_env(f"{instant_user.root.super_admin.username}_{wallet_issuer}_PIN")
 
         return serializer.validated_data['pin']
@@ -260,17 +261,25 @@ class InstantDisbursementAPIView(views.APIView):
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
             request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
             logging_message(
-                    INSTANT_CASHIN_REQUEST_LOGGER, "[request] [DATA DICT TO CENTRAL]", request,
-                    f"{request_data_dictionary_without_pins}"
+                INSTANT_CASHIN_REQUEST_LOGGER, "[request] [DATA DICT TO CENTRAL]", request,
+                f"{request_data_dictionary_without_pins}"
             )
 
             try:
                 if issuer == "aman":
                     return self.aman_issuer_handler(request, transaction, serializer, user)
 
+                # check if msisdn is test number
+                if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
+                    issuer in ['vodafone', 'etisalat'] and \
+                    data_dict['MSISDN2'] == get_from_env(f"test_number_for_{issuer}"):
+                    transaction.mark_successful(200, "")
+                    user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                    return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
+
                 trx_response = requests.post(
-                        get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
-                        timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"]
+                    get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
+                    timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"]
                 )
 
                 if trx_response.ok:
@@ -325,6 +334,17 @@ class InstantDisbursementAPIView(views.APIView):
                         transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
                         field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK
                 )
+
+            # check if msisdn is test number
+            if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
+                    issuer in ['orange', 'bank_wallet'] and \
+                    instant_trx_obj.anon_recipient == get_from_env(f"test_number_for_{issuer}"):
+
+                bank_trx_obj.mark_successful("8333", "success")
+                instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
+                bank_trx_obj.user_created.root. \
+                    budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
+                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
 
             return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
 

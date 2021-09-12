@@ -1366,7 +1366,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 class ExportDashboardUserTransactionsEwallets(Task):
     
     def create_transactions_report(self):
-        filename = f"transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
+        filename = f"ewallets_transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
 
@@ -1415,12 +1415,66 @@ class ExportDashboardUserTransactionsEwallets(Task):
         )
         mail_subject = "Ewallets Report"
         deliver_mail(self.user, _(mail_subject), mail_content)
+        
+        
+class ExportDashboardUserTransactionsBanks(Task):
+    
+    def create_transactions_report(self):
+        filename = f"banks_transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+
+
+        paginator = Paginator(self.data, 65535)
+        for page_number in paginator.page_range:
+            queryset = paginator.page(page_number)
+            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status","Updated At"]                                
+            ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
+
+        # 1. Write sheet header/column names - first row
+            row_num = 0
+            font_style = xlwt.XFStyle()
+            font_style.font.bold = True
+
+            for col_nums in range(len(column_names_list)):
+                ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+                
+            row_num = row_num + 1
+
+            for row in queryset:
+                ws.write(row_num, 0, str(row.parent_transaction.transaction_id))
+                ws.write(row_num, 1, str(row.creditor_account_number))
+                ws.write(row_num, 2, str(row.amount))
+                ws.write(row_num, 3, str(row.fees))
+                ws.write(row_num, 4, str(row.vat))
+                ws.write(row_num, 6, str(row.status_choice_verbose))
+                ws.write(row_num, 7, str(row.updated_at))
+                row_num = row_num + 1
+
+        wb.save(file_path)  
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
+
+    def run(self, user, queryset, start_date, end_date):
+        self.user = user
+        self.data = queryset
+        self.start_date = start_date
+        self.end_date = end_date
+        download_url = self.create_transactions_report()
+        mail_content = _(
+                f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
+                f"transactions report within the period of {self.start_date} to {self.end_date} "
+                f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+        )
+        mail_subject = "Banks Report"
+        deliver_mail(self.user, _(mail_subject), mail_content)
 
 
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
 EWalletsSheetProcessor = app.register_task(EWalletsSheetProcessor())
 ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
 ExportDashboardUserTransactionsEwallets = app.register_task(ExportDashboardUserTransactionsEwallets())
+ExportDashboardUserTransactionsBanks = app.register_task(ExportDashboardUserTransactionsBanks())
 
 
 @app.task()

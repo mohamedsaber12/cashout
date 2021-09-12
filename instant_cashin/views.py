@@ -4,6 +4,8 @@ from __future__ import unicode_literals
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
+
 from django.views.generic import ListView
 
 from disbursement.models import BankTransaction
@@ -12,6 +14,7 @@ from disbursement.utils import add_fees_and_vat_to_qs
 from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction
 from django.core.paginator import Paginator
+from data.tasks import ExportDashboardUserTransactionsEwallets, ExportDashboardUserTransactionsBanks
 
 
 
@@ -39,7 +42,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         else:
             hierarchy_to_filter_with = self.request.user.hierarchy
         queryset = super().get_queryset().filter(from_user__hierarchy=hierarchy_to_filter_with)
-
+                    
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
             queryset = queryset.filter(
@@ -51,12 +54,22 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         page = self.request.GET.get('page')
         queryset = paginator.get_page(page)
 
-
         return add_fees_and_vat_to_qs(
             queryset,
             self.request.user.root,
             'wallets'
         )
+        
+    def get(self, request):
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        if export_start_date and export_end_date:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
+            ExportDashboardUserTransactionsEwallets.run(self.request.user, self.get_queryset(),export_start_date, export_end_date )
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+        else:
+            return super().get(self,request)
+
 
 
 class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
@@ -106,3 +119,14 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
                 self.request.user.root,
                 None
         )
+        
+    def get(self, request):
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        if export_start_date and export_end_date:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
+            ExportDashboardUserTransactionsBanks.run(self.request.user, self.get_queryset(),export_start_date, export_end_date )
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+        else:
+            return super().get(self,request)
+

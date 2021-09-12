@@ -1,0 +1,22 @@
+{% load custom_tags i18n %}
+
+<div >
+  <form action="." method="get">
+    <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+      <h4> Export transactions </h4>
+      <div class="input-group">
+        <span> Start Date </span><input required type="date" class="form-control" name="export_start_date" >
+        <br>
+        <span> End Date </span><input required type="date" class="form-control" name="export_end_date" >
+        <br>
+        <br>
+        <br>
+          <button class="btn btn-default" type="submit" value="search">{% trans 'Export!'%}</button>
+
+          {% if 'export_message' in request.GET %}
+          {% endif %}
+      </div>
+    </div>
+  </form>
+<center><h5 style="color:red"> {{request.GET.export_message}} </h5></center>
+</div>

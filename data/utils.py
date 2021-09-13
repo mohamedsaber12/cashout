@@ -220,7 +220,10 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
     from_email = settings.SERVER_EMAIL
 
     if recipients is None:
-        subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+        if user_obj.brand:
+            subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
+        else:
+            subject = f'[{user_obj.root.brand.mail_subject}]' + subject_tail
         recipient_list = [user_obj.email]
     else:
         subject = f'[{recipients[0].brand.mail_subject}]' + subject_tail

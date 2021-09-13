@@ -217,11 +217,18 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     generate_all_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
                     return HttpResponse(status=200)
 
+            search_filter = None
+
             # 2.2 Prepare the context dict regarding the type of the doc
             if doc_obj.is_e_wallet:
                 template_name = "disbursement/e_wallets_transactions_list.html"
                 doc_transactions = doc_obj.disbursement_data.all()
-
+                if self.request.GET.get('search'):
+                    search_keys = self.request.GET.get('search')
+                    search_filter = (
+                        Q(msisdn__icontains=search_keys)|
+                        Q(reference_id__iexact=search_keys)
+                    )
                 context = {
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
@@ -231,6 +238,13 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
             elif doc_obj.is_bank_wallet:
                 template_name = "disbursement/bank_transactions_list.html"
                 doc_transactions = doc_obj.bank_wallets_transactions.all()
+                if self.request.GET.get('search'):
+                    search_keys = self.request.GET.get('search')
+                    search_filter = (
+                        Q(uid__iexact=search_keys)|
+                        Q(anon_recipient__icontains=search_keys)|
+                        Q(transaction_status_description__icontains=search_keys)
+                    )
 
                 context = {
                     'doc_transactions': doc_transactions,
@@ -248,7 +262,13 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     distinct("parent_transaction__transaction_id").\
                     values_list("id", flat=True)
                 doc_transactions = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
-
+                if self.request.GET.get('search'):
+                    search_keys = self.request.GET.get('search')
+                    search_filter = (
+                        Q(parent_transaction__transaction_id__iexact=search_keys)|
+                        Q(creditor_account_number__icontains=search_keys)|
+                        Q(creditor_bank__icontains=search_keys)
+                    )
                 context = {
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.bank_cards_transactions.filter(
@@ -258,7 +278,8 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                             status=AbstractBaseStatus.SUCCESSFUL
                     ).count() != 0,
                 }
-
+            if search_filter:
+                context['doc_transactions'] = context['doc_transactions'].filter(search_filter)
             # add server side pagination
             paginator = Paginator(context['doc_transactions'], 10)
             page = self.request.GET.get('page', 1)

@@ -291,7 +291,8 @@
     var table = $('#transaction-table').DataTable({
       "bLengthChange" : false,
       "bPaginate": false,
-      "bInfo" : false
+      "bInfo" : false,
+      "searching": false
     });
   
     var buttons = new $.fn.dataTable.Buttons( table, {
@@ -327,6 +328,15 @@
     if (empty_row) {
       empty_row.parent().attr('id', 'empty_row');
     }
+
+    let search_btn_str = `<form action="." style="display:inline;" method="get">`
+    search_btn_str += `<div class="input-group pull-{{'right'|invert_dir:LANGUAGE_CODE}}" style='margin-bottom:0;'>`;
+    search_btn_str += `<input type='text' class='form-control' name='search' placeholder='Search for a transaction'>`;
+    search_btn_str += `<span class='input-group-btn'>`;
+    search_btn_str += `<button class='btn btn-default' type='submit' value='search'>Go!</button>`;
+    search_btn_str += `</span></div></form>`;
+    $(search_btn_str).insertAfter( ".dt-buttons.btn-group" );
+
     $(document).ready(function () {
       $('#export-failed').on('click', function (ev) {
         $.ajax({

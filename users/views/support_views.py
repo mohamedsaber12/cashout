@@ -177,9 +177,22 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         doc_obj = doc.first()
         doc_transactions = doc_obj.disbursement_data.all()
         doc_transactions_qs = doc_obj.disbursement_data.all()
+        search_filter = None
+        if self.request.GET.get('search'):
+            search_keys = self.request.GET.get('search')
+            search_filter = (
+                Q(msisdn__icontains=search_keys)|
+                Q(id__iexact=search_keys)
+            )
         if doc_obj.is_bank_wallet:
             doc_transactions = doc_obj.bank_wallets_transactions.all()
             doc_transactions_qs = doc_obj.bank_wallets_transactions.all()
+            if search_filter:
+                search_filter = (
+                    Q(uid__iexact=search_keys)|
+                    Q(anon_recipient__icontains=search_keys)|
+                    Q(transaction_status_description__icontains=search_keys)
+                )
         elif doc_obj.is_bank_card:
             doc_transactions = doc_obj.bank_cards_transactions.all()\
                 .order_by('parent_transaction__transaction_id', '-created_at')\
@@ -187,6 +200,14 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             doc_transactions_qs = BankTransaction.objects.filter(
                 id__in=doc_transactions.values('id')
             )
+            if search_filter:
+                search_filter = (
+                    Q(parent_transaction__transaction_id__iexact=search_keys)|
+                    Q(creditor_account_number__icontains=search_keys)|
+                    Q(creditor_bank__icontains=search_keys)
+                )
+        if search_filter:
+            doc_transactions = doc_transactions.filter(search_filter)
 
         # add server side pagination
         paginator = Paginator(doc_transactions, 10)

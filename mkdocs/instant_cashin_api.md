@@ -324,6 +324,10 @@
 
 
 8. **Test e-wallet numbers**
+   1. **IMPORTANT Note**:
+
+   2.1) these numbers will get success response on staging environment only
+
 
    8.1 Test number for vodafone issuer
    

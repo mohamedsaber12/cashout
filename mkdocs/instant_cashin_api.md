@@ -344,3 +344,7 @@
     4. Test number for bank_wallet issuer
    
             01123416789
+
+    5. Test number for bank_card issuer
+
+           1111222233334444

@@ -321,3 +321,21 @@
                 "status_description": "Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team",
                 "status_code": "400"
             }
+
+8. **Test e-wallet numbers**
+
+   8.1 Test number for vodafone issuer
+
+            01023456789
+
+   8.2 Test number for etisalat issuer
+
+            01123456789
+
+   8.3 Test number for orange issuer
+
+            01223456789
+
+   8.4 Test number for bank_wallet issuer
+
+            01123416789

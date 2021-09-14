@@ -322,6 +322,7 @@
                 "status_code": "400"
             }
 
+
 8. **Test e-wallet numbers**
 
    8.1 Test number for vodafone issuer

@@ -325,22 +325,22 @@
 
 8. **Test e-wallet numbers**
 
-    1. **IMPORTANT Note**:
+    **IMPORTANT Note**:
 
-       1.1) these numbers will get success response on staging environment only
+        these numbers will get success response on staging environment only
     
-    2. Test number for vodafone issuer
+    1. Test number for vodafone issuer
    
              01023456789
 
-    3. Test number for etisalat issuer
+    2. Test number for etisalat issuer
    
             01123456789
 
-    4. Test number for orange issuer
+    3. Test number for orange issuer
    
              01223456789
 
-    5. Test number for bank_wallet issuer
+    4. Test number for bank_wallet issuer
    
             01123416789

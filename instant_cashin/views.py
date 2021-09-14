@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -50,6 +51,14 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                 Q(anon_recipient__iexact=search_keys)|
                 Q(transaction_status_description__icontains=search_keys)
             )
+        if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
+            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
+                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            return add_fees_and_vat_to_qs(
+                queryset,
+                self.request.user.root,
+                'wallets'
+                ) 
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
         queryset = paginator.get_page(page)
@@ -109,6 +118,15 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
                     Q(creditor_account_number__in=search_keys)|
                     Q(creditor_bank__in=search_keys)
             ).prefetch_related("children_transactions").distinct().order_by("-created_at")
+            
+        if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
+            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
+                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            return add_fees_and_vat_to_qs(
+                queryset,
+                self.request.user.root,
+                None
+                ) 
             
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')

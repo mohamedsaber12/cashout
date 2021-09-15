@@ -321,3 +321,30 @@
                 "status_description": "Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team",
                 "status_code": "400"
             }
+
+
+8. **Test e-wallet numbers**
+
+    **IMPORTANT Note**:
+
+        these numbers will get success response on staging environment only
+    
+    1. Test number for vodafone issuer
+   
+             01023456789
+
+    2. Test number for etisalat issuer
+   
+            01123456789
+
+    3. Test number for orange issuer
+   
+             01223456789
+
+    4. Test number for bank_wallet issuer
+   
+            01123416789
+
+    5. Test number for bank_card issuer
+
+           1111222233334444

@@ -11,6 +11,7 @@ nav:
   - Cancel Aman Transaction API: cancel_aman_transaction_api.md
   - Bulk Transaction Inquiry API: bulk_transaction_inquiry_api.md
   - Budget Inquiry API: budget_inquiry_api.md
+  - CallBack Url: callback_url.md
   - Response Codes: response_codes.md
 
 theme:

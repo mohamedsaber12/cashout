@@ -49,6 +49,8 @@ from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
+from disbursement.utils import add_fees_and_vat_to_qs
+
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -1416,7 +1418,11 @@ class ExportDashboardUserTransactionsEwallets(Task):
 
     def run(self, user, queryset, start_date, end_date):
         self.user = user
-        self.data = queryset
+        self.data = add_fees_and_vat_to_qs(
+            queryset,
+            self.user.root,
+            'wallets'
+            )
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()
@@ -1469,7 +1475,11 @@ class ExportDashboardUserTransactionsBanks(Task):
 
     def run(self, user, queryset, start_date, end_date):
         self.user = user
-        self.data = queryset
+        self.data = add_fees_and_vat_to_qs(
+            queryset,
+            self.user.root,
+            None
+            ) 
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()

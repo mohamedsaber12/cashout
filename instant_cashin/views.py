@@ -54,11 +54,12 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
             queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
                                        updated_at__lte=self.request.GET.get('export_end_date'))
-            return add_fees_and_vat_to_qs(
-                queryset,
-                self.request.user.root,
-                'wallets'
-                ) 
+            # return add_fees_and_vat_to_qs(
+            #     queryset,
+            #     self.request.user.root,
+            #     'wallets'
+            #     ) 
+            return queryset
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
         queryset = paginator.get_page(page)
@@ -122,11 +123,12 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
         if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
             queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
                                        updated_at__lte=self.request.GET.get('export_end_date'))
-            return add_fees_and_vat_to_qs(
-                queryset,
-                self.request.user.root,
-                None
-                ) 
+            # return add_fees_and_vat_to_qs(
+            #     queryset,
+            #     self.request.user.root,
+            #     None
+            #     ) 
+            return queryset
             
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')

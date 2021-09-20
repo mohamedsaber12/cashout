@@ -308,41 +308,54 @@ class BankWalletsAndCardsSheetProcessor(Task):
                                      codes_list=None,
                                      purposes_list=None):
         """"""
+        # get Budget from db
+        budget = Budget.objects.get(disburser=doc_obj.owner.root)
 
         # 1 For bank wallets/Orange: Save the refined data as instant transactions records
         if doc_obj.is_bank_wallet:
             processed_data = zip(amounts_list, names_list, recipients_list, issuers_list)
-            objs = [
-                InstantTransaction(
-                        document=doc_obj,
-                        issuer_type=AbstractBaseIssuer.ORANGE if record[3].lower() == "orange"
-                                                                                    else AbstractBaseIssuer.BANK_WALLET,
-                        amount=record[0],
-                        recipient_name=record[1],
-                        anon_recipient=record[2]
-                ) for record in processed_data
-            ]
+            objs = []
+            for record in processed_data:
+                fees, vat = budget.calculate_fees_and_vat_for_amount(
+                    record[0], record[3].lower()
+                )
+                objs.append(InstantTransaction(
+                    document=doc_obj,
+                    issuer_type=AbstractBaseIssuer.ORANGE if record[3].lower() == "orange"
+                    else AbstractBaseIssuer.BANK_WALLET,
+                    amount=record[0],
+                    recipient_name=record[1],
+                    anon_recipient=record[2],
+                    fees=fees,
+                    vat=vat
+                ))
+
             InstantTransaction.objects.bulk_create(objs=objs)
 
         # 2 For bank cards: Save the refined data as bank transactions records
         elif doc_obj.is_bank_card:
             processed_data = zip(amounts_list, names_list, recipients_list, codes_list, purposes_list)
             for record in processed_data:
+                fees, vat = budget.calculate_fees_and_vat_for_amount(
+                    record[0], "bank_card"
+                )
                 category_purpose_dict = determine_trx_category_and_purpose(record[4])
                 BankTransaction.objects.create(
-                        currency="EGP",
-                        debtor_address_1="EG",
-                        creditor_address_1="EG",
-                        corporate_code=get_from_env("ACH_CORPORATE_CODE"),
-                        debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
-                        document=doc_obj,
-                        user_created=doc_obj.owner,
-                        amount=record[0],
-                        creditor_name=record[1],
-                        creditor_account_number=record[2],
-                        creditor_bank=record[3],
-                        category_code=category_purpose_dict.get("category_code", "CASH"),
-                        purpose=category_purpose_dict.get("purpose", "CASH")
+                    currency="EGP",
+                    debtor_address_1="EG",
+                    creditor_address_1="EG",
+                    corporate_code=get_from_env("ACH_CORPORATE_CODE"),
+                    debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
+                    document=doc_obj,
+                    user_created=doc_obj.owner,
+                    amount=record[0],
+                    creditor_name=record[1],
+                    creditor_account_number=record[2],
+                    creditor_bank=record[3],
+                    category_code=category_purpose_dict.get("category_code", "CASH"),
+                    purpose=category_purpose_dict.get("purpose", "CASH"),
+                    fees=fees,
+                    vat=vat
                 )
 
     def run(self, doc_id, *args, **kwargs):
@@ -355,6 +368,9 @@ class BankWalletsAndCardsSheetProcessor(Task):
             budget_fees_key = "bank_card" if doc_obj.is_bank_card else "bank_wallet"
             file_type = "wallets file" if doc_obj.is_bank_wallet else "cards file"
             callwallets_moderator = doc_obj.owner.root.callwallets_moderator.first()
+
+            UPLOAD_LOGGER.debug(f"[message] [bank {file_type} doc start processing] [celery_task] -- Doc id: {doc_id}")
+
             max_amount_can_be_disbursed = self.determine_max_amount_can_be_disbursed(doc_obj)
             df = self.accumulate_df(doc_obj)
             rows_count = df.count()
@@ -726,6 +742,7 @@ class EWalletsSheetProcessor(Task):
 
     def run(self, doc_id, *args, **kwargs):
         try:
+            UPLOAD_LOGGER.debug(f"[message] [e wallets file start processing] [celery_task] -- Doc id: {doc_id}")
             self.doc_obj = Doc.objects.get(id=doc_id)
             self.is_normal_sheet_specs = self.doc_obj.owner.root.root_entity_setups.is_normal_flow
             wallets_moderator = self.doc_obj.owner.root.callwallets_moderator.first()
@@ -804,12 +821,18 @@ class EWalletsSheetProcessor(Task):
 
             # 7.2 For issuer based sheets: Save the refined data as disbursement data records
             else:
+                budget = Budget.objects.get(disburser=self.doc_obj.owner.root)
                 records = zip(amounts_list, msisdn_list, issuers_list)
-                objs = [
-                    DisbursementData(
-                            doc=self.doc_obj, amount=float(record[0]), msisdn=record[1], issuer=record[2]
-                    ) for record in records
-                ]
+                objs = []
+                for record in records:
+                    fees, vat = budget.calculate_fees_and_vat_for_amount(
+                        record[0], record[2].lower()
+                    )
+                    objs.append(DisbursementData(
+                        doc=self.doc_obj, amount=float(record[0]), msisdn=record[1],
+                        issuer=record[2], fees=fees, vat=vat
+                    ))
+
                 DisbursementData.objects.bulk_create(objs=objs)
 
             self.doc_obj.save()

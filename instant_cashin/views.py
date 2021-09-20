@@ -41,7 +41,9 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
             hierarchy_to_filter_with = user.hierarchy
         else:
             hierarchy_to_filter_with = self.request.user.hierarchy
-        queryset = super().get_queryset().filter(from_user__hierarchy=hierarchy_to_filter_with)
+        queryset = super().get_queryset().filter(
+            from_user__hierarchy=hierarchy_to_filter_with
+        ).order_by("-created_at")
                     
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
@@ -49,16 +51,10 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                 Q(uid__iexact=search_keys)|
                 Q(anon_recipient__iexact=search_keys)|
                 Q(transaction_status_description__icontains=search_keys)
-            )
-        paginator = Paginator(queryset, 20)
+            ).order_by("-created_at")
+        paginator = Paginator(queryset, 10)
         page = self.request.GET.get('page')
-        queryset = paginator.get_page(page)
-
-        return add_fees_and_vat_to_qs(
-            queryset,
-            self.request.user.root,
-            'wallets'
-        )
+        return paginator.get_page(page)
         
     def get(self, request):
         export_start_date = request.GET.get('export_start_date')
@@ -112,13 +108,7 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
             
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
-        queryset = paginator.get_page(page)
-
-        return add_fees_and_vat_to_qs(
-                queryset,
-                self.request.user.root,
-                None
-        )
+        return paginator.get_page(page)
         
     def get(self, request):
         export_start_date = request.GET.get('export_start_date')

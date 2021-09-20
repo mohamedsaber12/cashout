@@ -285,12 +285,6 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
             page = self.request.GET.get('page', 1)
             queryset = paginator.get_page(page)
 
-            # add fees and vat to query set in case of accept model
-            context['doc_transactions'] = add_fees_and_vat_to_qs(
-                queryset,
-                request.user.root,
-                doc_obj
-            )
             context.update({
                 'doc_obj': doc_obj,
                 'doc_transactions_totals': self.__class__.get_document_transactions_totals(doc_obj, doc_transactions),
@@ -811,11 +805,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
             trxs = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
         # add fees and vat to query set in case of accept model
-        return add_fees_and_vat_to_qs(
-            trxs,
-            root_user,
-            self.request.GET.get('issuer', None)
-        )
+        return trxs
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""

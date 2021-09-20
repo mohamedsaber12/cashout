@@ -68,7 +68,9 @@ class BankTransactionsChannel:
             'creditor_address_1': bank_trx_obj.creditor_address_1,
             'debtor_address_1': bank_trx_obj.debtor_address_1,
             'additional_info_1': bank_trx_obj.additional_info_1,
-            'disbursed_date': bank_trx_obj.disbursed_date
+            'disbursed_date': bank_trx_obj.disbursed_date,
+            "fees": bank_trx_obj.fees,
+            "vat": bank_trx_obj.vat
         }
         return BankTransaction.objects.create(**new_transaction_dict)
 

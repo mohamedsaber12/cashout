@@ -6,6 +6,7 @@ import logging
 
 from django.db.models import Q
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from core.models import AbstractBaseStatus
 from data.decorators import respects_language
@@ -42,18 +43,20 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
                 f"[message] [check for trx update task] [celery_task] -- "
                 f"transactions count: {latest_bank_transactions.count()}"
             )
+            paginator = Paginator(latest_bank_transactions, 500)
+            for page_number in paginator.page_range:
+                queryset = paginator.page(page_number)
+                for bank_trx in queryset:
+                    BankTransactionsChannel.get_transaction_status(bank_trx)
 
-            for bank_trx in latest_bank_transactions:
-                BankTransactionsChannel.get_transaction_status(bank_trx)
-                
-                # send bank transaction callback notifications 
-                if bank_trx.user_created.root.root.callback_url:
-                    callback_url = bank_trx.user_created.root.root.callback_url
-                    transaction = BankTransaction.objects.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
-                        filter(Q(parent_transaction=bank_trx)).\
-                            order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id")
-                    req_body = BankTransactionResponseModelSerializer(transaction.first())
-                    requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
+                    # send bank transaction callback notifications
+                    if bank_trx.user_created.root.root.callback_url:
+                        callback_url = bank_trx.user_created.root.root.callback_url
+                        transaction = BankTransaction.objects.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
+                            filter(Q(parent_transaction=bank_trx)).\
+                                order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id")
+                        req_body = BankTransactionResponseModelSerializer(transaction.first())
+                        requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
 
 
         return True

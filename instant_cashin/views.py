@@ -5,11 +5,9 @@ from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponseRedirect
-
 from django.views.generic import ListView
 
 from disbursement.models import BankTransaction
-from disbursement.utils import add_fees_and_vat_to_qs
 
 from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction

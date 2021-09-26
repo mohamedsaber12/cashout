@@ -913,9 +913,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 end_to_end=q.uid
             ).count() == 0:
                 q['fees'], q['vat'] = 0, 0
-            else:
-                q['fees'], q['vat'] = Budget.objects.get(disburser__username=q['admin']). \
-                    calculate_fees_and_vat_for_amount(q['total'], q['issuer'], q['count'])
         return qs
 
     def _add_issuers_with_values_0_to_final_data(self, final_data, issuers_exist):
@@ -941,12 +938,18 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 admin=F('doc__disbursed_by__root__username'),
                 vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
             ).values('admin', 'issuer', 'vf_identifier'). \
-                annotate(total=Sum('amount'), count=Count('id'))
+                annotate(
+                    total=Sum('amount'), count=Count('id'),
+                    fees=Sum('fees'), vat=Sum('vat')).\
+                order_by('admin', 'issuer', 'vf_identifier')
         else:
             qs = qs.annotate(
                 admin=F('doc__disbursed_by__root__username')
             ).values('admin', 'issuer'). \
-                annotate(total=Sum('amount'), count=Count('id'))
+                annotate(
+                    total=Sum('amount'), count=Count('id'),
+                    fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def _annotate_instant_trxs_qs(self, qs):
@@ -957,7 +960,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('document__disbursed_by__root__username')
             )
         ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('uid'))
+            annotate(total=Sum('amount'), count=Count('uid'),
+                     fees=Sum('fees'), vat=Sum('vat')). \
+            order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def aggregate_vf_ets_aman_transactions(self):
@@ -1127,10 +1132,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('user_created__root__username')
             )
         ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('id'))
+            annotate(
+                total=Sum('amount'), count=Count('id'),
+                fees=Sum('fees'), vat=Sum('vat')). \
+            order_by('admin', 'issuer')
 
         qs = self._customize_issuer_in_qs_values(qs)
-        qs = self._calculate_and_add_fees_to_qs_values(qs)
         return qs
 
     def group_result_transactions_data(self, vf_ets_aman_qs, bank_wallets_orange_instant_qs, cards_qs):
@@ -1283,8 +1290,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     total_per_admin['total'] += round(Decimal(el['total']), 2)
                     total_per_admin['count'] += el['count']
                     if self.instant_or_accept_perm:
-                        total_per_admin['fees'] += el['fees']
-                        total_per_admin['vat'] += el['vat']
+                        total_per_admin['fees'] += round(Decimal(el['fees']), 2)
+                        total_per_admin['vat'] += round(Decimal(el['vat']), 2)
                 final_data[key].append(total_per_admin)
 
         # 6. Add issuer with values 0 to final data

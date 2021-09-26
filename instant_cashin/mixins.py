@@ -73,7 +73,7 @@ class ExportCsvMixin:
 
         writer.writerow(field_names)
         for obj in queryset:
-            obj.status = [st for st in [AbstractBaseStatus.STATUS_CHOICES,
+            obj.status = [st for st in [*AbstractBaseStatus.STATUS_CHOICES,
                                         (InstantTransaction.UNKNOWN, "Unknown")]
                           if st[0] == obj.status][0][1]
             obj.issuer_type = [iss for iss in AbstractBaseIssuer.ISSUER_TYPE_CHOICES

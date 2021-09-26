@@ -111,6 +111,7 @@ class InstantDisbursementAPIView(views.APIView):
         amount = serializer.validated_data["amount"]
         issuer = serializer.validated_data["issuer"].lower()
         full_name = serializer.validated_data["full_name"]
+        client_reference_id = serializer.validated_data["client_reference_id"]
         instant_transaction = False
 
         if issuer in ["bank_wallet", "orange"]:
@@ -141,7 +142,8 @@ class InstantDisbursementAPIView(views.APIView):
             "creditor_bank": creditor_bank,
             "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid,
             "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date,
-            "is_single_step":serializer.validated_data["is_single_step"]
+            "is_single_step":serializer.validated_data["is_single_step"],
+            "client_transaction_reference":client_reference_id
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
@@ -245,7 +247,8 @@ class InstantDisbursementAPIView(views.APIView):
                         from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
                         amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
                         anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
-                        disbursed_date=timezone.now()
+                        disbursed_date=timezone.now(),
+                        client_transaction_reference=serializer.validated_data["client_reference_id"]
                 )
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 

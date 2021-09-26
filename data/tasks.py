@@ -918,12 +918,15 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 admin=F('doc__disbursed_by__root__username'),
                 vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
             ).values('admin', 'issuer', 'vf_identifier'). \
-                annotate(total=Sum('amount'), count=Count('id'))
+                annotate(total=Sum('amount'), count=Count('id')). \
+                order_by('admin', 'issuer', 'vf_identifier')
         else:
             qs = qs.annotate(
                 admin=F('doc__disbursed_by__root__username')
             ).values('admin', 'issuer'). \
-                annotate(total=Sum('amount'), count=Count('id'))
+                annotate(
+                    total=Sum('amount'), count=Count('id')
+                ).order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def _annotate_instant_trxs_qs(self, qs):
@@ -934,7 +937,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('document__disbursed_by__root__username')
             )
         ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('uid'))
+            annotate(
+                total=Sum('amount'), count=Count('uid')
+            ).order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def aggregate_vf_ets_aman_transactions(self):
@@ -967,7 +972,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         if self.vf_facilitator_perm:
             self.temp_vf_ets_aman_qs = qs
             self.temp_vf_ets_aman_qs = self.temp_vf_ets_aman_qs.annotate(
-                    admin=F('doc__disbursed_by__root__username')
+                admin=F('doc__disbursed_by__root__username')
             )
 
         if self.status in ['success', 'failed', 'invoices']:
@@ -1104,7 +1109,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('user_created__root__username')
             )
         ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('id'))
+            annotate(
+                total=Sum('amount'), count=Count('id')
+            ).order_by('admin', 'issuer')
 
         qs = self._customize_issuer_in_qs_values(qs)
         qs = self._calculate_and_add_fees_to_qs_values(qs)
@@ -1223,7 +1230,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
         if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
             return False
-
 
         # 3. Calculate vodafone, etisalat, aman transactions details
         vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions()

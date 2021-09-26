@@ -508,7 +508,7 @@
     });
 
     function cancel_transaction(trn_id){
-      conf = confirm("Are you sure you want to cancel this transaction ?");
+      conf = confirm("Please note that fees and VAT are not refundable. Are you sure you want to cancel this transaction ?");
       if (conf){
         $.ajax({
           url: "{% url 'disb_api:cancel_aman_transaction' %}",

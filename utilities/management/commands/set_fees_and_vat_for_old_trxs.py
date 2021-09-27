@@ -26,7 +26,8 @@ class Command(BaseCommand):
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
             for record in queryset:
-                if record.doc.owner.root.has_custom_budget:
+                if record.doc.owner.root != None and \
+                   record.doc.owner.root.has_custom_budget:
                     record.fees, record.vat = \
                         record.doc.owner.root.budget.calculate_fees_and_vat_for_amount(
                             record.amount, record.issuer

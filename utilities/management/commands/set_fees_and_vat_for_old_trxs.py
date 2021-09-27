@@ -69,6 +69,10 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(
                         f'budget for {record} in instant trx not exist'
                     ))
+                elif record.issuer == None:
+                    self.stdout.write(self.style.ERROR(
+                        f'trx => {record} in instant trx has issuer {record.issuer_type}'
+                    ))
                 else:
                     record.fees, record.vat = \
                         budget.calculate_fees_and_vat_for_amount(

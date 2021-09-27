@@ -69,7 +69,7 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.ERROR(
                         f'budget for {record} in instant trx not exist'
                     ))
-                elif record.issuer == None:
+                elif record.issuer_type == None:
                     self.stdout.write(self.style.ERROR(
                         f'trx => {record} in instant trx has issuer {record.issuer_type}'
                     ))

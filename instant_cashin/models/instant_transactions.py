@@ -114,6 +114,8 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     )
     is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
     disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
+    fees = models.FloatField(_("Fees"), default=0.0)
+    vat = models.FloatField(_("Vat"), default=0.0)
     # Not needed fields
     to_user = None
     external_reference_1 = None

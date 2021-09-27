@@ -112,7 +112,9 @@ class InstantDisbursementAPIView(views.APIView):
         issuer = serializer.validated_data["issuer"].lower()
         full_name = serializer.validated_data["full_name"]
         instant_transaction = False
-
+        fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
+            amount, issuer
+        )
         if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
             creditor_bank = "MIDG" if get_from_env("ENVIRONMENT") != "staging" else "THWL"     # ToDo: Should be "THWL" at the staging environment
@@ -121,6 +123,7 @@ class InstantDisbursementAPIView(views.APIView):
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
                     issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
                     is_single_step=serializer.validated_data["is_single_step"],
+                    fees=fees, vat=vat
                     #disbursed_date=timezone.now()
             )
         else:
@@ -141,7 +144,9 @@ class InstantDisbursementAPIView(views.APIView):
             "creditor_bank": creditor_bank,
             "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid,
             "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date,
-            "is_single_step":serializer.validated_data["is_single_step"]
+            "is_single_step":serializer.validated_data["is_single_step"],
+            "fees": fees,
+            "vat": vat
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
@@ -240,12 +245,14 @@ class InstantDisbursementAPIView(views.APIView):
                     full_name = f"{serializer.validated_data['first_name']} {serializer.validated_data['last_name']}"
                 else:
                     full_name = ""
-
+                fees, vat = user.root.budget.calculate_fees_and_vat_for_amount(
+                    data_dict['AMOUNT'], issuer
+                )
                 transaction = InstantTransaction.objects.create(
                         from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
                         amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
                         anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
-                        disbursed_date=timezone.now()
+                        disbursed_date=timezone.now(), fees=fees, vat=vat
                 )
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 

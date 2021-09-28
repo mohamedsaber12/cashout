@@ -59,7 +59,6 @@ from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData
 from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
-                    add_fees_and_vat_to_qs,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                     determine_trx_category_and_purpose)
@@ -285,12 +284,6 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
             page = self.request.GET.get('page', 1)
             queryset = paginator.get_page(page)
 
-            # add fees and vat to query set in case of accept model
-            context['doc_transactions'] = add_fees_and_vat_to_qs(
-                queryset,
-                request.user.root,
-                doc_obj
-            )
             context.update({
                 'doc_obj': doc_obj,
                 'doc_transactions_totals': self.__class__.get_document_transactions_totals(doc_obj, doc_transactions),
@@ -810,12 +803,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 values_list("id", flat=True)
 
             trxs = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
-        # add fees and vat to query set in case of accept model
-        return add_fees_and_vat_to_qs(
-            trxs,
-            root_user,
-            self.request.GET.get('issuer', None)
-        )
+
+        return trxs
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""
@@ -827,10 +816,21 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
             'form': SingleStepTransactionForm(checker_user=request.user),
             'transactions_list': queryset
         }
+        # pagination query string
+        query_string = ""
+
         if self.request.GET.get('issuer', None) == 'wallets':
             context['wallets'] = True
+            query_string += "issuer=wallets&"
+        else:
+            query_string +="issuer=bank-card&"
+
         if self.request.GET.get("admin_hierarchy", None) != None:
             context['admin_hierarchy'] = self.request.GET.get("admin_hierarchy")
+            query_string +="&admin_hierarchy=" + context['admin_hierarchy']
+
+        context["query_string"] = query_string
+
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):

@@ -123,6 +123,8 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
             verbose_name=_("Client Transaction Reference")
     )
     
+    fees = models.FloatField(_("Fees"), default=0.0)
+    vat = models.FloatField(_("Vat"), default=0.0)
     # Not needed fields
     to_user = None
     external_reference_1 = None

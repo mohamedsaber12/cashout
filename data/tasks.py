@@ -49,6 +49,8 @@ from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
+from disbursement.utils import add_fees_and_vat_to_qs
+
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -1406,6 +1408,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     
 class ExportDashboardUserTransactionsEwallets(Task):
     
+    user = None
+    data = None
+    start_date = None
+    end_date = None
+    
+    
     def create_transactions_report(self):
         filename = f"ewallets_transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
@@ -1443,9 +1451,14 @@ class ExportDashboardUserTransactionsEwallets(Task):
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user, queryset, start_date, end_date):
-        self.user = user
-        self.data = queryset
+    def run(self, user_id, queryset_ids, start_date, end_date):
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+        self.data = add_fees_and_vat_to_qs(
+            InstantTransaction.objects.filter(uid__in=queryset_ids),
+            root,
+            'wallets'
+            )
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()
@@ -1496,9 +1509,14 @@ class ExportDashboardUserTransactionsBanks(Task):
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user, queryset, start_date, end_date):
-        self.user = user
-        self.data = queryset
+    def run(self, user_id, queryset_ids, start_date, end_date):
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+        self.data = add_fees_and_vat_to_qs(
+            BankTransaction.objects.filter(id__in=queryset_ids),
+            root,
+            None
+            )
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()

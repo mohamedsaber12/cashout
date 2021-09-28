@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
@@ -49,8 +50,12 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                 Q(uid__iexact=search_keys)|
                 Q(anon_recipient__iexact=search_keys)|
                 Q(transaction_status_description__icontains=search_keys)
-            ).order_by("-created_at")
-        paginator = Paginator(queryset, 10)
+            )
+        if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
+            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
+                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            return queryset
+        paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
         return paginator.get_page(page)
         
@@ -59,7 +64,9 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         export_end_date = request.GET.get('export_end_date')
         if export_start_date and export_end_date:
             EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            ExportDashboardUserTransactionsEwallets.run(self.request.user, self.get_queryset(),export_start_date, export_end_date )
+            uids = self.get_queryset().values_list("uid", flat=True)
+            print(uids)
+            ExportDashboardUserTransactionsEwallets.delay(request.user.id,list(uids),export_start_date, export_end_date )
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
         else:
             return super().get(self,request)
@@ -104,6 +111,11 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
                     Q(creditor_bank__in=search_keys)
             ).prefetch_related("children_transactions").distinct().order_by("-created_at")
             
+        if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
+            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
+                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            return queryset
+            
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
         return paginator.get_page(page)
@@ -113,7 +125,7 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
         export_end_date = request.GET.get('export_end_date')
         if export_start_date and export_end_date:
             EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            ExportDashboardUserTransactionsBanks.run(self.request.user, self.get_queryset(),export_start_date, export_end_date )
+            ExportDashboardUserTransactionsBanks.delay(self.request.user.id, list(self.get_queryset().values_list("id", flat=True)),export_start_date, export_end_date )
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
         else:
             return super().get(self,request)

@@ -62,6 +62,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
     user = serializers.CharField(max_length=254, required=False, allow_blank=False)
     is_single_step = serializers.BooleanField(required=False, default=False)
+    client_reference_id = serializers.UUIDField(required=False)
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""
@@ -74,6 +75,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         bank_card_number = attrs.get('bank_card_number', '')
         bank_transaction_type = attrs.get('bank_transaction_type', '')
         full_name = attrs.get('full_name', '')
+        client_reference_id = attrs.get('client_reference_id', None)
 
         if issuer in ['vodafone', 'etisalat']:
             if not msisdn:
@@ -100,6 +102,17 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                         _("You must pass valid values for fields [msisdn, full_name]")
                 )
+        if issuer in ["vodafone", "etisalat", "aman"] and client_reference_id:
+           if InstantTransaction.objects.filter(client_transaction_reference=client_reference_id).exists():
+               raise serializers.ValidationError(
+                        _("client_reference_id is used before.")
+                )
+               
+        if issuer in ["bank_wallet", "bank_card", "orange"] and client_reference_id:
+               if BankTransaction.objects.filter(client_transaction_reference=client_reference_id).exists():
+                raise serializers.ValidationError(
+                            _("client_reference_id is used before.")
+                    )
 
         return attrs
 
@@ -174,7 +187,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = BankTransaction
         fields = [
             'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_code', 'bank_transaction_type',
-            'disbursement_status', 'status_code', 'status_description', 'created_at', 'updated_at'
+            'disbursement_status', 'status_code', 'status_description', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 
@@ -242,7 +255,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = InstantTransaction
         fields = [
             'transaction_id', 'issuer', 'msisdn', 'amount', 'full_name', 'disbursement_status', 'status_code',
-            'status_description', 'aman_cashing_details', 'created_at', 'updated_at'
+            'status_description', 'aman_cashing_details', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 

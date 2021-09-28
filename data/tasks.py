@@ -49,6 +49,8 @@ from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
+from disbursement.utils import add_fees_and_vat_to_qs
+
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -918,12 +920,15 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 admin=F('doc__disbursed_by__root__username'),
                 vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
             ).values('admin', 'issuer', 'vf_identifier'). \
-                annotate(total=Sum('amount'), count=Count('id'))
+                annotate(total=Sum('amount'), count=Count('id')). \
+                order_by('admin', 'issuer', 'vf_identifier')
         else:
             qs = qs.annotate(
                 admin=F('doc__disbursed_by__root__username')
             ).values('admin', 'issuer'). \
-                annotate(total=Sum('amount'), count=Count('id'))
+                annotate(
+                    total=Sum('amount'), count=Count('id')
+                ).order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def _annotate_instant_trxs_qs(self, qs):
@@ -934,7 +939,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('document__disbursed_by__root__username')
             )
         ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('uid'))
+            annotate(
+                total=Sum('amount'), count=Count('uid')
+            ).order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def aggregate_vf_ets_aman_transactions(self):
@@ -967,7 +974,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         if self.vf_facilitator_perm:
             self.temp_vf_ets_aman_qs = qs
             self.temp_vf_ets_aman_qs = self.temp_vf_ets_aman_qs.annotate(
-                    admin=F('doc__disbursed_by__root__username')
+                admin=F('doc__disbursed_by__root__username')
             )
 
         if self.status in ['success', 'failed', 'invoices']:
@@ -1104,7 +1111,9 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('user_created__root__username')
             )
         ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('id'))
+            annotate(
+                total=Sum('amount'), count=Count('id')
+            ).order_by('admin', 'issuer')
 
         qs = self._customize_issuer_in_qs_values(qs)
         qs = self._calculate_and_add_fees_to_qs_values(qs)
@@ -1223,7 +1232,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         onboarding_array = [self.vf_facilitator_perm, self.instant_or_accept_perm, self.default_vf__or_bank_perm]
         if not (onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2):
             return False
-
 
         # 3. Calculate vodafone, etisalat, aman transactions details
         vf_ets_aman_qs = self.aggregate_vf_ets_aman_transactions()
@@ -1377,6 +1385,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     
 class ExportDashboardUserTransactionsEwallets(Task):
     
+    user = None
+    data = None
+    start_date = None
+    end_date = None
+    
+    
     def create_transactions_report(self):
         filename = f"ewallets_transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
@@ -1414,9 +1428,14 @@ class ExportDashboardUserTransactionsEwallets(Task):
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user, queryset, start_date, end_date):
-        self.user = user
-        self.data = queryset
+    def run(self, user_id, queryset_ids, start_date, end_date):
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+        self.data = add_fees_and_vat_to_qs(
+            InstantTransaction.objects.filter(uid__in=queryset_ids),
+            root,
+            'wallets'
+            )
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()
@@ -1467,9 +1486,14 @@ class ExportDashboardUserTransactionsBanks(Task):
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user, queryset, start_date, end_date):
-        self.user = user
-        self.data = queryset
+    def run(self, user_id, queryset_ids, start_date, end_date):
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+        self.data = add_fees_and_vat_to_qs(
+            BankTransaction.objects.filter(id__in=queryset_ids),
+            root,
+            None
+            )
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()

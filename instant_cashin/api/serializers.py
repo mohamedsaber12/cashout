@@ -187,7 +187,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = BankTransaction
         fields = [
             'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_code', 'bank_transaction_type',
-            'disbursement_status', 'status_code', 'status_description', 'created_at', 'updated_at'
+            'disbursement_status', 'status_code', 'status_description', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 
@@ -255,7 +255,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = InstantTransaction
         fields = [
             'transaction_id', 'issuer', 'msisdn', 'amount', 'full_name', 'disbursement_status', 'status_code',
-            'status_description', 'aman_cashing_details', 'created_at', 'updated_at'
+            'status_description', 'aman_cashing_details', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 

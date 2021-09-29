@@ -111,7 +111,7 @@ class InstantDisbursementAPIView(views.APIView):
         amount = serializer.validated_data["amount"]
         issuer = serializer.validated_data["issuer"].lower()
         full_name = serializer.validated_data["full_name"]
-        client_reference_id = serializer.validated_data["client_reference_id"]
+        client_reference_id = serializer.validated_data.get("client_reference_id")
         instant_transaction = False
         fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
             amount, issuer
@@ -254,9 +254,10 @@ class InstantDisbursementAPIView(views.APIView):
                         from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
                         amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
                         anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
-                        client_transaction_reference=serializer.validated_data["client_reference_id"],
-                        disbursed_date=timezone.now(), fees=fees, vat=vat
+                        disbursed_date=timezone.now(), fees=fees, vat=vat,
+                        client_transaction_reference=serializer.validated_data.get("client_reference_id")
                 )
+                
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
             except Exception as e:

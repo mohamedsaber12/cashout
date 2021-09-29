@@ -75,7 +75,6 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         bank_card_number = attrs.get('bank_card_number', '')
         bank_transaction_type = attrs.get('bank_transaction_type', '')
         full_name = attrs.get('full_name', '')
-        client_reference_id = attrs.get('client_reference_id', None)
 
         if issuer in ['vodafone', 'etisalat']:
             if not msisdn:
@@ -102,14 +101,14 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                         _("You must pass valid values for fields [msisdn, full_name]")
                 )
-        if issuer in ["vodafone", "etisalat", "aman"] and client_reference_id:
-           if InstantTransaction.objects.filter(client_transaction_reference=client_reference_id).exists():
-               raise serializers.ValidationError(
+        if issuer in ["vodafone", "etisalat", "aman"] and attrs.get('client_reference_id'):
+            if InstantTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
+                raise serializers.ValidationError(
                         _("client_reference_id is used before.")
                 )
                
-        if issuer in ["bank_wallet", "bank_card", "orange"] and client_reference_id:
-               if BankTransaction.objects.filter(client_transaction_reference=client_reference_id).exists():
+        if issuer in ["bank_wallet", "bank_card", "orange"] and attrs.get('client_reference_id'):
+               if BankTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
                 raise serializers.ValidationError(
                             _("client_reference_id is used before.")
                     )

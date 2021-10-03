@@ -109,7 +109,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         CustomStatusFilter,
-        'issuer_type', 'anon_sender', 'from_user', 'is_single_step',
+        'issuer_type', 'anon_sender', 'from_user', 'is_single_step', 'transaction_status_code'
     ]
     actions = ["export_as_csv"]
     fieldsets = (

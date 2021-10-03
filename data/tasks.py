@@ -711,36 +711,57 @@ class EWalletsSheetProcessor(Task):
         """
         superadmin = self.doc_obj.owner.root.client.creator
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
-        response_has_error = True
         if self.doc_obj.owner.is_vodafone_default_onboarding or \
             self.doc_obj.owner.is_banks_standard_model_onboaring:
             fees_profile = self.doc_obj.owner.root.client.get_fees()
         else:
             fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
-        payload = superadmin.vmt.accumulate_change_profile_payload(vodafone_recipients_list, fees_profile)
 
+        payload_without_users = superadmin.vmt.accumulate_change_profile_payload(
+            vodafone_recipients_list, fees_profile, single_user=True
+        )
         try:
-            CHANGE_PROFILE_LOGGER.debug(f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}")
-            response = requests.post(wallets_env_url, json=payload, verify=False)
+            msisdns, errors = [], []
+            has_error = False
+            for user_msisdn in vodafone_recipients_list:
+                payload = {**payload_without_users, 'MSISDN': user_msisdn}
+                CHANGE_PROFILE_LOGGER.debug(f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}")
+                response = requests.post(wallets_env_url, json=payload, verify=False)
+                CHANGE_PROFILE_LOGGER.debug(
+                    f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}"
+                )
+                if response.ok:
+                    response_dict = response.json()
+                    msisdns.append(user_msisdn)
+                    if response_dict['TXNSTATUS'] not in ["200", "629", "560", "562"]:
+                        has_error = True
+                        errors.append(response_dict['MESSAGE'])
+                    else:
+                        errors.append("Passed validations successfully")
+
+            if not has_error:
+                self.doc_obj.processed_successfully()
+                notify_maker(self.doc_obj)
+                return True
+
+            filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+            file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+
+            data = list(zip(msisdns, errors))
+            headers = ['Mobile Number', 'Error']
+            data.insert(0, headers)
+            export_excel(file_path, data)
+            download_url = settings.BASE_URL + str(reverse(
+                'disbursement:download_validation_failed',
+                kwargs={'doc_id': self.doc_obj.id})) + f"?filename={filename}"
+
+            self.doc_obj.processing_failure("Mobile numbers validation error")
+            notify_maker(self.doc_obj, download_url)
+            return False
         except Exception as e:
             CHANGE_PROFILE_LOGGER.debug(f"[message] [change fees profile error] [{self.doc_obj.owner}] -- {e.args}")
             self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
             return False
-
-        CHANGE_PROFILE_LOGGER.debug(f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}")
-        if response.ok:
-            response_dict = response.json()
-            if response_dict["TXNSTATUS"] == "200":
-                self.doc_obj.txn_id = response_dict["BATCH_ID"]
-                response_has_error = False
-            else:
-                response_has_error = response_dict.get("MESSAGE") or _(CHANGE_PROFILE_LOGGER)
-
-        if response_has_error:
-            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
-            return False
-
-        return True
 
     def run(self, doc_id, *args, **kwargs):
         try:
@@ -793,7 +814,6 @@ class EWalletsSheetProcessor(Task):
             elif total_amount > max_amount_can_be_disbursed:
                 self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
                 return False
-            
 
             # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
             elif not self.doc_obj.owner.is_vodafone_default_onboarding\

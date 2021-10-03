@@ -306,7 +306,7 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            except TimeoutError as e:
+            except (requests.Timeout, TimeoutError) as e:
                 logging_message(
                     INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )
@@ -325,7 +325,7 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_successful(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
                 user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-            elif json_trx_response["TXNSTATUS"] == "501":
+            elif json_trx_response["TXNSTATUS"] == "501" or json_trx_response["TXNSTATUS"] == "-1":
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"timeout, {json_trx_response}")
                 transaction.mark_unknown(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)

@@ -124,7 +124,8 @@ class InstantDisbursementAPIView(views.APIView):
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
                     issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
                     is_single_step=serializer.validated_data["is_single_step"],
-                    fees=fees, vat=vat
+                    fees=fees, vat=vat,
+                    client_transaction_reference = client_reference_id
                     #disbursed_date=timezone.now()
             )
         else:

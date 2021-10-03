@@ -285,6 +285,7 @@ class BankTransactionsChannel:
     @staticmethod
     def send_transaction(bank_trx_obj, instant_trx_obj):
         """Make a new send transaction request to EBC"""
+            
         has_valid_response = True
 
         try:

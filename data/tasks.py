@@ -739,6 +739,7 @@ class EWalletsSheetProcessor(Task):
                     else:
                         errors.append("Passed validations successfully")
 
+            self.doc_obj.has_change_profile_callback = True
             if not has_error:
                 self.doc_obj.processed_successfully()
                 notify_maker(self.doc_obj)

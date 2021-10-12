@@ -168,6 +168,8 @@ class DisbursementData(AbstractTimeStamp):
     )
     
     disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
+    fees = models.FloatField(_("Fees"), default=0.0)
+    vat = models.FloatField(_("Vat"), default=0.0)
 
 
     class Meta:
@@ -346,6 +348,14 @@ class BankTransaction(AbstractTimeStamp,
     )
     is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
     disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
+    client_transaction_reference = models.UUIDField(
+            unique=True,
+            blank=True,
+            null=True,
+            verbose_name=_("Client Transaction Reference")
+    )
+    fees = models.FloatField(_("Fees"), default=0.0)
+    vat = models.FloatField(_("Vat"), default=0.0)
 
     class Meta:
         verbose_name = 'Bank Transaction'

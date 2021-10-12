@@ -19,6 +19,7 @@ from .validators import (
 )
 
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+import uuid
 
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
@@ -61,6 +62,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
     user = serializers.CharField(max_length=254, required=False, allow_blank=False)
     is_single_step = serializers.BooleanField(required=False, default=False)
+    client_reference_id = serializers.UUIDField(required=False)
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""
@@ -99,6 +101,17 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                         _("You must pass valid values for fields [msisdn, full_name]")
                 )
+        if issuer in ["vodafone", "etisalat", "aman"] and attrs.get('client_reference_id'):
+            if InstantTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
+                raise serializers.ValidationError(
+                        _("client_reference_id is used before.")
+                )
+               
+        if issuer in ["bank_wallet", "bank_card", "orange"] and attrs.get('client_reference_id'):
+               if BankTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
+                raise serializers.ValidationError(
+                            _("client_reference_id is used before.")
+                    )
 
         return attrs
 
@@ -173,7 +186,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = BankTransaction
         fields = [
             'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_code', 'bank_transaction_type',
-            'disbursement_status', 'status_code', 'status_description', 'created_at', 'updated_at'
+            'disbursement_status', 'status_code', 'status_description', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 
@@ -186,10 +199,10 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     issuer = CustomChoicesField(source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
     msisdn = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(
-            source='status', choices=[
-                *AbstractBaseStatus.STATUS_CHOICES,
-                ("U", _("Unknown")),
-            ]
+        source='status', choices=[
+            *AbstractBaseStatus.STATUS_CHOICES,
+            ("U", _("Unknown")),
+        ]
     )
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
@@ -225,7 +238,8 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         if aman_cashing_details:
             return {
                 'bill_reference': aman_cashing_details.bill_reference,
-                'is_paid': aman_cashing_details.is_paid
+                'is_paid': aman_cashing_details.is_paid,
+                'is_cancelled': aman_cashing_details.is_cancelled
             }
 
     def get_created_at(self, transaction):
@@ -240,7 +254,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = InstantTransaction
         fields = [
             'transaction_id', 'issuer', 'msisdn', 'amount', 'full_name', 'disbursement_status', 'status_code',
-            'status_description', 'aman_cashing_details', 'created_at', 'updated_at'
+            'status_description', 'aman_cashing_details', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 
@@ -260,3 +274,9 @@ class InstantUserInquirySerializer(serializers.Serializer):
     msisdn = serializers.CharField(max_length=11, required=True, validators=[msisdn_validator])
     issuer = serializers.CharField(max_length=12, required=True, validators=[issuer_validator])
     unique_identifier = serializers.CharField(max_length=255, required=True)    # Add validations/rate limit
+
+
+class CancelAmanTransactionSerializer(serializers.Serializer):
+    
+    transaction_id = serializers.UUIDField(required=True)
+

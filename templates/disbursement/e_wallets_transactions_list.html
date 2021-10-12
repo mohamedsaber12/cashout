@@ -27,6 +27,9 @@
     #download-doc span {
         color: #333;
     }
+    .pagination > li > span {
+      width: 33px;
+    }
   </style>
 {% endblock %}
 
@@ -102,6 +105,39 @@
               {% endfor %}
             </tbody>
           </table>
+          <ul class="pagination">
+            {% if doc_transactions.has_previous %}
+            <li>
+              <a href="?page={{ doc_transactions.previous_page_number }}">
+                <i class="fa fa-chevron-left" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="disabled"><span><i class="fa fa-chevron-left" aria-hidden="true"></i></span></li>
+            {% endif %}
+
+            {% if doc_transactions.number|add:'-4' > 1 %}
+            <li><a href="?page={{ doc_transactions.number|add:'-5' }}">&hellip;</a></li>
+            {% endif %}
+
+            {% for i in doc_transactions.paginator.page_range %}
+            {% if doc_transactions.number == i %}
+            <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+            {% elif i > doc_transactions.number|add:'-5' and i < doc_transactions.number|add:'5' %}
+            <li><a href="?page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+            {% endfor %}
+
+            {% if doc_transactions.paginator.num_pages > doc_transactions.number|add:'4' %}
+            <li><a href="?page={{ doc_transactions.number|add:'5' }}">&hellip;</a></li>
+            {% endif %}
+
+            {% if doc_transactions.has_next %}
+            <li><a href="?page={{ doc_transactions.next_page_number }}"><i class="fa fa-chevron-right" aria-hidden="true"></i></a></li>
+            {% else %}
+            <li class="disabled"><span><i class="fa fa-chevron-right" aria-hidden="true"></i></span></li>
+            {% endif %}
+          </ul>
         </div>
         {# End of file transactions table #}
       </div>
@@ -217,33 +253,34 @@
 
     var table = $('#transaction-table').DataTable({
     "bLengthChange" : false,
+    "bPaginate": false,
+    "bInfo" : false,
+    "searching": false
   });
   
   var buttons = new $.fn.dataTable.Buttons( table, {
-        buttons: [
-          {
-                extend: 'copy',
-                text : "{% trans 'Copy' %}",
-                exportOptions: {
-                    charSet: "utf-8",
-                }
-            },
-            {
-                extend: 'print',
-                text : "PDF",
-            },
-            {
-                extend: 'excelHtml5',
-                text : "{% trans 'Export' %}",
-                
-                customize: function( xlsx ) {
-
-                  var sheet = xlsx.xl.worksheets['sheet1.xml'];
-                  $('row c[r^="A"]', sheet).attr( 's', '0' );
-				       }
-            }
-        ]
-    });
+    buttons: [
+      {
+        extend: 'copy',
+        text : "{% trans 'Copy' %}",
+        exportOptions: {
+            charSet: "utf-8",
+        }
+      },
+      {
+        extend: 'print',
+        text : "PDF",
+      },
+      {
+        extend: 'excelHtml5',
+        text : "{% trans 'Export' %}",
+        customize: function( xlsx ) {
+          var sheet = xlsx.xl.worksheets['sheet1.xml'];
+          $('row c[r^="A"]', sheet).attr( 's', '0' );
+       }
+      }
+    ]
+  });
   
   table.buttons( 0, null ).container().prependTo(
         table.table().container()
@@ -252,6 +289,13 @@
     if (empty_row) {
       empty_row.parent().attr('id', 'empty_row');
     }
+    let search_btn_str = `<form action="." style="display:inline;" method="get">`
+    search_btn_str += `<div class="input-group pull-{{'right'|invert_dir:LANGUAGE_CODE}}" style='margin-bottom:0;'>`;
+    search_btn_str += `<input type='text' class='form-control' name='search' placeholder='Search for a transaction'>`;
+    search_btn_str += `<span class='input-group-btn'>`;
+    search_btn_str += `<button class='btn btn-default' type='submit' value='search'>Go!</button>`;
+    search_btn_str += `</span></div></form>`;
+    $(search_btn_str).insertAfter( ".dt-buttons.btn-group" );
 
     $(document).ready(function () {
       $('#export-failed').on('click',function(ev) {
@@ -400,7 +444,7 @@
     });
 
     function cancel_transaction(trn_id){
-      conf = confirm("Are you sure you want to cancel this transaction ?");
+      conf = confirm("Please note that fees and VAT are not refundable. Are you sure you want to cancel this transaction ?");
       if (conf){
         $.ajax({
           url: "{% url 'disb_api:cancel_aman_transaction' %}",

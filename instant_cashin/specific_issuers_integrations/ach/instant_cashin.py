@@ -33,6 +33,8 @@ from ...utils import get_from_env
 
 ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
+from instant_cashin.specific_issuers_integrations.aman.instant_cashin import UUIDEncoder
+
 
 
 class BankTransactionsChannel:
@@ -68,7 +70,10 @@ class BankTransactionsChannel:
             'creditor_address_1': bank_trx_obj.creditor_address_1,
             'debtor_address_1': bank_trx_obj.debtor_address_1,
             'additional_info_1': bank_trx_obj.additional_info_1,
-            'disbursed_date': bank_trx_obj.disbursed_date
+            'disbursed_date': bank_trx_obj.disbursed_date,
+            'client_transaction_reference': bank_trx_obj.client_transaction_reference,
+            "fees": bank_trx_obj.fees,
+            "vat": bank_trx_obj.vat
         }
         return BankTransaction.objects.create(**new_transaction_dict)
 
@@ -241,6 +246,12 @@ class BankTransactionsChannel:
         # 3. Otherwise start creating new bank transaction with the new status code
         else:
             new_trx_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(bank_trx_obj)
+            
+             # send bank transaction callback notifications
+            if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
+                callback_url = bank_trx_obj.user_created.root.root.callback_url
+                req_body = BankTransactionResponseModelSerializer(bank_trx_obj)
+                requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
 
             # 3.1) Transaction accepted by the bank
             if response_code == "8111":
@@ -274,6 +285,7 @@ class BankTransactionsChannel:
     @staticmethod
     def send_transaction(bank_trx_obj, instant_trx_obj):
         """Make a new send transaction request to EBC"""
+            
         has_valid_response = True
 
         try:

@@ -47,6 +47,9 @@
       -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
       box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
     }
+    .pagination > li > span {
+      width: 33px;
+    }
   </style>
   <!-- transaction details pdf css -->
   <link href="{% static 'css/transaction_details_pdf.css' %}" rel="stylesheet">
@@ -169,6 +172,42 @@
                 {% endif %}
               </table>
 
+              <ul class="pagination">
+                {% if transactions_list.has_previous %}
+                  <li>
+                    <a href="?{{query_string}}&page={{ transactions.previous_page_number }}">
+                      <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                    </a>
+                  </li>
+                {% else %}
+                  <li class="disabled"><span><i class="fa fa-chevron-left" aria-hidden="true"></i></span></li>
+                {% endif %}
+
+                {% if transactions_list.number|add:'-4' > 1 %}
+                  <li><a href="?{{query_string}}&page={{ transactions.number|add:'-5' }}">&hellip;</a></li>
+                {% endif %}
+
+                {% for i in transactions_list.paginator.page_range %}
+                  {% if transactions_list.number == i %}
+                    <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+                  {% elif i > transactions_list.number|add:'-5' and i < transactions_list.number|add:'5' %}
+                    <li><a href="?{{query_string}}&page={{ i }}">{{ i }}</a></li>
+                  {% endif %}
+                {% endfor %}
+
+                {% if transactions_list.paginator.num_pages > transactions_list.number|add:'4' %}
+                  <li><a href="?{{query_string}}&page={{ transactions_list.number|add:'5' }}">&hellip;</a></li>
+                {% endif %}
+
+                {% if transactions_list.has_next %}
+                  <li><a href="?{{query_string}}&page={{ transactions_list.next_page_number }}">
+                    <i class="fa fa-chevron-right" aria-hidden="true"></i></a>
+                  </li>
+                {% else %}
+                  <li class="disabled"><span><i class="fa fa-chevron-right" aria-hidden="true"></i></span></li>
+                {% endif %}
+              </ul>
+
               {% include 'pagination.html' %}
             </div>
           </div>
@@ -189,8 +228,8 @@
         <div class="modal-body">
           <div class="waiting-form-respond">
           </div>
-          <form role="form" action="{% url 'disbursement:single_step_list_create' %}"
-                method="post" id="addTransactionForm" class="autoValidateForm">
+          <form action="{% url 'disbursement:single_step_list_create' %}?{% if wallets %}issuer=wallets{% else %}issuer=bank-card{% endif %}"
+                method="post" id="addTransactionForm" class="autoValidateForm" role="form">
             {% csrf_token %}
             <div class="row">
               <div class="form-group col-md-6 col-sm-6 col-xs-12">
@@ -475,6 +514,8 @@
 
   var table = $('#transaction-table').DataTable({
     "bLengthChange" : false,
+    "bPaginate": false,
+    "bInfo" : false
   });
   
   var buttons = new $.fn.dataTable.Buttons( table, {
@@ -834,11 +875,11 @@ issuerType.addEventListener('change', toggleForm);
     tabindex="0" aria-controls="transaction-table"`;
 
   {% if admin_hierarchy %}
-    BankCardFilter += ` href="/disburse/single-step/?admin_hierarchy={{admin_hierarchy}}&issuer=bank-card"`;
-    WalletsFilter += ` href="/disburse/single-step/?admin_hierarchy={{admin_hierarchy}}&issuer=wallets"`;
+    BankCardFilter += ` href="/disburse/single-step/?admin_hierarchy={{admin_hierarchy}}&issuer=bank-card&page=1"`;
+    WalletsFilter += ` href="/disburse/single-step/?admin_hierarchy={{admin_hierarchy}}&issuer=wallets&page=1"`;
   {% else %}
-    BankCardFilter += ` href="/disburse/single-step/?issuer=bank-card"`;
-    WalletsFilter += ` href="/disburse/single-step/?issuer=wallets"`;
+    BankCardFilter += ` href="/disburse/single-step/?issuer=bank-card&page=1"`;
+    WalletsFilter += ` href="/disburse/single-step/?issuer=wallets&page=1"`;
   {% endif %}
   {% if wallets %}
     BankCardFilter += ` style="float:{{'right'|invert_dir:LANGUAGE_CODE}};margin-bottom:10px;"><span>{% trans 'Bank Card' %}</span></a>`;

@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from datetime import datetime
 
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponseRedirect
 from django.views.generic import ListView
 
 from disbursement.models import BankTransaction
-from disbursement.utils import add_fees_and_vat_to_qs
 
 from .mixins import IntegrationUserAndSupportUserPassesTestMixin
 from .models import InstantTransaction
+from django.core.paginator import Paginator
+from data.tasks import ExportDashboardUserTransactionsEwallets, ExportDashboardUserTransactionsBanks
+
 
 
 class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
@@ -36,21 +40,37 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
             hierarchy_to_filter_with = user.hierarchy
         else:
             hierarchy_to_filter_with = self.request.user.hierarchy
-        queryset = super().get_queryset().filter(from_user__hierarchy=hierarchy_to_filter_with)
-
+        queryset = super().get_queryset().filter(
+            from_user__hierarchy=hierarchy_to_filter_with
+        ).order_by("-created_at")
+                    
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
-            queryset.filter(
-                    Q(uid__iexact=search_keys)|
-                    Q(anon_recipient__iexact=search_keys)|
-                    Q(transaction_status_description__icontains=search_keys)
+            queryset = queryset.filter(
+                Q(uid__iexact=search_keys)|
+                Q(anon_recipient__iexact=search_keys)|
+                Q(transaction_status_description__icontains=search_keys)
             )
+        if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
+            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
+                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            return queryset
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page')
+        return paginator.get_page(page)
+        
+    def get(self, request):
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        if export_start_date and export_end_date:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
+            uids = self.get_queryset().values_list("uid", flat=True)
+            print(uids)
+            ExportDashboardUserTransactionsEwallets.delay(request.user.id,list(uids),export_start_date, export_end_date )
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+        else:
+            return super().get(self,request)
 
-        return add_fees_and_vat_to_qs(
-                queryset,
-                self.request.user.root,
-                'wallets'
-        )
 
 
 class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, ListView):
@@ -85,13 +105,28 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
 
         if self.request.GET.get('search'):                      # Handle search keywords if any
             search_keys = self.request.GET.get('search')
-            queryset.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).filter(
-                    Q(parent_transaction__transaction_id__in=search_keys)|
+            queryset = queryset.filter(~Q(creditor_bank__in=["THWL", "MIDG"])).filter(
+                    Q(parent_transaction__transaction_id__iexact=search_keys)|
                     Q(creditor_account_number__in=search_keys)|
                     Q(creditor_bank__in=search_keys)
             ).prefetch_related("children_transactions").distinct().order_by("-created_at")
-        return add_fees_and_vat_to_qs(
-                queryset,
-                self.request.user.root,
-                None
-        )
+            
+        if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
+            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
+                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            return queryset
+            
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page')
+        return paginator.get_page(page)
+        
+    def get(self, request):
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        if export_start_date and export_end_date:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
+            ExportDashboardUserTransactionsBanks.delay(self.request.user.id, list(self.get_queryset().values_list("id", flat=True)),export_start_date, export_end_date )
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+        else:
+            return super().get(self,request)
+

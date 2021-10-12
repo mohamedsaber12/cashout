@@ -26,7 +26,10 @@ python manage.py migrate utilities &&
 python manage.py makemigrations &&
 python manage.py migrate &&
 mkdocs build &&
-python manage.py runserver_plus 0.0.0.0:8000
+#uwsgi -i uwsgi.ini
+#uwsgi -s :8000 -M --env DJANGO_SETTINGS_MODULE=payouts.settings --chdir /app/payouts_portal/ -w "django.core.wsgi:get_wsgi_application()" --chmod-socket=666 --enable-threads --thunder-lock --daemonize /app/logs/uwsgi.log --log-4xx --log-5xx --workers 7 -b 32768
+#python manage.py runserver_plus 0.0.0.0:8000
+gunicorn payouts.wsgi:application --bind 0.0.0.0:8000
 
 exec "$@"
 # Switch to payouts_user

@@ -6,7 +6,7 @@ from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
 from core.models import AbstractBaseStatus
-from .models.instant_transactions import AbstractBaseIssuer
+from .models.instant_transactions import AbstractBaseIssuer, InstantTransaction
 
 class IntegrationUserAndSupportUserPassesTestMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
@@ -73,7 +73,8 @@ class ExportCsvMixin:
 
         writer.writerow(field_names)
         for obj in queryset:
-            obj.status = [st for st in AbstractBaseStatus.STATUS_CHOICES
+            obj.status = [st for st in [*AbstractBaseStatus.STATUS_CHOICES,
+                                        (InstantTransaction.UNKNOWN, "Unknown")]
                           if st[0] == obj.status][0][1]
             obj.issuer_type = [iss for iss in AbstractBaseIssuer.ISSUER_TYPE_CHOICES
                           if iss[0] == obj.issuer_type][0][1]

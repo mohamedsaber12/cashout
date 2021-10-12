@@ -126,7 +126,8 @@ class FileDocumentForm(forms.ModelForm):
             if self.doc_type == AbstractBaseDocType.E_WALLETS:
                 try:
                     xl_workbook = xlrd.open_workbook(tmp)
-                except Exception:
+                except Exception as err:
+                    UPLOAD_LOGGER.debug("{} error :--> {}".format(log_msg, {err.args}))
                     error = MSG_WRONG_FILE_FORMAT
                 else:
                     if file_category.unique_identifiers_number > xl_workbook.sheet_by_index(0).ncols:

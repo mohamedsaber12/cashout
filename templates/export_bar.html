@@ -1,0 +1,40 @@
+{% load custom_tags i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+
+<div>
+  <form class="form-inline" action="." method="get">
+    <h4> Export transactions </h4>
+    <div class="row">
+      <div class="col-md-4 col-sm-4 col-xs-12 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        <span> Start Date </span><input required type="text" placeholder="yyyy-mm-dd"  class="form-control input_date" name="export_start_date" >
+      </div>
+      <div class="col-md-4 col-sm-4 col-xs-12 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        <span> End Date </span><input required type="text" placeholder="yyyy-mm-dd"
+		min="1997-01-01" max="2030-12-31" class="form-control input_date" name="export_end_date">
+      </div>
+      <div class="col-md-4 col-sm-4 col-xs-12 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+        <button type="submit" class="btn btn-default export-dropdown
+                  pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+          <i class="glyphicon glyphicon-download-alt"></i> {% trans 'Export' %}
+        </button>
+      </div>
+    </div>
+  </form>
+<center><h5 style="color:red"> {{request.GET.export_message}} </h5></center>
+</div>
+
+
+<link
+href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css"
+rel="stylesheet"
+/>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+<script>
+var $j = jQuery.noConflict();
+ $j(function () {
+$j(".input_date").datepicker({
+  dateFormat: 'yy-mm-dd',
+});
+});
+</script>

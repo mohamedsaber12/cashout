@@ -3,7 +3,7 @@ from django.urls import path
 from .base_views import (
     AmanTransactionCallbackHandlerAPIView, BudgetInquiryAPIView,
     BulkTransactionInquiryAPIView, InstantDisbursementAPIView,
-    SingleStepDisbursementAPIView
+    SingleStepDisbursementAPIView, CancelAmanTransactionAPIView
 )
 
 
@@ -18,5 +18,7 @@ urlpatterns = [
     path('transaction/inquire/', BulkTransactionInquiryAPIView.as_view(), name='bulk_transaction_inquiry'),
     path('disburse/', InstantDisbursementAPIView.as_view(), name='instant_disburse'),
     path('disburse/single-step/', SingleStepDisbursementAPIView.as_view(), name='disburse_single_step'),
+    path('transaction/aman/cancel/', CancelAmanTransactionAPIView.as_view(), name='cancel_aman_transaction'),
+    
     
 ]

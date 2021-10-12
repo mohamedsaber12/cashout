@@ -208,7 +208,8 @@ ERROR_CODES_MESSAGES = {
     '90003': _('Invalid or missing parameters'),
     '90007': _('Invalid or missing parameters'),
     '90005': _('Service is down'),
-    '90006': _('Service is down')
+    '90006': _('Service is down'),
+    '90093': _('Service temporarily suspended')
 }
 
 DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [
@@ -388,21 +389,21 @@ def add_fees_and_vat_to_qs(qs, admin, doc_obj):
         if doc_obj == 'wallets':
             for trx in qs:
                 trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
-                        trx.amount, trx.issuer_choice_verbose.lower()
+                    trx.amount, trx.issuer_choice_verbose.lower()
                 )
         elif doc_obj is None or doc_obj == 'bank-card' or doc_obj.is_bank_card:
             for trx in qs:
                 trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
-                        trx.amount, 'C'
+                    trx.amount, 'C'
                 )
         elif doc_obj.is_e_wallet:
             for trx in qs:
                 trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
-                        trx.amount, trx.issuer
+                    trx.amount, trx.issuer
                 )
         elif doc_obj.is_bank_wallet:
             for trx in qs:
                 trx.fees, trx.vat = Budget.objects.get(disburser=admin).calculate_fees_and_vat_for_amount(
-                        trx.amount, trx.issuer_type
+                    trx.amount, trx.issuer_type
                 )
     return qs

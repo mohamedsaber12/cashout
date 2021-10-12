@@ -24,6 +24,7 @@ from django.utils.translation import gettext as _
 from django.views.generic import ListView, View
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
+from django.core.paginator import Paginator
 
 import urllib
 
@@ -57,7 +58,6 @@ from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData
 from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
-                    add_fees_and_vat_to_qs,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                     determine_trx_category_and_purpose)
@@ -215,11 +215,18 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     generate_all_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
                     return HttpResponse(status=200)
 
+            search_filter = None
+
             # 2.2 Prepare the context dict regarding the type of the doc
             if doc_obj.is_e_wallet:
                 template_name = "disbursement/e_wallets_transactions_list.html"
                 doc_transactions = doc_obj.disbursement_data.all()
-
+                if self.request.GET.get('search'):
+                    search_keys = self.request.GET.get('search')
+                    search_filter = (
+                        Q(msisdn__icontains=search_keys)|
+                        Q(reference_id__iexact=search_keys)
+                    )
                 context = {
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.disbursement_data.filter(is_disbursed=False).count() != 0,
@@ -229,6 +236,13 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
             elif doc_obj.is_bank_wallet:
                 template_name = "disbursement/bank_transactions_list.html"
                 doc_transactions = doc_obj.bank_wallets_transactions.all()
+                if self.request.GET.get('search'):
+                    search_keys = self.request.GET.get('search')
+                    search_filter = (
+                        Q(uid__iexact=search_keys)|
+                        Q(anon_recipient__icontains=search_keys)|
+                        Q(transaction_status_description__icontains=search_keys)
+                    )
 
                 context = {
                     'doc_transactions': doc_transactions,
@@ -246,7 +260,13 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                     distinct("parent_transaction__transaction_id").\
                     values_list("id", flat=True)
                 doc_transactions = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
-
+                if self.request.GET.get('search'):
+                    search_keys = self.request.GET.get('search')
+                    search_filter = (
+                        Q(parent_transaction__transaction_id__iexact=search_keys)|
+                        Q(creditor_account_number__icontains=search_keys)|
+                        Q(creditor_bank__icontains=search_keys)
+                    )
                 context = {
                     'doc_transactions': doc_transactions,
                     'has_failed': doc_obj.bank_cards_transactions.filter(
@@ -256,12 +276,13 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
                             status=AbstractBaseStatus.SUCCESSFUL
                     ).count() != 0,
                 }
-            # add fees and vat to query set in case of accept model
-            context['doc_transactions'] = add_fees_and_vat_to_qs(
-                context['doc_transactions'],
-                request.user.root,
-                doc_obj
-            )
+            if search_filter:
+                context['doc_transactions'] = context['doc_transactions'].filter(search_filter)
+            # add server side pagination
+            paginator = Paginator(context['doc_transactions'], 10)
+            page = self.request.GET.get('page', 1)
+            queryset = paginator.get_page(page)
+
             context.update({
                 'doc_obj': doc_obj,
                 'doc_transactions_totals': self.__class__.get_document_transactions_totals(doc_obj, doc_transactions),
@@ -780,23 +801,34 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 values_list("id", flat=True)
 
             trxs = BankTransaction.objects.filter(id__in=bank_trx_ids).order_by("-created_at")
-        # add fees and vat to query set in case of accept model
-        return add_fees_and_vat_to_qs(
-            trxs,
-            root_user,
-            self.request.GET.get('issuer', None)
-        )
+
+        return trxs
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for single step bank transactions list view"""
+        paginator = Paginator(self.get_queryset(), 10)
+        page = self.request.GET.get('page', 1)
+        queryset = paginator.get_page(page)
+
         context = {
             'form': SingleStepTransactionForm(checker_user=request.user),
-            'transactions_list': self.get_queryset()
+            'transactions_list': queryset
         }
+        # pagination query string
+        query_string = ""
+
         if self.request.GET.get('issuer', None) == 'wallets':
             context['wallets'] = True
+            query_string += "issuer=wallets&"
+        else:
+            query_string +="issuer=bank-card&"
+
         if self.request.GET.get("admin_hierarchy", None) != None:
             context['admin_hierarchy'] = self.request.GET.get("admin_hierarchy")
+            query_string +="&admin_hierarchy=" + context['admin_hierarchy']
+
+        context["query_string"] = query_string
+
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):
@@ -851,7 +883,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "status" : response.json().get('status_code'),
                     "message": response.json().get('status_description')
                 }
-                return redirect(request.path + '?' + urllib.parse.urlencode(data))
+                return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
             
             except:
                 error_msg = "Process stopped during an internal error, please can you try again."
@@ -859,7 +891,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "message": error_msg
                 }
-                return redirect(request.path + '?' + urllib.parse.urlencode(data))
+                return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)
 
@@ -1013,9 +1045,9 @@ class ExportClientsTransactionsMonthlyReport:
             if failed_qs and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
                 q['fees'], q['vat'] = 0, 0
             elif failed_qs and q.__class__.__name__ == 'InstantTransaction' \
-                    and q.issuer_type in ['orange', 'bank_wallet'] and BankTransaction.objects.filter(
-                    status=AbstractBaseStatus.PENDING,
-                    end_to_end=q.uid
+                and q.issuer_type in ['orange', 'bank_wallet'] and BankTransaction.objects.filter(
+                status=AbstractBaseStatus.PENDING,
+                end_to_end=q.uid
             ).count() == 0:
                 q['fees'], q['vat'] = 0, 0
             else:
@@ -1043,22 +1075,24 @@ class ExportClientsTransactionsMonthlyReport:
         """ Annotate qs then add admin username to qs"""
         if self.vf_facilitator_perm:
             qs = qs.annotate(
-                    admin=F('doc__disbursed_by__root__username'),
-                    vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
+                admin=F('doc__disbursed_by__root__username'),
+                vf_identifier=F('doc__disbursed_by__root__client__vodafone_facilitator_identifier')
             ).values('admin', 'issuer', 'vf_identifier'). \
                 annotate(total=Sum('amount'), count=Count('id'))
         else:
-            qs = qs.annotate(admin=F('doc__disbursed_by__root__username')).values('admin', 'issuer'). \
+            qs = qs.annotate(
+                admin=F('doc__disbursed_by__root__username')
+            ).values('admin', 'issuer'). \
                 annotate(total=Sum('amount'), count=Count('id'))
         return self._customize_issuer_in_qs_values(qs)
 
     def _annotate_instant_trxs_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
         qs = qs.annotate(
-                admin=Case(
-                        When(from_user__isnull=False, then=F('from_user__root__username')),
-                        default=F('document__disbursed_by__root__username')
-                )
+            admin=Case(
+                When(from_user__isnull=False, then=F('from_user__root__username')),
+                default=F('document__disbursed_by__root__username')
+            )
         ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
             annotate(total=Sum('amount'), count=Count('uid'))
         return self._customize_issuer_in_qs_values(qs)
@@ -1067,25 +1101,25 @@ class ExportClientsTransactionsMonthlyReport:
         """Calculate vodafone, etisalat, aman transactions details from DisbursementData model"""
         if self.status == 'failed':
             qs = DisbursementData.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    ~Q(reason__exact=''),
-                    Q(is_disbursed=False),
-                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                ~Q(reason__exact=''),
+                Q(is_disbursed=False),
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         elif self.status == 'success':
             qs = DisbursementData.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(is_disbursed=True),
-                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(is_disbursed=True),
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         else:
             qs = DisbursementData.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
-                    Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
+                Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
         
         # if super admins are vodafone facilitator onboarding save qs
@@ -1123,30 +1157,30 @@ class ExportClientsTransactionsMonthlyReport:
         """Calculate bank wallets, orange, instant transactions details from InstantTransaction model"""
         if self.status == 'failed':
             qs = InstantTransaction.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.FAILED),
-                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins))
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(status=AbstractBaseStatus.FAILED),
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         elif self.status == 'success':
             qs = InstantTransaction.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(status=AbstractBaseStatus.SUCCESSFUL),
-                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins))
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(status=AbstractBaseStatus.SUCCESSFUL),
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         else:
             qs = InstantTransaction.objects.filter(
-                    Q(disbursed_date__gte=self.first_day),
-                    Q(disbursed_date__lte=self.last_day),
-                    Q(status__in=[AbstractBaseStatus.SUCCESSFUL,
-                                  AbstractBaseStatus.PENDING,
-                                  AbstractBaseStatus.FAILED]),
-                    ~Q(transaction_status_code__in=['500', '424']),
-                    (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
-                    Q(from_user__root__client__creator__in=self.superadmins))
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(status__in=[AbstractBaseStatus.SUCCESSFUL,
+                              AbstractBaseStatus.PENDING,
+                              AbstractBaseStatus.FAILED]),
+                ~Q(transaction_status_code__in=['500', '424']),
+                (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
+                Q(from_user__root__client__creator__in=self.superadmins))
             )
         if self.status in ['success', 'failed']:
             qs = self._annotate_instant_trxs_qs(qs)
@@ -1344,7 +1378,7 @@ class ExportClientsTransactionsMonthlyReport:
 
         # 4. Group all data by admin
         final_data = self.group_result_transactions_data(
-                vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
+            vf_ets_aman_qs, bank_wallets_orange_instant_transactions_qs, bank_cards_transactions_qs
         )
 
         if self.instant_or_accept_perm  or self.default_vf__or_bank_perm:

@@ -21,9 +21,9 @@ RUN mkdir -p $HOME/staticfiles/static \
     && mkdir $HOME/mediafiles/media/documents/files_uploaded \
     && mkdir $HOME/mediafiles/media/documents/instant_transactions \
     && mkdir $HOME/mediafiles/media/documents/weekly_reports \
-    && mkdir -p $PAYOUTS_HOME/logs/uwsgi-logs \
-    && mkdir $PAYOUTS_HOME/logs/celery_logs \
-    && touch $PAYOUTS_HOME/logs/celery_logs/celery.log
+    && mkdir -p $HOME/logs/uwsgi-logs \
+    && mkdir $HOME/logs/celery_logs \
+    && touch $HOME/logs/celery_logs/celery.log
 
 
 WORKDIR $PAYOUTS_HOME

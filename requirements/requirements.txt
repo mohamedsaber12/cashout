@@ -154,3 +154,6 @@ ptvsd == 4.3.2 #vs code debug
 django-simple-history==2.12.0
 
 coverage==5.5
+
+gunicorn==20.1.0
+

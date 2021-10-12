@@ -1,15 +1,17 @@
 site_name: Payouts Portal Documentation!
 
 docs_dir: 'mkdocs'
-site_dir: '/app/mediafiles/mkdocs/build' # MKDOCS_ROOT_DIR
+site_dir: '/var/www/docs/static/mkdocs_build' # MKDOCS_ROOT_DIR
 nav:
   - Home: index.md
   - Table Of Contents: table_of_contents.md
   - Definitions and Acronyms: definitions_and_acronyms.md
   - Generate and Refresh Token API: generate_and_refresh_token_api.md
   - Instant Cashin API: instant_cashin_api.md
+  - Cancel Aman Transaction API: cancel_aman_transaction_api.md
   - Bulk Transaction Inquiry API: bulk_transaction_inquiry_api.md
   - Budget Inquiry API: budget_inquiry_api.md
+  - CallBack Url: callback_url.md
   - Response Codes: response_codes.md
 
 theme:

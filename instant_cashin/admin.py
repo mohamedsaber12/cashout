@@ -13,6 +13,7 @@ from django.utils.translation import gettext_lazy as _
 from disbursement.models import DisbursementData
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
+from core.models import AbstractBaseStatus
 
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
@@ -31,6 +32,21 @@ class AmanTransactionTypeFilter(admin.SimpleListFilter):
         if self.value() == 'instant_transaction':
             return queryset.filter(transaction_type=ContentType.objects.get_for_model(InstantTransaction))
 
+
+class CustomStatusFilter(admin.SimpleListFilter):
+    title = 'Status'
+    parameter_name = 'status_choice_verbose'
+
+    def lookups(self, request, model_admin):
+        return AbstractBaseStatus.STATUS_CHOICES + [
+            ('U', _("Unknown")),
+        ]
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value:
+            return queryset.filter(status=value)
+        return queryset
 
 
 @admin.register(AmanTransaction)
@@ -83,7 +99,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     """
 
     default_fields = [
-        'uid', 'from_user', 'anon_recipient', 'status', 'transaction_status_code', 'amount', 'issuer_type'
+        'uid', 'from_user', 'anon_recipient', 'status_choice_verbose', 'transaction_status_code', 'amount', 'issuer_type'
     ]
     list_display = default_fields + ['updated_at', 'disbursed_date']
     readonly_fields = default_fields + ['uid', 'created_at']
@@ -92,14 +108,15 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     list_filter = [
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
-        'status', 'issuer_type', 'anon_sender', 'from_user', 'is_single_step',
+        CustomStatusFilter,
+        'issuer_type', 'anon_sender', 'from_user', 'is_single_step', 'transaction_status_code'
     ]
     actions = ["export_as_csv"]
     fieldsets = (
         (None, {'fields': ('from_user', )}),
         (_('Transaction Details'), {
             'fields': (
-                'uid', 'reference_id', 'status', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient',
+                'uid', 'reference_id', 'status_choice_verbose', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient',
                 'recipient_name', 'transaction_status_code', 'transaction_status_description', 'document'
             )
         }),

@@ -27,7 +27,7 @@
 
     |  Field                  |  M/O/C   |    Type           |    Notes                                              |
     |-------	              |------    |--------           |---------                                              |
-    |  transactions_ids_list  |   M      |  String of uuid4  |  List of transaction ids as uuid4                     |
+    |  transactions_ids_list  |   M      |  String of uuid4  |  List of transaction ids as uuid4 or list of client refernce ids or list of mixed                    |
     |  bank_transactions      |   O      |  Boolean          |  Used when the passed ids list for bank transactions  |
 
 

@@ -20,6 +20,7 @@ from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
+from data.tasks import ExportClientsTransactionsMonthlyReportTask
 from disbursement.views import ExportClientsTransactionsMonthlyReport
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
@@ -296,24 +297,14 @@ class SuperAdmin(UserAccountAdmin):
             start_date = request.POST.get("start_date")
             end_date = request.POST.get("end_date")
             status = request.POST.get("status")
+            ExportClientsTransactionsMonthlyReportTask.delay(
+                request.user.id, start_date, end_date, status,
+                list(queryset.values_list('pk', flat=True))
+            )
+            # exportObject = ExportClientsTransactionsMonthlyReport()
+            # report_download_url = exportObject.run(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
 
-            exportObject = ExportClientsTransactionsMonthlyReport()
-            report_download_url = exportObject.run(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
-
-            if report_download_url == False:
-                self.message_user(request, f"Error Choosing super admins")
-                return HttpResponseRedirect(request.get_full_path())
-
-            filename = report_download_url.split('filename=')[1]
-            file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
-            if os.path.exists(file_path):
-                with open(file_path, 'rb') as fh:
-                    response = HttpResponse(
-                            fh.read(),
-                            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                    )
-                    response['Content-Disposition'] = 'attachment; filename=%s' % filename
-                    return response
+            self.message_user(request, f"The report will send  to your email in a few minutes")
             return HttpResponseRedirect(request.get_full_path())
         
         return render(request,
@@ -391,3 +382,4 @@ class UserAdmin(UserAdmin):
 # ToDo: Custom general user model
 # admin.site.register(User)
 admin.site.register(Client)
+

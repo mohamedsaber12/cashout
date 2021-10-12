@@ -248,7 +248,7 @@ class BankTransactionsChannel:
             new_trx_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(bank_trx_obj)
             
              # send bank transaction callback notifications
-            if bank_trx_obj.user_created.root.root.callback_url:
+            if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
                 callback_url = bank_trx_obj.user_created.root.root.callback_url
                 req_body = BankTransactionResponseModelSerializer(bank_trx_obj)
                 requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
@@ -285,6 +285,7 @@ class BankTransactionsChannel:
     @staticmethod
     def send_transaction(bank_trx_obj, instant_trx_obj):
         """Make a new send transaction request to EBC"""
+            
         has_valid_response = True
 
         try:

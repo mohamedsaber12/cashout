@@ -22,6 +22,16 @@ ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 @respects_language
 def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs):
     """Task for updating pending bank transactions from EBC for the last 5 days at max"""
+
+    # check if EBC is up , if not return False
+    try:
+        requests.get("https://cibcorpay.egyptianbanks.net", timeout=15)
+    except Exception as e:
+        ACH_GET_TRX_STATUS_LOGGER.debug(
+                f"[message] [check for EBC status] [celery_task] -- "
+                f"Exeption: {e}"
+            )
+        return False
     try:
         five_days_ago = timezone.now() - datetime.timedelta(int(days_delta))
         latest_bank_trx_ids = BankTransaction.objects.\

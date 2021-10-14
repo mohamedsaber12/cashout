@@ -14,6 +14,7 @@ from disbursement.models import BankTransaction
 from payouts.settings.celery import app
 
 from .specific_issuers_integrations import BankTransactionsChannel
+import requests
 
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 

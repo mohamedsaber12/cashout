@@ -276,10 +276,13 @@ def check_for_late_disbursement_callback(**kwargs):
             continue
         else:
             for disb_record in doc_transactions:
+                ref_id = disb_record.get('mpg_rrn', "None")
+                if ref_id is None:
+                    ref_id = "None"
                 DisbursementData.objects.select_for_update().filter(id=int(disb_record['id'])).update(
                         is_disbursed=True if disb_record['status'] == '0' else False,
                         reason=disb_record.get('description', 'No Description found'),
-                        reference_id=disb_record.get('mpg_rrn', 'None')
+                        reference_id=ref_id
                 )
 
                 # If disb_record['status'] = 0, it means this record amount is disbursed successfully

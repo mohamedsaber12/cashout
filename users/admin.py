@@ -314,7 +314,6 @@ class SuperAdmin(UserAccountAdmin):
     export_report.short_description = ugettext_lazy("export report selected %(verbose_name_plural)s")
 
 
-
 @admin.register(Setup)
 class SetupRootAdmin(admin.ModelAdmin):
     """
@@ -345,11 +344,39 @@ class SupportUserModelAdmin(UserAccountAdmin):
 
     list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
     
-    def get_fieldsets(self, request, obj):
-        return ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+    def get_fieldsets(self, request, obj=None):
+        return (
+            (None, {
+                'classes': ('wide',),
+                'fields': ('username', 'password')
+            }),
+            ('Personal info', {
+                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
+            }),
+            ('Permissions', {
+                'fields': ('is_active', 'is_staff', 'is_superuser')
+            }),
+            ('Important dates', {
+                'fields': ('last_login', 'date_joined')
+            })
+        )
     
     def get_fields(self):
-        return ((None, {'classes': ('wide',), 'fields': ('username', 'password1', 'password2')}), ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+        return (
+            (None, {
+                'classes': ('wide',),
+                'fields': ('username', 'password')
+            }),
+            ('Personal info', {
+                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
+            }),
+            ('Permissions', {
+                'fields': ('is_active', 'is_staff', 'is_superuser')
+            }),
+            ('Important dates', {
+                'fields': ('last_login', 'date_joined')
+            })
+        )
 
 
 @admin.register(SupportSetup)

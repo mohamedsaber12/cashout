@@ -19,7 +19,7 @@ from ..forms import SupportUserCreationForm
 from ..mixins import (
     SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin,
 )
-from ..models import Client, SupportSetup, SupportUser, RootUser
+from ..models import Client, SupportSetup, SupportUser, RootUser, SuperAdminUser
 
 
 class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
@@ -92,7 +92,22 @@ class ClientsForSupportListView(SupportUserRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(creator=self.request.user.my_setups.user_created)
+        creator = self.request.user.my_setups.user_created
+        all_super_admins = [creator]
+
+        # get all super admins that has same permission
+        if creator.is_vodafone_default_onboarding:
+            all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_vodafone_default_onboarding]
+        elif creator.is_instant_model_onboarding:
+            all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_instant_model_onboarding]
+        elif creator.is_accept_vodafone_onboarding:
+            all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_accept_vodafone_onboarding]
+        elif creator.is_vodafone_facilitator_onboarding:
+            all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_vodafone_facilitator_onboarding]
+        elif creator.is_banks_standard_model_onboaring:
+            all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_banks_standard_model_onboaring]
+
+        qs = qs.filter(creator__in=all_super_admins)
 
         if self.request.GET.get('search'):
             search_key = self.request.GET.get('search')

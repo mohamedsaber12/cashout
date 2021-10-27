@@ -6,6 +6,8 @@ import json
 import logging
 import re
 from decimal import Decimal
+
+from django.contrib.auth.models import Permission
 from celery.app import task
 
 import pandas as pd
@@ -20,7 +22,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.urls import reverse
-from django.utils.timezone import datetime, make_aware
+from django.utils.timezone import datetime, make_aware, timedelta
 from django.utils.translation import gettext as _
 
 from core.models import AbstractBaseStatus
@@ -50,6 +52,7 @@ from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
 from disbursement.utils import add_fees_and_vat_to_qs
+from data.utils import upload_file_to_vodafone 
 
 
 
@@ -1169,8 +1172,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
         """Write exported transactions data to excel file"""
-        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
-        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')
 
@@ -1228,7 +1229,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 ws.write(row_num, 5, current_admin_report['vf_facilitator_identifier'], font_style)
                 row_num += 1
 
-        wb.save(file_path)
+        wb.save(self.file_path)
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
@@ -1382,7 +1383,10 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         deliver_mail(self.superadmin_user, _(mail_subject), message)
 
+
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
+        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date
@@ -1888,3 +1892,25 @@ def notify_makers_collection(doc):
         The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully<br><br>
         Thanks, BR""")
     deliver_mail(None, _(' Collection File Upload Notification'), message, makers)
+
+
+
+@app.task()
+class ExportClientsTransactionsMonthlyReportVodafoneFacilitatorTask(ExportClientsTransactionsMonthlyReportTask):
+
+    def run(self, *args, **kwargs):
+        yesterday = datetime.now() - timedelta(1)
+        self.start_date = datetime.strftime(yesterday, '%Y-%m-%d')
+        self.end_date = datetime.strftime(yesterday, '%Y-%m-%d')
+        filename = _(f"Vodafone_facilitator_report_{self.start_date}.xls")
+        self.file_path = f"{settings.MEDIA_ROOT}/documents/vodafone_facilitator/{filename}"
+        self.status = 'all'
+        self.instant_or_accept_perm = False
+        self.vf_facilitator_perm = False
+        self.default_vf__or_bank_perm = False
+        facilitator_perm = Permission.objects.get(codename="vodafone_facilitator_accept_vodafone_onboarding")
+        self.superadmins = User.objects.filter(user_permissions=facilitator_perm)
+        self.prepare_transactions_report()
+        upload_file_to_vodafone(self.file_path)
+        
+        return True

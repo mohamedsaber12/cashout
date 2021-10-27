@@ -1895,22 +1895,22 @@ def notify_makers_collection(doc):
 
 
 
-@app.task()
-class ExportClientsTransactionsMonthlyReportVodafoneFacilitatorTask(ExportClientsTransactionsMonthlyReportTask):
+# @app.task()
+# class ExportClientsTransactionsMonthlyReportVodafoneFacilitatorTask(ExportClientsTransactionsMonthlyReportTask):
 
-    def run(self, *args, **kwargs):
-        yesterday = datetime.now() - timedelta(1)
-        self.start_date = datetime.strftime(yesterday, '%Y-%m-%d')
-        self.end_date = datetime.strftime(yesterday, '%Y-%m-%d')
-        filename = _(f"Vodafone_facilitator_report_{self.start_date}.xls")
-        self.file_path = f"{settings.MEDIA_ROOT}/documents/vodafone_facilitator/{filename}"
-        self.status = 'all'
-        self.instant_or_accept_perm = False
-        self.vf_facilitator_perm = False
-        self.default_vf__or_bank_perm = False
-        facilitator_perm = Permission.objects.get(codename="vodafone_facilitator_accept_vodafone_onboarding")
-        self.superadmins = User.objects.filter(user_permissions=facilitator_perm)
-        self.prepare_transactions_report()
-        upload_file_to_vodafone(self.file_path)
+#     def run(self, *args, **kwargs):
+#         yesterday = datetime.now() - timedelta(1)
+#         self.start_date = datetime.strftime(yesterday, '%Y-%m-%d')
+#         self.end_date = datetime.strftime(yesterday, '%Y-%m-%d')
+#         filename = _(f"Vodafone_facilitator_report_{self.start_date}.xls")
+#         self.file_path = f"{settings.MEDIA_ROOT}/documents/vodafone_facilitator/{filename}"
+#         self.status = 'all'
+#         self.instant_or_accept_perm = False
+#         self.vf_facilitator_perm = False
+#         self.default_vf__or_bank_perm = False
+#         facilitator_perm = Permission.objects.get(codename="vodafone_facilitator_accept_vodafone_onboarding")
+#         self.superadmins = User.objects.filter(user_permissions=facilitator_perm)
+#         self.prepare_transactions_report()
+#         upload_file_to_vodafone(self.file_path)
         
-        return True
+#         return True

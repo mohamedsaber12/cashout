@@ -1385,12 +1385,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
 
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
+        self.status = status
+        self.start_date = start_date
+        self.end_date = end_date
         self.filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
         self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{self.filename}"
         self.superadmin_user = User.objects.get(id=user_id)
-        self.start_date = start_date
-        self.end_date = end_date
-        self.status = status
         self.instant_or_accept_perm = False
         self.vf_facilitator_perm = False
         self.default_vf__or_bank_perm = False

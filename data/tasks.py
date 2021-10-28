@@ -1230,7 +1230,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 row_num += 1
 
         wb.save(self.file_path)
-        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={self.filename}"
         return report_download_url
 
     def prepare_transactions_report(self):
@@ -1385,8 +1385,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
 
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
-        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
-        self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        self.filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{self.filename}"
         self.superadmin_user = User.objects.get(id=user_id)
         self.start_date = start_date
         self.end_date = end_date

@@ -11,36 +11,36 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
 
         # set fees and vat in disbursement record model
-        self.stdout.write(self.style.SUCCESS('start getting Disbursement data records page by page...'))
-        self.stdout.write(self.style.SUCCESS(''))
+        #self.stdout.write(self.style.SUCCESS('start getting Disbursement data records page by page...'))
+        #self.stdout.write(self.style.SUCCESS(''))
 
-        disb_data_records = DisbursementData.objects.all().order_by('-created_at')
+        #disb_data_records = DisbursementData.objects.all().order_by('-created_at')
 
-        self.stdout.write(self.style.SUCCESS(
-            'start updating Disbursement data records with fees and vat ...'
-        ))
-        self.stdout.write(self.style.SUCCESS(
-            '----------------------------------------')
-        )
-        paginator = Paginator(disb_data_records, 500)
-        for page_number in paginator.page_range:
-            queryset = paginator.page(page_number)
-            for record in queryset:
-                if record.doc.owner.root != None and \
-                   record.doc.owner.root.has_custom_budget:
-                    record.fees, record.vat = \
-                        record.doc.owner.root.budget.calculate_fees_and_vat_for_amount(
-                            record.amount, record.issuer
-                        )
+        #self.stdout.write(self.style.SUCCESS(
+        #    'start updating Disbursement data records with fees and vat ...'
+        #))
+        #self.stdout.write(self.style.SUCCESS(
+        #    '----------------------------------------')
+        #)
+        #paginator = Paginator(disb_data_records, 500)
+        #for page_number in paginator.page_range:
+        #    queryset = paginator.page(page_number)
+        #    for record in queryset:
+        #        if record.doc.owner.root != None and \
+        #           record.doc.owner.root.has_custom_budget:
+        #            record.fees, record.vat = \
+        #                record.doc.owner.root.budget.calculate_fees_and_vat_for_amount(
+        #                    record.amount, record.issuer
+        #                )
                     # self.stdout.write(self.style.SUCCESS(
-                    #         f"issuer => {record.issuer}, fees => {record.fees}, vat ==> {record.vat}"))
-                    record.save(update_fields=['fees', 'vat'])
-            self.stdout.write(self.style.SUCCESS(
-                '----------------------------------------'
-            ))
-            self.stdout.write(self.style.SUCCESS(
-                f'finish updating Disbursement data records for page => {page_number}'
-            ))
+        #            #         f"issuer => {record.issuer}, fees => {record.fees}, vat ==> {record.vat}"))
+        #            record.save(update_fields=['fees', 'vat'])
+        #    self.stdout.write(self.style.SUCCESS(
+        #        '----------------------------------------'
+        #    ))
+        #    self.stdout.write(self.style.SUCCESS(
+        #        f'finish updating Disbursement data records for page => {page_number}'
+        #    ))
 
         # set fees and vat in instant transaction model
         self.stdout.write(self.style.SUCCESS('start getting instant transaction page by page...'))

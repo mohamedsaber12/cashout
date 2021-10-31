@@ -35,6 +35,7 @@ class SuperAdminUser(User):
         if self.agents:
             qs = self.agents.filter(super=False, type=msisdn_issuer_type)
             if qs.count() > 0:
+                # TODO make it take agents random
                 return qs.first().msisdn
 
         raise ValueError(f"{self.username} root/wallet_issuer has no agents setup.")

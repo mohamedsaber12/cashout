@@ -288,10 +288,14 @@ class DisburseCallBack(UpdateAPIView):
         for data in request.data['transactions']:
             try:
                 last_doc_record_id = int(data['id'])
+                # for None cases and not nullable refernce_id field 
+                ref_id = data.get('mpg_rrn', 'None')
+                if ref_id is None:
+                    ref_id = "None"
                 DisbursementData.objects.select_for_update().filter(id=int(data['id'])).update(
                         is_disbursed=True if data['status'] == '0' else False,
                         reason=data.get('description', 'No Description found'),
-                        reference_id=data.get('mpg_rrn', 'None')
+                        reference_id=ref_id
                 )
 
                 # If data['status'] = 0, it means this record amount is disbursed successfully

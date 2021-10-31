@@ -6,6 +6,7 @@ import logging
 import os
 import random
 import xlwt
+import urllib
 from decimal import Decimal
 from django.utils import timezone
 
@@ -25,9 +26,6 @@ from django.views.generic import ListView, View
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.core.paginator import Paginator
-
-import urllib
-
 
 from rest_framework import status
 from rest_framework_expiring_authtoken.models import ExpiringToken

@@ -10,6 +10,10 @@
     <div class="menu_section">
       <ul class="nav side-menu">
         <li><a href="{% url 'users:support_clients_list' %}"><i class="fa fa-users"></i>{% trans 'All Clients' %}</a></li>
+        <li><a href="{% url 'docs:instant_docs' path='' %}" target="_blank"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>
+        {% if request.user.my_setups.can_onboard_entities and request.user.is_instant_model_onboarding %}
+          <li><a href="{% url 'users:support_clients_credentials' %}"><i class="fa fa-lock"></i>{% trans 'Clients Credentials'%}</a></li>
+        {% endif %}
         <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o" ></i>{% trans 'Active Sessions' %}</a></li>
         <li><a href="{% url 'users:profile' request.user.username %}"><i class="fa fa-user"></i>{% trans 'Profile' %}</a></li>
       </ul>

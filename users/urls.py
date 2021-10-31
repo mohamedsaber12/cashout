@@ -36,6 +36,9 @@ support_urls = [
     path('support/', views.SupportUsersListView.as_view(), name='support'),
     path('support/creation/', views.SuperAdminSupportSetupCreateView.as_view(), name='add_support'),
     path('support/clients/', views.ClientsForSupportListView.as_view(), name='support_clients_list'),
+    path('support/clients/Credentials', views.OnboardingNewInstantAdmin.as_view(), name='support_clients_credentials'),
+    path('support/clients/Credentials/<client_id>', views.ClientCredentialsDetails.as_view(),
+         name='support_clients_credentials_details'),
 ]
 
 disbursement_setups_urls = [

@@ -1,26 +1,50 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
+import random
+import array
+
+from django.contrib.auth.models import Permission
 from django.db.models import Q
 from django.http import HttpResponseRedirect, Http404
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 from django.core.paginator import Paginator
 
+from instant_cashin.utils import get_from_env
 from data.models import Doc
+from utilities.models import Budget, CallWalletsModerator, FeeSetup
+from utilities.logging import logging_message
 from disbursement.views import DisbursementDocTransactionsView
-from disbursement.utils import add_fees_and_vat_to_qs
 from disbursement.models import BankTransaction
-
-from ..forms import SupportUserCreationForm
+from oauth2_provider.models import Application
+from ..forms import SupportUserCreationForm, OnboardingApiClientForm
 from ..mixins import (
     SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin,
 )
-from ..models import Client, SupportSetup, SupportUser, RootUser, SuperAdminUser
+from ..models import (
+    Client, SupportSetup, SupportUser, RootUser, SuperAdminUser, User, Setup,
+    EntitySetup, InstantAPIViewerUser, InstantAPICheckerUser
+)
 
+ROOT_CREATE_LOGGER = logging.getLogger("root_create")
+
+DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+LOCASE_CHARACTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+                     'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q',
+                     'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
+                     'z']
+UPCASE_CHARACTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                     'I', 'J', 'K', 'M', 'N', 'O', 'p', 'Q',
+                     'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+                     'Z']
+SYMBOLS = ['#']
+# combines all the character arrays above to form one array
+COMBINED_LIST = DIGITS + UPCASE_CHARACTERS + LOCASE_CHARACTERS + SYMBOLS
 
 class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
     """
@@ -242,3 +266,261 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         }
 
         return render(request, 'support/document_details.html', context=context)
+
+
+class OnboardingNewInstantAdmin(SupportUserRequiredMixin, View):
+    """
+    List/Create view for onboarding new client over the integration patch
+    """
+
+    model = Client
+    context_object_name = 'clients'
+    template_name = 'support/integration_client_credentials.html'
+
+    def define_new_admin_hierarchy(self, new_user):
+        """
+        Generate/Define the hierarchy of the new admin user
+        :param new_user: the new admin user to be created
+        :return: the new admin user with its new hierarchy
+        """
+        maximum = max(RootUser.objects.values_list('hierarchy', flat=True), default=False)
+        maximum = 0 if not maximum else maximum
+
+        try:
+            new_user.hierarchy = maximum + 1
+        except TypeError:
+            new_user.hierarchy = 1
+
+        return new_user
+
+    def generate_strong_password(self, pass_length):
+        # randomly select at least one character from each character set above
+        rand_digit = random.choice(DIGITS)
+        rand_upper = random.choice(UPCASE_CHARACTERS)
+        rand_lower = random.choice(LOCASE_CHARACTERS)
+        rand_symbol = random.choice(SYMBOLS)
+
+        # combine the character randomly selected above
+        temp_pass = rand_digit + rand_upper + rand_lower + rand_symbol
+        temp_pass_list = []
+        for x in range(pass_length - 4):
+            temp_pass = temp_pass + random.choice(COMBINED_LIST)
+            temp_pass_list = array.array('u', temp_pass)
+            random.shuffle(temp_pass_list)
+
+        return ''.join(temp_pass_list)
+
+    def get_queryset(self):
+        creator = self.request.user.my_setups.user_created
+        all_super_admins = [creator]
+
+        # get all super admins that has same permission
+        if creator.is_instant_model_onboarding:
+            all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_instant_model_onboarding]
+        qs = Client.objects.filter(creator__in=all_super_admins)
+
+        if self.request.GET.get('search'):
+            search_key = self.request.GET.get('search')
+            return qs.filter(Q(client__username__icontains=search_key) |
+                             Q(client__mobile_no__icontains=search_key) |
+                             Q(client__email__icontains=search_key))
+
+        return qs
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests for credentials list view"""
+        context = {
+            'form': OnboardingApiClientForm(),
+            'clients': self.get_queryset(),
+            "is_production": get_from_env("ENVIRONMENT") == 'production',
+        }
+
+        return render(request, template_name=self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to onboard new client"""
+        context = {
+            'form': OnboardingApiClientForm(request.POST),
+            'clients': self.get_queryset(),
+            "is_production": get_from_env("ENVIRONMENT") == 'production',
+            'show_add_form': True
+        }
+
+        if context['form'].is_valid():
+            form = context['form']
+            try:
+                data = form.cleaned_data
+                client_name = data['client_name'].strip().lower().replace(" ", "_")
+                # create root
+                root = RootUser.objects.create(
+                    username=f"{client_name}_integration_admin",
+                    email=f"{client_name}_integration_admin@paymob.com",
+                    user_type=3
+                )
+
+                # set root password
+                root.set_password(get_from_env('INSTANT_ADMIN_DEFAULT_PASSWORD'))
+                # set admin hierarchy
+                root = self.define_new_admin_hierarchy(root)
+                # add root field when create root
+                root.root = root
+                root.save()
+
+                # add permissions
+                root.user_permissions.add(
+                    Permission.objects.get(content_type__app_label='users', codename='instant_model_onboarding'),
+                    Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement')
+                )
+
+                # start create extra setup
+                entity_dict = {
+                    "user": self.request.user.my_setups.user_created,
+                    "entity": root,
+                    "agents_setup": True,
+                    "fees_setup": True
+                }
+                client_dict = {
+                    "creator": self.request.user.my_setups.user_created,
+                    "client": root,
+                }
+
+                Setup.objects.create(
+                    user=root, pin_setup=True, levels_setup=True,
+                    maker_setup=True, checker_setup=True, category_setup=True
+                )
+                CallWalletsModerator.objects.create(
+                    user_created=root, disbursement=False, change_profile=False,
+                    set_pin=False, user_inquiry=False, balance_inquiry=False
+                )
+                root.user_permissions. \
+                    add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
+
+                EntitySetup.objects.create(**entity_dict)
+                Client.objects.create(**client_dict)
+                # finish create extra setup
+
+                msg = f"New Root/Admin created with username: {root.username} by {request.user.username}"
+                logging_message(ROOT_CREATE_LOGGER, "[message] [NEW ADMIN CREATED]", self.request, msg)
+
+                # handle budget and fees setup
+                root_budget = Budget.objects.create(
+                    disburser=root, created_by=self.request.user, current_balance=2000
+                )
+
+                FeeSetup.objects.create(budget_related=root_budget, issuer='vf',
+                    fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='es',
+                    fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='og',
+                    fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='bw',
+                    fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='am',
+                    fee_type='p', percentage_value=3.0)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='bc',
+                    fee_type='f', fixed_value=20)
+
+                # create dashboard user
+                dashboard_user = InstantAPIViewerUser.objects.create(
+                    username=f"{client_name}_dashboard_user",
+                    email=f"{client_name}_dashboard_user@{client_name}.com",
+                    user_type=7,
+                    root=root,
+                    hierarchy=root.hierarchy
+                )
+                # generate strong password for dashboard user
+                dashboard_user_pass = self.generate_strong_password(25)
+                dashboard_user.set_password(dashboard_user_pass)
+                dashboard_user.save()
+
+                # create api checker
+                api_checker = InstantAPICheckerUser.objects.create(
+                    username=f"{client_name}_api_checker",
+                    email=f"{client_name}_api_checker@{client_name}.com",
+                    user_type=6,
+                    root=root,
+                    hierarchy=root.hierarchy
+                )
+
+                # generate strong password for api checker
+                api_checker_pass = self.generate_strong_password(25)
+                api_checker.set_password(api_checker_pass)
+                api_checker.save()
+
+                # create oauth2 provider app
+                oauth2_app = Application.objects.create(
+                    client_type=Application.CLIENT_CONFIDENTIAL, authorization_grant_type=Application.GRANT_PASSWORD,
+                    name=f"{api_checker.username} OAuth App", user=api_checker
+                )
+
+                # add permissions
+                onboarding_permission = Permission.objects.get(
+                    content_type__app_label='users', codename='instant_model_onboarding')
+                api_docs_permission = Permission.objects.get(
+                    content_type__app_label='users', codename='can_view_api_docs')
+
+                dashboard_user.user_permissions.add(onboarding_permission)
+
+                api_checker.user_permissions.add(onboarding_permission, api_docs_permission)
+
+                context = {
+                    'form': OnboardingApiClientForm(),
+                    'clients': self.get_queryset(),
+                    "is_production": get_from_env("ENVIRONMENT") == 'production',
+                    "has_error": 'No',
+                    "credentials_data": {
+                        "dashboard_user": {
+                            "username": dashboard_user.username,
+                            "password": dashboard_user_pass
+                        },
+                        "api_checker": {
+                            "username": api_checker.username,
+                            "password": api_checker_pass,
+                            "client_id": oauth2_app.client_id,
+                            "client_secret": oauth2_app.client_secret
+                        }
+                    }
+                }
+            except Exception as err:
+                print(err)
+                error_msg = "Process stopped during an internal error, please can you try again."
+                error = {
+                    "message": error_msg
+                }
+                context["has_error"]= True
+                context['error'] = error
+        return render(request, template_name=self.template_name, context=context)
+
+
+class ClientCredentialsDetails(SupportUserRequiredMixin, View):
+
+    """
+    Detail view to retrieve Credentials for client
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        """Shared attributes between GET and POST methods"""
+        self.client_id = self.kwargs['client_id']
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET request to retrieve Credentials for specific Client with id"""
+
+        client = Client.objects.filter(id=self.client_id)
+
+        if not client.exists():
+            raise Http404(_(f"Client with id: {self.client_id} not found."))
+
+        client_obj = client.first()
+        users = User.objects.filter(root=client_obj.client)
+        dashboard_users = users.filter(user_type=7)
+        api_checkers = users.filter(user_type=6)
+        for ch in api_checkers:
+            ch.auth_obj = Application.objects.get(user__username=ch.username)
+        context = {
+            "client": client_obj,
+            "dashboard_users": dashboard_users,
+            "api_checkers": api_checkers,
+        }
+
+        return render(request, 'support/client_Credentials_details.html', context=context)

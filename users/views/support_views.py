@@ -317,13 +317,13 @@ class OnboardingNewInstantAdmin(SupportUserRequiredMixin, View):
         # get all super admins that has same permission
         if creator.is_instant_model_onboarding:
             all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_instant_model_onboarding]
-        qs = Client.objects.filter(creator__in=all_super_admins)
+        qs = Client.objects.filter(creator__in=all_super_admins).order_by('-id')
 
         if self.request.GET.get('search'):
             search_key = self.request.GET.get('search')
             return qs.filter(Q(client__username__icontains=search_key) |
                              Q(client__mobile_no__icontains=search_key) |
-                             Q(client__email__icontains=search_key))
+                             Q(client__email__icontains=search_key)).order_by('-id')
 
         return qs
 

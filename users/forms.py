@@ -838,3 +838,32 @@ class CustomClientProfilesForm(forms.ModelForm):
     class Meta:
         model = Client
         fields = ['custom_profile']
+
+
+class OnboardingApiClientForm(forms.Form):
+    """
+    onboarding transaction Form by instant support users
+    """
+    client_name = forms.CharField(
+        label=_('Client Name'),
+        required=True,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control', 'id': 'client_name',
+            'name': 'client_name', 'placeholder': 'Enter company name'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def clean_client_name(self):
+        client_name = self.cleaned_data.get('client_name', None)
+        if not client_name:
+            raise forms.ValidationError(_('Invalid company name'))
+        elif any(e in str(client_name) for e in '!%@*+&'):
+            raise forms.ValidationError(_("Symbols like !%*+@& not allowed in client name"))
+        root_exist = RootUser.objects.filter(
+            username=f'{client_name.strip().lower().replace(" ", "_")}_integration_admin')
+        if root_exist.exists():
+            raise forms.ValidationError(_('Client already exist with this name'))
+        return client_name

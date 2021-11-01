@@ -9,5 +9,8 @@ from .main_views import (ExpiringAuthToken, OTPLoginView, ProfileUpdateView,
 from .password_handling_views import ForgotPasswordView, PasswordResetView, change_password
 from .sessions_views import SessionDeleteView, SessionDeleteOtherView, SessionListView
 from .super_and_root_views import EntityBranding, Members, UserDeleteView
-from .support_views import (ClientsForSupportListView, DocumentForSupportDetailView, DocumentsForSupportListView,
-                            SuperAdminSupportSetupCreateView, SupportHomeView, SupportUsersListView)
+from .support_views import (
+    ClientsForSupportListView, DocumentForSupportDetailView, DocumentsForSupportListView,
+    SuperAdminSupportSetupCreateView, SupportHomeView, SupportUsersListView,
+    OnboardingNewInstantAdmin, ClientCredentialsDetails
+)

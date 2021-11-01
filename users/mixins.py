@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import SupportSetup, Client, User
+from .models import SupportSetup, Client, User, SuperAdminUser
 
 
 class ParentPermissionMixin(object):
@@ -325,7 +325,21 @@ class SupportOrRootOrMakerUserPassesTestMixin(UserPassesTestMixin, LoginRequired
             return True
         elif self.request.user.is_support and admin_username:
             support_creator = self.request.user.my_setups.user_created
-            client_setups = Client.objects.filter(creator=support_creator).select_related('client')
+            all_super_admins = [support_creator]
+
+            # get all super admins that has same permission
+            if support_creator.is_vodafone_default_onboarding:
+                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_vodafone_default_onboarding]
+            elif support_creator.is_instant_model_onboarding:
+                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_instant_model_onboarding]
+            elif support_creator.is_accept_vodafone_onboarding:
+                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_accept_vodafone_onboarding]
+            elif support_creator.is_vodafone_facilitator_onboarding:
+                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_vodafone_facilitator_onboarding]
+            elif support_creator.is_banks_standard_model_onboaring:
+                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_banks_standard_model_onboaring]
+
+            client_setups = Client.objects.filter(creator__in=all_super_admins).select_related('client')
             members_list = [obj.client.username for obj in client_setups]
             if admin_username in members_list:
                 return True

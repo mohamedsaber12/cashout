@@ -2,5 +2,5 @@ projectKey=payout-Staging
 serverUrl=https://sonarqube.paymobsolutions.com
 serverVersion=8.5.1.38104
 dashboardUrl=https://sonarqube.paymobsolutions.com/dashboard?id=payout-Staging
-ceTaskId=AXszTl8Gti4trokCHP1I
-ceTaskUrl=https://sonarqube.paymobsolutions.com/api/ce/task?id=AXszTl8Gti4trokCHP1I
+ceTaskId=AXt6rbPZxK-pArXcpphF
+ceTaskUrl=https://sonarqube.paymobsolutions.com/api/ce/task?id=AXt6rbPZxK-pArXcpphF

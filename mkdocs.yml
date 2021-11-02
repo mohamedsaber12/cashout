@@ -1,7 +1,9 @@
 site_name: Payouts Portal Documentation!
 
 docs_dir: 'mkdocs'
-site_dir: '/var/www/docs/static/mkdocs_build' # MKDOCS_ROOT_DIR
+#site_dir: '/var/www/docs/static/mkdocs_build' # MKDOCS_ROOT_DIR
+site_dir: '/app/mediafiles/mkdocs/build' # MKDOCS_ROOT_DIR
+
 nav:
   - Home: index.md
   - Table Of Contents: table_of_contents.md

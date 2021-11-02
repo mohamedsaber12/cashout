@@ -179,6 +179,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         msisdn = f"00{msisdn}"
                         msisdns_list.append(msisdn)
                         valid_msisdn = True
+                    else:
+                        raise ValidationError('')
                 except ValidationError:
                     if errors_list[index]:
                         errors_list[index] = "Invalid mobile number"

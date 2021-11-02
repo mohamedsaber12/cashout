@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from .base import *
 
-
 DEBUG = False
 
 # Database
@@ -34,7 +33,7 @@ ADMINS = [
 
 # SSL
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-# SECURE_SSL_REDIRECT = True        # Handled by nginx
+# SECURE_SSL_REDIRECT = True # Handled by nginx
 
 # Sessions and Cookies
 SESSION_COOKIE_SECURE = True
@@ -46,23 +45,23 @@ GENERATE_REQUEST_ID_IF_NOT_IN_HEADER = True
 
 # To enable request ID from Nginx add this format to nginx.conf
 # log_format compo '$remote_addr [$time_local] "$request" '
-#                     '$status $body_bytes_sent "$http_referer" '
-#                     '"$http_user_agent" "$http_x_forwarded_for" '
-#                     '"$http_host" "$scheme" "$host" '
-#                     '"$server_port" "$server_protocol" '
-#                     '"$request_time" "$request_id" "$upstream_addr" "$upstream_response_time" '
-#                     '"$upstream_connect_time" '
-#                     '"$upstream_header_time" '
-#                     '"$upstream_status" "$msec" "$pipe" "$connection_requests"';
+# '$status $body_bytes_sent "$http_referer" '
+# '"$http_user_agent" "$http_x_forwarded_for" '
+# '"$http_host" "$scheme" "$host" '
+# '"$server_port" "$server_protocol" '
+# '"$request_time" "$request_id" "$upstream_addr" "$upstream_response_time" '
+# '"$upstream_connect_time" '
+# '"$upstream_header_time" '
+# '"$upstream_status" "$msec" "$pipe" "$connection_requests"';
 
 # access_log  /var/log/nginx/access.log  compo;
 
 # location {
-#     proxy_set_header X-Request-Id $request_id;
+# proxy_set_header X-Request-Id $request_id;
 # }
 
 # Enable HTTP Strict Transport Security (HSTS)
-# proxy_set_header X-Forwarded-Proto $scheme;  >>  Add to nginx configs
+# proxy_set_header X-Forwarded-Proto $scheme; >> Add to nginx configs
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True

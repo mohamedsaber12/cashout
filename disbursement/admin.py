@@ -40,7 +40,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
         'transaction_id', 'parent_transaction', 'creditor_account_number', 'creditor_bank', 'category_code', 'amount', 'status',
         'transaction_status_code', 'created_at', 'disbursed_date'
     ]
-    search_fields = ['transaction_id', 'parent_transaction__transaction_id']
+    search_fields = ['transaction_id', 'parent_transaction__transaction_id', 'creditor_account_number']
     readonly_fields = [
         field.name for field in BankTransaction._meta.local_fields]
     list_filter = [

@@ -101,7 +101,7 @@ class BankTransactionsChannel:
         payload['TransactionDateTime'] = trx_obj.created_at.strftime("%d/%m/%Y %H:%M:%S")
         payload['CategoryCode'] = trx_obj.category_code
         payload['TransactionPurpose'] = trx_obj.purpose
-        payload['TransactionAmount'] = float(trx_obj.amount - decimal.Decimal(amount_to_be_deducted))
+        payload['TransactionAmount'] = float(decimal.Decimal(trx_obj.amount) - decimal.Decimal(amount_to_be_deducted))
         payload['Currency'] = trx_obj.currency
         payload['CorporateCode'] = trx_obj.corporate_code
         payload['DebtorAccount'] = trx_obj.debtor_account
@@ -304,6 +304,7 @@ class BankTransactionsChannel:
                             amount_to_be_deducted = bank_trx_obj.amount - 1
                             remaining_amount_obj.remaining_amount = remaining_amount_obj.remaining_amount - amount_to_be_deducted
                         remaining_amount_obj.save()
+                        remaining_amount_obj.bank_transactions.add(bank_trx_obj)
 
 
 

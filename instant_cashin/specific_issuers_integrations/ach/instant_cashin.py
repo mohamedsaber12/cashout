@@ -301,7 +301,7 @@ class BankTransactionsChannel:
                             amount_to_be_deducted = remaining_amount_obj.remaining_amount
                             remaining_amount_obj.remaining_amount = decimal.Decimal(0)
                         else:
-                            amount_to_be_deducted = bank_trx_obj.amount - decimal.Decimal(1)
+                            amount_to_be_deducted = decima.Decimal(bank_trx_obj.amount) - decimal.Decimal(1)
                             remaining_amount_obj.remaining_amount = remaining_amount_obj.remaining_amount - amount_to_be_deducted
                         remaining_amount_obj.save()
                         remaining_amount_obj.bank_transactions.add(bank_trx_obj)

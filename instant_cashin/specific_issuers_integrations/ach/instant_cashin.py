@@ -312,10 +312,7 @@ class BankTransactionsChannel:
             response = BankTransactionsChannel.post(get_from_env("EBC_API_URL"), payload, bank_trx_obj)
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
-            exception_type, exception_object, exception_traceback = sys.exc_info()
-            filename = exception_traceback.tb_frame.f_code.co_filename
-            line_number = exception_traceback.tb_lineno
-            ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {filename} {line_number} {exception_type}"))
+            ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e}"))
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG) if instant_trx_obj \
                 else None

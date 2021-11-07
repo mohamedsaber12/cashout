@@ -293,10 +293,10 @@ class BankTransactionsChannel:
             # UVA issue remaining money 
             # TODO Remove this code after all remining money is zero (UVA-Admin)
             amount_to_be_deducted = 0
-            if trx_obj.user_created.root.username == "UVA-Admin":
+            if bank_trx_obj.user_created.root.username == "UVA-Admin":
                 remaining_amounts = RemainingAmounts.objects.filter(remaining_amount__gt=0)
                 for remaining_amount_obj in remaining_amounts:
-                    if remaining_amount.mobile in trx_obj.creditor_account_number:
+                    if remaining_amount_obj.mobile in bank_trx_obj.creditor_account_number:
                         if bank_trx_obj.amount - remaining_amount_obj.remaining_amount >= 1:
                             amount_to_be_deducted = remaining_amount_obj.remaining_amount
                             remaining_amount_obj.remaining_amount = decimal.Decimal(0)

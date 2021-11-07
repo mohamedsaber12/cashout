@@ -17,15 +17,15 @@ class DisbursementDataResourceForEWallets(resources.ModelResource):
 
     class Meta:
         model = DisbursementData
-        fields = ['amount', 'msisdn', 'disbursed', 'reason']
-        export_order = ['msisdn', 'amount', 'disbursed', 'reason']
+        fields = ['amount', 'msisdn', 'disbursed', 'reason', 'fees', 'vat']
+        export_order = ['msisdn', 'amount', 'disbursed', 'reason', 'fees', 'vat']
 
     def __init__(self, doc, is_disbursed):
         self.doc = doc
         self.is_disbursed = is_disbursed
 
     def get_export_headers(self):
-        return ['Mobile Number', 'Amount', 'Disbursement Status', 'Failure Reason']
+        return ['Mobile Number', 'Amount', 'Disbursement Status', 'Failure Reason', 'Fees', 'Vat']
 
     def get_queryset(self):
         qs = super().get_queryset()
@@ -54,11 +54,11 @@ class DisbursementDataResourceForBankWallet(resources.ModelResource):
         model = InstantTransaction
         fields = [
             'anon_recipient', 'amount', 'recipient_name', 'transaction_status', 'transaction_status_code',
-            'transaction_status_description'
+            'transaction_status_description', 'fees', 'vat'
         ]
         export_order = [
             'anon_recipient', 'amount', 'recipient_name', 'transaction_status', 'transaction_status_code',
-            'transaction_status_description'
+            'transaction_status_description', 'fees', 'vat'
         ]
 
     def __init__(self, doc, is_disbursed):
@@ -68,7 +68,7 @@ class DisbursementDataResourceForBankWallet(resources.ModelResource):
     def get_export_headers(self):
         return [
             'Mobile Number', 'Amount', 'Full Name', 'Disbursement Status', 'Disbursement Status Code',
-            'Disbursement Status Description'
+            'Disbursement Status Description', 'Fees', 'Vat'
         ]
 
     def get_queryset(self):
@@ -94,11 +94,13 @@ class DisbursementDataResourceForBankCards(resources.ModelResource):
         model = BankTransaction
         fields = [
             'creditor_account_number', 'amount', 'creditor_name', 'creditor_bank', 'transaction_type',
-            'transaction_status', 'transaction_status_code', 'transaction_status_description'
+            'transaction_status', 'transaction_status_code', 'transaction_status_description',
+            'fees', 'vat'
         ]
         export_order = [
             'creditor_account_number', 'amount', 'creditor_name', 'creditor_bank', 'transaction_type',
-            'transaction_status', 'transaction_status_code', 'transaction_status_description'
+            'transaction_status', 'transaction_status_code', 'transaction_status_description',
+            'fees', 'vat'
         ]
 
     def __init__(self, doc, is_disbursed):
@@ -108,7 +110,8 @@ class DisbursementDataResourceForBankCards(resources.ModelResource):
     def get_export_headers(self):
         return [
             'Account Number', 'Amount', 'Full Name', 'Bank Swift Code', 'Transaction Type',
-            'Disbursement Status', 'Disbursement Status Code', 'Disbursement Status Description'
+            'Disbursement Status', 'Disbursement Status Code', 'Disbursement Status Description',
+            'Fees', 'Vat'
         ]
 
     def get_queryset(self):

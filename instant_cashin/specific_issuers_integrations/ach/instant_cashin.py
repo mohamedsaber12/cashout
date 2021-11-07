@@ -297,7 +297,7 @@ class BankTransactionsChannel:
                 remaining_amounts = RemainingAmounts.objects.filter(remaining_amount__gt=0)
                 for remaining_amount_obj in remaining_amounts:
                     if remaining_amount_obj.mobile in bank_trx_obj.creditor_account_number:
-                        if bank_trx_obj.amount - remaining_amount_obj.remaining_amount >= 1:
+                        if decimal.Decimal(bank_trx_obj.amount) - remaining_amount_obj.remaining_amount >= 1:
                             amount_to_be_deducted = remaining_amount_obj.remaining_amount
                             remaining_amount_obj.remaining_amount = decimal.Decimal(0)
                         else:

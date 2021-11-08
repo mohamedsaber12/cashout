@@ -155,3 +155,5 @@ ptvsd == 4.3.2 #vs code debug
 django-simple-history==2.12.0
 
 pysftp==0.2.9
+
+django-silk==4.2.0

@@ -70,6 +70,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'silk.apps.SilkAppConfig',
 ]
 INSTALLED_APPS += THIRD_PARTY_APPS
 INSTALLED_APPS += SECURITY_THIRD_PARTY_APPS
@@ -102,6 +103,7 @@ MIDDLEWARE = [
     'users.middleware.AgentAndSuperAgentForAdminMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'silk.middleware.SilkyMiddleware',
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',

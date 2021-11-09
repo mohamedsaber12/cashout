@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import csv
+
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 
 from django.contrib import admin
@@ -9,8 +11,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.http import HttpResponse
 
-from disbursement.models import DisbursementData
+from disbursement.models import DisbursementData, BankTransaction
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
 from core.models import AbstractBaseStatus
@@ -111,7 +114,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         CustomStatusFilter,
         'issuer_type', 'anon_sender', 'from_user', 'is_single_step', 'transaction_status_code'
     ]
-    actions = ["export_as_csv"]
+    actions = ["export_as_csv","export_bank_transactions_ids"]
     fieldsets = (
         (None, {'fields': ('from_user', )}),
         (_('Transaction Details'), {
@@ -141,4 +144,21 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def export_bank_transactions_ids(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'bank_transactions_ids.csv'
+        writer = csv.writer(response)
+        writer.writerow(["TranstactionId"])
+
+        for id in queryset:
+            bank_trx = BankTransaction.objects.filter(end_to_end=id)
+            if bank_trx.exists():
+                transaction_id = bank_trx.first().parent_transation.transaction_id.hex
+                row = writer.writerow([transaction_id])
+
+        return response
+
+    export_bank_transactions_ids.short_description = "Export Bank Transactions Ids"
+
 

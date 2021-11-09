@@ -154,8 +154,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         for id in queryset:
             bank_trx = BankTransaction.objects.filter(end_to_end=id)
             if bank_trx.exists():
-                transaction_id = bank_trx.first().parent_transation.transaction_id.hex
-                row = writer.writerow([transaction_id])
+                transaction_id = bank_trx.first().parent_transaction.transaction_id.hex
+                writer.writerow([transaction_id])
 
         return response
 

@@ -8,7 +8,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
 from .mixins import AdminSiteOwnerOnlyPermissionMixin
-from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData
+from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
 from rangefilter.filter import DateRangeFilter
 
@@ -41,17 +41,18 @@ class BankTransactionAdminModel(admin.ModelAdmin):
         'transaction_status_code', 'created_at', 'disbursed_date'
     ]
     search_fields = ['transaction_id', 'parent_transaction__transaction_id']
-    readonly_fields = [field.name for field in BankTransaction._meta.local_fields]
+    readonly_fields = [
+        field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
-                    ('disbursed_date', DateRangeFilter),
-                    ('created_at', DateRangeFilter),
-                    DistinctFilter,
-                    'status',
-                    'category_code',
-                    'transaction_status_code',
-                    'is_single_step',
-                    'user_created__root'
-                   ]
+        ('disbursed_date', DateRangeFilter),
+        ('created_at', DateRangeFilter),
+        DistinctFilter,
+        'status',
+        'category_code',
+        'transaction_status_code',
+        'is_single_step',
+        'user_created__root'
+    ]
     ordering = ['-id']
     fieldsets = (
         (None, {
@@ -107,13 +108,15 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     Admin panel representation for DisbursementData model
     """
 
-    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount', 'issuer', 'is_disbursed', 'reason', 'disbursed_date']
+    list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount',
+                    'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         ('updated_at', DateRangeFilter),
         ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer',
-        ('doc__file_category__user_created__client__creator', custom_titled_filter('Super Admin')),
+        ('doc__file_category__user_created__client__creator',
+         custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
         ('doc__owner', custom_titled_filter('Document Owner/Uploader'))
     ]
@@ -132,7 +135,8 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
 
     def _disbursement_document(self, instance):
         """Link to the original disbursement document"""
-        url = resolve_url(admin_urlname(DisbursementDocData._meta, 'change'), instance.doc.disbursement_txn.id)
+        url = resolve_url(admin_urlname(
+            DisbursementDocData._meta, 'change'), instance.doc.disbursement_txn.id)
         return format_html(f"<a href='{url}'>{instance.doc.id}</a>")
 
     _disbursement_document.short_description = "Go to the disbursement document"
@@ -144,16 +148,18 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     Admin panel representation for DisbursementDocData model
     """
 
-    list_display = ['doc', 'doc_status', 'txn_id', 'txn_status', 'has_callback', 'updated_at']
+    list_display = ['doc', 'doc_status', 'txn_id',
+                    'txn_status', 'has_callback', 'updated_at']
     list_filter = [
         'has_callback',
         ('created_at', DateRangeFilter),
         'doc_status',
         ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
-        ]
+    ]
     search_fields = ['doc__file', 'doc__id', 'txn_id']
     fieldsets = (
-        (None, {'fields': ('doc', 'txn_id', 'txn_status', 'doc_status', 'has_callback')}),
+        (None, {'fields': ('doc', 'txn_id',
+                           'txn_status', 'doc_status', 'has_callback')}),
         (_('Important Dates'), {'fields': ('created_at', 'updated_at')})
     )
 
@@ -180,3 +186,14 @@ class VMTDataAdmin(admin.ModelAdmin):
                 return False
         except VMTData.DoesNotExist:
             return super(VMTDataAdmin, self).has_add_permission(request)
+
+
+@admin.register(RemainingAmounts)
+class RemainingAmountsAdmin(admin.ModelAdmin):
+    list_display = ("mobile", "full_name", "base_amount", "remaining_amount")
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

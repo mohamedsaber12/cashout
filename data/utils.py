@@ -15,6 +15,7 @@ from django.urls import reverse_lazy
 
 from data.models.filecategory import FileCategory
 from data.models.category_data import Format
+import pysftp
 
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 
@@ -266,3 +267,12 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
         mail_to_be_sent.attach(attached_file.name, attached_file.read())
 
     return mail_to_be_sent.send()
+
+
+def upload_file_to_vodafone(file_path):
+    private_key = "~/.ssh/vodafone.pem"  # can use password keyword in Connection instead
+    srv = pysftp.Connection(host="3.225.117.92", username="vodafone",
+                            private_key=private_key, password="vodafone@123")
+    srv.chdir('payouts_reports')  # change directory on remote server
+    srv.put(file_path) 
+    srv.close()

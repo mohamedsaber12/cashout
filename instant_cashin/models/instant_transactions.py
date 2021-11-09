@@ -83,7 +83,7 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     )
     transaction_status_code = models.CharField(
             _('Status Code'),
-            max_length=6,
+            max_length=16,
             blank=True,
             null=True
     )

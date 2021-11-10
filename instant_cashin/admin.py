@@ -150,9 +150,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         response['Content-Disposition'] = 'bank_transactions_ids.csv'
         writer = csv.writer(response)
         writer.writerow(["TranstactionId"])
-
-        for id in queryset:
-            bank_trx = BankTransaction.objects.filter(end_to_end=id)
+        for instant_trx in queryset:
+            bank_trx = BankTransaction.objects.filter(end_to_end=instant_trx.uid)
             if bank_trx.exists():
                 transaction_id = bank_trx.first().parent_transaction.transaction_id.hex
                 writer.writerow([transaction_id])

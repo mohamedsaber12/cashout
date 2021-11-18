@@ -15,6 +15,7 @@ from payouts.settings.celery import app
 
 from .specific_issuers_integrations import BankTransactionsChannel
 import requests
+from celery.task import control
 
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 
@@ -29,10 +30,16 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
         requests.get("https://cibcorpay.egyptianbanks.net", timeout=15)
     except Exception as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(
-                f"[message] [check for EBC status] [celery_task] -- "
-                f"Exeption: {e}"
-            )
+            f"[message] [check for EBC status] [celery_task] -- "
+            f"Exeption: {e}"
+        )
         return False
+    # check if there's same task is running
+    active_tasks = control.inspect().active()
+    for tsk in active_tasks.get("ach_worker1@ip-172-31-27-203.us-west-1.compute.internal"):
+        if tsk["type"] == 'instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions':
+            return False
+
     try:
         five_days_ago = timezone.now() - datetime.timedelta(int(days_delta))
         latest_bank_trx_ids = BankTransaction.objects.\

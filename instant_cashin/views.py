@@ -31,6 +31,11 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['admin'] = self.request.GET.get('client')
+        # pagination query string
+        query_string = ""
+        if self.request.GET.get('client', None):
+            query_string += "client=" + self.request.GET.get('client', None)
+        context['query_string'] = query_string
         return context
 
     def get_queryset(self):
@@ -56,7 +61,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                                        updated_at__lte=self.request.GET.get('export_end_date'))
             return queryset
         paginator = Paginator(queryset, 20)
-        page = self.request.GET.get('page')
+        page = self.request.GET.get('page', 1)
         return paginator.get_page(page)
         
     def get(self, request):
@@ -88,6 +93,11 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
         context = super().get_context_data(**kwargs)
         context['admin'] = self.request.GET.get('client')
         context['is_bank_transactions'] = 'yes'
+        # pagination query string
+        query_string = ""
+        if self.request.GET.get('client', None):
+            query_string += "client=" + self.request.GET.get('client', None)
+        context['query_string'] = query_string
         return context
 
     def get_queryset(self):

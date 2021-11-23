@@ -270,6 +270,10 @@ class InstantDisbursementAPIView(views.APIView):
                         field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
+            # if issuer etisalat add uid to the payload
+            if issuer == 'etisalat':
+                data_dict['EXTREFNUM'] = str(transaction.uid)
+            
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
             request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
             logging_message(

@@ -270,6 +270,10 @@ class InstantDisbursementAPIView(views.APIView):
                         field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
 
+            # if issuer etisalat add uid to the payload
+            if issuer == 'etisalat':
+                data_dict['EXTREFNUM'] = str(transaction.uid)
+            
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
             request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
             logging_message(
@@ -288,10 +292,6 @@ class InstantDisbursementAPIView(views.APIView):
                     transaction.mark_successful(200, "")
                     user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                     return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-                # if issuer etisalat add uid to the payload
-                if issuer == 'etisalat':
-                    data_dict['EXTREFNUM'] = str(transaction.uid)
 
                 trx_response = requests.post(
                     get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,

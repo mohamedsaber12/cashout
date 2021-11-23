@@ -86,8 +86,6 @@ class BudgetAdmin(SimpleHistoryAdmin):
     search_fields = ['disburser__username', 'created_by__username']
     ordering = ['-updated_at', '-created_at']
     history_list_display = ["current_balance"]
-    list_per_page = 5
-
     
 
     fieldsets = (

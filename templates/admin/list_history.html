@@ -1,0 +1,40 @@
+{% extends "admin/object_history.html" %}
+{% load i18n %}
+{% load url from simple_history_compat %}
+{% load admin_urls %}
+{% load display_list from simple_history_admin_list %}
+
+
+{% block content %}
+  <div id="content-main">
+    {% if not revert_disabled %}<p>
+      {% blocktrans %}Choose a date from the list below to revert to a previous version of this object.{% endblocktrans %}</p>{% endif %}
+    <div class="module">
+      {% if action_list %}
+        {% display_list %}
+      {% else %}
+        <p>{% trans "This object doesn't have a change history." %}</p>
+      {% endif %}
+    </div>
+    <div class="pagination">
+        <span class="step-links">
+            {% if action_list.has_previous %}
+                <a href="?page=1">&laquo; first</a>
+                <a href="?page={{ action_list.previous_page_number }}">previous</a>
+            {% endif %}
+    
+            <span class="current">
+                Page {{ action_list.number }} of {{ action_list.paginator.num_pages }}.
+            </span>
+    
+            {% if action_list.has_next %}
+                <a href="?page={{ action_list.next_page_number }}">next</a>
+                <a href="?page={{ action_list.paginator.num_pages }}">last &raquo;</a>
+            {% endif %}
+        </span>
+    </div>  
+  
+  {% endblock %}
+  
+  </div>
+

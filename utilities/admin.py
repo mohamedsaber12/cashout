@@ -186,7 +186,6 @@ class BudgetAdmin(SimpleHistoryAdmin):
         context.update(self.admin_site.each_context(request))
         context.update(extra_context or {})
         extra_kwargs = {}
-        print(context)
         return self.render_history_view(
             request, self.object_history_template, context, **extra_kwargs
         )

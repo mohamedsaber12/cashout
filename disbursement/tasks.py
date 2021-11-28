@@ -42,7 +42,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
         """
         recipients = DisbursementData.objects.filter(doc_id=doc_id)
 
-        vf_recipients = recipients.filter(issuer__in=['vodafone', 'default'])
+        vf_recipients = recipients.filter(issuer__in=['vodafone', 'default']). \
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
         etisalat_recipients = recipients.filter(issuer='etisalat'). \
             extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
         aman_recipients = recipients.filter(issuer='aman'). \
@@ -56,7 +57,12 @@ class BulkDisbursementThroughOneStepCashin(Task):
             trx_callback_status = status.HTTP_424_FAILED_DEPENDENCY
             reference_id = recipient["txn_id"]
 
-            if issuer == "etisalat":
+            if issuer == 'vodafone':
+                callback_json = callback.json()
+                trx_callback_status = callback_json["TXNSTATUS"]
+                reference_id = callback_json["TXNID"]
+                trx_callback_msg = callback_json["MESSAGE"]
+            elif issuer == "etisalat":
                 callback_json = callback.json()
                 trx_callback_status = callback_json["TXNSTATUS"]
                 reference_id = callback_json["TXNID"]
@@ -109,6 +115,23 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     wallets_env_url, ets_payload, checker.username, ets_log_payload
             )
             self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
+
+    def disburse_for_vodafone(self, checker, superadmin, vf_recipients):
+        """Disburse for vodafone specific recipients"""
+        from .api.views import DisburseAPIView          # Circular import
+
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
+        vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=vf_pin)
+
+        for recipient in vf_recipients:
+            vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
+                vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone'
+            )
+            vf_callback = DisburseAPIView.disburse_for_recipients(
+                wallets_env_url, vf_payload, checker.username, vf_log_payload
+            )
+            self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone')
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -227,6 +250,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     self.disburse_for_aman(checker, aman_recipients)
 
                 if vf_recipients.count() == 0 and (ets_recipients or aman_recipients):
+                    DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+
+                # handle disbursement for vodafone
+                if vf_recipients:
+                    self.disburse_for_vodafone(checker, superadmin, vf_recipients)
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
             # 2. Handle doc of type bank wallets/cards

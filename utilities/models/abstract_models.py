@@ -250,7 +250,7 @@ class AbstractBaseVMTData(models.Model):
 
         return payload, self._refine_payload_pin(payload)
 
-    def accumulate_change_profile_payload(self, users_attr, new_profile_attr):
+    def accumulate_change_profile_payload(self, users_attr, new_profile_attr, single_user=False):
         """
         :param users_attr: MSISDNs which we want to change their fees profiles
         :param new_profile_attr: the new profile to be assigned to the MSISDNs
@@ -260,10 +260,17 @@ class AbstractBaseVMTData(models.Model):
             raise ValueError(_("MSISDNS and a new profile are required parameters for the change profile dictionary"))
 
         payload = self.return_vmt_data(self.CHANGE_PROFILE)
-        payload.update({
-            'USERS': users_attr,
-            'NEWPROFILE': new_profile_attr
-        })
+        if not single_user:
+            payload.update({
+                'USERS': users_attr,
+                'NEWPROFILE': new_profile_attr
+            })
+        else:
+            # change type to be single change profile
+            payload['TYPE'] = 'SCHPREQ'
+            payload.update({
+                'NEWPROFILE': new_profile_attr
+            })
         return payload
 
     def accumulate_set_pin_payload(self, users_attr, pin_attr):

@@ -41,9 +41,12 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
     ACH_GET_TRX_STATUS_LOGGER.debug(
             f"Active Tasks {active_tasks.get(ach_worker)}"
         )
+    num_of_current_tasks = 0
     for tsk in active_tasks.get(ach_worker):
         if tsk["type"] == 'instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions':
-            return False
+            num_of_current_tasks += 1
+    if num_of_current_tasks > 1:
+        return False
 
     try:
         five_days_ago = timezone.now() - datetime.timedelta(int(days_delta))
@@ -98,6 +101,7 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
         latest_bank_transactions = BankTransaction.objects.\
             filter(id__in=latest_bank_trx_ids).\
             filter(Q(status=AbstractBaseStatus.PENDING) | Q(status=AbstractBaseStatus.SUCCESSFUL)).\
+            filter(~Q(transaction_status_code=8333)).\
             order_by("created_at")
 
         if latest_bank_transactions.count() > 0:

@@ -243,6 +243,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/instant_cashin_requests.log',
         },
+        'send_emails': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/send_emails.log',
+        },
         'instant_bulk_trx_inquiry': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -477,6 +484,11 @@ CUSTOM_LOGGING = {
         },
         'instant_cashin_requests': {
             'handlers': ['instant_cashin_requests'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'send_emails': {
+            'handlers': ['send_emails'],
             'level': 'DEBUG',
             'propagate': True,
         },

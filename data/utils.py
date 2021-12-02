@@ -18,6 +18,7 @@ from data.models.category_data import Format
 import pysftp
 
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 
 
 def validate_file_extension(value):
@@ -234,10 +235,17 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
             mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
             mail_to_be_sent.attach_alternative(message_body, "text/html")
             mail_to_be_sent.send()
+            SEND_EMAIL_LOGGER.debug(
+                f"[{subject}] [{recipient_list[0]}] -- {message_body}"
+            )
         return
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")
-    return mail_to_be_sent.send()
+    mail_to_be_sent.send()
+    SEND_EMAIL_LOGGER.debug(
+        f"[{subject}] [{recipient_list[0]}] -- {message_body}"
+    )
+    return
 
 
 def deliver_mail_to_multiple_recipients_with_attachment(user_obj,

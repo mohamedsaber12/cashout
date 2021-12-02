@@ -134,9 +134,14 @@
       empty_row.parent().attr('id', 'empty_row');
     }
     $('#search_form').submit(function(eventObj) {
-      console.log(eventObj);
       eventObj.preventDefault();
-      window.location.href = "{{request.get_full_path}}" + "&search=" + $('[name="search"]').val();
+      let newSearchUrl = "{{request.get_full_path}}";
+      if(newSearchUrl.includes('?')) {
+        newSearchUrl = newSearchUrl + "&search=" + $('[name="search"]').val();
+      } else {
+        newSearchUrl = newSearchUrl + "?search=" + $('[name="search"]').val();
+      }
+      window.location.href = newSearchUrl;
     });
   });
   $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {

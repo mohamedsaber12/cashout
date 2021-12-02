@@ -57,6 +57,7 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
         latest_bank_transactions = BankTransaction.objects.\
             filter(id__in=latest_bank_trx_ids).\
             filter(Q(status=AbstractBaseStatus.PENDING) | Q(status=AbstractBaseStatus.SUCCESSFUL)).\
+            filter(~Q(transaction_status_code=8333)).\
             order_by("created_at")
 
         if latest_bank_transactions.count() > 0:
@@ -91,11 +92,11 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
         )
         return False
     try:
-        start_date = timezone.now() - datetime.timedelta(int(6))
+        start_date = timezone.now()
         end_date = timezone.now() - datetime.timedelta(int(16))
         latest_bank_trx_ids = BankTransaction.objects.\
-            filter(Q(created_at__gte=start_date)).\
-            filter(Q(created_at__lte=end_date)).\
+            filter(Q(created_at__gte=end_date)).\
+            filter(Q(created_at__lte=start_date)).\
             order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id").\
             values_list("id", flat=True)
         latest_bank_transactions = BankTransaction.objects.\

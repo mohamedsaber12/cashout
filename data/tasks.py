@@ -1588,7 +1588,6 @@ def handle_change_profile_callback(doc_id, transactions):
 def prepare_disbursed_data_report(doc_id, report_type):
     """Prepare report for all, failed or success document transactions"""
     doc_obj = Doc.objects.get(id=doc_id)
-
     if report_type == 'all':
         filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(4))
         resource_query_dict = {'doc': doc_obj, 'is_disbursed': None}

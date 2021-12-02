@@ -38,6 +38,9 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
     # check if there's same task is running
     active_tasks = control.inspect().active()
     ach_worker = get_from_env("ach_worker")
+    ACH_GET_TRX_STATUS_LOGGER.debug(
+            f"Active Tasks {active_tasks.get(ach_worker)}"
+        )
     for tsk in active_tasks.get(ach_worker):
         if tsk["type"] == 'instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions':
             return False

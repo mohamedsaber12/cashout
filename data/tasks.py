@@ -764,6 +764,44 @@ class EWalletsSheetProcessor(Task):
             self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
             return False
 
+    def bulk_change_profile_for_vodafone_recipients(self, vodafone_recipients_list):
+        """
+        Change fees profile for vodafone recipients.
+        :return: True or False
+        """
+        superadmin = self.doc_obj.owner.root.client.creator
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        response_has_error = True
+        if self.doc_obj.owner.is_vodafone_default_onboarding or \
+                self.doc_obj.owner.is_banks_standard_model_onboaring:
+            fees_profile = self.doc_obj.owner.root.client.get_fees()
+        else:
+            fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
+        payload = superadmin.vmt.accumulate_change_profile_payload(vodafone_recipients_list, fees_profile)
+
+        try:
+            CHANGE_PROFILE_LOGGER.debug(f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}")
+            response = requests.post(wallets_env_url, json=payload, verify=False)
+        except Exception as e:
+            CHANGE_PROFILE_LOGGER.debug(f"[message] [change fees profile error] [{self.doc_obj.owner}] -- {e.args}")
+            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
+            return False
+
+        CHANGE_PROFILE_LOGGER.debug(f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}")
+        if response.ok:
+            response_dict = response.json()
+            if response_dict["TXNSTATUS"] == "200":
+                self.doc_obj.txn_id = response_dict["BATCH_ID"]
+                response_has_error = False
+            else:
+                response_has_error = response_dict.get("MESSAGE") or _(CHANGE_PROFILE_LOGGER)
+
+        if response_has_error:
+            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
+            return False
+
+        return True
+
     def run(self, doc_id, *args, **kwargs):
         try:
             UPLOAD_LOGGER.debug(f"[message] [e wallets file start processing] [celery_task] -- Doc id: {doc_id}")
@@ -826,7 +864,10 @@ class EWalletsSheetProcessor(Task):
 
             # 6. Make change fees profile request for vodafone recipients only
             if wallets_moderator.change_profile and vf_msisdns_list:
-                change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
+                if self.doc_obj.owner.root.username == 'Multiple_issuer_Admin':
+                    change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
+                else:
+                    change_profile_response = self.bulk_change_profile_for_vodafone_recipients(vf_msisdns_list)
                 if not change_profile_response:
                     return False
             elif not wallets_moderator.change_profile or (wallets_moderator.change_profile and not vf_msisdns_list):

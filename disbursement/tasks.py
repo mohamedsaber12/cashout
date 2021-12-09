@@ -394,11 +394,11 @@ def check_for_etisalat_unknown_transactions(**kwargs):
         resp_data = resp.json()
         ETISALAT_UNKNWON_INQ.debug(f"[response] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {resp_data}")
         if resp_data.get("DATA"):
-            if resp_data.get("TXNSTATUS"):
-                if resp_data.get("TXNSTATUS") == "FAILED":
+            if resp_data.get("DATA").get("TXNSTATUS"):
+                if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
                     unkown_trn.status = 'F'
                     unkown_trn.save()
-                elif resp_data.get("TXNSTATUS") == "SUCCESSFUL":
+                elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
                     unkown_trn.status = 'S'
                     unkown_trn.transaction_status_code = '200'
                     unkown_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'

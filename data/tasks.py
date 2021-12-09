@@ -716,9 +716,69 @@ class EWalletsSheetProcessor(Task):
         """
         superadmin = self.doc_obj.owner.root.client.creator
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
-        response_has_error = True
         if self.doc_obj.owner.is_vodafone_default_onboarding or \
             self.doc_obj.owner.is_banks_standard_model_onboaring:
+            fees_profile = self.doc_obj.owner.root.client.get_fees()
+        else:
+            fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
+
+        payload_without_users = superadmin.vmt.accumulate_change_profile_payload(
+            vodafone_recipients_list, fees_profile, single_user=True
+        )
+        try:
+            msisdns, errors = [], []
+            has_error = False
+            for user_msisdn in vodafone_recipients_list:
+                payload = {**payload_without_users, 'MSISDN': user_msisdn}
+                CHANGE_PROFILE_LOGGER.debug(f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}")
+                response = requests.post(wallets_env_url, json=payload, verify=False)
+                CHANGE_PROFILE_LOGGER.debug(
+                    f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}"
+                )
+                if response.ok:
+                    response_dict = response.json()
+                    msisdns.append(user_msisdn)
+                    if response_dict['TXNSTATUS'] not in ["200", "629", "560", "562"]:
+                        has_error = True
+                        errors.append(response_dict['MESSAGE'])
+                    else:
+                        errors.append("Passed validations successfully")
+
+            self.doc_obj.has_change_profile_callback = True
+            if not has_error:
+                self.doc_obj.processed_successfully()
+                notify_maker(self.doc_obj)
+                return True
+
+            filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+            file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+
+            data = list(zip(msisdns, errors))
+            headers = ['Mobile Number', 'Error']
+            data.insert(0, headers)
+            export_excel(file_path, data)
+            download_url = settings.BASE_URL + str(reverse(
+                'disbursement:download_validation_failed',
+                kwargs={'doc_id': self.doc_obj.id})) + f"?filename={filename}"
+
+            self.doc_obj.processing_failure("Mobile numbers validation error")
+            notify_maker(self.doc_obj, download_url)
+            return False
+        except Exception as e:
+            CHANGE_PROFILE_LOGGER.debug(f"[message] [change fees profile error] [{self.doc_obj.owner}] -- {e.args}")
+            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
+            return False
+
+    def bulk_change_profile_for_vodafone_recipients(self, vodafone_recipients_list):
+        """
+        Change fees profile for vodafone recipients.
+        :return: True or False
+        """
+        superadmin = self.doc_obj.owner.root.client.creator
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        response_has_error = True
+        if self.doc_obj.owner.is_vodafone_default_onboarding or \
+                self.doc_obj.owner.is_banks_standard_model_onboaring:
             fees_profile = self.doc_obj.owner.root.client.get_fees()
         else:
             fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
@@ -798,7 +858,6 @@ class EWalletsSheetProcessor(Task):
             elif total_amount > max_amount_can_be_disbursed:
                 self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
                 return False
-            
 
             # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
             elif not self.doc_obj.owner.is_vodafone_default_onboarding\
@@ -810,7 +869,10 @@ class EWalletsSheetProcessor(Task):
 
             # 6. Make change fees profile request for vodafone recipients only
             if wallets_moderator.change_profile and vf_msisdns_list:
-                change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
+                if self.doc_obj.owner.root.username == 'Multiple_issuer_Admin':
+                    change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
+                else:
+                    change_profile_response = self.bulk_change_profile_for_vodafone_recipients(vf_msisdns_list)
                 if not change_profile_response:
                     return False
             elif not wallets_moderator.change_profile or (wallets_moderator.change_profile and not vf_msisdns_list):

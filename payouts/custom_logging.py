@@ -320,6 +320,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/ssl_certificates.log',
         },
+        'etisalat_inq_by_ref': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/etisalat_inq_by_ref.log',
+        },
     },
 
     'loggers': {
@@ -529,6 +536,11 @@ CUSTOM_LOGGING = {
         },
         'ssl_certificates': {
             'handlers': ['ssl_certificates'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'etisalat_inq_by_ref': {
+            'handlers': ['etisalat_inq_by_ref'],
             'level': 'DEBUG',
             'propagate': True,
         },

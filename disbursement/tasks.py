@@ -360,7 +360,7 @@ def check_for_etisalat_unknown_transactions(**kwargs):
         super_admin = unkown_trn.from_user.root.super_admin
         url = get_value_from_env(super_admin.vmt.vmt_environment)
         payload = super_admin.vmt.accumulate_inquiry_for_etisalat_by_ref_id(
-            unkown_trn.uid)
+            str(unkown_trn.uid))
         ETISALAT_UNKNWON_INQ.debug(f"[request] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {payload}")
         resp = requests.post(url, json=payload, verify=False)
         resp_data = resp.json()

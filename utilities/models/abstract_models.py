@@ -231,12 +231,14 @@ class AbstractBaseVMTData(models.Model):
                                                 consumer_attr,
                                                 amount_attr,
                                                 raw_pin_attr,
-                                                issuer_attr):
+                                                issuer_attr,
+                                                sms_sender_name=''):
         """
         :param agent_attr: Agent that will send/disburse the money
         :param consumer_attr: Consumers of the e-money
         :param amount_attr: Amount to be disbursed
         :param issuer_attr: Wallet issuer channel that the e-money will be disbursed over
+        :param sms_sender_name: SMSC sender name for the standard vodafone users
         :return: instant disbursement request payload, refined payload without pin to be logged
         """
         valid_issuers_list = ['vodafone', 'etisalat']
@@ -251,8 +253,11 @@ class AbstractBaseVMTData(models.Model):
             'MSISDN': agent_attr,
             'MSISDN2': consumer_attr,
             'AMOUNT': amount_attr,
-            'PIN': raw_pin_attr
+            'PIN': raw_pin_attr,
+            'SENDERNAME': sms_sender_name
         })
+        if not sms_sender_name:
+            del(payload["SENDERNAME"])
 
         return payload, self._refine_payload_pin(payload)
 

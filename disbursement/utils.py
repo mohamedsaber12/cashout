@@ -209,7 +209,8 @@ ERROR_CODES_MESSAGES = {
     '90007': _('Invalid or missing parameters'),
     '90005': _('Service is down'),
     '90006': _('Service is down'),
-    '90093': _('Service temporarily suspended')
+    '90093': _('Service temporarily suspended'),
+    '90040': _('عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778')
 }
 
 DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [

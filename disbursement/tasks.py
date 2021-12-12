@@ -125,10 +125,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
         vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
         vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=vf_pin)
+        smsc_sender_name = checker.root.client.smsc_sender_name
 
         for recipient in vf_recipients:
             vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
-                vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone'
+                vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
             )
             vf_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url, vf_payload, checker.username, vf_log_payload
@@ -255,7 +256,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
                 # handle disbursement for vodafone
-                if vf_recipients and checker.root.username == 'Multiple_issuer_Admin':
+                if vf_recipients and checker.root.username == 'Taager_Admin':
                     self.disburse_for_vodafone(checker, superadmin, vf_recipients)
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 

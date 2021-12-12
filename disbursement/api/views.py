@@ -135,7 +135,7 @@ class DisburseAPIView(APIView):
             DATA_LOGGER.debug(f"[response] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
             return response.json() if jsoned_response else response
         except (HTTPError, ConnectionError, Exception):
-            DATA_LOGGER.debug(f"[response] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
+            DATA_LOGGER.debug(f"[response error] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
             return False
 
     def determine_disbursement_status(self, checker_user, doc_obj, vf_response, temp_response):

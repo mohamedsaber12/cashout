@@ -89,7 +89,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             else:
                 disbursement_data_record.is_disbursed = False
                 disbursement_data_record.reason = trx_callback_status
-
+            disbursement_data_record.disbursed_date=datetime.now()
             disbursement_data_record.save()
 
             if issuer == "aman":

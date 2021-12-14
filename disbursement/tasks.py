@@ -88,7 +88,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     update_disbursed_amount_and_current_balance(disbursement_data_record.amount, issuer)
             else:
                 disbursement_data_record.is_disbursed = False
-                disbursement_data_record.reason = trx_callback_status
+                if not trx_callback_status in ["501", "-1"]:
+                    disbursement_data_record.reason = trx_callback_status
             disbursement_data_record.disbursed_date=datetime.datetime.now()
             disbursement_data_record.save()
 
@@ -130,7 +131,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
             )
             vf_callback = DisburseAPIView.disburse_for_recipients(
-                wallets_env_url, vf_payload, checker.username, vf_log_payload
+                wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]
             )
             self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone')
 

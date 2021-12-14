@@ -116,7 +116,7 @@ class DisburseAPIView(APIView):
 
 
     @staticmethod
-    def disburse_for_recipients(url, payload, username, refined_payload, jsoned_response=False):
+    def disburse_for_recipients(url, payload, username, refined_payload, jsoned_response=False, txn_id=None):
         """
         Disburse for issuer based recipients
         :param url: wallets environment that will handle the disbursement request
@@ -134,6 +134,13 @@ class DisburseAPIView(APIView):
             response = request_obj.post(url=url, payload=payload)
             DATA_LOGGER.debug(f"[response] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
             return response.json() if jsoned_response else response
+        except (requests.Timeout, TimeoutError) as e:
+            DATA_LOGGER.debug(f"[response Timeout] [Timeout FROM CENTRAL] [{username}] -- timeout:- {e.args}")
+            if txn_id:
+                current_trx = DisbursementData.objects.get(id=txn_id)
+                current_trx.is_disbursed = False
+                current_trx.disbursed_date=datetime.now()
+                current_trx.save()
         except (HTTPError, ConnectionError, Exception):
             DATA_LOGGER.debug(f"[response error] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
             return False

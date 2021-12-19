@@ -7,11 +7,11 @@ from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from rangefilter.filter import DateRangeFilter
 
-from .mixins import AdminSiteOwnerOnlyPermissionMixin
+from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
-from rangefilter.filter import DateRangeFilter
 
 
 class DistinctFilter(admin.SimpleListFilter):
@@ -137,7 +137,7 @@ class AgentAdmin(admin.ModelAdmin):
 
 
 @admin.register(DisbursementData)
-class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin):
+class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin, ExportCsvMixin):
     """
     Admin panel representation for DisbursementData model
     """
@@ -156,6 +156,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     ]
     search_fields = ['id', 'doc__id', 'msisdn', 'reason']
     ordering = ['-updated_at', '-created_at']
+    actions = ["export_as_csv"]
 
     fieldsets = (
         (None, {'fields': list_display + ["doc", "_disbursement_document"]}),

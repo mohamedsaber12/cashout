@@ -133,8 +133,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
             )
             vf_callback = DisburseAPIView.disburse_for_recipients(
-                wallets_env_url, vf_payload, checker.username, vf_log_payload,
-                jsoned_response=True, txn_id=recipient["txn_id"]
+                wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]
             )
             self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone')
 

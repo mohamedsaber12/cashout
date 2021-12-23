@@ -1,16 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+from django.db.models import Q
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from rangefilter.filter import DateRangeFilter
 
-from .mixins import AdminSiteOwnerOnlyPermissionMixin
+from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
-from rangefilter.filter import DateRangeFilter
 
 
 class DistinctFilter(admin.SimpleListFilter):
@@ -28,6 +29,39 @@ class DistinctFilter(admin.SimpleListFilter):
         if self.value() == 'distinct':
             # return queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")
             return queryset.filter(id__in=[trn.id for trn in queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")])
+
+class DisbursedFilter(admin.SimpleListFilter):
+    title = "Disbursement Status"
+    parameter_name = "disbursed"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("yes", "Yes"),
+            ("no", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == 'yes':
+            return queryset.filter(~Q(disbursed_date=None))
+        elif self.value() == 'no':
+            return queryset.filter(disbursed_date=None, reason='')
+
+class TimeoutFilter(admin.SimpleListFilter):
+    title = "Timeout Status"
+    parameter_name = "is_timeout"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("yes", "Yes"),
+        )
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == 'yes':
+            return queryset.filter(~Q(disbursed_date=None), reason='', is_disbursed=False)
 
 
 @admin.register(BankTransaction)
@@ -103,7 +137,7 @@ class AgentAdmin(admin.ModelAdmin):
 
 
 @admin.register(DisbursementData)
-class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin):
+class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin, ExportCsvMixin):
     """
     Admin panel representation for DisbursementData model
     """
@@ -114,7 +148,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         ('updated_at', DateRangeFilter),
-        ('is_disbursed', custom_titled_filter('Disbursement Status')), 'issuer',
+        DisbursedFilter, TimeoutFilter, 'issuer',
         ('doc__file_category__user_created__client__creator',
          custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
@@ -122,6 +156,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin)
     ]
     search_fields = ['id', 'doc__id', 'msisdn', 'reason']
     ordering = ['-updated_at', '-created_at']
+    actions = ["export_as_csv"]
 
     fieldsets = (
         (None, {'fields': list_display + ["doc", "_disbursement_document"]}),

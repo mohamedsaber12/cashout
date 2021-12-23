@@ -24,7 +24,10 @@ from ...models import InstantTransaction
 from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from ...utils import default_response_structure, get_digits, get_from_env
 from ..mixins import IsInstantAPICheckerUser
-from ..serializers import InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer
+from ..serializers import (
+    InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer,
+    BankTransactionResponseModelSerializer
+)
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -355,14 +358,16 @@ class InstantDisbursementAPIView(views.APIView):
 
             # check if msisdn is test number
             if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
-                    issuer in ['orange', 'bank_wallet'] and \
-                    instant_trx_obj.anon_recipient == get_from_env(f"test_number_for_{issuer}"):
-
+                    bank_trx_obj.creditor_account_number == get_from_env(f"test_number_for_{issuer}"):
                 bank_trx_obj.mark_successful("8333", "success")
                 instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
                 bank_trx_obj.user_created.root. \
                     budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+                if instant_trx_obj:
+                    return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+                else:
+                    return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+
 
             return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
 

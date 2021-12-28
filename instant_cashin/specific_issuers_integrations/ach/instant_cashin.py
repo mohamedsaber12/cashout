@@ -110,6 +110,7 @@ class BankTransactionsChannel:
         payload['CreditorBank'] = trx_obj.creditor_bank
         payload['CreditorAddress1'] = trx_obj.creditor_address_1
         payload['DebtorAddress1'] = trx_obj.debtor_address_1
+        payload['AdditionalInfo'] = trx_obj.comment
 
         json_payload = json.dumps(payload, separators=(",", ":"))
         payload['Signature'] = SSLCertificate.generate_signature(get_from_env('PRIVATE_KEY_NAME'), json_payload)
@@ -143,7 +144,8 @@ class BankTransactionsChannel:
             response = requests.post(
                     url,
                     data=json.dumps(payload, separators=(",", ":")),
-                    headers={'Content-Type': 'application/json'}
+                    headers={'Content-Type': 'application/json'},
+                    timeout=30
             )
             response_log_message = f"Response: {response.json()}"
         except HTTPError as http_err:
@@ -171,7 +173,8 @@ class BankTransactionsChannel:
             response = requests.get(
                     url + "?",
                     params={"request": json.dumps(payload, separators=(",", ":"))},
-                    headers={'Content-Type': 'application/json'}
+                    headers={'Content-Type': 'application/json'},
+                    timeout=30
             )
             response_log_message = f"{response.json()}"
         except HTTPError as http_err:

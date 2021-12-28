@@ -16,6 +16,7 @@ from data.decorators import respects_language
 from data.models import Doc
 from data.tasks import handle_change_profile_callback
 from instant_cashin.models import AmanTransaction
+from instant_cashin.models.instant_transactions import InstantTransaction
 from instant_cashin.specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from instant_cashin.utils import get_from_env
 from payouts.settings.celery import app
@@ -27,6 +28,7 @@ from .models import DisbursementData, DisbursementDocData, BankTransaction
 
 CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
+ETISALAT_UNKNWON_INQ = logging.getLogger("etisalat_inq_by_ref")
 
 
 class BulkDisbursementThroughOneStepCashin(Task):
@@ -131,8 +133,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
             )
             vf_callback = DisburseAPIView.disburse_for_recipients(
-                wallets_env_url, vf_payload, checker.username, vf_log_payload,
-                jsoned_response=True, txn_id=recipient["txn_id"]
+                wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]
             )
             self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone')
 
@@ -374,3 +375,37 @@ def check_for_late_change_profile_callback(**kwargs):
             handle_change_profile_callback.delay(disbursement_doc.doc.id, refined_transactions_list)
 
     return True
+
+
+@app.task()
+@respects_language
+def check_for_etisalat_unknown_transactions(**kwargs):
+    """Background task for asking for the unknown etisalat transactions"""
+    unkown_trns = InstantTransaction.objects.filter(
+        status__in=["U", "P"],
+        issuer_type__exact="E"
+    )
+
+    for unkown_trn in unkown_trns:
+        super_admin = unkown_trn.from_user.root.super_admin
+        url = get_value_from_env(super_admin.vmt.vmt_environment)
+        payload = super_admin.vmt.accumulate_inquiry_for_etisalat_by_ref_id(
+            str(unkown_trn.uid))
+        ETISALAT_UNKNWON_INQ.debug(f"[request] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {payload}")
+        resp = requests.post(url, json=payload, verify=False)
+        resp_data = resp.json()
+        ETISALAT_UNKNWON_INQ.debug(f"[response] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {resp_data}")
+        if resp_data.get("DATA"):
+            if resp_data.get("DATA").get("TXNSTATUS"):
+                if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
+                    unkown_trn.status = 'F'
+                    unkown_trn.save()
+                elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
+                    unkown_trn.status = 'S'
+                    unkown_trn.transaction_status_code = '200'
+                    unkown_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'
+                    unkown_trn.save()
+                    unkown_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                            unkown_trn.amount, 'etisalat')
+
+

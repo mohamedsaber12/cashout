@@ -164,7 +164,8 @@ class DisbursementData(AbstractTimeStamp):
     reference_id = models.CharField(
         _('Reference ID'),
         max_length=30,
-        default='None'
+        default='None',
+        null=True
     )
     aman_obj = GenericRelation(
         "instant_cashin.AmanTransaction",
@@ -366,6 +367,12 @@ class BankTransaction(AbstractTimeStamp,
     )
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
+    comment = models.CharField(
+        _('Optional Transaction Comment'),
+        max_length=36,
+        blank=True,
+        default=''
+    )
 
     class Meta:
         verbose_name = 'Bank Transaction'

@@ -76,6 +76,7 @@ class AbstractBaseVMTData(models.Model):
     USER_INQUIRY = 5            # List/Bulk of agents/consumers
     BALANCE_INQUIRY = 6
     DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY = 7
+    ETISALAT_INQUIRY_BY_REF = 8
 
     login_username = models.CharField(_("UIG Login Username"), max_length=32)
     login_password = models.CharField(_("UIG Login Password"), max_length=32)
@@ -184,6 +185,11 @@ class AbstractBaseVMTData(models.Model):
             data.update({
                 "BATCH_ID": "",
                 "TYPE": "DISBINQREQ"
+            })
+        elif purpose == self.ETISALAT_INQUIRY_BY_REF:
+            data.update({
+                "EXTREFNUM": "",        # MSISDNs List
+                "TYPE": "EXTXNRREQ"
             })
 
         return data
@@ -335,6 +341,12 @@ class AbstractBaseVMTData(models.Model):
         payload = self.return_vmt_data(self.DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY)
         payload.update({"BATCH_ID": str(batch_id)})
         return payload
+
+    def accumulate_inquiry_for_etisalat_by_ref_id(self, trn_id):
+        payload = self.return_vmt_data(self.ETISALAT_INQUIRY_BY_REF)
+        payload.update({"EXTREFNUM": trn_id})
+        return payload
+
 
 
 class AbstractTransactionCurrency(models.Model):

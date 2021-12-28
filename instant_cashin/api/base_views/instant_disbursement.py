@@ -152,7 +152,8 @@ class InstantDisbursementAPIView(views.APIView):
             "is_single_step":serializer.validated_data["is_single_step"],
             "client_transaction_reference":client_reference_id,
             "fees": fees,
-            "vat": vat
+            "vat": vat,
+            "comment": serializer.validated_data.get("comment")
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)

@@ -238,7 +238,7 @@ class DisburseAPIView(APIView):
         vf_response = False
 
         # 4. Check if the doc type is an E-Wallet so it might has vodafone records to be disbursed
-        if doc_obj.is_e_wallet and checker.root.username != 'Taager_Admin':
+        if doc_obj.is_e_wallet and (not checker.is_accept_vodafone_onboarding):
             superadmin = checker.root.client.creator
             wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
             self.set_disbursed_date(doc_obj.id)

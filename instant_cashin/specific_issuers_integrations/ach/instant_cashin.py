@@ -110,6 +110,7 @@ class BankTransactionsChannel:
         payload['CreditorBank'] = trx_obj.creditor_bank
         payload['CreditorAddress1'] = trx_obj.creditor_address_1
         payload['DebtorAddress1'] = trx_obj.debtor_address_1
+        payload['AdditionalInfo'] = trx_obj.comment
 
         json_payload = json.dumps(payload, separators=(",", ":"))
         payload['Signature'] = SSLCertificate.generate_signature(get_from_env('PRIVATE_KEY_NAME'), json_payload)

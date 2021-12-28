@@ -63,6 +63,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     user = serializers.CharField(max_length=254, required=False, allow_blank=False)
     is_single_step = serializers.BooleanField(required=False, default=False)
     client_reference_id = serializers.UUIDField(required=False)
+    comment = serializers.CharField(max_length=140, required=False)
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""

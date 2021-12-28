@@ -367,6 +367,12 @@ class BankTransaction(AbstractTimeStamp,
     )
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
+    comment = models.CharField(
+        _('Optional Transaction Comment'),
+        max_length=36,
+        blank=True,
+        default=''
+    )
 
     class Meta:
         verbose_name = 'Bank Transaction'

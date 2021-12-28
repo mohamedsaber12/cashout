@@ -247,6 +247,12 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
                 )
         if search_filter:
             doc_transactions = doc_transactions.filter(search_filter)
+        if self.request.GET.get('status') and self.request.GET.get('status') == 'P':
+            if doc_obj.is_e_wallet:
+                doc_transactions = doc_transactions.filter(
+                    is_disbursed=False, reason=''
+                )
+
 
         # add server side pagination
         paginator = Paginator(doc_transactions, 10)
@@ -254,6 +260,7 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         queryset = paginator.get_page(page)
 
         context = {
+            'request_full_path': request.get_full_path(),
             'doc_obj': doc_obj,
             'reviews': doc_obj.reviews.all() ,
             'doc_status': self.retrieve_doc_status(doc_obj),

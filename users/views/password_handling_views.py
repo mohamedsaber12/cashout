@@ -23,10 +23,8 @@ class ForgotPasswordView(FormView):
         """
         Common attributes between GET and POST methods
         """
-        # make it for now until business say deploy vodafone forget password page on production
-        self.template_name = 'users/forget-password.html'
-        # self.template_name = 'users/vodafone_forgot_password.html' \
-        #     if "vodafone" in request.get_host() else 'users/forget-password.html'
+        self.template_name = 'users/vodafone_forgot_password.html' \
+            if "vodafone" in request.get_host() else 'users/forget-password.html'
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):

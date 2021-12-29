@@ -370,7 +370,7 @@ def download_exported_transactions(request):
 @login_required
 def download_failed_validation_file(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
-    can_view = (doc_obj.owner == request.user and request.user.is_maker)
+    can_view = (doc_obj.owner == request.user and request.user.is_maker) or request.user.is_superuser
     if not can_view:
         return HttpResponse(status=401)
 

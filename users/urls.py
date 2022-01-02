@@ -42,7 +42,9 @@ support_urls = [
 ]
 
 onboard_user_urls = [
+    path('onboard-user/home/', views.OnbooardUserHomeView.as_view(), name='onboard_user_home'),
     path('onboard-user/', views.OnboardUsersListView.as_view(), name='onboard_user'),
+    path('onboard-user/creation/', views.SuperAdminOnboardSetupCreateView.as_view(), name='add_onboard_user'),
 ]
 
 disbursement_setups_urls = [

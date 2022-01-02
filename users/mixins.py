@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import SupportSetup, Client, User, SuperAdminUser
+from .models import SupportSetup, Client, User, SuperAdminUser, OnboardUserSetup
 
 
 class ParentPermissionMixin(object):
@@ -181,6 +181,16 @@ class SupportUserRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class OnboardUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only onboard users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_OnboardUser:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
 class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
     Give the access permission of a certain view to only SuperAdmin users,
@@ -268,8 +278,11 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
             elif current_user.is_superadmin:
                 client_setups = Client.objects.filter(creator=current_user).select_related('client')
                 support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
+                onboard_user_setups = OnboardUserSetup.objects.filter(user_created=current_user). \
+                    select_related('onboard_user')
                 members_list = [obj.client.username for obj in client_setups]
                 members_list += [obj.support_user.username for obj in support_setups]
+                members_list += [obj.onboard_user.username for obj in onboard_user_setups]
                 if profile_username in members_list:
                     return True
             elif current_user.is_root:

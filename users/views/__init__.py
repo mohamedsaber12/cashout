@@ -15,5 +15,5 @@ from .support_views import (
     OnboardingNewInstantAdmin, ClientCredentialsDetails
 )
 from .onboard_user_view import (
-    OnboardUsersListView
+    OnboardUsersListView, OnbooardUserHomeView, SuperAdminOnboardSetupCreateView
 )

@@ -48,16 +48,16 @@
                 <div class="well profile_view" style="width: 100%;">
                   <div class="col-sm-12">
                     <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
-                      <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user"></i> {{ support_setup.onboard_user.get_full_name|truncatechars:26 }}</h2><br>
-                      <h5><strong>{% trans 'About:' %} </strong> {{ support_setup.onboard_user.title }} </h5>
+                      <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user"></i> {{ onboard_setup.onboard_user.get_full_name|truncatechars:26 }}</h2><br>
+                      <h5><strong>{% trans 'About:' %} </strong> {{ onboard_setup.onboard_user.title }} </h5>
                       <ul class="list-unstyled">
-                        <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ support_setup.onboard_user.username }}</li></ul></li>
-                        <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ support_setup.onboard_user.email }}</li></ul></li>
-                        <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ support_setup.onboard_user.mobile_no }}</li></ul></li>
+                        <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ onboard_setup.onboard_user.username }}</li></ul></li>
+                        <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ onboard_setup.onboard_user.email }}</li></ul></li>
+                        <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ onboard_setup.onboard_user.mobile_no }}</li></ul></li>
                       </ul>
                     </div>
                     <div class="right col-xs-5 text-center pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                      <img src="{{ support_setup.support_user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                      <img src="{{ onboard_setup.support_user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
                     </div>
                   </div>
                   <div class="col-xs-12 bottom text-center">

@@ -414,6 +414,46 @@ class SupportUserCreationForm(forms.ModelForm):
         return user
 
 
+class OnboardUserCreationForm(forms.ModelForm):
+    """
+    Onboard user creation form
+    """
+    class Meta:
+        model = SupportUser
+        fields = ['username', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 9
+        user.save()
+
+        if self.request.user.is_vodafone_default_onboarding:
+            onboarding_permission = Permission.objects. \
+                get(content_type__app_label='users', codename='vodafone_default_onboarding')
+        elif self.request.user.is_accept_vodafone_onboarding:
+            onboarding_permission = Permission.objects. \
+                get(content_type__app_label='users', codename='accept_vodafone_onboarding')
+        elif self.request.user.is_vodafone_facilitator_onboarding:
+            onboarding_permission = Permission.objects. \
+                get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
+        elif self.request.user.is_banks_standard_model_onboaring:
+            onboarding_permission = Permission.objects. \
+                get(content_type__app_label='users', codename='banks_standard_model_onboaring')
+        else:
+            onboarding_permission = Permission.objects. \
+                get(content_type__app_label='users', codename='instant_model_onboarding')
+
+        user.user_permissions.add(onboarding_permission)
+        return user
+
+
 class UserChangeForm(AbstractUserChangeForm):
 
     class Meta:

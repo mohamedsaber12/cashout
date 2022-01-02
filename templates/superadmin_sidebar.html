@@ -17,6 +17,7 @@
             {% if not request.user.is_banks_standard_model_onboaring %}
             <li><a href="{% url 'users:add_support' %}">{% trans 'New Support Member' %}</a></li>
             <li><a href="{% url 'users:support' %}">{% trans 'All Support Members' %}</a></li>
+            <li><a href="{% url 'users:onboard_user' %}">{% trans 'All Onboard Members' %}</a></li>
             {% endif %}
           </ul>
         </li>

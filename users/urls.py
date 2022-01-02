@@ -41,6 +41,10 @@ support_urls = [
          name='support_clients_credentials_details'),
 ]
 
+onboard_user_urls = [
+    path('onboard-user/', views.OnboardUsersListView.as_view(), name='onboard_user'),
+]
+
 disbursement_setups_urls = [
     path('setting-up/disbursement-pin', views.PinFormView.as_view(), name='setting-disbursement-pin'),
     path('setting-up/disbursement-makers', views.MakerFormView.as_view(), name='setting-disbursement-makers'),
@@ -98,6 +102,7 @@ urlpatterns = [
 urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += support_urls
+urlpatterns += onboard_user_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += instant_urls
 urlpatterns += password_handling_urls

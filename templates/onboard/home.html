@@ -1,0 +1,12 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Home' %} {% endblock title %}
+
+{% block body %}
+  <div class="well upload-nav col-xs-12">
+    <strong style="margin-top: 15px;">{% trans 'Welcome home ...' %}</strong>
+  </div>
+{% endblock body %}

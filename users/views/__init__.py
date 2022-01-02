@@ -14,3 +14,6 @@ from .support_views import (
     SuperAdminSupportSetupCreateView, SupportHomeView, SupportUsersListView,
     OnboardingNewInstantAdmin, ClientCredentialsDetails
 )
+from .onboard_user_view import (
+    OnboardUsersListView
+)

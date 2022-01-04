@@ -53,6 +53,9 @@
               {% if request.user.is_root %}
                 <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
                 <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+                {% if request.user.is_accept_vodafone_onboarding %}
+                <li><a href="{% url 'users:change_pin' %}">{% trans 'Change Pin' %}</a></li>
+                {% endif %}
               {% elif request.user.is_maker  %}
                 <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
               {% endif %}

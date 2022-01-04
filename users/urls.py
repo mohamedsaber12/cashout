@@ -50,6 +50,7 @@ disbursement_setups_urls = [
     path('members/maker/add/', views.AddMakerView.as_view(), name='add_maker'),
     path('members/checker/add/', views.AddCheckerView.as_view(), name='add_checker'),
     path('levels/', views.LevelsView.as_view(), name='levels'),
+    path('change_pin/', views.change_pin_view, name='change_pin'),
 ]
 
 instant_urls = [

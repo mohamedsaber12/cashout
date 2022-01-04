@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.models import Permission
 from django.http import HttpResponseRedirect
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, FormView, TemplateView
@@ -11,10 +11,11 @@ from django.views.generic import CreateView, FormView, TemplateView
 from data.forms import FileCategoryFormSet
 from data.models import FileCategory
 from disbursement.forms import PinForm
-
 from ..forms import CheckerCreationForm, CheckerMemberFormSet, LevelFormSet, MakerCreationForm, MakerMemberFormSet
 from ..mixins import DisbursementRootRequiredMixin
 from ..models import CheckerUser, Levels, MakerUser, Setup
+from django import forms
+from users.decorators import root_only
 
 
 class BaseFormsetView(TemplateView):
@@ -348,3 +349,34 @@ class LevelsView(LevelsFormView):
         form.save()
         Levels.update_levels_authority(self.request.user.root)
         return redirect(self.get_success_url())
+
+
+class ChangePinForm(forms.Form):
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(ChangePinForm, self).__init__(*args, **kwargs)
+
+    new_pin = forms.CharField(min_length=6, max_length=6)
+    password = forms.CharField(widget=forms.PasswordInput(), max_length=254)
+
+    def clean(self):
+        cleaned_data = super(ChangePinForm, self).clean()
+        password = cleaned_data.get('password')
+        new_pin = cleaned_data.get('new_pin')
+        if not self.user.check_password(password):
+            raise forms.ValidationError('Invalid password')
+        if not new_pin.isdigit():
+            raise forms.ValidationError('pin must be numeric only')
+
+@root_only
+def change_pin_view(request, template_name='users/change_pin.html', form_class=ChangePinForm):
+    if request.method == 'POST':
+        form = form_class(request.user, request.POST)
+        if form.is_valid():
+            request.user.set_pin(form.cleaned_data['new_pin'])
+            return render(request, template_name, {'message': 'Pin changed Successfully', 'form': form})
+    else:
+        form = form_class(request.user)
+    return render(request, template_name, {'form': form})
+
+

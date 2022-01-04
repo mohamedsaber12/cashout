@@ -42,6 +42,7 @@ from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
 from users.mixins import (SuperFinishedSetupMixin,
+                          SuperOrOnboardUserRequiredMixin,
                           SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
                           SuperRequiredMixin,
                           AgentsListPermissionRequired,
@@ -394,14 +395,15 @@ def download_failed_validation_file(request, doc_id):
         raise Http404
 
 
-class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
+class SuperAdminAgentsSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupMixin, View):
     """
     View for super user to create Agents for the entity.
     """
     template_name = 'entity/add_agent.html'
 
     def validate_agent_wallet(self, request, msisdns):
-        superadmin = request.user
+        superadmin = request.user if self.request.user.is_superadmin else \
+            self.request.user.my_onboard_setups.user_created
         payload = superadmin.vmt.accumulate_user_inquiry_payload(msisdns)
         try:
             WALLET_API_LOGGER.debug(f"[request] [user inquiry] [{request.user}] -- {payload}")
@@ -656,7 +658,9 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             return render(request, template_name=self.template_name, context=context)
 
         super_agent.save()
-        entity_setup = EntitySetup.objects.get(user=self.request.user, entity=self.root)
+        current_super_admin = self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_onboard_setups.user_created
+        entity_setup = EntitySetup.objects.get(user=current_super_admin, entity=self.root)
         entity_setup.agents_setup = True
         entity_setup.save()
         AGENT_CREATE_LOGGER.debug(

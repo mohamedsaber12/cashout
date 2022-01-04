@@ -22,6 +22,7 @@ from ..mixins import (
     SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
     SuperOwnsCustomizedBudgetClientRequiredMixin,
     SuperRequiredMixin,
+    SuperOrOnboardUserRequiredMixin,
     SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired,
 )
 from ..models import Client, EntitySetup, RootUser, User, Setup
@@ -65,7 +66,7 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
-class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
+class SuperAdminRootSetup(SuperOrOnboardUserRequiredMixin, CreateView):
     """
     View for SuperAdmin for creating root user.
     """
@@ -75,9 +76,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     template_name = 'entity/add_root.html'
 
     def get_success_url(self):
-
-        if not self.object.is_vodafone_default_onboarding or\
-           not self.object.is_banks_standard_model_onboaring:
+        if not (self.object.is_vodafone_default_onboarding or self.object.is_banks_standard_model_onboaring):
             return reverse('data:main_view')
 
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
@@ -95,11 +94,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def handle_entity_extra_setups(self):
         entity_dict = {
-            "user": self.request.user,
+            "user": self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_onboard_setups.user_created,
             "entity": self.object
         }
         client_dict = {
-            "creator": self.request.user,
+            "creator": self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_onboard_setups.user_created,
             "client": self.object,
         }
 
@@ -143,6 +144,10 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
+
+        if self.request.user.is_onboard_user:
+            client_dict['onboarded_by'] = self.request.user
+
         EntitySetup.objects.create(**entity_dict)
         Client.objects.create(**client_dict)
 
@@ -174,7 +179,7 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
         return redirect(reverse("data:e_wallets_home"))
 
 
-class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
+class ClientFeesSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupMixin, CreateView):
     """
     View for SuperAdmin to setup fees for the client
     """
@@ -182,7 +187,11 @@ class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
     model = Client
     form_class = ClientFeesForm
     template_name = 'entity/add_client_fees.html'
-    success_url = reverse_lazy('users:clients')
+
+    def get_success_url(self):
+        if self.request.user.is_onboard_user:
+            return reverse_lazy('users:onboard_user_home')
+        return reverse_lazy('users:clients')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

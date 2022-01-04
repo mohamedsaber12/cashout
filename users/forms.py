@@ -326,7 +326,7 @@ class RootCreationForm(forms.ModelForm):
         random_pass += get_random_string(allowed_chars=ALLOWED_SYMBOLS, length=4)
         user.set_password(random_pass)
 
-        if self.request.user.is_superadmin:
+        if self.request.user.is_superadmin or self.request.user.is_onboard_user:
             user.user_type = 3
             user = self.define_new_admin_hierarchy(user)
 

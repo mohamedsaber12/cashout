@@ -46,7 +46,11 @@
   </div>
 
   <div>
-    <a class="reset_pass" href="{% url 'users:clients' %}">{% trans 'Back' %}</a>
+    {% if request.user.is_onboard_user %}
+      <a class="reset_pass" href="{% url 'users:onboard_user_home' %}">{% trans 'Back' %}</a>
+    {% else %}
+      <a class="reset_pass" href="{% url 'users:clients' %}">{% trans 'Back' %}</a>
+    {% endif %}
     <input class="btn btn-default submit" type="submit" value="{% trans 'Create' %}">
 
   </div>

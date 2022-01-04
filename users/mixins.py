@@ -68,6 +68,13 @@ class SuperRequiredMixin(LoginRequiredMixin):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
+class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_onboard_user):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
 
 class UserWithDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
@@ -187,7 +194,7 @@ class OnboardUserRequiredMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_OnboardUser:
+        if not request.user.is_onboard_user:
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -258,7 +265,7 @@ class SuperFinishedSetupMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_uncomplete_entity_creation():
+        if request.user.is_superadmin and not request.user.has_uncomplete_entity_creation():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 

@@ -201,7 +201,7 @@ class User(AbstractUser, SoftDeletionModel):
         return self.user_type == 8
 
     @cached_property
-    def is_OnboardUser(self):
+    def is_onboard_user(self):
         return self.user_type == 9
     
     @cached_property

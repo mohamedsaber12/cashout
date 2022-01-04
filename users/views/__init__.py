@@ -2,7 +2,7 @@ from .clients_views import (ClientFeesSetup, Clients, CustomClientFeesProfilesUp
                             SuperAdminFeesProfileTemplateView, SuperAdminCancelsRootSetupView, SuperAdminRootSetup,
                             toggle_client)
 from .disbursement_setups_views import (AddCheckerView, AddMakerView, CategoryFormView, CheckerFormView,
-                                  LevelsFormView, LevelsView, MakerFormView, PinFormView, BaseFormsetView)
+                                  LevelsFormView, LevelsView, MakerFormView, PinFormView, BaseFormsetView, change_pin_view)
 from .instant_views import APICheckerCreateView, ViewerCreateView, OAuth2ApplicationDetailView
 from .main_views import (ExpiringAuthToken, OTPLoginView, ProfileUpdateView,
                          ProfileView, RedirectPageView, login_view, ourlogout)

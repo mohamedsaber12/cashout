@@ -1,6 +1,8 @@
-from .clients_views import (ClientFeesSetup, Clients, CustomClientFeesProfilesUpdateView,
-                            SuperAdminFeesProfileTemplateView, SuperAdminCancelsRootSetupView, SuperAdminRootSetup,
-                            toggle_client)
+from .clients_views import (
+    ClientFeesSetup, Clients, CustomClientFeesProfilesUpdateView,
+    SuperAdminFeesProfileTemplateView, SuperAdminCancelsRootSetupView, SuperAdminRootSetup,
+    toggle_client, ClientFeesUpdate
+)
 from .disbursement_setups_views import (AddCheckerView, AddMakerView, CategoryFormView, CheckerFormView,
                                   LevelsFormView, LevelsView, MakerFormView, PinFormView, BaseFormsetView)
 from .instant_views import APICheckerCreateView, ViewerCreateView, OAuth2ApplicationDetailView

@@ -22,6 +22,7 @@ from ..mixins import (
     SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
     SuperOwnsCustomizedBudgetClientRequiredMixin,
     SuperRequiredMixin,
+    OnboardUserRequiredMixin,
     SuperOrOnboardUserRequiredMixin,
     SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired,
 )
@@ -31,7 +32,7 @@ ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 DELETE_USER_VIEW_LOGGER = logging.getLogger("delete_user_view")
 
 
-class Clients(SuperRequiredMixin, ListView):
+class Clients(SuperOrOnboardUserRequiredMixin, ListView):
     """
     List clients related to same super user.
     Search clients by username, firstname or lastname by "search" query parameter.
@@ -45,7 +46,13 @@ class Clients(SuperRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(creator=self.request.user)
+        if self.request.user.is_onboard_user:
+            qs = qs.filter(
+                creator=self.request.user.my_onboard_setups.user_created,
+                onboarded_by=self.request.user
+            )
+        else:
+            qs = qs.filter(creator=self.request.user)
 
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
@@ -187,17 +194,27 @@ class ClientFeesSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupMixin, 
     model = Client
     form_class = ClientFeesForm
     template_name = 'entity/add_client_fees.html'
-
-    def get_success_url(self):
-        if self.request.user.is_onboard_user:
-            return reverse_lazy('users:onboard_user_home')
-        return reverse_lazy('users:clients')
+    success_url = reverse_lazy('users:clients')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         kwargs.update({'instance': root.client})
         return kwargs
+
+
+class ClientFeesUpdate(OnboardUserRequiredMixin, UpdateView):
+    model = Client
+    form_class = ClientFeesForm
+    template_name = 'onboard/update_fees_profile.html'
+    success_url = reverse_lazy('users:clients')
+
+    def get_object(self, queryset=None):
+        creator = self.request.user.my_onboard_setups.user_created
+        onboarded_by = self.request.user
+        return get_object_or_404(
+                Client, creator=creator, onboarded_by=onboarded_by,
+                client__username=self.kwargs.get('username'))
 
 
 class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView):

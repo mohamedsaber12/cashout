@@ -20,6 +20,7 @@ client_urls = [
     path('client/fees-setup/<token>/', views.ClientFeesSetup.as_view(), name='add_fees'),
     path('fees-profile/', views.SuperAdminFeesProfileTemplateView.as_view(), name='super_fees_profile'),
     path('client/fees-setup/edit/<str:username>/', views.CustomClientFeesProfilesUpdateView.as_view(), name='update_fees'),
+    path('client/fees-setup/update/<str:username>/', views.ClientFeesUpdate.as_view(), name='update_fees_profile'),
     path('client/toggle/', views.toggle_client, name='toggle'),
 ]
 

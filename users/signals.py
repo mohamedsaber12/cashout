@@ -18,7 +18,7 @@ import requests
 from instant_cashin.utils import get_from_env
 from .models import (
     Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser,
-    OnboardUserSetup
+    OnboardUserSetup, SupervisorSetup
 )
 
 
@@ -104,6 +104,15 @@ def support_post_save(sender, instance, created, **kwargs):
         onboard_user.brand = instance.user_created.brand
         onboard_user.save()
         notify_user(onboard_user, created)
+
+@receiver(post_save, sender=SupervisorSetup)
+def support_post_save(sender, instance, created, **kwargs):
+    """Post save signal to send password setup email after creating any supervisor user"""
+    if created:
+        supervisor_user = instance.supervisor_user
+        supervisor_user.brand = instance.user_created.brand
+        supervisor_user.save()
+        notify_user(supervisor_user, created)
 
 
 def set_brand(instance):

@@ -14,3 +14,4 @@ from .instant_api_checker import InstantAPICheckerUser
 from .instant_api_viewer import InstantAPIViewerUser
 from .support import SupportUser, SupportSetup
 from .onboard_user import OnboardUser, OnboardUserSetup
+from .supervisor import SupervisorUser, SupervisorSetup

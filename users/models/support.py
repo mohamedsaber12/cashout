@@ -50,6 +50,13 @@ class SupportSetup(models.Model):
             related_name='support_setups',
             verbose_name=_('Super Admin User')
     )
+    supervisor = models.ForeignKey(
+            'users.SupervisorUser',
+            on_delete=models.SET_NULL,
+            related_name='my_support_setups',
+            verbose_name=_('Supervisor User'),
+            null=True
+    )
     can_onboard_entities = models.BooleanField(default=False, verbose_name=_('Can On-board Entities?'))
 
     class Meta:

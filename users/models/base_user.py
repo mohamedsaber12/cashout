@@ -28,6 +28,7 @@ TYPES = (
     (7, 'InstantAPIViewer'),
     (8, 'Support'),
     (9, 'OnboardUser'),
+    (12, 'SuperVisor')
 )
 
 
@@ -211,6 +212,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_finance_with_instant_transaction_view(self):
         return self.user_type == 11
+
+    @cached_property
+    def is_supervisor(self):
+        return self.user_type == 12
 
     @cached_property
     def is_instant_member(self):

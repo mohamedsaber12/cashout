@@ -48,6 +48,12 @@ onboard_user_urls = [
     path('onboard-user/creation/', views.SuperAdminOnboardSetupCreateView.as_view(), name='add_onboard_user'),
 ]
 
+supervisor_user_urls = [
+    # path('supervisor/home/', views.OnbooardUserHomeView.as_view(), name='onboard_user_home'),
+    path('supervisor/', views.SupervisorUsersListView.as_view(), name='supervisor'),
+    path('supervisor/creation/', views.SuperAdminSupervisorSetupCreateView.as_view(), name='add_supervisor_user'),
+]
+
 disbursement_setups_urls = [
     path('setting-up/disbursement-pin', views.PinFormView.as_view(), name='setting-disbursement-pin'),
     path('setting-up/disbursement-makers', views.MakerFormView.as_view(), name='setting-disbursement-makers'),
@@ -106,6 +112,7 @@ urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += support_urls
 urlpatterns += onboard_user_urls
+urlpatterns += supervisor_user_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += instant_urls
 urlpatterns += password_handling_urls

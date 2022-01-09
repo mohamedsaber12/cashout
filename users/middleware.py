@@ -20,6 +20,7 @@ ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
     re.compile(r'^support*'),
     re.compile(r'^onboard-user*'),
+    re.compile(r'^supervisor*'),
     re.compile(r'^profile*'),
     re.compile(r'^fees-profile/*'),
     re.compile(r'^agents/'),

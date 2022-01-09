@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import SupportSetup, Client, User, SuperAdminUser, OnboardUserSetup
+from .models import SupportSetup, Client, User, SuperAdminUser, OnboardUserSetup, SupervisorSetup
 
 
 class ParentPermissionMixin(object):
@@ -287,9 +287,12 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
                 support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
                 onboard_user_setups = OnboardUserSetup.objects.filter(user_created=current_user). \
                     select_related('onboard_user')
+                supervisor_setups = SupervisorSetup.objects.filter(user_created=current_user). \
+                    select_related('supervisor_user')
                 members_list = [obj.client.username for obj in client_setups]
                 members_list += [obj.support_user.username for obj in support_setups]
                 members_list += [obj.onboard_user.username for obj in onboard_user_setups]
+                members_list += [obj.supervisor_user.username for obj in supervisor_setups]
                 if profile_username in members_list:
                     return True
             elif current_user.is_root:

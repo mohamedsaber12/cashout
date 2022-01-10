@@ -57,6 +57,8 @@ def redirect_home(request):
         return redirect(reverse('users:support_home'))
     elif request.user.is_onboard_user:
         return redirect(reverse('users:onboard_user_home'))
+    elif request.user.is_supervisor:
+        return redirect(reverse('users:supervisor_home'))
     elif request.user.is_instant_model_onboarding:
         return redirect(reverse('instant_cashin:wallets_trx_list'))
     else:

@@ -76,6 +76,14 @@ class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class SuperAdminOrSupervisorUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_supervisor):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class UserWithDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
     Check if the user has the default vodafone onboarding permission

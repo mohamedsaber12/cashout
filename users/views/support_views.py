@@ -25,6 +25,7 @@ from oauth2_provider.models import Application
 from ..forms import SupportUserCreationForm, OnboardingApiClientForm
 from ..mixins import (
     SuperRequiredMixin, SupportUserRequiredMixin, SupportOrRootOrMakerUserPassesTestMixin,
+    SuperAdminOrSupervisorUserRequiredMixin
 )
 from ..models import (
     Client, SupportSetup, SupportUser, RootUser, SuperAdminUser, User, Setup,
@@ -46,7 +47,7 @@ SYMBOLS = ['#']
 # combines all the character arrays above to form one array
 COMBINED_LIST = DIGITS + UPCASE_CHARACTERS + LOCASE_CHARACTERS + SYMBOLS
 
-class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
+class SuperAdminSupportSetupCreateView(SuperAdminOrSupervisorUserRequiredMixin, CreateView):
     """
     Create view for super admin users to create support users
     """
@@ -65,14 +66,17 @@ class SuperAdminSupportSetupCreateView(SuperRequiredMixin, CreateView):
         self.support_user = form.save()
         support_setup_dict = {
             'support_user': self.support_user,
-            'user_created': self.request.user
+            'user_created': self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_setup.user_created,
         }
+        if self.request.user.is_supervisor:
+            support_setup_dict['supervisor'] = self.request.user
         SupportSetup.objects.create(**support_setup_dict)
 
         return HttpResponseRedirect(self.success_url)
 
 
-class SupportUsersListView(SuperRequiredMixin, ListView):
+class SupportUsersListView(SuperAdminOrSupervisorUserRequiredMixin, ListView):
     """
     List support users related to the currently logged in super admin
     Search for support users by username, email or mobile no by "search" query parameter.
@@ -85,7 +89,13 @@ class SupportUsersListView(SuperRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(user_created=self.request.user)
+        if self.request.user.is_supervisor:
+            qs = qs.filter(
+                user_created=self.request.user.my_setup.user_created,
+                supervisor=self.request.user
+            )
+        else:
+            qs = qs.filter(user_created=self.request.user)
 
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")

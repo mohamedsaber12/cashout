@@ -13,6 +13,8 @@
                 {% include 'support/sidebar.html' %}
             {% elif request.user.is_onboard_user %}
                 {% include 'onboard/sidebar.html' %}
+            {% elif request.user.is_supervisor %}
+                {% include 'supervisor/sidebar.html' %}
             {% else %}
                 {% if current_status == 'disbursement' and not request.user.is_instant_member %}
                   {% include "disbursement_sidebar.html" %}

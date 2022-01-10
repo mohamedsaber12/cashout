@@ -198,6 +198,17 @@ class OnboardUserRequiredMixin(LoginRequiredMixin):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
+
+class SupervisorUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only supervisor users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_supervisor:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
 class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
     Give the access permission of a certain view to only SuperAdmin users,

@@ -20,5 +20,5 @@ from .onboard_user_view import (
     OnboardUsersListView, OnbooardUserHomeView, SuperAdminOnboardSetupCreateView
 )
 from .supervisor_views import (
-    SupervisorUsersListView, SuperAdminSupervisorSetupCreateView
+    SupervisorUsersListView, SuperAdminSupervisorSetupCreateView, SupervisorUserHomeView
 )

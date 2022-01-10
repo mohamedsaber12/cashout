@@ -7,12 +7,19 @@ from django.urls import reverse_lazy
 from django.http import HttpResponseRedirect
 
 from ..mixins import (
-    SuperRequiredMixin
+    SuperRequiredMixin, SupervisorUserRequiredMixin
 )
 from ..models import (
     SupervisorUser, SupervisorSetup
 )
 from ..forms import SupervisorUserCreationForm
+
+class SupervisorUserHomeView(SupervisorUserRequiredMixin, TemplateView):
+    """
+    Template view for supervisor users home page
+    """
+
+    template_name = 'supervisor/home.html'
 
 
 class SupervisorUsersListView(SuperRequiredMixin, ListView):

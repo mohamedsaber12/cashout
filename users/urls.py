@@ -49,7 +49,7 @@ onboard_user_urls = [
 ]
 
 supervisor_user_urls = [
-    # path('supervisor/home/', views.OnbooardUserHomeView.as_view(), name='onboard_user_home'),
+    path('supervisor/home/', views.SupervisorUserHomeView.as_view(), name='supervisor_home'),
     path('supervisor/', views.SupervisorUsersListView.as_view(), name='supervisor'),
     path('supervisor/creation/', views.SuperAdminSupervisorSetupCreateView.as_view(), name='add_supervisor_user'),
 ]

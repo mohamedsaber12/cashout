@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import SupportSetup, Client, User, SuperAdminUser
+from .models import SupportSetup, Client, User, SuperAdminUser, OnboardUserSetup, SupervisorSetup
 
 
 class ParentPermissionMixin(object):
@@ -65,6 +65,21 @@ class SuperRequiredMixin(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superadmin:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_onboard_user):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuperAdminOrSupervisorUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_supervisor):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -181,6 +196,27 @@ class SupportUserRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class OnboardUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only onboard users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_onboard_user:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SupervisorUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only supervisor users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_supervisor:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
 class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
     Give the access permission of a certain view to only SuperAdmin users,
@@ -248,7 +284,7 @@ class SuperFinishedSetupMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_uncomplete_entity_creation():
+        if request.user.is_superadmin and not request.user.has_uncomplete_entity_creation():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -268,8 +304,14 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
             elif current_user.is_superadmin:
                 client_setups = Client.objects.filter(creator=current_user).select_related('client')
                 support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
+                onboard_user_setups = OnboardUserSetup.objects.filter(user_created=current_user). \
+                    select_related('onboard_user')
+                supervisor_setups = SupervisorSetup.objects.filter(user_created=current_user). \
+                    select_related('supervisor_user')
                 members_list = [obj.client.username for obj in client_setups]
                 members_list += [obj.support_user.username for obj in support_setups]
+                members_list += [obj.onboard_user.username for obj in onboard_user_setups]
+                members_list += [obj.supervisor_user.username for obj in supervisor_setups]
                 if profile_username in members_list:
                     return True
             elif current_user.is_root:

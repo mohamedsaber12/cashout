@@ -16,7 +16,10 @@ from django.utils.translation import gettext as _
 import requests
 
 from instant_cashin.utils import get_from_env
-from .models import Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser
+from .models import (
+    Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser,
+    OnboardUserSetup, SupervisorSetup
+)
 
 
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -92,6 +95,24 @@ def support_post_save(sender, instance, created, **kwargs):
         support_user.brand = instance.user_created.brand
         support_user.save()
         notify_user(support_user, created)
+
+@receiver(post_save, sender=OnboardUserSetup)
+def support_post_save(sender, instance, created, **kwargs):
+    """Post save signal to send password setup email after creating any onboard user"""
+    if created:
+        onboard_user = instance.onboard_user
+        onboard_user.brand = instance.user_created.brand
+        onboard_user.save()
+        notify_user(onboard_user, created)
+
+@receiver(post_save, sender=SupervisorSetup)
+def support_post_save(sender, instance, created, **kwargs):
+    """Post save signal to send password setup email after creating any supervisor user"""
+    if created:
+        supervisor_user = instance.supervisor_user
+        supervisor_user.brand = instance.user_created.brand
+        supervisor_user.save()
+        notify_user(supervisor_user, created)
 
 
 def set_brand(instance):

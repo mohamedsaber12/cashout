@@ -24,11 +24,31 @@ from django_otp.forms import OTPAuthenticationFormMixin
 from oauth2_provider.models import Application
 
 from core.utils.validations import phonenumber_form_validate
-from .models import (Brand, CheckerUser, Client, EntitySetup,
-                     InstantAPICheckerUser, InstantAPIViewerUser, Levels,
-                     MakerUser, RootUser, SupportUser, UploaderUser, User)
+from .models import (
+    Brand, CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
+    Levels, MakerUser, RootUser, SupportUser, UploaderUser, User, OnboardUser, SupervisorUser
+)
 from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
                       ALLOWED_UPPER_CHARS)
+
+
+def determine_onboarding_permission(user):
+    if user.is_vodafone_default_onboarding:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='vodafone_default_onboarding')
+    elif user.is_accept_vodafone_onboarding:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='accept_vodafone_onboarding')
+    elif user.is_vodafone_facilitator_onboarding:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
+    elif user.is_banks_standard_model_onboaring:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='banks_standard_model_onboaring')
+    else:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='instant_model_onboarding')
+    return onboarding_permission
 
 
 class SetPasswordForm(forms.Form):
@@ -326,7 +346,7 @@ class RootCreationForm(forms.ModelForm):
         random_pass += get_random_string(allowed_chars=ALLOWED_SYMBOLS, length=4)
         user.set_password(random_pass)
 
-        if self.request.user.is_superadmin:
+        if self.request.user.is_superadmin or self.request.user.is_onboard_user:
             user.user_type = 3
             user = self.define_new_admin_hierarchy(user)
 
@@ -393,23 +413,57 @@ class SupportUserCreationForm(forms.ModelForm):
         user = super().save(commit=False)
         user.user_type = 8
         user.save()
+        onboarding_permission = determine_onboarding_permission(self.request.user)
+        user.user_permissions.add(onboarding_permission)
+        return user
 
-        if self.request.user.is_vodafone_default_onboarding:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='vodafone_default_onboarding')
-        elif self.request.user.is_accept_vodafone_onboarding:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='accept_vodafone_onboarding')
-        elif self.request.user.is_vodafone_facilitator_onboarding:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
-        elif self.request.user.is_banks_standard_model_onboaring:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='banks_standard_model_onboaring')
-        else:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='instant_model_onboarding')
 
+class OnboardUserCreationForm(forms.ModelForm):
+    """
+    Onboard user creation form
+    """
+    class Meta:
+        model = OnboardUser
+        fields = ['username', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 9
+        user.save()
+
+        onboarding_permission = determine_onboarding_permission(self.request.user)
+        user.user_permissions.add(onboarding_permission)
+        return user
+
+
+class SupervisorUserCreationForm(forms.ModelForm):
+    """
+    Supervisor user creation form
+    """
+    class Meta:
+        model = SupervisorUser
+        fields = ['username', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 12
+        user.save()
+
+        onboarding_permission = determine_onboarding_permission(self.request.user)
         user.user_permissions.add(onboarding_permission)
         return user
 

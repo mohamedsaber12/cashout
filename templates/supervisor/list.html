@@ -1,0 +1,154 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Supervisor Users' %} {% endblock title %}
+
+{% block body %}
+{% if not supervisors_setups %}
+<div class="well upload-nav col-xs-12">
+  <strong style="margin-top: 15px;">{% trans 'No Supervisor users are set here ...' %}</strong>
+</div>
+{% else %}
+
+<!-- page content -->
+<div class="col" role="main">
+  <div class="">
+    <div class="page-title">
+      <div class="title_left">
+        <h3>{% trans 'Supervisor Users' %}</h3>
+      </div>
+      <div class="title_right">
+        <form action="." method="get">
+          <div class="col-md-5 col-sm-5 col-xs-12 form-group pull-{{'right'|invert_dir:LANGUAGE_CODE}} top_search">
+            <div class="input-group">
+              <input type="text" class="form-control" name="search" value="{{ search }}" placeholder="Search for...">
+              <span class="input-group-btn">
+                    <button class="btn btn-default" type="submit" value="search">{% trans 'Go!' %}</button>
+                  </span>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="clearfix"></div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <div class="x_panel">
+          <div class="x_content">
+            <div class="row">
+              <div class="col-md-12 col-sm-12 col-xs-12 text-center"></div>
+              <div class="clearfix"></div>
+
+              {% for supervisor_setup in supervisors_setups %}
+              <div class="col-md-4 col-sm-4 col-xs-12 profile_details" id="user-{{ supervisor_setup.id }}">
+                <div class="well profile_view" style="width: 100%;">
+                  <div class="col-sm-12">
+                    <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+                      <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user"></i> {{ supervisor_setup.supervisor_user.get_full_name|truncatechars:26 }}</h2><br>
+                      <h5><strong>{% trans 'About:' %} </strong> {{ supervisor_setup.supervisor_user.title }} </h5>
+                      <ul class="list-unstyled">
+                        <li><i class="fa fa-sign-in"></i> <strong>{% trans 'username:' %}</strong><ul><li> {{ supervisor_setup.supervisor_user.username }}</li></ul></li>
+                        <li><i class="fa fa-envelope"></i> <strong>{% trans 'Email:' %}</strong><ul><li> {{ supervisor_setup.supervisor_user.email }}</li></ul></li>
+                        <li><i class="fa fa-phone-square"></i> <strong>{% trans 'Phone:' %}</strong><ul><li> {{ supervisor_setup.supervisor_user.mobile_no }}</li></ul></li>
+                      </ul>
+                    </div>
+                    <div class="right col-xs-5 text-center pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                      <img src="{{ supervisor_setup.supervisor_user.avatar_thumbnail.url }}" alt="" class="img-circle img-responsive">
+                    </div>
+                  </div>
+                  <div class="col-xs-12 bottom text-center">
+                    <div class="col-xs-12 col-sm-4 emphasis">
+                      <p class="ratings">
+                      </p>
+                    </div>
+                    <div class="col-xs-12 col-sm-8 emphasis text-right" style="padding-right:10px;padding-left:10px;">
+                      <button type="button" class="btn btn-danger btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
+                              data-target=".delete-modal-sm" onclick="delete_modal({{ supervisor_setup.id }})">
+                        <i class="fa fa-trash-o"></i>
+                      </button>
+                      <a href="{% url 'users:profile' supervisor_setup.supervisor_user.username %}" type="button"
+                         class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                        <i class="fa fa-user"> </i> {% trans 'View Profile' %}
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+
+            </div>
+          </div>
+          {% include 'pagination.html' %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- /page content -->
+
+<div id="delete-user-modal" class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
+      </div>
+      <div class="modal-body">
+        <h4 id="modal-body-header">Delete User?</h4>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+        <button type="button" class="btn btn-danger" id="delete-btn" data-id="" onclick="delete_user()">{% trans 'Delete' %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade delete-success" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">×</span>
+        </button>
+        <h4 class="modal-title" id="myModalLabel2">{% trans 'Successful' %}</h4>
+      </div>
+      <div class="modal-body">
+        <h4>{% trans 'Done Successfully' %}</h4>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endblock body %}
+
+{% block script %}
+<script type="text/javascript">
+      function delete_modal(obj_id){
+        $("#delete-btn").data('id', obj_id);
+      }
+
+      function delete_user() {
+        var id = $("#delete-btn").data('id');
+          $.ajax({
+            url: "{% url 'users:delete' %}",
+            type: "POST",
+            data: { user_id: id, support: true },
+            success: function (data, text, xhr) {
+              if (data["valid"] == "true") {
+                $("#delete-user-modal").modal('hide');
+                location.reload()
+              }
+            }
+          });
+      }
+  </script>
+{% endblock script %}

@@ -35,7 +35,7 @@
   </style>
 {% endblock customcss %}
 {% block body %}
-  {% if not request.user.has_vmt_setup %}
+  {% if request.user.is_superadmin and not request.user.has_vmt_setup %}
     <div class="well upload-nav col-xs-12">
       <strong style="margin-top: 15px;">{% trans 'Account is suspended due to uncompleted setups!' %}</strong>
     </div>
@@ -58,49 +58,49 @@
           <div class="col-md-12">
             <div class="x_panel">
               <div class="x_content">
+                {% if request.user.is_superadmin %}
+                  {# Export clients transactions report sections #}
+                  <div class="row">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                      <div class="x_panel">
+                        <div class="x_title">
+                          <h2>{% trans 'Export Clients Transactions Report' %}</h2>
+                          <ul class="nav navbar-right panel_toolbox">
+                            <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+                          </ul>
+                          <div class="clearfix"></div>
+                        </div>
 
-                {# Export clients transactions report sections #}
-                <div class="row">
-                  <div class="col-md-12 col-sm-12 col-xs-12">
-                    <div class="x_panel">
-                      <div class="x_title">
-                        <h2>{% trans 'Export Clients Transactions Report' %}</h2>
-                        <ul class="nav navbar-right panel_toolbox">
-                          <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
-                        </ul>
-                        <div class="clearfix"></div>
-                      </div>
-
-                      <div class="x_content">
-                        <div class="col-md-3 col-sm-3 col-xs-3 text-left">
-                          <label style="width:30%;">{% trans 'Start Date' %}</label>
-                          <input style="width:68%;" onchange="toggle_export_button()" id="start_date" type="date">
-                        </div>
-                        <div class="col-md-3 col-sm-3 col-xs-3 text-left">
-                          <label style="width:30%;">{% trans 'End Date' %}</label>
-                          <input style="width:68%;" onchange="toggle_export_button()" id="end_date" type="date">
-                        </div>
-                        <div class="col-md-3 col-sm-3 col-xs-3">
-                          <label style="width:30%;">{% trans 'Status' %}</label>
-                          <select id="status" class="form-control">
-                            <option value="all">{% trans 'All' %}</option>
-                            <option value="success">{% trans 'Success' %}</option>
-                            <option value="failed">{% trans 'Failed' %}</option>
-                          </select>
-                        </div>
-                        <div class="col-md-2 col-sm-2 col-xs-2">
-                          <button id="export-report" type="button" onclick="export_clients_transactions_report()"
-                                  disabled="true" class="btn btn-default pull-right">
-                            <i class="fa fa-file-excel-o" title="Export Transactions"></i>
-                            {% trans 'Export Report' %}
-                          </button>
+                        <div class="x_content">
+                          <div class="col-md-3 col-sm-3 col-xs-3 text-left">
+                            <label style="width:30%;">{% trans 'Start Date' %}</label>
+                            <input style="width:68%;" onchange="toggle_export_button()" id="start_date" type="date">
+                          </div>
+                          <div class="col-md-3 col-sm-3 col-xs-3 text-left">
+                            <label style="width:30%;">{% trans 'End Date' %}</label>
+                            <input style="width:68%;" onchange="toggle_export_button()" id="end_date" type="date">
+                          </div>
+                          <div class="col-md-3 col-sm-3 col-xs-3">
+                            <label style="width:30%;">{% trans 'Status' %}</label>
+                            <select id="status" class="form-control">
+                              <option value="all">{% trans 'All' %}</option>
+                              <option value="success">{% trans 'Success' %}</option>
+                              <option value="failed">{% trans 'Failed' %}</option>
+                            </select>
+                          </div>
+                          <div class="col-md-2 col-sm-2 col-xs-2">
+                            <button id="export-report" type="button" onclick="export_clients_transactions_report()"
+                                    disabled="true" class="btn btn-default pull-right">
+                              <i class="fa fa-file-excel-o" title="Export Transactions"></i>
+                              {% trans 'Export Report' %}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                {# End of export clients transactions report sections #}
-
+                  {# End of export clients transactions report sections #}
+                {% endif %}
                 <div class="row">
                   <div class="col-md-12 col-sm-12 col-xs-12 text-center">
                     <ul class="pagination pagination-split">
@@ -156,18 +156,27 @@
                             <p class="ratings pull-{{'left'|invert_dir:LANGUAGE_CODE}}"><a>{% trans 'Active' %}</a></p>
                           </div>
                           <div class="col-xs-12 col-sm-9 emphasis text-right" style="padding-right:10px;padding-left:10px;">
-                            <button type="button" class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
-                                    data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
-                              {% ifequal client_setup.is_active True %}
-                              <i class="fa fa-times" title="{% trans 'Deactivate User' %}"></i>
-                              {% else %}
-                              <i class="fa fa-check" title="{% trans 'Activate User' %}"></i>
-                              {% endifequal %}
-                            </button>
-                            {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
-                              <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Update Budget' %}">
-                                <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
+                            {% if request.user.is_onboard_user %}
+                              <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Edit Fees Profile' %}">
+                                <a class="fa fa-edit" href="{% url 'users:update_fees_profile' username=client_setup.client.username  %}" target="_blank"></a>
                               </button>
+                            {% endif %}
+                            {% if request.user.is_superadmin %}
+                              <button type="button" class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
+                                      data-target="#activation-modal" onclick="update_modal({{ client_setup.id }}, '{{ client_setup.is_active }}')">
+                                {% ifequal client_setup.is_active True %}
+                                <i class="fa fa-times" title="{% trans 'Deactivate User' %}"></i>
+                                {% else %}
+                                <i class="fa fa-check" title="{% trans 'Activate User' %}"></i>
+                                {% endifequal %}
+                              </button>
+                            {% endif %}
+                            {% if request.user.is_superadmin %}
+                              {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
+                                <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Update Budget' %}">
+                                  <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
+                                </button>
+                              {% endif %}
                             {% endif %}
                             <a href="{% url 'users:profile' client_setup.client.username %}" type="button"
                                class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}">

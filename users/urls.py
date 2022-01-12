@@ -20,6 +20,7 @@ client_urls = [
     path('client/fees-setup/<token>/', views.ClientFeesSetup.as_view(), name='add_fees'),
     path('fees-profile/', views.SuperAdminFeesProfileTemplateView.as_view(), name='super_fees_profile'),
     path('client/fees-setup/edit/<str:username>/', views.CustomClientFeesProfilesUpdateView.as_view(), name='update_fees'),
+    path('client/fees-setup/update/<str:username>/', views.ClientFeesUpdate.as_view(), name='update_fees_profile'),
     path('client/toggle/', views.toggle_client, name='toggle'),
 ]
 
@@ -39,6 +40,18 @@ support_urls = [
     path('support/clients/Credentials', views.OnboardingNewInstantAdmin.as_view(), name='support_clients_credentials'),
     path('support/clients/Credentials/<client_id>', views.ClientCredentialsDetails.as_view(),
          name='support_clients_credentials_details'),
+]
+
+onboard_user_urls = [
+    path('onboard-user/home/', views.OnbooardUserHomeView.as_view(), name='onboard_user_home'),
+    path('onboard-user/', views.OnboardUsersListView.as_view(), name='onboard_user'),
+    path('onboard-user/creation/', views.SuperAdminOnboardSetupCreateView.as_view(), name='add_onboard_user'),
+]
+
+supervisor_user_urls = [
+    path('supervisor/home/', views.SupervisorUserHomeView.as_view(), name='supervisor_home'),
+    path('supervisor/', views.SupervisorUsersListView.as_view(), name='supervisor'),
+    path('supervisor/creation/', views.SuperAdminSupervisorSetupCreateView.as_view(), name='add_supervisor_user'),
 ]
 
 disbursement_setups_urls = [
@@ -99,6 +112,8 @@ urlpatterns = [
 urlpatterns += client_urls
 urlpatterns += super_and_root_urls
 urlpatterns += support_urls
+urlpatterns += onboard_user_urls
+urlpatterns += supervisor_user_urls
 urlpatterns += disbursement_setups_urls
 urlpatterns += instant_urls
 urlpatterns += password_handling_urls

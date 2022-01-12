@@ -1,0 +1,21 @@
+{% load static %}
+{% load i18n %}
+
+<div class="left_col scroll-view">
+
+  {% include "sidebar_logo.html" %}
+
+  {# sidebar menu #}
+  <div id="sidebar-menu" class="main_menu_side hidden-print main_menu">
+    <div class="menu_section">
+      <ul class="nav side-menu">
+        <li><a href="{% url 'users:add_client' %}"><i class="fa fa-plus" ></i>{% trans 'New Client' %}</a></li>
+        <li><a href="{% url 'users:clients' %}"><i class="fa fa-users" ></i>{% trans 'My Clients' %}</a></li>
+        <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o" ></i>{% trans 'Active Sessions' %}</a></li>
+        <li><a href="{% url 'users:profile' request.user.username %}"><i class="fa fa-user"></i>{% trans 'Profile' %}</a></li>
+      </ul>
+    </div>
+  </div>
+  {# End of Sidebar menu #}
+
+</div>

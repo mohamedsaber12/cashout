@@ -70,6 +70,7 @@ class Client(models.Model):
     )
     client = models.OneToOneField('users.RootUser', on_delete=models.CASCADE, related_name='client', null=True)
     creator = models.ForeignKey('users.SuperAdminUser', on_delete=models.SET_NULL, related_name='clients', null=True)
+    onboarded_by = models.ForeignKey('users.OnboardUser', on_delete=models.SET_NULL, related_name='my_clients', null=True)
 
     objects = ClientManager()
 

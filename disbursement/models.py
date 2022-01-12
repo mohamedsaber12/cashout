@@ -178,6 +178,12 @@ class DisbursementData(AbstractTimeStamp):
         _("Disbursed At"), null=True, blank=True)
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
+    uid = models.UUIDField(
+        default=uuid.uuid4,
+        null=True,
+        blank=True,
+        verbose_name=_("Transaction UID")
+    )
 
     class Meta:
         verbose_name = "Disbursement Data Record"

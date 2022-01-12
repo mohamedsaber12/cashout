@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import random
 import datetime
 import logging
 from decimal import Decimal
@@ -112,10 +113,10 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         for recipient in ets_recipients:
             ets_payload, ets_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
-                    ets_agents[0], recipient['msisdn'], recipient['amount'], ets_pin, 'etisalat'
+                random.choice(ets_agents), recipient['msisdn'], recipient['amount'], ets_pin, 'etisalat'
             )
             ets_callback = DisburseAPIView.disburse_for_recipients(
-                    wallets_env_url, ets_payload, checker.username, ets_log_payload
+                wallets_env_url, ets_payload, checker.username, ets_log_payload
             )
             self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
 
@@ -130,7 +131,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         for recipient in vf_recipients:
             vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
-                vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
+                random.choice(vf_agents)['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
             )
             vf_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]

@@ -377,6 +377,7 @@ class BankTransaction(AbstractTimeStamp,
         _('Optional Transaction Comment'),
         max_length=36,
         blank=True,
+        null=True,
         default=''
     )
 

@@ -121,7 +121,7 @@ class InstantDisbursementAPIView(views.APIView):
         )
         if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
-            creditor_bank = "MIDG",
+            creditor_bank = "MIDG"
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,

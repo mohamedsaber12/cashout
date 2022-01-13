@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import random
 import datetime
 import logging
 from decimal import Decimal
@@ -45,11 +46,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
         recipients = DisbursementData.objects.filter(doc_id=doc_id)
 
         vf_recipients = recipients.filter(issuer__in=['vodafone', 'default']). \
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id', 'uid': 'uid'}). \
+            values('msisdn', 'amount', 'txn_id', 'uid')
         etisalat_recipients = recipients.filter(issuer='etisalat'). \
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id', 'uid': 'uid'}). \
+            values('msisdn', 'amount', 'txn_id', 'uid')
         aman_recipients = recipients.filter(issuer='aman'). \
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id', 'uid': 'uid'}). \
+            values('msisdn', 'amount', 'txn_id', 'uid')
 
         return vf_recipients, list(etisalat_recipients), list(aman_recipients)
 
@@ -112,10 +116,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         for recipient in ets_recipients:
             ets_payload, ets_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
-                    ets_agents[0], recipient['msisdn'], recipient['amount'], ets_pin, 'etisalat'
+                random.choice(ets_agents), recipient['msisdn'], recipient['amount'],
+                ets_pin, 'etisalat', recipient['uid']
             )
             ets_callback = DisburseAPIView.disburse_for_recipients(
-                    wallets_env_url, ets_payload, checker.username, ets_log_payload
+                wallets_env_url, ets_payload, checker.username, ets_log_payload
             )
             self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
 
@@ -130,7 +135,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         for recipient in vf_recipients:
             vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
-                vf_agents[0]['MSISDN'], recipient['msisdn'], recipient['amount'], vf_pin, 'vodafone', smsc_sender_name
+                random.choice(vf_agents)['MSISDN'], recipient['msisdn'], recipient['amount'],
+                vf_pin, 'vodafone', recipient['uid'], smsc_sender_name
             )
             vf_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]

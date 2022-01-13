@@ -232,6 +232,7 @@ class AbstractBaseVMTData(models.Model):
                                                 amount_attr,
                                                 raw_pin_attr,
                                                 issuer_attr,
+                                                trx_uid,
                                                 sms_sender_name=''):
         """
         :param agent_attr: Agent that will send/disburse the money
@@ -254,6 +255,7 @@ class AbstractBaseVMTData(models.Model):
             'MSISDN2': consumer_attr,
             'AMOUNT': amount_attr,
             'PIN': raw_pin_attr,
+            'EXTREFNUM': str(trx_uid),
             'SENDERNAME': sms_sender_name
         })
         if not sms_sender_name:

@@ -250,7 +250,6 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   <script>
-
     var table = $('#transaction-table').DataTable({
     "bLengthChange" : false,
     "bPaginate": false,
@@ -357,7 +356,6 @@
 
         {% if not is_normal_flow %}
           let trx_id = $(this).data('trx_id')
-          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx_id}</li>`;
         {% endif %}
 
         let msisdn = $(this).data('msisdn');

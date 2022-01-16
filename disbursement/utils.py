@@ -175,7 +175,7 @@ ERROR_CODES_MESSAGES = {
     '6030':	_('Format Error'),
     '6041':	_('Funding Account Status is Lost'),
     '6043':	_('Funding Account Status is Stolen'),
-    '6051':	_('Funding Account has Insufficient Funds'),
+    '6051':	_('Service temporarily suspended'),
     '6054':	_('Funding Account is Expired'),
     '6055':	_('Invalid C-PIN'),
     '6057':	_('Transaction Not Permitted to Issuer/Card Holder'),

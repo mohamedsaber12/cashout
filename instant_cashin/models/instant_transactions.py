@@ -154,7 +154,7 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         Mark transaction status as failed and add the failure reason if provided
         :param failure_reason: if provided add failure reason
         """
-        if str(status_code) == '90093':
+        if str(status_code) == '90093' or str(status_code) == '6051':
             failure_reason = "Service temporarily suspended"
         self.update_status_code_and_description(str(status_code), failure_reason)
         self.status = self.FAILED

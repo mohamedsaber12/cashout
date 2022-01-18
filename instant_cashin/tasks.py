@@ -28,7 +28,7 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
 
     # check if EBC is up , if not return False
     try:
-        requests.get("https://cibcorpay.egyptianbanks.net", timeout=15)
+        requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
     except Exception as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(
             f"[message] [check for EBC status] [celery_task] -- "
@@ -87,7 +87,7 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
 def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
     # check if EBC is up , if not return False
     try:
-        requests.get("https://cibcorpay.egyptianbanks.net", timeout=15)
+        requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
     except Exception as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(
             f"[message] [check for EBC status more than 6 days] [celery_task] -- "

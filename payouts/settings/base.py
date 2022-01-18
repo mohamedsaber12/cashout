@@ -328,7 +328,7 @@ ADMIN_INDEX_TITLE = 'Payouts Administration'
 
 # Timeout dictionary
 TIMEOUT_CONSTANTS = {
-    'CENTRAL_UIG': 33
+    'CENTRAL_UIG': 10
 }
 
 

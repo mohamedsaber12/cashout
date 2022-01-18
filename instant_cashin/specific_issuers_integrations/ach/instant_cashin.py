@@ -173,7 +173,7 @@ class BankTransactionsChannel:
                     url + "?",
                     params={"request": json.dumps(payload, separators=(",", ":"))},
                     headers={'Content-Type': 'application/json'},
-                    timeout=30
+                    timeout=10
             )
             response_log_message = f"{response.json()}"
         except HTTPError as http_err:

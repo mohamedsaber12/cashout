@@ -204,7 +204,6 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
         if can_view:
             # 2.1 If the request is ajax then prepare the disbursement report
             if request.is_ajax():
-                # ToDo: Change this to handle bank sheets
                 if request.GET.get('export_failed') == 'true':
                     generate_failed_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
                     return HttpResponse(status=200)

@@ -30,6 +30,7 @@ from .models import DisbursementData, DisbursementDocData, BankTransaction
 CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
 ETISALAT_UNKNWON_INQ = logging.getLogger("etisalat_inq_by_ref")
+VODAFONE_UNKNWON_INQ = logging.getLogger("vofafone_inq_by_ref")
 
 
 class BulkDisbursementThroughOneStepCashin(Task):
@@ -413,5 +414,63 @@ def check_for_etisalat_unknown_transactions(**kwargs):
                     unkown_trn.save()
                     unkown_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
                             unkown_trn.amount, 'etisalat')
+
+
+@app.task()
+@respects_language
+def check_for_etisalat_and_vodafone_unknown_transactions(**kwargs):
+    """Background task for asking for the unknown etisalat and vodafone transactions"""
+    unkown_e_trns = InstantTransaction.objects.filter(
+        status__in=["U", "P"],
+        issuer_type__exact="E"
+    )
+
+    for unkown_e_trn in unkown_e_trns:
+        super_admin = unkown_e_trn.from_user.root.super_admin
+        url = get_value_from_env(super_admin.vmt.vmt_environment)
+        payload = super_admin.vmt.accumulate_inquiry_for_etisalat_by_ref_id(
+            str(unkown_e_trn.uid))
+        ETISALAT_UNKNWON_INQ.debug(f"[request] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {payload}")
+        resp = requests.post(url, json=payload, verify=False)
+        resp_data = resp.json()
+        ETISALAT_UNKNWON_INQ.debug(f"[response] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {resp_data}")
+        if resp_data.get("DATA"):
+            if resp_data.get("DATA").get("TXNSTATUS"):
+                if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
+                    unkown_e_trn.status = 'F'
+                    unkown_e_trn.save()
+                elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
+                    unkown_e_trn.status = 'S'
+                    unkown_e_trn.transaction_status_code = '200'
+                    unkown_e_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'
+                    unkown_e_trn.save()
+                    unkown_e_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                            unkown_e_trn.amount, 'etisalat')
+
+        unkown_v_trns = InstantTransaction.objects.filter(
+            status__in=["U", "P"],
+            issuer_type__exact="V"
+        )
+        for unkown_v_trn in unkown_v_trns:
+            super_admin = unkown_v_trn.from_user.root.super_admin
+            url = get_value_from_env(super_admin.vmt.vmt_environment)
+            payload = super_admin.vmt.accumulate_inquiry_for_vodafone_by_ref_id(
+                str(unkown_v_trn.uid))
+            VODAFONE_UNKNWON_INQ.debug(f"[request] [VODAFONE UNKNWON TRX INQ] [celery_task] -- {payload}")
+            resp = requests.post(url, json=payload, verify=False)
+            resp_data = resp.json()
+            VODAFONE_UNKNWON_INQ.debug(f"[response] [VODAFONE UNKNWON TRX INQ] [celery_task] -- {resp_data}")
+            if resp_data.get("DATA"):
+                if resp_data.get("DATA").get("TXNSTATUS"):
+                    if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
+                        unkown_v_trn.status = 'F'
+                        unkown_v_trn.save()
+                    elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
+                        unkown_v_trn.status = 'S'
+                        unkown_v_trn.transaction_status_code = '200'
+                        unkown_v_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'
+                        unkown_v_trn.save()
+                        unkown_v_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                                unkown_v_trn.amount, 'vodafone')
 
 

@@ -327,6 +327,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/etisalat_inq_by_ref.log',
         },
+        'vodafone_inq_by_ref': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/vodafone_inq_by_ref.log',
+        },
     },
 
     'loggers': {
@@ -541,6 +548,11 @@ CUSTOM_LOGGING = {
         },
         'etisalat_inq_by_ref': {
             'handlers': ['etisalat_inq_by_ref'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'vodafone_inq_by_ref': {
+            'handlers': ['vodafone_inq_by_ref'],
             'level': 'DEBUG',
             'propagate': True,
         },

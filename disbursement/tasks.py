@@ -30,7 +30,7 @@ from .models import DisbursementData, DisbursementDocData, BankTransaction
 CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
 ETISALAT_UNKNWON_INQ = logging.getLogger("etisalat_inq_by_ref")
-VODAFONE_UNKNWON_INQ = logging.getLogger("vofafone_inq_by_ref")
+VODAFONE_UNKNWON_INQ = logging.getLogger("vodafone_inq_by_ref")
 
 
 class BulkDisbursementThroughOneStepCashin(Task):

@@ -267,7 +267,7 @@ class BankTransactionsChannel:
                 bank_trx_message = BANK_TRX_IS_SUCCESSFUL_1 if response_code == "8222" else BANK_TRX_IS_SUCCESSFUL_2
                 new_trx_obj.mark_successful(response_code, bank_trx_message)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_successful("8222", INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
+                instant_trx.mark_successful(response_code, INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
 
             # 3.4) Handle bank reject and return cases
             elif response_code in TRX_REJECTED_BY_BANK_CODES + TRX_RETURNED_BY_BANK_CODES:

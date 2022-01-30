@@ -23,6 +23,7 @@ if django.VERSION < (2,):
 else:
     from django.utils.encoding import force_str
 
+from  users.models import InstantAPICheckerUser, User
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
 
@@ -165,6 +166,11 @@ class BudgetAdmin(SimpleHistoryAdmin):
             content_type.app_label,
             content_type.model,
         )
+        # filter by history_user
+        history_user = request.GET.get('history_user', None)
+        if history_user:
+            action_list = action_list.filter(history_user=history_user)
+
         page = request.GET.get('page', 1)
         paginator = Paginator(action_list, 30)
         action_list = paginator.get_page(page)
@@ -180,6 +186,11 @@ class BudgetAdmin(SimpleHistoryAdmin):
             "admin_user_view": admin_user_view,
             "history_list_display": history_list_display,
             "revert_disabled": self.revert_disabled,
+            "users_can_filter": [
+                obj.disburser,
+                *list(InstantAPICheckerUser.objects.filter(root=obj.disburser)),
+                *list(User.objects.filter(is_staff=True))
+            ]
         }
         context.update(self.admin_site.each_context(request))
         context.update(extra_context or {})

@@ -6,15 +6,68 @@
 
 
 {% block content %}
+  <style>
+    #changelist-filter h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 5px 15px;
+      margin-bottom: 12px;
+      border-bottom: none;
+    }
+    #changelist-filter h3 {
+      font-weight: 400;
+      font-size: 14px;
+      padding: 0 15px;
+      margin-bottom: 10px;
+    }
+    #changelist-filter ul {
+      margin: 5px 0;
+      padding: 0 15px 15px;
+      border-bottom: 1px solid #eaeaea;
+    }
+    #changelist-filter li {
+      list-style-type: none;
+      margin-left: 0;
+      padding-left: 0;
+    }
+    #changelist-filter li.selected {
+      border-left: 5px solid #eaeaea;
+      padding-left: 10px;
+      margin-left: -15px;
+    }
+  </style>
   <div id="content-main">
     {% if not revert_disabled %}<p>
       {% blocktrans %}Choose a date from the list below to revert to a previous version of this object.{% endblocktrans %}</p>{% endif %}
     <div class="module">
-      {% if action_list %}
-        {% display_list %}
-      {% else %}
-        <p>{% trans "This object doesn't have a change history." %}</p>
-      {% endif %}
+      <div style="display:flex;">
+        <div style="width:80%;display: inline-block;">
+          {% if action_list %}
+            {% display_list %}
+          {% else %}
+            <p>{% trans "This object doesn't have a change history." %}</p>
+          {% endif %}
+        </div>
+        <div style="width:20%;display: inline-block;background: #f8f8f8;margin-left:20px;">
+          <div id="changelist-filter">
+            <h2>Filter</h2>
+            <h3> By History User </h3>
+            <ul>
+              <li id="0">
+                <a href="?" title="All">All</a>
+              </li>
+              {% for user in users_can_filter %}
+                <li id="{{user.id}}">
+                  <a href="?history_user={{user.id}}" title="{{user.username}}">
+                    {{user.username}}
+                  </a>
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
     <div class="pagination">
         <span class="step-links">
@@ -32,8 +85,23 @@
                 <a href="?page={{ action_list.paginator.num_pages }}">last &raquo;</a>
             {% endif %}
         </span>
-    </div>  
-  
+    </div>
+    <script>
+      let params = (new URL(document.location)).searchParams;
+      let history_user = params.get("history_user");
+      // remove class selected for any dom element
+      let elements = document.querySelectorAll(".selected");
+      elements.forEach(element => {
+        element.classList.remove("selected");
+      });
+      if(history_user === null) {
+        let defaultElement = document.getElementById("0");
+        defaultElement.classList.add("selected");
+      } else {
+        let selectedElement = document.getElementById(history_user);
+        selectedElement.classList.add("selected");
+      }
+    </script>
   {% endblock %}
   
   </div>

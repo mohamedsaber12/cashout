@@ -128,8 +128,8 @@ class InstantDisbursementAPIView(views.APIView):
                     issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
                     is_single_step=serializer.validated_data["is_single_step"],
                     fees=fees, vat=vat,
-                    client_transaction_reference = client_reference_id
-                    #disbursed_date=timezone.now()
+                    client_transaction_reference = client_reference_id,
+                    disbursed_date=timezone.now()
             )
         else:
             creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])

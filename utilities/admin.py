@@ -215,6 +215,11 @@ class BudgetAdmin(SimpleHistoryAdmin):
             query_string_date = query_string_date + "history_date__range__lte=" + \
                                 query_string_dict.get('history_date__range__lte')[0]
 
+        if settings.DEBUG:
+            admin_url_key='admin'
+        else:
+            admin_url_key='secure-portal'
+
         context = {
             "title": self.history_view_title(obj),
             "action_list": action_list,
@@ -231,7 +236,8 @@ class BudgetAdmin(SimpleHistoryAdmin):
                 *list(InstantAPICheckerUser.objects.filter(root=obj.disburser)),
                 *list(User.objects.filter(is_staff=True))
             ],
-            "query_string_date": query_string_date
+            "query_string_date": query_string_date,
+            "admin_url_key": admin_url_key
         }
         context.update(self.admin_site.each_context(request))
         context.update(extra_context or {})

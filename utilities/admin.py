@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
 from django.utils.translation import gettext_lazy as _
+from django.utils.timezone import datetime, make_aware
 
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
@@ -171,9 +172,48 @@ class BudgetAdmin(SimpleHistoryAdmin):
         if history_user:
             action_list = action_list.filter(history_user=history_user)
 
+        # filter by history date
+        start_history_date = request.GET.get('history_date__range__gte', None)
+        end_history_date = request.GET.get('history_date__range__lte', None)
+
+        if start_history_date:
+            first_day = datetime(
+                year=int(start_history_date.split('-')[0]),
+                month=int(start_history_date.split('-')[1]),
+                day=int(start_history_date.split('-')[2]),
+            )
+            first_day = make_aware(first_day)
+            action_list = action_list.filter(history_date__gte=first_day)
+        if end_history_date:
+            last_day = datetime(
+                year=int(end_history_date.split('-')[0]),
+                month=int(end_history_date.split('-')[1]),
+                day=int(end_history_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            last_day = make_aware(last_day)
+            action_list = action_list.filter(history_date__lte=last_day)
+
         page = request.GET.get('page', 1)
         paginator = Paginator(action_list, 30)
         action_list = paginator.get_page(page)
+
+        # convert query string to dictionary
+        from urllib.parse import parse_qs
+        query_string_dict = parse_qs(request.META['QUERY_STRING'])
+        
+        query_string_date = ""
+        if query_string_dict.get('history_date__range__gte',None):
+            query_string_date = query_string_date + "history_date__range__gte=" + \
+                                query_string_dict.get('history_date__range__gte')[0]
+        if query_string_dict.get('history_date__range__lte',None) and query_string_date != "":
+            query_string_date = query_string_date + "&history_date__range__lte=" + \
+                                query_string_dict.get('history_date__range__lte')[0]
+        elif query_string_dict.get('history_date__range__lte',None):
+            query_string_date = query_string_date + "history_date__range__lte=" + \
+                                query_string_dict.get('history_date__range__lte')[0]
 
         context = {
             "title": self.history_view_title(obj),
@@ -190,7 +230,8 @@ class BudgetAdmin(SimpleHistoryAdmin):
                 obj.disburser,
                 *list(InstantAPICheckerUser.objects.filter(root=obj.disburser)),
                 *list(User.objects.filter(is_staff=True))
-            ]
+            ],
+            "query_string_date": query_string_date
         }
         context.update(self.admin_site.each_context(request))
         context.update(extra_context or {})

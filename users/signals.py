@@ -97,7 +97,7 @@ def support_post_save(sender, instance, created, **kwargs):
         notify_user(support_user, created)
 
 @receiver(post_save, sender=OnboardUserSetup)
-def support_post_save(sender, instance, created, **kwargs):
+def onboard_user_post_save(sender, instance, created, **kwargs):
     """Post save signal to send password setup email after creating any onboard user"""
     if created:
         onboard_user = instance.onboard_user
@@ -106,7 +106,7 @@ def support_post_save(sender, instance, created, **kwargs):
         notify_user(onboard_user, created)
 
 @receiver(post_save, sender=SupervisorSetup)
-def support_post_save(sender, instance, created, **kwargs):
+def supervisor_post_save(sender, instance, created, **kwargs):
     """Post save signal to send password setup email after creating any supervisor user"""
     if created:
         supervisor_user = instance.supervisor_user

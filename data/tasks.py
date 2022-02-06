@@ -869,7 +869,8 @@ class EWalletsSheetProcessor(Task):
 
             # 6. Make change fees profile request for vodafone recipients only
             if wallets_moderator.change_profile and vf_msisdns_list:
-                if self.doc_obj.owner.is_accept_vodafone_onboarding:
+                if self.doc_obj.owner.is_accept_vodafone_onboarding or \
+                   self.doc_obj.owner.is_vodafone_facilitator_onboarding:
                     change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
                 else:
                     change_profile_response = self.bulk_change_profile_for_vodafone_recipients(vf_msisdns_list)

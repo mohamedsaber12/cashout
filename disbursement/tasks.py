@@ -264,7 +264,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
                 # handle disbursement for vodafone
-                if vf_recipients and checker.is_accept_vodafone_onboarding:
+                if vf_recipients and (checker.is_accept_vodafone_onboarding
+                    or checker.is_vodafone_facilitator_onboarding):
                     self.disburse_for_vodafone(checker, superadmin, vf_recipients)
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 

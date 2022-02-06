@@ -238,7 +238,8 @@ class DisburseAPIView(APIView):
         vf_response = False
 
         # 4. Check if the doc type is an E-Wallet so it might has vodafone records to be disbursed
-        if doc_obj.is_e_wallet and (not checker.is_accept_vodafone_onboarding):
+        if doc_obj.is_e_wallet and not (checker.is_accept_vodafone_onboarding
+            or checker.is_vodafone_facilitator_onboarding):
             superadmin = checker.root.client.creator
             wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
             self.set_disbursed_date(doc_obj.id)
@@ -259,7 +260,7 @@ class DisburseAPIView(APIView):
                 
 
         # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)
-        if checker.is_accept_vodafone_onboarding:
+        if checker.is_accept_vodafone_onboarding or checker.is_vodafone_facilitator_onboarding:
             BulkDisbursementThroughOneStepCashin.delay(doc_id=str(doc_obj.id), checker_username=str(checker.username))
 
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, temp_response)

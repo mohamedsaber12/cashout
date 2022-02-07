@@ -6,7 +6,7 @@ import logging
 
 from django.conf import settings
 from django.core.files.storage import default_storage
-from django.core.mail import EmailMessage
+from django.core.mail import EmailMessage, EmailMultiAlternatives
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -109,3 +109,121 @@ def send_transfer_request_email(admin_username, message, attachment_file_name=No
             f"[message] [transfer request Email] from :- [{admin_username}]  to:- {business_team}"
     )
     return True
+
+
+@app.task()
+@respects_language
+def check_disk_space_and_send_warning_email():
+    import shutil
+    # get total space and used space and free space
+    total, used, free = shutil.disk_usage("/")
+
+    # send email if free space <= 3 GiB
+    if (free // (2**30)) <= 3:
+        developers_team = [admin[1] for admin in settings.ADMINS]
+        subject='Warning, Payout Server Run Out Of Disk Space'
+        message_body= """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+                <html xmlns="http://www.w3.org/1999/xhtml">
+                <head>
+                    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+                    <link rel="icon" sizes="" href="https://yt3.ggpht.com/a-/AN66SAzzGZByUtn6CpHHJVIEOuqQbvAqwgPiKy1RTw=s900-mo-c-c0xffffffff-rj-k-no" type="image/jpg" />
+                    <title>SolarWinds Orion Email Alert Template</title>
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                        <style>
+                            body {
+                                background-color: #f0f0f0;
+                                font-family: Arial, sans-serif;
+                                color: #000000;
+                            }
+                            .center {
+                                text-align: center;
+                            }             
+                            td {
+                                padding: 20px 50px 30px 50px;
+                            }
+                            td.notification {
+                                padding: 10px 50px 30px 50px;
+                            }
+                            h1,h2 {
+                                font-size: 22px;
+                                color: #000000;
+                                font-weight: normal;
+                            }
+                            p {
+                                font-size: 15px;
+                                color: #000000;
+                            }
+                            .notification h1 {
+                                font-size: 26px;
+                                color: #000000;
+                                font-weight: normal;
+                            }
+                            .notification p {
+                                font-size: 18px;
+                            }
+                            .warning {
+                                border-top: 20px #c08040 solid;
+                                background-color: #e0c4aa;
+                            }
+                            .warning p {
+                                color: #000000;
+                            }
+                            .content {
+                                width: 600px;
+                            }
+                            @media only screen and (max-width: 600px) {
+                                .content {
+                                    width: 100%;
+                                }
+                            }
+                            @media only screen and (max-width: 400px) {
+                                td {
+                                    padding: 15px 25px;
+                                }
+                                h1{
+                                    font-size: 20px;
+                                }
+                                p {
+                                    font-size: 13px;
+                                }
+                                td.notification {
+                                    text-align: center;
+                                    padding: 10px 25px 15px 25px;
+                                }
+                                .notification h1 {
+                                    font-size: 22px;
+                                }
+                                    .notification p {
+                                    font-size: 16px;
+                                }
+                            }
+                    </style>
+                </head>""" + f"""
+                <body style="margin: 0; padding: 0">
+                    <table style="border: none" cellpadding="0" cellspacing="0" width="100%">
+                        <tr>
+                            <td style="padding: 15px 0">
+                                <table style="border: none; margin-left: auto; margin-right: auto" cellpadding="0" cellspacing="0" width="600" class="content">
+                                    <tr>
+                                        <td class="warning notification">
+                                            <h1>Warning</h1>
+                                            <h2>Payout Server Run Out Of Disk Space</h2>
+                                            <h4>Payout Server Disk Size Information :-</h4>
+                                            <p>Total:  <b>{(total // (2**30))} GiB</b></p>
+                                            <p>Used:  <b>{(used // (2**30))} GiB</b></p>
+                                            <p>Free:  <b>{(free // (2**30))} GiB</b></p>
+                                            <p><b>Please remove old logs to free up some space.</b></p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
+            """
+        from_email = settings.SERVER_EMAIL
+        mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, developers_team)
+        mail_to_be_sent.attach_alternative(message_body, "text/html")
+
+        return mail_to_be_sent.send()

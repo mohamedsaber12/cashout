@@ -33,9 +33,6 @@
     #download-doc span {
         color: #333;
     }
-    #menu1 {
-      display:none;
-    }
     {% if LANGUAGE_CODE == 'ar' %}
       ul > li > span{
         width: 120px;
@@ -305,6 +302,61 @@
   </div>
   {# End of transaction details #}
 
+  {# Modal for export all file transactions #}
+  <div class="modal fade" id="exportAllModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of modal for export all file transactions #}
+
+  {# Modal for export successful file transactions #}
+  <div class="modal fade" id="exportSuccessModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the success data file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of modal for export successful file transactions #}
+
+  {# Modal for export failed file transactions #}
+  <div class="modal fade" id="exportFailedModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the failed data file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
   {# End of modal for export failed file transactions #}
 
 {% endblock %}
@@ -530,5 +582,47 @@
       }
     }
 
+  </script>
+  <script>
+    $(document).ready(function () {
+      $('#export-failed').on('click',function(ev) {
+        $.ajax({
+          type:'GET',
+          url: '{{request.path}}' + '?export_failed=true',
+          success: function (data, text, xhr) {
+            $('#exportFailedModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          },
+        })
+      });
+
+      $('#export-success').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_success=true',
+          success: function (data, text, xhr) {
+            $('#exportSuccessModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          },
+        })
+      });
+
+      $('#export-all').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_all=true',
+          success: function (data, text, xhr) {
+            $('#exportAllModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          },
+        })
+      });
+    });
   </script>
 {% endblock %}

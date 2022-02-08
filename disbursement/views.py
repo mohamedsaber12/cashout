@@ -315,13 +315,13 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
 def failed_disbursed_for_download(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
-        doc_obj.owner.hierarchy == request.user.hierarchy and
+        (doc_obj.owner.hierarchy == request.user.hierarchy and
         (
             doc_obj.owner == request.user or
             request.user.is_checker or
             request.user.is_root
         ) and
-        doc_obj.is_disbursed
+        doc_obj.is_disbursed) or request.user.is_support
     )
     if not can_view:
         return HttpResponse(status=401)

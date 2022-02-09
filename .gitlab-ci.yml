@@ -1,0 +1,15 @@
+image:
+  name: sonarsource/sonar-scanner-cli:latest
+  entrypoint: [""]
+variables:
+  SONAR_TOKEN: "a9fe525760daa36bcaffd4a8f2b8cf65b8f75f8c"
+  SONAR_HOST_URL: "https://sonarqube.paymobsolutions.com"
+  GIT_DEPTH: 0
+sonarqube-check:
+  stage: test
+  script:
+    - sonar-scanner -Dsonar.qualitygate.wait=true -Dsonar.projectKey=accept-methods                   
+  allow_failure: true
+  only:
+    - master
+    - new-staging

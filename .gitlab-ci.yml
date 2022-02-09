@@ -10,7 +10,7 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
-    - sonar-scanner
+    - sonar-scanner -Dsonar.projectKey=Payouts
   allow_failure: true
   only:
     - merge_requests

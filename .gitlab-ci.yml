@@ -8,7 +8,7 @@ variables:
 sonarqube-check:
   stage: test
   script:
-    - sonar-scanner -Dsonar.qualitygate.wait=true -Dsonar.projectKey=accept-methods                   
+    - sonar-scanner -Dsonar.qualitygate.wait=true -Dsonar.projectKey=payouts                 
   allow_failure: true
   only:
     - master

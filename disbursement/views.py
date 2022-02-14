@@ -331,6 +331,14 @@ def failed_disbursed_for_download(request, doc_id):
         raise Http404
 
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+
+    # prevent path traversal vulnerability
+    real_path = os.path.realpath(file_path)
+    base_dir = "%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/")
+    common_prefix = os.path.commonprefix([real_path, base_dir])
+    if common_prefix != base_dir:
+        raise Http404
+
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(

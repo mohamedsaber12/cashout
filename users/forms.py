@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy
+import copy, logging
 
 from django import forms
 from django.conf import settings
@@ -28,8 +28,12 @@ from .models import (
     Brand, CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
     Levels, MakerUser, RootUser, SupportUser, UploaderUser, User, OnboardUser, SupervisorUser
 )
-from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
-                      ALLOWED_UPPER_CHARS)
+from .signals import (
+    ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS, ALLOWED_UPPER_CHARS,
+    send_activation_message
+)
+
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 
 
 def determine_onboarding_permission(user):
@@ -852,6 +856,10 @@ class ForgotPasswordForm(forms.Form):
         uid = urlsafe_base64_encode(force_bytes(self.user.pk))
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
 
+        # send sms message
+        if self.user.is_root and self.user.is_vodafone_default_onboarding:
+            send_activation_message(self.user, url)
+
         from_email = settings.SERVER_EMAIL
         sub_subject = f'[{self.user.brand.mail_subject}]'
         subject = "{}{}".format(sub_subject, _(' Password Notification'))
@@ -860,6 +868,9 @@ class ForgotPasswordForm(forms.Form):
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
         mail_to_be_sent.send()
+        SEND_EMAIL_LOGGER.debug(
+            f"[{subject}] [{recipient_list[0]}] -- {message}"
+        )
 
 
 class ClientFeesForm(forms.ModelForm):

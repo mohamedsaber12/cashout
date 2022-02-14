@@ -22,6 +22,7 @@ from .models import (
 )
 
 
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 ALLOWED_UPPER_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 ALLOWED_LOWER_CHARS = 'abcdefghijklmnopqrstuvwxyz'
@@ -204,3 +205,6 @@ def notify_user(instance, created):
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
         mail_to_be_sent.send()
+        SEND_EMAIL_LOGGER.debug(
+            f"[{subject}] [{recipient_list[0]}] -- {message}"
+        )

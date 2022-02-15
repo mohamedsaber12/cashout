@@ -67,11 +67,12 @@ class IncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
             )
             # Prepare email message
             message = _(f"""Dear All,<br><br>
-            <label>Admin Username: </label> {request.user}<br/>
-            <label>Admin E-mail: </label> {request.user.email}<br/>
-            <label>Request Date/Time: </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
-            <label>Amount To Be Added: </label>{form.cleaned_data['amount']}<br/>
-            <label>Transfer Type: </label> {form.cleaned_data['type'].replace("_", " ")} <br/><br/>
+            <label>Admin Username:       </label> {request.user}<br/>
+            <label>Admin E-mail:         </label> {request.user.email}<br/>
+            <label>Request Date/Time:    </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
+            <label>Amount To Be Added:   </label>{form.cleaned_data['amount']}<br/>
+            <label>Transfer Type:        </label> {form.cleaned_data['type'].replace("_", " ")} <br/>
+            <label>Currency:             </label> {form.cleaned_data['currency'].replace("_", " ")} <br/><br/>
             """)
 
             if form.cleaned_data['type'] == 'from_accept_balance':

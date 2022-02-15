@@ -116,6 +116,17 @@ class IncreaseBalanceRequestForm(forms.Form):
             'class': 'form-control',
         })
     )
+    currency = forms.ChoiceField(
+            label=_('Currency'),
+            required=True,
+            choices=[
+                ('egyptian_pound', _('Egyptian Pound (L.E)')),
+                ('american_dollar', _('American Dollar ($)'))
+            ],
+            widget=forms.Select(attrs={
+                'class': 'form-control',
+            })
+    )
     username = forms.CharField(
         label=_('username'),
         required=False,

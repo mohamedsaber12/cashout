@@ -13,6 +13,7 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 
+from instant_cashin.utils import get_from_env
 from data.models.filecategory import FileCategory
 from data.models.category_data import Format
 import pysftp
@@ -278,9 +279,10 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
 
 
 def upload_file_to_vodafone(file_path):
-    private_key = "~/.ssh/vodafone.pem"  # can use password keyword in Connection instead
-    srv = pysftp.Connection(host="3.225.117.92", username="vodafone",
-                            private_key=private_key, password="vodafone@123")
-    srv.chdir('payouts_reports')  # change directory on remote server
+    private_key = get_from_env("VF_PRIVATE_KEY")  # can use password keyword in Connection instead
+    srv = pysftp.Connection(
+        host=get_from_env("VF_HOST"), username=get_from_env("VF_USERNAME"),
+        private_key=private_key, password=get_from_env("VF_PASSWORD"))
+    srv.chdir(get_from_env("VF_DIRECTORY"))  # change directory on remote server
     srv.put(file_path) 
     srv.close()

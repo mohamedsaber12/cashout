@@ -1,16 +1,20 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import json
+
 from django.db.models import Q
 from django.views.generic import ListView, TemplateView, CreateView
 from django.urls import reverse_lazy
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse, Http404
+from django.views import View
+
 
 from ..mixins import (
-    SuperRequiredMixin, SupervisorUserRequiredMixin
+    SuperRequiredMixin, SupervisorUserRequiredMixin, UserOwnsMemberRequiredMixin
 )
 from ..models import (
-    SupervisorUser, SupervisorSetup
+    SupervisorUser, SupervisorSetup, SupportSetup, User
 )
 from ..forms import SupervisorUserCreationForm
 
@@ -70,3 +74,32 @@ class SuperAdminSupervisorSetupCreateView(SuperRequiredMixin, CreateView):
         SupervisorSetup.objects.create(**supervisor_setup_dict)
 
         return HttpResponseRedirect(self.success_url)
+
+class SupervisorReactivateSupportView(UserOwnsMemberRequiredMixin, View):
+    """
+    reactivate support user view
+    """
+
+    def post(self, request, *args, **kwargs):
+        if request.is_ajax():
+            try:
+                data = request.POST.copy()
+                if data.get('support'):
+                    support_setup = SupportSetup.objects.get(id=int(data['user_id']))
+                    user = support_setup.support_user
+                    if not self.request.user.check_password(data.get('password')):
+                        return HttpResponse(
+                            content=json.dumps({"error": "Invalid Password"}),
+                            content_type="application/json"
+                        )
+                    user.is_active = True
+                    user.save()
+            except SupportSetup.DoesNotExist:
+                return HttpResponse(
+                    content=json.dumps({"error": "Support User Not Exist"}),
+                    content_type="application/json"
+                )
+
+            return HttpResponse(content=json.dumps({"valid": "true"}), content_type="application/json")
+
+        raise Http404

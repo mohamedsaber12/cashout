@@ -52,6 +52,8 @@ supervisor_user_urls = [
     path('supervisor/home/', views.SupervisorUserHomeView.as_view(), name='supervisor_home'),
     path('supervisor/', views.SupervisorUsersListView.as_view(), name='supervisor'),
     path('supervisor/creation/', views.SuperAdminSupervisorSetupCreateView.as_view(), name='add_supervisor_user'),
+    path('supervisor/reactivate_support_user', views.SupervisorReactivateSupportView.as_view(),
+         name='reactivate_support_user')
 ]
 
 disbursement_setups_urls = [

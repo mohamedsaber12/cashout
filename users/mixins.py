@@ -347,6 +347,10 @@ class UserOwnsMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
                 members_ids_list = [user.id for user in members_objects]
                 if target_id in members_ids_list:
                     return True
+            elif current_user.is_supervisor and target_is_support_member:
+                support_setup = SupportSetup.objects.get(id=int(target_id))
+                if support_setup.supervisor == current_user:
+                    return True
 
         return False
 

@@ -66,10 +66,18 @@
                             </p>
                           </div>
                           <div class="col-xs-12 col-sm-8 emphasis text-right" style="padding-right:10px;padding-left:10px;">
-                            <button type="button" class="btn btn-danger btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
-                                    data-target=".delete-modal-sm" onclick="delete_modal({{ support_setup.id }})">
-                              <i class="fa fa-trash-o"></i>
-                            </button>
+                            {% if support_setup.support_user.is_active %}
+                              <button type="button" class="btn btn-danger btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
+                                      data-target=".delete-modal-sm" onclick="delete_modal({{ support_setup.id }})">
+                                <i class="fa fa-trash-o" title="Deactivate user"></i>
+                              </button>
+                            {% else %}
+                              <button type="button" class="btn btn-danger btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" data-toggle="modal"
+                                      data-target=".reactivate-modal-sm" onclick="reactivate_model({{ support_setup.id }})">
+                                <i class="fa fa-check-circle-o" title="Reactivate user"
+                                   style="font-size:14px;"></i>
+                              </button>
+                            {% endif %}
                             <a href="{% url 'users:profile' support_setup.support_user.username %}" type="button"
                                class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               <i class="fa fa-user"> </i> {% trans 'View Profile' %}
@@ -79,7 +87,6 @@
                       </div>
                     </div>
                   {% endfor %}
-
                 </div>
               </div>
               {% include 'pagination.html' %}
@@ -89,26 +96,75 @@
       </div>
     </div>
     <!-- /page content -->
-
+    <!-- start delete modal -->
     <div id="delete-user-modal" class="modal fade delete-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
           <div class="modal-header">
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span>
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
             </button>
-            <h4 class="modal-title" id="myModalLabel2">{% trans 'Confirmation' %}</h4>
+            <h4 class="modal-title">{% trans 'Confirmation' %}</h4>
           </div>
           <div class="modal-body">
-            <h4 id="modal-body-header">Delete User?</h4>
+            <h4 id="modal-body-header">Deactivate User ?</h4>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
-            <button type="button" class="btn btn-danger" id="delete-btn" data-id="" onclick="delete_user()">{% trans 'Delete' %}</button>
+            <button type="button" class="btn btn-danger" data-dismiss="modal">{% trans 'Close' %}</button>
+            <button type="button" class="btn btn-danger" id="delete-btn" data-id="" onclick="delete_user()">
+              {% trans 'Deactivate' %}
+            </button>
           </div>
         </div>
       </div>
     </div>
-
+    <!-- end delete modal -->
+    <!-- start reactivate modal -->
+    <div id="reactivate-user-modal" class="modal fade reactivate-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+            <h4 class="modal-title">{% trans 'Confirmation' %}</h4>
+          </div>
+          <div class="modal-body">
+            <h4>Reactivate User ?</h4>
+            <input id="s-password" type="password" placeholder="Enter Your Password" onkeyup="updateReactivateBtnStatus()"
+                   style="border-color:rgb(234, 65, 33);border-radius:6px;font-size:16px;">
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-dismiss="modal">{% trans 'Close' %}</button>
+            <button type="button" class="btn btn-danger" id="reactivate-btn" data-id=""
+                    onclick="reactivate_user()" disabled>
+              {% trans 'Reactivate' %}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end reactivate modal -->
+    <!-- start error modal -->
+    <div id="error-user-modal" class="modal fade error-modal-sm" tabindex="-1" role="dialog" aria-hidden="true">
+      <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">×</span>
+            </button>
+            <h4 class="modal-title">{% trans 'Error' %}</h4>
+          </div>
+          <div class="modal-body">
+            <h4 id="error-message"></h4>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" data-dismiss="modal">{% trans 'Close' %}</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- end error modal -->
     <div class="modal fade delete-success" tabindex="-1" role="dialog" aria-hidden="true">
       <div class="modal-dialog modal-sm">
         <div class="modal-content">
@@ -136,19 +192,51 @@
         $("#delete-btn").data('id', obj_id);
       }
 
+      function reactivate_model(obj_id) {
+        $("#reactivate-btn").data('id', obj_id);
+      }
+
+      function updateReactivateBtnStatus() {
+        if ($("#s-password").val().length > 0) {
+          $('#reactivate-btn').removeAttr('disabled');
+        } else {
+          $('#reactivate-btn').attr('disabled','disabled');
+        }
+      }
+
       function delete_user() {
-        var id = $("#delete-btn").data('id');
-          $.ajax({
-            url: "{% url 'users:delete' %}",
-            type: "POST",
-            data: { user_id: id, support: true },
-            success: function (data, text, xhr) {
-              if (data["valid"] == "true") {
-                $("#delete-user-modal").modal('hide');
-                location.reload()
-              }
+        let id = $("#delete-btn").data('id');
+        $.ajax({
+          url: "{% url 'users:delete' %}",
+          type: "POST",
+          data: { user_id: id, support: true },
+          success: function (data, text, xhr) {
+            if (data["valid"] == "true") {
+              $("#delete-user-modal").modal('hide');
+              location.reload();
             }
-          });
+          }
+        });
+      }
+
+      function reactivate_user() {
+        let id = $("#reactivate-btn").data('id');
+        let currentPass = $("#s-password").val()
+        $.ajax({
+          url: "{% url 'users:reactivate_support_user' %}",
+          type: "POST",
+          data: { user_id: id, support: true, password: currentPass },
+          success: function (data, text, xhr) {
+            if (data["valid"] == "true") {
+              $("#reactivate-user-modal").modal('hide');
+              location.reload();
+            } else {
+              $("#reactivate-user-modal").modal('hide');
+              $('#error-message').text(data["error"]);
+              $("#error-user-modal").modal();
+            }
+          }
+        });
       }
   </script>
 {% endblock script %}

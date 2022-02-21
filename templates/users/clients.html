@@ -158,7 +158,7 @@
                           <div class="col-xs-12 col-sm-9 emphasis text-right" style="padding-right:10px;padding-left:10px;">
                             {% if request.user.is_onboard_user %}
                               <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Edit Fees Profile' %}">
-                                <a class="fa fa-edit" href="{% url 'users:update_fees_profile' username=client_setup.client.username  %}" target="_blank"></a>
+                                <a class="fa fa-edit" href="{% url 'users:update_fees_profile' username=client_setup.client.username  %}" rel="noopener" target="_blank"></a>
                               </button>
                             {% endif %}
                             {% if request.user.is_superadmin %}
@@ -174,7 +174,7 @@
                             {% if request.user.is_superadmin %}
                               {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
                                 <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Update Budget' %}">
-                                  <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
+                                  <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" rel="noopener" target="_blank"></a>
                                 </button>
                               {% endif %}
                             {% endif %}

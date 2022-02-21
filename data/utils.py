@@ -75,28 +75,6 @@ def redirect_params(url, kw, params=None):
     return redirect(response + '?' +query_string)
 
 
-def pkgen():
-    """
-    Function to generate reference hash
-    ref: https://code-examples.net/en/q/395b9e # python 2 version
-    :return:
-    """
-    from base64 import b32encode
-    from hashlib import sha1
-    from random import random
-    rude = (b'lol',)
-    bad_pk = True
-    while bad_pk:
-        sha1_obj = sha1()
-        sha1_obj.update(str(random()).encode('utf-8'))
-        pk = b32encode(sha1_obj.hexdigest().encode()).lower()
-        bad_pk = False
-        for rw in rude:
-            if pk.find(rw) >= 0:
-                bad_pk = True
-        return pk.decode()[:32]
-
-
 def update_user_last_seen(user, end_date=None, clients_data=None):
     """
     Updates the request's user last seen date and Transaction.is_seen.

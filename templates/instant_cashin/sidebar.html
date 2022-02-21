@@ -30,7 +30,7 @@
         <li><a href="{% url 'utilities:transfer_request' %}">
           <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Transfer Request' %}</a>
         </li>
-        <li><a href="{% url 'docs:instant_docs' path='' %}" target="_blank"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>
+        <li><a href="{% url 'docs:instant_docs' path='' %}" rel="noopener" target="_blank"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>
         {% if request.user.user_type == 7 %}
           <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.root.username %}"><i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}</a></li>
         {% endif %}

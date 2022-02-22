@@ -1,6 +1,6 @@
 sonarqube-check:
   tags:
-    - docker-runner1
+    - docker-runner-1
   image: 
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
@@ -15,5 +15,6 @@ sonarqube-check:
     - sonar-scanner -Dsonar.projectKey=Payouts
   allow_failure: true
   only:
+    - merge_requests
     - master # or the name of your main branch
     - develop

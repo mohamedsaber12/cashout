@@ -142,7 +142,7 @@ def generate_username(user, user_model):
     user.username = username
 
 
-def send_activation_message(root_user, set_password_url):
+def send_activation_message(root_user, set_password_url, forget_password_msg=False):
     send_staging_url = "https://stagingvodafonepayouts.paymob.com"
     send_production_url = "https://vodafonepayouts.paymob.com"
     superadmin = root_user.client.creator
@@ -163,6 +163,8 @@ def send_activation_message(root_user, set_password_url):
             ),
             "SMSSENDER": f"{root_user.client.smsc_sender_name}"
         }
+        if forget_password_msg:
+            payload["TEXT"] = f"Click this link to reset your password <a href={set_password_url}>link</a>"
         # delete SMSSENDER from payload if it's empty
         if not root_user.client.smsc_sender_name:
             del(payload["SMSSENDER"])

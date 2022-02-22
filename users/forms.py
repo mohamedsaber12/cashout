@@ -858,7 +858,7 @@ class ForgotPasswordForm(forms.Form):
 
         # send sms message
         if self.user.is_root and self.user.is_vodafone_default_onboarding:
-            send_activation_message(self.user, url)
+            send_activation_message(self.user, url, True)
 
         from_email = settings.SERVER_EMAIL
         sub_subject = f'[{self.user.brand.mail_subject}]'

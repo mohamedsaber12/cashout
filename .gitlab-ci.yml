@@ -12,7 +12,7 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
-    - sonar-scanner -Dsonar.projectKey=Payouts
+    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   allow_failure: true
   only:
     - merge_requests

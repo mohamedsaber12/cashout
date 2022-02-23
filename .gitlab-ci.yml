@@ -17,4 +17,5 @@ sonarqube-check:
   only:
     - merge_requests
     - master # or the name of your main branch
-    - develop
+    - new-staging
+    - staging

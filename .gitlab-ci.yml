@@ -1,4 +1,6 @@
 sonarqube-check:
+  tags:
+    - docker-runner-1
   image: 
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
@@ -10,9 +12,10 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
-    - sonar-scanner -Dsonar.projectKey=Payouts
+    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
   allow_failure: true
   only:
     - merge_requests
     - master # or the name of your main branch
-    - develop
+    - new-staging
+    - staging

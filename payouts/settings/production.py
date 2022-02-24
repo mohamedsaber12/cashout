@@ -9,10 +9,5 @@ ALLOWED_HOSTS += [
     '172.30.1.74',
 ]
 
-# Email Reporting
-ADMINS += [
-    ('Omar Nawar', 'omarnawar@paymob.com'),
-]
-
 # base url
 BASE_URL = 'https://payouts.paymobsolutions.com'

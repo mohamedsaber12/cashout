@@ -324,6 +324,11 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
                 members_list = [obj.support_user.username for obj in support_setups]
                 if profile_username in members_list:
                     return True
+            elif current_user.is_onboard_user:
+                client_setups = Client.objects.filter(onboarded_by=current_user).select_related('client')
+                members_list = [obj.client.username for obj in client_setups]
+                if profile_username in members_list:
+                    return True
 
         return False
 

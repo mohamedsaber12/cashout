@@ -319,6 +319,11 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
                 members_list = [user.username for user in members_objects]
                 if profile_username in members_list:
                     return True
+            elif current_user.is_supervisor:
+                support_setups = SupportSetup.objects.filter(supervisor=current_user).select_related('support_user')
+                members_list = [obj.support_user.username for obj in support_setups]
+                if profile_username in members_list:
+                    return True
 
         return False
 

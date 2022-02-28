@@ -182,7 +182,8 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
             DELETE_USER_VIEW_LOGGER.debug(
                     f"[message] [USER DOES NOT EXIST] [{request.user}] -- "
                     f"tried to delete does not exist user with username {username}")
-
+        if self.request.user.is_onboard_user:
+            return redirect(reverse("users:clients"))
         return redirect(reverse("data:e_wallets_home"))
 
 

@@ -231,6 +231,12 @@ class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
             for client_obj in self.request.user.clients.all():
                 if client_obj.client.username == entity_admin_username:
                     return True
+        elif self.request.user.is_onboard_user:
+            entity_admin_username = self.request.resolver_match.kwargs.get('username')
+
+            for client_obj in self.request.user.my_onboard_setups.user_created.clients.all():
+                if client_obj.client.username == entity_admin_username:
+                    return True
 
         return False
 

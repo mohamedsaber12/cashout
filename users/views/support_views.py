@@ -95,10 +95,7 @@ class SupportUsersListView(SuperAdminOrSupervisorUserRequiredMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.user.is_supervisor:
-            qs = qs.filter(
-                user_created=self.request.user.my_setup.user_created,
-                supervisor=self.request.user
-            )
+            qs = qs.filter(user_created=self.request.user.my_setup.user_created)
         else:
             qs = qs.filter(user_created=self.request.user)
 

@@ -96,7 +96,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
         (_('Users Details'), {'fields': ('disburser', 'created_by')}),
         (
             _('Budget Amount Details'),
-            {'fields': ('total_disbursed_amount', 'current_balance', 'add_new_amount', 'updated_at', 'created_at')}
+            {'fields': ('total_disbursed_amount', 'current_balance', 'add_new_amount', "fx_rate", 'updated_at', 'created_at')}
         ),
     )
 

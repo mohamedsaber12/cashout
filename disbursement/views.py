@@ -508,7 +508,8 @@ class SuperAdminAgentsSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupM
 
         if self.root.client.agents_onboarding_choice in \
                 [Client.EXISTING_SUPERAGENT_NEW_AGENTS, Client.EXISTING_SUPERAGENT_AGENTS]:
-            superadmin_children = request.user.children()
+            superadmin_children = request.user.children() if request.user.is_superadmin else \
+                request.user.my_onboard_setups.user_created.children()
             agents_of_all_types = Agent.objects.filter(wallet_provider__in=superadmin_children).distinct('msisdn')
             existing_super_agents = agents_of_all_types.filter(super=True).exclude(type__in=[Agent.P2M])
             existing_non_super_agents = agents_of_all_types.filter(super=False)

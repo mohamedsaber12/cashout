@@ -4,10 +4,14 @@ from __future__ import unicode_literals
 from decimal import Decimal
 
 from django import forms
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext as _
 
 from .models import Budget
+import logging
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
+
+
 
 
 class BudgetModelForm(forms.ModelForm):
@@ -71,14 +75,27 @@ class BudgetAdminModelForm(forms.ModelForm):
             validators=[MinValueValidator(round(Decimal(0), 2))],
             widget=forms.TextInput(attrs={'placeholder': _('Add New budget, ex: 100')})
     )
+    fx_rate = forms.FloatField(
+        required=False,
+        validators=[MinValueValidator(round(Decimal(0.1), 2)), MaxValueValidator((round(Decimal(1), 2)))],
+        help_text=_('If the amount charged by USD please add the fx rate if not leave empty '),
+        widget=forms.TextInput(attrs={'placeholder': _('FX rate ')}))
 
     def save(self, commit=True):
         """Update the current balance using the newly added amount"""
         try:
             amount_being_added = self.cleaned_data.get('add_new_amount', None)
+            fx_rate = self.cleaned_data.get('fx_rate', None)
             if amount_being_added:
                 amount_being_added = round(Decimal(amount_being_added), 2)
+                if fx_rate:
+                    new_amount = round(amount_being_added - (amount_being_added * Decimal(fx_rate)), 2)
+                    BUDGET_LOGGER.debug(
+                        f"FX rate applied ({fx_rate}) amount before {amount_being_added} amount after {new_amount}"
+                        )
+                    amount_being_added = new_amount
                 self.instance.current_balance += amount_being_added
+
 
         except ValueError:
             self.add_error('add_new_amount', _('New amount must be a valid integer, please check and try again.'))

@@ -8,6 +8,10 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext as _
 
 from .models import Budget
+import logging
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
+
+
 
 
 class BudgetModelForm(forms.ModelForm):
@@ -85,7 +89,11 @@ class BudgetAdminModelForm(forms.ModelForm):
             if amount_being_added:
                 amount_being_added = round(Decimal(amount_being_added), 2)
                 if fx_rate:
-                    amount_being_added = round(amount_being_added - (amount_being_added * Decimal(fx_rate)), 2)
+                    new_amount = round(amount_being_added - (amount_being_added * Decimal(fx_rate)), 2)
+                    BUDGET_LOGGER.debug(
+                        f"FX rate applied ({fx_rate}) amount before {amount_being_added} amount after {new_amount}"
+                        )
+                    amount_being_added = new_amount
                 self.instance.current_balance += amount_being_added
 
 

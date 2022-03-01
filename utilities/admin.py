@@ -9,7 +9,7 @@ from django.utils.timezone import datetime, make_aware
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
-from .models import Budget, CallWalletsModerator, FeeSetup
+from .models import Budget, CallWalletsModerator, FeeSetup, TopupRequest
 from simple_history.admin import SimpleHistoryAdmin
 from django.core.exceptions import PermissionDenied
 from django import http
@@ -25,6 +25,8 @@ else:
     from django.utils.encoding import force_str
 
 from  users.models import InstantAPICheckerUser, User
+from rangefilter.filter import DateRangeFilter
+
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
 
@@ -246,3 +248,18 @@ class BudgetAdmin(SimpleHistoryAdmin):
             request, self.object_history_template, context, **extra_kwargs
         )
 
+
+
+@admin.register(TopupRequest)
+class TopupRequestAdmin(admin.ModelAdmin):
+    """
+    Customize the list view of the call topup requests model
+    """
+
+    list_display = [
+        "client", "amount", "currency", "created_at", "updated_at"]
+    list_filter = [
+        "client",
+        "currency",
+        ('created_at', DateRangeFilter),
+    ]

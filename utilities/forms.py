@@ -77,7 +77,7 @@ class BudgetAdminModelForm(forms.ModelForm):
     )
     fx_rate = forms.FloatField(
         required=False,
-        validators=[MinValueValidator(round(Decimal(0.1), 2)), MaxValueValidator((round(Decimal(1), 2)))],
+        validators=[MinValueValidator(round(Decimal(0.1), 2)), MaxValueValidator((round(Decimal(100), 2)))],
         help_text=_('If the amount charged by USD please add the fx rate if not leave empty '),
         widget=forms.TextInput(attrs={'placeholder': _('FX rate ')}))
 
@@ -89,7 +89,7 @@ class BudgetAdminModelForm(forms.ModelForm):
             if amount_being_added:
                 amount_being_added = round(Decimal(amount_being_added), 2)
                 if fx_rate:
-                    new_amount = round(amount_being_added - (amount_being_added * Decimal(fx_rate)), 2)
+                    new_amount = round(amount_being_added - (amount_being_added * Decimal(fx_rate/100)), 2)
                     BUDGET_LOGGER.debug(
                         f"FX rate applied ({fx_rate}) amount before {amount_being_added} amount after {new_amount}"
                         )

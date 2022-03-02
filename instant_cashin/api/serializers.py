@@ -102,6 +102,10 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                         _("You must pass valid values for fields [msisdn, full_name]")
                 )
+            if any(e in str(full_name) for e in '!%*+&'):
+                raise serializers.ValidationError(
+                        _("Symbols like !%*+& not allowed in full_name")
+                )
         if issuer in ["vodafone", "etisalat", "aman"] and attrs.get('client_reference_id'):
             if InstantTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
                 raise serializers.ValidationError(

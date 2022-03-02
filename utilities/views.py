@@ -18,6 +18,7 @@ from .forms import BudgetModelForm, IncreaseBalanceRequestForm
 from .mixins import BudgetActionMixin
 from .models import Budget
 from .tasks import send_transfer_request_email
+from utilities.models import TopupRequest
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -100,6 +101,7 @@ class IncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
                 <label> Account Name:  </label> {form.cleaned_data['to_account_name']} <br/><br/>
                 Best Regards,""")
             message += rest_of_message
+            file_path = ""
 
             if form.cleaned_data['type'] == 'from_accept_balance':
                 send_transfer_request_email.delay(request.user.username, message)
@@ -109,6 +111,22 @@ class IncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
                 file_path = f"{settings.MEDIA_ROOT}/transfer_request_attach/{randomword(5)}_{proof_image.name}"
                 file_name = default_storage.save(file_path, proof_image)
                 send_transfer_request_email.delay(request.user.username, message, file_name)
+            # save topup information
+            TopupRequest.objects.create(
+                client=request.user.root,
+                amount=form.cleaned_data['amount'],
+                currency=form.cleaned_data['currency'],
+                transfer_type=form.cleaned_data['type'],
+                username=form.cleaned_data['username'],
+                from_bank=form.cleaned_data['from_bank'],
+                to_bank=form.cleaned_data['to_bank'],
+                from_account_number=form.cleaned_data['from_account_number'],
+                to_account_number=form.cleaned_data['to_account_number'],
+                from_account_name=form.cleaned_data['from_account_name'],
+                to_account_name=form.cleaned_data['to_account_name'],
+                from_date=form.cleaned_data['from_date'],
+                to_attach_proof=file_path,
+            )
 
             context = {
                 'request_received': True,

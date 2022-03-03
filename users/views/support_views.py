@@ -440,7 +440,7 @@ class OnboardingNewInstantAdmin(SupportUserRequiredMixin, View):
 
                 # handle budget and fees setup
                 root_budget = Budget.objects.create(
-                    disburser=root, created_by=self.request.user, current_balance=2000
+                    disburser=root, created_by=self.request.user, current_balance=20000
                 )
 
                 FeeSetup.objects.create(budget_related=root_budget, issuer='vf',

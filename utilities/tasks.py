@@ -81,7 +81,7 @@ def generate_onboarded_entities_report(recipients_list, superadmin_username, **k
     message = _('Dear Team,\n\nKindly find the weekly report attached.\n\nBest Regards,')
     mail = EmailMessage(subject, message, sender, recipients_list)
     mail.attach_file(filepath)
-    return mail.send()
+    return #mail.send()
 
 
 @app.task()
@@ -226,4 +226,4 @@ def check_disk_space_and_send_warning_email():
         mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, developers_team)
         mail_to_be_sent.attach_alternative(message_body, "text/html")
 
-        return mail_to_be_sent.send()
+        return #mail_to_be_sent.send()

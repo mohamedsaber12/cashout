@@ -213,14 +213,14 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
         for mail in recipient_list:
             mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
             mail_to_be_sent.attach_alternative(message_body, "text/html")
-            mail_to_be_sent.send()
+            # mail_to_be_sent.send()
             SEND_EMAIL_LOGGER.debug(
                 f"[{subject}] [{recipient_list[0]}] -- {message_body}"
             )
         return
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")
-    mail_to_be_sent.send()
+    # mail_to_be_sent.send()
     SEND_EMAIL_LOGGER.debug(
         f"[{subject}] [{recipient_list[0]}] -- {message_body}"
     )
@@ -253,7 +253,7 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
     if attached_file:
         mail_to_be_sent.attach(attached_file.name, attached_file.read())
 
-    return mail_to_be_sent.send()
+    return #mail_to_be_sent.send()
 
 
 def upload_file_to_vodafone(file_path):

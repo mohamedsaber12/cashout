@@ -805,7 +805,7 @@ class ForgotPasswordForm(forms.Form):
         message = MESSAGE.format(self.user.first_name or self.user.username, url, self.user.username)
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
-        mail_to_be_sent.send()
+        # mail_to_be_sent.send()
 
 
 class ClientFeesForm(forms.ModelForm):

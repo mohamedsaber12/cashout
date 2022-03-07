@@ -182,4 +182,4 @@ def notify_user(instance, created):
         recipient_list = [instance.email]
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
-        # mail_to_be_sent.send()
+        mail_to_be_sent.send()

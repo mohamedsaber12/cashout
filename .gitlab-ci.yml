@@ -1,6 +1,17 @@
-stages:          #  List of stages for jobs, and their order of execution
+stages:
+  - requirements-dependency_scanning         
   - dependency_check
   - sonarqube
+
+requirements-dependency_scanning:
+  image: python:3.7
+  stage: requirements-dependency_scanning
+  before_script:
+    - apt-get update -y
+    - pip install safety
+  script:
+    - safety check -r requirements
+  allow_failure: true
 
 owasp_dependency_check:
   image:
@@ -8,22 +19,18 @@ owasp_dependency_check:
     entrypoint: [""]
   stage: dependency_check
   script:
-    # Job will scan the project root folder and fail if any vulnerabilities with CVSS > 0 are found
-    - /usr/share/dependency-check/bin/dependency-check.sh --scan "./" --format ALL --project "$CI_PROJECT_NAME"
-    # Dependency Check will only fail the job based on CVSS scores, and in some cases vulnerabilities do not
-    # have CVSS scores (e.g. those from NPM audit), so they don't cause failure.  To fail for any vulnerabilities
-    # grep the resulting report for any "vulnerabilities" sections and exit if any are found (count > 0).
+    
+    - /usr/share/dependency-check/bin/dependency-check.sh --scan "./" --format ALL --project "$CI_PROJECT_NAME" --enableExperimental
+     
   allow_failure: true
   artifacts:
     when: always
     paths:
-        # Save the HTML and JSON report artifacts
       - "./dependency-check-report.html"
       - "./dependency-check-report.json"
       - "./dependency-check-report.xml"
 
-   
-sonarqube-check:  # This job runs in the test stage.
+sonarqube-check:  
   stage: sonarqube
   tags:
     - docker-runner-1
@@ -31,17 +38,17 @@ sonarqube-check:  # This job runs in the test stage.
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
   variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
-    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
+    GIT_DEPTH: "0"  
   cache:
     key: "${CI_JOB_NAME}"
     paths:
       - .sonar/cache
   script: 
-    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN
+    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html
   allow_failure: true
   only:
     - merge_requests
-    - master # or the name of your main branch
+    - master 
     - new-staging
     - staging

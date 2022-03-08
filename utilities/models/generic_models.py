@@ -468,7 +468,7 @@ class TopupRequest(AbstractTimeStamp):
         null=True
     )
     to_attach_proof = models.CharField(
-        max_length=100,
+        max_length=500,
         blank=True,
         null=True
     )

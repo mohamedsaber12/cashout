@@ -29,16 +29,16 @@
       htmlForPdf += "<fieldset><legend class='bulk_info_title'>Bulk Information</legend>";
       htmlForPdf += "<ul class='ulright'>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Bulk ID</span><b>:</b> ";
+      htmlForPdf += "<span>Bulk ID</span><strong>: </strong> ";
       {% if doc_obj %}
         htmlForPdf += "{{doc_obj.id}}</li>";
       {% else %}
         htmlForPdf += trx.id+"</li>";
       {% endif %}
-      htmlForPdf += "<li class='padding-left'><span>Currency</span><b>:</b> EGP</li>";
+      htmlForPdf += "<li class='padding-left'><span>Currency</span><strong>: </strong> EGP</li>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Sending Date</span><b>:</b>"+trx.created_at+"</li>";
-      htmlForPdf += "<li class='padding-left'><span>Last Update Date</span><b>:</b>"+trx.updated_at;
+      htmlForPdf += "<span>Sending Date</span><strong>: </strong>"+trx.created_at+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Last Update Date</span><strong>: </strong>"+trx.updated_at;
       htmlForPdf += "</li></ul></fieldset></div></div>";
 
       htmlForPdf += "<div class='row' style='margin-bottom: 50px;'>";
@@ -46,13 +46,13 @@
       htmlForPdf += "<fieldset><legend class='payment_info_title'>Payment Information</legend>";
       htmlForPdf += "<ul>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Transaction ID</span><b>:</b> "+trx.id+"</li>";
-      htmlForPdf += "<li class='padding-left'><span>Transaction Status</span><b>:</b> "+trx.status+"</li>";
+      htmlForPdf += "<span>Transaction ID</span><strong>: </strong> "+trx.id+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Transaction Status</span><strong>: </strong> "+trx.status+"</li>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Amount</span><b>:</b> "+trx.amount+"</li>";
-      htmlForPdf += "<li class='padding-left'><span>Transaction Type</span><b>:</b> "+trx.type+"</li>";
+      htmlForPdf += "<span>Amount</span><strong>: </strong> "+trx.amount+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Transaction Type</span><strong>: </strong> "+trx.type+"</li>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Transaction Status Description</span><b>:</b> "+trx.transaction_status_description;
+      htmlForPdf += "<span>Transaction Status Description</span><strong>: </strong> "+trx.transaction_status_description;
       htmlForPdf += "</li></ul></fieldset></div></div>";
 
       htmlForPdf += "<div class='row debtor_info' style='margin-bottom: 50px;'>";
@@ -60,10 +60,10 @@
       htmlForPdf += "class='col-md-12 col-sm-12 col-xs-12'>";
       htmlForPdf += "<fieldset><legend class='debtor_info_title'>Debtor Information</legend>";
       htmlForPdf += "<ul><li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Name</span><b>:</b> PAY MOB SOLUTIONS COMPANY</li>";
-      htmlForPdf += "<li class='padding-left'><span>Bank Name</span><b>:</b> Commercial International Bank - Egypt S.A.E</li>";
+      htmlForPdf += "<span>Name</span><strong>: </strong> PAY MOB SOLUTIONS COMPANY</li>";
+      htmlForPdf += "<li class='padding-left'><span>Bank Name</span><strong>: </strong> Commercial International Bank - Egypt S.A.E</li>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Account Number</span><b>:</b> "+ trx.debtor_account;
+      htmlForPdf += "<span>Account Number</span><strong>: </strong> "+ trx.debtor_account;
       htmlForPdf += "</li></ul></fieldset></div></div>";
 
       htmlForPdf += "<div class='row debtor_info' style='margin-bottom: 20px;'>";
@@ -71,10 +71,10 @@
       htmlForPdf += "class='col-md-12 col-sm-12 col-xs-12'>";
       htmlForPdf += "<fieldset><legend class='creditor_info_title'>Creditor Information</legend>";
       htmlForPdf += "<ul><li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Name</span><b>:</b> "+trx.creditor_name+"</li>";
-      htmlForPdf += "<li class='padding-left'><span>Bank Name</span><b>:</b> "+trx.bank_name+"</li>";
+      htmlForPdf += "<span>Name</span><strong>: </strong> "+trx.creditor_name+"</li>";
+      htmlForPdf += "<li class='padding-left'><span>Bank Name</span><strong>: </strong> "+trx.bank_name+"</li>";
       htmlForPdf += "<li class='list-element-odd padding-left'>";
-      htmlForPdf += "<span>Account Number</span><b>:</b> "+trx.creditor_account_number+"</li>";
+      htmlForPdf += "<span>Account Number</span><strong>: </strong> "+trx.creditor_account_number+"</li>";
       htmlForPdf += "</ul></fieldset></div></div>";
       htmlForPdf += "<div style='color:#000;'>"+ new Date(Date.now()).toString().split('GMT')[0] +"</div";
       htmlForPdf += "</div>";

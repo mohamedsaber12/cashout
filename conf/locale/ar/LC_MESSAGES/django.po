@@ -2299,7 +2299,7 @@ msgstr "ملفات الصرف"
 #: templates/data/document_disbursement_list.html:22
 #: templates/data/document_disbursement_list.html:35
 msgid "Download Sample File"
-msgstr ""
+msgstr "تحميل الملف المستخدم"
 
 #: templates/data/document_disbursement_list.html:25
 msgid "Banks Swift Codes List"

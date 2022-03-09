@@ -505,30 +505,30 @@
 
         {% if doc.is_bank_wallet %}
           let uid = $(this).data('id');
-          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${uid}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${uid}</li>`;
           let anon_recipient = $(this).data('anon_recipient');
-          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${anon_recipient}</li>`;
+          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><strong>: </strong>${anon_recipient}</li>`;
           let amount = $(this).data('amount');
-          appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${amount}</li>`;
+          appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${amount}</li>`;
           let recipient_name = $(this).data('recipient_name');
-          appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${recipient_name}</li>`;
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${recipient_name}</li>`;
 
         {% else %}
 
           let uid = $(this).data('id');
-          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${uid}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${uid}</li>`;
           let creditor_account_number = $(this).data('creditor_account_number');
-          appendedTags += `<li><span>{% trans 'Account number / IBAN' %}</span><b>:</b>${creditor_account_number}</li>`;
+          appendedTags += `<li><span>{% trans 'Account number / IBAN' %}</span><strong>: </strong>${creditor_account_number}</li>`;
           let amount = $(this).data('amount');
-          appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${amount}</li>`;
+          appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${amount}</li>`;
           let creditor_name = $(this).data('creditor_name');
-          appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${creditor_name}</li>`;
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${creditor_name}</li>`;
           let creditor_bank = $(this).data('creditor_bank');
-          appendedTags += `<li><span>{% trans 'Bank Swift Code' %}</span><b>:</b>${creditor_bank}</li>`;
+          appendedTags += `<li><span>{% trans 'Bank Swift Code' %}</span><strong>: </strong>${creditor_bank}</li>`;
           let bank_name = $(this).data('bank_name');
-          appendedTags += `<li><span>{% trans 'Bank Name' %}</span><b>:</b>${bank_name}</li>`;
+          appendedTags += `<li><span>{% trans 'Bank Name' %}</span><strong>: </strong>${bank_name}</li>`;
           let type = $(this).data('type');
-          appendedTags += `<li><span>{% trans 'Transaction Type' %}</span><b>:</b>${type}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction Type' %}</span><strong>: </strong>${type}</li>`;
         {% endif %}
 
         ul.empty();
@@ -537,13 +537,13 @@
 
         {% if doc.is_bank_wallet %}
           let issuer = $(this).data('issuer');
-          appendedTags += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
+          appendedTags += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer}</li>`;
         {% endif %}
 
         let doc_id = $(this).data('doc_id');
-        appendedTags += `<li><span>{% trans 'Document ID' %}</span><b>:</b>${doc_id}</li>`;
+        appendedTags += `<li><span>{% trans 'Document ID' %}</span><strong>: </strong>${doc_id}</li>`;
         let doc_maker = $(this).data('doc_maker');
-        appendedTags += `<li><span>{% trans 'Maker' %}</span><b>:</b>${doc_maker}</li>`;
+        appendedTags += `<li><span>{% trans 'Maker' %}</span><strong>: </strong>${doc_maker}</li>`;
 
         ulRight.empty();
         ulRight.append(appendedTags);

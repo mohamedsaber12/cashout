@@ -217,47 +217,47 @@
         let appendedTagsLast = '';
         // add data to ul left
         let full_name = $(this).data('full_name');
-        appendedTagsLeft += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${full_name}</li>`;
+        appendedTagsLeft += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${full_name}</li>`;
 
         let username = $(this).data('username');
-        appendedTagsLeft += `<li><span>{% trans 'Username' %}</span><b>:</b>${username}</li>`;
+        appendedTagsLeft += `<li><span>{% trans 'Username' %}</span><strong>: </strong>${username}</li>`;
 
         let email = $(this).data('email');
-        appendedTagsLeft += `<li><span>{% trans 'Email' %}</span><b>:</b>${email}</li>`;
+        appendedTagsLeft += `<li><span>{% trans 'Email' %}</span><strong>: </strong>${email}</li>`;
 
         let phone = $(this).data('phone');
-        appendedTagsLeft += `<li><span>{% trans 'Mobile Number' %}</span><b>:</b>${phone}</li>`;
+        appendedTagsLeft += `<li><span>{% trans 'Mobile Number' %}</span><strong>: </strong>${phone}</li>`;
 
         // add data to ul right
         let status = $(this).data('status');
-        appendedTagsRight += `<li><span>{% trans 'Status' %}</span><b>:</b>${status}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Status' %}</span><strong>: </strong>${status}</li>`;
 
         let agent_list = $(this).data('agent_list');
         let current_balance = $(this).data('current_balance');
         if (agent_list && !current_balance) {
-          appendedTagsRight += `<li><span>{% trans 'Agents' %}</span><b>:</b><a href=${agent_list} >{% trans 'Agents List' %}</a></li>`
+          appendedTagsRight += `<li><span>{% trans 'Agents' %}</span><strong>: </strong><a href=${agent_list} >{% trans 'Agents List' %}</a></li>`
         } else {
-          appendedTagsRight += `<li><span>{% trans 'Current Balance' %}</span><b>:</b>${current_balance} EG</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Current Balance' %}</span><strong>: </strong>${current_balance} EG</li>`;
         }
 
         {% if request.user.is_instant_model_onboarding %}
           let integration_wallets_trx = $(this).data('integration_wallets_trx');
           let integration_banks_trx = $(this).data('integration_banks_trx');
-          appendedTagsRight += `<li><span>{% trans 'Wallets Transactions' %}</span><b>:</b><a href=${integration_wallets_trx} >{% trans 'Transactions List' %}</a></li>`;
-          appendedTagsRight += `<li><span>{% trans 'Banks Transactions' %}</span><b>:</b><a href=${integration_banks_trx} >{% trans 'Transactions List' %}</a></li>`;
+          appendedTagsRight += `<li><span>{% trans 'Wallets Transactions' %}</span><strong>: </strong><a href=${integration_wallets_trx} >{% trans 'Transactions List' %}</a></li>`;
+          appendedTagsRight += `<li><span>{% trans 'Banks Transactions' %}</span><strong>: </strong><a href=${integration_banks_trx} >{% trans 'Transactions List' %}</a></li>`;
         {% else %}
           let formats = $(this).data('formats');
           let document_list = $(this).data('document_list');
-          appendedTagsRight += `<li><span>{% trans 'Formats' %}</span><b>:</b><a href=${formats} >{% trans 'Formats' %}</a></li>`;
-          appendedTagsRight += `<li><span>{% trans 'Disbursement Documents List' %}</span><b>:</b><a href=${document_list} >{% trans 'Documents' %}</a></li>`;
+          appendedTagsRight += `<li><span>{% trans 'Formats' %}</span><strong>: </strong><a href=${formats} >{% trans 'Formats' %}</a></li>`;
+          appendedTagsRight += `<li><span>{% trans 'Disbursement Documents List' %}</span><strong>: </strong><a href=${document_list} >{% trans 'Documents' %}</a></li>`;
           {% if request.user.is_accept_vodafone_onboarding %}
             let single_step_trxs = $(this).data('single_step_trxs');
-            appendedTagsRight += `<li><span>{% trans 'Single Step Transactions' %}</span><b>:</b><a href=${single_step_trxs} >{% trans 'Transactions' %}</a></li>`;
+            appendedTagsRight += `<li><span>{% trans 'Single Step Transactions' %}</span><strong>: </strong><a href=${single_step_trxs} >{% trans 'Transactions' %}</a></li>`;
           {% endif %}
         {% endif %}
         {% if request.user.is_vodafone_default_onboarding %}
           let fees_profile = $(this).data('fees_profile');
-          appendedTagsRight += `<li><span>{% trans 'Fees Profile' %}</span><b>:</b>${fees_profile}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Fees Profile' %}</span><strong>: </strong>${fees_profile}</li>`;
         {% endif %}
 
         ulLeft.empty();
@@ -267,7 +267,7 @@
         ulRight.append(appendedTagsRight);
 
         let about = $(this).data('about');
-        appendedTagsLast += `<li><span>{% trans 'About' %}</span><b>:</b>${about}</li>`;
+        appendedTagsLast += `<li><span>{% trans 'About' %}</span><strong>: </strong>${about}</li>`;
         ulLast.empty();
         ulLast.append(appendedTagsLast);
 

@@ -10,7 +10,8 @@ requirements-dependency_scanning:
     - apt-get update -y
     - pip install safety
   script:
-    - safety check -r requirements
+    - safety check -r requirements/requirements.txt
+    - safety check -r requirements/base.txt
   allow_failure: true
 
 owasp_dependency_check:

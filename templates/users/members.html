@@ -46,7 +46,7 @@
                     <div class="well profile_view">
                       <div class="col-sm-12">
                         <h4 class="brief">
-                          <i>
+                          <em>
                             {% if user.user_type == 1 %}
                               {% trans 'Maker' %}
                             {% elif user.user_type == 2 %}
@@ -58,7 +58,7 @@
                             {% elif user.user_type == 5 and current_status == 'disbursement' %}
                               {% trans 'Maker' %}
                             {% endif %}
-                          </i>
+                          </em>
                         </h4>
                         <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
                           <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.get_full_name|truncatechars:26 }}</h2>

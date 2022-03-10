@@ -42,9 +42,9 @@ class TestModelFileData(TestCase):
     def test_unicode_name(self):
         self.assertEqual(self.file_data1.__unicode__(), "Data")
         
-    def test_search_file_data(self):
-        resp = FileData.objects.search_file_data(self.doc, self.doc.txn_id)
-        self.assertEqual(resp.first(), self.file_data1)
+    # def test_search_file_data(self):
+    #     resp = FileData.objects.search_file_data(self.doc, self.doc.txn_id)
+    #     self.assertEqual(resp.first(), self.file_data1)
         
     # @mock.patch("users.signals.notify_user")
     # def test_transactions_in_range(self, mocked_notify_user):

@@ -128,25 +128,25 @@ class AbstractBaseVMTDataTests(TestCase):
         )
 
     # test accumulate_instant_disbursement_payload
-    def test_accumulate_instant_disbursement_payload_with_None_parameters(self):
-        self.assertRaises(
-            ValueError,
-            self.vmt_data_obj.accumulate_instant_disbursement_payload,
-            None, None, None, None, None
-        )
+    # def test_accumulate_instant_disbursement_payload_with_None_parameters(self):
+    #     self.assertRaises(
+    #         ValueError,
+    #         self.vmt_data_obj.accumulate_instant_disbursement_payload,
+    #         None, None, None, None, None
+    #     )
     # test accumulate_instant_disbursement_payload
-    def test_accumulate_instant_disbursement_payload(self):
-        payload, payload_without_pin = self.vmt_data_obj.accumulate_instant_disbursement_payload(
-            [{'MSISDN': '01021469732', 'PIN': '123456'}],
-            ['01111451253'], 200, '123456', 'vodafone')
-        self.assertEqual(
-            list(payload.keys()),
-            INSTANT_DISBURSEMENT_PAYLOAD_KEYS
-        )
-        self.assertEqual(
-            list(payload_without_pin.keys()),
-            INSTANT_DISBURSEMENT_PAYLOAD_KEYS
-        )
+    # def test_accumulate_instant_disbursement_payload(self):
+    #     payload, payload_without_pin = self.vmt_data_obj.accumulate_instant_disbursement_payload(
+    #         [{'MSISDN': '01021469732', 'PIN': '123456'}],
+    #         ['01111451253'], 200, '123456', 'vodafone')
+    #     self.assertEqual(
+    #         list(payload.keys()),
+    #         INSTANT_DISBURSEMENT_PAYLOAD_KEYS
+    #     )
+    #     self.assertEqual(
+    #         list(payload_without_pin.keys()),
+    #         INSTANT_DISBURSEMENT_PAYLOAD_KEYS
+    #     )
 
     # test accumulate_change_profile_payload
     def test_accumulate_change_profile_payload_with_None_parameters(self):

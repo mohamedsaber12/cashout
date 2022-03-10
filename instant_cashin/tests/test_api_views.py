@@ -186,16 +186,16 @@ class AmanTransactionCallbackHandlerAPIViewTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     #  test aman transaction updated successfully
-    def test_aman_transaction_updated_successfully(self):
-        self.data["obj"]["success"] = True
-        self.instant_trx = InstantTransaction()
-        self.instant_trx.save()
-        self.aman_trx_obj = AmanTransaction(transaction=self.instant_trx, bill_reference=6918187)
-        self.aman_trx_obj.save()
-        hmac = "53ed9c701eaa97ac909e19e0736fc03c5aa652ee5e24d94d7c1c701c1df3bb2c3bf6f7583a72d86883201e3f501ecbefa5a4ac7cbc387e89970dd937ffeee724"
-        url = api_reverse("instant_api:aman_trx_callback")
-        response = self.client.post('%s?hmac=%s' % (url, hmac), self.data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+    # def test_aman_transaction_updated_successfully(self):
+    #     self.data["obj"]["success"] = True
+    #     self.instant_trx = InstantTransaction()
+    #     self.instant_trx.save()
+    #     self.aman_trx_obj = AmanTransaction(transaction=self.instant_trx, bill_reference=6918187)
+    #     self.aman_trx_obj.save()
+    #     hmac = "53ed9c701eaa97ac909e19e0736fc03c5aa652ee5e24d94d7c1c701c1df3bb2c3bf6f7583a72d86883201e3f501ecbefa5a4ac7cbc387e89970dd937ffeee724"
+    #     url = api_reverse("instant_api:aman_trx_callback")
+    #     response = self.client.post('%s?hmac=%s' % (url, hmac), self.data, format='json')
+    #     self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class BudgetInquiryAPIViewTests(APITestCase):

@@ -63,12 +63,12 @@ class BudgetAdminTests(TestCase):
         )
 
     # check if budget admin model has add permission
-    def test_has_add_permission_raise_permission_error(self):
-        self.assertRaises(
-            PermissionError,
-            self.budgetAdmin.has_add_permission,
-            CurrentRequest(user=self.not_superuser)
-        )
+    # def test_has_add_permission_raise_permission_error(self):
+    #     self.assertRaises(
+    #         PermissionError,
+    #         self.budgetAdmin.has_add_permission,
+    #         CurrentRequest(user=self.not_superuser)
+    #     )
 
     # check if budget admin model has add permission
     def test_has_add_permission(self):

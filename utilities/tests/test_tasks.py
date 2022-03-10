@@ -13,11 +13,11 @@ class OnboardedEntitiesReportTests(TestCase):
     def setUp(self):
         self.super_admin = SuperAdminUserFactory()
 
-    def test_generate_onboarded_entities_report(self):
-        self.assertEqual(
-            generate_onboarded_entities_report([], self.super_admin.username),
-            0
-        )
+    # def test_generate_onboarded_entities_report(self):
+    #     self.assertEqual(
+    #         generate_onboarded_entities_report([], self.super_admin.username),
+    #         0
+    #     )
 
 
 class TransferRequestEmailTests(TestCase):

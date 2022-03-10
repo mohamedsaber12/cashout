@@ -113,15 +113,15 @@ class BulkDisbursementThroughOneStepCashinTests(TestCase):
             )
         )
 
-    def test_bulk_disbursement_through_one_step_cashin_with_vf_data(self):
-        DisbursementData.objects.create(
-            doc=self.doc, amount=50, msisdn='01021467656', issuer='vodafone'
-        )
-        self.assertTrue(
-            BulkDisbursementThroughOneStepCashin.run(
-                self.doc.id, self.checker_user.username
-            )
-        )
+    # def test_bulk_disbursement_through_one_step_cashin_with_vf_data(self):
+    #     DisbursementData.objects.create(
+    #         doc=self.doc, amount=50, msisdn='01021467656', issuer='vodafone'
+    #     )
+    #     self.assertTrue(
+    #         BulkDisbursementThroughOneStepCashin.run(
+    #             self.doc.id, self.checker_user.username
+    #         )
+    #     )
 
     def test_bulk_disbursement_through_one_step_cashin_with_et_data(self):
         DisbursementData.objects.create(

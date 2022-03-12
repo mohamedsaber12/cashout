@@ -1,7 +1,23 @@
 stages:
+  - lint-test
   - requirements-dependency_scanning         
   - dependency_check
   - sonarqube
+
+
+lint_test:
+  image: python:3.8.0-slim
+  stage: lint-test
+  before_script:
+    - pip install flake8-html
+  script:
+    - flake8 --format=html --htmldir=flake_reports/
+  allow_failure: true  
+  artifacts:
+    when: always
+    paths:
+      - flake_reports/
+
 
 requirements-dependency_scanning:
   image: python:3.7

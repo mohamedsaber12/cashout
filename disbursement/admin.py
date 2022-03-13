@@ -65,7 +65,7 @@ class TimeoutFilter(admin.SimpleListFilter):
 
 
 @admin.register(BankTransaction)
-class BankTransactionAdminModel(admin.ModelAdmin):
+class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
     """
     Admin model for customizing BankTransaction model admin view
     """
@@ -114,6 +114,7 @@ class BankTransactionAdminModel(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at')
         }),
     )
+    actions = ["export_as_csv"]
 
     def has_add_permission(self, request):
         return False

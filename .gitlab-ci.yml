@@ -2,6 +2,7 @@ stages:
   - lint-test
   - requirements-dependency_scanning         
   - dependency_check
+  - coverage-test
   - sonarqube
 
 
@@ -46,6 +47,21 @@ owasp_dependency_check:
       - "./dependency-check-report.html"
       - "./dependency-check-report.json"
       - "./dependency-check-report.xml"
+
+coverage-test:
+  stage: coverage-test
+  image: docker/compose:alpine-1.29.2
+  script:
+    - docker-compose up -d --build
+    - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
+    - docker-compose exec payouts coverage report
+    - docker-compose exec payouts coverage xml
+  allow_failure: true
+  artifacts:
+    when: always
+    paths:
+      - "./coverage.xml"
+
 
 sonarqube-check:  
   stage: sonarqube

@@ -51,7 +51,7 @@ owasp_dependency_check:
 coverage-test:
   stage: coverage-test
   tags:
-    - shell-runner
+    - docker-local
   image: docker/compose:alpine-1.29.2
   script:
     - docker-compose up -d --build

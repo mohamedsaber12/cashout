@@ -50,7 +50,9 @@ owasp_dependency_check:
 
 coverage-test:
   stage: coverage-test
-  image: docker/compose:alpine-1.29.2
+  tags:
+    - shell-runner
+  #image: docker/compose:alpine-1.29.2
   script:
     - docker-compose up -d --build
     - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test

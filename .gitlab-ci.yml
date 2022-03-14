@@ -62,6 +62,8 @@ coverage-test:
     - echo "$coverage_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:
+   - cat  "$coverage_private_key"
+   - cat "$coverage_private_key" > .env
    - docker-compose up -d  
    - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
    -  docker-compose exec payouts coverage report

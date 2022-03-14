@@ -51,7 +51,7 @@ owasp_dependency_check:
 coverage-test:
   stage: coverage-test
   tags:
-    - docker-local
+    - docker-runner-1
   image: docker/compose:alpine-1.29.2
   before_script:
     - export DOCKER_HOST="ssh://coverage@3.138.165.122"

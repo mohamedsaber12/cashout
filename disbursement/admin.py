@@ -48,6 +48,45 @@ class DisbursedFilter(admin.SimpleListFilter):
         elif self.value() == 'no':
             return queryset.filter(disbursed_date=None, reason='')
 
+
+class TransactionStatusFilter(admin.SimpleListFilter):
+    title = "Transaction Status"
+    parameter_name = "status"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("S", "Successful"),
+            ("F", "Failed"),
+        )
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == 'S':
+            return queryset.filter(~Q(disbursed_date=None), ~Q(reason=''), Q(is_disbursed=True))
+        elif self.value() == 'F':
+            return queryset.filter(~Q(disbursed_date=None), ~Q(reason=''), Q(is_disbursed=False))
+
+
+class EndToEndFilter(admin.SimpleListFilter):
+    title = "Has End To End Transaction"
+    parameter_name = "end_to_end"
+
+    def lookups(self, request, model_admin):
+        return(
+            ("yes", "Yes"),
+            ("no", "No"),
+        )
+
+    def queryset(self, request, queryset):
+        if not self.value():
+            return queryset
+        if self.value() == 'yes':
+            return queryset.filter(~Q(end_to_end=''))
+        elif self.value() == 'no':
+            return queryset.filter(Q(end_to_end=''))
+
+
 class TimeoutFilter(admin.SimpleListFilter):
     title = "Timeout Status"
     parameter_name = "is_timeout"
@@ -80,7 +119,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
     list_filter = [
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
-        DistinctFilter,
+        DistinctFilter, EndToEndFilter,
         'status',
         'category_code',
         'transaction_status_code',

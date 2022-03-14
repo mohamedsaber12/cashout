@@ -63,9 +63,9 @@ coverage-test:
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:
    - echo "$payout_staging_env" > .env
-   - docker-compose up -d  
-   - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
-   -  docker-compose exec payouts coverage report
+   - sudo docker-compose up -d  
+   - sudo docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
+   -  sudo docker-compose exec payouts coverage report
     
     
     #- ssh coverage@3.138.165.122 "cd /home/coverage/payout-staging/disbursement_tool && sudo docker-compose up -d --build && sudo docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test && sudo docker-compose exec payouts coverage report && sudo docker-compose exec payouts coverage xml && sudo  docker-compose down --volumes && sudo docker container prune --force && exit && exit"

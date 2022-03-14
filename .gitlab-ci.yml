@@ -65,7 +65,7 @@ coverage-test:
     - cd /home/coverage/payout-staging
     - docker-compose up -d --build
     - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
-    - docker-compose exec payouts coverage report
+    #- docker-compose exec payouts coverage report
     - docker-compose exec payouts coverage xml
     - docker-compose down --volumes
     - docker container prune --force

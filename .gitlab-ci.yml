@@ -58,7 +58,7 @@ coverage-test:
     - apk add --no-cache openssh-client curl bash                    
     - mkdir -p ~/.ssh
     - eval $(ssh-agent -s)
-    - echo "$SSH_DEPLOY_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "$coverage_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:
     - cd ~/payout-staging

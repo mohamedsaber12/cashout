@@ -62,7 +62,8 @@ coverage-test:
     - echo "$coverage_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:
-    - ssh -tt -o StrictHostKeyChecking=no -i "$coverage_private_key@3.138.165.122"
+    - echo "$coverage_private_key" > covergae.pem
+    - - ssh -tt -o StrictHostKeyChecking=no -i covergae.pem coverage@3.138.165.122
     - cd /home/coverage/payout-staging
     - docker-compose up -d --build
     - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test

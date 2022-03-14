@@ -55,9 +55,10 @@ coverage-test:
   image: docker/compose:alpine-1.29.2
   before_script:
     - export DOCKER_HOST="ssh://coverage@3.138.165.122"
-    - apk add --no-cache openssh-client curl bash echo                    
+    - apk add --no-cache openssh-client curl bash                   
     - mkdir -p ~/.ssh
     - eval $(ssh-agent -s)
+    - echo test
     - echo "$coverage_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:

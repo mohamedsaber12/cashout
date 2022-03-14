@@ -59,7 +59,7 @@ coverage-test:
     - echo $(whoami)                  
     - mkdir -p ~/.ssh
     - eval $(ssh-agent -s)
-    - "$coverage_private_key"
+    - echo "$coverage_private_key"
     - echo "$coverage_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:

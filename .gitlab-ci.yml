@@ -59,11 +59,10 @@ coverage-test:
     - echo $(whoami)                  
     - mkdir -p ~/.ssh
     - eval $(ssh-agent -s)
-    - echo "$coverage_private_key"
     - echo "$coverage_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan 3.138.165.122 >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script:
-    - cd ~/payout-staging
+    - cd /home/coverage/payout-staging
     - docker-compose up -d --build
     - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
     - docker-compose exec payouts coverage report

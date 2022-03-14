@@ -51,11 +51,11 @@ owasp_dependency_check:
 coverage-test:
   stage: coverage-test
   tags:
-    - docker-runner-1
+    #- docker-runner-1
   image: docker/compose:alpine-1.29.2
   before_script:
     - export DOCKER_HOST="ssh://coverage@3.138.165.122"
-    - apk add --no-cache openssh-client curl bash                    
+    - apk add --no-cache openssh-client curl bash echo                    
     - mkdir -p ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$coverage_private_key" | tr -d '\r' | ssh-add -

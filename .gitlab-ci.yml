@@ -62,7 +62,8 @@ coverage_test:
      - echo "$gitlab_ci_key" >> ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
      - git clone git@gitlab.com:paymob-nanolending/core.git
      - git clone --branch=python3-porting git@gitlab.com:MISC-PayMob/smpp.git
-     - cd core && ls 
+     - cd core && git clone git@gitlab.com:paymob-nanolending/utils.git
+     - cd core && cd utils && ls 
    script:
      - docker-compose up -d --build
      - sleep 10

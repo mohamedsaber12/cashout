@@ -55,11 +55,14 @@ coverage_test:
      -  docker:dind
    before_script: 
      - echo "$payout_staging_env" > "$(pwd)/.env"
+     - apk add --no-cache openssh-client git
+     - mkdir -p /.ssh && touch /.ssh/known_hosts
+     - ssh-keyscan gitlab.com >> /.ssh/known_hosts
+     - echo $gitlab_ci_key | base64 -d >> /.ssh/id_rsa && chmod 600 /.ssh/id_rsa
+     - git clone git@gitlab.com:paymob-nanolending/core.git
+     - git clone --branch=python3-porting git@gitlab.com:MISC-PayMob/smpp.git
    script:
      - docker-compose up -d --build
-     - sleep 10
-     - docker ps 
-     - docker logs -f PayoutsPortal
      - docker exec PayoutsPortal coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
      - docker exec PayoutsPortal coverage report --fail-under=20
      - docker exec PayoutsPortal coverage xml --fail-under=20 --ignore-errors

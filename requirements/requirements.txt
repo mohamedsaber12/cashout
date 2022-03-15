@@ -159,7 +159,7 @@ pysftp==0.2.9
 django-silk==4.2.0
 
 paramiko
-# bcrypt
-# PyNaCl
-# gprof2dot
+ bcrypt
+ PyNaCl
+ gprof2dot
 coverage

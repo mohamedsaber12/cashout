@@ -62,10 +62,12 @@ coverage_test:
      - echo "$gitlab_ci_key" >> ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
      - git clone git@gitlab.com:paymob-nanolending/core.git
      - git clone --branch=python3-porting git@gitlab.com:MISC-PayMob/smpp.git
-     - ls 
+     - cd core && ls 
    script:
      - docker-compose up -d --build
-     - docker exec PayoutsPortal coverage run manage.py test
+     - sleep 10
+     - docker logs -f PayoutsPortal
+     - docker exec PayoutsPortal coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
      - docker exec PayoutsPortal coverage report --fail-under=20
      - docker exec PayoutsPortal coverage xml --fail-under=20 --ignore-errors
      - docker cp PayoutsPortal:/app/payouts_portal/coverage.xml coverage.xml

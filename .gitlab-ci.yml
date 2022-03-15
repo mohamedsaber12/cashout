@@ -100,4 +100,4 @@ sonarqube-check:
     - merge_requests
     - master 
     - new-staging
-    - staging
+    - staging 

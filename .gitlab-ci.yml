@@ -58,7 +58,7 @@ coverage_test:
      - apk add --no-cache openssh-client git
      - mkdir -p /.ssh && touch /.ssh/known_hosts
      - ssh-keyscan gitlab.com >> /.ssh/known_hosts
-     - echo $gitlab_ci_key >> /.ssh/id_rsa && chmod 600 /.ssh/id_rsa
+     - echo "$gitlab_ci_key" >> /.ssh/id_rsa && chmod 600 /.ssh/id_rsa
      - git clone git@gitlab.com:paymob-nanolending/core.git
      - git clone --branch=python3-porting git@gitlab.com:MISC-PayMob/smpp.git
    script:

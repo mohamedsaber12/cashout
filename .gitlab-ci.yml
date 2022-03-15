@@ -48,24 +48,24 @@ owasp_dependency_check:
       - "./dependency-check-report.json"
       - "./dependency-check-report.xml"
 
-coverage-test:
-  stage: coverage-test
-  tags:
-    #- docker-runner-1
-  image: docker/compose:alpine-1.29.2
-  script:
-   - echo "$payout_staging_env" > .env
-   - docker-compose up -d  
-   - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
-   - docker-compose exec payouts coverage report
-    
-    
-    #- ssh coverage@3.138.165.122 "cd /home/coverage/payout-staging/disbursement_tool && sudo docker-compose up -d --build && sudo docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test && sudo docker-compose exec payouts coverage report && sudo docker-compose exec payouts coverage xml && sudo  docker-compose down --volumes && sudo docker container prune --force && exit && exit"
-  allow_failure: true
-  artifacts:
-    when: always
+coverage_test:
+   stage: coverage-test
+   image: tiangolo/docker-with-compose
+   services:
+     -  docker:dind
+   before_script: 
+     - cat "$payout_staging_env" > "$(pwd)/.env"
+   script:
+     - docker-compose up -d --build
+     - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
+     - docker-compose exec payouts coverage report --fail-under=20
+     - docker-compose exec payouts coverage xml --fail-under=20 --ignore-errors
+     - docker-compose cp payouts:/app/payouts_portal/coverage.xml coverage.xml
+   allow_failure: true
+   artifacts:
+    when: always 
     paths:
-      - "./coverage.xml"
+      - coverage.xml
 
 
 sonarqube-check:  
@@ -83,7 +83,7 @@ sonarqube-check:
     paths:
       - .sonar/cache
   script: 
-    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html
+    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html -Dsonar.python.coverage.reportPaths=coverage.xml
   allow_failure: true
   only:
     - merge_requests

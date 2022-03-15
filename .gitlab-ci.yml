@@ -54,7 +54,7 @@ coverage_test:
    services:
      -  docker:dind
    before_script: 
-     - cat "$payout_staging_env" > "$(pwd)/.env"
+     - echo "$payout_staging_env" > "$(pwd)/.env"
    script:
      - docker-compose up -d --build
      - docker-compose exec payouts coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test

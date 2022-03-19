@@ -78,7 +78,7 @@ coverage_test:
     paths:
       - coverage.xml
 
-
+      
 sonarqube-check:  
   stage: sonarqube
   tags:

@@ -67,6 +67,7 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   <script>
+    {% if request.user.is_maker %}
     Dropzone.autoDiscover = false;
 
     $(function () {
@@ -102,6 +103,7 @@
         }
       });
     });
+    {% endif %}
   </script>
 
   <script>

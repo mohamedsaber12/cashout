@@ -89,6 +89,7 @@
 <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 
 <script>
+    {% if user_has_upload_perm %}
     Dropzone.autoDiscover = false;
 
     $(function () {
@@ -131,6 +132,7 @@
             }
         });
     });
+    {% endif %}
 </script>
 
 <script>

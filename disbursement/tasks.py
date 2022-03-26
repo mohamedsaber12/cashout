@@ -91,8 +91,10 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if trx_callback_status == "200":
                 disbursement_data_record.is_disbursed = True
                 disbursement_data_record.reason = trx_callback_msg
-                doc_obj.owner.root.budget. \
-                    update_disbursed_amount_and_current_balance(disbursement_data_record.amount, issuer)
+                if doc_obj.owner.root.has_custom_budget:
+                    doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
+                        disbursement_data_record.amount, issuer
+                    )
             else:
                 disbursement_data_record.is_disbursed = False
                 if not trx_callback_status in ["501", "-1"]:
@@ -125,12 +127,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
             )
             self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
 
-    def disburse_for_vodafone(self, checker, superadmin, vf_recipients):
+    def disburse_for_vodafone(self, checker, superadmin, vf_recipients, vf_pin):
         """Disburse for vodafone specific recipients"""
         from .api.views import DisburseAPIView          # Circular import
 
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
-        vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
+        if not ( checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring):
+            vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
         vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=vf_pin)
         smsc_sender_name = checker.root.client.smsc_sender_name
 
@@ -241,7 +244,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 except:
                     pass
 
-    def run(self, doc_id, checker_username, *args, **kwargs):
+    def run(self, doc_id, checker_username, pin, *args, **kwargs):
         """
         :param doc_id: id of the document being disbursed
         :param checker_username: username of the checker who is taking the disbursement action
@@ -264,9 +267,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
                 # handle disbursement for vodafone
-                if vf_recipients and (checker.is_accept_vodafone_onboarding
-                    or checker.is_vodafone_facilitator_onboarding):
-                    self.disburse_for_vodafone(checker, superadmin, vf_recipients)
+                if vf_recipients:
+                    self.disburse_for_vodafone(checker, superadmin, vf_recipients, pin)
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
             # 2. Handle doc of type bank wallets/cards

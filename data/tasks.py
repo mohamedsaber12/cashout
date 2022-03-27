@@ -961,7 +961,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _customize_issuer_in_qs_values(self, qs):
         """Append admin username to the output transactions queryset values dict"""
         for q in qs:
-            if len(str(q['issuer'])) > 20:
+            if q.get('issuer', None) == None or len(str(q['issuer'])) > 20:
                 q['issuer'] = 'C'
             elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
                 q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
@@ -1026,8 +1026,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 default=F('document__disbursed_by__root__username')
             )
         ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('uid'),
-                     fees=Sum('fees'), vat=Sum('vat')). \
+            annotate(total=Sum(Case(
+                        When(status=AbstractBaseStatus.FAILED, then=0),
+                        default=F('amount')
+                    )
+                ), count=Count('uid'), fees=Sum('fees'), vat=Sum('vat')). \
             order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
@@ -1187,7 +1190,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
-                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL, AbstractBaseACHTransactionStatus.RETURNED]),
+                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                              AbstractBaseACHTransactionStatus.RETURNED, AbstractBaseACHTransactionStatus.REJECTED]),
                 (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                 Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
@@ -1197,11 +1201,17 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
                 default=F('user_created__root__username')
             )
-        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
+        ).values('admin'). \
             annotate(
-                total=Sum('amount'), count=Count('id'),
+                total=Sum(Case(
+                        When(status__in=[
+                            AbstractBaseACHTransactionStatus.PENDING,
+                            AbstractBaseACHTransactionStatus.SUCCESSFUL], then=F('amount')),
+                        default=0
+                    )
+                ), count=Count('id'),
                 fees=Sum('fees'), vat=Sum('vat')). \
-            order_by('admin', 'issuer')
+            order_by('admin')
 
         qs = self._customize_issuer_in_qs_values(qs)
         return qs

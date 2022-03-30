@@ -280,7 +280,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
                 # 3. Validate for empty names or have special character
                 names_list.append(record[3])
-                if not record[3] or any(e in str(record[3]) for e in '!%*+&'):
+                if not record[3] or any(e in str(record[3]) for e in '!%*+&,<=>'):
                     if errors_list[index]:
                         errors_list[index] = "Symbols not allowed in name"
                     else:

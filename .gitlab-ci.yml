@@ -65,7 +65,7 @@ coverage_test:
      - cd core && git clone git@gitlab.com:paymob-nanolending/utils.git 
    script:
      - docker-compose up -d --build
-     - sleep 200
+     - sleep 300
      - docker exec PayoutsPortal coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
      - docker exec PayoutsPortal coverage report --fail-under=20
      - docker exec PayoutsPortal coverage xml --fail-under=20 --ignore-errors

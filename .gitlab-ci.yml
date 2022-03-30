@@ -95,7 +95,5 @@ sonarqube-check:
     - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html -Dsonar.python.coverage.reportPaths=coverage.xml
   allow_failure: true
   only:
-    - merge_requests
-    - master 
     - new-staging
-    - staging 
+    

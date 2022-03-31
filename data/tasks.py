@@ -236,7 +236,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
         """
         total_amount = 0
         accounts_list, amount_list, names_list, codes_list, purposes_list, errors_list = [], [], [], [], [], []
-        iban_regex = re.compile('^EG\d{27}')
+        iban_regex = re.compile(r'^EG\d{27}')
         try:
             for record in df.itertuples():
                 index = record[0]

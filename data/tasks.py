@@ -1527,7 +1527,7 @@ class ExportDashboardUserTransactionsEwallets(Task):
             InstantTransaction.objects.filter(uid__in=queryset_ids),
             root,
             'wallets'
-            )
+        )
         self.start_date = start_date
         self.end_date = end_date
         download_url = self.create_transactions_report()

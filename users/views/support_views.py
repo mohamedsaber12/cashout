@@ -518,7 +518,6 @@ class OnboardingNewInstantAdmin(SupportUserRequiredMixin, View):
                     }
                 }
             except Exception as err:
-                print(err)
                 error_msg = "Process stopped during an internal error, please can you try again."
                 error = {
                     "message": error_msg

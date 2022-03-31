@@ -70,7 +70,6 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         if export_start_date and export_end_date:
             EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
             uids = self.get_queryset().values_list("uid", flat=True)
-            print(uids)
             ExportDashboardUserTransactionsEwallets.delay(request.user.id,list(uids),export_start_date, export_end_date )
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
         else:

@@ -55,7 +55,7 @@ COPY ./media/avatars/user.png /app/mediafiles/media/avatars
 RUN useradd payouts_user \
     && chown -R payouts_user:payouts_user $HOME
 #    && chmod -R 755 $HOME
-RUN chmod -R 755 /var/www/docs/static/mkdocs_build
+RUN  chown -R payouts_user:payouts_user /var/ -R && chmod -R 755 /var/www/docs/static/mkdocs_build
 # Copy and run the entrypoint script
 COPY ./entrypoint.sh .
 RUN chmod 755 entrypoint.sh

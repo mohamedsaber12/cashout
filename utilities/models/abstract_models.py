@@ -266,7 +266,7 @@ class AbstractBaseVMTData(models.Model):
             'EXTREFNUM': str(trx_uid),
             'SENDERNAME': sms_sender_name
         })
-        if payload['WALLETISSUER'].upper() != 'raseedy':
+        if payload['WALLETISSUER'].lower() != 'raseedy':
             payload['WALLETISSUER'] = issuer_attr.upper()
         if not sms_sender_name:
             del(payload["SENDERNAME"])

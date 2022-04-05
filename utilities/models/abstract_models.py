@@ -259,7 +259,6 @@ class AbstractBaseVMTData(models.Model):
 
         payload = self.return_vmt_data(self.INSTANT_DISBURSEMENT)
         payload.update({
-            'WALLETISSUER': issuer_attr.upper(),
             'MSISDN': agent_attr,
             'MSISDN2': consumer_attr,
             'AMOUNT': amount_attr,
@@ -267,6 +266,8 @@ class AbstractBaseVMTData(models.Model):
             'EXTREFNUM': str(trx_uid),
             'SENDERNAME': sms_sender_name
         })
+        if payload['WALLETISSUER'].lower() != 'raseedy':
+            payload['WALLETISSUER'] = issuer_attr.upper()
         if not sms_sender_name:
             del(payload["SENDERNAME"])
 

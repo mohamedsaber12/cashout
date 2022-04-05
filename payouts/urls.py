@@ -55,7 +55,7 @@ urlpatterns += [
 ]
 
 # urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)
 
 urlpatterns += [path('silk/', include('silk.urls', namespace='silk'))]
 

@@ -105,7 +105,8 @@ MIDDLEWARE = [
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
-    'simple_history.middleware.HistoryRequestMiddleware'
+    'simple_history.middleware.HistoryRequestMiddleware',
+    'instant_cashin.middleware.ip_whitelist.FilterIPMiddleware'
 
     # ToDo: Request/Response Time Delta Middleware
 ]

@@ -54,7 +54,7 @@ urlpatterns += [
     path('admin/log_viewer/', include('log_viewer.urls')),
 ]
 
-# urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
+urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)
 
 

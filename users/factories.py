@@ -23,7 +23,7 @@ class BaseUserFactory(factory.django.DjangoModelFactory):
     """
 
     username = factory.LazyFunction(fake.user_name)
-    password = factory.Sequence(lambda obj: make_password(fake.password))
+    password = factory.Sequence(lambda obj: make_password("password"))
     email = factory.LazyFunction(fake.email)
     mobile_no = factory.Sequence(lambda obj: fake.numerify(text="010########"))
     first_name = factory.LazyFunction(fake.first_name)

@@ -1307,7 +1307,7 @@ class ExportClientsTransactionsMonthlyReport:
 
     def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
         """Write exported transactions data to excel file"""
-        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(8)}.xls")
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')

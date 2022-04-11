@@ -1453,7 +1453,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.status = status
         self.start_date = start_date
         self.end_date = end_date
-        self.filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        self.filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(8)}.xls")
         self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{self.filename}"
         self.superadmin_user = User.objects.get(id=user_id)
         self.instant_or_accept_perm = False

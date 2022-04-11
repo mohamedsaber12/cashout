@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django_otp import _user_is_authenticated, user_has_device
+from django_otp import user_has_device
 
 from rest_framework import permissions
 
@@ -18,7 +18,7 @@ class TOTPAuthenticated(permissions.IsAuthenticated):
         is_authenticated = super(TOTPAuthenticated, self).has_permission(request=request, view=view)
 
         def test(user):
-            return user.is_verified() or (_user_is_authenticated(user) and not user_has_device(user))
+            return user.is_verified() or (user.is_authenticated and not user_has_device(user))
 
         return test(request.user) and is_authenticated
 

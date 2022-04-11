@@ -302,6 +302,8 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         status = request.GET.get('status', None)
 
         if request.is_ajax():
+            if status not in ["all", "success", "failed"]:
+                return HttpResponse(status=401)
             # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
             exportObject = ExportClientsTransactionsMonthlyReport()
             report_download_url = exportObject.run(request.user.id, start_date, end_date, status)

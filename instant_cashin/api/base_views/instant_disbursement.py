@@ -205,7 +205,6 @@ class InstantDisbursementAPIView(views.APIView):
         Handles POST HTTP requests
         """
         serializer = InstantDisbursementRequestSerializer(data=request.data)
-        print(settings.BANK_WALLET_AND_ORNAGE_ISSUER)
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -265,7 +264,6 @@ class InstantDisbursementAPIView(views.APIView):
                 if issuer in ["orange", "bank_wallet"]:
                     data_dict['WALLETISSUER'] = "VODAFONE"
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
-                print(data_dict['PIN'])
 
             except Exception as e:
                 if transaction:transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
@@ -280,6 +278,11 @@ class InstantDisbursementAPIView(views.APIView):
             if issuer in ['etisalat', 'vodafone'] or \
                 (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
                 data_dict['EXTREFNUM'] = str(transaction.uid)
+            
+            if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
+                issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
+                data_dict["ISSUER"] = "VODAFONE"
+                data_dict["TYPE"] = "DPSTREQ"
             
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
             request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
@@ -299,10 +302,6 @@ class InstantDisbursementAPIView(views.APIView):
                     transaction.mark_successful(200, "")
                     user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                     return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-                if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
-                    issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
-                    data_dict["ISSUER"] = "VODAFONE"
-                    # data_dict["TYPE"] = "DPSTREQ"
 
 
                 trx_response = requests.post(

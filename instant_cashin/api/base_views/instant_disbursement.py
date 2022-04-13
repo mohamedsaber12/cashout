@@ -284,7 +284,7 @@ class InstantDisbursementAPIView(views.APIView):
             
             if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
                 issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
-                data_dict["ISSUER"] = "VODAFONE"
+                data_dict["WALLETISSUER"] = "VODAFONE"
                 data_dict["TYPE"] = "DPSTREQ"
             
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)

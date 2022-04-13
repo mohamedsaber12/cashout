@@ -280,7 +280,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
                 # 3. Validate for empty names or have special character
                 names_list.append(record[3])
-                if not record[3] or any(e in str(record[3]) for e in '!%*+&'):
+                if not record[3] or any(e in str(record[3]) for e in '!%*+&,<=>'):
                     if errors_list[index]:
                         errors_list[index] = "Symbols not allowed in name"
                     else:
@@ -869,11 +869,7 @@ class EWalletsSheetProcessor(Task):
 
             # 6. Make change fees profile request for vodafone recipients only
             if wallets_moderator.change_profile and vf_msisdns_list:
-                if self.doc_obj.owner.is_accept_vodafone_onboarding or \
-                   self.doc_obj.owner.is_vodafone_facilitator_onboarding:
-                    change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
-                else:
-                    change_profile_response = self.bulk_change_profile_for_vodafone_recipients(vf_msisdns_list)
+                change_profile_response = self.change_profile_for_vodafone_recipients(vf_msisdns_list)
                 if not change_profile_response:
                     return False
             elif not wallets_moderator.change_profile or (wallets_moderator.change_profile and not vf_msisdns_list):
@@ -965,7 +961,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _customize_issuer_in_qs_values(self, qs):
         """Append admin username to the output transactions queryset values dict"""
         for q in qs:
-            if len(str(q['issuer'])) > 20:
+            if q.get('issuer', None) == None or len(str(q['issuer'])) > 20:
                 q['issuer'] = 'C'
             elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
                 q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
@@ -1024,15 +1020,33 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def _annotate_instant_trxs_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
-        qs = qs.annotate(
-            admin=Case(
-                When(from_user__isnull=False, then=F('from_user__root__username')),
-                default=F('document__disbursed_by__root__username')
-            )
-        ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('uid'),
-                     fees=Sum('fees'), vat=Sum('vat')). \
-            order_by('admin', 'issuer')
+        if self.status == 'invoices':
+            qs = qs.annotate(
+                admin=Case(
+                    When(from_user__isnull=False, then=F('from_user__root__username')),
+                    default=F('document__disbursed_by__root__username')
+                )
+            ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
+                annotate(total=Sum(Case(
+                            When(status=AbstractBaseStatus.FAILED, then=0),
+                            default=F('amount')
+                        )
+                    ), count=Count(Case(
+                            When(status=AbstractBaseStatus.FAILED, then=None),
+                            default=F('uid')
+                        )
+                    ), fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin', 'issuer')
+        else:
+            qs = qs.annotate(
+                    admin=Case(
+                            When(from_user__isnull=False, then=F('from_user__root__username')),
+                            default=F('document__disbursed_by__root__username')
+                    )
+            ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
+                annotate(total=Sum('amount'), count=Count('uid'),
+                         fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def aggregate_vf_ets_aman_transactions(self):
@@ -1045,7 +1059,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(is_disbursed=False),
                 Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
-        elif self.status == 'success' or self.status == 'invoices':
+        elif self.status in ['success', 'invoices', 'report']:
             qs = DisbursementData.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
@@ -1068,7 +1082,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 admin=F('doc__disbursed_by__root__username')
             )
 
-        if self.status in ['success', 'failed', 'invoices']:
+        if self.status in ['success', 'failed', 'invoices', 'report']:
             qs = self._annotate_vf_ets_aman_qs(qs)
             if self.instant_or_accept_perm:
                 qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
@@ -1130,8 +1144,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
 
         # remove instant transactions with issuer vodafone, etisalat, aman
-        # in case status is invoices
-        if self.status == 'invoices':
+        # in case status is invoices or report
+        if self.status == 'invoices' or self.status == 'report':
             failed_qs = failed_qs.filter(
                 issuer_type__in=[InstantTransaction.ORANGE, InstantTransaction.BANK_WALLET]
             )
@@ -1191,21 +1205,45 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
-                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL, AbstractBaseACHTransactionStatus.RETURNED]),
+                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                              AbstractBaseACHTransactionStatus.RETURNED, AbstractBaseACHTransactionStatus.REJECTED]),
                 (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                 Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id").values('id')
-        qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
-            admin=Case(
-                When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
-                default=F('user_created__root__username')
-            )
-        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
-            annotate(
-                total=Sum('amount'), count=Count('id'),
-                fees=Sum('fees'), vat=Sum('vat')). \
-            order_by('admin', 'issuer')
+
+        if self.status == 'invoices':
+            qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
+                admin=Case(
+                    When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
+                    default=F('user_created__root__username')
+                )
+            ).values('admin'). \
+                annotate(
+                    total=Sum(Case(
+                            When(status__in=[
+                                AbstractBaseACHTransactionStatus.PENDING,
+                                AbstractBaseACHTransactionStatus.SUCCESSFUL], then=F('amount')),
+                            default=0
+                        )
+                    ), count=Count(Case(
+                            When(status__in=[
+                                AbstractBaseACHTransactionStatus.PENDING,
+                                AbstractBaseACHTransactionStatus.SUCCESSFUL], then=F('id')),
+                            default=None
+                    )),
+                    fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin')
+        else:
+            qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
+                    admin=Case(
+                            When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
+                            default=F('user_created__root__username')
+                    )
+            ).values('admin'). \
+                annotate(total=Sum('amount'), count=Count('id'),
+                    fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin')
 
         qs = self._customize_issuer_in_qs_values(qs)
         return qs

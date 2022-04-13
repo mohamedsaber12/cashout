@@ -28,6 +28,7 @@ from ..serializers import (
     InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer,
     BankTransactionResponseModelSerializer
 )
+from django.conf import settings
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -208,6 +209,7 @@ class InstantDisbursementAPIView(views.APIView):
         Handles POST HTTP requests
         """
         serializer = InstantDisbursementRequestSerializer(data=request.data)
+        print(settings.BANK_WALLET_AND_ORNAGE_ISSUER)
 
         try:
             serializer.is_valid(raise_exception=True)
@@ -234,7 +236,8 @@ class InstantDisbursementAPIView(views.APIView):
 
         issuer = serializer.validated_data["issuer"].lower()
 
-        if issuer in ["vodafone", "etisalat", "aman"]:
+        if issuer in ["vodafone", "etisalat", "aman"] or \
+            (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
             transaction = None
 
             try:
@@ -245,7 +248,8 @@ class InstantDisbursementAPIView(views.APIView):
                 data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
                 data_dict['WALLETISSUER'] = issuer.upper()
 
-                if issuer not in self.specific_issuers:
+                if issuer not in self.specific_issuers or \
+                    (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
                     data_dict['MSISDN'] = instant_user.root.super_admin.first_non_super_agent(issuer)
 
                 if issuer.lower() == 'aman':
@@ -262,8 +266,10 @@ class InstantDisbursementAPIView(views.APIView):
                         disbursed_date=timezone.now(), fees=fees, vat=vat,
                         client_transaction_reference=serializer.validated_data.get("client_reference_id")
                 )
-                
+                if issuer in ["orange", "bank_wallet"]:
+                    data_dict['WALLETISSUER'] = "VODAFONE"
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
+                print(data_dict['PIN'])
 
             except Exception as e:
                 if transaction:transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
@@ -275,7 +281,8 @@ class InstantDisbursementAPIView(views.APIView):
                 )
 
             #  add uid to the payload
-            if issuer in ['etisalat', 'vodafone']:
+            if issuer in ['etisalat', 'vodafone'] or \
+                (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
                 data_dict['EXTREFNUM'] = str(transaction.uid)
             
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
@@ -296,6 +303,11 @@ class InstantDisbursementAPIView(views.APIView):
                     transaction.mark_successful(200, "")
                     user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
                     return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
+                if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
+                    issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
+                    data_dict["ISSUER"] = "VODAFONE"
+                    # data_dict["TYPE"] = "DPSTREQ"
+
 
                 trx_response = requests.post(
                     get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
@@ -346,7 +358,8 @@ class InstantDisbursementAPIView(views.APIView):
             transaction.mark_failed(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-        elif issuer in ["bank_wallet", "bank_card", "orange"]:
+        elif issuer == "bank_card" \
+            or (issuer in ["bank_wallet", "orange"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER=="ACH"):
 
             try:
                 bank_trx_obj, instant_trx_obj = self.create_bank_transaction(user, serializer)

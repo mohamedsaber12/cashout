@@ -237,31 +237,10 @@ class DisburseAPIView(APIView):
         temp_response = {'BATCH_ID': '0', 'TXNSTATUS': '200'}
         vf_response = False
 
-        # 4. Check if the doc type is an E-Wallet so it might has vodafone records to be disbursed
-        if doc_obj.is_e_wallet and not (checker.is_accept_vodafone_onboarding
-            or checker.is_vodafone_facilitator_onboarding):
-            superadmin = checker.root.client.creator
-            wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
-            self.set_disbursed_date(doc_obj.id)
-            vf_recipients = self.prepare_vodafone_recipients(doc_obj.id)
-            smsc_sender_name = checker.root.client.smsc_sender_name
-
-            if vf_recipients:
-                if not ( checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring):
-                    pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
-                vf_agents, _ = self.prepare_agents_list(provider=checker.root, raw_pin=pin)
-                vf_payload, log_payload = superadmin.vmt.\
-                    accumulate_bulk_disbursement_payload(vf_agents, vf_recipients, smsc_sender_name)
-                    # check if have balance before disbursement
-                    # if checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring:
-                    #     self.check_balance_before_disbursement(request, checker, doc_obj)
-                        
-                vf_response = self.disburse_for_recipients(wallets_env_url, vf_payload, checker, log_payload, True)
-                
-
-        # 5. Run the task to disburse any records other than vodafone (etisalat, aman, bank wallets/orange)
-        if checker.is_accept_vodafone_onboarding or checker.is_vodafone_facilitator_onboarding:
-            BulkDisbursementThroughOneStepCashin.delay(doc_id=str(doc_obj.id), checker_username=str(checker.username))
+        # 4. Run the task to disburse any records on (vodafone, etisalat, aman, bank wallets/orange)
+        BulkDisbursementThroughOneStepCashin.delay(
+            doc_id=str(doc_obj.id), checker_username=str(checker.username), pin=pin
+        )
 
         is_success_disbursement = self.determine_disbursement_status(checker, doc_obj, vf_response, temp_response)
 

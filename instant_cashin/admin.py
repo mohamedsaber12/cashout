@@ -12,8 +12,10 @@ from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpResponse
+from django.db.models import Q
 
 from disbursement.models import DisbursementData, BankTransaction
+from users.models import RootUser
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
 from core.models import AbstractBaseStatus
@@ -49,6 +51,20 @@ class CustomStatusFilter(admin.SimpleListFilter):
         value = self.value()
         if value:
             return queryset.filter(status=value)
+        return queryset
+
+
+class CustomRootFilter(admin.SimpleListFilter):
+    title = 'Root'
+    parameter_name = 'root__id'
+
+    def lookups(self, request, model_admin):
+        return RootUser.objects.all().values_list('id', 'username')
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value:
+            return queryset.filter((Q(document__owner__root__id=value) | Q(from_user__root__id=value)))
         return queryset
 
 
@@ -112,7 +128,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         CustomStatusFilter,
-        'issuer_type', 'anon_sender', 'from_user', 'document__owner__root',
+        'issuer_type', 'anon_sender', 'from_user',
+        CustomRootFilter,
         'is_single_step', 'transaction_status_code'
     ]
     actions = ["export_as_csv","export_bank_transactions_ids"]

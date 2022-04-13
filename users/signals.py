@@ -200,7 +200,10 @@ def notify_user(instance, created):
             send_activation_message(instance, url)
 
         from_email = settings.SERVER_EMAIL
-        subject = f'[{instance.brand.mail_subject}]'
+        if instance.brand:
+            subject = f'[{instance.brand.mail_subject}]'
+        else:
+            subject = 'Paymob Send'
         subject = subject + _(' Password Notification')
         message = MESSAGE.format(instance.username, url, instance.email, instance.username)
         recipient_list = [instance.email]

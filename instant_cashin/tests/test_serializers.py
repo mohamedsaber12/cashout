@@ -65,5 +65,5 @@ class InstantDisbursementRequestSerializerTests(APITestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(
             serializer.errors['non_field_errors'],
-            ["Symbols like !%*+& not allowed in full_name"]
+            ["Symbols like !%*+&,<=> not allowed in full_name"]
         )

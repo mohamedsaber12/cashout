@@ -133,3 +133,15 @@ class IncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
                 'form': IncreaseBalanceRequestForm(),
             }
         return render(request, template_name=self.template_name, context=context)
+
+
+
+class ListIncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View):
+    template_name = 'utilities/list_transfer_request.html'
+
+    def get(self, request, *args, **kwargs):
+        print(TopupRequest.objects.filter(client=request.user.root))
+        context = {
+            'transfer_requests': TopupRequest.objects.filter(client=request.user.root),
+        }
+        return render(request, template_name=self.template_name, context=context)

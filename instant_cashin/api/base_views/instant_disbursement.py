@@ -264,7 +264,8 @@ class InstantDisbursementAPIView(views.APIView):
                         disbursed_date=timezone.now(), fees=fees, vat=vat,
                         client_transaction_reference=serializer.validated_data.get("client_reference_id")
                 )
-                if issuer in ["orange", "bank_wallet"]:
+                if issuer in ["orange", "bank_wallet"] or \
+                (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE"):
                     data_dict['WALLETISSUER'] = "VODAFONE"
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 

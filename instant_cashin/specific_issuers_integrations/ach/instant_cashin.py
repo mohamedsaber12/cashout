@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+import decimal
 
 import json
 import logging
@@ -14,7 +15,7 @@ from django.utils.translation import gettext as _
 from rest_framework import status
 from rest_framework.response import Response
 
-from disbursement.models import BankTransaction
+from disbursement.models import BankTransaction, RemainingAmounts
 from disbursement.utils import (BANK_TRX_BEING_PROCESSED,
                                 BANK_TRX_IS_SUCCESSFUL_1,
                                 BANK_TRX_IS_SUCCESSFUL_2, BANK_TRX_RECEIVED,
@@ -88,7 +89,7 @@ class BankTransactionsChannel:
         return False
 
     @staticmethod
-    def accumulate_send_transaction_payload(trx_obj):
+    def accumulate_send_transaction_payload(trx_obj, amount_to_be_deducted=0):
         """
         Accumulates SendTransaction API request payload
         :param trx_obj: transaction object that saved after serializer passed validations
@@ -100,7 +101,7 @@ class BankTransactionsChannel:
         payload['TransactionDateTime'] = trx_obj.created_at.strftime("%d/%m/%Y %H:%M:%S")
         payload['CategoryCode'] = trx_obj.category_code
         payload['TransactionPurpose'] = trx_obj.purpose
-        payload['TransactionAmount'] = float(trx_obj.amount)
+        payload['TransactionAmount'] = float(decimal.Decimal(trx_obj.amount) - decimal.Decimal(amount_to_be_deducted))
         payload['Currency'] = trx_obj.currency
         payload['CorporateCode'] = trx_obj.corporate_code
         payload['DebtorAccount'] = trx_obj.debtor_account
@@ -142,7 +143,8 @@ class BankTransactionsChannel:
             response = requests.post(
                     url,
                     data=json.dumps(payload, separators=(",", ":")),
-                    headers={'Content-Type': 'application/json'}
+                    headers={'Content-Type': 'application/json'},
+                    timeout=30
             )
             response_log_message = f"Response: {response.json()}"
         except HTTPError as http_err:
@@ -170,7 +172,8 @@ class BankTransactionsChannel:
             response = requests.get(
                     url + "?",
                     params={"request": json.dumps(payload, separators=(",", ":"))},
-                    headers={'Content-Type': 'application/json'}
+                    headers={'Content-Type': 'application/json'},
+                    timeout=10
             )
             response_log_message = f"{response.json()}"
         except HTTPError as http_err:
@@ -264,7 +267,7 @@ class BankTransactionsChannel:
                 bank_trx_message = BANK_TRX_IS_SUCCESSFUL_1 if response_code == "8222" else BANK_TRX_IS_SUCCESSFUL_2
                 new_trx_obj.mark_successful(response_code, bank_trx_message)
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
-                instant_trx.mark_successful("8222", INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
+                instant_trx.mark_successful(response_code, INSTANT_TRX_IS_ACCEPTED) if instant_trx else None
 
             # 3.4) Handle bank reject and return cases
             elif response_code in TRX_REJECTED_BY_BANK_CODES + TRX_RETURNED_BY_BANK_CODES:
@@ -289,11 +292,29 @@ class BankTransactionsChannel:
         has_valid_response = True
 
         try:
-            payload = BankTransactionsChannel.accumulate_send_transaction_payload(bank_trx_obj)
+            # UVA issue remaining money 
+            # TODO Remove this code after all remining money is zero (UVA-Admin)
+            amount_to_be_deducted = 0
+            if bank_trx_obj.user_created.root.username == "UVA-Admin":
+                remaining_amounts = RemainingAmounts.objects.filter(remaining_amount__gt=0)
+                for remaining_amount_obj in remaining_amounts:
+                    if remaining_amount_obj.mobile in bank_trx_obj.creditor_account_number:
+                        if decimal.Decimal(bank_trx_obj.amount) - remaining_amount_obj.remaining_amount >= 1:
+                            amount_to_be_deducted = remaining_amount_obj.remaining_amount
+                            remaining_amount_obj.remaining_amount = decimal.Decimal(0)
+                        else:
+                            amount_to_be_deducted = decimal.Decimal(bank_trx_obj.amount) - decimal.Decimal(1)
+                            remaining_amount_obj.remaining_amount = remaining_amount_obj.remaining_amount - amount_to_be_deducted
+                        remaining_amount_obj.save()
+                        remaining_amount_obj.bank_transactions.add(bank_trx_obj)
+
+
+
+            payload = BankTransactionsChannel.accumulate_send_transaction_payload(bank_trx_obj, amount_to_be_deducted)
             response = BankTransactionsChannel.post(get_from_env("EBC_API_URL"), payload, bank_trx_obj)
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
-            ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"))
+            ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e}"))
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG) if instant_trx_obj \
                 else None

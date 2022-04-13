@@ -1,0 +1,113 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Transfer Requests' %} {% endblock %}
+
+{% block gentellacss %}
+  {# Datatables #}
+  <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+{% endblock %}
+
+{% block body %}
+
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+            <h2>{% trans 'Topup Requests' %}</h2>
+            <ul class="nav navbar-right panel_toolbox">
+              <li>
+                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+              </li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+          <table class="table table-bordered" id="topup_request">
+            <thead>
+              <tr>
+                <th>{% trans 'Amount' %}</th>
+                <th>{% trans 'Currency' %}</th>
+                <th>{% trans 'Transfer Type' %}</th>
+                <th>{% trans 'Date' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for transfer_request in transfer_requests %}
+                  <td>{{ transfer_request.amount }}</td>
+                  <td>{{ transfer_request.currency }}</td>
+                  <td>{{ transfer_request.transfer_type }}</td>
+                  <td>{{ transfer_request.created_at }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  {% endblock %}
+
+{% block script %}
+  {# Datatables #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script>
+    var table = $('#topup_request').DataTable({
+      "bLengthChange" : false,
+      "bPaginate": false,
+      "bInfo" : false,
+      "searching": true
+    });
+  
+    var buttons = new $.fn.dataTable.Buttons( table, {
+      buttons: [
+        {
+          extend: 'copy',
+          text : "{% trans 'Copy' %}",
+          exportOptions: {
+              charSet: "utf-8",
+          }
+        },
+        {
+          extend: 'print',
+          text : "PDF",
+        },
+        {
+          extend: 'excelHtml5',
+          text : "{% trans 'Export' %}",
+          customize: function( xlsx ) {
+            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+            $('row c[r^="A"]', sheet).attr( 's', '0' );
+         }
+        }
+      ]
+    });
+  
+    table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
+  </script>
+{% endblock %}

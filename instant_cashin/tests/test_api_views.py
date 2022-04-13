@@ -15,7 +15,6 @@ from users.models import Client
 from disbursement.models import Agent
 from instant_cashin.models import AmanTransaction, InstantTransaction
 
-
 class CurrentRequest(object):
     def __init__(self, user=None):
         self.user=user
@@ -375,6 +374,7 @@ class InstantDisbursementAPIViewTests(APITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+<<<<<<< HEAD
     # test instant Cashin on vodafone with timeout
     def test_instant_cashin_on_vodafone_with_timeout(self):
         fees_setup_vodafone = FeeSetup(
@@ -406,6 +406,8 @@ class InstantDisbursementAPIViewTests(APITestCase):
                 response = self.client.post(url, data, format='json')
                 self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+=======
+>>>>>>> 859b9d49d52454dc9b87bc640bc43715ff8f7dd2
     # test instant Cashin on vodafone
     def test_instant_cashin_on_vodafone(self):
         fees_setup_vodafone = FeeSetup(
@@ -431,7 +433,11 @@ class InstantDisbursementAPIViewTests(APITestCase):
                 "msisdn": "01003764686"
             }
             response = self.client.post(url, data, format='json')
+<<<<<<< HEAD
             self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+=======
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+>>>>>>> 859b9d49d52454dc9b87bc640bc43715ff8f7dd2
 
     # test instant Cashin on etisalat with internal server error
     def test_instant_cashin_on_etisalat_with_internal_server_error(self):
@@ -485,7 +491,11 @@ class InstantDisbursementAPIViewTests(APITestCase):
                 "msisdn": "01003764686"
             }
             response = self.client.post(url, data, format='json')
+<<<<<<< HEAD
             self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+=======
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
+>>>>>>> 859b9d49d52454dc9b87bc640bc43715ff8f7dd2
 
     # test instant Cashin on aman
     def test_instant_cashin_on_aman(self):

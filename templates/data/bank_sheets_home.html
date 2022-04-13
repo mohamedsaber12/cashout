@@ -67,8 +67,11 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   <script>
+    {% if request.user.is_maker %}
+    Dropzone.autoDiscover = false;
+
     $(function () {
-      Dropzone.options.fileUpload = {
+      new Dropzone(".dropzone", {
         maxFiles: 1,
         dictDefaultMessage: '{% trans "Drop a file here to upload or click to browse one" %}',
         accept: function (file, done) {
@@ -98,8 +101,9 @@
             fail_modal.modal('show');
           });
         }
-      }
+      });
     });
+    {% endif %}
   </script>
 
   <script>

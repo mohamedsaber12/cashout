@@ -6,6 +6,8 @@ import json
 import logging
 import re
 from decimal import Decimal
+
+from django.contrib.auth.models import Permission
 from celery.app import task
 
 import pandas as pd
@@ -20,7 +22,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.urls import reverse
-from django.utils.timezone import datetime, make_aware
+from django.utils.timezone import datetime, make_aware, timedelta
 from django.utils.translation import gettext as _
 
 from core.models import AbstractBaseStatus
@@ -50,6 +52,7 @@ from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
 from disbursement.utils import add_fees_and_vat_to_qs
+from data.utils import upload_file_to_vodafone 
 
 
 
@@ -179,6 +182,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         msisdn = f"00{msisdn}"
                         msisdns_list.append(msisdn)
                         valid_msisdn = True
+                    else:
+                        raise ValidationError('')
                 except ValidationError:
                     if errors_list[index]:
                         errors_list[index] = "Invalid mobile number"
@@ -275,7 +280,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
                 # 3. Validate for empty names or have special character
                 names_list.append(record[3])
-                if not record[3] or any(e in str(record[3]) for e in '!%*+&'):
+                if not record[3] or any(e in str(record[3]) for e in '!%*+&,<=>'):
                     if errors_list[index]:
                         errors_list[index] = "Symbols not allowed in name"
                     else:
@@ -711,9 +716,69 @@ class EWalletsSheetProcessor(Task):
         """
         superadmin = self.doc_obj.owner.root.client.creator
         wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
-        response_has_error = True
         if self.doc_obj.owner.is_vodafone_default_onboarding or \
             self.doc_obj.owner.is_banks_standard_model_onboaring:
+            fees_profile = self.doc_obj.owner.root.client.get_fees()
+        else:
+            fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
+
+        payload_without_users = superadmin.vmt.accumulate_change_profile_payload(
+            vodafone_recipients_list, fees_profile, single_user=True
+        )
+        try:
+            msisdns, errors = [], []
+            has_error = False
+            for user_msisdn in vodafone_recipients_list:
+                payload = {**payload_without_users, 'MSISDN': user_msisdn}
+                CHANGE_PROFILE_LOGGER.debug(f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}")
+                response = requests.post(wallets_env_url, json=payload, verify=False)
+                CHANGE_PROFILE_LOGGER.debug(
+                    f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}"
+                )
+                if response.ok:
+                    response_dict = response.json()
+                    msisdns.append(user_msisdn)
+                    if response_dict['TXNSTATUS'] not in ["200", "629", "560", "562"]:
+                        has_error = True
+                        errors.append(response_dict['MESSAGE'])
+                    else:
+                        errors.append("Passed validations successfully")
+
+            self.doc_obj.has_change_profile_callback = True
+            if not has_error:
+                self.doc_obj.processed_successfully()
+                notify_maker(self.doc_obj)
+                return True
+
+            filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+            file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+
+            data = list(zip(msisdns, errors))
+            headers = ['Mobile Number', 'Error']
+            data.insert(0, headers)
+            export_excel(file_path, data)
+            download_url = settings.BASE_URL + str(reverse(
+                'disbursement:download_validation_failed',
+                kwargs={'doc_id': self.doc_obj.id})) + f"?filename={filename}"
+
+            self.doc_obj.processing_failure("Mobile numbers validation error")
+            notify_maker(self.doc_obj, download_url)
+            return False
+        except Exception as e:
+            CHANGE_PROFILE_LOGGER.debug(f"[message] [change fees profile error] [{self.doc_obj.owner}] -- {e.args}")
+            self.end_with_failure(_(MSG_CHANGE_PROFILE_ERROR))
+            return False
+
+    def bulk_change_profile_for_vodafone_recipients(self, vodafone_recipients_list):
+        """
+        Change fees profile for vodafone recipients.
+        :return: True or False
+        """
+        superadmin = self.doc_obj.owner.root.client.creator
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        response_has_error = True
+        if self.doc_obj.owner.is_vodafone_default_onboarding or \
+                self.doc_obj.owner.is_banks_standard_model_onboaring:
             fees_profile = self.doc_obj.owner.root.client.get_fees()
         else:
             fees_profile = self.doc_obj.owner.root.super_admin.wallet_fees_profile
@@ -793,7 +858,6 @@ class EWalletsSheetProcessor(Task):
             elif total_amount > max_amount_can_be_disbursed:
                 self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
                 return False
-            
 
             # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
             elif not self.doc_obj.owner.is_vodafone_default_onboarding\
@@ -897,7 +961,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _customize_issuer_in_qs_values(self, qs):
         """Append admin username to the output transactions queryset values dict"""
         for q in qs:
-            if len(str(q['issuer'])) > 20:
+            if q.get('issuer', None) == None or len(str(q['issuer'])) > 20:
                 q['issuer'] = 'C'
             elif q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1:
                 q['issuer'] = str(dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]).lower()
@@ -956,15 +1020,33 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def _annotate_instant_trxs_qs(self, qs):
         """ Annotate qs then add admin username to qs"""
-        qs = qs.annotate(
-            admin=Case(
-                When(from_user__isnull=False, then=F('from_user__root__username')),
-                default=F('document__disbursed_by__root__username')
-            )
-        ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
-            annotate(total=Sum('amount'), count=Count('uid'),
-                     fees=Sum('fees'), vat=Sum('vat')). \
-            order_by('admin', 'issuer')
+        if self.status == 'invoices':
+            qs = qs.annotate(
+                admin=Case(
+                    When(from_user__isnull=False, then=F('from_user__root__username')),
+                    default=F('document__disbursed_by__root__username')
+                )
+            ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
+                annotate(total=Sum(Case(
+                            When(status=AbstractBaseStatus.FAILED, then=0),
+                            default=F('amount')
+                        )
+                    ), count=Count(Case(
+                            When(status=AbstractBaseStatus.FAILED, then=None),
+                            default=F('uid')
+                        )
+                    ), fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin', 'issuer')
+        else:
+            qs = qs.annotate(
+                    admin=Case(
+                            When(from_user__isnull=False, then=F('from_user__root__username')),
+                            default=F('document__disbursed_by__root__username')
+                    )
+            ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
+                annotate(total=Sum('amount'), count=Count('uid'),
+                         fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin', 'issuer')
         return self._customize_issuer_in_qs_values(qs)
 
     def aggregate_vf_ets_aman_transactions(self):
@@ -977,7 +1059,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(is_disbursed=False),
                 Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
-        elif self.status == 'success' or self.status == 'invoices':
+        elif self.status in ['success', 'invoices', 'report']:
             qs = DisbursementData.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
@@ -1000,7 +1082,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 admin=F('doc__disbursed_by__root__username')
             )
 
-        if self.status in ['success', 'failed', 'invoices']:
+        if self.status in ['success', 'failed', 'invoices', 'report']:
             qs = self._annotate_vf_ets_aman_qs(qs)
             if self.instant_or_accept_perm:
                 qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
@@ -1062,8 +1144,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         failed_qs = qs.filter(Q(status=AbstractBaseStatus.FAILED))
 
         # remove instant transactions with issuer vodafone, etisalat, aman
-        # in case status is invoices
-        if self.status == 'invoices':
+        # in case status is invoices or report
+        if self.status == 'invoices' or self.status == 'report':
             failed_qs = failed_qs.filter(
                 issuer_type__in=[InstantTransaction.ORANGE, InstantTransaction.BANK_WALLET]
             )
@@ -1123,21 +1205,45 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
-                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL, AbstractBaseACHTransactionStatus.RETURNED]),
+                Q(status__in=[AbstractBaseACHTransactionStatus.PENDING, AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                              AbstractBaseACHTransactionStatus.RETURNED, AbstractBaseACHTransactionStatus.REJECTED]),
                 (Q(document__disbursed_by__root__client__creator__in=self.superadmins) |
                 Q(user_created__root__client__creator__in=self.superadmins))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id").values('id')
-        qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
-            admin=Case(
-                When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
-                default=F('user_created__root__username')
-            )
-        ).extra(select={'issuer': 'transaction_id'}).values('admin', 'issuer'). \
-            annotate(
-                total=Sum('amount'), count=Count('id'),
-                fees=Sum('fees'), vat=Sum('vat')). \
-            order_by('admin', 'issuer')
+
+        if self.status == 'invoices':
+            qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
+                admin=Case(
+                    When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
+                    default=F('user_created__root__username')
+                )
+            ).values('admin'). \
+                annotate(
+                    total=Sum(Case(
+                            When(status__in=[
+                                AbstractBaseACHTransactionStatus.PENDING,
+                                AbstractBaseACHTransactionStatus.SUCCESSFUL], then=F('amount')),
+                            default=0
+                        )
+                    ), count=Count(Case(
+                            When(status__in=[
+                                AbstractBaseACHTransactionStatus.PENDING,
+                                AbstractBaseACHTransactionStatus.SUCCESSFUL], then=F('id')),
+                            default=None
+                    )),
+                    fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin')
+        else:
+            qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
+                    admin=Case(
+                            When(document__disbursed_by__isnull=False, then=F('document__disbursed_by__root__username')),
+                            default=F('user_created__root__username')
+                    )
+            ).values('admin'). \
+                annotate(total=Sum('amount'), count=Count('id'),
+                    fees=Sum('fees'), vat=Sum('vat')). \
+                order_by('admin')
 
         qs = self._customize_issuer_in_qs_values(qs)
         return qs
@@ -1169,8 +1275,6 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
     def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
         """Write exported transactions data to excel file"""
-        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
-        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')
 
@@ -1228,8 +1332,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 ws.write(row_num, 5, current_admin_report['vf_facilitator_identifier'], font_style)
                 row_num += 1
 
-        wb.save(file_path)
-        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        wb.save(self.file_path)
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={self.filename}"
         return report_download_url
 
     def prepare_transactions_report(self):
@@ -1382,11 +1486,14 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         deliver_mail(self.superadmin_user, _(mail_subject), message)
 
+
     def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
-        self.superadmin_user = User.objects.get(id=user_id)
+        self.status = status
         self.start_date = start_date
         self.end_date = end_date
-        self.status = status
+        self.filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{self.filename}"
+        self.superadmin_user = User.objects.get(id=user_id)
         self.instant_or_accept_perm = False
         self.vf_facilitator_perm = False
         self.default_vf__or_bank_perm = False
@@ -1889,3 +1996,24 @@ def notify_makers_collection(doc):
         Thanks, BR""")
     deliver_mail(None, _(' Collection File Upload Notification'), message, makers)
 
+
+
+# @app.task()
+# class ExportClientsTransactionsMonthlyReportVodafoneFacilitatorTask(ExportClientsTransactionsMonthlyReportTask):
+
+#     def run(self, *args, **kwargs):
+#         yesterday = datetime.now() - timedelta(1)
+#         self.start_date = datetime.strftime(yesterday, '%Y-%m-%d')
+#         self.end_date = datetime.strftime(yesterday, '%Y-%m-%d')
+#         filename = _(f"Vodafone_facilitator_report_{self.start_date}.xls")
+#         self.file_path = f"{settings.MEDIA_ROOT}/documents/vodafone_facilitator/{filename}"
+#         self.status = 'all'
+#         self.instant_or_accept_perm = False
+#         self.vf_facilitator_perm = False
+#         self.default_vf__or_bank_perm = False
+#         facilitator_perm = Permission.objects.get(codename="vodafone_facilitator_accept_vodafone_onboarding")
+#         self.superadmins = User.objects.filter(user_permissions=facilitator_perm)
+#         self.prepare_transactions_report()
+#         upload_file_to_vodafone(self.file_path)
+        
+#         return True

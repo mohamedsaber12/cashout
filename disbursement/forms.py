@@ -403,8 +403,8 @@ class SingleStepTransactionForm(forms.Form):
 
         if not creditor_name:
             return _('Invalid name')
-        elif any(e in str(creditor_name) for e in '!%*+&'):
-            return _("Symbols like !%*+& not allowed in full name")
+        elif any(e in str(creditor_name) for e in '!%*+&,<=>'):
+            return _("Symbols like !%*+&,<=> not allowed in full name")
 
         return True
 
@@ -443,24 +443,24 @@ class SingleStepTransactionForm(forms.Form):
         full_name = self.cleaned_data.get('full_name', None)
         if not full_name :
             return _('This field is required')
-        elif any(e in str(full_name) for e in '!%*+&'):
-            return _("Symbols like !%*+& not allowed in full name")
+        elif any(e in str(full_name) for e in '!%*+&,<=>'):
+            return _("Symbols like !%*+&,<=> not allowed in full name")
         return True
 
     def validate_first_name(self):
         first_name = self.cleaned_data.get('first_name', None)
         if not first_name :
             return _('This field is required')
-        elif any(e in str(first_name) for e in '!%*+&'):
-            return _("Symbols like !%*+& not allowed in first name")
+        elif any(e in str(first_name) for e in '!%*+&,<=>'):
+            return _("Symbols like !%*+&,<=> not allowed in first name")
         return True
 
     def validate_last_name(self):
         last_name = self.cleaned_data.get('last_name', None)
         if not last_name :
             return _('This field is required')
-        elif any(e in str(last_name) for e in '!%*+&'):
-            return _("Symbols like !%*+& not allowed in last name")
+        elif any(e in str(last_name) for e in '!%*+&,<=>'):
+            return _("Symbols like !%*+&,<=> not allowed in last name")
         return True
 
     def validate_email(self):

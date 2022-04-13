@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import random
 import datetime
 import logging
 from decimal import Decimal
@@ -16,6 +17,7 @@ from data.decorators import respects_language
 from data.models import Doc
 from data.tasks import handle_change_profile_callback
 from instant_cashin.models import AmanTransaction
+from instant_cashin.models.instant_transactions import InstantTransaction
 from instant_cashin.specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from instant_cashin.utils import get_from_env
 from payouts.settings.celery import app
@@ -27,6 +29,8 @@ from .models import DisbursementData, DisbursementDocData, BankTransaction
 
 CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
+ETISALAT_UNKNWON_INQ = logging.getLogger("etisalat_inq_by_ref")
+VODAFONE_UNKNWON_INQ = logging.getLogger("vodafone_inq_by_ref")
 
 
 class BulkDisbursementThroughOneStepCashin(Task):
@@ -42,11 +46,15 @@ class BulkDisbursementThroughOneStepCashin(Task):
         """
         recipients = DisbursementData.objects.filter(doc_id=doc_id)
 
-        vf_recipients = recipients.filter(issuer__in=['vodafone', 'default'])
+        vf_recipients = recipients.filter(issuer__in=['vodafone', 'default']). \
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id', 'uid': 'uid'}). \
+            values('msisdn', 'amount', 'txn_id', 'uid')
         etisalat_recipients = recipients.filter(issuer='etisalat'). \
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id', 'uid': 'uid'}). \
+            values('msisdn', 'amount', 'txn_id', 'uid')
         aman_recipients = recipients.filter(issuer='aman'). \
-            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id'}).values('msisdn', 'amount', 'txn_id')
+            extra(select={'msisdn': 'msisdn', 'amount': 'amount', 'txn_id': 'id', 'uid': 'uid'}). \
+            values('msisdn', 'amount', 'txn_id', 'uid')
 
         return vf_recipients, list(etisalat_recipients), list(aman_recipients)
 
@@ -56,7 +64,12 @@ class BulkDisbursementThroughOneStepCashin(Task):
             trx_callback_status = status.HTTP_424_FAILED_DEPENDENCY
             reference_id = recipient["txn_id"]
 
-            if issuer == "etisalat":
+            if issuer == 'vodafone':
+                callback_json = callback.json()
+                trx_callback_status = callback_json["TXNSTATUS"]
+                reference_id = callback_json["TXNID"]
+                trx_callback_msg = callback_json["MESSAGE"]
+            elif issuer == "etisalat":
                 callback_json = callback.json()
                 trx_callback_status = callback_json["TXNSTATUS"]
                 reference_id = callback_json["TXNID"]
@@ -78,12 +91,15 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if trx_callback_status == "200":
                 disbursement_data_record.is_disbursed = True
                 disbursement_data_record.reason = trx_callback_msg
-                doc_obj.owner.root.budget. \
-                    update_disbursed_amount_and_current_balance(disbursement_data_record.amount, issuer)
+                if doc_obj.owner.root.has_custom_budget:
+                    doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
+                        disbursement_data_record.amount, issuer
+                    )
             else:
                 disbursement_data_record.is_disbursed = False
-                disbursement_data_record.reason = trx_callback_status
-
+                if not trx_callback_status in ["501", "-1"]:
+                    disbursement_data_record.reason = trx_callback_status
+            disbursement_data_record.disbursed_date=datetime.datetime.now()
             disbursement_data_record.save()
 
             if issuer == "aman":
@@ -103,12 +119,33 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         for recipient in ets_recipients:
             ets_payload, ets_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
-                    ets_agents[0], recipient['msisdn'], recipient['amount'], ets_pin, 'etisalat'
+                random.choice(ets_agents), recipient['msisdn'], recipient['amount'],
+                ets_pin, 'etisalat', recipient['uid']
             )
             ets_callback = DisburseAPIView.disburse_for_recipients(
-                    wallets_env_url, ets_payload, checker.username, ets_log_payload
+                wallets_env_url, ets_payload, checker.username, ets_log_payload
             )
             self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
+
+    def disburse_for_vodafone(self, checker, superadmin, vf_recipients, vf_pin):
+        """Disburse for vodafone specific recipients"""
+        from .api.views import DisburseAPIView          # Circular import
+
+        wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+        if not ( checker.is_vodafone_default_onboarding or checker.is_banks_standard_model_onboaring):
+            vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
+        vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=vf_pin)
+        smsc_sender_name = checker.root.client.smsc_sender_name
+
+        for recipient in vf_recipients:
+            vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
+                random.choice(vf_agents)['MSISDN'], recipient['msisdn'], recipient['amount'],
+                vf_pin, 'vodafone', recipient['uid'], smsc_sender_name
+            )
+            vf_callback = DisburseAPIView.disburse_for_recipients(
+                wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]
+            )
+            self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone')
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -207,7 +244,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 except:
                     pass
 
-    def run(self, doc_id, checker_username, *args, **kwargs):
+    def run(self, doc_id, checker_username, pin, *args, **kwargs):
         """
         :param doc_id: id of the document being disbursed
         :param checker_username: username of the checker who is taking the disbursement action
@@ -227,6 +264,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     self.disburse_for_aman(checker, aman_recipients)
 
                 if vf_recipients.count() == 0 and (ets_recipients or aman_recipients):
+                    DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+
+                # handle disbursement for vodafone
+                if vf_recipients:
+                    self.disburse_for_vodafone(checker, superadmin, vf_recipients, pin)
                     DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
             # 2. Handle doc of type bank wallets/cards
@@ -343,3 +385,95 @@ def check_for_late_change_profile_callback(**kwargs):
             handle_change_profile_callback.delay(disbursement_doc.doc.id, refined_transactions_list)
 
     return True
+
+
+@app.task()
+@respects_language
+def check_for_etisalat_unknown_transactions(**kwargs):
+    """Background task for asking for the unknown etisalat transactions"""
+    unkown_trns = InstantTransaction.objects.filter(
+        status__in=["U", "P"],
+        issuer_type__exact="E"
+    )
+
+    for unkown_trn in unkown_trns:
+        super_admin = unkown_trn.from_user.root.super_admin
+        url = get_value_from_env(super_admin.vmt.vmt_environment)
+        payload = super_admin.vmt.accumulate_inquiry_for_etisalat_by_ref_id(
+            str(unkown_trn.uid))
+        ETISALAT_UNKNWON_INQ.debug(f"[request] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {payload}")
+        resp = requests.post(url, json=payload, verify=False)
+        resp_data = resp.json()
+        ETISALAT_UNKNWON_INQ.debug(f"[response] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {resp_data}")
+        if resp_data.get("DATA"):
+            if resp_data.get("DATA").get("TXNSTATUS"):
+                if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
+                    unkown_trn.status = 'F'
+                    unkown_trn.save()
+                elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
+                    unkown_trn.status = 'S'
+                    unkown_trn.transaction_status_code = '200'
+                    unkown_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'
+                    unkown_trn.save()
+                    unkown_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                            unkown_trn.amount, 'etisalat')
+
+
+@app.task()
+@respects_language
+def check_for_etisalat_and_vodafone_unknown_transactions(**kwargs):
+    """Background task for asking for the unknown etisalat and vodafone transactions"""
+    unkown_e_trns = InstantTransaction.objects.filter(
+        status__in=["U", "P"],
+        issuer_type__exact="E"
+    )
+
+    for unkown_e_trn in unkown_e_trns:
+        super_admin = unkown_e_trn.from_user.root.super_admin
+        url = get_value_from_env(super_admin.vmt.vmt_environment)
+        payload = super_admin.vmt.accumulate_inquiry_for_etisalat_by_ref_id(
+            str(unkown_e_trn.uid))
+        ETISALAT_UNKNWON_INQ.debug(f"[request] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {payload}")
+        resp = requests.post(url, json=payload, verify=False)
+        resp_data = resp.json()
+        ETISALAT_UNKNWON_INQ.debug(f"[response] [ETISALAT UNKNWON TRX INQ] [celery_task] -- {resp_data}")
+        if resp_data.get("DATA"):
+            if resp_data.get("DATA").get("TXNSTATUS"):
+                if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
+                    unkown_e_trn.status = 'F'
+                    unkown_e_trn.save()
+                elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
+                    unkown_e_trn.status = 'S'
+                    unkown_e_trn.transaction_status_code = '200'
+                    unkown_e_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'
+                    unkown_e_trn.save()
+                    unkown_e_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                            unkown_e_trn.amount, 'etisalat')
+
+    unkown_v_trns = InstantTransaction.objects.filter(
+        status__in=["U", "P"],
+        issuer_type__exact="V"
+    )
+    for unkown_v_trn in unkown_v_trns:
+        super_admin = unkown_v_trn.from_user.root.super_admin
+        url = get_value_from_env(super_admin.vmt.vmt_environment)
+        payload = super_admin.vmt.accumulate_inquiry_for_vodafone_by_ref_id(
+            str(unkown_v_trn.uid))
+        VODAFONE_UNKNWON_INQ.debug(f"[request] [VODAFONE UNKNWON TRX INQ] [celery_task] -- {payload}")
+        resp = requests.post(url, json=payload, verify=False)
+        resp_data = resp.json()
+        VODAFONE_UNKNWON_INQ.debug(f"[response] [VODAFONE UNKNWON TRX INQ] [celery_task] -- {resp_data}")
+        if resp_data.get("DATA"):
+            if resp_data.get("DATA").get("TXNSTATUS"):
+                if resp_data.get("DATA").get("TXNSTATUS") == "FAILED":
+                    unkown_v_trn.status = 'F'
+                    unkown_v_trn.save()
+                elif resp_data.get("DATA").get("TXNSTATUS") == "SUCCESSFUL":
+                    unkown_v_trn.status = 'S'
+                    unkown_v_trn.transaction_status_code = '200'
+                    unkown_v_trn.transaction_status_description = 'تم إيداع المبلغ بنجاح'
+                    unkown_v_trn.save()
+                    unkown_v_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                            unkown_v_trn.amount, 'vodafone')
+
+

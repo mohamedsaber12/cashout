@@ -83,7 +83,7 @@
               method="post" class="autoValidateForm" enctype="multipart/form-data">
           {% csrf_token %}
           <div class="row">
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+            <div class="form-group col-md-4 col-sm-4 col-xs-12">
               <label>
                 <span class="glyphicon glyphicon-sort"></span> {% trans 'Type' %} *
               </label>
@@ -93,14 +93,24 @@
                 {{ form.type.errors }}
               </div>
             </div>
-            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+            <div class="form-group col-md-4 col-sm-4 col-xs-12">
               <label>
-                <span class="glyphicon glyphicon-tag"></span> {% trans 'Amount To Be Added' %} * (EGP)
+                <span class="glyphicon glyphicon-tag"></span> {% trans 'Amount To Be Added' %} *
               </label>
               {{form.amount}}
               <span class="respond-span"></span>
               <div class="help-block">
                 {{form.amount.errors}}
+              </div>
+            </div>
+            <div class="form-group col-md-4 col-sm-4 col-xs-12">
+              <label>
+                <i class="fa fa-bitcoin" style="font-size:16px"></i> {% trans 'Currency' %} *
+              </label>
+              {{form.currency}}
+              <span class="respond-span"></span>
+              <div class="help-block">
+                {{form.currency.errors}}
               </div>
             </div>
           </div>

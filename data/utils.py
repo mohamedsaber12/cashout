@@ -13,10 +13,13 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 
+from instant_cashin.utils import get_from_env
 from data.models.filecategory import FileCategory
 from data.models.category_data import Format
+import pysftp
 
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 
 
 def validate_file_extension(value):
@@ -70,28 +73,6 @@ def redirect_params(url, kw, params=None):
         query_string = ''
 
     return redirect(response + '?' +query_string)
-
-
-def pkgen():
-    """
-    Function to generate reference hash
-    ref: https://code-examples.net/en/q/395b9e # python 2 version
-    :return:
-    """
-    from base64 import b32encode
-    from hashlib import sha1
-    from random import random
-    rude = (b'lol',)
-    bad_pk = True
-    while bad_pk:
-        sha1_obj = sha1()
-        sha1_obj.update(str(random()).encode('utf-8'))
-        pk = b32encode(sha1_obj.hexdigest().encode()).lower()
-        bad_pk = False
-        for rw in rude:
-            if pk.find(rw) >= 0:
-                bad_pk = True
-        return pk.decode()[:32]
 
 
 def update_user_last_seen(user, end_date=None, clients_data=None):
@@ -233,10 +214,17 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
             mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
             mail_to_be_sent.attach_alternative(message_body, "text/html")
             mail_to_be_sent.send()
+            SEND_EMAIL_LOGGER.debug(
+                f"[{subject}] [{recipient_list[0]}] -- {message_body}"
+            )
         return
     mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
     mail_to_be_sent.attach_alternative(message_body, "text/html")
-    return mail_to_be_sent.send()
+    mail_to_be_sent.send()
+    SEND_EMAIL_LOGGER.debug(
+        f"[{subject}] [{recipient_list[0]}] -- {message_body}"
+    )
+    return
 
 
 def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
@@ -266,3 +254,13 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
         mail_to_be_sent.attach(attached_file.name, attached_file.read())
 
     return mail_to_be_sent.send()
+
+
+def upload_file_to_vodafone(file_path):
+    private_key = get_from_env("VF_PRIVATE_KEY")  # can use password keyword in Connection instead
+    srv = pysftp.Connection(
+        host=get_from_env("VF_HOST"), username=get_from_env("VF_USERNAME"),
+        private_key=private_key, password=get_from_env("VF_PASSWORD"))
+    srv.chdir(get_from_env("VF_DIRECTORY"))  # change directory on remote server
+    srv.put(file_path) 
+    srv.close()

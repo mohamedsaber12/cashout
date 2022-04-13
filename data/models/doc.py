@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import os
+import os, uuid
 
 from django.conf import settings
 from django.db import models
@@ -14,7 +14,7 @@ from disbursement.models import DisbursementDocData, BankTransaction
 from users.models import CheckerUser
 from utilities.models import AbstractBaseDocType, SoftDeletionModel
 
-from ..utils import pkgen, update_filename
+from ..utils import update_filename
 
 
 class Doc(AbstractBaseDocType, SoftDeletionModel):
@@ -22,7 +22,10 @@ class Doc(AbstractBaseDocType, SoftDeletionModel):
     Model for representing uploaded document object
     """
 
-    id = models.CharField(primary_key=True, editable=False, unique=True, db_index=True, max_length=32, default=pkgen)
+    id = models.CharField(
+        primary_key=True, editable=False, unique=True, db_index=True,
+        max_length=36, default=uuid.uuid4
+    )
     file = models.FileField(upload_to=update_filename, null=True, blank=True)
     is_disbursed = models.BooleanField(default=False)
     can_be_disbursed = models.BooleanField(default=False)

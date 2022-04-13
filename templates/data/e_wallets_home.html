@@ -89,8 +89,11 @@
 <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
 
 <script>
+    {% if user_has_upload_perm %}
+    Dropzone.autoDiscover = false;
+
     $(function () {
-        Dropzone.options.fileUpload = {
+        new Dropzone(".dropzone", {
             maxFiles: 1,
             dictDefaultMessage: '{% trans "Drop a file here to upload or click to browse one" %}',
             accept: function (file, done) {
@@ -127,8 +130,9 @@
                     }
                 });
             }
-        }
+        });
     });
+    {% endif %}
 </script>
 
 <script>

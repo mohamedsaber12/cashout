@@ -33,9 +33,6 @@
     #download-doc span {
         color: #333;
     }
-    #menu1 {
-      display:none;
-    }
     {% if LANGUAGE_CODE == 'ar' %}
       ul > li > span{
         width: 120px;
@@ -57,6 +54,9 @@
           <h2>{% trans 'Transactions of document: ' %}<small>{{ doc_obj.filename }}</small></h2>
           <ul class="nav navbar-right panel_toolbox">
             <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a></li>
+            {% if doc_obj.is_e_wallet %}
+              <li><a href="{{request_full_path}}?status=P"><span>⏳</span></a></li>
+            {% endif %}
           </ul>
           <div class="clearfix"></div>
         </div>
@@ -229,36 +229,36 @@
             <div class="row">
               <div class="col-md-8 col-sm-8 col-xs-8">
                 <ul id="docDetailsLeft" class="list-group">
-                  <li class="list-group-item"><span>{% trans 'ID' %}</span><b>:</b>{{ doc_obj.id }}</li>
-                  <li class="list-group-item"><span>{% trans 'Name' %}</span><b>:</b>{{ doc_obj.filename }}</li>
-                  <li class="list-group-item"><span>{% trans 'Status' %}</span><b>:</b>{{ doc_status }}</li>
-                  <li class="list-group-item"><span>{% trans 'Uploaded By' %}</span><b>:</b>{{ doc_obj.owner }}</li>
-                  <li class="list-group-item"><span>{% trans 'Disbursed By' %}</span><b>:</b>{{ doc_obj.disbursed_by }}</li>
-                  <li class="list-group-item"><span>{% trans 'Specs Used' %}</span><b>:</b>{{ doc_obj.file_category.name }}</li>
+                  <li class="list-group-item"><span>{% trans 'ID' %}</span><strong>: </strong>{{ doc_obj.id }}</li>
+                  <li class="list-group-item"><span>{% trans 'Name' %}</span><strong>: </strong>{{ doc_obj.filename }}</li>
+                  <li class="list-group-item"><span>{% trans 'Status' %}</span><strong>: </strong>{{ doc_status }}</li>
+                  <li class="list-group-item"><span>{% trans 'Uploaded By' %}</span><strong>: </strong>{{ doc_obj.owner }}</li>
+                  <li class="list-group-item"><span>{% trans 'Disbursed By' %}</span><strong>: </strong>{{ doc_obj.disbursed_by }}</li>
+                  <li class="list-group-item"><span>{% trans 'Specs Used' %}</span><strong>: </strong>{{ doc_obj.file_category.name }}</li>
                 </ul>
               </div>
               <div class="col-md-4 col-sm-4 col-xs-4">
                 <ul id="docDetailsRight" class="list-group">
-                  <li class="list-group-item"><span>{% trans 'Total Amount' %}</span><b>:</b>{{ doc_obj.total_amount }}</li>
-                  <li class="list-group-item"><span>{% trans 'Total Records' %}</span><b>:</b>{{ doc_obj.total_count }}</li>
-                  <li class="list-group-item"><span>{% trans 'Can Be Disbursed' %}?</span><b>:</b>{{ doc_obj.can_be_disbursed }}</li>
-                  <li class="list-group-item"><span>{% trans 'Disbursement Ratio' %}</span><b>:</b>{{ disbursement_ratio }} %</li>
-                  <li class="list-group-item"><span>{% trans 'Created At' %}</span><b>:</b>{{ disbursement_doc_data.created_at }}</li>
-                  <li class="list-group-item"><span>{% trans 'Updated At' %}</span><b>:</b>{{ disbursement_doc_data.updated_at }}</li>
+                  <li class="list-group-item"><span>{% trans 'Total Amount' %}</span><strong>: </strong>{{ doc_obj.total_amount }}</li>
+                  <li class="list-group-item"><span>{% trans 'Total Records' %}</span><strong>: </strong>{{ doc_obj.total_count }}</li>
+                  <li class="list-group-item"><span>{% trans 'Can Be Disbursed' %}?</span><strong>: </strong>{{ doc_obj.can_be_disbursed }}</li>
+                  <li class="list-group-item"><span>{% trans 'Disbursement Ratio' %}</span><strong>: </strong>{{ disbursement_ratio }} %</li>
+                  <li class="list-group-item"><span>{% trans 'Created At' %}</span><strong>: </strong>{{ disbursement_doc_data.created_at }}</li>
+                  <li class="list-group-item"><span>{% trans 'Updated At' %}</span><strong>: </strong>{{ disbursement_doc_data.updated_at }}</li>
                 </ul>
               </div>
             </div>
             <div class="row">
               <div class="col-md-12 col-sm-12 col-xs-12">
                 <ul class="list-group">
-                  <li class="list-group-item"><span>{% trans 'Processing Failure Reason' %}</span><b>:</b>{{ doc_obj.processing_failure_reason }}</li>
-                  <li class="list-group-item"><span>{% trans 'Number of reviews required' %}?</span><b>:</b>{{ doc_obj.file_category.no_of_reviews_required }}</li>
-                  <li class="list-group-item"><span>{% trans 'Is reviews completed' %}?</span><b>:</b>{% if is_reviews_completed %} Yes {% else %} No {% endif %}</li>
+                  <li class="list-group-item"><span>{% trans 'Processing Failure Reason' %}</span><strong>: </strong>{{ doc_obj.processing_failure_reason }}</li>
+                  <li class="list-group-item"><span>{% trans 'Number of reviews required' %}?</span><strong>: </strong>{{ doc_obj.file_category.no_of_reviews_required }}</li>
+                  <li class="list-group-item"><span>{% trans 'Is reviews completed' %}?</span><strong>: </strong>{% if is_reviews_completed %} Yes {% else %} No {% endif %}</li>
                   {% for review in reviews %}
-                    <li class="list-group-item"><span>{% trans 'Reviewed By' %}</span><b>:</b>{{ review.user_created }}</li>
-                    <li class="list-group-item"><span>{% trans 'Is Ok' %}?</span><b>:</b>{{ review.is_ok }}</li>
-                    <li class="list-group-item"><span>{% trans 'Timestamp' %}</span><b>:</b>{{ review.timestamp }}</li>
-                    <li class="list-group-item"><span>{% trans 'Comment' %}</span><b>:</b>{{ review.comment }}</li>
+                    <li class="list-group-item"><span>{% trans 'Reviewed By' %}</span><strong>: </strong>{{ review.user_created }}</li>
+                    <li class="list-group-item"><span>{% trans 'Is Ok' %}?</span><strong>: </strong>{{ review.is_ok }}</li>
+                    <li class="list-group-item"><span>{% trans 'Timestamp' %}</span><strong>: </strong>{{ review.timestamp }}</li>
+                    <li class="list-group-item"><span>{% trans 'Comment' %}</span><strong>: </strong>{{ review.comment }}</li>
                   {% empty %}
                   {% endfor %}
                 </ul>
@@ -302,6 +302,61 @@
   </div>
   {# End of transaction details #}
 
+  {# Modal for export all file transactions #}
+  <div class="modal fade" id="exportAllModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of modal for export all file transactions #}
+
+  {# Modal for export successful file transactions #}
+  <div class="modal fade" id="exportSuccessModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the success data file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of modal for export successful file transactions #}
+
+  {# Modal for export failed file transactions #}
+  <div class="modal fade" id="exportFailedModal" role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">{% trans 'Report Exported Successfully' %}</h4>
+        </div>
+        <div class="modal-body">
+          {% trans 'You will receive an email shortly with the failed data file to download' %}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">{% trans 'Close' %}</button>
+        </div>
+      </div>
+    </div>
+  </div>
   {# End of modal for export failed file transactions #}
 
 {% endblock %}
@@ -392,96 +447,96 @@
         let appendedTagsBottom = '';
 
         trx.amount = $(this).data('amount');
-        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${trx.amount}</li>`;
 
         {% if doc_obj.is_bank_card or doc_obj.is_bank_wallet %}
           trx.id = $(this).data('id');
-          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
+          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${trx.id}</li>`;
           trx.status = $(this).data('status');
-          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>${trx.status}</li>`;
           trx.transaction_status_code = $(this).data('transaction_status_code');
-          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>${trx.transaction_status_code}</li>`;
+          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>${trx.transaction_status_code}</li>`;
           trx.transaction_status_description = $(this).data('transaction_status_description');
-          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>${trx.transaction_status_description}</li>`;
+          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${trx.transaction_status_description}</li>`;
         {% endif %}
 
         {% if doc_obj.is_bank_wallet %}
           trx.anon_recipient = $(this).data('anon_recipient');
-          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${trx.anon_recipient}</li>`;
+          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><strong>: </strong>${trx.anon_recipient}</li>`;
           trx.recipient_name = $(this).data('recipient_name');
-          appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.recipient_name}</li>`;
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${trx.recipient_name}</li>`;
           let issuer = $(this).data('issuer');
-          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer}</li>`;
         {% endif %}
         {% if doc_obj.is_bank_card %}
           let issuer = $(this).data('issuer');
           trx.debtor_account = $(this).data('debtor_account');
           trx.creditor_account_number = $(this).data('creditor_account_number');
-          appendedTags += `<li><span>{% trans 'Account Number' %}</span><b>:</b>${trx.creditor_account_number}</li>`;
+          appendedTags += `<li><span>{% trans 'Account Number' %}</span><strong>: </strong>${trx.creditor_account_number}</li>`;
           trx.creditor_name = $(this).data('creditor_name');
-          appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.creditor_name}</li>`;
-          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>bank_card</li>`;
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${trx.creditor_name}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>bank_card</li>`;
           trx.creditor_bank = $(this).data('creditor_bank');
-          appendedTagsRight += `<li><span>{% trans 'Bank Swift Code' %}</span><b>:</b>${trx.creditor_bank}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Bank Swift Code' %}</span><strong>: </strong>${trx.creditor_bank}</li>`;
           trx.bank_name = $(this).data('bank_name');
-          appendedTagsRight += `<li><span>{% trans 'Bank Name' %}</span><b>:</b>${trx.bank_name}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Bank Name' %}</span><strong>: </strong>${trx.bank_name}</li>`;
           trx.type = $(this).data('type');
-          appendedTagsRight += `<li><span>{% trans 'Transaction Type' %}</span><b>:</b>${trx.type}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Transaction Type' %}</span><strong>: </strong>${trx.type}</li>`;
         {% endif %}
         {% if doc_obj.is_e_wallet %}
           let issuer = $(this).data('issuer');
           let is_canceled = $(this).data('aman_is_canceled');
-          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer}</li>`;
           {# Determine is_paid? status for aman transactions #}
           if (issuer === 'Aman' || issuer === 'aman') {
             let aman_is_paid = $(this).data('aman_is_paid');
             if (aman_is_paid === 'True') {
-              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
             }
 
             if (is_canceled === 'True') {
-              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>Canceled?</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>Canceled?</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
             }
           }
           let msisdn = $(this).data('msisdn');
-          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${msisdn}</li>`;
+          appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><strong>: </strong>${msisdn}</li>`;
 
           let is_disbursed = $(this).data('is_disbursed');
           let reason = $(this).data('reason');
 
           {# Handle is_disbursed icon based of the record disbursement status #}
           if (is_disbursed === 'True') {
-            appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Successful" %}</li>`;
+            appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Successful" %}</li>`;
           }
           else if (!reason) {
-            appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Pending" %}</li>`;
+            appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Pending" %}</li>`;
           }
           else {
-            appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Failed" %}</li>`;
+            appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Failed" %}</li>`;
           }
 
           {# Handle disbursement status description based of the record disbursement status #}
           if (reason) {
             if (reason === 'SUCCESS') {
-              appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>200</li>`;
+              appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>200</li>`;
             } else {
-              appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>${reason}</li>`;
+              appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>${reason}</li>`;
             }
             let reason_description = $(this).data('reason_description');
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>${reason_description}</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${reason_description}</li>`;
           } else {
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b> -- </li>`;
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>Disbursement process is running</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong> -- </li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>Disbursement process is running</li>`;
           }
           trx.created_at = $(this).data('created_at');
-          appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${trx.created_at}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${trx.created_at}</li>`;
         {% endif %}
         trx.updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${trx.updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${trx.updated_at}</li>`;
         if (issuer === 'aman') {
           let aman_is_paid = $(this).data('aman_is_paid');
           let is_canceled = $(this).data('aman_is_canceled');
@@ -527,5 +582,47 @@
       }
     }
 
+  </script>
+  <script>
+    $(document).ready(function () {
+      $('#export-failed').on('click',function(ev) {
+        $.ajax({
+          type:'GET',
+          url: '{{request.path}}' + '?export_failed=true',
+          success: function (data, text, xhr) {
+            $('#exportFailedModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          },
+        })
+      });
+
+      $('#export-success').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_success=true',
+          success: function (data, text, xhr) {
+            $('#exportSuccessModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          },
+        })
+      });
+
+      $('#export-all').on('click', function (ev) {
+        $.ajax({
+          type: 'GET',
+          url: '{{request.path}}' + '?export_all=true',
+          success: function (data, text, xhr) {
+            $('#exportAllModal').modal({
+              backdrop: 'static',
+              keyboard: false
+            })
+          },
+        })
+      });
+    });
   </script>
 {% endblock %}

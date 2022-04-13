@@ -76,6 +76,8 @@ class AbstractBaseVMTData(models.Model):
     USER_INQUIRY = 5            # List/Bulk of agents/consumers
     BALANCE_INQUIRY = 6
     DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY = 7
+    ETISALAT_INQUIRY_BY_REF = 8
+    VODAFONE_INQUIRY_BY_REF = 9
 
     login_username = models.CharField(_("UIG Login Username"), max_length=32)
     login_password = models.CharField(_("UIG Login Password"), max_length=32)
@@ -185,6 +187,19 @@ class AbstractBaseVMTData(models.Model):
                 "BATCH_ID": "",
                 "TYPE": "DISBINQREQ"
             })
+        elif purpose == self.ETISALAT_INQUIRY_BY_REF:
+            data.update({
+                "EXTREFNUM": "",        # MSISDNs List
+                "TYPE": "EXTXNRREQ",
+                "WALLETISSUER": "ETISALAT"
+            })
+
+        elif purpose == self.VODAFONE_INQUIRY_BY_REF:
+            data.update({
+                "EXTREFNUM": "",        # MSISDNs List
+                "TYPE": "EXTXNRREQ",
+                "WALLETISSUER": "VODAFONE",
+            })
 
         return data
 
@@ -225,12 +240,15 @@ class AbstractBaseVMTData(models.Model):
                                                 consumer_attr,
                                                 amount_attr,
                                                 raw_pin_attr,
-                                                issuer_attr):
+                                                issuer_attr,
+                                                trx_uid,
+                                                sms_sender_name=''):
         """
         :param agent_attr: Agent that will send/disburse the money
         :param consumer_attr: Consumers of the e-money
         :param amount_attr: Amount to be disbursed
         :param issuer_attr: Wallet issuer channel that the e-money will be disbursed over
+        :param sms_sender_name: SMSC sender name for the standard vodafone users
         :return: instant disbursement request payload, refined payload without pin to be logged
         """
         valid_issuers_list = ['vodafone', 'etisalat']
@@ -241,16 +259,21 @@ class AbstractBaseVMTData(models.Model):
 
         payload = self.return_vmt_data(self.INSTANT_DISBURSEMENT)
         payload.update({
-            'WALLETISSUER': issuer_attr.upper(),
             'MSISDN': agent_attr,
             'MSISDN2': consumer_attr,
             'AMOUNT': amount_attr,
-            'PIN': raw_pin_attr
+            'PIN': raw_pin_attr,
+            'EXTREFNUM': str(trx_uid),
+            'SENDERNAME': sms_sender_name
         })
+        if payload['WALLETISSUER'].lower() != 'raseedy':
+            payload['WALLETISSUER'] = issuer_attr.upper()
+        if not sms_sender_name:
+            del(payload["SENDERNAME"])
 
         return payload, self._refine_payload_pin(payload)
 
-    def accumulate_change_profile_payload(self, users_attr, new_profile_attr):
+    def accumulate_change_profile_payload(self, users_attr, new_profile_attr, single_user=False):
         """
         :param users_attr: MSISDNs which we want to change their fees profiles
         :param new_profile_attr: the new profile to be assigned to the MSISDNs
@@ -260,10 +283,17 @@ class AbstractBaseVMTData(models.Model):
             raise ValueError(_("MSISDNS and a new profile are required parameters for the change profile dictionary"))
 
         payload = self.return_vmt_data(self.CHANGE_PROFILE)
-        payload.update({
-            'USERS': users_attr,
-            'NEWPROFILE': new_profile_attr
-        })
+        if not single_user:
+            payload.update({
+                'USERS': users_attr,
+                'NEWPROFILE': new_profile_attr
+            })
+        else:
+            # change type to be single change profile
+            payload['TYPE'] = 'SCHPREQ'
+            payload.update({
+                'NEWPROFILE': new_profile_attr
+            })
         return payload
 
     def accumulate_set_pin_payload(self, users_attr, pin_attr):
@@ -322,6 +352,16 @@ class AbstractBaseVMTData(models.Model):
 
         payload = self.return_vmt_data(self.DISBURSEMENT_OR_CHANGE_PROFILE_CALLBACK_INQUIRY)
         payload.update({"BATCH_ID": str(batch_id)})
+        return payload
+
+    def accumulate_inquiry_for_etisalat_by_ref_id(self, trn_id):
+        payload = self.return_vmt_data(self.ETISALAT_INQUIRY_BY_REF)
+        payload.update({"EXTREFNUM": trn_id})
+        return payload
+
+    def accumulate_inquiry_for_vodafone_by_ref_id(self, trn_id):
+        payload = self.return_vmt_data(self.VODAFONE_INQUIRY_BY_REF)
+        payload.update({"EXTREFNUM": trn_id})
         return payload
 
 

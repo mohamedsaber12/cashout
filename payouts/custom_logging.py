@@ -243,6 +243,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/instant_cashin_requests.log',
         },
+        'send_emails': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/send_emails.log',
+        },
         'instant_bulk_trx_inquiry': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -312,6 +319,20 @@ CUSTOM_LOGGING = {
             'formatter': 'detail',
             'class': 'logging.FileHandler',
             'filename': 'logs/ssl_certificates.log',
+        },
+        'etisalat_inq_by_ref': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/etisalat_inq_by_ref.log',
+        },
+        'vodafone_inq_by_ref': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/vodafone_inq_by_ref.log',
         },
     },
 
@@ -480,6 +501,11 @@ CUSTOM_LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'send_emails': {
+            'handlers': ['send_emails'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'instant_bulk_trx_inquiry': {
             'handlers': ['instant_bulk_trx_inquiry'],
             'level': 'DEBUG',
@@ -517,6 +543,16 @@ CUSTOM_LOGGING = {
         },
         'ssl_certificates': {
             'handlers': ['ssl_certificates'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'etisalat_inq_by_ref': {
+            'handlers': ['etisalat_inq_by_ref'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'vodafone_inq_by_ref': {
+            'handlers': ['vodafone_inq_by_ref'],
             'level': 'DEBUG',
             'propagate': True,
         },

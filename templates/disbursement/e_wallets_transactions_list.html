@@ -250,39 +250,38 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   <script>
-
     var table = $('#transaction-table').DataTable({
-    "bLengthChange" : false,
-    "bPaginate": false,
-    "bInfo" : false,
-    "searching": false
-  });
+      "bLengthChange" : false,
+      "bPaginate": false,
+      "bInfo" : false,
+      "searching": false
+    });
   
-  var buttons = new $.fn.dataTable.Buttons( table, {
-    buttons: [
-      {
-        extend: 'copy',
-        text : "{% trans 'Copy' %}",
-        exportOptions: {
-            charSet: "utf-8",
+    var buttons = new $.fn.dataTable.Buttons( table, {
+      buttons: [
+        {
+          extend: 'copy',
+          text : "{% trans 'Copy' %}",
+          exportOptions: {
+              charSet: "utf-8",
+          }
+        },
+        {
+          extend: 'print',
+          text : "PDF",
+        },
+        {
+          extend: 'excelHtml5',
+          text : "{% trans 'Export' %}",
+          customize: function( xlsx ) {
+            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+            $('row c[r^="A"]', sheet).attr( 's', '0' );
+         }
         }
-      },
-      {
-        extend: 'print',
-        text : "PDF",
-      },
-      {
-        extend: 'excelHtml5',
-        text : "{% trans 'Export' %}",
-        customize: function( xlsx ) {
-          var sheet = xlsx.xl.worksheets['sheet1.xml'];
-          $('row c[r^="A"]', sheet).attr( 's', '0' );
-       }
-      }
-    ]
-  });
+      ]
+    });
   
-  table.buttons( 0, null ).container().prependTo(
+    table.buttons( 0, null ).container().prependTo(
         table.table().container()
     );
     let empty_row = $('.dataTables_empty');
@@ -357,14 +356,13 @@
 
         {% if not is_normal_flow %}
           let trx_id = $(this).data('trx_id')
-          appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx_id}</li>`;
         {% endif %}
 
         let msisdn = $(this).data('msisdn');
-        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${msisdn}</li>`;
+        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><strong>: </strong>${msisdn}</li>`;
 
         let amount = $(this).data('amount');
-        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${amount}</li>`;
 
         let is_disbursed = $(this).data('is_disbursed');
         let is_canceled = $(this).data('is_canceled');
@@ -372,31 +370,31 @@
 
         {# Handle is_disbursed icon based of the record disbursement status #}
         if (is_disbursed === 'True') {
-          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Successful" %}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Successful" %}</li>`;
         }
         else if (!reason) {
-          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Pending" %}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Pending" %}</li>`;
         }
         else {
-          appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>{% trans "Failed" %}</li>`;
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Failed" %}</li>`;
         }
         let issuer = $(this).data('issuer');
         {% if not is_normal_flow %}
-          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${issuer}</li>`;
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer}</li>`;
           let aman_is_paid = $(this).data('aman_is_paid');
 
           {# Determine is_paid? status for aman transactions #}
           if (issuer === 'Aman') {
             if (aman_is_paid === 'True') {
-              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
             }
 
             if (is_canceled === 'True') {
-              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>Canceled?</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>Canceled?</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>Canceled?</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
             }
           }
         {% endif %}
@@ -404,16 +402,16 @@
         {# Handle disbursement status description based of the record disbursement status #}
         if (reason) {
           if (is_disbursed === 'True') {
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>200</li>`;
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>${reason}</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>200</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${reason}</li>`;
           } else {
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b>${reason}</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>${reason}</li>`;
             let reason_description = $(this).data('reason_description');
-            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>${reason_description}</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${reason_description}</li>`;
           }
         } else {
-          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><b>:</b> -- </li>`;
-          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><b>:</b>Disbursement process is running</li>`;
+          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong> -- </li>`;
+          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>Disbursement process is running</li>`;
         }
         if (issuer === 'Aman') {
           if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
@@ -422,10 +420,10 @@
         }
 
         let created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${created_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${created_at}</li>`;
 
         let updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${updated_at}</li>`;
 
         ul.empty();
         ul.append(appendedTags);

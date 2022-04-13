@@ -46,7 +46,7 @@
                     <div class="well profile_view">
                       <div class="col-sm-12">
                         <h4 class="brief">
-                          <i>
+                          <em>
                             {% if user.user_type == 1 %}
                               {% trans 'Maker' %}
                             {% elif user.user_type == 2 %}
@@ -58,7 +58,7 @@
                             {% elif user.user_type == 5 and current_status == 'disbursement' %}
                               {% trans 'Maker' %}
                             {% endif %}
-                          </i>
+                          </em>
                         </h4>
                         <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
                           <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ user.get_full_name|truncatechars:26 }}</h2>
@@ -80,7 +80,7 @@
                         <div class="col-xs-12 col-sm-8 emphasis text-right" style="padding-right:10px;padding-left:10px;">
                           {% if user.user_type == 6 %}
                             <button class="btn btn-default btn-xs" title="Authorization Keys">
-                              <a href="{% url 'users:oauth2_detail' username=user.username %}" target="_blank"><i class="fa fa-key"></i></a>
+                              <a href="{% url 'users:oauth2_detail' username=user.username %}" rel="noopener" target="_blank"><i class="fa fa-key"></i></a>
                             </button>
                           {% endif %}
                           <a href="{% url 'users:profile' user.username %}" type="button"

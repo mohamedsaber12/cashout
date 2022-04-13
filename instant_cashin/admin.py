@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import csv
+
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 
 from django.contrib import admin
@@ -9,8 +11,11 @@ from django.contrib.contenttypes.models import ContentType
 from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
+from django.http import HttpResponse
+from django.db.models import Q
 
-from disbursement.models import DisbursementData
+from disbursement.models import DisbursementData, BankTransaction
+from users.models import RootUser
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
 from core.models import AbstractBaseStatus
@@ -46,6 +51,20 @@ class CustomStatusFilter(admin.SimpleListFilter):
         value = self.value()
         if value:
             return queryset.filter(status=value)
+        return queryset
+
+
+class CustomRootFilter(admin.SimpleListFilter):
+    title = 'Root'
+    parameter_name = 'root__id'
+
+    def lookups(self, request, model_admin):
+        return RootUser.objects.all().values_list('id', 'username')
+
+    def queryset(self, request, queryset):
+        value = self.value()
+        if value:
+            return queryset.filter((Q(document__owner__root__id=value) | Q(from_user__root__id=value)))
         return queryset
 
 
@@ -101,7 +120,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     default_fields = [
         'uid', 'from_user', 'anon_recipient', 'status_choice_verbose', 'transaction_status_code', 'amount', 'issuer_type'
     ]
-    list_display = default_fields + ['updated_at', 'disbursed_date']
+    list_display = default_fields + ['created_at', 'updated_at', 'disbursed_date']
     readonly_fields = default_fields + ['uid', 'created_at']
     search_fields = ['uid', 'anon_recipient']
     ordering = ['-created_at']
@@ -109,9 +128,11 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         CustomStatusFilter,
-        'issuer_type', 'anon_sender', 'from_user', 'is_single_step', 'transaction_status_code'
+        'issuer_type', 'anon_sender', 'from_user',
+        CustomRootFilter,
+        'is_single_step', 'transaction_status_code'
     ]
-    actions = ["export_as_csv"]
+    actions = ["export_as_csv","export_bank_transactions_ids"]
     fieldsets = (
         (None, {'fields': ('from_user', )}),
         (_('Transaction Details'), {
@@ -141,4 +162,20 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def export_bank_transactions_ids(self, request, queryset):
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'bank_transactions_ids.csv'
+        writer = csv.writer(response)
+        writer.writerow(["TranstactionId"])
+        for instant_trx in queryset:
+            bank_trx = BankTransaction.objects.filter(end_to_end=instant_trx.uid)
+            if bank_trx.exists():
+                transaction_id = bank_trx.first().parent_transaction.transaction_id.hex
+                writer.writerow([transaction_id])
+
+        return response
+
+    export_bank_transactions_ids.short_description = "Export Bank Transactions Ids"
+
 

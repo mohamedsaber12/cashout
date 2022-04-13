@@ -7,14 +7,16 @@ import array
 
 from django.contrib.auth.models import Permission
 from django.db.models import Q
-from django.http import HttpResponseRedirect, Http404
+from django.http import HttpResponseRedirect, Http404, HttpResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import ugettext as _
 from django.views import View
 from django.views.generic import CreateView, ListView, TemplateView
 from django.core.paginator import Paginator
+from django.utils import translation
 
+from core.models import AbstractBaseStatus
 from instant_cashin.utils import get_from_env
 from data.models import Doc
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
@@ -29,6 +31,9 @@ from ..mixins import (
 from ..models import (
     Client, SupportSetup, SupportUser, RootUser, SuperAdminUser, User, Setup,
     EntitySetup, InstantAPIViewerUser, InstantAPICheckerUser
+)
+from data.tasks import (
+    generate_all_disbursed_data, generate_failed_disbursed_data, generate_success_disbursed_data
 )
 
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
@@ -212,7 +217,17 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
 
         if not doc.exists():
             raise Http404(_(f"Document with id: {self.doc_id} for {self.admin_username} entity members not found."))
-
+        # 2.1 If the request is ajax then prepare the disbursement report
+        if request.is_ajax():
+            if request.GET.get('export_failed') == 'true':
+                generate_failed_disbursed_data.delay(self.doc_id, request.user.id, language=translation.get_language())
+                return HttpResponse(status=200)
+            elif request.GET.get('export_success') == 'true':
+                generate_success_disbursed_data.delay(self.doc_id, request.user.id, language=translation.get_language())
+                return HttpResponse(status=200)
+            elif request.GET.get('export_all') == 'true':
+                generate_all_disbursed_data.delay(self.doc_id, request.user.id, language=translation.get_language())
+                return HttpResponse(status=200)
         doc_obj = doc.first()
         doc_transactions = doc_obj.disbursement_data.all()
         doc_transactions_qs = doc_obj.disbursement_data.all()
@@ -247,6 +262,12 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
                 )
         if search_filter:
             doc_transactions = doc_transactions.filter(search_filter)
+        if self.request.GET.get('status') and self.request.GET.get('status') == 'P':
+            if doc_obj.is_e_wallet:
+                doc_transactions = doc_transactions.filter(
+                    is_disbursed=False, reason=''
+                )
+
 
         # add server side pagination
         paginator = Paginator(doc_transactions, 10)
@@ -254,6 +275,7 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
         queryset = paginator.get_page(page)
 
         context = {
+            'request_full_path': request.get_full_path(),
             'doc_obj': doc_obj,
             'reviews': doc_obj.reviews.all() ,
             'doc_status': self.retrieve_doc_status(doc_obj),
@@ -264,6 +286,13 @@ class DocumentForSupportDetailView(SupportUserRequiredMixin,
             'doc_transactions_totals':
                 DisbursementDocTransactionsView.get_document_transactions_totals(doc_obj, doc_transactions_qs),
         }
+        if doc_obj.is_e_wallet:
+            context['has_failed'] = doc_transactions_qs.filter(is_disbursed=False).count() != 0
+            context['has_success'] = doc_transactions_qs.filter(is_disbursed=True).count() != 0
+        else:
+            context['has_failed'] = doc_transactions_qs.filter(status=AbstractBaseStatus.FAILED).count() != 0
+            context['has_success'] = doc_transactions_qs.filter(status=AbstractBaseStatus.SUCCESSFUL).count() != 0
+
 
         return render(request, 'support/document_details.html', context=context)
 

@@ -116,14 +116,14 @@
                       <div class="well profile_view" style="width: 100%;">
                         <div class="col-sm-12">
                           <h4 class="brief">
-                            <i>
+                            <em>
                               {% ifequal client_setup.is_active True %}
                                 {% trans 'Active' %}
                               {% else %}
                                 {% trans 'InActive' %}
                               {% endifequal %}
-                            </i>
-                            <i class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                            </em>
+                            <em class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               {% if client_setup.client.is_instant_model_onboarding %}
                                 {% trans 'Integration Disbursement Model' %}
                               {% elif client_setup.client.is_accept_vodafone_onboarding %}
@@ -135,7 +135,7 @@
                               {% else %}
                                 {% trans 'Vodafone PSP Disbursement Model' %}
                               {% endif %}
-                            </i>
+                            </em>
                           </h4>
                           <div class="left col-xs-7 pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
                             <h2 style="font-size:18px;word-wrap:break-word;"><i class="fa fa-user" style="margin-bottom: 10px;"></i> {{ client_setup.client.get_full_name|truncatechars:26 }}</h2>
@@ -166,7 +166,7 @@
                             </button>
                             {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring %}
                               <button class="btn btn-default btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}" title="{% trans 'Update Budget' %}">
-                                <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" target="_blank"></a>
+                                <a class="fa fa-money" href="{% url 'utilities:budget_update' username=client_setup.client.username %}" rel="noopener" target="_blank"></a>
                               </button>
                             {% endif %}
                             <a href="{% url 'users:profile' client_setup.client.username %}" type="button"

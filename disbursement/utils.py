@@ -77,7 +77,7 @@ TRX_RETURNED_BY_BANK_CODES = [
 
 TRX_REJECTED_BY_BANK_CODES = [
     "000001", "000002", "000003", "000004", "000005", "000006", "000007", "000008", "000009", "000010", "000011",
-    "000012", "000013", "000014"
+    "000012", "000013", "000014", "515", "001054",
 ]
 
 BANK_TRANSACTION_TYPES_DESCRIPTION_LIST = [
@@ -175,7 +175,7 @@ ERROR_CODES_MESSAGES = {
     '6030':	_('Format Error'),
     '6041':	_('Funding Account Status is Lost'),
     '6043':	_('Funding Account Status is Stolen'),
-    '6051':	_('Funding Account has Insufficient Funds'),
+    '6051':	_('Service temporarily suspended'),
     '6054':	_('Funding Account is Expired'),
     '6055':	_('Invalid C-PIN'),
     '6057':	_('Transaction Not Permitted to Issuer/Card Holder'),
@@ -209,7 +209,8 @@ ERROR_CODES_MESSAGES = {
     '90007': _('Invalid or missing parameters'),
     '90005': _('Service is down'),
     '90006': _('Service is down'),
-    '90093': _('Service temporarily suspended')
+    '90093': _('Service temporarily suspended'),
+    '90040': _('عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778')
 }
 
 DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT = [

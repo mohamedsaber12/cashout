@@ -421,7 +421,7 @@
             {{ status_description }}
           </div>
           <div style="text-align: center;">
-            <img src='https://image.flaticon.com/icons/svg/148/148767.svg' style='margin:auto;' width = '30%'/>
+            <img src="{% static 'img/success.png' %}" style='margin:auto;' width = '30%'/>
           </div>
         </div>
         <div class="modal-footer">
@@ -445,7 +445,7 @@
             {{ status_description }}
           </div>
           <div style="text-align: center;">
-            <img src='https://www.flaticon.com/svg/static/icons/svg/1828/1828843.svg'  width='30%'/>
+            <img src="{% static 'img/failed.png' %}"  width='30%'/>
           </div>
         </div>
         <div class="modal-footer">
@@ -614,64 +614,64 @@
 
       {% if wallets %}
         trx.id = $(this).data('id')
-        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
+        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${trx.id}</li>`;
         trx.anon_recipient = $(this).data('anon_recipient');
-        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><b>:</b>${trx.anon_recipient}</li>`;
+        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><strong>: </strong>${trx.anon_recipient}</li>`;
         trx.amount = $(this).data('amount');
-        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${trx.amount}</li>`;
         trx.recipient_name = $(this).data('recipient_name');
-        appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.recipient_name}</li>`;
+        appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${trx.recipient_name}</li>`;
         trx.status = $(this).data('status');
-        appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
+        appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>${trx.status}</li>`;
 
         trx.issuer = $(this).data('issuer');
-        appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><b>:</b>${trx.issuer}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${trx.issuer}</li>`;
         {# Determine is_paid? status for aman transactions #}
           if (trx.issuer === 'Aman') {
             let aman_is_paid = $(this).data('aman_is_paid');
             if (aman_is_paid === 'True') {
-              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkgreen">&#10004;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
             } else {
-              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><b>:</b><span style="color: darkred">&#10006;</span></li>`;
+              appendedTagsRight += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
             }
           }
 
         trx.created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${trx.created_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${trx.created_at}</li>`;
         trx.updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${trx.updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${trx.updated_at}</li>`;
 
       {% else %}
         trx.debtor_account = $(this).data('debtor_account');
 
         trx.id = $(this).data('id')
-        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><b>:</b>${trx.id}</li>`;
+        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${trx.id}</li>`;
         trx.creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>{% trans 'Account Number / IBAN' %}</span><b>:</b>${trx.creditor_account_number}</li>`;
+        appendedTags += `<li><span>{% trans 'Account Number / IBAN' %}</span><strong>: </strong>${trx.creditor_account_number}</li>`;
         trx.creditor_name = $(this).data('creditor_name');
-        appendedTags += `<li><span>{% trans 'Full Name' %}</span><b>:</b>${trx.creditor_name}</li>`;
+        appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${trx.creditor_name}</li>`;
         trx.amount = $(this).data('amount');
-        appendedTags += `<li><span>{% trans 'Amount' %}</span><b>:</b>${trx.amount}</li>`;
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${trx.amount}</li>`;
         trx.status = $(this).data('status');
-        appendedTags += `<li><span>{% trans 'Status' %}</span><b>:</b>${trx.status}</li>`;
+        appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>${trx.status}</li>`;
 
         trx.creditor_bank = $(this).data('creditor_bank');
-        appendedTagsRight += `<li><span>{% trans 'Bank Swift Code' %}</span><b>:</b>${trx.creditor_bank}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Bank Swift Code' %}</span><strong>: </strong>${trx.creditor_bank}</li>`;
         trx.bank_name = $(this).data('bank_name');
-        appendedTagsRight += `<li><span>{% trans 'Bank Name' %}</span><b>:</b>${trx.bank_name}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Bank Name' %}</span><strong>: </strong>${trx.bank_name}</li>`;
         trx.type = $(this).data('type');
-        appendedTagsRight += `<li><span>{% trans 'Transaction Type' %}</span><b>:</b>${trx.type}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Transaction Type' %}</span><strong>: </strong>${trx.type}</li>`;
         trx.checker = $(this).data('checker');
-        appendedTagsRight += `<li><span>{% trans 'Checker' %}</span><b>:</b>${trx.checker}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Checker' %}</span><strong>: </strong>${trx.checker}</li>`;
         trx.created_at = $(this).data('created_at');
-        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><b>:</b>${trx.created_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${trx.created_at}</li>`;
         trx.updated_at = $(this).data('updated_at');
-        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><b>:</b>${trx.updated_at}</li>`;
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${trx.updated_at}</li>`;
       {% endif %}
       trx.status_code = $(this).data('status_code');
-      appendedTagsBottom += `<li><span>{% trans 'Status Code' %}</span><b>:</b>${trx.status_code}</li>`;
+      appendedTagsBottom += `<li><span>{% trans 'Status Code' %}</span><strong>: </strong>${trx.status_code}</li>`;
       trx.transaction_status_description = $(this).data('transaction_status_description');
-      appendedTagsBottom += `<li><span>{% trans 'Status Description' %}</span><b>:</b>${trx.transaction_status_description}</li>`;
+      appendedTagsBottom += `<li><span>{% trans 'Status Description' %}</span><strong>: </strong>${trx.transaction_status_description}</li>`;
 
       ul.empty();
       ul.append(appendedTags);

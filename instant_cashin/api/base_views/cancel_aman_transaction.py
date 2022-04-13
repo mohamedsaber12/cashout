@@ -63,6 +63,7 @@ class CancelAmanTransactionAPIView(views.APIView):
                 aman_obj.is_cancelled = True
                 aman_obj.save()
                 request.user.root.budget.return_disbursed_amount_for_cancelled_trx(trans.amount)
+                trans.refresh_from_db()
                 resp_data = InstantTransactionResponseModelSerializer(trans)
                 return Response(resp_data.data)
             else:

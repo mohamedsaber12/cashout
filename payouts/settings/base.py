@@ -70,7 +70,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-]
+    ]
 INSTALLED_APPS += THIRD_PARTY_APPS
 INSTALLED_APPS += SECURITY_THIRD_PARTY_APPS
 INSTALLED_APPS += USER_DEFINED_APPS
@@ -105,7 +105,8 @@ MIDDLEWARE = [
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
-    'simple_history.middleware.HistoryRequestMiddleware'
+    'simple_history.middleware.HistoryRequestMiddleware',
+    'instant_cashin.middleware.ip_whitelist.FilterIPMiddleware'
 
     # ToDo: Request/Response Time Delta Middleware
 ]
@@ -341,3 +342,6 @@ LOG_VIEWER_PATTERNS = [']OFNI[', ']GUBED[', ']GNINRAW[', ']RORRE[', ']LACITIRC['
 
 
 SIMPLE_HISTORY_REVERT_DISABLED=True
+
+BANK_WALLET_AND_ORNAGE_ISSUER = env.str('BANK_WALLET_AND_ORNAGE_ISSUER', "ACH")
+ETISALAT_ISSUER = env.str('ETISALAT_ISSUER', "ETISALAT")

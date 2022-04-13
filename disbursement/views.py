@@ -313,13 +313,13 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
 def failed_disbursed_for_download(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
-        doc_obj.owner.hierarchy == request.user.hierarchy and
+        (doc_obj.owner.hierarchy == request.user.hierarchy and
         (
             doc_obj.owner == request.user or
             request.user.is_checker or
             request.user.is_root
         ) and
-        doc_obj.is_disbursed
+        doc_obj.is_disbursed) or request.user.is_support
     )
     if not can_view:
         return HttpResponse(status=401)
@@ -329,6 +329,14 @@ def failed_disbursed_for_download(request, doc_id):
         raise Http404
 
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+
+    # prevent path traversal vulnerability
+    real_path = os.path.realpath(file_path)
+    base_dir = "%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/")
+    common_prefix = os.path.commonprefix([real_path, base_dir])
+    if common_prefix != base_dir:
+        raise Http404
+
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(
@@ -350,6 +358,14 @@ def download_exported_transactions(request):
         raise Http404
 
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+
+    # prevent path traversal vulnerability
+    real_path = os.path.realpath(file_path)
+    base_dir = "%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/")
+    common_prefix = os.path.commonprefix([real_path, base_dir])
+    if common_prefix != base_dir:
+        raise Http404
+
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(
@@ -368,7 +384,7 @@ def download_exported_transactions(request):
 @login_required
 def download_failed_validation_file(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
-    can_view = (doc_obj.owner == request.user and request.user.is_maker)
+    can_view = (doc_obj.owner == request.user and request.user.is_maker) or request.user.is_superuser
     if not can_view:
         return HttpResponse(status=401)
 
@@ -377,6 +393,14 @@ def download_failed_validation_file(request, doc_id):
         raise Http404
 
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
+
+    # prevent path traversal vulnerability
+    real_path = os.path.realpath(file_path)
+    base_dir = "%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/")
+    common_prefix = os.path.commonprefix([real_path, base_dir])
+    if common_prefix != base_dir:
+        raise Http404
+
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(

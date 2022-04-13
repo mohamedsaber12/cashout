@@ -400,3 +400,80 @@ class FeeSetup(models.Model):
     def __str__(self):
         """String representation for a fee setup object"""
         return f"{self.fee_type_choice_verbose} setup for {self.issuer_choice_verbose}"
+
+
+class TopupRequest(AbstractTimeStamp):
+
+    client = models.ForeignKey(
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="topup_request",
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    currency = models.CharField(
+        max_length=20,
+        choices=[
+                ('egyptian_pound', _('Egyptian Pound (L.E)')),
+                ('american_dollar', _('American Dollar ($)'))
+            ],
+        default="egyptian_pound"
+    )
+    transfer_type = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    username = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    from_bank = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    to_bank = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    from_account_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    to_account_number = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    from_account_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    to_account_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+    from_date = models.DateField(
+        blank=True,
+        null=True
+    )
+    to_attach_proof = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = "Topup Request"
+        verbose_name_plural = "Topup Requests"
+        ordering = ["-id"]

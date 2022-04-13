@@ -305,8 +305,8 @@ class InstantDisbursementAPIView(views.APIView):
                     return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
                 if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
                     issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
-                    data_dict["ISSUER"] = "VODAFONE"
-                    # data_dict["TYPE"] = "DPSTREQ"
+                    # data_dict["ISSUER"] = "VODAFONE"
+                    data_dict["TYPE"] = "DPSTREQ"
 
 
                 trx_response = requests.post(

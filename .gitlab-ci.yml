@@ -111,8 +111,13 @@ staging-deploy      :
                     - echo $(whoami)
                     - mkdir -p ~/.ssh
                     - eval $(ssh-agent -s)
-                    - cat "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
+                    - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
                     - ssh-keyscan $ >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
+  script            :
+                    - docker info | grep "Name:"
+                    - sudo su - payouts-user
+                    - payouts
+                    - restart
   after_script      :
                     - unset DOCKER_HOST
   rules             :

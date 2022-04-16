@@ -113,7 +113,7 @@ staging-deploy      :
     - mkdir -p ~/.ssh
     - eval $(ssh-agent -s)
     - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
-    - ssh-keyscan $STG_SERVER >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
+    - ssh-keyscan $payout_staging_server >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script            :
                     - ssh -i $payout_staging_server_private_key $payout_staging_server_user@$payout_staging_server "sudo su - payouts-user && payouts && restart && exit"
   rules             :

@@ -101,22 +101,12 @@ sonarqube-check:
 
 # deploy-to-staging    
 staging-deploy      :
-  image             : tiangolo/docker-with-compose
   stage             : deployment
   tags              :
                     - docker-runner-1
-  before_script     :
-                    - export DOCKER_HOST="ssh://$payout_staging_server_user@$payout_staging_server"
-                    - apk add --no-cache openssh-client curl bash
-                    - echo $(whoami)
-                    - mkdir -p ~/.ssh
-                    - eval $(ssh-agent -s)
-                    - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
-                    - ssh-keyscan $ >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script            :
-                    - sudo su - payouts-user
-                    - payouts
-                    - restart
+                    - ssh $payout_staging_server_user@$payout_staging_server " sudo su - payouts-user && payouts && restart && exit"
+ 
   after_script      :
                     - unset DOCKER_HOST
   rules             :

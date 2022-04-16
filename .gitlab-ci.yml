@@ -101,7 +101,9 @@ sonarqube-check:
 
 # deploy-to-staging    
 staging-deploy      :
-  image             : docker:19.03.6
+  image: tiangolo/docker-with-compose
+  services:
+    -  docker:dind
   stage             : deployment
   tags              :
                     - docker-runner-1

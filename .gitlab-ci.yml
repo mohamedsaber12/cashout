@@ -100,7 +100,7 @@ sonarqube-check:
     - new-staging
 
 # deploy-to-staging    
-staging-deploy         :
+staging-deploy      :
   image             : tiangolo/docker-with-compose
   stage             : deployment
   tags              :

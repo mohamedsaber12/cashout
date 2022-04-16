@@ -115,7 +115,7 @@ staging-deploy      :
     - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan $payout_staging_server >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script            :
-                    - ssh -tt -o StrictHostKeyChecking=no "$payout_staging_server_user@$payout_staging_server" "sudo su - payouts-user && ls && exit"
+                    - ssh -tt -o StrictHostKeyChecking=no "$payout_staging_server_user@$payout_staging_server" 
   rules             :
                      - if: '$CI_COMMIT_BRANCH == "new-staging"'
   interruptible     : true

@@ -4,6 +4,7 @@ stages:
   - dependency_check
   - coverage-test
   - sonarqube
+  - deployment
 
 
 lint_test:
@@ -97,4 +98,28 @@ sonarqube-check:
   allow_failure: true
   only:
     - new-staging
-    
+
+# deploy-to-staging    
+staging-deploy         :
+  image             : tiangolo/docker-with-compose
+  stage             : deployment
+  tags              :
+                    - docker-runner-1
+  before_script     :
+                    - export DOCKER_HOST="ssh://$payout_staging_server_user@$payout_staging_server"
+                    - apk add --no-cache openssh-client curl bash
+                    - echo $(whoami)
+                    - mkdir -p ~/.ssh
+                    - eval $(ssh-agent -s)
+                    - cat "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
+                    - ssh-keyscan $ >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
+  script            :
+                    - docker info | grep "Name:"
+                    - sudo su - payouts-user
+                    - payouts
+                    - restart
+  after_script      :
+                    - unset DOCKER_HOST
+  rules             :
+                     - if: '$CI_COMMIT_BRANCH == "new-staging"'
+  interruptible     : true

@@ -105,7 +105,7 @@ staging-deploy      :
   tags              :
                     - docker-runner-1
   script            :
-                    - ssh $payout_staging_server_user@$payout_staging_server " sudo su - payouts-user && payouts && restart && exit"
+                    - ssh -tt -o StrictHostKeyChecking=no -i $payout_staging_server_user@$payout_staging_server " sudo su - payouts-user && payouts && restart && exit"
  
   after_script      :
                     - unset DOCKER_HOST

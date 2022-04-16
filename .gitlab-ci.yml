@@ -104,11 +104,14 @@ staging-deploy      :
   stage             : deployment
   tags              :
                     - docker-runner-1
+  before_script:
+    - apk add --no-cache openssh-client curl bash
+    - echo $(whoami)
+    - mkdir -p ~/.ssh
+    - cat "$staging_private_key" | tr -d '\r' | ssh-add -
+    - ssh-keyscan $STG_SERVER >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script            :
-                    - ssh -tt -o StrictHostKeyChecking=no -i $payout_staging_server_user@$payout_staging_server " sudo su - payouts-user && payouts && restart && exit"
- 
-  after_script      :
-                    - unset DOCKER_HOST
+                    - ssh -i $staging_private_key $payout_staging_server_user@$payout_staging_server " sudo su - payouts-user && payouts && restart && exit"
   rules             :
                      - if: '$CI_COMMIT_BRANCH == "new-staging"'
   interruptible     : true

@@ -99,6 +99,7 @@ sonarqube-check:
   only:
     - new-staging
 
+
 # deploy-to-staging    
 staging-deploy      :
   image: tiangolo/docker-with-compose

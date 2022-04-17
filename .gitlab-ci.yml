@@ -115,7 +115,7 @@ staging-deploy      :
     - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
     - ssh-keyscan $payout_staging_server >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
   script            :
-                    - ssh -tt -o StrictHostKeyChecking=no "$payout_staging_server_user@$payout_staging_server" "cd /home/payouts-user/payouts-portal/disbursment_tool && git pull origin new-staging && sh /home/payouts-user/restart.sh $$ python manage.py makemigrations && python manage.py migrate && exit"
+                    - ssh -tt -o StrictHostKeyChecking=no "$payout_staging_server_user@$payout_staging_server" "cd /home/payouts-user/payouts-portal/disbursment_tool && sh /home/payouts-user/restart.sh $$ python manage.py makemigrations && python manage.py migrate && exit"
   rules             :
                      - if: '$CI_COMMIT_BRANCH == "new-staging"'
   interruptible     : true

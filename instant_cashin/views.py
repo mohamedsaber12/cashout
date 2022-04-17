@@ -57,8 +57,10 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                 Q(transaction_status_description__icontains=search_keys)
             )
         if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
-            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
-                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            queryset = queryset.filter(
+                disbursed_date__gte=self.request.GET.get('export_start_date'),
+                disbursed_date__lte=self.request.GET.get('export_end_date')
+            )
             return queryset
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
@@ -122,8 +124,9 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
             ).prefetch_related("children_transactions").distinct().order_by("-created_at")
             
         if self.request.GET.get('export_start_date') and self.request.GET.get('export_end_date'):
-            queryset = queryset.filter(updated_at__gte=self.request.GET.get('export_start_date'),
-                                       updated_at__lte=self.request.GET.get('export_end_date'))
+            queryset = queryset.filter(
+                disbursed_date__gte=self.request.GET.get('export_start_date'),
+                disbursed_date__lte=self.request.GET.get('export_end_date'))
             return queryset
             
         paginator = Paginator(queryset, 20)

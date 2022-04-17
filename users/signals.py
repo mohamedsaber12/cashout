@@ -164,7 +164,7 @@ def send_activation_message(root_user, set_password_url, forget_password_msg=Fal
             "SMSSENDER": f"{root_user.client.smsc_sender_name}"
         }
         if forget_password_msg:
-            payload["TEXT"] = f"Click this link to reset your password <a href={set_password_url}>link</a>"
+            payload["TEXT"] = f"Click this link to reset your password {set_password_url}"
         # delete SMSSENDER from payload if it's empty
         if not root_user.client.smsc_sender_name:
             del(payload["SMSSENDER"])

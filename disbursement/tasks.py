@@ -24,6 +24,8 @@ from payouts.settings.celery import app
 from smpp.smpp_interface import send_sms
 from users.models import User
 from utilities.functions import custom_budget_logger, get_value_from_env
+from django.conf import settings
+
 
 from .models import DisbursementData, DisbursementDocData, BankTransaction
 
@@ -115,8 +117,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
         trx_callback_msg = callback_json["MESSAGE"]
         if trx_callback_status == "200":
             inst_obj.is_disbursed = True
-            inst_obj.transaction_status_code = "200"
-            inst_obj.transaction_status_description = trx_callback_msg
+            inst_obj.mark_successful("200", trx_callback_msg)
             doc_obj = inst_obj.document
             if doc_obj.owner.root.has_custom_budget:
                 doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
@@ -124,8 +125,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 )
         else:
             if not trx_callback_status in ["501", "-1"]:
-                inst_obj.transaction_status_code = trx_callback_status
-                inst_obj.transaction_status_description = trx_callback_msg
+                inst_obj.mark_failed(trx_callback_status, trx_callback_msg)
         inst_obj.reference_id = reference_id
         inst_obj.disbursed_date=datetime.datetime.now()
         inst_obj.save()
@@ -148,7 +148,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             )
             self.handle_disbursement_callback(recipient, ets_callback, issuer='etisalat')
 
-    def disburse_for_vodafone(self, checker, superadmin, vf_recipients, vf_pin):
+    def disburse_for_vodafone(self, checker, superadmin, vf_recipients, vf_pin, deposit=False):
         """Disburse for vodafone specific recipients"""
         from .api.views import DisburseAPIView          # Circular import
 
@@ -163,6 +163,9 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 random.choice(vf_agents)['MSISDN'], recipient['msisdn'], recipient['amount'],
                 vf_pin, 'vodafone', recipient['uid'], smsc_sender_name
             )
+            if deposit:
+               vf_payload["TYPE"] =  "DPSTREQ"
+               vf_log_payload["TYPE"] = "DPSTREQ"
             vf_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]
             )
@@ -248,6 +251,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             if settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE":
                 from .api.views import DisburseAPIView
+                superadmin = checker.root.client.creator
                 wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
                 vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
                 vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=pin)
@@ -297,8 +301,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if doc_obj.is_e_wallet:
                 vf_recipients, ets_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
                 if ets_recipients:
-                    if setting.ETISALAT_ISSUER == "VODAFONE":
-                        self.disburse_for_vodafone(checker, superadmin, ets_recipients, pin)
+                    if settings.ETISALAT_ISSUER == "VODAFONE":
+                        self.disburse_for_vodafone(checker, superadmin, ets_recipients, pin, True)
                         DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
                     else:
                         self.disburse_for_etisalat(checker, superadmin, ets_recipients)

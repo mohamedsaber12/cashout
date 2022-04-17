@@ -156,6 +156,10 @@ class DisburseAPIView(APIView):
         :param jsoned_response: flag to check if the response needed as json of raw response object
         :return: response object if successful disbursement or False
         """
+        payload["WALLETISSUER"] = "VODAFONE"
+        refined_payload["WALLETISSUER"] = "VODAFONE"
+        payload["TYPE"] = "DPSTREQ"
+        refined_payload["TYPE"] = "DPSTREQ"
         logging_header = "BULK DISBURSEMENT TO CENTRAL UIG"
         DATA_LOGGER.debug(f"[request] [{logging_header}] [{username}] -- {refined_payload}")
         request_obj = CustomRequests()
@@ -163,7 +167,7 @@ class DisburseAPIView(APIView):
         try:
             response = request_obj.post(url=url, payload=payload)
             DATA_LOGGER.debug(f"[response] [{logging_header}] [{username}] -- {request_obj.resp_log_msg}")
-            return response.json()
+            return response
         except (requests.Timeout, TimeoutError) as e:
             DATA_LOGGER.debug(f"[response Timeout] [Timeout FROM CENTRAL] [{username}] -- timeout:- {e.args}")
             inst_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, "Timeout request")

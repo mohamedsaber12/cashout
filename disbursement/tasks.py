@@ -259,7 +259,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if doc_obj.is_e_wallet:
                 vf_recipients, ets_recipients, aman_recipients = self.separate_recipients(doc_obj.id)
                 if ets_recipients:
-                    self.disburse_for_etisalat(checker, superadmin, ets_recipients)
+                    if setting.ETISALAT_ISSUER == "VODAFONE":
+                        self.disburse_for_vodafone(checker, superadmin, ets_recipients, pin)
+                        DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
+                    else:
+                        self.disburse_for_etisalat(checker, superadmin, ets_recipients)
                 if aman_recipients:
                     self.disburse_for_aman(checker, aman_recipients)
 

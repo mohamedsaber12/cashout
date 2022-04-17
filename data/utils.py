@@ -199,7 +199,6 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
     :return: Action of sending the mail to the user.
     """
     from_email = settings.SERVER_EMAIL
-    return
 
     if recipients is None:
         if user_obj.brand:

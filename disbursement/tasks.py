@@ -101,13 +101,34 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     disbursement_data_record.reason = trx_callback_status
             disbursement_data_record.disbursed_date=datetime.datetime.now()
             disbursement_data_record.save()
-
             if issuer == "aman":
                 AmanTransaction.objects.create(transaction=disbursement_data_record, bill_reference=reference_id)
-
             return True
         except (DisbursementData.DoesNotExist, Exception):
             return False
+
+    def handle_disbursement_callback_deposit(self, inst_obj, callback):
+        """Handle disbursement callback depending on issuer based recipients"""
+        callback_json = callback.json()
+        trx_callback_status = callback_json["TXNSTATUS"]
+        reference_id = callback_json["TXNID"]
+        trx_callback_msg = callback_json["MESSAGE"]
+        if trx_callback_status == "200":
+            inst_obj.is_disbursed = True
+            inst_obj.transaction_status_code = "200"
+            inst_obj.transaction_status_description = trx_callback_msg
+            doc_obj = inst_obj.document
+            if doc_obj.owner.root.has_custom_budget:
+                doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
+                    inst_obj.amount, "VODAFONE"
+                )
+        else:
+            if not trx_callback_status in ["501", "-1"]:
+                inst_obj.transaction_status_code = trx_callback_status
+                inst_obj.transaction_status_description = trx_callback_msg
+        inst_obj.reference_id = reference_id
+        inst_obj.disbursed_date=datetime.datetime.now()
+        inst_obj.save()
 
     def disburse_for_etisalat(self, checker, superadmin, ets_recipients):
         """Disburse for etisalat specific recipients"""
@@ -216,7 +237,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
         }
         return BankTransaction.objects.create(**transaction_dict)
 
-    def disburse_for_bank_docs(self, doc, checker):
+    def disburse_for_bank_docs(self, doc, checker, pin):
         """
         :param doc: the document being disbursed
         :param checker: the checker user who have taken the disbursement action
@@ -225,14 +246,31 @@ class BulkDisbursementThroughOneStepCashin(Task):
         if doc.is_bank_wallet:
             bank_wallets_transactions = doc.bank_wallets_transactions.all()
 
-            for instant_trx_obj in bank_wallets_transactions:
-                try:
-                    instant_trx_obj.disbursed_date = timezone.now()
-                    instant_trx_obj.save()
-                    bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
-                    BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
-                except:
-                    pass
+            if settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE":
+                from .api.views import DisburseAPIView
+                wallets_env_url = get_value_from_env(superadmin.vmt.vmt_environment)
+                vf_pin = get_value_from_env(f"{superadmin.username}_VODAFONE_PIN")
+                vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=pin)
+                smsc_sender_name = checker.root.client.smsc_sender_name
+                for instant_trx_obj in bank_wallets_transactions:
+                    vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
+                        random.choice(vf_agents)['MSISDN'], instant_trx_obj.anon_recipient, instant_trx_obj.amount,
+                        vf_pin, 'vodafone', instant_trx_obj.uid, smsc_sender_name
+                    )
+                    vf_callback = DisburseAPIView.disburse_for_recipients_deposit(
+                        wallets_env_url, vf_payload, checker.username, vf_log_payload, inst_obj=instant_trx_obj
+                    )
+                    self.handle_disbursement_callback_deposit(callback=vf_callback, inst_obj=instant_trx_obj)
+
+            else:
+                for instant_trx_obj in bank_wallets_transactions:
+                    try:
+                        instant_trx_obj.disbursed_date = timezone.now()
+                        instant_trx_obj.save()
+                        bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
+                        BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
+                    except:
+                        pass
         else:
             bank_cards_transactions = doc.bank_cards_transactions.all()
 
@@ -277,7 +315,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             # 2. Handle doc of type bank wallets/cards
             elif doc_obj.is_bank_wallet or doc_obj.is_bank_card:
-                self.disburse_for_bank_docs(doc=doc_obj, checker=checker)
+                self.disburse_for_bank_docs(doc=doc_obj, checker=checker, pin=pin)
                 DisbursementDocData.objects.filter(doc=doc_obj).update(has_callback=True)
 
         except (Doc.DoesNotExist, User.DoesNotExist, Exception) as err:

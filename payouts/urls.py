@@ -62,3 +62,7 @@ urlpatterns += [
 admin.site.site_header = settings.ADMIN_SITE_HEADER
 admin.site.site_title = settings.ADMIN_SITE_TITLE
 admin.site.index_title = settings.ADMIN_INDEX_TITLE
+
+# disable the new sidebar feature that exist in django 3.1+
+admin.autodiscover()
+admin.site.enable_nav_sidebar = False

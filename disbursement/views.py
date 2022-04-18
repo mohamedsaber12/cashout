@@ -29,6 +29,7 @@ from django.core.paginator import Paginator
 
 from rest_framework import status
 from rest_framework_expiring_authtoken.models import ExpiringToken
+from ratelimit.decorators import ratelimit
 
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
@@ -314,6 +315,7 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
 
 @setup_required
 @login_required
+@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
 def failed_disbursed_for_download(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
@@ -356,6 +358,7 @@ def failed_disbursed_for_download(request, doc_id):
         raise Http404
 
 @login_required
+@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
 def download_exported_transactions(request):
     filename = request.GET.get('filename', None)
     if not filename:
@@ -386,6 +389,7 @@ def download_exported_transactions(request):
 
 @setup_required
 @login_required
+@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
 def download_failed_validation_file(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (doc_obj.owner == request.user and request.user.is_maker) or request.user.is_superuser

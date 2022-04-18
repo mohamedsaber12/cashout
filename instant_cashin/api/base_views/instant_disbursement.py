@@ -245,12 +245,11 @@ class InstantDisbursementAPIView(views.APIView):
 
                 new_issuer = issuer
 
-                if issuer not in self.specific_issuers or \
-                    (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE") or \
+                if issuer not in self.specific_issuers:
+                    if (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE") or \
                         (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE"):
                         new_issuer = "VODAFONE"
-                        data_dict['MSISDN'] = instant_user.root.super_admin.first_non_super_agent(new_issuer)
-
+                    data_dict['MSISDN'] = instant_user.root.super_admin.first_non_super_agent(new_issuer)
                 if issuer.lower() == 'aman':
                     full_name = f"{serializer.validated_data['first_name']} {serializer.validated_data['last_name']}"
                 else:

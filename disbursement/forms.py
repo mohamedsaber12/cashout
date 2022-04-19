@@ -69,6 +69,8 @@ class AgentForm(forms.ModelForm):
         r = re.compile(r'(201|01|05|07)\d{8}')
         if not r.match(msisdn):
             raise forms.ValidationError(_("Mobile number is not valid"))
+        if Agent.objects.filter(msisdn=msisdn).exists():
+            raise forms.ValidationError(_("Please Provide new agent because this agent already exist."))
         return msisdn
 
 

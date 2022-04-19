@@ -47,10 +47,7 @@ class Clients(SuperOrOnboardUserRequiredMixin, ListView):
     def get_queryset(self):
         qs = super().get_queryset()
         if self.request.user.is_onboard_user:
-            qs = qs.filter(
-                creator=self.request.user.my_onboard_setups.user_created,
-                onboarded_by=self.request.user
-            )
+            qs = qs.filter(creator=self.request.user.my_onboard_setups.user_created)
         else:
             qs = qs.filter(creator=self.request.user)
 
@@ -212,10 +209,9 @@ class ClientFeesUpdate(OnboardUserRequiredMixin, UpdateView):
 
     def get_object(self, queryset=None):
         creator = self.request.user.my_onboard_setups.user_created
-        onboarded_by = self.request.user
         return get_object_or_404(
-                Client, creator=creator, onboarded_by=onboarded_by,
-                client__username=self.kwargs.get('username'))
+            Client, creator=creator,client__username=self.kwargs.get('username')
+        )
 
 
 class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView):

@@ -506,7 +506,7 @@ server {
    server_name localhost 127.0.0.1 payouts.paymobsolutions.com;
 
         location /media/  {
-                root /var/www/media/;
+                root /var/www/;
                 }
 
         location /static/ {

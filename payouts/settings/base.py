@@ -349,3 +349,11 @@ ETISALAT_ISSUER = env.str('ETISALAT_ISSUER', "ETISALAT")
 # RATELIMIT SETTINGS
 RATELIMIT_ENABLE = True
 RATELIMIT_USE_CACHE = 'default'
+
+
+CACHES = {
+    'default':{
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'dataflair_cache',
+    }
+}

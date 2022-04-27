@@ -31,6 +31,14 @@ class RootRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class RootUserORDashboardUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_instantapiviewer or request.user.is_root):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class MakeTransferRequestPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
     Admin user with any onboarding business model but the standard vodafone one.
@@ -67,6 +75,7 @@ class SuperRequiredMixin(LoginRequiredMixin):
         if not request.user.is_superadmin:
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
+
 
 class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
 

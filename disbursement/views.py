@@ -49,7 +49,7 @@ from users.mixins import (SuperFinishedSetupMixin,
                           AgentsListPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
                           UserWithDisbursementPermissionRequired,
-                          RootRequiredMixin)
+                          RootUserORDashboardUserRequiredMixin)
 from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
 from utilities.models import Budget
@@ -790,7 +790,7 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
 
 
 @method_decorator([setup_required], name='dispatch')
-class HomeView(RootRequiredMixin, TemplateView):
+class HomeView(RootUserORDashboardUserRequiredMixin, TemplateView):
 
     template_name = 'disbursement/home_root.html'
 

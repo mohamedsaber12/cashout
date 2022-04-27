@@ -22,7 +22,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import ListView, View
+from django.views.generic import ListView, View, TemplateView
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.core.paginator import Paginator
@@ -48,7 +48,8 @@ from users.mixins import (SuperFinishedSetupMixin,
                           SuperRequiredMixin,
                           AgentsListPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
-                          UserWithDisbursementPermissionRequired)
+                          UserWithDisbursementPermissionRequired,
+                          RootRequiredMixin)
 from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
 from utilities.models import Budget
@@ -787,6 +788,11 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR
 
+
+@method_decorator([setup_required], name='dispatch')
+class HomeView(RootRequiredMixin, TemplateView):
+
+    template_name = 'disbursement/home_root.html'
 
 class AgentsListView(AgentsListPermissionRequired, ListView):
     """

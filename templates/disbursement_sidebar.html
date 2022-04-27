@@ -14,6 +14,9 @@
         {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding or request.user.is_banks_standard_model_onboaring %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-files-o"></i>{% trans 'Disbursement Files' %}</a></li>
         {% elif request.user.is_accept_vodafone_onboarding %}
+          {% if request.user.is_root %}
+            <li><a href="{% url 'disbursement:home_root' %}"><i class="fa fa-home"></i>{% trans 'Home' %}</a></li>
+          {% endif %}
           <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
           <li><a href="{% url 'data:bank_wallets_home' %}">
             <img style="width: 20px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>

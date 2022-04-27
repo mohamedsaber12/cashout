@@ -47,6 +47,8 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 @login_required
 @setup_required
 def redirect_home(request):
+    if request.user.is_root and request.user.is_accept_vodafone_onboarding:
+        return redirect(reverse('disbursement:home_root'))
     if request.user.is_superuser:
         return redirect(reverse('admin:index'))
     if request.user.is_finance:

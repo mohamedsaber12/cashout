@@ -13,6 +13,28 @@
   <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+  <style>
+    .export-dropdown {
+      position: relative;
+      display: inline-block;
+      border: 0;
+      background: transparent;
+      border-radius: 1.25rem!important;
+      width: 8rem!important;
+      padding: .75rem!important;
+      padding-bottom: .5rem!important;
+      -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
+      margin-left: 47%;
+    }
+    .input_date {
+      border-radius: 1.25rem!important;
+      width: 80%!important;
+    }
+    hr.solid {
+      border-top: 1px solid #bbb;
+    }
+  </style>
 {% endblock gentellacss %}
 
 {% block body %}
@@ -39,6 +61,10 @@
         </form>
       </div>
     </div>
+  {% endif %}
+  {% if request.user.is_root and request.user.is_accept_vodafone_onboarding %}
+    {% include 'export_bar.html' %}
+    <hr class="solid">
   {% endif %}
 
   {% include 'data/document_disbursement_list.html' with object_list=banks_doc_list list_header=doc_list_header %}

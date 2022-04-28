@@ -52,7 +52,7 @@ from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
 from disbursement.utils import add_fees_and_vat_to_qs
-from data.utils import upload_file_to_vodafone 
+from data.utils import upload_file_to_vodafone, ExportTransactionsBaseView
 
 
 
@@ -1512,17 +1512,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         else:
             self.prepare_and_send_report_mail(report_download_url)
         return True
-    
-class ExportDashboardUserTransactionsEwallets(Task):
-    
-    user = None
-    data = None
-    start_date = None
-    end_date = None
-    
-    
+
+
+class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBaseView, Task):
+
     def create_transactions_report(self):
-        filename = f"ewallets_transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
+        filename = f"ewallets_transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
 
@@ -1558,16 +1553,24 @@ class ExportDashboardUserTransactionsEwallets(Task):
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user_id, queryset_ids, start_date, end_date):
-        self.user = User.objects.get(id=user_id)
-        root = self.user.root
-        self.data = add_fees_and_vat_to_qs(
-            InstantTransaction.objects.filter(uid__in=queryset_ids),
-            root,
-            'wallets'
-        )
+    def run(self, user_id, start_date, end_date):
         self.start_date = start_date
         self.end_date = end_date
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+
+
+        # 1. Format start and end date
+        self.refine_start_and_end_date_format()
+
+        # 2. get data of current client within date range
+        self.data = InstantTransaction.objects.filter(
+            (Q(document__disbursed_by__root=root) |
+             Q(from_user__root=root)),
+            Q(disbursed_date__gte=self.first_day),
+            Q(disbursed_date__lte=self.last_day),
+        )
+
         download_url = self.create_transactions_report()
         mail_content = _(
                 f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
@@ -1576,12 +1579,12 @@ class ExportDashboardUserTransactionsEwallets(Task):
         )
         mail_subject = "Ewallets Report"
         deliver_mail(self.user, _(mail_subject), mail_content)
-        
-        
-class ExportDashboardUserTransactionsBanks(Task):
-    
+
+
+class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseView, Task):
+
     def create_transactions_report(self):
-        filename = f"banks_transactions_report_from_{self.start_date}_to{self.end_date}_{randomword(8)}.xls"
+        filename = f"banks_transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
 
@@ -1616,16 +1619,25 @@ class ExportDashboardUserTransactionsBanks(Task):
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user_id, queryset_ids, start_date, end_date):
-        self.user = User.objects.get(id=user_id)
-        root = self.user.root
-        self.data = add_fees_and_vat_to_qs(
-            BankTransaction.objects.filter(id__in=queryset_ids),
-            root,
-            None
-            )
+    def run(self, user_id, start_date, end_date):
         self.start_date = start_date
         self.end_date = end_date
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+
+        # 1. Format start and end date
+        self.refine_start_and_end_date_format()
+
+        # 2. get data of current client within date range
+        self.data = BankTransaction.objects.filter(
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(end_to_end=""),
+                (Q(document__disbursed_by__root=root) |
+                Q(user_created__root=root))
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id")
+
         download_url = self.create_transactions_report()
         mail_content = _(
                 f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
@@ -1636,11 +1648,82 @@ class ExportDashboardUserTransactionsBanks(Task):
         deliver_mail(self.user, _(mail_subject), mail_content)
 
 
+class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
+
+    def create_transactions_report(self):
+        filename = f"e_wallets_transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+
+        paginator = Paginator(self.data, 65535)
+        for page_number in paginator.page_range:
+            queryset = paginator.page(page_number)
+            column_names_list = [
+                "Transaction UID", "Document", "Recipient", "Amount", "Fees", "Vat", "Issuer",
+                "Is Disbursed", "Disbursed At", "Created At", "Reason"
+            ]
+            ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
+
+            # 1. Write sheet header/column names - first row
+            row_num = 0
+            font_style = xlwt.XFStyle()
+            font_style.font.bold = True
+
+            for col_nums in range(len(column_names_list)):
+                ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+
+            row_num = row_num + 1
+
+            for row in queryset:
+                ws.write(row_num, 0, str(row.uid))
+                ws.write(row_num, 1, str(row.doc))
+                ws.write(row_num, 2, str(row.msisdn))
+                ws.write(row_num, 3, str(row.amount))
+                ws.write(row_num, 4, str(row.fees))
+                ws.write(row_num, 5, str(row.vat))
+                ws.write(row_num, 6, str(row.issuer))
+                ws.write(row_num, 7, str(row.is_disbursed))
+                ws.write(row_num, 8, str(row.disbursed_date))
+                ws.write(row_num, 9, str(row.created_at))
+                ws.write(row_num, 9, str(row.reason))
+                row_num = row_num + 1
+
+        wb.save(file_path)
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
+
+    def run(self, user_id, start_date, end_date):
+        self.start_date = start_date
+        self.end_date = end_date
+        self.user = User.objects.get(id=user_id)
+        root = self.user.root
+
+        # 1. Format start and end date
+        self.refine_start_and_end_date_format()
+
+        # 2. get data of current client within date range
+        self.data = DisbursementData.objects.filter(
+                Q(doc__disbursed_by__root=root),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+        )
+
+        download_url = self.create_transactions_report()
+        mail_content = _(
+                f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
+                f"transactions report within the period of {self.start_date} to {self.end_date} "
+                f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+        )
+        mail_subject = "Ewallets Report"
+        deliver_mail(self.user, _(mail_subject), mail_content)
+
+
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
 EWalletsSheetProcessor = app.register_task(EWalletsSheetProcessor())
 ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
-ExportDashboardUserTransactionsEwallets = app.register_task(ExportDashboardUserTransactionsEwallets())
-ExportDashboardUserTransactionsBanks = app.register_task(ExportDashboardUserTransactionsBanks())
+ExportPortalRootOrDashboardUserTransactionsEwallets = app.register_task(ExportPortalRootOrDashboardUserTransactionsEwallets())
+ExportPortalRootOrDashboardUserTransactionsBanks = app.register_task(ExportPortalRootOrDashboardUserTransactionsBanks())
+ExportPortalRootTransactionsEwallet = app.register_task(ExportPortalRootTransactionsEwallet())
 
 
 @app.task()

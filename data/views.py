@@ -32,9 +32,11 @@ from utilities.models import AbstractBaseDocType
 from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm,
                     FormatFormSet)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
-from .tasks import (BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor,
-                    doc_review_maker_mail, handle_uploaded_file,
-                    notify_checkers, notify_disbursers)
+from .tasks import (
+    BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor, doc_review_maker_mail,
+    handle_uploaded_file, notify_checkers, notify_disbursers, ExportPortalRootTransactionsEwallet,
+    ExportPortalRootOrDashboardUserTransactionsEwallets, ExportPortalRootOrDashboardUserTransactionsBanks
+)
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
@@ -96,6 +98,14 @@ class DisbursementHomeView(UserWithDisbursementPermissionRequired, View):
             1. Documents can be filtered by date.
             2. Documents are paginated but not used in template.
         """
+        # fire export action within date range
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        if export_start_date and export_end_date:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
+            ExportPortalRootTransactionsEwallet.delay(self.request.user.id, export_start_date, export_end_date)
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+
         has_vmt_setup = request.user.root.has_vmt_setup
         doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=self.doc_type)
         paginator = Paginator(doc_list_disbursement, 7)
@@ -167,6 +177,17 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
             1. Documents can be filtered by date.
             2. Documents are paginated but not used in template.
         """
+        # fire export action within date range
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        if export_start_date and export_end_date:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
+            if "bank-wallets" in request.path:
+                ExportPortalRootOrDashboardUserTransactionsEwallets.delay(self.request.user.id, export_start_date, export_end_date)
+            else:
+                ExportPortalRootOrDashboardUserTransactionsBanks.delay(self.request.user.id, export_start_date, export_end_date)
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+
         has_vmt_setup = request.user.root.has_vmt_setup
         banks_doc_list = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=self.doc_type)
         paginator = Paginator(banks_doc_list, 7)

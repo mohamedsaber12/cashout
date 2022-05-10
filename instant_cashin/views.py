@@ -58,7 +58,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
                 Q(anon_recipient__iexact=search_keys)|
                 Q(transaction_status_description__icontains=search_keys)
             )
-        paginator = Paginatinstant_cashin/views.pyor(queryset, 20)
+        paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
         return paginator.get_page(page)
         

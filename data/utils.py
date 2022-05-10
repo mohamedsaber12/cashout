@@ -1,5 +1,5 @@
 import os
-import random, string, datetime, logging
+import random, string, logging
 import xlsxwriter
 from urllib.parse import urlencode
 
@@ -52,7 +52,7 @@ def update_filename(instance, filename):
     :param filename: filename of uploaded file
     :return:
     """
-    now = datetime.datetime.now()
+    now = datetime.now()
     path = "documents/files_uploaded/%d/%s/" %(now.year, now.month)
     file, ext = filename.split('.')
     filename = file + '_' + instance.owner.username + '_' +\

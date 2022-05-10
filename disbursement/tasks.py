@@ -111,24 +111,28 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
     def handle_disbursement_callback_deposit(self, inst_obj, callback):
         """Handle disbursement callback depending on issuer based recipients"""
-        callback_json = callback.json()
-        trx_callback_status = callback_json["TXNSTATUS"]
-        reference_id = callback_json["TXNID"]
-        trx_callback_msg = callback_json["MESSAGE"]
-        if trx_callback_status == "200":
-            inst_obj.is_disbursed = True
-            inst_obj.mark_successful("200", trx_callback_msg)
-            doc_obj = inst_obj.document
-            if doc_obj.owner.root.has_custom_budget:
-                doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
-                    inst_obj.amount, "VODAFONE"
-                )
-        else:
-            if not trx_callback_status in ["501", "-1"]:
-                inst_obj.mark_failed(trx_callback_status, trx_callback_msg)
-        inst_obj.reference_id = reference_id
-        inst_obj.disbursed_date=datetime.datetime.now()
-        inst_obj.save()
+        try:
+            callback_json = callback.json()
+            trx_callback_status = callback_json["TXNSTATUS"]
+            reference_id = callback_json["TXNID"]
+            trx_callback_msg = callback_json["MESSAGE"]
+            if trx_callback_status == "200":
+                inst_obj.is_disbursed = True
+                inst_obj.mark_successful("200", trx_callback_msg)
+                doc_obj = inst_obj.document
+                if doc_obj.owner.root.has_custom_budget:
+                    doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
+                        inst_obj.amount, "VODAFONE"
+                    )
+            else:
+                if not trx_callback_status in ["501", "-1"]:
+                    inst_obj.mark_failed(trx_callback_status, trx_callback_msg)
+            inst_obj.reference_id = reference_id
+            inst_obj.disbursed_date=datetime.datetime.now()
+            inst_obj.save()
+        except Exception as err:
+            inst_obj.mark_failed(500, "External Error")
+            DISBURSE_LOGGER.debug(f"[message] [HANDLE DISB CALLBACK DEPOSIT -- {err.args}")
 
     def disburse_for_etisalat(self, checker, superadmin, ets_recipients):
         """Disburse for etisalat specific recipients"""

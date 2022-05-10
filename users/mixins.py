@@ -3,7 +3,7 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import SupportSetup, Client, User, SuperAdminUser
+from .models import SupportSetup, Client, User, SuperAdminUser, OnboardUserSetup, SupervisorSetup
 
 
 class ParentPermissionMixin(object):
@@ -27,6 +27,14 @@ class RootRequiredMixin(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_root:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class RootUserORDashboardUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_instantapiviewer or request.user.is_root):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -65,6 +73,22 @@ class SuperRequiredMixin(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superadmin:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_onboard_user):
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SuperAdminOrSupervisorUserRequiredMixin(LoginRequiredMixin):
+
+    def dispatch(self, request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_supervisor):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -181,6 +205,27 @@ class SupportUserRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
+class OnboardUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only onboard users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_onboard_user:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class SupervisorUserRequiredMixin(LoginRequiredMixin):
+    """
+    Mixin to give access permission for only supervisor users
+    """
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_supervisor:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
 class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
     """
     Give the access permission of a certain view to only SuperAdmin users,
@@ -193,6 +238,12 @@ class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
             entity_admin_username = self.request.resolver_match.kwargs.get('username')
 
             for client_obj in self.request.user.clients.all():
+                if client_obj.client.username == entity_admin_username:
+                    return True
+        elif self.request.user.is_onboard_user:
+            entity_admin_username = self.request.resolver_match.kwargs.get('username')
+
+            for client_obj in self.request.user.my_onboard_setups.user_created.clients.all():
                 if client_obj.client.username == entity_admin_username:
                     return True
 
@@ -248,7 +299,7 @@ class SuperFinishedSetupMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.has_uncomplete_entity_creation():
+        if request.user.is_superadmin and not request.user.has_uncomplete_entity_creation():
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -268,13 +319,31 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
             elif current_user.is_superadmin:
                 client_setups = Client.objects.filter(creator=current_user).select_related('client')
                 support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
+                onboard_user_setups = OnboardUserSetup.objects.filter(user_created=current_user). \
+                    select_related('onboard_user')
+                supervisor_setups = SupervisorSetup.objects.filter(user_created=current_user). \
+                    select_related('supervisor_user')
                 members_list = [obj.client.username for obj in client_setups]
                 members_list += [obj.support_user.username for obj in support_setups]
+                members_list += [obj.onboard_user.username for obj in onboard_user_setups]
+                members_list += [obj.supervisor_user.username for obj in supervisor_setups]
                 if profile_username in members_list:
                     return True
             elif current_user.is_root:
                 members_objects = User.objects.get_all_hierarchy_tree(current_user.hierarchy)
                 members_list = [user.username for user in members_objects]
+                if profile_username in members_list:
+                    return True
+            elif current_user.is_supervisor:
+                support_setups = SupportSetup.objects.filter(user_created=current_user.my_setup.user_created).select_related('support_user')
+                members_list = [obj.support_user.username for obj in support_setups]
+                if profile_username in members_list:
+                    return True
+            elif current_user.is_onboard_user:
+                client_setups = Client.objects.filter(
+                    creator=current_user.my_onboard_setups.user_created
+                ).select_related('client')
+                members_list = [obj.client.username for obj in client_setups]
                 if profile_username in members_list:
                     return True
 
@@ -304,6 +373,10 @@ class UserOwnsMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
                 members_objects = User.objects.get_all_hierarchy_tree(current_user.hierarchy)
                 members_ids_list = [user.id for user in members_objects]
                 if target_id in members_ids_list:
+                    return True
+            elif current_user.is_supervisor and target_is_support_member:
+                support_setup = SupportSetup.objects.get(id=int(target_id))
+                if support_setup.user_created == current_user.my_setup.user_created:
                     return True
 
         return False

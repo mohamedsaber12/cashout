@@ -22,6 +22,8 @@ from ..mixins import (
     SuperFinishedSetupMixin, SuperOwnsClientRequiredMixin,
     SuperOwnsCustomizedBudgetClientRequiredMixin,
     SuperRequiredMixin,
+    OnboardUserRequiredMixin,
+    SuperOrOnboardUserRequiredMixin,
     SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired,
 )
 from ..models import Client, EntitySetup, RootUser, User, Setup
@@ -30,7 +32,7 @@ ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 DELETE_USER_VIEW_LOGGER = logging.getLogger("delete_user_view")
 
 
-class Clients(SuperRequiredMixin, ListView):
+class Clients(SuperOrOnboardUserRequiredMixin, ListView):
     """
     List clients related to same super user.
     Search clients by username, firstname or lastname by "search" query parameter.
@@ -44,7 +46,10 @@ class Clients(SuperRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset()
-        qs = qs.filter(creator=self.request.user)
+        if self.request.user.is_onboard_user:
+            qs = qs.filter(creator=self.request.user.my_onboard_setups.user_created)
+        else:
+            qs = qs.filter(creator=self.request.user)
 
         if self.request.GET.get("search"):
             search = self.request.GET.get("search")
@@ -65,7 +70,7 @@ class Clients(SuperRequiredMixin, ListView):
         return qs
 
 
-class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
+class SuperAdminRootSetup(SuperOrOnboardUserRequiredMixin, CreateView):
     """
     View for SuperAdmin for creating root user.
     """
@@ -75,9 +80,7 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
     template_name = 'entity/add_root.html'
 
     def get_success_url(self):
-
-        if not self.object.is_vodafone_default_onboarding or\
-           not self.object.is_banks_standard_model_onboaring:
+        if not (self.object.is_vodafone_default_onboarding or self.object.is_banks_standard_model_onboaring):
             return reverse('data:main_view')
 
         token, created = ExpiringToken.objects.get_or_create(user=self.object)
@@ -95,11 +98,13 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
     def handle_entity_extra_setups(self):
         entity_dict = {
-            "user": self.request.user,
+            "user": self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_onboard_setups.user_created,
             "entity": self.object
         }
         client_dict = {
-            "creator": self.request.user,
+            "creator": self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_onboard_setups.user_created,
             "client": self.object,
         }
 
@@ -143,6 +148,10 @@ class SuperAdminRootSetup(SuperRequiredMixin, CreateView):
 
         self.object.user_permissions.\
             add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
+
+        if self.request.user.is_onboard_user:
+            client_dict['onboarded_by'] = self.request.user
+
         EntitySetup.objects.create(**entity_dict)
         Client.objects.create(**client_dict)
 
@@ -170,11 +179,12 @@ class SuperAdminCancelsRootSetupView(SuperOwnsClientRequiredMixin, View):
             DELETE_USER_VIEW_LOGGER.debug(
                     f"[message] [USER DOES NOT EXIST] [{request.user}] -- "
                     f"tried to delete does not exist user with username {username}")
-
+        if self.request.user.is_onboard_user:
+            return redirect(reverse("users:clients"))
         return redirect(reverse("data:e_wallets_home"))
 
 
-class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
+class ClientFeesSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupMixin, CreateView):
     """
     View for SuperAdmin to setup fees for the client
     """
@@ -189,6 +199,19 @@ class ClientFeesSetup(SuperRequiredMixin, SuperFinishedSetupMixin, CreateView):
         root = ExpiringToken.objects.get(key=self.kwargs['token']).user
         kwargs.update({'instance': root.client})
         return kwargs
+
+
+class ClientFeesUpdate(OnboardUserRequiredMixin, UpdateView):
+    model = Client
+    form_class = ClientFeesForm
+    template_name = 'onboard/update_fees_profile.html'
+    success_url = reverse_lazy('users:clients')
+
+    def get_object(self, queryset=None):
+        creator = self.request.user.my_onboard_setups.user_created
+        return get_object_or_404(
+            Client, creator=creator,client__username=self.kwargs.get('username')
+        )
 
 
 class CustomClientFeesProfilesUpdateView(SuperOwnsCustomizedBudgetClientRequiredMixin, UpdateView):

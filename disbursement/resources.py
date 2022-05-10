@@ -1,6 +1,8 @@
 from import_export import resources
 from import_export.fields import Field
 
+from django.db.models import Q
+
 from core.models import AbstractBaseStatus
 from instant_cashin.models.instant_transactions import InstantTransaction
 
@@ -32,8 +34,9 @@ class DisbursementDataResourceForEWallets(resources.ModelResource):
 
         if self.is_disbursed is None:
             return qs.filter(doc_id=self.doc.id)
-        else:    
+        elif self.is_disbursed: # get all success records
             return qs.filter(is_disbursed=self.is_disbursed, doc_id=self.doc.id)
+        return qs.filter(Q(is_disbursed=self.is_disbursed), Q(doc_id=self.doc.id), ~Q(reason__exact=''))
 
     def export_resource(self, obj):
         obj_resources = super().export_resource(obj)

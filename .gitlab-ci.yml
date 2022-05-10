@@ -4,6 +4,7 @@ stages:
   - dependency_check
   - coverage-test
   - sonarqube
+  - deployment
 
 
 lint_test:
@@ -66,6 +67,7 @@ coverage_test:
    script:
      - docker-compose up -d --build
      - sleep 200
+     - docker logs PayoutsPortal
      - docker exec PayoutsPortal coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
      - docker exec PayoutsPortal coverage report --fail-under=20
      - docker exec PayoutsPortal coverage xml --fail-under=20 --ignore-errors
@@ -94,6 +96,26 @@ sonarqube-check:
   script: 
     - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html -Dsonar.python.coverage.reportPaths=coverage.xml
   allow_failure: true
-  only: 
+  only:
     - new-staging
-    
+
+
+# deploy-to-staging    
+staging-deploy      :
+  image: tiangolo/docker-with-compose
+  services:
+    -  docker:dind
+  stage             : deployment
+  tags              :
+                    - docker-runner-1
+  before_script:
+    - apk add --no-cache openssh-client curl bash
+    - mkdir -p ~/.ssh
+    - eval $(ssh-agent -s)
+    - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
+    - ssh-keyscan $payout_staging_server >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
+  script            :
+                    - ssh -tt -o StrictHostKeyChecking=no "$payout_staging_server_user@$payout_staging_server" "cd /home/payouts-user/payouts-portal/disbursment_tool && git pull origin new-staging &&sh /home/payouts-user/restart.sh && exit"
+  rules             :
+                     - if: '$CI_COMMIT_BRANCH == "new-staging"'
+  interruptible     : true

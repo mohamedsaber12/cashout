@@ -7,7 +7,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.core.paginator import PageNotAnInteger, EmptyPage
 from django.core.paginator import Paginator
-from django.utils.timezone import now
+from django.utils.timezone import datetime, make_aware, now
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.auth.base_user import BaseUserManager
 from django.shortcuts import redirect
@@ -264,3 +264,35 @@ def upload_file_to_vodafone(file_path):
     srv.chdir(get_from_env("VF_DIRECTORY"))  # change directory on remote server
     srv.put(file_path) 
     srv.close()
+
+
+class ExportTransactionsBaseView:
+    user = None
+    data = None
+    start_date = None
+    end_date = None
+    first_day = None
+    last_day = None
+
+    def refine_start_and_end_date_format(self):
+        """
+        Refine start date and end date format using datetime and set values for first and last days.
+        make_aware(): Converts naive datetime object (without timezone info) to the one that has timezone info,
+            using timezone specified in your django settings if you don't specify it explicitly as a second argument.
+        """
+        first_day = datetime(
+            year=int(self.start_date.split('-')[0]),
+            month=int(self.start_date.split('-')[1]),
+            day=int(self.start_date.split('-')[2]),
+        )
+        self.first_day = make_aware(first_day)
+
+        last_day = datetime(
+            year=int(self.end_date.split('-')[0]),
+            month=int(self.end_date.split('-')[1]),
+            day=int(self.end_date.split('-')[2]),
+            hour=23,
+            minute=59,
+            second=59,
+        )
+        self.last_day = make_aware(last_day)

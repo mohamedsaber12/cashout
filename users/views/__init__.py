@@ -1,6 +1,8 @@
-from .clients_views import (ClientFeesSetup, Clients, CustomClientFeesProfilesUpdateView,
-                            SuperAdminFeesProfileTemplateView, SuperAdminCancelsRootSetupView, SuperAdminRootSetup,
-                            toggle_client)
+from .clients_views import (
+    ClientFeesSetup, Clients, CustomClientFeesProfilesUpdateView,
+    SuperAdminFeesProfileTemplateView, SuperAdminCancelsRootSetupView, SuperAdminRootSetup,
+    toggle_client, ClientFeesUpdate
+)
 from .disbursement_setups_views import (AddCheckerView, AddMakerView, CategoryFormView, CheckerFormView,
                                   LevelsFormView, LevelsView, MakerFormView, PinFormView, BaseFormsetView, change_pin_view)
 from .instant_views import APICheckerCreateView, ViewerCreateView, OAuth2ApplicationDetailView
@@ -13,4 +15,11 @@ from .support_views import (
     ClientsForSupportListView, DocumentForSupportDetailView, DocumentsForSupportListView,
     SuperAdminSupportSetupCreateView, SupportHomeView, SupportUsersListView,
     OnboardingNewInstantAdmin, ClientCredentialsDetails
+)
+from .onboard_user_view import (
+    OnboardUsersListView, OnbooardUserHomeView, SuperAdminOnboardSetupCreateView
+)
+from .supervisor_views import (
+    SupervisorUsersListView, SuperAdminSupervisorSetupCreateView, SupervisorUserHomeView,
+    SupervisorReactivateSupportView
 )

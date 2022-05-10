@@ -19,6 +19,8 @@ if hasattr(settings, 'LOGIN_EXEMPT_URLS'):
 ALLOWED_URLS_FOR_ADMIN = (
     re.compile(r'^client*'),
     re.compile(r'^support*'),
+    re.compile(r'^onboard-user*'),
+    re.compile(r'^supervisor*'),
     re.compile(r'^profile*'),
     re.compile(r'^fees-profile/*'),
     re.compile(r'^agents/'),
@@ -155,6 +157,5 @@ class AgentAndSuperAgentForAdminMiddleware:
                     request.user.is_vodafone_default_onboarding and \
                 (request.user.is_checker or request.user.is_root or request.user.is_maker):
                     has_agent = Agent.objects.filter(wallet_provider=request.user.root).exists()
-                    print(has_agent)
                     if not has_agent and not path in urls:
                         return redirect(reverse("users:no_agent_error"))

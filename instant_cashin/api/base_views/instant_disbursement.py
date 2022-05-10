@@ -24,7 +24,10 @@ from ...models import InstantTransaction
 from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
 from ...utils import default_response_structure, get_digits, get_from_env
 from ..mixins import IsInstantAPICheckerUser
-from ..serializers import InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer
+from ..serializers import (
+    InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer,
+    BankTransactionResponseModelSerializer
+)
 from django.conf import settings
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
@@ -119,7 +122,7 @@ class InstantDisbursementAPIView(views.APIView):
         )
         if issuer in ["bank_wallet", "orange"]:
             creditor_account_number = serializer.validated_data["msisdn"]
-            creditor_bank = "MIDG" if get_from_env("ENVIRONMENT") != "staging" else "THWL"     # ToDo: Should be "THWL" at the staging environment
+            creditor_bank = "MIDG"
             transaction_type = "MOBILE"
             instant_transaction = InstantTransaction.objects.create(
                     from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
@@ -150,7 +153,8 @@ class InstantDisbursementAPIView(views.APIView):
             "is_single_step":serializer.validated_data["is_single_step"],
             "client_transaction_reference":client_reference_id,
             "fees": fees,
-            "vat": vat
+            "vat": vat,
+            "comment": serializer.validated_data.get("comment")
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
@@ -205,7 +209,6 @@ class InstantDisbursementAPIView(views.APIView):
         Handles POST HTTP requests
         """
         serializer = InstantDisbursementRequestSerializer(data=request.data)
-
         try:
             serializer.is_valid(raise_exception=True)
             if 'user' in serializer.validated_data:
@@ -370,14 +373,17 @@ class InstantDisbursementAPIView(views.APIView):
 
             # check if msisdn is test number
             if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
-                    issuer in ['orange', 'bank_wallet'] and \
-                    instant_trx_obj.anon_recipient == get_from_env(f"test_number_for_{issuer}"):
-
+                    (bank_trx_obj.creditor_account_number == get_from_env(f"test_number_for_{issuer}") or \
+                     bank_trx_obj.creditor_account_number == get_from_env(f"test_IBAN_number")):
                 bank_trx_obj.mark_successful("8333", "success")
                 instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
                 bank_trx_obj.user_created.root. \
                     budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-                return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+                if instant_trx_obj:
+                    return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+                else:
+                    return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+
 
             return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
 

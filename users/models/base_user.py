@@ -27,6 +27,8 @@ TYPES = (
     (6, 'InstantAPIChecker'),
     (7, 'InstantAPIViewer'),
     (8, 'Support'),
+    (9, 'OnboardUser'),
+    (12, 'SuperVisor')
 )
 
 
@@ -198,6 +200,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_support(self):
         return self.user_type == 8
+
+    @cached_property
+    def is_onboard_user(self):
+        return self.user_type == 9
     
     @cached_property
     def is_finance(self):
@@ -206,6 +212,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_finance_with_instant_transaction_view(self):
         return self.user_type == 11
+
+    @cached_property
+    def is_supervisor(self):
+        return self.user_type == 12
 
     @cached_property
     def is_instant_member(self):

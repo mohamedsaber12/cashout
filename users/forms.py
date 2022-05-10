@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-import copy
+import copy, logging
 
 from django import forms
 from django.conf import settings
@@ -24,11 +24,35 @@ from django_otp.forms import OTPAuthenticationFormMixin
 from oauth2_provider.models import Application
 
 from core.utils.validations import phonenumber_form_validate
-from .models import (Brand, CheckerUser, Client, EntitySetup,
-                     InstantAPICheckerUser, InstantAPIViewerUser, Levels,
-                     MakerUser, RootUser, SupportUser, UploaderUser, User)
-from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
-                      ALLOWED_UPPER_CHARS)
+from .models import (
+    Brand, CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
+    Levels, MakerUser, RootUser, SupportUser, UploaderUser, User, OnboardUser, SupervisorUser
+)
+from .signals import (
+    ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS, ALLOWED_UPPER_CHARS,
+    send_activation_message
+)
+
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
+
+
+def determine_onboarding_permission(user):
+    if user.is_vodafone_default_onboarding:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='vodafone_default_onboarding')
+    elif user.is_accept_vodafone_onboarding:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='accept_vodafone_onboarding')
+    elif user.is_vodafone_facilitator_onboarding:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
+    elif user.is_banks_standard_model_onboaring:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='banks_standard_model_onboaring')
+    else:
+        onboarding_permission = Permission.objects. \
+            get(content_type__app_label='users', codename='instant_model_onboarding')
+    return onboarding_permission
 
 
 class SetPasswordForm(forms.Form):
@@ -326,7 +350,7 @@ class RootCreationForm(forms.ModelForm):
         random_pass += get_random_string(allowed_chars=ALLOWED_SYMBOLS, length=4)
         user.set_password(random_pass)
 
-        if self.request.user.is_superadmin:
+        if self.request.user.is_superadmin or self.request.user.is_onboard_user:
             user.user_type = 3
             user = self.define_new_admin_hierarchy(user)
 
@@ -393,23 +417,57 @@ class SupportUserCreationForm(forms.ModelForm):
         user = super().save(commit=False)
         user.user_type = 8
         user.save()
+        onboarding_permission = determine_onboarding_permission(self.request.user)
+        user.user_permissions.add(onboarding_permission)
+        return user
 
-        if self.request.user.is_vodafone_default_onboarding:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='vodafone_default_onboarding')
-        elif self.request.user.is_accept_vodafone_onboarding:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='accept_vodafone_onboarding')
-        elif self.request.user.is_vodafone_facilitator_onboarding:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='vodafone_facilitator_accept_vodafone_onboarding')
-        elif self.request.user.is_banks_standard_model_onboaring:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='banks_standard_model_onboaring')
-        else:
-            onboarding_permission = Permission.objects.\
-                get(content_type__app_label='users', codename='instant_model_onboarding')
 
+class OnboardUserCreationForm(forms.ModelForm):
+    """
+    Onboard user creation form
+    """
+    class Meta:
+        model = OnboardUser
+        fields = ['username', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 9
+        user.save()
+
+        onboarding_permission = determine_onboarding_permission(self.request.user)
+        user.user_permissions.add(onboarding_permission)
+        return user
+
+
+class SupervisorUserCreationForm(forms.ModelForm):
+    """
+    Supervisor user creation form
+    """
+    class Meta:
+        model = SupervisorUser
+        fields = ['username', 'email']
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super().__init__(*args, **kwargs)
+
+        for field in self.fields:
+            self.fields[field].widget.attrs.setdefault('placeholder', self.fields[field].label)
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.user_type = 12
+        user.save()
+
+        onboarding_permission = determine_onboarding_permission(self.request.user)
         user.user_permissions.add(onboarding_permission)
         return user
 
@@ -798,6 +856,10 @@ class ForgotPasswordForm(forms.Form):
         uid = urlsafe_base64_encode(force_bytes(self.user.pk))
         url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
 
+        # send sms message
+        if self.user.is_root and self.user.is_vodafone_default_onboarding:
+            send_activation_message(self.user, url, True)
+
         from_email = settings.SERVER_EMAIL
         sub_subject = f'[{self.user.brand.mail_subject}]'
         subject = "{}{}".format(sub_subject, _(' Password Notification'))
@@ -806,6 +868,9 @@ class ForgotPasswordForm(forms.Form):
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
         mail_to_be_sent.send()
+        SEND_EMAIL_LOGGER.debug(
+            f"[{subject}] [{recipient_list[0]}] -- {message}"
+        )
 
 
 class ClientFeesForm(forms.ModelForm):

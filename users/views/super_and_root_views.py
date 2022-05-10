@@ -94,7 +94,8 @@ class UserDeleteView(UserOwnsMemberRequiredMixin, View):
                 elif data.get('support'):
                     support_setup = SupportSetup.objects.get(id=int(data['user_id']))
                     user = support_setup.support_user
-                    User.objects.filter(id=support_setup.support_user.id).delete()
+                    user.is_active = False
+                    user.save()
                 else:
                     user = User.objects.get(id=int(data['user_id']))
                     # user.delete()

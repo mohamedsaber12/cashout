@@ -349,4 +349,8 @@
 
     5. Test number for bank_card issuer
 
-           1111222233334444
+            1111222233334444
+
+    6. Test IBAN number for bank_card issuer
+    
+            EG829299835722904511873050307

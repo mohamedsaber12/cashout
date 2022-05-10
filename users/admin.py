@@ -14,9 +14,11 @@ from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
 from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
-from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
-                     InstantAPIViewerUser, MakerUser, RootUser, Setup, SupportUser, SupportSetup,
-                     SuperAdminUser, User)
+from .models import (
+    CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
+    MakerUser, RootUser, Setup, SupportUser, SupportSetup, SuperAdminUser, User,
+    OnboardUser, OnboardUserSetup, SupervisorUser, SupervisorSetup
+)
 
 from django.shortcuts import render
 from django.http import HttpResponseRedirect, HttpResponse
@@ -387,7 +389,8 @@ class SupportSetupModelAdmin(admin.ModelAdmin):
 
     list_display = ['user_created', 'support_user', 'can_onboard_entities']
     list_filter = ['user_created']
-    
+
+
 @admin.register(User)
 class UserAdmin(UserAdmin):
 
@@ -405,6 +408,111 @@ class UserAdmin(UserAdmin):
         ),
     )
 
+
+@admin.register(OnboardUser)
+class OnboardUserModelAdmin(UserAccountAdmin):
+    """
+    Manages Onboard user model at the admin panel
+    """
+
+    list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+
+    def get_fieldsets(self, request, obj=None):
+        return (
+            (None, {
+                'classes': ('wide',),
+                'fields': ('username', 'password')
+            }),
+            ('Personal info', {
+                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
+            }),
+            ('Permissions', {
+                'fields': ('is_active', 'is_staff', 'is_superuser')
+            }),
+            ('Important dates', {
+                'fields': ('last_login', 'date_joined')
+            })
+        )
+
+    def get_fields(self):
+        return (
+            (None, {
+                'classes': ('wide',),
+                'fields': ('username', 'password')
+            }),
+            ('Personal info', {
+                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
+            }),
+            ('Permissions', {
+                'fields': ('is_active', 'is_staff', 'is_superuser')
+            }),
+            ('Important dates', {
+                'fields': ('last_login', 'date_joined')
+            })
+        )
+
+
+@admin.register(OnboardUserSetup)
+class OnboardUserSetupModelAdmin(admin.ModelAdmin):
+    """
+    Manages Onboard user setup model at the admin panel
+    """
+
+    list_display = ['user_created', 'onboard_user']
+    list_filter = ['user_created']
+
+
+@admin.register(SupervisorUser)
+class SupervisorUserModelAdmin(UserAccountAdmin):
+    """
+    Manages Supervisor user model at the admin panel
+    """
+
+    list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+
+    def get_fieldsets(self, request, obj=None):
+        return (
+            (None, {
+                'classes': ('wide',),
+                'fields': ('username', 'password')
+            }),
+            ('Personal info', {
+                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
+            }),
+            ('Permissions', {
+                'fields': ('is_active', 'is_staff', 'is_superuser')
+            }),
+            ('Important dates', {
+                'fields': ('last_login', 'date_joined')
+            })
+        )
+
+    def get_fields(self):
+        return (
+            (None, {
+                'classes': ('wide',),
+                'fields': ('username', 'password')
+            }),
+            ('Personal info', {
+                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
+            }),
+            ('Permissions', {
+                'fields': ('is_active', 'is_staff', 'is_superuser')
+            }),
+            ('Important dates', {
+                'fields': ('last_login', 'date_joined')
+            })
+        )
+
+
+@admin.register(SupervisorSetup)
+class SupervisorUserSetupModelAdmin(admin.ModelAdmin):
+    """
+    Manages Supervisor user setup model at the admin panel
+    """
+
+    list_display = ['user_created', 'supervisor_user']
+    list_filter = ['user_created']
 
 # ToDo: Custom general user model
 # admin.site.register(User)

@@ -3,8 +3,6 @@
 */migrations/
 *.log
 db.sqlite3
-*/local.py
-local.py
 static/debug_toolbar/
 static_root
 todo.txt

@@ -6,7 +6,6 @@ from decimal import Decimal
 from django.utils.translation import ugettext_lazy as _
 
 from rest_framework import serializers
-from rest_framework.compat import MinValueValidator
 
 from core.models import AbstractBaseStatus
 from disbursement.models import BankTransaction
@@ -39,7 +38,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
             required=True,
             decimal_places=2,
             max_digits=9,
-            validators=[MinValueValidator(Decimal(1.0))],
+            min_value=Decimal(1.0)
     )
     bank_transaction_type = serializers.CharField(
             min_length=6,
@@ -63,6 +62,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     user = serializers.CharField(max_length=254, required=False, allow_blank=False)
     is_single_step = serializers.BooleanField(required=False, default=False)
     client_reference_id = serializers.UUIDField(required=False)
+    comment = serializers.CharField(max_length=140, required=False)
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""

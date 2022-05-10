@@ -139,7 +139,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
         (_('Creditor/Beneficiary Data'), {
             'fields': (
                 'creditor_name', 'creditor_account_number', 'creditor_bank', 'creditor_bank_branch', 'creditor_email',
-                'creditor_mobile_number', 'creditor_id', 'creditor_address_1'
+                'creditor_mobile_number', 'creditor_id', 'creditor_address_1', 'comment'
             )
         }),
         (_('Debtor Data'), {

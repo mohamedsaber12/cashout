@@ -16,9 +16,13 @@ from django.utils.translation import gettext as _
 import requests
 
 from instant_cashin.utils import get_from_env
-from .models import Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser
+from .models import (
+    Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser,
+    OnboardUserSetup, SupervisorSetup
+)
 
 
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
 ALLOWED_UPPER_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 ALLOWED_LOWER_CHARS = 'abcdefghijklmnopqrstuvwxyz'
@@ -93,6 +97,24 @@ def support_post_save(sender, instance, created, **kwargs):
         support_user.save()
         notify_user(support_user, created)
 
+@receiver(post_save, sender=OnboardUserSetup)
+def onboard_user_post_save(sender, instance, created, **kwargs):
+    """Post save signal to send password setup email after creating any onboard user"""
+    if created:
+        onboard_user = instance.onboard_user
+        onboard_user.brand = instance.user_created.brand
+        onboard_user.save()
+        notify_user(onboard_user, created)
+
+@receiver(post_save, sender=SupervisorSetup)
+def supervisor_post_save(sender, instance, created, **kwargs):
+    """Post save signal to send password setup email after creating any supervisor user"""
+    if created:
+        supervisor_user = instance.supervisor_user
+        supervisor_user.brand = instance.user_created.brand
+        supervisor_user.save()
+        notify_user(supervisor_user, created)
+
 
 def set_brand(instance):
     if not instance.brand:
@@ -120,7 +142,7 @@ def generate_username(user, user_model):
     user.username = username
 
 
-def send_activation_message(root_user, set_password_url):
+def send_activation_message(root_user, set_password_url, forget_password_msg=False):
     send_staging_url = "https://stagingvodafonepayouts.paymob.com"
     send_production_url = "https://vodafonepayouts.paymob.com"
     superadmin = root_user.client.creator
@@ -141,6 +163,8 @@ def send_activation_message(root_user, set_password_url):
             ),
             "SMSSENDER": f"{root_user.client.smsc_sender_name}"
         }
+        if forget_password_msg:
+            payload["TEXT"] = f"Click this link to reset your password {set_password_url}"
         # delete SMSSENDER from payload if it's empty
         if not root_user.client.smsc_sender_name:
             del(payload["SMSSENDER"])
@@ -186,3 +210,6 @@ def notify_user(instance, created):
         mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
         mail_to_be_sent.attach_alternative(message, "text/html")
         mail_to_be_sent.send()
+        SEND_EMAIL_LOGGER.debug(
+            f"[{subject}] [{recipient_list[0]}] -- {message}"
+        )

@@ -22,13 +22,14 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import ListView, View
+from django.views.generic import ListView, View, TemplateView
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.core.paginator import Paginator
 
 from rest_framework import status
 from rest_framework_expiring_authtoken.models import ExpiringToken
+from ratelimit.decorators import ratelimit
 
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
@@ -42,11 +43,13 @@ from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
 from users.mixins import (SuperFinishedSetupMixin,
+                          SuperOrOnboardUserRequiredMixin,
                           SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
                           SuperRequiredMixin,
                           AgentsListPermissionRequired,
                           UserWithAcceptVFOnboardingPermissionRequired,
-                          UserWithDisbursementPermissionRequired)
+                          UserWithDisbursementPermissionRequired,
+                          RootUserORDashboardUserRequiredMixin)
 from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
 from utilities.models import Budget
@@ -203,7 +206,6 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
         if can_view:
             # 2.1 If the request is ajax then prepare the disbursement report
             if request.is_ajax():
-                # ToDo: Change this to handle bank sheets
                 if request.GET.get('export_failed') == 'true':
                     generate_failed_disbursed_data.delay(doc_id, request.user.id, language=translation.get_language())
                     return HttpResponse(status=200)
@@ -302,6 +304,8 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
         status = request.GET.get('status', None)
 
         if request.is_ajax():
+            if status not in ["all", "success", "failed"]:
+                return HttpResponse(status=401)
             # ExportClientsTransactionsMonthlyReportTask.delay(request.user.id, start_date, end_date, status)
             exportObject = ExportClientsTransactionsMonthlyReport()
             report_download_url = exportObject.run(request.user.id, start_date, end_date, status)
@@ -312,6 +316,7 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
 
 @setup_required
 @login_required
+@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
 def failed_disbursed_for_download(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
@@ -354,6 +359,7 @@ def failed_disbursed_for_download(request, doc_id):
         raise Http404
 
 @login_required
+@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
 def download_exported_transactions(request):
     filename = request.GET.get('filename', None)
     if not filename:
@@ -384,6 +390,7 @@ def download_exported_transactions(request):
 
 @setup_required
 @login_required
+@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
 def download_failed_validation_file(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (doc_obj.owner == request.user and request.user.is_maker) or request.user.is_superuser
@@ -418,14 +425,15 @@ def download_failed_validation_file(request, doc_id):
         raise Http404
 
 
-class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
+class SuperAdminAgentsSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupMixin, View):
     """
     View for super user to create Agents for the entity.
     """
     template_name = 'entity/add_agent.html'
 
     def validate_agent_wallet(self, request, msisdns):
-        superadmin = request.user
+        superadmin = request.user if self.request.user.is_superadmin else \
+            self.request.user.my_onboard_setups.user_created
         payload = superadmin.vmt.accumulate_user_inquiry_payload(msisdns)
         try:
             WALLET_API_LOGGER.debug(f"[request] [user inquiry] [{request.user}] -- {payload}")
@@ -507,7 +515,8 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
 
         if self.root.client.agents_onboarding_choice in \
                 [Client.EXISTING_SUPERAGENT_NEW_AGENTS, Client.EXISTING_SUPERAGENT_AGENTS]:
-            superadmin_children = request.user.children()
+            superadmin_children = request.user.children() if request.user.is_superadmin else \
+                request.user.my_onboard_setups.user_created.children()
             agents_of_all_types = Agent.objects.filter(wallet_provider__in=superadmin_children).distinct('msisdn')
             existing_super_agents = agents_of_all_types.filter(super=True).exclude(type__in=[Agent.P2M])
             existing_non_super_agents = agents_of_all_types.filter(super=False)
@@ -680,7 +689,9 @@ class SuperAdminAgentsSetup(SuperRequiredMixin, SuperFinishedSetupMixin, View):
             return render(request, template_name=self.template_name, context=context)
 
         super_agent.save()
-        entity_setup = EntitySetup.objects.get(user=self.request.user, entity=self.root)
+        current_super_admin = self.request.user if self.request.user.is_superadmin else \
+                self.request.user.my_onboard_setups.user_created
+        entity_setup = EntitySetup.objects.get(user=current_super_admin, entity=self.root)
         entity_setup.agents_setup = True
         entity_setup.save()
         AGENT_CREATE_LOGGER.debug(
@@ -777,6 +788,11 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
             return False, error_message
         return False, MSG_BALANCE_INQUIRY_ERROR
 
+
+@method_decorator([setup_required], name='dispatch')
+class HomeView(RootUserORDashboardUserRequiredMixin, TemplateView):
+
+    template_name = 'disbursement/home_root.html'
 
 class AgentsListView(AgentsListPermissionRequired, ListView):
     """
@@ -1301,7 +1317,7 @@ class ExportClientsTransactionsMonthlyReport:
 
     def write_data_to_excel_file(self, final_data, column_names_list, distinct_msisdn=None):
         """Write exported transactions data to excel file"""
-        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(4)}.xls")
+        filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(8)}.xls")
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
         ws = wb.add_sheet('report')

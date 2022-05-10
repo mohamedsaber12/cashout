@@ -54,11 +54,15 @@ urlpatterns += [
     path('admin/log_viewer/', include('log_viewer.urls')),
 ]
 
-urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
-urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)
+# urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)
+# urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT, view=protected_media_serve)
 
 
 # Admin site settings
 admin.site.site_header = settings.ADMIN_SITE_HEADER
 admin.site.site_title = settings.ADMIN_SITE_TITLE
 admin.site.index_title = settings.ADMIN_INDEX_TITLE
+
+# disable the new sidebar feature that exist in django 3.1+
+admin.autodiscover()
+admin.site.enable_nav_sidebar = False

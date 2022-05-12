@@ -22,7 +22,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import ListView, View, TemplateView
+from django.views.generic import ListView, View
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.core.paginator import Paginator
@@ -790,9 +790,65 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
 
 
 @method_decorator([setup_required], name='dispatch')
-class HomeView(RootUserORDashboardUserRequiredMixin, TemplateView):
+class HomeView(RootUserORDashboardUserRequiredMixin, View):
 
+    model = BankTransaction
     template_name = 'disbursement/home_root.html'
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests for Dashboard view"""
+        vf_et_aman_trx = DisbursementData.objects.filter(
+            Q(doc__disbursed_by__root=request.user.root),
+            Q(doc__disbursement_txn__doc_status='5')
+        ).values('issuer').annotate(count=Count('id')).order_by('issuer')
+
+        instant_trx = InstantTransaction.objects.filter(
+            ~Q(disbursed_date=None),
+            (Q(document__disbursed_by__root=request.user.root) |
+            Q(from_user__root=request.user.root))
+        ).extra(select={'issuer': 'issuer_type'}).values('issuer'). \
+            annotate(count=Count('uid')).order_by('issuer')
+
+        bank_count = BankTransaction.objects.filter(
+            ~Q(disbursed_date=None),
+            Q(end_to_end=""),
+            (Q(document__disbursed_by__root=request.user.root) |
+             Q(user_created__root=request.user.root))
+        ).order_by("parent_transaction__transaction_id", "-id"). \
+            distinct("parent_transaction__transaction_id").values('id').count()
+
+        vodafone_transactions = 0
+        etisalat_transactions = 0
+        aman_transactions = 0
+        orange_transactions = 0
+        bank_wallet_transactions = 0
+        total = bank_count
+        all_issuers =[*vf_et_aman_trx, *instant_trx]
+        for trx in all_issuers:
+            if trx['issuer'] in ['vodafone', 'V']:
+                vodafone_transactions = vodafone_transactions + trx['count']
+            elif trx['issuer'] in ['etisalat', 'E']:
+                etisalat_transactions = etisalat_transactions + trx['count']
+            elif trx['issuer'] in ['aman', 'A']:
+                aman_transactions = aman_transactions + trx['count']
+            elif trx['issuer'] in ['orange', 'O']:
+                orange_transactions = orange_transactions + trx['count']
+            elif trx['issuer'] in ['bank_wallet', 'B']:
+                bank_wallet_transactions = bank_wallet_transactions + trx['count']
+            total = total + trx['count']
+
+        context = {
+            "all_transactions": total,
+            "vodafone_transactions": vodafone_transactions,
+            "etisalat_transactions": etisalat_transactions,
+            "orange_transactions": aman_transactions,
+            "aman_transactions": orange_transactions,
+            "bank_wallet_transactions": bank_wallet_transactions,
+            "banks_transactions": bank_count,
+        }
+
+        return render(request, template_name=self.template_name, context=context)
+
 
 class AgentsListView(AgentsListPermissionRequired, ListView):
     """

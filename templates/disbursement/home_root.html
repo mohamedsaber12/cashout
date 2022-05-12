@@ -1,23 +1,370 @@
 {% extends 'new_base.html' %}
+{% load static %}
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 
 {% block title %} {% trans 'Home' %} {% endblock %}
+{% block customcss %}
+  <style>
+    .text-white {
+      color: #FFFFFF !important;
+    }
+    .bg-analytics {
+      background: -webkit-linear-gradient(332deg, #1f0beb, rgb(19 105 227));
+    }
+    .card {
+      margin-bottom: 2.2rem;
+      border: none;
+      box-shadow: 0 4px 25px 0 rgb(0 0 0 / 10%);
+      -webkit-transition: all 0.3s ease-in-out;
+      transition: all 0.3s ease-in-out;
+      position: relative;
+      display: flex;
+      -webkit-box-orient: vertical;
+      -webkit-box-direction: normal;
+      -webkit-flex-direction: column;
+      -ms-flex-direction: column;
+      flex-direction: column;
+      min-width: 0;
+      word-wrap: break-word;
+      background-color: #FFFFFF;
+      background-clip: border-box;
+      border: 1px solid rgba(34, 41, 47, 0.125);
+      border-radius: 1rem;
+    }
+    .card-body {
+      -webkit-box-flex: 1;
+      -webkit-flex: 1 1 auto;
+      -ms-flex: 1 1 auto;
+      flex: 1 1 auto;
+      padding: 1.5rem;
+    }
+    .bg-analytics .img-left {
+      width: 200px;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+    .bg-analytics .img-right {
+      width: 175px;
+      position: absolute;
+      top: 0;
+      right: 0;
+    }
+    .bg-analytics .avatar {
+      margin-bottom: 2rem;
+    }
+    .avatar.avatar-xl {
+      font-size: 1.5rem;
+    }
+    .avatar {
+      white-space: nowrap;
+      background-color: #C3C3C3;
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+      color: #FFFFFF;
+      display: -webkit-inline-box;
+      display: -webkit-inline-flex;
+      display: -ms-inline-flexbox;
+      display: inline-flex;
+      font-size: 0.75rem;
+      text-align: center;
+      vertical-align: middle;
+      margin: 5px;
+    }
+    .bg-primary {
+      background-color: #7367F0 !important;
+    }
+    .mt-0, .my-0 {
+      margin-top: 0 !important;
+    }
+    .shadow {
+      box-shadow: 0 0.5rem 1rem rgb(34 41 47 / 15%) !important;
+    }
+    .avatar.avatar-xl .avatar-content {
+      height: 70px;
+      width: 70px;
+    }
+    .avatar img {
+      border-radius: 0%;
+    }
+    .avatar .avatar-content {
+      display: -webkit-box;
+      display: -webkit-flex;
+      display: -ms-flexbox;
+      display: flex;
+      -webkit-box-pack: center;
+      -webkit-justify-content: center;
+      -ms-flex-pack: center;
+      justify-content: center;
+      -webkit-box-align: center;
+      -webkit-align-items: center;
+      -ms-flex-align: center;
+      align-items: center;
+    }
+    .white {
+      color: #FFFFFF !important;
+    }
+    .font-large-1 {
+      font-size: 4rem !important;
+    }
+    .text-center {
+      text-align: center !important;
+    }
+    .wave {
+      animation-name: wave-animation;  /* Refers to the name of your @keyframes element below */
+      animation-duration: 2.5s;        /* Change to speed up or slow down */
+      animation-iteration-count: infinite;  /* Never stop waving :) */
+      transform-origin: 70% 70%;       /* Pivot around the bottom-left palm */
+      display: inline-block;
+    }
+    @keyframes wave-animation {
+        0% { transform: rotate( 0.0deg) }
+       10% { transform: rotate(14.0deg) }  /* The following five values can be played with to make the waving more or less extreme */
+       20% { transform: rotate(-8.0deg) }
+       30% { transform: rotate(14.0deg) }
+       40% { transform: rotate(-4.0deg) }
+       50% { transform: rotate(10.0deg) }
+       60% { transform: rotate( 0.0deg) }  /* Reset for the last half to pause */
+      100% { transform: rotate( 0.0deg) }
+    }
+    .mb-2, .my-2 {
+      margin-bottom: 1.5rem !important;
+    }
+    h1 {
+      font-size: 3rem;
+    }
+    .avatar {
+      white-space: nowrap;
+      background-color: #C3C3C3;
+      border-radius: 50%;
+      position: relative;
+      cursor: pointer;
+      color: #FFFFFF;
+      display: -webkit-inline-box;
+      display: -webkit-inline-flex;
+      display: -ms-inline-flexbox;
+      display: inline-flex;
+      font-size: 0.75rem;
+      text-align: center;
+      vertical-align: middle;
+      margin: 5px;
+    }
+    .bg-rgba-primary {
+      background: rgba(60, 110, 240, 0.15) !important;
+    }
+    .p-50 {
+      padding: 0.5rem !important;
+    }
+    .mb-1, .my-1 {
+      margin-bottom: 1rem !important;
+    }
+    .m-0 {
+      margin: 0 !important;
+    }
+    .font-medium-5 {
+      font-size: 3rem !important;
+    }
+    .text-primary {
+      color: #7367F0 !important;
+    }
+    .feather {
+      width: 60px;
+      height: 60px;
+    }
+    .text-bold-700 {
+      font-weight: 700;
+      line-height: 1.2;
+      color: #2C2C2C;
+      font-style: italic;
+    }
+    .line-ellipsis {
+      font-size: 19px;
+      margin-top: 0;
+      margin-bottom: 9px;
+      font-style: italic;
+    }
+    .bg-rgba-success {
+      background: rgba(40, 199, 111, 0.15) !important;
+    }
+    .text-success {
+      color: #28C76F !important;
+    }
+    .icon-logo {
+      width: 70px;
+      max-width: 70px !important;
+      height: 70px;
+    }
+    .bg-rgba-danger {
+      background: rgba(234, 84, 85, 0.15) !important;
+    }
+    .et-icon {
+      width: 80px;
+      height: 50px;
+    }
+    .et-m-b {
+      height: 20px;
+    }
+    .bg-rgba-info {
+      background: rgba(0, 207, 232, 0.15) !important;
+    }
+    .text-info {
+      color: #00CFE8 !important;
+    }
+  </style>
+{% endblock %}
 {% block body %}
-
 <div class="row">
-    <div class="well upload-nav col-lg-12">
-        <div class="panel panel-default">
-          <div class="well upload-nav col-xs-12">
-            <strong style="margin-top: 15px;">{% trans 'Welcome home ...' %}</strong>
+  <div class="col-lg-8 col-md-12 col-sm-12">
+    <div class="card bg-analytics text-white">
+      <div class="card-content">
+        <div class="card-body text-center">
+          <img src="{% static 'img/decore-left.png' %}" class="img-left" alt="card-img-left">
+            <img src="{% static 'img/decore-right.png' %}" class="img-right" alt="card-img-right">
+              <div class="avatar avatar-xl bg-primary shadow mt-0">
+                <div class="avatar-content">
+                  <span class="wave white font-large-1">👋</span>
+                </div>
+              </div>
+              <div class="text-center">
+                <h1 class="mb-2 text-white">Welcome {{request.user.username}}</h1>
+              </div>
+              </div>
           </div>
-          {% if request.user.has_custom_budget or  request.user.root.has_custom_budget%}
-            <div class="well col-xs-12">
-              <h4>{% trans 'Your current budget is: ' %} {{ request.user.root.budget.current_balance }} EG</h4>
+      </div>
+  </div>
+  {% if request.user.has_custom_budget or  request.user.root.has_custom_budget%}
+    <div class="col-lg-2 col-md-6 col-sm-6">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar bg-rgba-primary p-50 m-0 mb-1">
+              <div class="feather avatar-content">
+                <i class="fa fa-money text-primary font-medium-5"></i>
+              </div>
             </div>
-          {% endif %}
+            <h2 class="text-bold-700">{{ request.user.root.budget.current_balance }} LE</h2>
+            <p class="mb-0 line-ellipsis">{% trans 'Budget ' %}</p>
+          </div>
         </div>
+      </div>
+    </div>
+  {% endif %}
+  <div class="col-lg-2 col-md-6 col-sm-6">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar bg-rgba-success p-50 m-0 mb-1">
+              <div class="feather avatar-content">
+                <i class="fa fa-bitcoin text-success font-medium-5"></i>
+              </div>
+            </div>
+            <h2 class="count text-bold-700">{{ all_transactions }}</h2>
+            <p class="mb-0 line-ellipsis">{% trans 'Transactions' %}</p>
+          </div>
+        </div>
+      </div>
     </div>
 </div>
-{%endblock%}
+<div class="row">
+  <div class="col-lg-2 col-md-4 col-sm-4">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar m-0 mb-1" style="width:70px;height:70px;">
+              <img class="icon-logo" src="{% static 'img/vf_cash.png' %}">
+            </div>
+            <h2 class="count text-bold-700">{{ vodafone_transactions }}</h2>
+            <p class="mb-0 line-ellipsis">{% trans 'VODAFONE' %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div class="col-lg-2 col-md-4 col-sm-4">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="m-0 mb-1">
+              <img class="et-icon" src="{% static 'img/etisalat_cash.png' %}">
+            </div>
+            <div class="et-m-b"></div>
+            <h2 class="count text-bold-700">{{ etisalat_transactions }}</h2>
+            <p class="mb-0 line-ellipsis">{% trans 'ETISALAT' %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div class="col-lg-2 col-md-4 col-sm-4">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
+              <img class="icon-logo" src="{% static 'img/orange_cash.png' %}">
+            </div>
+            <h2 class="count text-bold-700">{{ orange_transactions }}</h2>
+            <p class="mb-0 line-ellipsis">{% trans 'ORANGE' %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div class="col-lg-2 col-md-4 col-sm-4">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
+              <img class="icon-logo" src="{% static 'img/aman.png' %}">
+            </div>
+            <h2 class="count text-bold-700">{{ aman_transactions }}</h2>
+            <p class="mb-0 line-ellipsis">{% trans 'AMAN' %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div class="col-lg-2 col-md-4 col-sm-4">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar m-0 mb-1"
+                 style="width:70px;height:70px;background-color: white;border-radius:0%;">
+              <img class="icon-logo" src="{% static 'img/bank-wallet.png' %}">
+            </div>
+            <h2 class="count text-bold-700">{{ bank_wallet_transactions }}</h2>
+            <p class="mb-0 line-ellipsis" style="font-size:17px;">{% trans 'BANK WALLET' %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  <div class="col-lg-2 col-md-4 col-sm-4">
+      <div class="card text-center">
+        <div class="card-content">
+          <div class="card-body">
+            <div class="avatar bg-rgba-info p-50 m-0 mb-1">
+              <div class="feather avatar-content">
+                <i class="fa fa-credit-card text-info font-medium-5"></i>
+              </div>
+            </div>
+            <h2 class="count text-bold-700">{{ banks_transactions }}</h2>
+            <p class="mb-0 line-ellipsis">{% trans ' BANKS' %}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+  <script>
+    $('.count').each(function () {
+      $(this).prop('Counter',0).animate({
+        Counter: $(this).text()
+      }, {
+          duration: 4000,
+          easing: 'swing',
+          step: function (now) {
+              $(this).text(Math.ceil(now));
+          }
+      });
+    });
+  </script>
+{% endblock %}

@@ -1,121 +1,100 @@
 stages:
-  - lint-test
-  - requirements-dependency_scanning         
-  - dependency_check
-  - coverage-test
-  - sonarqube
-  - deployment
-
-
-lint_test:
-  image: python:3.8.0-slim
-  stage: lint-test
-  before_script:
-    - pip install flake8-html
-  script:
-    - flake8 --format=html --htmldir=flake_reports/
-  allow_failure: true  
-  artifacts:
-    when: always
-    paths:
-      - flake_reports/
-
-
-requirements-dependency_scanning:
-  image: python:3.7
-  stage: requirements-dependency_scanning
-  before_script:
-    - apt-get update -y
-    - pip install safety
-  script:
-    - safety check -r requirements/requirements.txt
-    - safety check -r requirements/base.txt
-  allow_failure: true
-
-owasp_dependency_check:
-  image:
-    name: registry.gitlab.com/gitlab-ci-utils/docker-dependency-check:latest
-    entrypoint: [""]
-  stage: dependency_check
-  script:
-    
-    - /usr/share/dependency-check/bin/dependency-check.sh --scan "./" --format ALL --project "$CI_PROJECT_NAME" --enableExperimental
-     
-  allow_failure: true
-  artifacts:
-    when: always
-    paths:
-      - "./dependency-check-report.html"
-      - "./dependency-check-report.json"
-      - "./dependency-check-report.xml"
-
-coverage_test:
-   stage: coverage-test
-   image: tiangolo/docker-with-compose
-   services:
-     -  docker:dind
-   before_script: 
-     - echo "$payout_staging_env" > "$(pwd)/.env"
-     - apk add --no-cache openssh-client git
-     - git config --global url."git@gitlab.com:".insteadOf "https://gitlab.com/"
-     - mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/known_hosts
-     - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
-     - echo "$gitlab_ci_key" >> ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
-     - git clone git@gitlab.com:paymob-nanolending/core.git
-     - git clone --branch=python3-porting git@gitlab.com:MISC-PayMob/smpp.git
-     - cd core && git clone git@gitlab.com:paymob-nanolending/utils.git 
-   script:
-     - docker-compose up -d --build
-     - sleep 200
-     - docker logs PayoutsPortal
-     - docker exec PayoutsPortal coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
-     - docker exec PayoutsPortal coverage report --fail-under=20
-     - docker exec PayoutsPortal coverage xml --fail-under=20 --ignore-errors
-     - docker cp PayoutsPortal:/app/payouts_portal/coverage.xml coverage.xml
-   allow_failure: true
-   artifacts:
-    when: always 
-    paths:
-      - coverage.xml
-
+    - lint-test
+    - requirements-dependency_scanning         
+    - dependency_check
+    - coverage-test
+    - sonarqube
+  
+  
+  lint_test:
+    image: python:3.8.0-slim
+    stage: lint-test
+    before_script:
+      - pip install flake8-html
+    script:
+      - flake8 --format=html --htmldir=flake_reports/
+    allow_failure: true  
+    artifacts:
+      when: always
+      paths:
+        - flake_reports/
+  
+  
+  requirements-dependency_scanning:
+    image: python:3.7
+    stage: requirements-dependency_scanning
+    before_script:
+      - apt-get update -y
+      - pip install safety
+    script:
+      - safety check -r requirements/requirements.txt
+      - safety check -r requirements/base.txt
+    allow_failure: true
+  
+  owasp_dependency_check:
+    image:
+      name: registry.gitlab.com/gitlab-ci-utils/docker-dependency-check:latest
+      entrypoint: [""]
+    stage: dependency_check
+    script:
       
-sonarqube-check:  
-  stage: sonarqube
-  tags:
-    - docker-runner-1
-  image: 
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  variables:
-    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
-    GIT_DEPTH: "0"  
-  cache:
-    key: "${CI_JOB_NAME}"
-    paths:
-      - .sonar/cache
-  script: 
-    - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html -Dsonar.python.coverage.reportPaths=coverage.xml
-  allow_failure: true
-  only:
-    - new-staging
-
-
-# deploy-to-staging    
-staging-deploy      :
-  image: tiangolo/docker-with-compose
-  services:
-    -  docker:dind
-  stage             : deployment
-  tags              :
-                    - docker-runner-1
-  before_script:
-    - apk add --no-cache openssh-client curl bash
-    - mkdir -p ~/.ssh
-    - eval $(ssh-agent -s)
-    - echo "$payout_staging_server_private_key" | tr -d '\r' | ssh-add -
-    - ssh-keyscan $payout_staging_server >> ~/.ssh/known_hosts && chmod 0644 ~/.ssh/known_hosts
-  script            :
-                    - ssh -tt -o StrictHostKeyChecking=no "$payout_staging_server_user@$payout_staging_server" "cd /home/payouts-user/payouts-portal/disbursment_tool && git pull origin new-staging &&sh /home/payouts-user/restart.sh && exit"
-  rules             :
-                     - if: '$CI_COMMIT_BRANCH == "new-staging"'
-  interruptible     : true
+      - /usr/share/dependency-check/bin/dependency-check.sh --scan "./" --format ALL --project "$CI_PROJECT_NAME" --enableExperimental
+       
+    allow_failure: true
+    artifacts:
+      when: always
+      paths:
+        - "./dependency-check-report.html"
+        - "./dependency-check-report.json"
+        - "./dependency-check-report.xml"
+  
+  coverage_test:
+     stage: coverage-test
+     image: tiangolo/docker-with-compose
+     services:
+       -  docker:dind
+     before_script: 
+       - echo "$payout_staging_env" > "$(pwd)/.env"
+       - apk add --no-cache openssh-client git
+       - git config --global url."git@gitlab.com:".insteadOf "https://gitlab.com/"
+       - mkdir -p ~/.ssh && chmod 700 ~/.ssh && touch ~/.ssh/known_hosts
+       - ssh-keyscan -H gitlab.com >> ~/.ssh/known_hosts
+       - echo "$gitlab_ci_key" >> ~/.ssh/id_rsa && chmod 600 ~/.ssh/id_rsa
+       - git clone git@gitlab.com:paymob-nanolending/core.git
+       - git clone --branch=python3-porting git@gitlab.com:MISC-PayMob/smpp.git
+       - cd core && git clone git@gitlab.com:paymob-nanolending/utils.git 
+     script:
+       - docker-compose up -d --build
+       - sleep 200
+       - docker exec PayoutsPortal coverage run --source=users,data,disbursement,payment,instant_cashin,utilities manage.py test
+       - docker exec PayoutsPortal coverage report --fail-under=20
+       - docker exec PayoutsPortal coverage xml --fail-under=20 --ignore-errors
+       - docker cp PayoutsPortal:/app/payouts_portal/coverage.xml coverage.xml
+     allow_failure: true
+     artifacts:
+      when: always 
+      paths:
+        - coverage.xml
+  
+        
+  sonarqube-check:  
+    stage: sonarqube
+    tags:
+      - docker-runner-1
+    image: 
+      name: sonarsource/sonar-scanner-cli:latest
+      entrypoint: [""]
+    variables:
+      SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  
+      GIT_DEPTH: "0"  
+    cache:
+      key: "${CI_JOB_NAME}"
+      paths:
+        - .sonar/cache
+    script: 
+      - sonar-scanner -Dsonar.projectKey=Payouts -Dsonar.qualitygate.wait=true -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.login=$SONAR_TOKEN -Dsonar.dependencyCheck.htmlReportPath=./dependency-check-report.html -Dsonar.python.coverage.reportPaths=coverage.xml
+    allow_failure: true
+    only: 
+      - new-staging
+      
+  

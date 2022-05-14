@@ -16,3 +16,6 @@ test:
 	sudo docker-compose exec payouts ./manage.py test --parallel 
 superuser:
 	sudo docker-compose exec payouts ./manage.py createsuperuser
+
+createcachetable:
+	sudo docker-compose exec payouts ./manage.py createcachetable

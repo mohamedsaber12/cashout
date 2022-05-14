@@ -6,6 +6,9 @@ from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.utils.translation import gettext as _
 
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+from disbursement.models import BankTransaction
+
 
 class AdminSiteOwnerOnlyPermissionMixin:
     """
@@ -74,6 +77,9 @@ class ExportCsvMixin:
 
         writer.writerow(field_names)
         for obj in queryset:
+            if queryset.model is BankTransaction:
+                obj.status = [st for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
+                              if st[0] == obj.status][0][1]
             row = writer.writerow([getattr(obj, field) for field in field_names])
 
         return response

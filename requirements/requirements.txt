@@ -55,7 +55,7 @@ geoip2==3.0.0
 html5lib==1.1
 httpie==2.0.0
 idna==2.7
-importlib-metadata==1.7.0
+importlib-metadata==4.4.0
 ipdb==0.11
 ipython==7.14.0
 ipython-genutils==0.2.0

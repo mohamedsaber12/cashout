@@ -34,10 +34,12 @@ from ratelimit.decorators import ratelimit
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (ExportClientsTransactionsMonthlyReportTask,
-                        generate_all_disbursed_data,
-                        generate_failed_disbursed_data,
-                        generate_success_disbursed_data)
+from data.tasks import (
+    generate_all_disbursed_data, generate_failed_disbursed_data,
+    generate_success_disbursed_data, ExportPortalRootTransactionsEwallet,
+    ExportPortalRootOrDashboardUserTransactionsEwallets,
+    ExportPortalRootOrDashboardUserTransactionsBanks
+)
 from data.utils import redirect_params
 from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
@@ -795,8 +797,44 @@ class HomeView(RootUserORDashboardUserRequiredMixin, View):
     model = BankTransaction
     template_name = 'disbursement/home_root.html'
 
+    def validate_export_issuer(self, issuer):
+        """method for issuer validation based on user type"""
+        if self.request.user.is_instant_model_onboarding and \
+            issuer in ['wallets', 'banks']:
+            return True
+        elif self.request.user.is_accept_vodafone_onboarding and \
+            issuer in ['vodafone/etisalat/aman', 'bank wallets/orange',
+                       'bank accounts/cards']:
+            return True
+        return False
+
     def get(self, request, *args, **kwargs):
         """Handles GET requests for Dashboard view"""
+
+        # fire export action within date range
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        export_issuer = request.GET.get('export_issuer')
+
+        # validate issuer
+        if export_issuer and not self.validate_export_issuer(export_issuer):
+            EXPORT_MESSAGE = f"issuer validation error please choose issuer from list"
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+
+        if export_start_date and export_end_date and export_issuer:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email} after a few minutes"
+            if export_issuer == 'vodafone/etisalat/aman':
+                ExportPortalRootTransactionsEwallet.delay(self.request.user.id, export_start_date, export_end_date)
+            elif export_issuer in ['bank wallets/orange', 'wallets']:
+                ExportPortalRootOrDashboardUserTransactionsEwallets.delay(
+                    self.request.user.id, export_start_date, export_end_date
+                )
+            elif export_issuer in ['bank accounts/cards', 'banks']:
+                ExportPortalRootOrDashboardUserTransactionsBanks.delay(
+                    self.request.user.id, export_start_date, export_end_date
+                )
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+
         vf_et_aman_trx = DisbursementData.objects.filter(
             Q(doc__disbursed_by__root=request.user.root),
             Q(doc__disbursement_txn__doc_status='5')
@@ -846,6 +884,13 @@ class HomeView(RootUserORDashboardUserRequiredMixin, View):
             "bank_wallet_transactions": bank_wallet_transactions,
             "banks_transactions": bank_count,
         }
+        # render issuer options based on user type
+        if request.user.is_instant_model_onboarding:
+            context['issuer_options'] = ['wallets', 'banks']
+        elif request.user.is_accept_vodafone_onboarding:
+            context['issuer_options'] = [
+                'vodafone/etisalat/aman', 'bank wallets/orange', 'bank accounts/cards'
+            ]
 
         return render(request, template_name=self.template_name, context=context)
 

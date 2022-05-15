@@ -77,9 +77,6 @@
                 </form>
             </div>
         </div>
-    {% elif request.user.is_root and request.user.is_accept_vodafone_onboarding %}
-        {% include 'export_bar.html' %}
-        <hr class="solid">
     {% endif %}
 
     {% if request.user.is_accept_vodafone_onboarding %}

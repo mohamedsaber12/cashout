@@ -63,14 +63,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         return paginator.get_page(page)
         
     def get(self, request):
-        export_start_date = request.GET.get('export_start_date')
-        export_end_date = request.GET.get('export_end_date')
-        if export_start_date and export_end_date:
-            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            ExportPortalRootOrDashboardUserTransactionsEwallets.delay(request.user.id,export_start_date, export_end_date )
-            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
-        else:
-            return super().get(self,request)
+        return super().get(self, request)
 
 
 
@@ -121,12 +114,4 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
         return paginator.get_page(page)
         
     def get(self, request):
-        export_start_date = request.GET.get('export_start_date')
-        export_end_date = request.GET.get('export_end_date')
-        if export_start_date and export_end_date:
-            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            ExportPortalRootOrDashboardUserTransactionsBanks.delay(self.request.user.id, export_start_date, export_end_date )
-            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
-        else:
-            return super().get(self,request)
-
+        return super().get(self, request)

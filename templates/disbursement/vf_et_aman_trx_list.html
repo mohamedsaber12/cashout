@@ -1,0 +1,385 @@
+{% extends 'new_base.html' %}
+{% load static %}
+{% load i18n %}
+{% load custom_tags %}
+{% load error_codes_tags %}
+
+{% block title %} {% trans 'Transactions' %} {% endblock %}
+
+{% block gentellacss %}
+  {# Datatables #}
+  <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
+  <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
+  <link href="{% static 'css/right_sidebar.css' %}" rel="stylesheet">
+  <style>
+    #trxDetailsDataRight > li > span{
+      width: 90px;
+    }
+    #download-doc {
+        width: 17rem!important;
+        margin-right: 10px;
+        color: #333;
+    }
+    #download-doc span {
+        color: #333;
+    }
+    .pagination > li > span {
+      width: 33px;
+    }
+  </style>
+{% endblock %}
+
+{% block body %}
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+            <h2>{% trans 'Vodafone/Etisalat/Aman Transactions' %}</h2>
+            <ul class="nav navbar-right panel_toolbox">
+              <li>
+                <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+              </li>
+              <li style="float: right;">
+                <a id="sidebarCollapse"><i class="fa fa-search"></i></a>
+              </li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+
+        {# transactions table #}
+        <div class="x_content">
+          <table class="table table-bordered" id="transaction-table">
+            <thead>
+              <tr>
+                <th>{% trans 'Wallet Number' %}</th>
+                <th>{% trans 'Amount' %}</th>
+                <th>{% trans 'Fees' %}</th>
+                <th>{% trans 'Vat' %}</th>
+                <th>{% trans 'Issuer' %}</th>
+                <th>{% trans 'Status' %}</th>
+                <th>{% trans 'Disbursed At' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for transaction in portal_transactions %}
+                <tr data-created_at="{{ transaction.created_at }}"
+                    data-updated_at="{{ transaction.updated_at }}"
+                    data-disbursed_at="{{ transaction.disbursed_date }}"
+                    data-msisdn="{{ transaction.msisdn }}"
+                    data-amount="{{ transaction.amount }}"
+                    data-is_disbursed="{{ transaction.is_disbursed }}"
+                    data-reason="{{ transaction.reason }}"
+                    data-reason_description="{{ transaction.reason | code_description }}"
+                    data-trx_id="{{ transaction.reference_id }}"
+                    data-is_canceled="{{ transaction.aman_transaction_is_canceled }}"
+                    data-issuer="{{ transaction.issuer|title }}"
+                    data-aman_is_paid="{{ transaction.aman_transaction_is_paid }}"
+                    class="row-hover">
+
+                  <td>{{ transaction.msisdn }}</td>
+                  <td>{{ transaction.amount }}</td>
+                  <td>{{ transaction.fees }}</td>
+                  <td>{{ transaction.vat }}</td>
+                  <td>{{ transaction.issuer|title }}</td>
+                  <td>
+                    {% if transaction.is_disbursed %}
+                      {% trans "Successful" %}
+                    {% elif transaction.reason == '' and transaction.disbursed_date == None %}
+                      {% trans "Pending" %}
+                    {% else %}
+                      {% trans "Failed" %}
+                    {% endif %}
+                  </td>
+                <td>{{ transaction.disbursed_date }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <ul class="pagination">
+            {% if portal_transactions.has_previous %}
+            <li>
+              <a href="?page={{ portal_transactions.previous_page_number }}">
+                <i class="fa fa-chevron-left" aria-hidden="true"></i>
+              </a>
+            </li>
+            {% else %}
+            <li class="disabled"><span><i class="fa fa-chevron-left" aria-hidden="true"></i></span></li>
+            {% endif %}
+
+            {% if portal_transactions.number|add:'-4' > 1 %}
+            <li><a href="?page={{ portal_transactions.number|add:'-5' }}">&hellip;</a></li>
+            {% endif %}
+
+            {% for i in portal_transactions.paginator.page_range %}
+            {% if portal_transactions.number == i %}
+            <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+            {% elif i > portal_transactions.number|add:'-5' and i < portal_transactions.number|add:'5' %}
+            <li><a href="?page={{ i }}">{{ i }}</a></li>
+            {% endif %}
+            {% endfor %}
+
+            {% if portal_transactions.paginator.num_pages > portal_transactions.number|add:'4' %}
+            <li><a href="?page={{ portal_transactions.number|add:'5' }}">&hellip;</a></li>
+            {% endif %}
+
+            {% if portal_transactions.has_next %}
+            <li><a href="?page={{ portal_transactions.next_page_number }}"><i class="fa fa-chevron-right" aria-hidden="true"></i></a></li>
+            {% else %}
+            <li class="disabled"><span><i class="fa fa-chevron-right" aria-hidden="true"></i></span></li>
+            {% endif %}
+          </ul>
+        </div>
+        {# End of file transactions table #}
+      </div>
+    </div>
+    {# right sidebar #}
+    {% include 'disbursement/right_sidebar.html' with type='portal_wallets' %}
+    {# End of right sidebar #}
+  </div>
+
+  {# Transaction details #}
+  <div id="trxDetails" style="display: none;" class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
+          <div class="clearfix"></div>
+        </div>
+
+        <div class="x_content">
+          <div class="row">
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsData">
+              </ul>
+            </div>
+            <div class="col-md-6 col-sm-6 col-xs-6">
+              <ul id="trxDetailsDataRight">
+              </ul>
+            </div>
+          </div>
+          <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+              <ul id="trxDetailsDataLast">
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# End of transaction details #}
+{% endblock %}
+
+{% block script %}
+  {# Datatables #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script>
+    var table = $('#transaction-table').DataTable({
+      "bLengthChange" : false,
+      "bPaginate": false,
+      "bInfo" : false
+    });
+
+    var buttons = new $.fn.dataTable.Buttons( table, {
+      buttons: [
+        {
+          extend: 'copy',
+          text : "{% trans 'Copy' %}",
+          exportOptions: {
+              charSet: "utf-8",
+          }
+        },
+        {
+          extend: 'print',
+          text : "PDF",
+        },
+        {
+          extend: 'excelHtml5',
+          text : "{% trans 'Export' %}",
+          customize: function( xlsx ) {
+            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+            $('row c[r^="A"]', sheet).attr( 's', '0' );
+         }
+        }
+      ]
+    });
+
+    table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
+    let empty_row = $('.dataTables_empty');
+    if (empty_row) {
+      empty_row.parent().attr('id', 'empty_row');
+    }
+  </script>
+  {# transaction details #}
+  <script>
+    $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+        $("#trxDetails").slideUp().fadeOut();
+      }
+      else {
+        $('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+        let ul = $('#trxDetailsData');
+        let ulRight = $('#trxDetailsDataRight');
+        let ulLast = $('#trxDetailsDataLast');
+        let appendedTags = '';
+        let appendedTagsRight = '';
+        let appendedTagsBottom = '';
+
+        {% if not is_normal_flow %}
+          let trx_id = $(this).data('trx_id')
+        {% endif %}
+
+        let msisdn = $(this).data('msisdn');
+        appendedTags += `<li><span>{% trans 'Wallet Number' %}</span><strong>: </strong>${msisdn}</li>`;
+
+        let amount = $(this).data('amount');
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${amount}</li>`;
+
+        let is_disbursed = $(this).data('is_disbursed');
+        let is_canceled = $(this).data('is_canceled');
+        let reason = $(this).data('reason');
+
+        {# Handle is_disbursed icon based of the record disbursement status #}
+        if (is_disbursed === 'True') {
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Successful" %}</li>`;
+        }
+        else if (!reason) {
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Pending" %}</li>`;
+        }
+        else {
+          appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>{% trans "Failed" %}</li>`;
+        }
+        let issuer = $(this).data('issuer');
+        {% if not is_normal_flow %}
+          appendedTagsRight += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer}</li>`;
+          let aman_is_paid = $(this).data('aman_is_paid');
+
+          {# Determine is_paid? status for aman transactions #}
+          if (issuer === 'Aman') {
+            if (aman_is_paid === 'True') {
+              appendedTags += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTags += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
+            }
+
+            if (is_canceled === 'True') {
+              appendedTags += `<li><span>Canceled?</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTags += `<li><span>Canceled?</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
+        {% endif %}
+
+        {# Handle disbursement status description based of the record disbursement status #}
+        if (reason) {
+          if (is_disbursed === 'True') {
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>200</li>`;
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${reason}</li>`;
+          } else {
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>${reason}</li>`;
+            let reason_description = $(this).data('reason_description');
+            appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${reason_description}</li>`;
+          }
+        } else {
+          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong> -- </li>`;
+          appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>Disbursement process is running</li>`;
+        }
+        if (issuer === 'Aman') {
+          if (aman_is_paid !== 'True' && is_disbursed === 'True' && is_canceled == 'False') {
+            appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx_id})" class="btn btn-danger btn-md">Cancel</button></center>`;
+          }
+        }
+
+        let created_at = $(this).data('created_at');
+        appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${created_at}</li>`;
+
+        let updated_at = $(this).data('updated_at');
+        appendedTagsRight += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${updated_at}</li>`;
+
+        let disbursed_at = $(this).data('disbursed_at');
+        appendedTagsRight += `<li><span>{% trans 'Disbursed At' %}</span><strong>: </strong>${disbursed_at}</li>`;
+
+        ul.empty();
+        ul.append(appendedTags);
+
+        ulRight.empty();
+        ulRight.append(appendedTagsRight);
+
+        ulLast.empty();
+        ulLast.append(appendedTagsBottom);
+
+        $("#trxDetails").slideDown();
+        $('html,body').animate({
+          scrollTop: $("#trxDetails").offset().top
+        }, 'slow');
+     }
+    });
+
+    function cancel_transaction(trn_id){
+      conf = confirm("Please note that fees and VAT are not refundable. Are you sure you want to cancel this transaction ?");
+      if (conf){
+        $.ajax({
+          url: "{% url 'disb_api:cancel_aman_transaction' %}",
+          type: "POST",
+            headers: {'Content-Type': 'application/json'},
+
+          'data': JSON.stringify({ 'transaction_id': trn_id }),
+          success: function (data, text, xhr) {
+            if (data.canceled == false)
+                alert("Transaction can't be canceled");
+            else
+                location.reload();
+          },
+        });
+
+      }
+    }
+  </script>
+  {# sidebar search #}
+  <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet"/>
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+  <script>
+    var $j = jQuery.noConflict();
+    $j(function () {
+      $j(".input_date").datepicker({
+        dateFormat: 'yy-mm-dd',
+      });
+    });
+
+    $(document).ready(function() {
+      $("#sidebarCollapse").on("click", function() {
+        openNav();
+      });
+    });
+    function openNav() {
+      $("#overlay").addClass("show");
+      $("#filter-sidebar").addClass("show");
+    }
+    function closeNav() {
+      $("#overlay").removeClass("show");
+      $("#filter-sidebar").removeClass("show");
+    }
+  </script>
+{% endblock %}

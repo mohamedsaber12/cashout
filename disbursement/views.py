@@ -44,14 +44,13 @@ from data.utils import redirect_params
 from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (SuperFinishedSetupMixin,
-                          SuperOrOnboardUserRequiredMixin,
-                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-                          SuperRequiredMixin,
-                          AgentsListPermissionRequired,
-                          UserWithAcceptVFOnboardingPermissionRequired,
-                          UserWithDisbursementPermissionRequired,
-                          RootUserORDashboardUserRequiredMixin)
+from users.mixins import (
+    SuperFinishedSetupMixin, SuperOrOnboardUserRequiredMixin,
+    SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin,
+    AgentsListPermissionRequired, UserWithAcceptVFOnboardingPermissionRequired,
+    UserWithDisbursementPermissionRequired, RootUserORDashboardUserRequiredMixin,
+    RootRequiredMixin
+)
 from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
 from utilities.models import Budget
@@ -1625,4 +1624,47 @@ class ExportClientsTransactionsMonthlyReport:
         report_download_url = self.prepare_transactions_report()
 
         return report_download_url
-    
+
+
+class DisbursementDataListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired, ListView):
+    """
+    View for displaying instant transactions
+    """
+
+    model = DisbursementData
+    context_object_name = 'portal_transactions'
+    template_name = 'disbursement/vf_et_aman_trx_list.html'
+
+    def get_queryset(self):
+        filter_dict = {
+            'doc__owner__root': self.request.user,
+        }
+        # add filters to filter dict
+        if self.request.GET.get('number'):
+            filter_dict['msisdn'] = self.request.GET.get('number')
+        if self.request.GET.get('issuer'):
+            filter_dict['issuer'] = self.request.GET.get('issuer')
+        if self.request.GET.get('start_date'):
+            start_date = self.request.GET.get('start_date')
+            first_day = datetime(
+                year=int(start_date.split('-')[0]),
+                month=int(start_date.split('-')[1]),
+                day=int(start_date.split('-')[2]),
+            )
+            filter_dict['disbursed_date__gte'] = make_aware(first_day)
+        if self.request.GET.get('end_date'):
+            end_date = self.request.GET.get('end_date')
+            last_day = datetime(
+                year=int(end_date.split('-')[0]),
+                month=int(end_date.split('-')[1]),
+                day=int(end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            filter_dict['disbursed_date__lte'] = make_aware(last_day)
+
+        queryset = super().get_queryset().filter(**filter_dict).order_by("-created_at")
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page', 1)
+        return paginator.get_page(page)

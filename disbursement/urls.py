@@ -5,7 +5,8 @@ from .views import (
     SuperAdminAgentsSetup, disburse, DisbursementDocTransactionsView,
     download_failed_validation_file, ExportClientsTransactionsReportPerSuperAdmin,
     failed_disbursed_for_download, SingleStepTransactionsView,
-    DownloadSampleSheetView, download_exported_transactions, HomeView
+    DownloadSampleSheetView, download_exported_transactions, HomeView,
+    DisbursementDataListView
 )
 
 
@@ -14,6 +15,7 @@ app_name = 'disbursement'
 client_urls = [
     path('agents/', AgentsListView.as_view(), name='agents_list'),
     path('home/', HomeView.as_view(), name='home_root'),
+    path('home/portal-transactions/', DisbursementDataListView.as_view(), name='vf_et_aman_list'),
     path('budget/inquiry/<str:username>/', BalanceInquiry.as_view(), name='balance_inquiry'),
     path('client/creation/agents/<token>/', SuperAdminAgentsSetup.as_view(), name='add_agents'),
 ]

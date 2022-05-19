@@ -6,7 +6,7 @@ from .views import (
     download_failed_validation_file, ExportClientsTransactionsReportPerSuperAdmin,
     failed_disbursed_for_download, SingleStepTransactionsView,
     DownloadSampleSheetView, download_exported_transactions, HomeView,
-    DisbursementDataListView, OrangeBankWalletListView
+    DisbursementDataListView, OrangeBankWalletListView, BanksListView
 )
 
 
@@ -17,6 +17,7 @@ client_urls = [
     path('home/', HomeView.as_view(), name='home_root'),
     path('home/portal-transactions/', DisbursementDataListView.as_view(), name='vf_et_aman_list'),
     path('home/portal-transactions-orange/', OrangeBankWalletListView.as_view(), name='orange_bank_wallet_list'),
+    path('home/portal-transactions-banks/', BanksListView.as_view(), name='banks_list'),
     path('budget/inquiry/<str:username>/', BalanceInquiry.as_view(), name='balance_inquiry'),
     path('client/creation/agents/<token>/', SuperAdminAgentsSetup.as_view(), name='add_agents'),
 ]

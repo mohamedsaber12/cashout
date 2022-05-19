@@ -19,6 +19,11 @@
             <label for="data-name">IBAN/Account Number</label>
             <input name="account_number" type="text" class="form-control">
           </div>
+          {% elif type == 'instant_portal_wallets' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-name">Recipient Number</label>
+            <input name="number" type="text" class="form-control" id="data-name">
+          </div>
           {% else %}
           <div class="col-sm-12 data-field-col">
             <label for="data-name">Wallet Number</label>
@@ -40,11 +45,20 @@
             <label for="data-category"> Issuer </label>
             <select name="issuer" class="form-control" id="data-category">
               <option value="">All</option>
-              <option value="vodafone">Vodafone</option>
-              <option value="etisalat">Etisalat</option>
-              <option value="aman">Aman</option>
-              <option value="aman">Orange</option>
-              <option value="aman">Bank Wallet</option>
+              <option value="V">Vodafone</option>
+              <option value="E">Etisalat</option>
+              <option value="A">Aman</option>
+              <option value="O">Orange</option>
+              <option value="B">Bank Wallet</option>
+            </select>
+          </div>
+          {% elif type == 'instant_portal_wallets' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-category"> Issuer </label>
+            <select name="issuer" class="form-control">
+              <option value="">All</option>
+              <option value="O">Orange</option>
+              <option value="B">Bank Wallet</option>
             </select>
           </div>
           {% endif %}

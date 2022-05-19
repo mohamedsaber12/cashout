@@ -1628,7 +1628,7 @@ class ExportClientsTransactionsMonthlyReport:
 
 class DisbursementDataListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired, ListView):
     """
-    View for displaying instant transactions
+    View for displaying vodafone, etisalat, aman transactions
     """
 
     model = DisbursementData
@@ -1641,9 +1641,53 @@ class DisbursementDataListView(RootRequiredMixin, UserWithAcceptVFOnboardingPerm
         }
         # add filters to filter dict
         if self.request.GET.get('number'):
-            filter_dict['msisdn'] = self.request.GET.get('number')
+            filter_dict['msisdn__contains'] = self.request.GET.get('number')
         if self.request.GET.get('issuer'):
             filter_dict['issuer'] = self.request.GET.get('issuer')
+        if self.request.GET.get('start_date'):
+            start_date = self.request.GET.get('start_date')
+            first_day = datetime(
+                year=int(start_date.split('-')[0]),
+                month=int(start_date.split('-')[1]),
+                day=int(start_date.split('-')[2]),
+            )
+            filter_dict['disbursed_date__gte'] = make_aware(first_day)
+        if self.request.GET.get('end_date'):
+            end_date = self.request.GET.get('end_date')
+            last_day = datetime(
+                year=int(end_date.split('-')[0]),
+                month=int(end_date.split('-')[1]),
+                day=int(end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            filter_dict['disbursed_date__lte'] = make_aware(last_day)
+
+        queryset = super().get_queryset().filter(**filter_dict).order_by("-created_at")
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page', 1)
+        return paginator.get_page(page)
+
+
+class OrangeBankWalletListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired, ListView):
+    """
+    View for displaying instant transactions (orange/bank wallet)
+    """
+
+    model = InstantTransaction
+    context_object_name = 'transactions'
+    template_name = 'disbursement/orange_bank_wallet_trx_list.html'
+
+    def get_queryset(self):
+        filter_dict = {
+            'document__owner__root': self.request.user,
+        }
+        # add filters to filter dict
+        if self.request.GET.get('number'):
+            filter_dict['anon_recipient__contains'] = self.request.GET.get('number')
+        if self.request.GET.get('issuer'):
+            filter_dict['issuer_type'] = self.request.GET.get('issuer')
         if self.request.GET.get('start_date'):
             start_date = self.request.GET.get('start_date')
             first_day = datetime(

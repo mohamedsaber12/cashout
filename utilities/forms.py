@@ -2,10 +2,13 @@
 from __future__ import unicode_literals
 
 from decimal import Decimal
+from http import client
 
 from django import forms
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext as _
+
+from utilities.models.generic_models import TopupAction
 
 from .models import Budget
 import logging
@@ -69,7 +72,6 @@ class BudgetAdminModelForm(forms.ModelForm):
     """
     Admin model form for adding new amounts to the current balance of a budget record
     """
-
     add_new_amount = forms.IntegerField(
             required=False,
             validators=[MinValueValidator(round(Decimal(0), 2))],
@@ -85,16 +87,27 @@ class BudgetAdminModelForm(forms.ModelForm):
         """Update the current balance using the newly added amount"""
         try:
             amount_being_added = self.cleaned_data.get('add_new_amount', None)
+            balance_before = self.instance.current_balance
+            fx_amount = 0
             fx_rate = self.cleaned_data.get('fx_rate', None)
             if amount_being_added:
                 amount_being_added = round(Decimal(amount_being_added), 2)
                 if fx_rate:
-                    new_amount = round(amount_being_added - (amount_being_added * Decimal(fx_rate/100)), 2)
+                    fx_amount = amount_being_added * Decimal(fx_rate/100)
+                    new_amount = round(amount_being_added - fx_amount, 2)
                     BUDGET_LOGGER.debug(
                         f"FX rate applied ({fx_rate}) amount before {amount_being_added} amount after {new_amount}"
                         )
                     amount_being_added = new_amount
                 self.instance.current_balance += amount_being_added
+                TopupAction.objects.create(
+                    client=self.instance.disburser,
+                    amount=Decimal(amount_being_added),
+                    balance_before=Decimal(balance_before),
+                    balance_after=Decimal(self.instance.current_balance),
+                    fx_ratio_amount=Decimal(fx_amount),
+                )
+
 
 
         except ValueError:

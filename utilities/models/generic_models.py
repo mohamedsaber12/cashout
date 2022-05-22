@@ -477,3 +477,47 @@ class TopupRequest(AbstractTimeStamp):
         verbose_name = "Topup Request"
         verbose_name_plural = "Topup Requests"
         ordering = ["-id"]
+
+
+class TopupAction(AbstractTimeStamp):
+
+    client = models.ForeignKey(
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="topup_action",
+    )
+    amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    fx_ratio_amount = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    balance_before = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    balance_after = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    notes = models.CharField(
+        max_length=500,
+        blank=True,
+        null=True
+    )
+
+    class Meta:
+        verbose_name = "Topup Action"
+        verbose_name_plural = "Topup Actions"
+        ordering = ["-id"]
+

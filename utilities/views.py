@@ -18,7 +18,7 @@ from .forms import BudgetModelForm, IncreaseBalanceRequestForm
 from .mixins import BudgetActionMixin
 from .models import Budget
 from .tasks import send_transfer_request_email
-from utilities.models import TopupRequest
+from utilities.models import TopupRequest, TopupAction
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -140,8 +140,7 @@ class ListIncreaseBalanceRequestView(MakeTransferRequestPermissionRequired, View
     template_name = 'utilities/list_transfer_request.html'
 
     def get(self, request, *args, **kwargs):
-        print(TopupRequest.objects.filter(client=request.user.root))
         context = {
-            'transfer_requests': TopupRequest.objects.filter(client=request.user.root),
+            'transfer_requests': TopupAction.objects.filter(client=request.user.root),
         }
         return render(request, template_name=self.template_name, context=context)

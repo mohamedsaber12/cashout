@@ -36,16 +36,18 @@
             <thead>
               <tr>
                 <th>{% trans 'Amount' %}</th>
-                <th>{% trans 'Currency' %}</th>
-                <th>{% trans 'Transfer Type' %}</th>
+                <th>{% trans 'FX Fees Amount' %}</th>
+                <th>{% trans 'Balance Before' %}</th>
+                <th>{% trans 'Balance After' %}</th>
                 <th>{% trans 'Date' %}</th>
               </tr>
             </thead>
             <tbody>
               {% for transfer_request in transfer_requests %}
                   <td>{{ transfer_request.amount }}</td>
-                  <td>{{ transfer_request.currency }}</td>
-                  <td>{{ transfer_request.transfer_type }}</td>
+                  <td>{{ transfer_request.fx_ratio_amount }}</td>
+                  <td>{{ transfer_request.balance_before }}</td>
+                  <td>{{ transfer_request.balance_after }}</td>
                   <td>{{ transfer_request.created_at }}</td>
                 </tr>
               {% endfor %}

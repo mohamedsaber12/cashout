@@ -9,6 +9,7 @@
 {% block gentellacss %}
   <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
   <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
+  <link href="{% static 'css/right_sidebar.css' %}" rel="stylesheet">
   <style>
     .export-dropdown {
       position: relative;
@@ -21,10 +22,6 @@
       padding-bottom: .5rem!important;
       -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
       box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
-    }
-    .input_date {
-      border-radius: 1.25rem!important;
-      width: 80%!important;
     }
     #trxDetailsDataRight > li > span{
       {% if bank_transactions %}
@@ -49,7 +46,6 @@
             <h3>{% trans 'Wallets/Aggregators Transactions' %}{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
           {% endif %}
         </div>
-        {% include 'search_bar.html' %}
       </div>
 
       <div class="row">
@@ -58,7 +54,11 @@
             <div class="x_title">
               <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
               <ul class="nav navbar-right panel_toolbox">
-                <li><a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                <li>
+                  <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+                </li>
+                <li style="float: right;">
+                  <a id="sidebarCollapse"><i class="fa fa-search"></i></a>
                 </li>
               </ul>
               <div class="clearfix"></div>
@@ -71,6 +71,13 @@
             {% endif %}
           </div>
         </div>
+        {# right sidebar #}
+        {% if is_bank_transactions == 'yes' %}
+          {% include 'disbursement/right_sidebar.html' with type='banks' %}
+        {% else %}
+          {% include 'disbursement/right_sidebar.html' with type='wallets' %}
+        {% endif %}
+        {# End of right sidebar #}
       </div>
     </div>
   </div>
@@ -110,153 +117,166 @@
 {% endblock %}
 
 {% block script %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
-<script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+  <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/dataTables.buttons.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons-bs/js/buttons.bootstrap.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.flash.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.html5.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-buttons/js/buttons.print.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-fixedheader/js/dataTables.fixedHeader.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-keytable/js/dataTables.keyTable.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
+  <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  {# DataTables #}
+  <script>
+      var table = $('#transaction-table').DataTable({
+        "bLengthChange" : false,
+        "bPaginate": false,
+        "bInfo" : false
+      });
 
-
-<script>
-  $(document).ready( function () {
-    let empty_row = $('.dataTables_empty');
-    if (empty_row) {
-      empty_row.parent().attr('id', 'empty_row');
-    }
-    $('#search_form').submit(function(eventObj) {
-      eventObj.preventDefault();
-      let newSearchUrl = "{{request.get_full_path}}";
-      if(newSearchUrl.includes('?')) {
-        newSearchUrl = newSearchUrl + "&search=" + $('[name="search"]').val();
-      } else {
-        newSearchUrl = newSearchUrl + "?search=" + $('[name="search"]').val();
-      }
-      window.location.href = newSearchUrl;
-    });
-  });
-  $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
-    if ($(this).hasClass('selected')) {
-      $(this).removeClass('selected');
-      $("#trxDetails").slideUp().fadeOut();
-    } else {
-      $('tr.selected').removeClass('selected');
-      $(this).addClass('selected');
-      let ul = $('#trxDetailsData');
-      let ulRight = $('#trxDetailsDataRight');
-      let ulLast = $('#trxDetailsDataLast');
-      let appendedTags = '';
-
-      let uid = $(this).data('id');
-      appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${uid}</li>`;
-
-      {% if bank_transactions %}
-        let creditor_account_number = $(this).data('creditor_account_number');
-        appendedTags += `<li><span>{% trans 'Recipient' %}</span><strong>: </strong>${creditor_account_number}</li>`;
-        let creditor_name = $(this).data('creditor_name');
-        appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${creditor_name}</li>`;
-      {% else %}
-        let anon_recipient = $(this).data('anon_recipient');
-        appendedTags += `<li><span>{% trans 'Recipient' %}</span><strong>: </strong>${anon_recipient}</li>`;
-        let issuer_type = $(this).data('issuer_type');
-
-        if (['Orange', 'Bank Wallet'].includes(issuer_type)) {
-          let recipient_name = $(this).data('recipient_name');
-          appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${recipient_name}</li>`;
-        }
-      {% endif %}
-      let amount = $(this).data('amount');
-      appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${amount}</li>`;
-      let status = $(this).data('status');
-      appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>${status}</li>`;
-
-      ul.empty();
-      ul.append(appendedTags);
-      appendedTags = '';
-
-      {% if bank_transactions %}
-        let creditor_bank_code = $(this).data('creditor_bank_code');
-        appendedTags += `<li><span>{% trans 'Bank Swift Code' %}</span><strong>: </strong>${creditor_bank_code}</li>`;
-        let creditor_bank_name = $(this).data('creditor_bank_name');
-        appendedTags += `<li><span>{% trans 'Bank Name' %}</span><strong>: </strong>${creditor_bank_name}</li>`;
-        let transaction_type = $(this).data('transaction_type');
-        appendedTags += `<li><span>{% trans 'Transaction Type' %}</span><strong>: </strong>${transaction_type}</li>`;
-      {% else %}
-        appendedTags += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer_type}</li>`;
-        let aman_is_paid = $(this).data('aman_is_paid');
-
-        {# Determine is_paid? status for aman transactions #}
-        if (issuer_type === 'Aman') {
-          if (aman_is_paid === 'True') {
-            appendedTags += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
-          } else {
-            appendedTags += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
+      var buttons = new $.fn.dataTable.Buttons( table, {
+        buttons: [
+          {
+            extend: 'copy',
+            text : "{% trans 'Copy' %}",
+            exportOptions: {
+                charSet: "utf-8",
+            }
+          },
+          {
+            extend: 'print',
+            text : "PDF",
+          },
+          {
+            extend: 'excelHtml5',
+            text : "{% trans 'Export' %}",
+            customize: function( xlsx ) {
+              var sheet = xlsx.xl.worksheets['sheet1.xml'];
+              $('row c[r^="A"]', sheet).attr( 's', '0' );
+           }
           }
-        }
-      {% endif %}
-      let created_at = $(this).data('created_at');
-      appendedTags += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${created_at}</li>`;
-      let updated_at = $(this).data('updated_at');
-      appendedTags += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${updated_at}</li>`;
+        ]
+      });
 
-      ulRight.empty();
-      ulRight.append(appendedTags);
-      appendedTags = '';
-
-      let status_code = $(this).data('status_code');
-      appendedTags += `<li><span>{% trans 'Transaction Status Code' %}</span><strong>: </strong>${status_code}</li>`;
-      let status_description = $(this).data('status_description');
-      appendedTags += `<li><span>{% trans 'Transaction Status Description' %}</span><strong>: </strong>${status_description}</li>`;
-      ulLast.empty();
-      ulLast.append(appendedTags);
-      $("#trxDetails").slideDown();
-      $('html,body').animate({
-        scrollTop: $("#trxDetails").offset().top
-      }, 'slow');
-   }
-  });
-</script>
-
-<script>
-  var table = $('#transaction-table').DataTable({
-    "bLengthChange" : false,
-    "bPaginate": false,
-    "bInfo" : false
-  });
-  
-  var buttons = new $.fn.dataTable.Buttons( table, {
-    buttons: [
-      {
-        extend: 'copy',
-        text : "{% trans 'Copy' %}",
-        exportOptions: {
-          charSet: "utf-8",
-        }
-      },
-      {
-        extend: 'print',
-        text : "PDF",
-      },
-      {
-        extend: 'excelHtml5',
-        text : "{% trans 'Export' %}",
-        customize: function( xlsx ) {
-          var sheet = xlsx.xl.worksheets['sheet1.xml'];
-          $('row c[r^="A"]', sheet).attr( 's', '0' );
-        }
+      table.buttons( 0, null ).container().prependTo(
+          table.table().container()
+      );
+      let empty_row = $('.dataTables_empty');
+      if (empty_row) {
+        empty_row.parent().attr('id', 'empty_row');
       }
-    ]
-  });
-  
-  table.buttons( 0, null ).container().prependTo(
-    table.table().container()
-  );
-</script>
+    </script>
+  {# transaction details #}
+  <script>
+    $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
+      if ($(this).hasClass('selected')) {
+        $(this).removeClass('selected');
+        $("#trxDetails").slideUp().fadeOut();
+      } else {
+        $('tr.selected').removeClass('selected');
+        $(this).addClass('selected');
+        let ul = $('#trxDetailsData');
+        let ulRight = $('#trxDetailsDataRight');
+        let ulLast = $('#trxDetailsDataLast');
+        let appendedTags = '';
+
+        let uid = $(this).data('id');
+        appendedTags += `<li><span>{% trans 'Transaction ID' %}</span><strong>: </strong>${uid}</li>`;
+
+        {% if bank_transactions %}
+          let creditor_account_number = $(this).data('creditor_account_number');
+          appendedTags += `<li><span>{% trans 'Recipient' %}</span><strong>: </strong>${creditor_account_number}</li>`;
+          let creditor_name = $(this).data('creditor_name');
+          appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${creditor_name}</li>`;
+        {% else %}
+          let anon_recipient = $(this).data('anon_recipient');
+          appendedTags += `<li><span>{% trans 'Recipient' %}</span><strong>: </strong>${anon_recipient}</li>`;
+          let issuer_type = $(this).data('issuer_type');
+
+          if (['Orange', 'Bank Wallet'].includes(issuer_type)) {
+            let recipient_name = $(this).data('recipient_name');
+            appendedTags += `<li><span>{% trans 'Full Name' %}</span><strong>: </strong>${recipient_name}</li>`;
+          }
+        {% endif %}
+        let amount = $(this).data('amount');
+        appendedTags += `<li><span>{% trans 'Amount' %}</span><strong>: </strong>${amount}</li>`;
+        let status = $(this).data('status');
+        appendedTags += `<li><span>{% trans 'Status' %}</span><strong>: </strong>${status}</li>`;
+
+        ul.empty();
+        ul.append(appendedTags);
+        appendedTags = '';
+
+        {% if bank_transactions %}
+          let creditor_bank_code = $(this).data('creditor_bank_code');
+          appendedTags += `<li><span>{% trans 'Bank Swift Code' %}</span><strong>: </strong>${creditor_bank_code}</li>`;
+          let creditor_bank_name = $(this).data('creditor_bank_name');
+          appendedTags += `<li><span>{% trans 'Bank Name' %}</span><strong>: </strong>${creditor_bank_name}</li>`;
+          let transaction_type = $(this).data('transaction_type');
+          appendedTags += `<li><span>{% trans 'Transaction Type' %}</span><strong>: </strong>${transaction_type}</li>`;
+        {% else %}
+          appendedTags += `<li><span>{% trans 'Issuer' %}</span><strong>: </strong>${issuer_type}</li>`;
+          let aman_is_paid = $(this).data('aman_is_paid');
+
+          {# Determine is_paid? status for aman transactions #}
+          if (issuer_type === 'Aman') {
+            if (aman_is_paid === 'True') {
+              appendedTags += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkgreen">&#10004;</span></li>`;
+            } else {
+              appendedTags += `<li><span>{% trans 'Cashed Out?' %}</span><strong>: </strong><span style="color: darkred">&#10006;</span></li>`;
+            }
+          }
+        {% endif %}
+        let created_at = $(this).data('created_at');
+        appendedTags += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${created_at}</li>`;
+        let updated_at = $(this).data('updated_at');
+        appendedTags += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${updated_at}</li>`;
+
+        ulRight.empty();
+        ulRight.append(appendedTags);
+        appendedTags = '';
+
+        let status_code = $(this).data('status_code');
+        appendedTags += `<li><span>{% trans 'Transaction Status Code' %}</span><strong>: </strong>${status_code}</li>`;
+        let status_description = $(this).data('status_description');
+        appendedTags += `<li><span>{% trans 'Transaction Status Description' %}</span><strong>: </strong>${status_description}</li>`;
+        ulLast.empty();
+        ulLast.append(appendedTags);
+        $("#trxDetails").slideDown();
+        $('html,body').animate({
+          scrollTop: $("#trxDetails").offset().top
+        }, 'slow');
+     }
+    });
+  </script>
+  {# sidebar search #}
+  <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet"/>
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+  <script>
+      var $j = jQuery.noConflict();
+      $j(function () {
+        $j(".input_date").datepicker({
+          dateFormat: 'yy-mm-dd',
+        });
+      });
+
+      $(document).ready(function() {
+        $("#sidebarCollapse").on("click", function() {
+          openNav();
+        });
+      });
+      function openNav() {
+        $("#overlay").addClass("show");
+        $("#filter-sidebar").addClass("show");
+      }
+      function closeNav() {
+        $("#overlay").removeClass("show");
+        $("#filter-sidebar").removeClass("show");
+      }
+    </script>
 {% endblock %}

@@ -182,6 +182,7 @@
   <script src="{% static 'gentella/vendors/datatables.net-responsive/js/dataTables.responsive.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-responsive-bs/js/responsive.bootstrap.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
+  {# DataTables #}
   <script>
     var table = $('#transaction-table').DataTable({
       "bLengthChange" : false,
@@ -222,10 +223,7 @@
     }
   </script>
   {# transaction details #}
-  {# sidebar search #}
-<link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet"/>
-<script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-<script>
+  <script>
     $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
@@ -309,27 +307,30 @@
      }
     });
   </script>
-<script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
-<script>
-    var $j = jQuery.noConflict();
-    $j(function () {
-      $j(".input_date").datepicker({
-        dateFormat: 'yy-mm-dd',
+  {# sidebar search #}
+  <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet"/>
+  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
+  <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+  <script>
+      var $j = jQuery.noConflict();
+      $j(function () {
+        $j(".input_date").datepicker({
+          dateFormat: 'yy-mm-dd',
+        });
       });
-    });
 
-    $(document).ready(function() {
-      $("#sidebarCollapse").on("click", function() {
-        openNav();
+      $(document).ready(function() {
+        $("#sidebarCollapse").on("click", function() {
+          openNav();
+        });
       });
-    });
-    function openNav() {
-      $("#overlay").addClass("show");
-      $("#filter-sidebar").addClass("show");
-    }
-    function closeNav() {
-      $("#overlay").removeClass("show");
-      $("#filter-sidebar").removeClass("show");
-    }
-  </script>
+      function openNav() {
+        $("#overlay").addClass("show");
+        $("#filter-sidebar").addClass("show");
+      }
+      function closeNav() {
+        $("#overlay").removeClass("show");
+        $("#filter-sidebar").removeClass("show");
+      }
+    </script>
 {% endblock %}

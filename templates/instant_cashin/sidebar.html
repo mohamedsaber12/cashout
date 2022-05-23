@@ -29,12 +29,12 @@
         {% endif %}
 
         <li><a>
-          <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Transfer Request' %}
+          <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Topup balance' %}
           <span class="fa fa-chevron-down"></span>
         </a>
           <ul class="nav child_menu">
-            <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add Transfer Request' %}</a></li>
-            <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All Transfer Requests' %}</a></li>
+            <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add topup balance Request' %}</a></li>
+            <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All topup balance Requests' %}</a></li>
           </ul>
         </li>
         <li><a href="{% url 'docs:instant_docs' path='' %}" rel="noopener" target="_blank"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>

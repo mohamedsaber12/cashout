@@ -55,9 +55,15 @@
           </a>
           </li>
           {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring%}
-            <li><a href="{% url 'utilities:transfer_request' %}">
-              <img style="width: 19px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Top Up Balance' %}</a>
-            </li>
+          <li><a>
+            <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Topup balance' %}
+            <span class="fa fa-chevron-down"></span>
+          </a>
+            <ul class="nav child_menu">
+              <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add topup balance Request' %}</a></li>
+              <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All topup balance requests' %}</a></li>
+            </ul>
+          </li>
           {% endif %}
         {% endif %}
 

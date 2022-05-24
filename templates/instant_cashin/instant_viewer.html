@@ -16,7 +16,7 @@
       display: inline-block;
       border: 0;
       background: transparent;
-      border-radius: 1.25rem!important;
+      border-radius: 0.5rem!important;
       width: 8rem!important;
       padding: .75rem!important;
       padding-bottom: .5rem!important;
@@ -29,6 +29,9 @@
       {% else %}
         width: 90px;
       {% endif %}
+    }
+    #sidebarCollapse {
+      color: #333;
     }
   </style>
 {% endblock %}
@@ -57,8 +60,8 @@
                 <li>
                   <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
                 </li>
-                <li style="float: right;">
-                  <a id="sidebarCollapse"><i class="fa fa-search"></i></a>
+                <li style="float: right;margin-left:10px;" title="open sidebar search">
+                  <a class="btn btn-default export-dropdown" id="sidebarCollapse"><i class="fa fa-search"></i> Search</a>
                 </li>
               </ul>
               <div class="clearfix"></div>
@@ -254,9 +257,9 @@
     });
   </script>
   {# sidebar search #}
-  <link href="https://code.jquery.com/ui/1.10.4/themes/ui-lightness/jquery-ui.css" rel="stylesheet"/>
-  <script src="https://code.jquery.com/jquery-1.12.4.min.js"></script>
-  <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
+  <link href="{% static 'gentella/jquery-ui-1.10.4.css' %}" rel="stylesheet"/>
+  <script src="{% static 'gentella/jquery-ui-1.10.4.js' %}"></script>
+  <script src="{% static 'rest_framework/js/jquery-1.12.4.min.js' %}"></script>
   <script>
       var $j = jQuery.noConflict();
       $j(function () {

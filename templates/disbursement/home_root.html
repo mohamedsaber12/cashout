@@ -11,7 +11,7 @@
       color: #FFFFFF !important;
     }
     .bg-analytics {
-      background: -webkit-linear-gradient(332deg, #1f0beb, rgb(19 105 227));
+      background: -webkit-linear-gradient(332deg, #1f0beb, rgb(43, 112, 176));
     }
     .card {
       margin-bottom: 2.2rem;
@@ -279,19 +279,17 @@
     <div class="card bg-analytics text-white">
       <div class="card-content">
         <div class="card-body text-center">
-          <img src="{% static 'img/decore-left.png' %}" class="img-left" alt="card-img-left">
-            <img src="{% static 'img/decore-right.png' %}" class="img-right" alt="card-img-right">
-              <div class="avatar avatar-xl bg-primary shadow mt-0">
-                <div class="avatar-content">
-                  <span class="wave white font-large-1">👋</span>
-                </div>
-              </div>
-              <div class="text-center">
-                <h1 class="mb-2 text-white">Welcome {{request.user.username}}</h1>
-              </div>
-              </div>
+          <div class="avatar avatar-xl bg-primary shadow mt-0">
+            <div class="avatar-content">
+              <span class="wave white font-large-1">👋</span>
+            </div>
           </div>
+          <div class="text-center">
+            <h1 class="mb-2 text-white">Welcome {{request.user.username}}</h1>
+          </div>
+        </div>
       </div>
+    </div>
   </div>
   {% if request.user.has_custom_budget or  request.user.root.has_custom_budget%}
     <div class="col-lg-2 col-md-6 col-sm-6">

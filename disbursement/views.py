@@ -379,12 +379,12 @@ def download_exported_transactions(request):
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(
-                    fh.read(),
-                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                fh.read(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
             FAILED_DISBURSEMENT_DOWNLOAD.debug(
-                    f"[message] [DOWNLOAD EXPORTED TRANSACTIONS] [{request.user}] -- file name: {filename}"
+                f"[message] [DOWNLOAD EXPORTED TRANSACTIONS] [{request.user}] -- file name: {filename}"
             )
             return response
     else:

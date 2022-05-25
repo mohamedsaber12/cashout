@@ -31,10 +31,11 @@ class RootRequiredMixin(LoginRequiredMixin):
         return super().dispatch(request, *args, **kwargs)
 
 
-class RootUserORDashboardUserRequiredMixin(LoginRequiredMixin):
+class RootUserORDashboardUserOrMakerORCheckerRequiredMixin(LoginRequiredMixin):
 
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.is_instantapiviewer or request.user.is_root):
+        if not (request.user.is_instantapiviewer or request.user.is_root or
+            request.user.is_maker or request.user.is_checker):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 

@@ -48,7 +48,7 @@ from users.mixins import (
     SuperFinishedSetupMixin, SuperOrOnboardUserRequiredMixin,
     SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin,
     AgentsListPermissionRequired, UserWithAcceptVFOnboardingPermissionRequired,
-    UserWithDisbursementPermissionRequired, RootUserORDashboardUserRequiredMixin,
+    UserWithDisbursementPermissionRequired, RootUserORDashboardUserOrMakerORCheckerRequiredMixin,
     RootRequiredMixin
 )
 from users.models import EntitySetup, Client, RootUser, User
@@ -792,7 +792,7 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
 
 
 @method_decorator([setup_required], name='dispatch')
-class HomeView(RootUserORDashboardUserRequiredMixin, View):
+class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
     model = BankTransaction
     template_name = 'disbursement/home_root.html'
@@ -835,25 +835,29 @@ class HomeView(RootUserORDashboardUserRequiredMixin, View):
                 )
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
 
-        vf_et_aman_trx = DisbursementData.objects.filter(
-            Q(doc__disbursed_by__root=request.user.root),
-            Q(doc__disbursement_txn__doc_status='5')
-        ).values('issuer').annotate(count=Count('id')).order_by('issuer')
+        vf_et_aman_trx = []
+        instant_trx = []
+        bank_count = 0
+        if request.user.is_root or request.user.is_instantapiviewer:
+            vf_et_aman_trx = DisbursementData.objects.filter(
+                Q(doc__disbursed_by__root=request.user.root),
+                Q(doc__disbursement_txn__doc_status='5')
+            ).values('issuer').annotate(count=Count('id')).order_by('issuer')
 
-        instant_trx = InstantTransaction.objects.filter(
-            ~Q(disbursed_date=None),
-            (Q(document__disbursed_by__root=request.user.root) |
-            Q(from_user__root=request.user.root))
-        ).extra(select={'issuer': 'issuer_type'}).values('issuer'). \
-            annotate(count=Count('uid')).order_by('issuer')
+            instant_trx = InstantTransaction.objects.filter(
+                ~Q(disbursed_date=None),
+                (Q(document__disbursed_by__root=request.user.root) |
+                Q(from_user__root=request.user.root))
+            ).extra(select={'issuer': 'issuer_type'}).values('issuer'). \
+                annotate(count=Count('uid')).order_by('issuer')
 
-        bank_count = BankTransaction.objects.filter(
-            ~Q(disbursed_date=None),
-            Q(end_to_end=""),
-            (Q(document__disbursed_by__root=request.user.root) |
-             Q(user_created__root=request.user.root))
-        ).order_by("parent_transaction__transaction_id", "-id"). \
-            distinct("parent_transaction__transaction_id").values('id').count()
+            bank_count = BankTransaction.objects.filter(
+                ~Q(disbursed_date=None),
+                Q(end_to_end=""),
+                (Q(document__disbursed_by__root=request.user.root) |
+                 Q(user_created__root=request.user.root))
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id").values('id').count()
 
         vodafone_transactions = 0
         etisalat_transactions = 0
@@ -1627,7 +1631,7 @@ class ExportClientsTransactionsMonthlyReport:
         return report_download_url
 
 
-class DisbursementDataListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired, ListView):
+class DisbursementDataListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
     """
     View for displaying vodafone, etisalat, aman transactions
     """
@@ -1637,9 +1641,19 @@ class DisbursementDataListView(RootRequiredMixin, UserWithAcceptVFOnboardingPerm
     template_name = 'disbursement/vf_et_aman_trx_list.html'
 
     def get_queryset(self):
-        filter_dict = {
-            'doc__owner__root': self.request.user,
-        }
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'doc__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'doc__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'doc__disbursed_by': self.request.user,
+            }
         # add filters to filter dict
         if self.request.GET.get('number'):
             filter_dict['msisdn__contains'] = self.request.GET.get('number')
@@ -1671,7 +1685,7 @@ class DisbursementDataListView(RootRequiredMixin, UserWithAcceptVFOnboardingPerm
         return paginator.get_page(page)
 
 
-class OrangeBankWalletListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired, ListView):
+class OrangeBankWalletListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
     """
     View for displaying instant transactions (orange/bank wallet)
     """
@@ -1681,9 +1695,20 @@ class OrangeBankWalletListView(RootRequiredMixin, UserWithAcceptVFOnboardingPerm
     template_name = 'disbursement/orange_bank_wallet_trx_list.html'
 
     def get_queryset(self):
-        filter_dict = {
-            'document__owner__root': self.request.user,
-        }
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+
         # add filters to filter dict
         if self.request.GET.get('number'):
             filter_dict['anon_recipient__contains'] = self.request.GET.get('number')
@@ -1715,7 +1740,7 @@ class OrangeBankWalletListView(RootRequiredMixin, UserWithAcceptVFOnboardingPerm
         return paginator.get_page(page)
 
 
-class BanksListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequired, ListView):
+class BanksListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
     """
     View for displaying bank transactions
     """
@@ -1725,9 +1750,19 @@ class BanksListView(RootRequiredMixin, UserWithAcceptVFOnboardingPermissionRequi
     template_name = 'disbursement/banks_trx_list.html'
 
     def get_queryset(self):
-        filter_dict = {
-            'document__owner__root': self.request.user,
-        }
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
         # add filters to filter dict
         if self.request.GET.get('account_number'):
             filter_dict['creditor_account_number__contains'] = self.request.GET.get('account_number')

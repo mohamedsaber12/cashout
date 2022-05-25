@@ -1703,16 +1703,16 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
 
         # 2. get data of current client within date range
         self.data = DisbursementData.objects.filter(
-                Q(doc__disbursed_by__root=root),
-                Q(disbursed_date__gte=self.first_day),
-                Q(disbursed_date__lte=self.last_day),
+            Q(doc__disbursed_by__root=root),
+            Q(disbursed_date__gte=self.first_day),
+            Q(disbursed_date__lte=self.last_day),
         )
 
         download_url = self.create_transactions_report()
         mail_content = _(
-                f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
-                f"transactions report within the period of {self.start_date} to {self.end_date} "
-                f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+            f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
+            f"transactions report within the period of {self.start_date} to {self.end_date} "
+            f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
         )
         mail_subject = "Ewallets Report"
         deliver_mail(self.user, _(mail_subject), mail_content)

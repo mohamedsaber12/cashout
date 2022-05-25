@@ -366,7 +366,6 @@ class BankTransaction(AbstractTimeStamp,
     disbursed_date = models.DateTimeField(
         _("Disbursed At"), null=True, blank=True)
     client_transaction_reference = models.UUIDField(
-        unique=True,
         blank=True,
         null=True,
         verbose_name=_("Client Transaction Reference")

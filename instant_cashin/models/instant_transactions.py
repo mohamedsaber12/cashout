@@ -125,6 +125,19 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
+
+    balance_before = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+
+    balance_after = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    
     # Not needed fields
     to_user = None
     external_reference_1 = None

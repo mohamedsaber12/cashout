@@ -144,6 +144,9 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         (_('Important Dates'), {
             'fields': ('created_at', 'updated_at', 'disbursed_date')
         }),
+        (_('Balance updates'), {
+            'fields': ('balance_before', 'balance_after')
+        }),
     )
 
     def has_module_permission(self, request):

@@ -89,12 +89,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
             disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
             disbursement_data_record.reference_id = reference_id
             doc_obj = disbursement_data_record.doc
+            balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
 
             if trx_callback_status == "200":
                 disbursement_data_record.is_disbursed = True
                 disbursement_data_record.reason = trx_callback_msg
                 if doc_obj.owner.root.has_custom_budget:
-                    doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
+                    balance_after = doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
                         disbursement_data_record.amount, issuer
                     )
             else:
@@ -102,6 +103,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 if not trx_callback_status in ["501", "-1"]:
                     disbursement_data_record.reason = trx_callback_status
             disbursement_data_record.disbursed_date=datetime.datetime.now()
+            disbursement_data_record.balance_before = balance_before
+            disbursement_data_record.balance_after = balance_after
             disbursement_data_record.save()
             if issuer == "aman":
                 AmanTransaction.objects.create(transaction=disbursement_data_record, bill_reference=reference_id)
@@ -116,12 +119,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
             trx_callback_status = callback_json["TXNSTATUS"]
             reference_id = callback_json["TXNID"]
             trx_callback_msg = callback_json["MESSAGE"]
+            doc_obj = inst_obj.document
+            balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
+
             if trx_callback_status == "200":
                 inst_obj.is_disbursed = True
                 inst_obj.mark_successful("200", trx_callback_msg)
-                doc_obj = inst_obj.document
                 if doc_obj.owner.root.has_custom_budget:
-                    doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
+                    balance_after = doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
                         inst_obj.amount, "VODAFONE"
                     )
             else:
@@ -129,6 +134,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     inst_obj.mark_failed(trx_callback_status, trx_callback_msg)
             inst_obj.reference_id = reference_id
             inst_obj.disbursed_date=datetime.datetime.now()
+            inst_obj.balance_before = balance_before
+            inst_obj.balance_after = balance_after
             inst_obj.save()
         except Exception as err:
             inst_obj.mark_failed(500, "External Error")

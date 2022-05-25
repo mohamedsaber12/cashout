@@ -187,13 +187,17 @@ class DisbursementData(AbstractTimeStamp):
     balance_before = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
 
     balance_after = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
 
     class Meta:
@@ -394,13 +398,17 @@ class BankTransaction(AbstractTimeStamp,
     balance_before = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
 
     balance_after = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
 
     class Meta:

@@ -202,7 +202,8 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin,
 
     fieldsets = (
         (None, {'fields': list_display + ["doc", "_disbursement_document"]}),
-        (_('Important Dates'), {'fields': ('created_at', 'updated_at')})
+        (_('Important Dates'), {'fields': ('created_at', 'updated_at')}),
+        (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
     )
 
     def _trx_id(self, obj):
@@ -237,7 +238,7 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     fieldsets = (
         (None, {'fields': ('doc', 'txn_id',
                            'txn_status', 'doc_status', 'has_callback')}),
-        (_('Important Dates'), {'fields': ('created_at', 'updated_at')})
+        (_('Important Dates'), {'fields': ('created_at', 'updated_at')}),
     )
 
 

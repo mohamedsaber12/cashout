@@ -235,6 +235,7 @@ class Budget(AbstractTimeStamp):
                 applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
                 budget_obj.total_disbursed_amount += amount_plus_fees_vat
                 budget_obj.current_balance -= amount_plus_fees_vat
+                balance_after = budget_obj.current_balance
                 budget_obj.save()
                 BUDGET_LOGGER.debug(
                         f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- disbursed amount: {amount}, "
@@ -247,7 +248,7 @@ class Budget(AbstractTimeStamp):
                     f"exception: {e.args}"
             ))
 
-        return True
+        return balance_after
 
     def return_disbursed_amount_for_cancelled_trx(self, amount):
         """
@@ -268,6 +269,12 @@ class Budget(AbstractTimeStamp):
             raise ValueError(_(f"Error adding to the current balance and cutting from the total disbursed amount"))
 
         return True
+
+    def get_current_balance(self):
+        with transaction.atomic():
+            print("===============GETTING BALACE=================")
+            budget_obj = Budget.objects.select_for_update().get(id=self.id)
+            return budget_obj.current_balance
 
 
 class FeeSetup(models.Model):
@@ -501,13 +508,17 @@ class TopupAction(AbstractTimeStamp):
     balance_before = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
 
     balance_after = models.DecimalField(
         max_digits=10,
         decimal_places=2,
-        default=0
+        default=0,
+        null=True,
+        blank=True
     )
 
     notes = models.CharField(

@@ -521,3 +521,15 @@ class TopupAction(AbstractTimeStamp):
         verbose_name_plural = "Topup Actions"
         ordering = ["-id"]
 
+
+class ExcelFile(AbstractTimeStamp):
+    """
+    Model for store Excel files with their users
+    """
+    file_name = models.CharField(max_length=100, null=False, blank=False, default='')
+    owner = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='my_excel_files',
+        verbose_name=_("Owner")
+    )

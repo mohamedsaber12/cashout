@@ -8,7 +8,6 @@ import random
 import xlwt
 import urllib
 from decimal import Decimal
-from django.utils import timezone
 
 from faker import Factory as fake_factory
 import pandas as pd
@@ -16,7 +15,7 @@ import requests
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import translation
@@ -53,7 +52,7 @@ from users.mixins import (
 )
 from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
-from utilities.models import Budget
+from utilities.models import Budget, ExcelFile
 
 from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
                     BalanceInquiryPinForm, SingleStepTransactionForm)
@@ -366,7 +365,10 @@ def download_exported_transactions(request):
     filename = request.GET.get('filename', None)
     if not filename:
         raise Http404
-
+    # check if user have permission for download file
+    if not request.user.is_staff:
+        if not ExcelFile.objects.filter(owner=request.user, file_name=filename).exists():
+            return HttpResponseForbidden()
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
 
     # prevent path traversal vulnerability
@@ -1482,6 +1484,10 @@ class ExportClientsTransactionsMonthlyReport:
                 row_num += 1
 
         wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.superadmin_user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 

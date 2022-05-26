@@ -303,7 +303,8 @@ class InstantDisbursementAPIView(views.APIView):
 
                 # check if msisdn is test number
                 if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
-                    issuer in ['vodafone', 'etisalat'] and \
+                    (issuer in ['vodafone', 'etisalat'] or
+                    (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE")) and \
                     data_dict['MSISDN2'] == get_from_env(f"test_number_for_{issuer}"):
                     transaction.mark_successful(200, "")
                     user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)

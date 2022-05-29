@@ -1572,19 +1572,31 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
-        root = self.user.root
-
 
         # 1. Format start and end date
         self.refine_start_and_end_date_format()
 
         # 2. get data of current client within date range
-        self.data = InstantTransaction.objects.filter(
-            (Q(document__disbursed_by__root=root) |
-             Q(from_user__root=root)),
-            Q(disbursed_date__gte=self.first_day),
-            Q(disbursed_date__lte=self.last_day),
-        )
+        self.data = []
+        if self.user.is_root or self.user.is_instantapiviewer:
+            self.data = InstantTransaction.objects.filter(
+                (Q(document__disbursed_by__root=self.user.root) |
+                 Q(from_user__root=self.user.root)),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_maker:
+            self.data = InstantTransaction.objects.filter(
+                Q(document__owner=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_checker:
+            self.data = InstantTransaction.objects.filter(
+                Q(document__disbursed_by=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
 
         download_url = self.create_transactions_report()
         mail_content = _(
@@ -1602,9 +1614,6 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         filename = f"banks_transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
-
-        # add new file for this user in ExcelFile model
-        ExcelFile.objects.create(file_name=filename, owner=self.user)
 
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
@@ -1632,7 +1641,11 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
                 ws.write(row_num, 7, str(row.updated_at))
                 row_num = row_num + 1
 
-        wb.save(file_path)  
+        wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
@@ -1640,20 +1653,38 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
-        root = self.user.root
 
         # 1. Format start and end date
         self.refine_start_and_end_date_format()
 
         # 2. get data of current client within date range
-        self.data = BankTransaction.objects.filter(
+        self.data = []
+        if self.user.is_root or self.user.is_instantapiviewer:
+            self.data = BankTransaction.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
-                (Q(document__disbursed_by__root=root) |
-                Q(user_created__root=root))
+                (Q(document__disbursed_by__root=self.user.root) |
+                 Q(user_created__root=self.user.root))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id")
+        elif self.user.is_maker:
+            self.data = BankTransaction.objects.filter(
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(end_to_end=""),
+                Q(document__owner=self.user)
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id")
+        elif self.user.is_checker:
+            self.data = BankTransaction.objects.filter(
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(end_to_end=""),
+                Q(document__disbursed_by=self.user)
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id")
+
 
         download_url = self.create_transactions_report()
         mail_content = _(
@@ -1717,17 +1748,30 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
-        root = self.user.root
 
         # 1. Format start and end date
         self.refine_start_and_end_date_format()
 
         # 2. get data of current client within date range
-        self.data = DisbursementData.objects.filter(
-            Q(doc__disbursed_by__root=root),
-            Q(disbursed_date__gte=self.first_day),
-            Q(disbursed_date__lte=self.last_day),
-        )
+        self.data = []
+        if self.user.is_root:
+            self.data = DisbursementData.objects.filter(
+                Q(doc__disbursed_by__root=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_maker:
+            self.data = DisbursementData.objects.filter(
+                Q(doc__owner=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_checker:
+            self.data = DisbursementData.objects.filter(
+                Q(doc__disbursed_by=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
 
         download_url = self.create_transactions_report()
         mail_content = _(

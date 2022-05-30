@@ -4,6 +4,7 @@ from __future__ import unicode_literals
 import csv
 
 from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
+from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
@@ -68,6 +69,15 @@ class CustomRootFilter(admin.SimpleListFilter):
         return queryset
 
 
+
+class IssuerTypeListFilter(MultipleChoiceListFilter):
+    title = 'Issuer Type'
+    parameter_name = 'issuer_type__in'
+
+    def lookups(self, request, model_admin):
+        return InstantTransaction.ISSUER_TYPE_CHOICES
+
+
 @admin.register(AmanTransaction)
 class AmanTransactionAdmin(admin.ModelAdmin):
     """
@@ -128,7 +138,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         ('disbursed_date', DateRangeFilter),
         ('created_at', DateRangeFilter),
         CustomStatusFilter,
-        'issuer_type', 'anon_sender', 'from_user',
+        IssuerTypeListFilter,
+        'anon_sender', 'from_user',
         CustomRootFilter,
         'is_single_step', 'transaction_status_code'
     ]

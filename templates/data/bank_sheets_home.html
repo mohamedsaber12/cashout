@@ -62,10 +62,6 @@
       </div>
     </div>
   {% endif %}
-  {% if request.user.is_root and request.user.is_accept_vodafone_onboarding %}
-    {% include 'export_bar.html' %}
-    <hr class="solid">
-  {% endif %}
 
   {% include 'data/document_disbursement_list.html' with object_list=banks_doc_list list_header=doc_list_header %}
 

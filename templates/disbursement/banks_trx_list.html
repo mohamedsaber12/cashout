@@ -1,34 +1,35 @@
 {% extends 'new_base.html' %}
 {% load static %}
 {% load i18n %}
-{% get_current_language as LANGUAGE_CODE %}
+{% load banks_tags i18n %}
 {% load custom_tags %}
+{% load error_codes_tags %}
 
 {% block title %} {% trans 'Transactions' %} {% endblock %}
-
 {% block gentellacss %}
+  {# Datatables #}
+  <link href="{% static 'gentella/vendors/datatables.net-bs/css/dataTables.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-buttons-bs/css/buttons.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/transaction_details.css' %}" rel="stylesheet">
-  <link href="{% static 'css/bootstrap_alerts.css' %}" rel="stylesheet">
+  <link href="{% static 'css/disbursement_transactions_dashboard.css' %}" rel="stylesheet">
   <link href="{% static 'css/right_sidebar.css' %}" rel="stylesheet">
   <style>
-    .export-dropdown {
-      position: relative;
-      display: inline-block;
-      border: 0;
-      background: transparent;
-      border-radius: 0.5rem!important;
-      width: 8rem!important;
-      padding: .75rem!important;
-      padding-bottom: .5rem!important;
-      -webkit-box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
-      box-shadow: 0 2px 8px 0 rgba(0,0,0,.14)!important;
-    }
     #trxDetailsDataRight > li > span{
-      {% if bank_transactions %}
-        width: 120px;
-      {% else %}
-        width: 90px;
-      {% endif %}
+      width: 90px;
+    }
+    #download-doc {
+        width: 17rem!important;
+        margin-right: 10px;
+        color: #333;
+    }
+    #download-doc span {
+        color: #333;
+    }
+    .pagination > li > span {
+      width: 33px;
     }
     #sidebarCollapse {
       color: #333;
@@ -37,56 +38,106 @@
 {% endblock %}
 
 {% block body %}
-
-  {# page content #}
-  <div class="col" role="main">
-    <div class="">
-      <div class="page-title">
-        <div class="title_left">
-          {% if is_bank_transactions == 'yes' %}
-            <h3>{% trans 'Bank Accounts/Cards Transactions' %}{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
-          {% else %}
-            <h3>{% trans 'Wallets/Aggregators Transactions' %}{% if request.user.is_support %}: {{ admin }} {% endif %}</h3>
-          {% endif %}
+  <div class="row">
+    <div class="col-md-12 col-sm-12 col-xs-12">
+      <div class="x_panel">
+        <div class="x_title">
+          <h2>{% trans 'Bank Accounts/Cards Transactions' %}</h2>
+          <ul class="nav navbar-right panel_toolbox">
+            <li>
+              <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+            </li>
+            <li style="float: right;margin-left:10px;" title="open sidebar search">
+              <a class="btn btn-default export-dropdown" id="sidebarCollapse"><i class="fa fa-search"></i> Search</a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
         </div>
-      </div>
-
-      <div class="row">
-        <div class="col-md-12 col-sm-12 col-xs-12">
-          <div class="x_panel">
-            <div class="x_title">
-              <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
-              <ul class="nav navbar-right panel_toolbox">
-                <li>
-                  <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
-                </li>
-                <li style="float: right;margin-left:10px;" title="open sidebar search">
-                  <a class="btn btn-default export-dropdown" id="sidebarCollapse"><i class="fa fa-search"></i> Search</a>
-                </li>
-              </ul>
-              <div class="clearfix"></div>
-            </div>
-
-            {% if is_bank_transactions == 'yes' %}
-              {% include 'instant_cashin/banks_transactions.html' with transactions=bank_transactions %}
+        {# transactions table #}
+        <div class="x_content">
+          <table class="table table-bordered" id="transaction-table">
+            <thead>
+              <tr>
+                <th class="trxTableHeader">{% trans 'Reference ID' %}</th>
+                <th class="trxTableHeader">{% trans 'Recipient' %}</th>
+                <th class="trxTableHeader">{% trans 'Amount' %}</th>
+                <th class="trxTableHeader">{% trans 'Fees' %}</th>
+                <th class="trxTableHeader">{% trans 'Vat' %}</th>
+                <th class="trxTableHeader">{% trans 'Status' %}</th>
+                <th class="trxTableHeader">{% trans 'Disbursed At' %}</th>
+              </tr>
+            </thead>
+            <tbody>
+            {% for trx in transactions %}
+              <tr data-id="{{ trx.parent_transaction.transaction_id }}"
+                  data-creditor_name="{{ trx.creditor_name }}"
+                  data-creditor_account_number="{{ trx.creditor_account_number }}"
+                  data-creditor_bank_code="{{ trx.creditor_bank }}"
+                  data-creditor_bank_name="{{ trx.creditor_bank|bank_name }}"
+                  data-transaction_type="{{ trx|transaction_type }}"
+                  data-amount="{{ trx.amount }}"
+                  data-status="{{ trx.status_choice_verbose }}"
+                  data-status_code="{{ trx.transaction_status_code }}"
+                  data-updated_at="{{ trx.updated_at }}"
+                  data-disbursed_at="{{ trx.disbursed_date }}"
+                  data-created_at="{{ trx.parent_transaction.created_at }}"
+                  data-status_description="{{ trx.transaction_status_description }}"
+                  class="row-hover"
+                  data-href="#">
+                <td>{{ trx.parent_transaction.transaction_id }}</td>
+                <td>{{ trx.creditor_account_number }}</td>
+                <td>{{ trx.amount }}</td>
+                <td>{{ trx.fees }}</td>
+                <td>{{ trx.vat }}</td>
+                <td>{{ trx.status_choice_verbose }}</td>
+                <td>{{ trx.disbursed_date }}</td>
+              </tr>
+            {% endfor %}
+            </tbody>
+          </table>
+          <ul class="pagination">
+            {% if transactions.has_previous %}
+              <li>
+                <a href="?page={{ transactions.previous_page_number }}&{{query_string}}">
+                  <i class="fa fa-chevron-left" aria-hidden="true"></i>
+                </a>
+              </li>
             {% else %}
-              {% include 'instant_cashin/wallets_transactions.html' with transactions=instant_transactions %}
+              <li class="disabled"><span><i class="fa fa-chevron-left" aria-hidden="true"></i></span></li>
             {% endif %}
-          </div>
+            {% if transactions.number|add:'-4' > 1 %}
+              <li><a href="?page={{ transactions.number|add:'-5' }}&{{query_string}}">&hellip;</a></li>
+            {% endif %}
+            {% for i in transactions.paginator.page_range %}
+              {% if transactions.number == i %}
+                <li class="active"><span>{{ i }} <span class="sr-only">(current)</span></span></li>
+              {% elif i > transactions.number|add:'-5' and i < transactions.number|add:'5' %}
+                <li><a href="?page={{ i }}&{{query_string}}">{{ i }}</a></li>
+              {% endif %}
+            {% endfor %}
+            {% if transactions.paginator.num_pages > transactions.number|add:'4' %}
+              <li><a href="?page={{ transactions.number|add:'5' }}&{{query_string}}">&hellip;</a></li>
+            {% endif %}
+            {% if transactions.has_next %}
+              <li>
+                <a href="?page={{ transactions.next_page_number }}&{{query_string}}">
+                  <i class="fa fa-chevron-right" aria-hidden="true"></i>
+                </a>
+              </li>
+            {% else %}
+              <li class="disabled"><span><i class="fa fa-chevron-right" aria-hidden="true"></i></span></li>
+            {% endif %}
+          </ul>
         </div>
-        {# right sidebar #}
-        {% if is_bank_transactions == 'yes' %}
-          {% include 'disbursement/right_sidebar.html' with type='banks' %}
-        {% else %}
-          {% include 'disbursement/right_sidebar.html' with type='wallets' %}
-        {% endif %}
-        {# End of right sidebar #}
+        {# End of transactions table #}
       </div>
     </div>
+    {# right sidebar #}
+    {% include 'disbursement/right_sidebar.html' with type='banks' %}
+    {# End of right sidebar #}
   </div>
-  {# end of page content #}
 
-  {# transaction details #}
+  {# Transaction details #}
   <div id="trxDetails" style="display: none;" class="row">
     <div class="col-md-12 col-sm-12 col-xs-12">
       <div class="x_panel">
@@ -116,10 +167,11 @@
       </div>
     </div>
   </div>
-  {# end of transaction details #}
+  {# End of transaction details #}
 {% endblock %}
 
 {% block script %}
+  {# Datatables #}
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
   <script src="{% static 'gentella/vendors/datatables.net/js/jquery.dataTables.min.js' %}"></script>
   <script src="{% static 'gentella/vendors/datatables.net-bs/js/dataTables.bootstrap.min.js' %}"></script>
@@ -135,44 +187,44 @@
   <script src="{% static 'gentella/vendors/datatables.net-scroller/js/dataTables.scroller.min.js' %}"></script>
   {# DataTables #}
   <script>
-      var table = $('#transaction-table').DataTable({
-        "bLengthChange" : false,
-        "bPaginate": false,
-        "bInfo" : false
-      });
+    var table = $('#transaction-table').DataTable({
+      "bLengthChange" : false,
+      "bPaginate": false,
+      "bInfo" : false
+    });
 
-      var buttons = new $.fn.dataTable.Buttons( table, {
-        buttons: [
-          {
-            extend: 'copy',
-            text : "{% trans 'Copy' %}",
-            exportOptions: {
-                charSet: "utf-8",
-            }
-          },
-          {
-            extend: 'print',
-            text : "PDF",
-          },
-          {
-            extend: 'excelHtml5',
-            text : "{% trans 'Export' %}",
-            customize: function( xlsx ) {
-              var sheet = xlsx.xl.worksheets['sheet1.xml'];
-              $('row c[r^="A"]', sheet).attr( 's', '0' );
-           }
+    var buttons = new $.fn.dataTable.Buttons( table, {
+      buttons: [
+        {
+          extend: 'copy',
+          text : "{% trans 'Copy' %}",
+          exportOptions: {
+              charSet: "utf-8",
           }
-        ]
-      });
+        },
+        {
+          extend: 'print',
+          text : "PDF",
+        },
+        {
+          extend: 'excelHtml5',
+          text : "{% trans 'Export' %}",
+          customize: function( xlsx ) {
+            var sheet = xlsx.xl.worksheets['sheet1.xml'];
+            $('row c[r^="A"]', sheet).attr( 's', '0' );
+         }
+        }
+      ]
+    });
 
-      table.buttons( 0, null ).container().prependTo(
-          table.table().container()
-      );
-      let empty_row = $('.dataTables_empty');
-      if (empty_row) {
-        empty_row.parent().attr('id', 'empty_row');
-      }
-    </script>
+    table.buttons( 0, null ).container().prependTo(
+        table.table().container()
+    );
+    let empty_row = $('.dataTables_empty');
+    if (empty_row) {
+      empty_row.parent().attr('id', 'empty_row');
+    }
+  </script>
   {# transaction details #}
   <script>
     $('#transaction-table tbody').on('click', 'tr:not(#empty_row)', function () {
@@ -238,6 +290,8 @@
         appendedTags += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${created_at}</li>`;
         let updated_at = $(this).data('updated_at');
         appendedTags += `<li><span>{% trans 'Updated At' %}</span><strong>: </strong>${updated_at}</li>`;
+        let disbursed_at = $(this).data('disbursed_at');
+        appendedTags += `<li><span>{% trans 'Disbursed At' %}</span><strong>: </strong>${disbursed_at}</li>`;
 
         ulRight.empty();
         ulRight.append(appendedTags);

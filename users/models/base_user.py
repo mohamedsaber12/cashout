@@ -285,28 +285,28 @@ class User(AbstractUser, SoftDeletionModel):
 
     @cached_property
     def is_vodafone_default_onboarding(self):
-        """Check if the current user belongs the vodafone default onboarding setups"""
+        """Check if the current user belongs to vodafone default onboarding setups"""
         if self.has_perm('users.vodafone_default_onboarding'):
             return True
         return False
 
     @cached_property
     def is_instant_model_onboarding(self):
-        """Check if the current user belongs the instant model onboarding setups"""
+        """Check if the current user belongs to instant model onboarding setups"""
         if self.has_perm('users.instant_model_onboarding'):
             return True
         return False
 
     @cached_property
     def is_accept_vodafone_onboarding(self):
-        """Check if the current user belongs the accept vodafone onboarding setups"""
+        """Check if the current user belongs to accept vodafone onboarding setups"""
         if self.has_perm('users.accept_vodafone_onboarding'):
             return True
         return False
 
     @cached_property
     def is_vodafone_facilitator_onboarding(self):
-        """Check if the current user belongs the vodafone facilitator accept vodafone onboarding setups"""
+        """Check if the current user belongs to vodafone facilitator accept vodafone onboarding setups"""
         if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
             return True
         return False

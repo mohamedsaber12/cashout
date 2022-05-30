@@ -8,7 +8,6 @@ import random
 import xlwt
 import urllib
 from decimal import Decimal
-from django.utils import timezone
 
 from faker import Factory as fake_factory
 import pandas as pd
@@ -16,13 +15,13 @@ import requests
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
-from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import translation
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
-from django.views.generic import ListView, View, TemplateView
+from django.views.generic import ListView, View
 from django.utils.timezone import datetime, make_aware
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.core.paginator import Paginator
@@ -34,25 +33,26 @@ from ratelimit.decorators import ratelimit
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (ExportClientsTransactionsMonthlyReportTask,
-                        generate_all_disbursed_data,
-                        generate_failed_disbursed_data,
-                        generate_success_disbursed_data)
+from data.tasks import (
+    generate_all_disbursed_data, generate_failed_disbursed_data,
+    generate_success_disbursed_data, ExportPortalRootTransactionsEwallet,
+    ExportPortalRootOrDashboardUserTransactionsEwallets,
+    ExportPortalRootOrDashboardUserTransactionsBanks
+)
 from data.utils import redirect_params
 from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (SuperFinishedSetupMixin,
-                          SuperOrOnboardUserRequiredMixin,
-                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-                          SuperRequiredMixin,
-                          AgentsListPermissionRequired,
-                          UserWithAcceptVFOnboardingPermissionRequired,
-                          UserWithDisbursementPermissionRequired,
-                          RootUserORDashboardUserRequiredMixin)
+from users.mixins import (
+    SuperFinishedSetupMixin, SuperOrOnboardUserRequiredMixin,
+    SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, SuperRequiredMixin,
+    AgentsListPermissionRequired, UserWithAcceptVFOnboardingPermissionRequired,
+    UserWithDisbursementPermissionRequired, RootUserORDashboardUserOrMakerORCheckerRequiredMixin,
+    RootRequiredMixin
+)
 from users.models import EntitySetup, Client, RootUser, User
 from utilities import messages
-from utilities.models import Budget
+from utilities.models import Budget, ExcelFile
 
 from .forms import (ExistingAgentForm, AgentForm, AgentFormSet, ExistingAgentFormSet,
                     BalanceInquiryPinForm, SingleStepTransactionForm)
@@ -293,6 +293,7 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
         return HttpResponse(status=401)
 
 
+@method_decorator(ratelimit(key='ip', rate='5/1m', method='GET', block=True), name='get')
 class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
     """
     View for exporting clients aggregated transactions report per super admin
@@ -364,7 +365,10 @@ def download_exported_transactions(request):
     filename = request.GET.get('filename', None)
     if not filename:
         raise Http404
-
+    # check if user have permission for download file
+    if not request.user.is_staff:
+        if not ExcelFile.objects.filter(owner=request.user, file_name=filename).exists():
+            return HttpResponseForbidden()
     file_path = "%s%s%s" % (settings.MEDIA_ROOT, "/documents/disbursement/", filename)
 
     # prevent path traversal vulnerability
@@ -377,12 +381,12 @@ def download_exported_transactions(request):
     if os.path.exists(file_path):
         with open(file_path, 'rb') as fh:
             response = HttpResponse(
-                    fh.read(),
-                    content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                fh.read(),
+                content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
             response['Content-Disposition'] = 'attachment; filename=%s' % filename
             FAILED_DISBURSEMENT_DOWNLOAD.debug(
-                    f"[message] [DOWNLOAD EXPORTED TRANSACTIONS] [{request.user}] -- file name: {filename}"
+                f"[message] [DOWNLOAD EXPORTED TRANSACTIONS] [{request.user}] -- file name: {filename}"
             )
             return response
     else:
@@ -790,9 +794,112 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
 
 
 @method_decorator([setup_required], name='dispatch')
-class HomeView(RootUserORDashboardUserRequiredMixin, TemplateView):
+class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
+    model = BankTransaction
     template_name = 'disbursement/home_root.html'
+
+    def validate_export_issuer(self, issuer):
+        """method for issuer validation based on user type"""
+        if self.request.user.is_instant_model_onboarding and \
+            issuer in ['wallets', 'banks']:
+            return True
+        elif self.request.user.is_accept_vodafone_onboarding and \
+            issuer in ['vodafone/etisalat/aman', 'bank wallets/orange',
+                       'bank accounts/cards']:
+            return True
+        return False
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests for Dashboard view"""
+
+        # fire export action within date range
+        export_start_date = request.GET.get('export_start_date')
+        export_end_date = request.GET.get('export_end_date')
+        export_issuer = request.GET.get('export_issuer')
+
+        # validate issuer
+        if export_issuer and not self.validate_export_issuer(export_issuer):
+            EXPORT_MESSAGE = f"issuer validation error please choose issuer from list"
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+
+        if export_start_date and export_end_date and export_issuer:
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email} after a few minutes"
+            if export_issuer == 'vodafone/etisalat/aman':
+                ExportPortalRootTransactionsEwallet.delay(self.request.user.id, export_start_date, export_end_date)
+            elif export_issuer in ['bank wallets/orange', 'wallets']:
+                ExportPortalRootOrDashboardUserTransactionsEwallets.delay(
+                    self.request.user.id, export_start_date, export_end_date
+                )
+            elif export_issuer in ['bank accounts/cards', 'banks']:
+                ExportPortalRootOrDashboardUserTransactionsBanks.delay(
+                    self.request.user.id, export_start_date, export_end_date
+                )
+            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
+
+        vf_et_aman_trx = []
+        instant_trx = []
+        bank_count = 0
+        if request.user.is_root or request.user.is_instantapiviewer:
+            vf_et_aman_trx = DisbursementData.objects.filter(
+                Q(doc__disbursed_by__root=request.user.root),
+                Q(doc__disbursement_txn__doc_status='5')
+            ).values('issuer').annotate(count=Count('id')).order_by('issuer')
+
+            instant_trx = InstantTransaction.objects.filter(
+                ~Q(disbursed_date=None),
+                (Q(document__disbursed_by__root=request.user.root) |
+                Q(from_user__root=request.user.root))
+            ).extra(select={'issuer': 'issuer_type'}).values('issuer'). \
+                annotate(count=Count('uid')).order_by('issuer')
+
+            bank_count = BankTransaction.objects.filter(
+                ~Q(disbursed_date=None),
+                Q(end_to_end=""),
+                (Q(document__disbursed_by__root=request.user.root) |
+                 Q(user_created__root=request.user.root))
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id").values('id').count()
+
+        vodafone_transactions = 0
+        etisalat_transactions = 0
+        aman_transactions = 0
+        orange_transactions = 0
+        bank_wallet_transactions = 0
+        total = bank_count
+        all_issuers =[*vf_et_aman_trx, *instant_trx]
+        for trx in all_issuers:
+            if trx['issuer'] in ['vodafone', 'V']:
+                vodafone_transactions = vodafone_transactions + trx['count']
+            elif trx['issuer'] in ['etisalat', 'E']:
+                etisalat_transactions = etisalat_transactions + trx['count']
+            elif trx['issuer'] in ['aman', 'A']:
+                aman_transactions = aman_transactions + trx['count']
+            elif trx['issuer'] in ['orange', 'O']:
+                orange_transactions = orange_transactions + trx['count']
+            elif trx['issuer'] in ['bank_wallet', 'B']:
+                bank_wallet_transactions = bank_wallet_transactions + trx['count']
+            total = total + trx['count']
+
+        context = {
+            "all_transactions": total,
+            "vodafone_transactions": vodafone_transactions,
+            "etisalat_transactions": etisalat_transactions,
+            "orange_transactions": aman_transactions,
+            "aman_transactions": orange_transactions,
+            "bank_wallet_transactions": bank_wallet_transactions,
+            "banks_transactions": bank_count,
+        }
+        # render issuer options based on user type
+        if request.user.is_instant_model_onboarding:
+            context['issuer_options'] = ['wallets', 'banks']
+        elif request.user.is_accept_vodafone_onboarding:
+            context['issuer_options'] = [
+                'vodafone/etisalat/aman', 'bank wallets/orange', 'bank accounts/cards'
+            ]
+
+        return render(request, template_name=self.template_name, context=context)
+
 
 class AgentsListView(AgentsListPermissionRequired, ListView):
     """
@@ -1377,6 +1484,10 @@ class ExportClientsTransactionsMonthlyReport:
                 row_num += 1
 
         wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.superadmin_user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
@@ -1524,4 +1635,167 @@ class ExportClientsTransactionsMonthlyReport:
         report_download_url = self.prepare_transactions_report()
 
         return report_download_url
-    
+
+
+class DisbursementDataListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
+    """
+    View for displaying vodafone, etisalat, aman transactions
+    """
+
+    model = DisbursementData
+    context_object_name = 'portal_transactions'
+    template_name = 'disbursement/vf_et_aman_trx_list.html'
+
+    def get_queryset(self):
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'doc__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'doc__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'doc__disbursed_by': self.request.user,
+            }
+        # add filters to filter dict
+        if self.request.GET.get('number'):
+            filter_dict['msisdn__contains'] = self.request.GET.get('number')
+        if self.request.GET.get('issuer'):
+            filter_dict['issuer'] = self.request.GET.get('issuer')
+        if self.request.GET.get('start_date'):
+            start_date = self.request.GET.get('start_date')
+            first_day = datetime(
+                year=int(start_date.split('-')[0]),
+                month=int(start_date.split('-')[1]),
+                day=int(start_date.split('-')[2]),
+            )
+            filter_dict['disbursed_date__gte'] = make_aware(first_day)
+        if self.request.GET.get('end_date'):
+            end_date = self.request.GET.get('end_date')
+            last_day = datetime(
+                year=int(end_date.split('-')[0]),
+                month=int(end_date.split('-')[1]),
+                day=int(end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            filter_dict['disbursed_date__lte'] = make_aware(last_day)
+
+        queryset = super().get_queryset().filter(**filter_dict).order_by("-created_at")
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page', 1)
+        return paginator.get_page(page)
+
+
+class OrangeBankWalletListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
+    """
+    View for displaying instant transactions (orange/bank wallet)
+    """
+
+    model = InstantTransaction
+    context_object_name = 'transactions'
+    template_name = 'disbursement/orange_bank_wallet_trx_list.html'
+
+    def get_queryset(self):
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+
+        # add filters to filter dict
+        if self.request.GET.get('number'):
+            filter_dict['anon_recipient__contains'] = self.request.GET.get('number')
+        if self.request.GET.get('issuer'):
+            filter_dict['issuer_type'] = self.request.GET.get('issuer')
+        if self.request.GET.get('start_date'):
+            start_date = self.request.GET.get('start_date')
+            first_day = datetime(
+                year=int(start_date.split('-')[0]),
+                month=int(start_date.split('-')[1]),
+                day=int(start_date.split('-')[2]),
+            )
+            filter_dict['disbursed_date__gte'] = make_aware(first_day)
+        if self.request.GET.get('end_date'):
+            end_date = self.request.GET.get('end_date')
+            last_day = datetime(
+                year=int(end_date.split('-')[0]),
+                month=int(end_date.split('-')[1]),
+                day=int(end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            filter_dict['disbursed_date__lte'] = make_aware(last_day)
+
+        queryset = super().get_queryset().filter(**filter_dict).order_by("-created_at")
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page', 1)
+        return paginator.get_page(page)
+
+
+class BanksListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
+    """
+    View for displaying bank transactions
+    """
+
+    model = BankTransaction
+    context_object_name = 'transactions'
+    template_name = 'disbursement/banks_trx_list.html'
+
+    def get_queryset(self):
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+        # add filters to filter dict
+        if self.request.GET.get('account_number'):
+            filter_dict['creditor_account_number__contains'] = self.request.GET.get('account_number')
+        if self.request.GET.get('start_date'):
+            start_date = self.request.GET.get('start_date')
+            first_day = datetime(
+                year=int(start_date.split('-')[0]),
+                month=int(start_date.split('-')[1]),
+                day=int(start_date.split('-')[2]),
+            )
+            filter_dict['disbursed_date__gte'] = make_aware(first_day)
+        if self.request.GET.get('end_date'):
+            end_date = self.request.GET.get('end_date')
+            last_day = datetime(
+                year=int(end_date.split('-')[0]),
+                month=int(end_date.split('-')[1]),
+                day=int(end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            filter_dict['disbursed_date__lte'] = make_aware(last_day)
+
+        queryset = super().get_queryset().filter(**filter_dict). \
+            filter(~Q(creditor_bank__in=["THWL", "MIDG"])). \
+            order_by("parent_transaction__transaction_id", "-id", "-created_at"). \
+            distinct("parent_transaction__transaction_id")
+        paginator = Paginator(queryset, 20)
+        page = self.request.GET.get('page', 1)
+        return paginator.get_page(page)

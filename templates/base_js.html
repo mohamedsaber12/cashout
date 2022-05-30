@@ -2,12 +2,12 @@
 {% load i18n %}
 <!-- jQuery -->
 <script src="{% static 'gentella/jquery.min.js' %}"></script>
+<!-- Popper -->
+<script src="{% static 'gentella/popper.min.js' %}"></script>
 <!-- Bootstrap -->
 <script src="{% static 'gentella/bootstrap.min.js' %}"></script>
 <!-- FastClick -->
 <script src="{% static 'gentella/fastclick.js' %}"></script>
-<!-- NProgress -->
-<script src="{% static 'gentella/nprogress.js' %}"></script>
 <!-- Chart.js -->
 <script src="{% static 'gentella/Chart.min.js' %}"></script>
 <!-- gauge.js -->
@@ -188,7 +188,7 @@
 <!-- for top_navigation.html -->
 <script>
     $(document).ready(function () {
-        $('a#lang').on('click', function () {            
+        $('a#lang').on('click', function () {
             let data = {
                 'language': $(this).attr('data'),
             }
@@ -199,11 +199,8 @@
                 success: function (data, text, xhr) {
                     location.reload()       
                 },
-                
             });
-
         });
-
     });
 </script>
 <!-- handle loading stuff -->
@@ -213,13 +210,10 @@
         // PAGE IS FULLY LOADED  
         $(".loading").hide();
     });
-        
     $(document).ajaxStart(function () {
         $('.loading').show();
     });
     $(document).ajaxStop(function () {
         $(".loading").hide();
-    });  
-
-
+    });
 </script>

@@ -15,9 +15,9 @@
           <img src="{{ request.user.avatar_thumbnail.url }}" alt="">
           {% if request.user.first_name %}
             {{ request.user.first_name | capfirst }}
-          {%else%}
+          {% else %}
             {{ request.user.username }}
-          {%endif%}  
+          {% endif %}
           <span class=" fa fa-angle-down"></span>
         </a>
         <ul class="dropdown-menu dropdown-usermenu pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
@@ -27,23 +27,23 @@
                 <span class="badge bg-red pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                   {% if current_status == 'collection' %}
                     {{ request.user.setup.collection_percentage }}%
-                  {%else%}
+                  {% else %}
                     {{ request.user.setup.disbursement_percentage }}%
-                   {%endif%}   
+                   {% endif %}
                 </span>
                 <span>{% trans 'Settings'%}</span>
               </a>
             </li>
-          {%endif%}  
+          {% endif %}
           <li><a style="pointer-events: none;cursor: default;">{% trans 'Language:' %}</a>
           </li>
           {% for code,lang in LANGUAGES %}
             <li>
               {% if code == LANGUAGE_CODE %}
                 <a style="pointer-events: none;cursor: default;color:black;">&emsp;{{lang}}</a>
-              {%else%}  
+              {% else %}
                 <a id="lang" data="{{code}}" >&emsp;{{lang}}</a>
-              {%endif%}   
+              {% endif %}
             </li>
           {%endfor%}
           

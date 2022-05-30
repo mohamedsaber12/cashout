@@ -49,6 +49,10 @@ VIEW_DOCUMENT_LOGGER = logging.getLogger("view_document")
 @login_required
 @setup_required
 def redirect_home(request):
+    if request.user.is_accept_vodafone_onboarding and (
+            request.user.is_checker or
+            request.user.is_maker) :
+        return redirect(reverse('disbursement:home_root'))
     if request.user.is_root and (
             request.user.is_accept_vodafone_onboarding or
             request.user.is_instant_model_onboarding):
@@ -98,14 +102,6 @@ class DisbursementHomeView(UserWithDisbursementPermissionRequired, View):
             1. Documents can be filtered by date.
             2. Documents are paginated but not used in template.
         """
-        # fire export action within date range
-        export_start_date = request.GET.get('export_start_date')
-        export_end_date = request.GET.get('export_end_date')
-        if export_start_date and export_end_date:
-            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            ExportPortalRootTransactionsEwallet.delay(self.request.user.id, export_start_date, export_end_date)
-            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
-
         has_vmt_setup = request.user.root.has_vmt_setup
         doc_list_disbursement = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=self.doc_type)
         paginator = Paginator(doc_list_disbursement, 7)
@@ -177,17 +173,6 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
             1. Documents can be filtered by date.
             2. Documents are paginated but not used in template.
         """
-        # fire export action within date range
-        export_start_date = request.GET.get('export_start_date')
-        export_end_date = request.GET.get('export_end_date')
-        if export_start_date and export_end_date:
-            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email}"
-            if "bank-wallets" in request.path:
-                ExportPortalRootOrDashboardUserTransactionsEwallets.delay(self.request.user.id, export_start_date, export_end_date)
-            else:
-                ExportPortalRootOrDashboardUserTransactionsBanks.delay(self.request.user.id, export_start_date, export_end_date)
-            return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
-
         has_vmt_setup = request.user.root.has_vmt_setup
         banks_doc_list = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=self.doc_type)
         paginator = Paginator(banks_doc_list, 7)

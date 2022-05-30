@@ -518,6 +518,10 @@ class OnboardingNewInstantAdmin(SupportUserRequiredMixin, View):
                     }
                 }
             except Exception as err:
+                logging_message(
+                    ROOT_CREATE_LOGGER, "[error] [error when onboarding new client]",
+                    self.request, f"error :-  Error: {err.args}"
+                )
                 error_msg = "Process stopped during an internal error, please can you try again."
                 error = {
                     "message": error_msg

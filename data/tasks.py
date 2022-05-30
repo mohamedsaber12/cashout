@@ -6,10 +6,6 @@ import json
 import logging
 import re
 from decimal import Decimal
-
-from django.contrib.auth.models import Permission
-from celery.app import task
-
 import pandas as pd
 import requests
 import tablib
@@ -43,7 +39,7 @@ from payouts.settings.celery import app
 from users.models import CheckerUser, Levels, UploaderUser, User
 from utilities.functions import get_value_from_env
 from utilities.messages import MSG_TRY_OR_CONTACT, MSG_WRONG_FILE_FORMAT
-from utilities.models import Budget
+from utilities.models import Budget, ExcelFile
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from .decorators import respects_language
@@ -51,7 +47,6 @@ from .models import Doc, FileData
 from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
-from disbursement.utils import add_fees_and_vat_to_qs
 from data.utils import upload_file_to_vodafone, ExportTransactionsBaseView
 
 
@@ -139,7 +134,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
             sheet_data = list(zip(numbers_list, amount_list, names_list, codes_list, purposes_list, errors_list))
             headers = ["account number / IBAN", "amount", "full name", "bank swift code", "transaction type", "errors"]
 
-        filename = f"failed_validations_{randomword(4)}.xlsx"
+        filename = f"failed_validations_{randomword(8)}.xlsx"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         error_message = _("File validation error")
         sheet_data.insert(0, headers)
@@ -148,6 +143,10 @@ class BankWalletsAndCardsSheetProcessor(Task):
                        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_obj.id})) + \
                        f"?filename={filename}"
         doc_obj.processing_failure(error_message)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=doc_obj.owner)
+
         notify_maker(doc_obj, download_url)
 
     def process_and_validate_wallets_records(self, df):
@@ -535,7 +534,7 @@ class EWalletsSheetProcessor(Task):
             sheet_data = list(zip(numbers_list, amount_list, issuers_list, errors_list))
             headers = ["mobile number", "amount", "issuer", "errors"]
 
-        filename = f"failed_validations_{randomword(4)}.xlsx"
+        filename = f"failed_validations_{randomword(8)}.xlsx"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         error_message = _("Validation error, file with errors sent to the maker user.")
         sheet_data.insert(0, headers)
@@ -544,6 +543,10 @@ class EWalletsSheetProcessor(Task):
                        str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': self.doc_obj.id})) + \
                        f"?filename={filename}"
         self.doc_obj.processing_failure(error_message)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.doc_obj.owner)
+
         notify_maker(self.doc_obj, download_url)
 
     def process_and_validate_normal_specs_records(self, df, msisdn_header, amount_header):
@@ -750,7 +753,7 @@ class EWalletsSheetProcessor(Task):
                 notify_maker(self.doc_obj)
                 return True
 
-            filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+            filename = f"failed_disbursement_validation_{randomword(8)}.xlsx"
             file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
 
             data = list(zip(msisdns, errors))
@@ -762,6 +765,10 @@ class EWalletsSheetProcessor(Task):
                 kwargs={'doc_id': self.doc_obj.id})) + f"?filename={filename}"
 
             self.doc_obj.processing_failure("Mobile numbers validation error")
+
+            # add new file for this user in ExcelFile model
+            ExcelFile.objects.create(file_name=filename, owner=self.doc_obj.owner)
+
             notify_maker(self.doc_obj, download_url)
             return False
         except Exception as e:
@@ -1333,6 +1340,10 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 row_num += 1
 
         wb.save(self.file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=self.filename, owner=self.superadmin_user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={self.filename}"
         return report_download_url
 
@@ -1549,7 +1560,11 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
                 ws.write(row_num, 7, str(row.updated_at))
                 row_num = row_num + 1
 
-        wb.save(file_path)  
+        wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
@@ -1557,25 +1572,37 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
-        root = self.user.root
-
 
         # 1. Format start and end date
         self.refine_start_and_end_date_format()
 
         # 2. get data of current client within date range
-        self.data = InstantTransaction.objects.filter(
-            (Q(document__disbursed_by__root=root) |
-             Q(from_user__root=root)),
-            Q(disbursed_date__gte=self.first_day),
-            Q(disbursed_date__lte=self.last_day),
-        )
+        self.data = []
+        if self.user.is_root or self.user.is_instantapiviewer:
+            self.data = InstantTransaction.objects.filter(
+                (Q(document__disbursed_by__root=self.user.root) |
+                 Q(from_user__root=self.user.root)),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_maker:
+            self.data = InstantTransaction.objects.filter(
+                Q(document__owner=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_checker:
+            self.data = InstantTransaction.objects.filter(
+                Q(document__disbursed_by=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
 
         download_url = self.create_transactions_report()
         mail_content = _(
-                f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
-                f"transactions report within the period of {self.start_date} to {self.end_date} "
-                f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+            f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
+            f"transactions report within the period of {self.start_date} to {self.end_date} "
+            f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
         )
         mail_subject = "Ewallets Report"
         deliver_mail(self.user, _(mail_subject), mail_content)
@@ -1587,7 +1614,6 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         filename = f"banks_transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
-
 
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
@@ -1615,7 +1641,11 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
                 ws.write(row_num, 7, str(row.updated_at))
                 row_num = row_num + 1
 
-        wb.save(file_path)  
+        wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
@@ -1623,20 +1653,38 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
-        root = self.user.root
 
         # 1. Format start and end date
         self.refine_start_and_end_date_format()
 
         # 2. get data of current client within date range
-        self.data = BankTransaction.objects.filter(
+        self.data = []
+        if self.user.is_root or self.user.is_instantapiviewer:
+            self.data = BankTransaction.objects.filter(
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
                 Q(end_to_end=""),
-                (Q(document__disbursed_by__root=root) |
-                Q(user_created__root=root))
+                (Q(document__disbursed_by__root=self.user.root) |
+                 Q(user_created__root=self.user.root))
             ).order_by("parent_transaction__transaction_id", "-id"). \
                 distinct("parent_transaction__transaction_id")
+        elif self.user.is_maker:
+            self.data = BankTransaction.objects.filter(
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(end_to_end=""),
+                Q(document__owner=self.user)
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id")
+        elif self.user.is_checker:
+            self.data = BankTransaction.objects.filter(
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+                Q(end_to_end=""),
+                Q(document__disbursed_by=self.user)
+            ).order_by("parent_transaction__transaction_id", "-id"). \
+                distinct("parent_transaction__transaction_id")
+
 
         download_url = self.create_transactions_report()
         mail_content = _(
@@ -1689,6 +1737,10 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
                 row_num = row_num + 1
 
         wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.user)
+
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
@@ -1696,23 +1748,36 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
-        root = self.user.root
 
         # 1. Format start and end date
         self.refine_start_and_end_date_format()
 
         # 2. get data of current client within date range
-        self.data = DisbursementData.objects.filter(
-                Q(doc__disbursed_by__root=root),
+        self.data = []
+        if self.user.is_root:
+            self.data = DisbursementData.objects.filter(
+                Q(doc__disbursed_by__root=self.user),
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
-        )
+            )
+        elif self.user.is_maker:
+            self.data = DisbursementData.objects.filter(
+                Q(doc__owner=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
+        elif self.user.is_checker:
+            self.data = DisbursementData.objects.filter(
+                Q(doc__disbursed_by=self.user),
+                Q(disbursed_date__gte=self.first_day),
+                Q(disbursed_date__lte=self.last_day),
+            )
 
         download_url = self.create_transactions_report()
         mail_content = _(
-                f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
-                f"transactions report within the period of {self.start_date} to {self.end_date} "
-                f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+            f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
+            f"transactions report within the period of {self.start_date} to {self.end_date} "
+            f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
         )
         mail_subject = "Ewallets Report"
         deliver_mail(self.user, _(mail_subject), mail_content)
@@ -1754,7 +1819,7 @@ def handle_change_profile_callback(doc_id, transactions):
         return
 
     doc_obj.disbursement_data.all().delete()
-    filename = f"failed_disbursement_validation_{randomword(4)}.xlsx"
+    filename = f"failed_disbursement_validation_{randomword(8)}.xlsx"
     file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
 
     data = list(zip(msisdns, errors))
@@ -1765,6 +1830,10 @@ def handle_change_profile_callback(doc_id, transactions):
         str(reverse('disbursement:download_validation_failed', kwargs={'doc_id': doc_id})) + f"?filename={filename}"
 
     doc_obj.processing_failure("Mobile numbers validation error")
+
+    # add new file for this user in ExcelFile model
+    ExcelFile.objects.create(file_name=filename, owner=doc_obj.owner)
+
     notify_maker(doc_obj, download_url)
     return
 
@@ -1774,13 +1843,13 @@ def prepare_disbursed_data_report(doc_id, report_type):
     doc_obj = Doc.objects.get(id=doc_id)
 
     if report_type == 'all':
-        filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(4))
+        filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(8))
         resource_query_dict = {'doc': doc_obj, 'is_disbursed': None}
     elif report_type == 'success':
         filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
         resource_query_dict = {'doc': doc_obj, 'is_disbursed': True}
     else:
-        filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(4)}.xlsx")
+        filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(8)}.xlsx")
         resource_query_dict = {'doc': doc_obj, 'is_disbursed': False}
 
     if doc_obj.is_e_wallet:
@@ -1975,8 +2044,8 @@ def notify_checkers(doc_id, level, **kwargs):
     deliver_mail(None, _(' Review Notification'), message, checkers)
 
     CHECKERS_NOTIFICATION_LOGGER.debug(
-            f"[message] [REVIEWERS NOTIFIED] [{doc_obj.owner}] -- "
-            f"{' and '.join([checker.username for checker in checkers])}"
+        f"[message] [REVIEWERS NOTIFIED] [{doc_obj.owner}] -- "
+        f"{' and '.join([checker.username for checker in checkers])}"
     )
 
 
@@ -2078,25 +2147,3 @@ def notify_makers_collection(doc):
         The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully<br><br>
         Thanks, BR""")
     deliver_mail(None, _(' Collection File Upload Notification'), message, makers)
-
-
-
-# @app.task()
-# class ExportClientsTransactionsMonthlyReportVodafoneFacilitatorTask(ExportClientsTransactionsMonthlyReportTask):
-
-#     def run(self, *args, **kwargs):
-#         yesterday = datetime.now() - timedelta(1)
-#         self.start_date = datetime.strftime(yesterday, '%Y-%m-%d')
-#         self.end_date = datetime.strftime(yesterday, '%Y-%m-%d')
-#         filename = _(f"Vodafone_facilitator_report_{self.start_date}.xls")
-#         self.file_path = f"{settings.MEDIA_ROOT}/documents/vodafone_facilitator/{filename}"
-#         self.status = 'all'
-#         self.instant_or_accept_perm = False
-#         self.vf_facilitator_perm = False
-#         self.default_vf__or_bank_perm = False
-#         facilitator_perm = Permission.objects.get(codename="vodafone_facilitator_accept_vodafone_onboarding")
-#         self.superadmins = User.objects.filter(user_permissions=facilitator_perm)
-#         self.prepare_transactions_report()
-#         upload_file_to_vodafone(self.file_path)
-        
-#         return True

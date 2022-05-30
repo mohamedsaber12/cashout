@@ -1,0 +1,92 @@
+{% load i18n %}
+
+<div id="overlay" class="overlay-bg"></div>
+<div id="mySidepanel" class="sidepanel">
+  <div id="filter-sidebar" class="add-new-data">
+    <div class="div mt-2 px-2 d-flex new-data-title justify-content-between">
+      <div>
+        <h4 class="text-uppercase">Search</h4>
+      </div>
+      <div class="hide-data-sidebar">
+        <a href="javascript:void(0)" class="feather icon-x" onclick="closeNav()">×</a>
+      </div>
+    </div>
+    <form action="." method="get" class="data-items pb-3 ps ps--active-y">
+      <div class="data-fields px-2 mt-3">
+        <div class="row">
+          {% if type == 'banks' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-name">IBAN/Account Number</label>
+            <input name="account_number" type="text" class="form-control">
+          </div>
+          {% elif type == 'instant_portal_wallets' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-name">Recipient Number</label>
+            <input name="number" type="text" class="form-control" id="data-name">
+          </div>
+          {% else %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-name">Wallet Number</label>
+            <input name="number" type="text" class="form-control" id="data-name">
+          </div>
+          {% endif %}
+          {% if type == 'portal_wallets' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-category"> Issuer </label>
+            <select name="issuer" class="form-control">
+              <option value="">All</option>
+              <option value="vodafone">Vodafone</option>
+              <option value="etisalat">Etisalat</option>
+              <option value="aman">Aman</option>
+            </select>
+          </div>
+          {% elif type == 'wallets' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-category"> Issuer </label>
+            <select name="issuer" class="form-control" id="data-category">
+              <option value="">All</option>
+              <option value="V">Vodafone</option>
+              <option value="E">Etisalat</option>
+              <option value="A">Aman</option>
+              <option value="O">Orange</option>
+              <option value="B">Bank Wallet</option>
+            </select>
+          </div>
+          {% elif type == 'instant_portal_wallets' %}
+          <div class="col-sm-12 data-field-col">
+            <label for="data-category"> Issuer </label>
+            <select name="issuer" class="form-control">
+              <option value="">All</option>
+              <option value="O">Orange</option>
+              <option value="B">Bank Wallet</option>
+            </select>
+          </div>
+          {% endif %}
+          <div class="col-sm-12 data-field-col">
+            <label>Start Date</label>
+            <fieldset class="form-group">
+              <input type="text" placeholder="yyyy-mm-dd"
+                     class="form-control input_date" name="start_date">
+            </fieldset>
+          </div>
+          <div class="col-sm-12 data-field-col">
+            <label>End Date</label>
+            <fieldset class="form-group">
+              <input type="text" placeholder="yyyy-mm-dd" min="1997-01-01"
+                     max="2030-12-31" class="form-control input_date" name="end_date">
+            </fieldset>
+          </div>
+        </div>
+        <div class="row footer mt-2">
+          <div class="col-sm-6 add-data-btn">
+            <button type="submit" class="btn btn-primary waves-effect waves-light">search</button>
+          </div>
+          <div class="col-sm-6 cancel-data-btn">
+            <button onclick="closeNav()"
+              class="btn btn-outline-danger waves-effect waves-light">Cancel</button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

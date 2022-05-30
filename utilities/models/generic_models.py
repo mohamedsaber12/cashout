@@ -268,7 +268,7 @@ class Budget(AbstractTimeStamp):
         except Exception:
             raise ValueError(_(f"Error adding to the current balance and cutting from the total disbursed amount"))
 
-        return True
+        return self.current_balance
 
     def get_current_balance(self):
         with transaction.atomic():

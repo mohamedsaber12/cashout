@@ -200,6 +200,11 @@ class InstantDisbursementAPIView(views.APIView):
                         return make_payment_request
 
         except Exception as err:
+            user = request.user if not request.user.is_anonymous else user
+            balance_before = balance_after = user.root.budget.get_current_balance()
+            transaction_object.balance_before = balance_before
+            transaction_object.balance_after = balance_after
+            transaction_object.save()
             aman_object.log_message(request, f"[failed instant trx]", f"exception: {err.args[0]}")
             transaction_object.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             return Response(InstantTransactionResponseModelSerializer(transaction_object).data)
@@ -272,7 +277,13 @@ class InstantDisbursementAPIView(views.APIView):
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
 
             except Exception as e:
-                if transaction:transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
+                if transaction:
+                    transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
+                    balance_before = user.root.budget.get_current_balance()
+                    transaction.balance_before = balance_before
+                    transaction.balance_after = balance_before
+                    transaction.save()
+
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [INTERNAL SYSTEM ERROR]", request, e.args)
                 return default_response_structure(
                         transaction_id=transaction.uid if transaction else None,
@@ -306,7 +317,11 @@ class InstantDisbursementAPIView(views.APIView):
                     issuer in ['vodafone', 'etisalat'] and \
                     data_dict['MSISDN2'] == get_from_env(f"test_number_for_{issuer}"):
                     transaction.mark_successful(200, "")
-                    user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                    balance_before = user.root.budget.get_current_balance()
+                    balance_after = user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                    transaction.balance_before = balance_before
+                    transaction.balance_after = balance_after
+                    transaction.save()
                     return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
 
@@ -325,7 +340,12 @@ class InstantDisbursementAPIView(views.APIView):
                 logging_message(
                         INSTANT_CASHIN_FAILURE_LOGGER, "[message] [DISBURSEMENT VALIDATION ERROR]", request, e.args
                 )
+                
                 transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
+                balance_before = user.root.budget.get_current_balance()
+                transaction.balance_before = balance_before
+                transaction.balance_after = balance_before
+                transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (requests.Timeout, TimeoutError) as e:
@@ -333,11 +353,19 @@ class InstantDisbursementAPIView(views.APIView):
                     INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )
                 transaction.mark_unknown(status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG)
+                balance_before = user.root.budget.get_current_balance()
+                transaction.balance_before = balance_before
+                transaction.balance_after = balance_before
+                transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             except (ImproperlyConfigured, Exception) as e:
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, e.args)
                 transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+                balance_before = user.root.budget.get_current_balance()
+                transaction.balance_before = balance_before
+                transaction.balance_after = balance_before
+                transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
             if json_trx_response["TXNSTATUS"] == "200":
@@ -345,18 +373,30 @@ class InstantDisbursementAPIView(views.APIView):
                         INSTANT_CASHIN_SUCCESS_LOGGER, "[response] [SUCCESSFUL TRX]", request, f"{json_trx_response}"
                 )
                 transaction.mark_successful(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
-                user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                balance_before = user.root.budget.get_current_balance()
+                balance_after = user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
+                transaction.balance_before = balance_before
+                transaction.balance_after = balance_after
+                transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
             elif json_trx_response["TXNSTATUS"] == "501" or \
                  json_trx_response["TXNSTATUS"] == "-1" or \
                  json_trx_response["TXNSTATUS"] == "6005" :
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"timeout, {json_trx_response}")
                 transaction.mark_unknown(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
+                balance_before = user.root.budget.get_current_balance()
+                transaction.balance_before = balance_before
+                transaction.balance_after = balance_before
+                transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
 
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_trx_response}")
             transaction.mark_failed(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
+            balance_before = user.root.budget.get_current_balance()
+            transaction.balance_before = balance_before
+            transaction.balance_after = balance_before
+            transaction.save()
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
         elif issuer == "bank_card" \
@@ -364,6 +404,16 @@ class InstantDisbursementAPIView(views.APIView):
 
             try:
                 bank_trx_obj, instant_trx_obj = self.create_bank_transaction(user, serializer)
+                balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+                bank_trx_obj.balance_before = balance_before
+                bank_trx_obj.balance_after = balance_after
+                bank_trx_obj.save()
+                if instant_trx_obj:
+                    instant_trx_obj.balance_before = balance_before
+                    instant_trx_obj.balance_after = balance_after
+                    instant_trx_obj.save()
+
+
             except Exception as e:
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [ACH EXCEPTION]", request, e.args)
                 return default_response_structure(
@@ -377,8 +427,17 @@ class InstantDisbursementAPIView(views.APIView):
                      bank_trx_obj.creditor_account_number == get_from_env(f"test_IBAN_number")):
                 bank_trx_obj.mark_successful("8333", "success")
                 instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
-                bank_trx_obj.user_created.root. \
+                balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
+                balance_after = bank_trx_obj.user_created.root. \
                     budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
+                bank_trx_obj.balance_before = balance_before
+                bank_trx_obj.balance_after = balance_after
+                bank_trx_obj.save()
+                if instant_trx_obj:
+                    instant_trx_obj.balance_before = balance_before
+                    instant_trx_obj.balance_after = balance_after
+                    instant_trx_obj.save()
+
                 if instant_trx_obj:
                     return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
                 else:

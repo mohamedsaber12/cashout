@@ -153,6 +153,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
         (_('Important Dates'), {
             'fields': ('created_at', 'updated_at')
         }),
+        (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
     )
     actions = ["export_as_csv"]
 

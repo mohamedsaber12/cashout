@@ -74,7 +74,9 @@ class BankTransactionsChannel:
             'disbursed_date': bank_trx_obj.disbursed_date,
             'client_transaction_reference': bank_trx_obj.client_transaction_reference,
             "fees": bank_trx_obj.fees,
-            "vat": bank_trx_obj.vat
+            "vat": bank_trx_obj.vat,
+            "balance_before": bank_trx_obj.balance_before,
+            "balance_after": bank_trx_obj.balance_after
         }
         return BankTransaction.objects.create(**new_transaction_dict)
 
@@ -213,8 +215,13 @@ class BankTransactionsChannel:
 
             bank_trx_obj.mark_pending(response_code, bank_message)
             instant_trx_obj.mark_pending(response_code, instant_message) if instant_trx_obj else None
-            bank_trx_obj.user_created.root.\
+            balance_after = bank_trx_obj.user_created.root.\
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
+            bank_trx_obj.balace_after = balance_after
+            bank_trx_obj.save()
+            if instant_trx_obj:
+                instant_trx_obj.balace_after = balance_after
+                instant_trx_obj.save()
 
         # 2. Transaction validation is rejected by EBC because of invalid bank swift code
         elif response_code == "8002":
@@ -282,7 +289,16 @@ class BankTransactionsChannel:
 
                 instant_trx = BankTransactionsChannel.get_corresponding_instant_trx_if_any(new_trx_obj)
                 instant_trx.mark_failed("8888", INSTANT_TRX_IS_REJECTED) if instant_trx else None
-                new_trx_obj.user_created.root.budget.return_disbursed_amount_for_cancelled_trx(new_trx_obj.amount)
+                balance_before = new_trx_obj.user_created.root.budget.get_current_balance()
+                balance_after = new_trx_obj.user_created.root.budget.return_disbursed_amount_for_cancelled_trx(new_trx_obj.amount)
+                new_trx_obj.balance_before = balance_before
+                new_trx_obj.balance_after = balance_after
+                new_trx_obj.save()
+                if instant_trx:
+                    instant_trx.balance_before = balance_before
+                    instant_trx.balance_after = balance_after
+                    instant_trx.save()
+
 
             return new_trx_obj
 
@@ -316,6 +332,14 @@ class BankTransactionsChannel:
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
             ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e}"))
+            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+            bank_trx_obj.balance_before = balance_before
+            bank_trx_obj.balance_after = balance_after
+            bank_trx_obj.save()
+            if instant_trx_obj:
+                instant_trx_obj.balance_before = balance_before
+                instant_trx_obj.balance_after = balance_after
+                instant_trx_obj.save()
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG) if instant_trx_obj \
                 else None

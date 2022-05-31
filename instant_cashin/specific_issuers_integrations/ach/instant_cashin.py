@@ -217,7 +217,10 @@ class BankTransactionsChannel:
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
             bank_trx_obj.balance_before = balance_before
             bank_trx_obj.balance_after = balance_after
+            ACH_SEND_TRX_LOGGER.debug(f"[message] balance before {balance_before} balance after {balance_after}")
             bank_trx_obj.save()
+            ACH_SEND_TRX_LOGGER.debug(f"[message] obj balance before {bank_trx_obj.balance_before} obj balance after {bank_trx_obj.balance_after}")
+
             if instant_trx_obj:
                 instant_trx_obj.balance_before = balance_before
                 instant_trx_obj.balance_after = balance_after

@@ -217,10 +217,10 @@ class BankTransactionsChannel:
             instant_trx_obj.mark_pending(response_code, instant_message) if instant_trx_obj else None
             balance_after = bank_trx_obj.user_created.root.\
                 budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-            bank_trx_obj.balace_after = balance_after
+            bank_trx_obj.balance_after = balance_after
             bank_trx_obj.save()
             if instant_trx_obj:
-                instant_trx_obj.balace_after = balance_after
+                instant_trx_obj.balance_after = balance_after
                 instant_trx_obj.save()
 
         # 2. Transaction validation is rejected by EBC because of invalid bank swift code

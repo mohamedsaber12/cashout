@@ -182,7 +182,11 @@ class AmanChannel:
                     self.transaction.mark_successful(status.HTTP_200_OK, msg)
                     AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
                     user = self.request.user if not self.request.user.is_anonymous else self.user
-                    user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
+                    balance_before = user.root.budget.get_current_balance()
+                    balance_after = user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
+                    self.transaction.balance_before = balance_before
+                    self.transaction.balance_after = balance_after
+                    self.transaction.save()
                     return Response(InstantTransactionResponseModelSerializer(self.transaction).data)
 
                 return Response({

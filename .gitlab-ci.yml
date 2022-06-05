@@ -1,4 +1,4 @@
- stages:
+  stages:
     - lint-test
     - requirements-dependency_scanning         
     - dependency_check
@@ -96,5 +96,4 @@
     allow_failure: true
     only: 
       - new-staging
-      
-  
+    

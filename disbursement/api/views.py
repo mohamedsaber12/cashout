@@ -461,7 +461,12 @@ class CancelAmanTransactionView(APIView):
             aman_obj = disb_trn.aman_obj.first()
             aman_obj.is_cancelled = True
             aman_obj.save()
-            disb_trn.doc.owner.root.budget.return_disbursed_amount_for_cancelled_trx(disb_trn.amount)
+            balance_before = disb_trn.doc.owner.root.budget.get_current_balance()
+            balance_after = disb_trn.doc.owner.root.budget.return_disbursed_amount_for_cancelled_trx(disb_trn.amount)
+            disb_trn.balance_before = balance_before
+            disb_trn.balance_after = balance_after
+            disb_trn.save()
+
             return JsonResponse(data={"canceled": True}, status=200)
         else:
             return JsonResponse(data={"canceled": False, "message":"request error"}, status=200)

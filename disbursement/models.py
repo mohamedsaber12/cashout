@@ -184,6 +184,21 @@ class DisbursementData(AbstractTimeStamp):
         blank=True,
         verbose_name=_("Transaction UID")
     )
+    balance_before = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True
+    )
+
+    balance_after = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = "Disbursement Data Record"
@@ -366,7 +381,6 @@ class BankTransaction(AbstractTimeStamp,
     disbursed_date = models.DateTimeField(
         _("Disbursed At"), null=True, blank=True)
     client_transaction_reference = models.UUIDField(
-        unique=True,
         blank=True,
         null=True,
         verbose_name=_("Client Transaction Reference")
@@ -379,6 +393,22 @@ class BankTransaction(AbstractTimeStamp,
         blank=True,
         null=True,
         default=''
+    )
+
+    balance_before = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True
+    )
+
+    balance_after = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True
     )
 
     class Meta:

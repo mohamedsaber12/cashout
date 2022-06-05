@@ -1536,7 +1536,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At"]                                
+            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At", "Balance before", "Balance After"]                                
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1558,6 +1558,8 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
                 ws.write(row_num, 5, str(row.issuer_choice_verbose))
                 ws.write(row_num, 6, str(row.status_choice_verbose))
                 ws.write(row_num, 7, str(row.updated_at))
+                ws.write(row_num, 8, str(row.balance_before))
+                ws.write(row_num, 9, str(row.balance_after))
                 row_num = row_num + 1
 
         wb.save(file_path)
@@ -1618,7 +1620,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status","Updated At"]                                
+            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status","Updated At", "balance_before", "balance_after"]                                
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1639,6 +1641,8 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
                 ws.write(row_num, 4, str(row.vat))
                 ws.write(row_num, 6, str(row.status_choice_verbose))
                 ws.write(row_num, 7, str(row.updated_at))
+                ws.write(row_num, 8, str(row.balance_before))
+                ws.write(row_num, 9, str(row.balance_after))
                 row_num = row_num + 1
 
         wb.save(file_path)
@@ -1708,7 +1712,7 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
             queryset = paginator.page(page_number)
             column_names_list = [
                 "Transaction UID", "Document", "Recipient", "Amount", "Fees", "Vat", "Issuer",
-                "Is Disbursed", "Disbursed At", "Created At", "Reason"
+                "Is Disbursed", "Disbursed At", "Created At", "Reason", "Balance before", "Balance after"
             ]
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
@@ -1733,7 +1737,9 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
                 ws.write(row_num, 7, str(row.is_disbursed))
                 ws.write(row_num, 8, str(row.disbursed_date))
                 ws.write(row_num, 9, str(row.created_at))
-                ws.write(row_num, 9, str(row.reason))
+                ws.write(row_num, 10, str(row.reason))
+                ws.write(row_num, 11, str(row.balance_before))
+                ws.write(row_num, 12, str(row.balance_after))
                 row_num = row_num + 1
 
         wb.save(file_path)

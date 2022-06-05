@@ -97,9 +97,9 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                         _("Symbols like !%*+&,<=> not allowed in full_name")
                 )
         elif issuer in ['bank_wallet', 'orange']:
-            if not msisdn or not full_name:
+            if not msisdn:
                 raise serializers.ValidationError(
-                        _("You must pass valid values for fields [msisdn, full_name]")
+                        _("You must pass valid value for field msisdn")
                 )
             if any(e in str(full_name) for e in '!%*+&,<=>'):
                 raise serializers.ValidationError(

@@ -96,7 +96,11 @@
     allow_failure: true
     only: 
       - new-staging
+<<<<<<< HEAD
   
+=======
+
+>>>>>>> f71761543a0802fd5bc4448e518e2b2db6b97839
   # deploy-to-staging    
   staging-deploy      :
     image: tiangolo/docker-with-compose
@@ -116,4 +120,7 @@
     rules             :
                       - if: '$CI_COMMIT_BRANCH == "new-staging"'
     interruptible     : true
+<<<<<<< HEAD
   
+=======
+>>>>>>> f71761543a0802fd5bc4448e518e2b2db6b97839

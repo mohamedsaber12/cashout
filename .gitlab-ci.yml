@@ -101,7 +101,7 @@
   staging-deploy      :
     image: tiangolo/docker-with-compose
     services:
-      -  docker:dind
+      - docker:dind
     stage             : deployment
     tags              :
                       - docker-runner-1

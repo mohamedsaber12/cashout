@@ -4,6 +4,7 @@
     - dependency_check
     - coverage-test
     - sonarqube
+    - deployment
   
   
   lint_test:

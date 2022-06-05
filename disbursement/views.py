@@ -703,6 +703,7 @@ class SuperAdminAgentsSetup(SuperOrOnboardUserRequiredMixin, SuperFinishedSetupM
         )
         return HttpResponseRedirect(self.get_success_url(self.root))
 
+
 @method_decorator([setup_required], name='dispatch')
 class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
     """

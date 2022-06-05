@@ -1035,7 +1035,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 )
             ).extra(select={'issuer': 'issuer_type'}).values('admin', 'issuer'). \
                 annotate(total=Sum(Case(
-                            When(status=AbstractBaseStatus.FAILED, then=0),
+                            When(status=AbstractBaseStatus.FAILED, then=float(0)),
                             default=F('amount')
                         )
                     ), count=Count(Case(
@@ -1231,7 +1231,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                             When(status__in=[
                                 AbstractBaseACHTransactionStatus.PENDING,
                                 AbstractBaseACHTransactionStatus.SUCCESSFUL], then=F('amount')),
-                            default=0
+                            default=Decimal(0)
                         )
                     ), count=Count(Case(
                             When(status__in=[

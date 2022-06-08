@@ -89,7 +89,9 @@ class BulkDisbursementThroughOneStepCashin(Task):
             disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
             disbursement_data_record.reference_id = reference_id
             doc_obj = disbursement_data_record.doc
-            balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
+            balance_before = balance_after = 0
+            if doc_obj.owner.root.has_custom_budget:
+                balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
 
             if trx_callback_status == "200":
                 disbursement_data_record.is_disbursed = True
@@ -120,7 +122,9 @@ class BulkDisbursementThroughOneStepCashin(Task):
             reference_id = callback_json["TXNID"]
             trx_callback_msg = callback_json["MESSAGE"]
             doc_obj = inst_obj.document
-            balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
+            balance_before = balance_after = 0
+            if doc_obj.owner.root.has_custom_budget:
+                balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
 
             if trx_callback_status == "200":
                 inst_obj.is_disbursed = True

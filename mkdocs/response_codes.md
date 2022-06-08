@@ -1,37 +1,37 @@
 # General Responses
 
 
-### Vodafone Cash Codes
+### Vodafone / Etisalat Cash  Codes
 
    | Errot Code | Description                                                |
    |----------  |----------                                                  |
-   | 403        | Channel Authentication Failed 
-   | 404        | Undefined request type 
-   | 406        | Incorrect input given to request 
-   | 501        | Internal Error        
-   | 583        | Exceeded Maximum Limit Per Single Transaction 
-   | 604        | Below Minimum Transaction Limit Per Single Transaction 
-   | 610        | User Not Eligible To Perform Transaction 
-   | 615        | Sender and Recipient Accounts are the Same 
-   | 618        | Recipient Is Unregistered 
-   | 1051       | MSISDN Does Not Exist 
-   | 1056       | Invalid Consumer PIN  
-   | 1033       | Initial MPIN has not been changed 
-   | 1069       | Sender and Recipient Accounts are the Same 
-   | 1102       | M-PIN is Empty        
-   | 1118       | MSISDN is Locked      
-   | 1301       | Invalid Client ID     
-   | 1996       | Catch All SE Errors   
-   | 1997       | Inactive Service      
-   | 4011       | Initial MPIN has not been changed. 
-   | 4037       | Consumer MSISDN Does Not Exist 
-   | 4051       | Agent MSISDN Does Not Exist 
-   | 4055       | Consumer Account Status is Not Active 
-   | 4056       | Invalid Agent M-PIN   
-   | 4070       | Agent Type is Invalid 
-   | 4081       | Consumer has No Default Funding Account 
-   | 4139       | Agent MSISDN does not exist 
-   | 4140       | Agent ID Does Not Exist 
+   | 403        | Channel Authentication Failed
+   | 404        | Undefined request type
+   | 406        | Incorrect input given to request
+   | 501        | Internal Error
+   | 583        | Exceeded Maximum Limit Per Single Transaction
+   | 604        | Below Minimum Transaction Limit Per Single Transaction
+   | 610        | User Not Eligible To Perform Transaction
+   | 615        | Sender and Recipient Accounts are the Same
+   | 618        | Recipient Is Unregistered
+   | 1051       | MSISDN Does Not Exist
+   | 1056       | Invalid Consumer PIN
+   | 1033       | Initial MPIN has not been changed
+   | 1069       | Sender and Recipient Accounts are the Same
+   | 1102       | M-PIN is Empty
+   | 1118       | MSISDN is Locked
+   | 1301       | Invalid Client ID
+   | 1996       | Catch All SE Errors
+   | 1997       | Inactive Service
+   | 4011       | Initial MPIN has not been changed.
+   | 4037       | Consumer MSISDN Does Not Exist
+   | 4051       | Agent MSISDN Does Not Exist
+   | 4055       | Consumer Account Status is Not Active
+   | 4056       | Invalid Agent M-PIN
+   | 4070       | Agent Type is Invalid
+   | 4081       | Consumer has No Default Funding Account
+   | 4139       | Agent MSISDN does not exist
+   | 4140       | Agent ID Does Not Exist
    | 4333       | Recipient Consumers MPIN has not been changed
    | 4334       | Recipient Consumers has exceeded transaction count limit
    | 5465       | Service Call Failed
@@ -74,15 +74,25 @@
    | 6099       | Catch All Acquirer SE Error
 
 
-### Etisalat Cash Codes
+[//]: # (### Etisalat Cash Codes)
 
-   | Errot Code | Description                       
-   |----------  |----------                        
-   | 0          | Successful transaction
-   | 90002      | Invalid disbursement request
-   | 90003      | Invalid or missing parameters
-   | 90007      | Invalid or missing parameters
-   | 90005      | Service is down
-   | 90006      | Service is down
-   | 90093      | Service temporarily suspended
-   | 90040      | عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778 
+[//]: # ()
+[//]: # (   | Errot Code | Description                       )
+
+[//]: # (   |----------  |----------                        )
+
+[//]: # (   | 0          | Successful transaction)
+
+[//]: # (   | 90002      | Invalid disbursement request)
+
+[//]: # (   | 90003      | Invalid or missing parameters)
+
+[//]: # (   | 90007      | Invalid or missing parameters)
+
+[//]: # (   | 90005      | Service is down)
+
+[//]: # (   | 90006      | Service is down)
+
+[//]: # (   | 90093      | Service temporarily suspended)
+
+[//]: # (   | 90040      | عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778 )

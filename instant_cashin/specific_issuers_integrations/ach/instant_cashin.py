@@ -279,12 +279,6 @@ class BankTransactionsChannel:
         # 3. Otherwise start creating new bank transaction with the new status code
         else:
             new_trx_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(bank_trx_obj)
-            
-             # send bank transaction callback notifications
-            if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
-                callback_url = bank_trx_obj.user_created.root.root.callback_url
-                req_body = BankTransactionResponseModelSerializer(bank_trx_obj)
-                requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
 
             # 3.1) Transaction accepted by the bank
             if response_code == "8111":
@@ -321,17 +315,22 @@ class BankTransactionsChannel:
                     instant_trx.balance_after = balance_after
                     instant_trx.save()
 
+            # send bank transaction callback notifications
+            if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
+                callback_url = bank_trx_obj.user_created.root.root.callback_url
+                req_body = BankTransactionResponseModelSerializer(new_trx_obj)
+                requests.post(callback_url, data=req_body.data)
 
             return new_trx_obj
 
     @staticmethod
     def send_transaction(bank_trx_obj, instant_trx_obj):
         """Make a new send transaction request to EBC"""
-            
+
         has_valid_response = True
 
         try:
-            # UVA issue remaining money 
+            # UVA issue remaining money
             # TODO Remove this code after all remining money is zero (UVA-Admin)
             amount_to_be_deducted = 0
             if bank_trx_obj.user_created.root.username == "UVA-Admin":

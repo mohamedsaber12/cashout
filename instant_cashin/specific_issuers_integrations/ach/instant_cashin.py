@@ -331,7 +331,7 @@ class BankTransactionsChannel:
 
         try:
             # UVA issue remaining money
-            # TODO Remove this code after all remining money is zero (UVA-Admin)
+            # TODO Remove this code after all remaining money is zero (UVA-Admin)
             amount_to_be_deducted = 0
             if bank_trx_obj.user_created.root.username == "UVA-Admin":
                 remaining_amounts = RemainingAmounts.objects.filter(remaining_amount__gt=0)

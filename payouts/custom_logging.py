@@ -313,6 +313,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/ach_get_transaction_status.log',
         },
+        'callback_requests': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/callback_requests.log',
+        },
         'ssl_certificates': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -538,6 +545,11 @@ CUSTOM_LOGGING = {
         },
         'ach_get_transaction_status': {
             'handlers': ['ach_get_transaction_status'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'callback_requests': {
+            'handlers': ['callback_requests'],
             'level': 'DEBUG',
             'propagate': True,
         },

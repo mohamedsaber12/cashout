@@ -34,6 +34,7 @@ from ...utils import get_from_env
 
 ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
+CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
 from instant_cashin.specific_issuers_integrations.aman.instant_cashin import UUIDEncoder
 
 
@@ -320,6 +321,10 @@ class BankTransactionsChannel:
                 callback_url = bank_trx_obj.user_created.root.root.callback_url
                 req_body = BankTransactionResponseModelSerializer(new_trx_obj)
                 requests.post(callback_url, data=req_body.data)
+                log_header = "send callback request to ==> "
+                CALLBACK_REQUESTS_LOGGER.debug(
+                    _(f"[callback request] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {req_body.data}")
+                )
 
             return new_trx_obj
 

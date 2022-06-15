@@ -250,7 +250,7 @@
                 "amount": 100.0,
                 "full_name": "",
                 "disbursement_status": "success",
-                "status_code": "8000",
+                "status_code": "200",
                 "status_description": "amount is deposited successfully",
                 "aman_cashing_details": null,
                 "created_at": "2020-10-12 07:23:17.540219",

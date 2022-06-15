@@ -73,6 +73,20 @@ services:
     links:
       - payouts
 
+  nginx:
+    container_name: nginx
+    build:
+      context: ./docker/nginx
+      dockerfile: ./Dockerfile
+      args:
+        - NGINX_ENVIRONMENT=dev
+    volumes:
+      - /var/www/:/www:rw
+    ports:
+      - "80:80"
+    depends_on:
+      - payouts
+
 volumes:
   static_volume:
   media_volume:

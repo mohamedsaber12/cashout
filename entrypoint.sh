@@ -12,7 +12,7 @@ then
 fi
 
 # Switch to payouts_user
-su - payouts_user
+# su - payouts_user
 
 # Migrate users app
 # python manage.py makemigrations users

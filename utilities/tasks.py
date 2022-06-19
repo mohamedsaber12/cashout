@@ -121,7 +121,7 @@ def check_disk_space_and_send_warning_email():
     # send email if free space <= 3 GiB
     if (free // (2**30)) <= 3:
         developers_team = [admin[1] for admin in settings.ADMINS]
-        subject='Warning, Payout Server Run Out Of Disk Space'
+        subject=f'Warning, Payout {get_from_env("ENVIRONMENT").capitalize()} Server Run Out Of Disk Space'
         message_body= """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
                 <html xmlns="http://www.w3.org/1999/xhtml">
                 <head>
@@ -137,7 +137,7 @@ def check_disk_space_and_send_warning_email():
                             }
                             .center {
                                 text-align: center;
-                            }             
+                            }
                             td {
                                 padding: 20px 50px 30px 50px;
                             }

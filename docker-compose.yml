@@ -42,7 +42,8 @@ services:
 
   postgres:
     container_name: PostgreSQL
-    image: postgres:11
+    image: postgres:14
+    restart: always
     environment:
       POSTGRES_USER: payouts_user
       POSTGRES_DB: payouts_database
@@ -52,6 +53,8 @@ services:
       - postgresql_volume:/var/lib/postgresql/data
     networks:
       - payouts_network
+    ports:
+      - "5432:5432"
 
   rabbitmq:
     container_name: RabbitMQ
@@ -71,6 +74,21 @@ services:
     depends_on:
       - rabbitmq
     links:
+      - payouts
+
+  nginx:
+    container_name: nginx
+    build:
+      context: ./docker/nginx
+      dockerfile: ./Dockerfile
+      args:
+        - NGINX_ENVIRONMENT=prod
+    volumes:
+      - /var/www/:/www:rw
+      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+    ports:
+      - "80:80"
+    depends_on:
       - payouts
 
 volumes:

@@ -64,7 +64,7 @@ from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                     determine_trx_category_and_purpose)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
-from data.utils import deliver_mail, export_excel, randomword 
+from data.utils import deliver_mail, export_excel, randomword
 from instant_cashin.utils import get_from_env
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
@@ -98,7 +98,7 @@ def disburse(request, doc_id):
         if doc_obj.owner.hierarchy == request.user.hierarchy and can_disburse and not doc_obj.is_disbursed:
             DATA_LOGGER.debug(f"[message] [BULK DISBURSEMENT TO INTERNAL API] [{request.user}] -- doc_id: {doc_id}")
             http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
-            
+
             response = requests.post(
                 http_or_https + request.get_host() + str(reverse_lazy("disbursement_api:disburse")),
                 json={'doc_id': doc_id, 'pin': request.POST.get('pin'), 'user': request.user.username}
@@ -886,8 +886,8 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             "all_transactions": total,
             "vodafone_transactions": vodafone_transactions,
             "etisalat_transactions": etisalat_transactions,
-            "orange_transactions": aman_transactions,
-            "aman_transactions": orange_transactions,
+            "orange_transactions": orange_transactions,
+            "aman_transactions": aman_transactions,
             "bank_wallet_transactions": bank_wallet_transactions,
             "banks_transactions": bank_count,
         }
@@ -1021,7 +1021,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     payload["last_name"] =  data["last_name"]
                     payload["email"] =  data["email"]
                 http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
-                
+
                 response = requests.post(
                     http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
                     json=payload
@@ -1032,7 +1032,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "message": response.json().get('status_description')
                 }
                 return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
-            
+
             except:
                 error_msg = "Process stopped during an internal error, please can you try again."
                 data = {
@@ -1269,7 +1269,7 @@ class ExportClientsTransactionsMonthlyReport:
                 (Q(is_disbursed=True) | (~Q(reason__exact='') & Q(is_disbursed=False))),
                 Q(doc__disbursed_by__root__client__creator__in=self.superadmins)
             )
-        
+
         # if super admins are vodafone facilitator onboarding save qs
         # for calculate distinct msisdn count
         if self.vf_facilitator_perm:
@@ -1586,7 +1586,7 @@ class ExportClientsTransactionsMonthlyReport:
                         'full_date': f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
-                    
+
                 elif self.instant_or_accept_perm:
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT
                 else:

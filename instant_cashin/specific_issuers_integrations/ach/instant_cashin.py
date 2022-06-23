@@ -318,9 +318,12 @@ class BankTransactionsChannel:
 
             # send bank transaction callback notifications
             if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
-                callback_url = bank_trx_obj.user_created.root.root.callback_url
+                callback_url = bank_trx_obj.user_created.root.callback_url
                 req_body = BankTransactionResponseModelSerializer(new_trx_obj)
-                response = requests.post(callback_url, data=req_body.data)
+                callback_payload = req_body.data
+                callback_payload['transaction_id'] = str(callback_payload['transaction_id'])
+                response = requests.post(callback_url, json=callback_payload)
+
                 log_header = "send callback request to ==> "
                 CALLBACK_REQUESTS_LOGGER.debug(
                     _(f"[callback request] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {req_body.data}")

@@ -320,10 +320,14 @@ class BankTransactionsChannel:
             if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
                 callback_url = bank_trx_obj.user_created.root.root.callback_url
                 req_body = BankTransactionResponseModelSerializer(new_trx_obj)
-                requests.post(callback_url, data=req_body.data)
+                response = requests.post(callback_url, data=req_body.data)
                 log_header = "send callback request to ==> "
                 CALLBACK_REQUESTS_LOGGER.debug(
                     _(f"[callback request] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {req_body.data}")
+                )
+                log_header = "received callback response from ==> "
+                CALLBACK_REQUESTS_LOGGER.debug(
+                    _(f"[callback response] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {response.json()}")
                 )
 
             return new_trx_obj

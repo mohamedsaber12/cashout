@@ -295,12 +295,12 @@ class InstantDisbursementAPIView(views.APIView):
             if issuer in ['etisalat', 'vodafone'] or \
                 (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
                 data_dict['EXTREFNUM'] = str(transaction.uid)
-            
+
             if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
                 issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
                 data_dict["WALLETISSUER"] = "VODAFONE"
                 data_dict["TYPE"] = "DPSTREQ"
-            
+
             request_data_dictionary_without_pins = copy.deepcopy(data_dict)
             request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
             logging_message(
@@ -341,7 +341,7 @@ class InstantDisbursementAPIView(views.APIView):
                 logging_message(
                         INSTANT_CASHIN_FAILURE_LOGGER, "[message] [DISBURSEMENT VALIDATION ERROR]", request, e.args
                 )
-                
+
                 transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
                 balance_before = user.root.budget.get_current_balance()
                 transaction.balance_before = balance_before
@@ -381,7 +381,6 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
             elif json_trx_response["TXNSTATUS"] == "501" or \
-                 json_trx_response["TXNSTATUS"] == "-1" or \
                  json_trx_response["TXNSTATUS"] == "6005" :
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"timeout, {json_trx_response}")
                 transaction.mark_unknown(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
@@ -449,5 +448,5 @@ class InstantDisbursementAPIView(views.APIView):
 
 
 class SingleStepDisbursementAPIView(InstantDisbursementAPIView):
-   
+
     permission_classes = []

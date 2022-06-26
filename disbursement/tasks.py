@@ -102,7 +102,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     )
             else:
                 disbursement_data_record.is_disbursed = False
-                if not trx_callback_status in ["501", "-1"]:
+                if not trx_callback_status in ["501"]:
                     disbursement_data_record.reason = trx_callback_status
             disbursement_data_record.disbursed_date=datetime.datetime.now()
             disbursement_data_record.balance_before = balance_before
@@ -134,7 +134,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                         inst_obj.amount, "VODAFONE"
                     )
             else:
-                if not trx_callback_status in ["501", "-1"]:
+                if not trx_callback_status in ["501"]:
                     inst_obj.mark_failed(trx_callback_status, trx_callback_msg)
             inst_obj.reference_id = reference_id
             inst_obj.disbursed_date=datetime.datetime.now()
@@ -536,5 +536,3 @@ def check_for_etisalat_and_vodafone_unknown_transactions(**kwargs):
                     unkown_v_trn.save()
                     unkown_v_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
                             unkown_v_trn.amount, 'vodafone')
-
-

@@ -352,3 +352,10 @@
     6. Test IBAN number for bank_card issuer
 
             EG829299835722904511873050307
+
+
+9. **Important Notes:-**
+
+   1. **Transactions on wallet take notime to get final status (on the spot)**
+
+   2. **Transactions on bank take 2 Working Days to get final status**

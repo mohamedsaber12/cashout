@@ -53,8 +53,7 @@ COPY ./media/avatars/user.png /app/mediafiles/media/avatars
 
 # Creating app user
 RUN useradd payouts_user \
-    && chown -R payouts_user:payouts_user $HOME
-#    && chmod -R 755 $HOME
+    && chown -R payouts_user:payouts_user $HOME && chmod -R 755 $HOME
 RUN  chown -R payouts_user:payouts_user /var/ -R && chmod -R 755 /var/www/docs/static/mkdocs_build
 # Copy and run the entrypoint script
 COPY ./entrypoint.sh .

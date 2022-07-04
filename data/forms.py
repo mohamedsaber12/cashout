@@ -357,6 +357,17 @@ class DocReviewForm(forms.ModelForm):
             raise forms.ValidationError(_('Rejection reason is required'))
         return self.cleaned_data.get('comment')
 
+class RecuringForm(forms.ModelForm):
+
+    is_recuring = forms.BooleanField(required=False)
+    recuring_period = forms.IntegerField(min_value=0)
+    recuring_starting_date = forms.DateField()
+
+    class Meta:
+        model = Doc
+        fields = ['is_recuring', 'recuring_period', 'recuring_starting_date']
+
+
 
 class OtpForm(forms.Form):
 

@@ -291,6 +291,7 @@ def document_view(request, doc_id):
     doc = get_object_or_404(Doc, id=doc_id)
     doc_transactions = None
     review_form_errors = None
+    recuring_form_errors = None
     reviews = None
     hide_review_form = True         # True if checker already reviewed this doc or reviews are completed
     can_review = True               # True if checker have the level rights to review the doc
@@ -384,11 +385,13 @@ def document_view(request, doc_id):
 
     if request.method == "POST" and request.user.is_maker:
         recuring_form = RecuringForm(request.POST)
+        recuring_form_errors = recuring_form.errors
         if recuring_form.is_valid():
             cleaned_data = recuring_form.cleaned_data
-            print(cleaned_data)
             doc.recuring_period = cleaned_data.get("recuring_period")
             doc.is_recuring = cleaned_data.get("is_recuring")
+            if doc.recuring_starting_date != cleaned_data.get("recuring_starting_date"):
+                doc.recuring_end_date = cleaned_data.get("recuring_starting_date")
             doc.recuring_starting_date = cleaned_data.get("recuring_starting_date")
             doc.save()
 
@@ -412,7 +415,7 @@ def document_view(request, doc_id):
         'doc_transactions': doc_transactions,
         'can_review': can_review,
         'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
-        'recuring_form_errors': recuring_form.errors
+        'recuring_form_errors': recuring_form_errors
     }
 
     # 5. Handle document auto-redirects after disbursement action related to different responses

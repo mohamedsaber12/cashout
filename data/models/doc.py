@@ -74,6 +74,7 @@ class Doc(AbstractBaseDocType, SoftDeletionModel):
     is_recuring = models.BooleanField(default=False)
     recuring_period = models.IntegerField(default=0,help_text=_("Number of days"))
     recuring_starting_date = models.DateField(null=True, blank=True)
+    recuring_latest_date = models.DateField(null=True, blank=True)
 
 
     class Meta:

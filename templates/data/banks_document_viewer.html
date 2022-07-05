@@ -286,7 +286,7 @@
       </div>
     </div>
 
-    {% if request.user.is_maker %}
+    {% if request.user.is_maker and doc.is_processed and doc.can_be_disbursed %}
     <div class="form-group col-md-6 col-sm-6 col-xs-12">
       {% if recuring_form_errors %}<span class="error_span">{{ recuring_form_errors }}</span>{% endif %}
       <form method="post" id="recuringform" action="">

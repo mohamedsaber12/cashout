@@ -70,6 +70,7 @@ class Doc(AbstractBaseDocType, SoftDeletionModel):
             related_name='collection_doc',
             null=True
     )
+    original_file_name = models.CharField(null=True, blank=True, max_length=255)
 
     class Meta:
         permissions = (

@@ -194,6 +194,7 @@ class FileDocumentForm(forms.ModelForm):
         instance = super().save(commit=False)
         instance.owner = self.request.user
         instance.type_of = self.doc_type
+        instance.original_file_name = self.request.FILES['file'].name
 
         if commit:
             instance.save()

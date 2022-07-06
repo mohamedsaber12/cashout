@@ -9,7 +9,7 @@ from django.utils.timezone import datetime, make_aware
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
-from .models import Budget, CallWalletsModerator, FeeSetup, TopupRequest, TopupAction
+from .models import Budget, CallWalletsModerator, FeeSetup, TopupRequest, TopupAction, VodafoneBalance
 from simple_history.admin import SimpleHistoryAdmin
 from django.core.exceptions import PermissionDenied
 from django import http
@@ -26,6 +26,7 @@ else:
 
 from users.models import InstantAPICheckerUser, User
 from rangefilter.filter import DateRangeFilter
+from disbursement.mixins import ExportCsvMixin
 
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
@@ -340,3 +341,41 @@ class TopupActionAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request,obj=None):
         return False
+
+
+@admin.register(VodafoneBalance)
+class VodafoneBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
+    """
+    Customize the list view of the call topup requests model
+    """
+
+    list_display = [
+        "super_agent",
+        "balance",
+        "created_at",
+    ]
+    list_filter = [
+        ("created_at", DateRangeFilter),
+    ]
+
+    actions = ["export_as_csv"]
+
+    def has_add_permission(self, request):
+        if not request.user.is_superuser or not request.user.is_superadmin:
+            return False
+        return True
+
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_finance:
+            return True
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_finance:
+            return True
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+
+

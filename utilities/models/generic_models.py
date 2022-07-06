@@ -544,3 +544,14 @@ class ExcelFile(AbstractTimeStamp):
         related_name='my_excel_files',
         verbose_name=_("Owner")
     )
+
+
+class VodafoneBalance(AbstractTimeStamp):
+
+    balance = models.CharField(max_length=100, null=False, blank=False)
+    super_agent = models.CharField(max_length=100, null=False, blank=False)
+
+    class Meta:
+        verbose_name = "Vodafone Balance"
+        verbose_name_plural = "Vodafone Monthly Balances"
+        ordering = ["-id"]

@@ -391,7 +391,7 @@ def document_view(request, doc_id):
             doc.recuring_period = cleaned_data.get("recuring_period")
             doc.is_recuring = cleaned_data.get("is_recuring")
             if doc.recuring_starting_date != cleaned_data.get("recuring_starting_date"):
-                doc.recuring_end_date = cleaned_data.get("recuring_starting_date")
+                doc.recuring_latest_date = cleaned_data.get("recuring_starting_date")
             doc.recuring_starting_date = cleaned_data.get("recuring_starting_date")
             doc.save()
 

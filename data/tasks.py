@@ -54,6 +54,7 @@ from data.utils import upload_file_to_vodafone, ExportTransactionsBaseView
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
+VF_FACILITATOR_REPORT_LOGGER = logging.getLogger("vodafone_facilitator_daily_report")
 
 MSG_NOT_WITHIN_THRESHOLD = _(f"File's total amount exceeds your current balance, please contact your support team")
 MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(f"File's total amount exceeds your maximum amount that can be disbursed,"
@@ -2192,5 +2193,9 @@ def generate_vf_daily_report():
 
     vf_facilitator_report_path = ExportClientsTransactionsMonthlyReportTask.run(
         2, start_date, end_date, 'all', list(vf_facilitator_super_admins_ids), True)
+    VF_FACILITATOR_REPORT_LOGGER.debug(
+        f"[message] [report generated successfully] -- "
+        f"{vf_facilitator_report_path}"
+    )
     # upload vodafone facilitator report to vodafone server
     upload_file_to_vodafone(vf_facilitator_report_path)

@@ -194,6 +194,7 @@ class FileDocumentForm(forms.ModelForm):
         instance = super().save(commit=False)
         instance.owner = self.request.user
         instance.type_of = self.doc_type
+        instance.original_file_name = self.request.FILES['file'].name
 
         if commit:
             instance.save()
@@ -356,6 +357,17 @@ class DocReviewForm(forms.ModelForm):
         if not self.cleaned_data.get('is_ok') and not self.cleaned_data.get('comment'):
             raise forms.ValidationError(_('Rejection reason is required'))
         return self.cleaned_data.get('comment')
+
+class RecuringForm(forms.ModelForm):
+
+    is_recuring = forms.BooleanField(required=False)
+    recuring_period = forms.IntegerField(min_value=0)
+    recuring_starting_date = forms.DateField()
+
+    class Meta:
+        model = Doc
+        fields = ['is_recuring', 'recuring_period', 'recuring_starting_date']
+
 
 
 class OtpForm(forms.Form):

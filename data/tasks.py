@@ -19,6 +19,7 @@ from django.core.exceptions import ValidationError
 from django.db.models import Case, Count, F, Q, Sum, When
 from django.urls import reverse
 from django.utils.timezone import datetime, make_aware, timedelta
+from datetime import date
 from django.utils.translation import gettext as _
 from django.contrib.auth.models import Permission
 
@@ -49,6 +50,8 @@ from .utils import deliver_mail, export_excel, randomword
 
 from django.core.paginator import Paginator
 from data.utils import upload_file_to_vodafone, ExportTransactionsBaseView
+from copy import deepcopy
+import uuid
 
 
 
@@ -2194,3 +2197,75 @@ def generate_vf_daily_report():
         2, start_date, end_date, 'all', list(vf_facilitator_super_admins_ids), True)
     # upload vodafone facilitator report to vodafone server
     upload_file_to_vodafone(vf_facilitator_report_path)
+
+
+def create_recuring_docs():
+    """
+    Generate new doc for recuring docs if it's today
+    """
+    recu_docs = Doc.objects.filter(is_recuring=True, recuring_period__gte= 1)
+    today = date.today()
+    for recu_doc in recu_docs:
+        if today == recu_doc.recuring_latest_date + timedelta(days=recu_doc.recuring_period):
+            doc = deepcopy(recu_doc)
+            doc.id = None
+            doc.pk = None
+            doc.is_disbursed = False
+            doc.is_processed = True
+            doc.can_be_disbursed = True
+            doc.is_recuring = False
+            doc.recuring_period = 0
+            doc.recuring_starting_date = None
+            doc.save()
+
+            dis_doc = deepcopy(recu_doc.disbursement_txn)
+            dis_doc.doc = doc
+            dis_doc.status = 3
+            dis_doc.txn_status = None
+            dis_doc.has_callback = False
+            dis_doc.id = None
+            dis_doc.pk = None
+            dis_doc.save()
+
+
+            if recu_doc.is_e_wallet:
+                for obj in recu_doc.disbursement_data.all():
+                    new_obj = deepcopy(obj)
+                    new_obj.uid = None
+                    new_obj.id = None
+                    new_obj.pk = None
+                    new_obj.doc = doc
+                    new_obj.is_disbursed = False
+                    new_obj.reason = ''
+                    new_obj.reference_id = None
+                    new_obj.disbursed_date = None
+
+                    new_obj.save()
+
+            elif recu_doc.is_bank_wallet:
+                for obj in recu_doc.bank_wallets_transactions.all():
+                    new_obj = deepcopy(obj)
+                    new_obj.uid = None
+                    new_obj.pk = None
+                    new_obj.document = doc
+                    new_obj.balance_before = Decimal(0)
+                    new_obj.after = Decimal(0)
+                    new_obj.save()
+            elif recu_doc.is_bank_card:
+                for obj in recu_doc.bank_cards_transactions.filter(status__in=["p", "d"]):
+                    new_obj = deepcopy(obj)
+                    new_obj.id = None
+                    new_obj.pk = None
+                    new_obj.status = 'd'
+                    new_obj.parent_transaction_id = None
+                    new_obj.transaction_id = uuid.uuid4()
+                    new_obj.message_id = uuid.uuid4()
+                    new_obj.transaction_status_code = None
+                    new_obj.transaction_status_description = None
+                    new_obj.document = doc
+                    new_obj.balance_before = Decimal(0)
+                    new_obj.after = Decimal(0)
+                    new_obj.save()
+
+        recu_doc.recuring_latest_date = today
+        recu_doc.save()

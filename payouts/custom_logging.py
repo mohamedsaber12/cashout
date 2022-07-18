@@ -341,6 +341,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/vodafone_inq_by_ref.log',
         },
+        'vodafone_facilitator_daily_report': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/vodafone_facilitator_daily_report.log',
+        },
     },
 
     'loggers': {
@@ -565,6 +572,11 @@ CUSTOM_LOGGING = {
         },
         'vodafone_inq_by_ref': {
             'handlers': ['vodafone_inq_by_ref'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'vodafone_facilitator_daily_report': {
+            'handlers': ['vodafone_facilitator_daily_report'],
             'level': 'DEBUG',
             'propagate': True,
         },

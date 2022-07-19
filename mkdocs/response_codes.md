@@ -1,7 +1,7 @@
 # General Responses
 
 
-### Vodafone / Etisalat / orange / bank wallet Codes
+### Vodafone / Etisalat / Orange / Bank Wallet Codes
 
    | Errot Code | Description                                                |
    |----------  |----------                                                  |

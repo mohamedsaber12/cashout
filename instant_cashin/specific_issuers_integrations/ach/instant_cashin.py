@@ -319,9 +319,21 @@ class BankTransactionsChannel:
             # send bank transaction callback notifications
             if response_code and response_description and bank_trx_obj.user_created.root.root.callback_url:
                 callback_url = bank_trx_obj.user_created.root.callback_url
-                req_body = BankTransactionResponseModelSerializer(new_trx_obj)
-                callback_payload = req_body.data
-                callback_payload['transaction_id'] = str(callback_payload['transaction_id'])
+                callback_payload = {
+                    'transaction_id': str(new_trx_obj.parent_transaction.transaction_id),
+                    'issuer': 'bank_card',
+                    'amount': str(new_trx_obj.amount),
+                    'bank_card_number': str(new_trx_obj.creditor_account_number),
+                    'full_name': str(new_trx_obj.creditor_name),
+                    'bank_code': str(new_trx_obj.creditor_bank),
+                    'bank_transaction_type': str(bank_trx_obj.get_transaction_type),
+                    'disbursement_status': str(new_trx_obj.status_choice_verbose),
+                    'status_code': str(new_trx_obj.transaction_status_code),
+                    'status_description': str(new_trx_obj.transaction_status_description),
+                    'client_transaction_reference': str(new_trx_obj.client_transaction_reference),
+                    'created_at': new_trx_obj.parent_transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                    'updated_at': new_trx_obj.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+                }
                 response = requests.post(callback_url, json=callback_payload)
 
                 log_header = "send callback request to ==> "

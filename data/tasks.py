@@ -20,6 +20,7 @@ from django.db.models import Case, Count, F, Q, Sum, When
 from django.urls import reverse
 from django.utils.timezone import datetime, make_aware, timedelta
 from django.utils.translation import gettext as _
+from django.contrib.auth.models import Permission
 
 from core.models import AbstractBaseStatus
 from core.utils.validations import phonenumber_form_validate
@@ -36,7 +37,7 @@ from disbursement.utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
-from users.models import CheckerUser, Levels, UploaderUser, User
+from users.models import CheckerUser, Levels, UploaderUser, User, SuperAdminUser
 from utilities.functions import get_value_from_env
 from utilities.messages import MSG_TRY_OR_CONTACT, MSG_WRONG_FILE_FORMAT
 from utilities.models import Budget, ExcelFile
@@ -53,6 +54,7 @@ from data.utils import upload_file_to_vodafone, ExportTransactionsBaseView
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
+VF_FACILITATOR_REPORT_LOGGER = logging.getLogger("vodafone_facilitator_daily_report")
 
 MSG_NOT_WITHIN_THRESHOLD = _(f"File's total amount exceeds your current balance, please contact your support team")
 MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED = _(f"File's total amount exceeds your maximum amount that can be disbursed,"
@@ -641,10 +643,10 @@ class EWalletsSheetProcessor(Task):
                         phonenumber_form_validate(f"+{msisdn}")
                         msisdn = f"00{msisdn}"
                         msisdns_list.append(msisdn)
-                        valid_msisdn = True    
+                        valid_msisdn = True
                     else:
                         raise ValidationError('')
-                    
+
                 except ValidationError:
                     if errors_list[index]:
                         errors_list[index] = "Invalid mobile number"
@@ -941,6 +943,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     vf_facilitator_perm = False
     default_vf__or_bank_perm = False
     temp_vf_ets_aman_qs = []
+    automatic_fire = False
 
     def refine_first_and_end_date_format(self):
         """
@@ -1438,7 +1441,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 if self.vf_facilitator_perm:
                     final_data[current_admin.username] = [{
                         **DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
-                        'full_date': f"{self.start_date} to {self.end_date}",
+                        'full_date': f"{self.start_date}" if self.automatic_fire else f"{self.start_date} to {self.end_date}",
                         'vf_facilitator_identifier': current_admin.client.vodafone_facilitator_identifier
                     }]
 
@@ -1448,8 +1451,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     final_data[current_admin.username] = DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf
             else:
                 if self.vf_facilitator_perm:
-                    final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
-                    final_data[current_admin.username][0]["vf_facilitator_identifier"] =  current_admin.client.vodafone_facilitator_identifier
+                    if self.automatic_fire:
+                        final_data[current_admin.username][0]["full_date"] = f"{self.start_date}"
+                    else:
+                        final_data[current_admin.username][0]["full_date"] =  f"{self.start_date} to {self.end_date}"
+                    final_data[current_admin.username][0]["vf_facilitator_identifier"] = current_admin.client.vodafone_facilitator_identifier
 
         if self.vf_facilitator_perm:
             # 8. calculate distinct msisdn per admin
@@ -1498,11 +1504,16 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         deliver_mail(self.superadmin_user, _(mail_subject), message)
 
 
-    def run(self, user_id, start_date, end_date, status, super_admins_ids=[], *args, **kwargs):
+    def run(self, user_id, start_date, end_date, status, super_admins_ids=[], automatic_fire=False, *args, **kwargs):
         self.status = status
         self.start_date = start_date
         self.end_date = end_date
-        self.filename = _(f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(8)}.xls")
+        self.automatic_fire = automatic_fire
+
+        if automatic_fire:
+            self.filename = f"clients_monthly_report_{self.status}_{self.start_date}_{randomword(8)}.xls"
+        else:
+            self.filename = f"clients_monthly_report_{self.status}_{self.start_date}_{self.end_date}_{randomword(8)}.xls"
         self.file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{self.filename}"
         self.superadmin_user = User.objects.get(id=user_id)
         self.instant_or_accept_perm = False
@@ -1510,6 +1521,11 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.default_vf__or_bank_perm = False
         self.superadmins = User.objects.filter(pk__in=super_admins_ids)
         report_download_url = self.prepare_transactions_report()
+
+        # return file path if this task fired by celery for vodafone facilitator
+        if automatic_fire:
+            return self.file_path
+
         if report_download_url == False:
             err_messgae_email = _(
                 f"Dear <strong>{self.superadmin_user.get_full_name}</strong><br><br> "
@@ -1536,7 +1552,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At", "Balance before", "Balance After"]                                
+            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At", "Balance before", "Balance After"]
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1546,7 +1562,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
 
             for col_nums in range(len(column_names_list)):
                 ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
-                
+
             row_num = row_num + 1
 
             for row in queryset:
@@ -1620,7 +1636,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status","Updated At", "balance_before", "balance_after"]                                
+            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status","Updated At", "balance_before", "balance_after"]
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1630,7 +1646,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
 
             for col_nums in range(len(column_names_list)):
                 ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
-                
+
             row_num = row_num + 1
 
             for row in queryset:
@@ -2153,3 +2169,33 @@ def notify_makers_collection(doc):
         The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully<br><br>
         Thanks, BR""")
     deliver_mail(None, _(' Collection File Upload Notification'), message, makers)
+
+
+@app.task()
+@respects_language
+def generate_vf_daily_report():
+    """
+    celery task for generate vodafone facilitator report every day for yesterday
+    """
+    # get yesterday datetime
+    yesterday = datetime.now() - timedelta(int(1))
+
+    start_date = f"{yesterday.year}-{yesterday.month}-{yesterday.day}"
+    end_date = f"{yesterday.year}-{yesterday.month}-{yesterday.day}"
+
+    # get vodafone facilitator permission
+    vf_facilitator_perm = Permission.objects.get(codename='vodafone_facilitator_accept_vodafone_onboarding')
+
+    # get all vodafone facilitator super admin
+    vf_facilitator_super_admins_ids = SuperAdminUser.objects.filter(
+        Q(user_permissions=vf_facilitator_perm)
+    ).values_list('pk', flat=True)
+
+    vf_facilitator_report_path = ExportClientsTransactionsMonthlyReportTask.run(
+        2, start_date, end_date, 'all', list(vf_facilitator_super_admins_ids), True)
+    VF_FACILITATOR_REPORT_LOGGER.debug(
+        f"[message] [report generated successfully] -- "
+        f"{vf_facilitator_report_path}"
+    )
+    # upload vodafone facilitator report to vodafone server
+    upload_file_to_vodafone(vf_facilitator_report_path)

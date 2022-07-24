@@ -137,7 +137,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 inst_obj.mark_successful("200", trx_callback_msg)
                 if doc_obj.owner.root.has_custom_budget:
                     balance_after = doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
-                        inst_obj.amount, "VODAFONE"
+                        inst_obj.amount, inst_obj.issuer_type
                     )
             else:
                 if not trx_callback_status in ["501"]:

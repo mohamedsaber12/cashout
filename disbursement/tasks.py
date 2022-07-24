@@ -546,8 +546,11 @@ def check_for_etisalat_and_vodafone_unknown_transactions(**kwargs):
 
 @app.task()
 @respects_language
-def check_vodafone_monthly_balance(**kwargs):
-    now = datetime.datetime.now()
+def check_vodafone_monthly_balance(date_time=None, **kwargs):
+    if date_time:
+        now = date_time
+    else:
+        now = datetime.datetime.now()
 
     if end_of_month(now):
         superadmin = User.objects.get(username=settings.VODAFONE_BALANCE_SUPER_ADMIN)

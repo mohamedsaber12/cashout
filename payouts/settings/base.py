@@ -388,3 +388,8 @@ sentry_sdk.init(
     # django.contrib.auth) you may enable sending PII data.
     send_default_pii=True
 )
+
+
+VODAFONE_BALANCE_SUPER_AGENT_NUMBER=env.str('VODAFONE_BALANCE_SUPER_AGENT_NUMBER', "")
+VODAFONE_BALANCE_SUPER_AGENT_NUMBER_PIN=env.str('VODAFONE_BALANCE_SUPER_AGENT_NUMBER_PIN', "")
+VODAFONE_BALANCE_SUPER_ADMIN=env.str('VODAFONE_BALANCE_SUPER_ADMIN', "")

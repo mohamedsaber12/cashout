@@ -366,3 +366,25 @@ SECURE_HSTS_PRELOAD = True
 
 
 SECRET_KEY = env.str('SECRET_KEY')
+
+
+## Sentry 
+
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+
+sentry_sdk.init(
+    dsn="https://87c556fc87c1467b83a09d06b3c09244@o1332627.ingest.sentry.io/6597349",
+    integrations=[
+        DjangoIntegration(),
+    ],
+
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)

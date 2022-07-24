@@ -285,6 +285,35 @@
         {% endif %}
       </div>
     </div>
+
+    {% if request.user.is_maker and doc.is_processed and doc.can_be_disbursed %}
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      {% if recuring_form_errors %}<span class="error_span">{{ recuring_form_errors }}</span>{% endif %}
+      <form method="post" id="recuringform" action="">
+        <span style="font-weight:bold;font-size:18px;">Periodic doc</span>
+        {% csrf_token %}
+        <br>
+        <br>
+        {% if doc.is_recuring %}
+        <input type="checkbox" checked id="recuring-enabled" name="is_recuring" >
+        {% else %}
+        <input type="checkbox" id="recuring-enabled" name="is_recuring" >
+        {% endif %}
+        <label for="recuring-period">{% trans 'Enable' %}</label>
+        <br>
+        <br>
+          <label for="recuring-period">{% trans 'Recuring Period' %}</label>
+          <input type="number" id="recuring-period" name="recuring_period" value ="{{doc.recuring_period}}" class="form-control" placeholder="{% trans 'Period in days' %}" required >
+          <label for="recuring-start-date">{% trans 'Start date' %}</label>
+          <input value ="{{doc.recuring_starting_date|date:"Y-m-d"}}" type="date" id="recuring-start-date" name="recuring_starting_date" class="form-control" placeholder="{% trans 'Start date' %}" required >
+        <div class="modal-footer">
+          <input type="submit" class="btn btn-default" value="{% trans 'Submit' %}">
+        </div>
+      </form>
+    </div>
+    {% endif %}
+
+
   </div>
 
   {# transaction details #}

@@ -106,7 +106,7 @@ class DisburseAPIView(APIView):
             extra(select={'MSISDN': 'msisdn', 'AMOUNT': 'amount', 'TXNID': 'id'}).values('MSISDN', 'AMOUNT', 'TXNID')
 
         return list(vf_recipients)
-    
+
     def set_disbursed_date(self, doc_id):
         """
         :param doc_id: Id of the document being disbursed
@@ -202,10 +202,10 @@ class DisburseAPIView(APIView):
 
         doc_obj.mark_disbursement_failure()
         return False
-    
+
     def check_balance_before_disbursement(self, request, checker,doc_obj ):
         total_doc_amount = self.get_total_doc_amount(doc_obj)
-        # get balance 
+        # get balance
         superadmin = checker.root.client.creator
         super_agent = Agent.objects.get(wallet_provider=checker.root, super=True)
         payload, refined_payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent.msisdn, pin)
@@ -218,7 +218,7 @@ class DisburseAPIView(APIView):
             return HttpResponse(
                 json.dumps({'message': MSG_BALANCE_INQUIRY_ERROR}),
                 status=status.HTTP_400_BAD_REQUEST
-                ) 
+                )
         else:
             WALLET_API_LOGGER.debug(f"[response] [BALANCE INQUIRY] [{request.user}] -- {response.text}")
         if response.ok:
@@ -236,13 +236,13 @@ class DisburseAPIView(APIView):
                     json.dumps({'message': error_message}),
                     status=status.HTTP_400_BAD_REQUEST
                     )
-                
+
         else:
             error_message = resp_json.get('MESSAGE', None) or _("Balance inquiry failed")
             return HttpResponse(
                     json.dumps({'message': error_message}),
                     status=status.HTTP_400_BAD_REQUEST
-                    ) 
+                    )
 
     def post(self, request, *args, **kwargs):
         """
@@ -305,7 +305,7 @@ class DisburseCallBack(UpdateAPIView):
         for data in request.data['transactions']:
             try:
                 last_doc_record_id = int(data['id'])
-                # for None cases and not nullable refernce_id field 
+                # for None cases and not nullable refernce_id field
                 ref_id = data.get('mpg_rrn', 'None')
                 if ref_id is None:
                     ref_id = "None"
@@ -430,32 +430,32 @@ class AllowDocDisburse(APIView):
             return Response(status=status.HTTP_200_OK)
 
         return Response(status=status.HTTP_403_FORBIDDEN)
-    
-    
+
+
 class CancelAmanTransactionView(APIView):
-    
+
     http_method_names = ['post']
-    
+
     def __init__(self):
         self.req_headers = {'Content-Type': 'application/json'}
         self.authentication_url = "https://accept.paymobsolutions.com/api/auth/tokens"
         self.api_key = get_value_from_env("ACCEPT_API_KEY")
         self.payload = {'api_key': self.api_key}
         self.void_url = "https://accept.paymob.com/api/acceptance/void_refund/void?token="
-        
-    
+
+
     def post(self, request, *args, **kwargs):
-        
+
         if not request.is_ajax():
             return JsonResponse(data={}, status=status.HTTP_403_FORBIDDEN)
-     
+
         trn_id = request.data.get('transaction_id', None)
         if not trn_id:
             return JsonResponse(data={"canceled": False, "message": "missed transaction ID"}, status=401)
         token = self.create_auth_token()
-        resp = self.void_transaction(trn_id, token)        
-        
-        
+        resp = self.void_transaction(trn_id, token)
+
+
         if resp.json().get("success") == True:
             disb_trn = DisbursementData.objects.get(reference_id=trn_id)
             aman_obj = disb_trn.aman_obj.first()
@@ -470,19 +470,17 @@ class CancelAmanTransactionView(APIView):
             return JsonResponse(data={"canceled": True}, status=200)
         else:
             return JsonResponse(data={"canceled": False, "message":"request error"}, status=200)
-        
-        
-    
+
+
+
     def create_auth_token(self):
         response = requests.post(self.authentication_url, data=json.dumps(self.payload), headers=self.req_headers)
         token = response.json().get("token")
         return token
-    
+
     def void_transaction(self,trn_id, token):
         payload = {
             "transaction_id": trn_id
         }
         resp = requests.post(f"{self.void_url}{token}", data=json.dumps(payload), headers=self.req_headers)
         return resp
-
-

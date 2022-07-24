@@ -72,6 +72,12 @@ class Doc(AbstractBaseDocType, SoftDeletionModel):
     )
     original_file_name = models.CharField(null=True, blank=True, max_length=255)
 
+    is_recuring = models.BooleanField(default=False)
+    recuring_period = models.IntegerField(default=0,help_text=_("Number of days"))
+    recuring_starting_date = models.DateField(null=True, blank=True)
+    recuring_latest_date = models.DateField(null=True, blank=True)
+
+
     class Meta:
         permissions = (
             ("upload_file", "upload file"),

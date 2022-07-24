@@ -25,6 +25,8 @@ from smpp.smpp_interface import send_sms
 from users.models import User
 from utilities.functions import custom_budget_logger, get_value_from_env
 from django.conf import settings
+from utilities.models import VodafoneBalance
+import environ
 
 
 from .models import DisbursementData, DisbursementDocData, BankTransaction
@@ -33,6 +35,10 @@ CH_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DISBURSE_LOGGER = logging.getLogger("disburse")
 ETISALAT_UNKNWON_INQ = logging.getLogger("etisalat_inq_by_ref")
 VODAFONE_UNKNWON_INQ = logging.getLogger("vodafone_inq_by_ref")
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
+env = environ.Env()
+
+
 
 
 class BulkDisbursementThroughOneStepCashin(Task):
@@ -536,3 +542,37 @@ def check_for_etisalat_and_vodafone_unknown_transactions(**kwargs):
                     unkown_v_trn.save()
                     unkown_v_trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
                             unkown_v_trn.amount, 'vodafone')
+
+
+@app.task()
+@respects_language
+def check_vodafone_monthly_balance(date_time=None, **kwargs):
+    if date_time:
+        now = date_time
+    else:
+        now = datetime.datetime.now()
+
+    if end_of_month(now):
+        superadmin = User.objects.get(username=settings.VODAFONE_BALANCE_SUPER_ADMIN)
+        super_agent = settings.VODAFONE_BALANCE_SUPER_AGENT_NUMBER
+        pin = settings.VODAFONE_BALANCE_SUPER_AGENT_NUMBER_PIN
+        payload, refined_payload = superadmin.vmt.accumulate_balance_inquiry_payload(super_agent, pin)
+
+        try:
+            WALLET_API_LOGGER.debug(f"[request] [BALANCE INQUIRY] [MONTHLY BALANCE] -- {refined_payload}")
+            response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
+        except Exception as e:
+            WALLET_API_LOGGER.debug(f"[message] [BALANCE INQUIRY ERROR] [MONTHLY BALANCE] -- Error: {e.args}")
+        else:
+            WALLET_API_LOGGER.debug(f"[response] [BALANCE INQUIRY] [MONTHLY BALANCE] -- {response.text}")
+        if response.ok:
+            resp_json = response.json()
+            if resp_json["TXNSTATUS"] == '200':
+                    balance = resp_json['BALANCE']
+                    VodafoneBalance.objects.create(balance=balance, super_agent=super_agent)
+
+
+def end_of_month(dt):
+    todays_month = dt.month
+    tomorrows_month = (dt + datetime.timedelta(days=1)).month
+    return True if tomorrows_month != todays_month else False

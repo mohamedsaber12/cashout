@@ -2202,7 +2202,7 @@ def generate_vf_daily_report():
     )
     # upload vodafone facilitator report to vodafone server
     upload_file_to_vodafone(vf_facilitator_report_path)
-
+    
 
 def create_recuring_docs():
     """

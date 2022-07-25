@@ -331,11 +331,7 @@ class BankTransactionsChannel:
                     'status_code': str(new_trx_obj.transaction_status_code),
                     'status_description': str(new_trx_obj.transaction_status_description),
                     'client_transaction_reference': str(new_trx_obj.client_transaction_reference),
-<<<<<<< HEAD
                     'created_at': new_trx_obj.parent_transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
-=======
-                    'created_at' : new_trx_obj.parent_transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
->>>>>>> 1ba182979b7dd6ca89377a2252f8f1d1933bb4d4
                     'updated_at': new_trx_obj.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
                 }
                 response = requests.post(callback_url, json=callback_payload)

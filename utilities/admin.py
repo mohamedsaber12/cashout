@@ -366,11 +366,11 @@ class VodafoneBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
         return True
 
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser or request.user.is_vodafone_monthly_report:
             return True
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser or request.user.is_vodafone_monthly_report:
             return True
 
     def has_delete_permission(self, request, obj=None):

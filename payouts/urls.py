@@ -11,7 +11,6 @@ from two_factor.urls import urlpatterns as tf_urls
 from data.views import protected_serve
 
 from .decorators import protected_media_serve
-from django.views.generic import TemplateView
 
 
 if settings.DEBUG:
@@ -53,10 +52,6 @@ urlpatterns += [
     path('api/secure/', include('payment.api.urls', namespace='payment_api')),
     path('api/secure/', include('instant_cashin.api.urls', namespace='instant_api')),
     path('admin/log_viewer/', include('log_viewer.urls')),
-    path('docs-swagger-ui/', TemplateView.as_view(
-            template_name='instant_cashin/swagger_api_docs.html',
-            extra_context={'schema_url': 'openapi-schema'}
-        ), name='swagger-ui'),
 ]
 
 # urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)

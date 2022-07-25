@@ -13,7 +13,7 @@ nav:
   - Budget Inquiry API: budget_inquiry_api.md
   - CallBack Url: callback_url.md
   - Response Codes: response_codes.md
-  - Swagger Api: api.json
+  - Swagger Api: (/docs-swagger-ui/)
 
 theme:
     name: readthedocs
@@ -27,6 +27,3 @@ markdown_extensions:
 
 extra:
     version: 2.0
-
-plugins:
-  - render_swagger

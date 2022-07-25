@@ -165,3 +165,4 @@ packaging==20.9
 ghp-import==2.0.2
 watchdog==2.1.6
 django-admin-multiple-choice-list-filter==0.1.1
+mkdocs-render-swagger-plugin==0.0.3

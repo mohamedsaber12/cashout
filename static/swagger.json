@@ -11,13 +11,136 @@
         "scheme": "bearer",
         "bearerFormat": "JWT"
       }
+    },
+    "schemas": {
+      "Wallet": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "enum": [
+              "vodafone",
+              "etisalat",
+              "orange",
+              "bank_wallet"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.0"
+          },
+          "msisdn": {
+            "type": "string",
+            "example": "01092737975"
+          }
+        }
+      },
+      "Bank": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "enum": [
+              "bank_card"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.0"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "bank_card_number": {
+            "type": "string"
+          },
+          "bank_code": {
+            "type": "string",
+            "enum": [
+              "AUB",
+              "CITI",
+              "MIDB",
+              "BDC",
+              "HSBC",
+              "CAE",
+              "EGB",
+              "UB",
+              "QNB",
+              "ARAB",
+              "ENBD",
+              "ABK",
+              "NBK",
+              "ABC",
+              "FAB",
+              "ADIB",
+              "CIB",
+              "HDB",
+              "MISR",
+              "AAIB",
+              "EALB",
+              "EDBE",
+              "FAIB",
+              "BLOM",
+              "ADCB",
+              "BOA",
+              "SAIB",
+              "NBE",
+              "ABRK",
+              "POST",
+              "NSB",
+              "IDB",
+              "SCB",
+              "MASH",
+              "AIB",
+              "AUDI",
+              "GASC",
+              "ARIB",
+              "PDAC",
+              "NBG",
+              "CBE",
+              "BBE"
+            ]
+          },
+          "bank_transaction_type": {
+            "type": "string",
+            "enum": [
+              "salary",
+              "credit_card",
+              "prepaid_card",
+              "cash_transfer"
+            ]
+          }
+        }
+      },
+      "Aman": {
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "enum": [
+              "aman"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.0"
+          },
+          "msisdn": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
     }
   },
-  "security": [
-    {
-      "bearerAuth": []
-    }
-  ],
   "paths": {
     "/api/secure/o/token/": {
       "post": {
@@ -76,42 +199,27 @@
         "tags": [
           "General"
         ],
-        "summary": "Instant Cashin bank card",
+        "summary": "Instant Cashin",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "example": {
-                  "issuer": "bank_card",
-                  "amount": 100,
-                  "full_name": "Tom Bernard Ceisar",
-                  "bank_card_number": "EG026208774732576901243317177",
-                  "bank_code": "CIB",
-                  "bank_transaction_type": "cash_transfer"
-                }
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/Wallet"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Bank"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Aman"
+                  }
+                ]
               }
             }
           }
         },
-        "parameters": [
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "application/json"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "Bearer tv3wBY79dsyfAjnO95ZykdbWHMJsyn"
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -132,25 +240,24 @@
         "tags": [
           "General"
         ],
-        "summary": "Bulk Transaction Inquiry banking",
-        "parameters": [
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "application/json"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "Bearer {{ACCESS_TOKEN}}"
+        "summary": "Bulk Transaction Inquiry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transactions_ids_list": [
+                    "dd73549d-7413-47ce-a79b-56d5735c14b7",
+                    "2a08d70c-49a9-48ed-bcbf-734343065477",
+                    "1531eb29-199e-4487-96ab-72ef76564a42",
+                  ]
+                }
+              }
+            }
           }
-        ],
+        },
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -172,24 +279,7 @@
           "General"
         ],
         "summary": "User Budget Inquiry ",
-        "parameters": [
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "application/json"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "Bearer {{ACCESS_TOKEN}}"
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Successful response",
@@ -223,24 +313,7 @@
             }
           }
         },
-        "parameters": [
-          {
-            "name": "Content-Type",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "application/json"
-          },
-          {
-            "name": "Authorization",
-            "in": "header",
-            "schema": {
-              "type": "string"
-            },
-            "example": "Bearer tv3wBY79dsyfAjnO95ZykdbWHMJsyn"
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Successful response",

@@ -14,6 +14,7 @@
     },
     "schemas": {
       "Wallet": {
+        "description": "request body for disburse on vodafone/etisalat/orange/bank wallet",
         "type": "object",
         "properties": {
           "issuer": {
@@ -36,6 +37,7 @@
         }
       },
       "Bank": {
+        "description": "request body for disburse on bank card / bank account",
         "type": "object",
         "properties": {
           "issuer": {
@@ -113,6 +115,7 @@
         }
       },
       "Aman": {
+        "description": "request body for disburse on Aman",
         "type": "object",
         "properties": {
           "issuer": {
@@ -231,7 +234,7 @@
       }
     },
     "/api/secure/transaction/inquire/": {
-      "get": {
+      "post": {
         "security": [
           {
             "bearerAuth": []

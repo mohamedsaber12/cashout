@@ -11,6 +11,7 @@
         <th class="trxTableHeader">{% trans 'Vat' %}</th>
         <th class="trxTableHeader">{% trans 'Issuer' %}</th>
         <th class="trxTableHeader">{% trans 'Status' %}</th>
+        <th class="trxTableHeader">{% trans 'Cancelled' %}</th>
         <th class="trxTableHeader">{% trans 'Updated At' %}</th>
       </tr>
     </thead>
@@ -37,6 +38,11 @@
           <td>{{ transaction.vat }}</td>
           <td>{{ transaction.issuer_choice_verbose }}</td>
           <td>{{ transaction.status_choice_verbose }}</td>
+          {% if transaction.aman_transaction %}
+          <td>{{ transaction.aman_transaction.is_cancelled  }}</td>
+          {% else %}
+          <td>False</td>
+          {% endif %}
           <td>{{ transaction.updated_at }}</td>
         </tr>
       {% endfor %}

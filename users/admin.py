@@ -71,9 +71,9 @@ class UserAccountAdmin(UserAdmin):
 
             obj.is_active = True
             obj.save()
-          
+
     activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
-    
+
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
         if request.user.is_superuser:
@@ -146,9 +146,12 @@ class BaseChildAdmin(UserAccountAdmin):
     logged_user_type = 'Child'
 
     def save_model(self, request, obj, form, change):
-        # TODO : FIX Parent hierarchy
+
         if request.user.is_superuser:
-            obj.hierarchy = form.cleaned_data['parent'].hierarchy
+            if obj.pk is not None:
+                obj.hierarchy = obj.root.hierarchy
+            else:
+                obj.hierarchy = form.cleaned_data['parent'].hierarchy
         else:
             obj.hierarchy = request.user.hierarchy
 
@@ -157,7 +160,6 @@ class BaseChildAdmin(UserAccountAdmin):
                     f"[message] [{self.logged_user_type.capitalize()} User Modified] [{request.user}] "
                     f"-- Modified user with username: {obj.username}"
             )
-
         else:
             CREATED_USERS_LOGGER.debug(
                     f"[message] [{self.logged_user_type} User Created] [{request.user}] "
@@ -243,10 +245,10 @@ class RootAdmin(UserAccountAdmin):
 
 @admin.register(SuperAdminUser)
 class SuperAdmin(UserAccountAdmin):
-    
+
     actions = ['activate_selected', 'deactivate_selected', "export_report"]
     extended_actions = ['activate_selected', 'deactivate_selected', "export_report"]
-    
+
     def get_actions(self, request):
         actions = super(UserAccountAdmin, self).get_actions(request)
         if request.user.is_finance:
@@ -255,23 +257,23 @@ class SuperAdmin(UserAccountAdmin):
             if 'deactivate_selected' in actions:
                 del actions['deactivate_selected']
         return actions
-    
+
     # def get_extended_actions(self, request):
     #     ext_actions = super(UserAccountAdmin, self).get_extended_actions(request)
     #     if request.user.is_finance:
     #         del ext_actions['activate_selected', 'deactivate_selected']
     #     return ext_actions
-    
+
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.is_finance \
                 or request.user.is_finance_with_instant_transaction_view:
             return True
-        
+
     def has_view_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.is_finance \
                 or request.user.is_finance_with_instant_transaction_view:
             return True
-    
+
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
         # pop parent field from fieldsets
@@ -290,10 +292,10 @@ class SuperAdmin(UserAccountAdmin):
                     f"[message] [SuperAdmin User Created] [{request.user}] -- Created new super-user: {obj.username}"
             )
         super(SuperAdmin, self).save_model(request, obj, form, change)
-        
+
     def export_report(self, request, queryset):
         """export report for selected list of users"""
-        
+
         if 'apply' in request.POST:
             # queryset.update(env='hard coded response')
             start_date = request.POST.get("start_date")
@@ -308,7 +310,7 @@ class SuperAdmin(UserAccountAdmin):
 
             self.message_user(request, f"The report will send  to your email in a few minutes")
             return HttpResponseRedirect(request.get_full_path())
-        
+
         return render(request,
                       'admin/all_superadmins_report.html',
                       context={'superadmins': queryset})
@@ -345,7 +347,7 @@ class SupportUserModelAdmin(UserAccountAdmin):
     """
 
     list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
-    
+
     def get_fieldsets(self, request, obj=None):
         return (
             (None, {
@@ -362,7 +364,7 @@ class SupportUserModelAdmin(UserAccountAdmin):
                 'fields': ('last_login', 'date_joined')
             })
         )
-    
+
     def get_fields(self):
         return (
             (None, {

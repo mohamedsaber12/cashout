@@ -160,7 +160,6 @@ class BaseChildAdmin(UserAccountAdmin):
                     f"[message] [{self.logged_user_type.capitalize()} User Modified] [{request.user}] "
                     f"-- Modified user with username: {obj.username}"
             )
-
         else:
             CREATED_USERS_LOGGER.debug(
                     f"[message] [{self.logged_user_type} User Created] [{request.user}] "

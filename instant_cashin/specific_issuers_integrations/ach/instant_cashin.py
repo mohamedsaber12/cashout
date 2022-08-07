@@ -407,5 +407,7 @@ class BankTransactionsChannel:
             new_bank_trx_obj = BankTransactionsChannel.update_bank_trx_status(bank_trx_obj, json.loads(response.json()))
             return Response(BankTransactionResponseModelSerializer(new_bank_trx_obj).data)
         except (HTTPError, ConnectionError, Exception) as e:
-            ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e.args}"))
+            ACH_GET_TRX_STATUS_LOGGER.debug(
+                _(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transatcion_id)}] -- {e.args}")
+            )
             return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)

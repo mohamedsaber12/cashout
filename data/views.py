@@ -30,7 +30,7 @@ from users.models import CheckerUser, Levels
 from utilities.models import AbstractBaseDocType
 
 from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm,
-                    FormatFormSet)
+                    FormatFormSet, RecuringForm)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
 from .tasks import (
     BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor, doc_review_maker_mail,
@@ -293,6 +293,7 @@ def document_view(request, doc_id):
     doc = get_object_or_404(Doc, id=doc_id)
     doc_transactions = None
     review_form_errors = None
+    recuring_form_errors = None
     reviews = None
     hide_review_form = True         # True if checker already reviewed this doc or reviews are completed
     can_review = True               # True if checker have the level rights to review the doc
@@ -369,7 +370,6 @@ def document_view(request, doc_id):
                     hide_review_form = True
                 else:
                     review_form_errors = doc_review_form.errors['comment'][0]
-
             can_user_disburse = doc.can_user_disburse(request.user)
             can_user_disburse = {
                 'can_disburse': can_user_disburse[0],
@@ -377,11 +377,25 @@ def document_view(request, doc_id):
                 'code': can_user_disburse[2]
             }
 
+        
+
     # 2. The user who is trying to access the doc is NOT from the same hierarchy (NOT privileged)
     else:
         err_msg = f"doc id: {doc.id} with hierarchy: {doc.owner.hierarchy}, user hierarchy: {request.user.hierarchy}"
         VIEW_DOCUMENT_LOGGER.debug(f"[message] [HIERARCHY ERROR] [{request.user}] -- {err_msg}")
         return redirect(reverse("data:e_wallets_home"))
+
+    if request.method == "POST" and request.user.is_maker:
+        recuring_form = RecuringForm(request.POST)
+        recuring_form_errors = recuring_form.errors
+        if recuring_form.is_valid():
+            cleaned_data = recuring_form.cleaned_data
+            doc.recuring_period = cleaned_data.get("recuring_period")
+            doc.is_recuring = cleaned_data.get("is_recuring")
+            if doc.recuring_starting_date != cleaned_data.get("recuring_starting_date"):
+                doc.recuring_latest_date = cleaned_data.get("recuring_starting_date")
+            doc.recuring_starting_date = cleaned_data.get("recuring_starting_date")
+            doc.save()
 
     # 3. Retrieve the document related transactions to be viewed
     if doc.is_processed and doc.is_e_wallet:
@@ -403,6 +417,7 @@ def document_view(request, doc_id):
         'doc_transactions': doc_transactions,
         'can_review': can_review,
         'is_normal_flow': request.user.root.root_entity_setups.is_normal_flow,
+        'recuring_form_errors': recuring_form_errors
     }
 
     # 5. Handle document auto-redirects after disbursement action related to different responses

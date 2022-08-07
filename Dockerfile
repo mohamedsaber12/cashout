@@ -55,6 +55,9 @@ COPY ./media/avatars/user.png /app/mediafiles/media/avatars
 RUN useradd payouts_user \
     && chown -R payouts_user:payouts_user $HOME && chmod -R 755 $HOME
 RUN  chown -R payouts_user:payouts_user /var/ -R && chmod -R 755 /var/www/docs/static/mkdocs_build
+
+RUN chown -R payouts_user:payouts_user $PAYOUTS_HOME
+
 # Copy and run the entrypoint script
 COPY ./entrypoint.sh .
 RUN chmod 755 entrypoint.sh
@@ -63,4 +66,4 @@ ENTRYPOINT ["sh", "/app/payouts_portal/entrypoint.sh"]
 #CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
 
 # Switch to app user
-USER payouts_user
+# USER payouts_user

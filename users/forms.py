@@ -304,7 +304,7 @@ class RootCreationForm(forms.ModelForm):
             self.fields['smsc_sender_name'].widget = forms.HiddenInput()
             self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
             self.fields['mobile_number'].widget = forms.HiddenInput()
-                         
+
         if self.request.user.is_banks_standard_model_onboaring:
             self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
             self.fields['smsc_sender_name'].widget = forms.HiddenInput()
@@ -494,9 +494,9 @@ class ProfileEditForm(forms.ModelForm):
         model = User
         fields = ['first_name', 'last_name', 'mobile_no', 'email', 'title', 'avatar_thumbnail']
 
-       
+
 class CallbackURLEditForm(forms.ModelForm):
-    
+
     class Meta:
         model = User
         fields = ['callback_url', ]
@@ -688,8 +688,10 @@ class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.user_type = 7
         user.hierarchy = self.request.user.hierarchy
         user.set_password(self.cleaned_data["password1"])
-        # add root to checker
+        # add root to Dashboard User
         user.root = self.request.user
+        # add brand to Dashboard User
+        user.brand = self.request.user.brand
         user.save()
 
         onboarding_permission = Permission.objects.\

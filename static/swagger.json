@@ -1,0 +1,331 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "payout portal",
+    "version": "1.0.0"
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Wallet": {
+        "description": "request body for disburse on vodafone/etisalat/orange/bank wallet",
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "enum": [
+              "vodafone",
+              "etisalat",
+              "orange",
+              "bank_wallet"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.0"
+          },
+          "msisdn": {
+            "type": "string",
+            "example": "01092737975"
+          }
+        }
+      },
+      "Bank": {
+        "description": "request body for disburse on bank card / bank account",
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "enum": [
+              "bank_card"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.0"
+          },
+          "full_name": {
+            "type": "string"
+          },
+          "bank_card_number": {
+            "type": "string"
+          },
+          "bank_code": {
+            "type": "string",
+            "enum": [
+              "AUB",
+              "CITI",
+              "MIDB",
+              "BDC",
+              "HSBC",
+              "CAE",
+              "EGB",
+              "UB",
+              "QNB",
+              "ARAB",
+              "ENBD",
+              "ABK",
+              "NBK",
+              "ABC",
+              "FAB",
+              "ADIB",
+              "CIB",
+              "HDB",
+              "MISR",
+              "AAIB",
+              "EALB",
+              "EDBE",
+              "FAIB",
+              "BLOM",
+              "ADCB",
+              "BOA",
+              "SAIB",
+              "NBE",
+              "ABRK",
+              "POST",
+              "NSB",
+              "IDB",
+              "SCB",
+              "MASH",
+              "AIB",
+              "AUDI",
+              "GASC",
+              "ARIB",
+              "PDAC",
+              "NBG",
+              "CBE",
+              "BBE"
+            ]
+          },
+          "bank_transaction_type": {
+            "type": "string",
+            "enum": [
+              "salary",
+              "credit_card",
+              "prepaid_card",
+              "cash_transfer"
+            ]
+          }
+        }
+      },
+      "Aman": {
+        "description": "request body for disburse on Aman",
+        "type": "object",
+        "properties": {
+          "issuer": {
+            "type": "string",
+            "enum": [
+              "aman"
+            ]
+          },
+          "amount": {
+            "type": "string",
+            "example": "100.0"
+          },
+          "msisdn": {
+            "type": "string"
+          },
+          "first_name": {
+            "type": "string"
+          },
+          "last_name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "paths": {
+    "/api/secure/o/token/": {
+      "post": {
+        "tags": [
+          "General"
+        ],
+        "summary": "generate token",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "client_id": {
+                    "type": "string",
+                    "example": ""
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "example": ""
+                  },
+                  "username": {
+                    "type": "string",
+                    "example": ""
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": ""
+                  },
+                  "grant_type": {
+                    "type": "string",
+                    "example": "password"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/secure/disburse/": {
+      "post": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "General"
+        ],
+        "summary": "Instant Cashin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/Wallet"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Bank"
+                  },
+                  {
+                    "$ref": "#/components/schemas/Aman"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/secure/transaction/inquire/": {
+      "post": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "General"
+        ],
+        "summary": "Bulk Transaction Inquiry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transactions_ids_list": [
+                    "dd73549d-7413-47ce-a79b-56d5735c14b7",
+                    "2a08d70c-49a9-48ed-bcbf-734343065477",
+                    "1531eb29-199e-4487-96ab-72ef76564a42",
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/secure/budget/inquire/": {
+      "get": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "General"
+        ],
+        "summary": "User Budget Inquiry ",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/api/secure/transaction/aman/cancel/": {
+      "post": {
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "tags": [
+          "General"
+        ],
+        "summary": "cancel aman transaction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "example": {
+                  "transaction_id": "91850fe4-022e-4562-a6e0-284cb57b2934"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    }
+  }
+}

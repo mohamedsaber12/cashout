@@ -103,6 +103,7 @@ MIDDLEWARE = [
     'users.middleware.AgentAndSuperAgentForAdminMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
@@ -112,7 +113,7 @@ MIDDLEWARE = [
     # ToDo: Request/Response Time Delta Middleware
 ]
 
-# disable AdministrativeTwoFactorAuthMiddleWare on local 
+# disable AdministrativeTwoFactorAuthMiddleWare on local
 if env.str('ENVIRONMENT') == "local":
     MIDDLEWARE.remove("users.middleware.AdministrativeTwoFactorAuthMiddleWare")
 
@@ -368,7 +369,7 @@ SECURE_HSTS_PRELOAD = True
 SECRET_KEY = env.str('SECRET_KEY')
 
 
-## Sentry 
+## Sentry
 
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -393,3 +394,15 @@ sentry_sdk.init(
 VODAFONE_BALANCE_SUPER_AGENT_NUMBER=env.str('VODAFONE_BALANCE_SUPER_AGENT_NUMBER', "")
 VODAFONE_BALANCE_SUPER_AGENT_NUMBER_PIN=env.str('VODAFONE_BALANCE_SUPER_AGENT_NUMBER_PIN', "")
 VODAFONE_BALANCE_SUPER_ADMIN=env.str('VODAFONE_BALANCE_SUPER_ADMIN', "")
+
+# Configuring CSP headers
+CSP_DEFAULT_SRC = (
+    "'self'", "maxcdn.bootstrapcdn.com","'unsafe-inline'", "cdnjs.cloudflare.com",
+    "fonts.googleapis.com", "fonts.gstatic.com", "data:", "ajax.googleapis.com",
+)
+CSP_IMG_SRC = (
+    "'self'", "data:",
+)
+
+# add x-xss-protection header
+SECURE_BROWSER_XSS_FILTER = True

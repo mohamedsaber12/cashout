@@ -103,6 +103,7 @@ MIDDLEWARE = [
     'users.middleware.AgentAndSuperAgentForAdminMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'csp.middleware.CSPMiddleware',
 
     # Must be the last middleware in the list
     'axes.middleware.AxesMiddleware',
@@ -112,7 +113,7 @@ MIDDLEWARE = [
     # ToDo: Request/Response Time Delta Middleware
 ]
 
-# disable AdministrativeTwoFactorAuthMiddleWare on local 
+# disable AdministrativeTwoFactorAuthMiddleWare on local
 if env.str('ENVIRONMENT') == "local":
     MIDDLEWARE.remove("users.middleware.AdministrativeTwoFactorAuthMiddleWare")
 
@@ -368,7 +369,7 @@ SECURE_HSTS_PRELOAD = True
 SECRET_KEY = env.str('SECRET_KEY')
 
 
-## Sentry 
+## Sentry
 
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
@@ -388,3 +389,16 @@ sentry_sdk.init(
     # django.contrib.auth) you may enable sending PII data.
     send_default_pii=True
 )
+
+
+# Configuring CSP headers
+CSP_DEFAULT_SRC = (
+    "'self'", "maxcdn.bootstrapcdn.com","'unsafe-inline'", "cdnjs.cloudflare.com",
+    "fonts.googleapis.com", "fonts.gstatic.com", "data:", "ajax.googleapis.com",
+)
+CSP_IMG_SRC = (
+    "'self'", "data:",
+)
+
+# add x-xss-protection header
+SECURE_BROWSER_XSS_FILTER = True

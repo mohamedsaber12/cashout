@@ -166,3 +166,4 @@ ghp-import==2.0.2
 watchdog==2.1.6
 django-admin-multiple-choice-list-filter==0.1.1
 sentry-sdk
+django-csp==3.7

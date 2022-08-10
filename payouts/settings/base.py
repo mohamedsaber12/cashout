@@ -399,6 +399,7 @@ VODAFONE_BALANCE_SUPER_ADMIN=env.str('VODAFONE_BALANCE_SUPER_ADMIN', "")
 CSP_DEFAULT_SRC = (
     "'self'", "maxcdn.bootstrapcdn.com","'unsafe-inline'", "cdnjs.cloudflare.com",
     "fonts.googleapis.com", "fonts.gstatic.com", "data:", "ajax.googleapis.com",
+    "unpkg.com",
 )
 CSP_IMG_SRC = (
     "'self'", "data:",

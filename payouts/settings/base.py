@@ -43,7 +43,6 @@ THIRD_PARTY_APPS = [
     'simple_history',
     'rangefilter',
     'django_admin_multiple_choice_list_filter',
-    # 'schema_graph',
 ]
 
 SECURITY_THIRD_PARTY_APPS = [
@@ -410,9 +409,3 @@ CSP_OBJECT_SRC = (
 ADMIN_RANGEFILTER_NONCE_ENABLED = False
 # add x-xss-protection header
 SECURE_BROWSER_XSS_FILTER = True
-
-
-# GRAPH_MODELS = {
-#   'all_applications': True,
-#   'group_models': True,
-# }

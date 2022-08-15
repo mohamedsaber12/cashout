@@ -3,7 +3,6 @@ from __future__ import unicode_literals
 
 import csv
 
-from rangefilter.filter import DateRangeFilter, DateTimeRangeFilter
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from django.contrib import admin
@@ -20,6 +19,7 @@ from users.models import RootUser
 from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
 from core.models import AbstractBaseStatus
+from utilities.date_range_filter import CustomDateRangeFilter
 
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
@@ -135,8 +135,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     search_fields = ['uid', 'anon_recipient']
     ordering = ['-created_at']
     list_filter = [
-        ('disbursed_date', DateRangeFilter),
-        ('created_at', DateRangeFilter),
+        ('disbursed_date', CustomDateRangeFilter),
+        ('created_at', CustomDateRangeFilter),
         CustomStatusFilter,
         IssuerTypeListFilter,
         'anon_sender', 'from_user',
@@ -191,5 +191,3 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         return response
 
     export_bank_transactions_ids.short_description = "Export Bank Transactions Ids"
-
-

@@ -71,7 +71,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    ]
+]
 INSTALLED_APPS += THIRD_PARTY_APPS
 INSTALLED_APPS += SECURITY_THIRD_PARTY_APPS
 INSTALLED_APPS += USER_DEFINED_APPS
@@ -397,13 +397,19 @@ VODAFONE_BALANCE_SUPER_ADMIN=env.str('VODAFONE_BALANCE_SUPER_ADMIN', "")
 
 # Configuring CSP headers
 CSP_DEFAULT_SRC = (
-    "'self'", "maxcdn.bootstrapcdn.com","'unsafe-inline'", "cdnjs.cloudflare.com",
-    "fonts.googleapis.com", "fonts.gstatic.com", "data:", "ajax.googleapis.com",
-    "unpkg.com",
+    "'self'", "maxcdn.bootstrapcdn.com",
+    "cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js",
+    "cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js",
+    "fonts.googleapis.com", "fonts.gstatic.com",
+    "ajax.googleapis.com/ajax/libs/jquery", "unpkg.com",
+    "'unsafe-inline'",
 )
 CSP_IMG_SRC = (
     "'self'", "data:",
 )
-
+CSP_OBJECT_SRC = (
+    "'self'",
+)
+ADMIN_RANGEFILTER_NONCE_ENABLED = False
 # add x-xss-protection header
 SECURE_BROWSER_XSS_FILTER = True

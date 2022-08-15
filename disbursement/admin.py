@@ -7,12 +7,11 @@ from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from rangefilter.filter import DateRangeFilter
 
 from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
-
+from utilities.date_range_filter import CustomDateRangeFilter
 
 class DistinctFilter(admin.SimpleListFilter):
     title = "Distinct"
@@ -118,8 +117,8 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
     readonly_fields = [
         field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
-        ('disbursed_date', DateRangeFilter),
-        ('created_at', DateRangeFilter),
+        ('disbursed_date', CustomDateRangeFilter),
+        ('created_at', CustomDateRangeFilter),
         DistinctFilter, EndToEndFilter,
         'status',
         'category_code',
@@ -187,9 +186,9 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin,
     list_display = ['_trx_id', 'reference_id', 'msisdn', 'amount',
                     'issuer', 'is_disbursed', 'reason', 'disbursed_date']
     list_filter = [
-        ('disbursed_date', DateRangeFilter),
-        ('created_at', DateRangeFilter),
-        ('updated_at', DateRangeFilter),
+        ('disbursed_date', CustomDateRangeFilter),
+        ('created_at', CustomDateRangeFilter),
+        ('updated_at', CustomDateRangeFilter),
         TransactionStatusFilter,
         DisbursedFilter, TimeoutFilter, 'issuer',
         ('doc__file_category__user_created__client__creator',
@@ -231,7 +230,7 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
                     'txn_status', 'has_callback', 'updated_at']
     list_filter = [
         'has_callback',
-        ('created_at', DateRangeFilter),
+        ('created_at', CustomDateRangeFilter),
         'doc_status',
         ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
     ]

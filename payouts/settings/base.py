@@ -393,18 +393,20 @@ sentry_sdk.init(
 
 # Configuring CSP headers
 CSP_DEFAULT_SRC = (
-    "'self'", "maxcdn.bootstrapcdn.com",
+    "'self'", "http:",  "https:", "maxcdn.bootstrapcdn.com",
     "cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js",
     "cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js",
-    "fonts.googleapis.com", "fonts.gstatic.com",
-    "ajax.googleapis.com/ajax/libs/jquery", "unpkg.com",
-    "'unsafe-inline'",
+    "fonts.googleapis.com", "fonts.gstatic.com", "unpkg.com",
+    "ajax.googleapis.com/ajax/libs/jquery", "'unsafe-inline'",
 )
 CSP_IMG_SRC = (
     "'self'", "data:",
 )
 CSP_OBJECT_SRC = (
-    "'self'",
+    "'none'",
+)
+CSP_BASE_URI = (
+    "'none'",
 )
 ADMIN_RANGEFILTER_NONCE_ENABLED = False
 # add x-xss-protection header

@@ -397,9 +397,10 @@ VODAFONE_BALANCE_SUPER_ADMIN=env.str('VODAFONE_BALANCE_SUPER_ADMIN', "")
 
 # Configuring CSP headers
 CSP_DEFAULT_SRC = (
-    "'self'", "http:",  "https:", "maxcdn.bootstrapcdn.com",
+    "'self'", "maxcdn.bootstrapcdn.com",
     "cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js",
     "cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js",
+    "ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js",
     "fonts.googleapis.com", "fonts.gstatic.com", "unpkg.com",
     "ajax.googleapis.com/ajax/libs/jquery", "'unsafe-inline'",
 )

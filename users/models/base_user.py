@@ -69,6 +69,7 @@ class User(AbstractUser, SoftDeletionModel):
     brand = models.ForeignKey('users.Brand', on_delete=models.SET_NULL, null=True)
     wallet_fees_profile = models.CharField(max_length=30, default='', null=True, blank=True)
     callback_url = models.CharField(max_length=128, default='', null=True, blank=True)
+    access_top_up_balance = models.BooleanField(null=True, default=True, verbose_name='Has Access To Top Up Balance')
 
     objects = UserManager()
 
@@ -170,6 +171,10 @@ class User(AbstractUser, SoftDeletionModel):
         return self.user_type == 3
 
     @cached_property
+    def has_access_to_topUp_balance(self):
+        return self.access_top_up_balance == True
+
+    @cached_property
     def is_maker(self):
         return self.user_type == 1
 
@@ -204,7 +209,7 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_onboard_user(self):
         return self.user_type == 9
-    
+
     @cached_property
     def is_finance(self):
         return self.user_type == 10
@@ -314,7 +319,7 @@ class User(AbstractUser, SoftDeletionModel):
         if self.has_perm('users.vodafone_facilitator_accept_vodafone_onboarding'):
             return True
         return False
-    
+
     @cached_property
     def is_banks_standard_model_onboaring(self):
         """

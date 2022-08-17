@@ -97,7 +97,9 @@ class UserAccountAdmin(UserAdmin):
         perm_fields = ('is_active', 'is_staff')
         if not obj:
             if request.user.is_superuser:
-                perm_fields = ('is_active', 'is_staff', 'is_superuser', 'parent')
+                perm_fields = (
+                    'is_active', 'is_staff', 'is_superuser', 'parent', 'access_top_up_balance'
+                )
 
             self.add_fieldsets = (
                 (None, {
@@ -112,7 +114,7 @@ class UserAccountAdmin(UserAdmin):
             )
 
         elif obj:
-            perm_fields = ('is_active', 'is_staff', 'user_type')
+            perm_fields = ('is_active', 'is_staff', 'user_type', 'access_top_up_balance')
             self.add_fieldsets = (
                 (None, {
                     'classes': ('wide',),

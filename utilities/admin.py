@@ -149,11 +149,11 @@ class BudgetAdmin(SimpleHistoryAdmin):
         return True
 
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser:
             return True
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.is_finance:
+        if request.user.is_superuser:
             return True
 
     def save_model(self, request, obj, form,change):

@@ -75,7 +75,7 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
         return paginator.get_page(page)
-        
+
     def get(self, request):
         return super().get(self, request)
 
@@ -115,6 +115,8 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
             'user_created__hierarchy': hierarchy_to_filter_with,
         }
         # add filters to filter dict
+        if self.request.GET.get('transaction_id'):
+            filter_dict['parent_transaction__transaction_id__contains'] = self.request.GET.get('transaction_id')
         if self.request.GET.get('account_number'):
             filter_dict['creditor_account_number__contains'] = self.request.GET.get('account_number')
         if self.request.GET.get('start_date'):
@@ -144,6 +146,6 @@ class BankTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, Lis
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page')
         return paginator.get_page(page)
-        
+
     def get(self, request):
         return super().get(self, request)

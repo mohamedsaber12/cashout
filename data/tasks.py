@@ -972,7 +972,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         self.last_day = make_aware(last_day)
 
     def _customize_issuer_in_qs_values(self, qs):
-        """Append admin username to the output transactions queryset values dict"""
+        """Append/Issuer by full name to the output transactions queryset values dict"""
         for q in qs:
             if q.get('issuer', None) == None or len(str(q['issuer'])) > 20:
                 q['issuer'] = 'C'
@@ -984,7 +984,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
     def _calculate_and_add_fees_to_qs_values(self, qs, failed_qs=False):
         """Calculate and append the fees to the output transactions queryset values dict"""
         for q in qs:
-            if failed_qs and q['issuer'] in ['vodafone', 'etisalat', 'aman']:
+            if failed_qs and q['issuer'] in ['vodafone', 'etisalat', 'aman', 'orange', 'B']:
                 q['fees'], q['vat'] = 0, 0
             elif failed_qs and q.__class__.__name__ == 'InstantTransaction' \
                 and q.issuer_type in ['orange', 'bank_wallet'] and BankTransaction.objects.filter(
@@ -2202,7 +2202,7 @@ def generate_vf_daily_report():
     )
     # upload vodafone facilitator report to vodafone server
     upload_file_to_vodafone(vf_facilitator_report_path)
-    
+
 
 def create_recuring_docs():
     """

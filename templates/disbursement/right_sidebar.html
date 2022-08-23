@@ -16,6 +16,10 @@
         <div class="row">
           {% if type == 'banks' %}
           <div class="col-sm-12 data-field-col">
+            <label for="data-name">Transaction ID / Reference ID</label>
+            <input name="transaction_id" type="text" class="form-control">
+          </div>
+          <div class="col-sm-12 data-field-col">
             <label for="data-name">IBAN/Account Number</label>
             <input name="account_number" type="text" class="form-control">
           </div>

@@ -22,7 +22,7 @@ from utilities.logging import logging_message
 
 from ...models import InstantTransaction
 from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
-from ...utils import default_response_structure, get_digits, get_from_env
+from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
 from ..serializers import (
     InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer,
@@ -133,7 +133,7 @@ class InstantDisbursementAPIView(views.APIView):
                     disbursed_date=timezone.now()
             )
         else:
-            creditor_account_number = get_digits(serializer.validated_data["bank_card_number"])
+            creditor_account_number = serializer.validated_data["bank_card_number"]
             creditor_bank = serializer.validated_data["bank_code"]
             transaction_type = serializer.validated_data["bank_transaction_type"]
 

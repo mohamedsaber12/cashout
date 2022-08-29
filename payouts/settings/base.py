@@ -405,7 +405,7 @@ CSP_DEFAULT_SRC = (
     "ajax.googleapis.com/ajax/libs/jquery", "'unsafe-inline'",
 )
 CSP_IMG_SRC = (
-    "'self'", "data:",
+    "'self'", "data:", "user-images.githubusercontent.com",
 )
 CSP_OBJECT_SRC = (
     "'none'",

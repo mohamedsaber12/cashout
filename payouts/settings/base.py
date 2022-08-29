@@ -401,11 +401,15 @@ CSP_DEFAULT_SRC = (
     "cdnjs.cloudflare.com/ajax/libs/bootbox.js/4.4.0/bootbox.min.js",
     "cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js",
     "ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js",
+    "cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/styles/github.min.css",
+    "cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/highlight.min.js",
+    "cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/rust.min.js",
+    "cdnjs.cloudflare.com/ajax/libs/highlight.js/10.5.0/languages/yaml.min.js",
     "fonts.googleapis.com", "fonts.gstatic.com", "unpkg.com",
     "ajax.googleapis.com/ajax/libs/jquery", "'unsafe-inline'",
 )
 CSP_IMG_SRC = (
-    "'self'", "data:",
+    "'self'", "data:", "user-images.githubusercontent.com",
 )
 CSP_OBJECT_SRC = (
     "'none'",

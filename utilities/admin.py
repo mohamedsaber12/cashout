@@ -149,11 +149,11 @@ class BudgetAdmin(SimpleHistoryAdmin):
         return True
 
     def has_module_permission(self, request):
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.is_finance:
             return True
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser:
+        if request.user.is_superuser or request.user.is_finance:
             return True
 
     def save_model(self, request, obj, form,change):
@@ -375,7 +375,3 @@ class VodafoneBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         return False
-
-
-
-

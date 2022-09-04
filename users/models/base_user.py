@@ -70,6 +70,9 @@ class User(AbstractUser, SoftDeletionModel):
     wallet_fees_profile = models.CharField(max_length=30, default='', null=True, blank=True)
     callback_url = models.CharField(max_length=128, default='', null=True, blank=True)
     access_top_up_balance = models.BooleanField(null=True, default=True, verbose_name='Has Access To Top Up Balance')
+    idms_user_id = models.CharField(max_length=50, null=True, blank=True)
+
+
 
     objects = UserManager()
 

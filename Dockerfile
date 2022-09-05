@@ -61,6 +61,11 @@ RUN chown -R payouts_user:payouts_user $PAYOUTS_HOME
 # Copy and run the entrypoint script
 COPY ./entrypoint.sh .
 RUN chmod 755 entrypoint.sh
+
+# Copy and run the celery start script
+COPY ./celery_start.sh .
+RUN chmod 755 celery_start.sh
+
 ENTRYPOINT ["sh", "/app/payouts_portal/entrypoint.sh"]
 
 #CMD [ "uwsgi", "--ini", "/app/payouts_portal/uwsgi.ini" ]

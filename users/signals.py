@@ -21,6 +21,7 @@ from .models import (
     Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser,
     OnboardUserSetup, SupervisorSetup
 )
+from users.sso import SSOIntegration
 
 
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
@@ -105,8 +106,9 @@ def onboard_user_post_save(sender, instance, created, **kwargs):
         onboard_user = instance.onboard_user
         onboard_user.brand = instance.user_created.brand
         onboard_user.save()
-        # Register User Over IDMS 
-        register_user_on_idms(onboard_user, created)
+        # Register User Over IDMS
+        sso =  SSOIntegration()
+        sso.register_user_on_idms(onboard_user)
         notify_user(onboard_user, created)
 
 @receiver(post_save, sender=SupervisorSetup)
@@ -216,34 +218,3 @@ def notify_user(instance, created):
         SEND_EMAIL_LOGGER.debug(
             f"[{subject}] [{recipient_list[0]}] -- {message}"
         )
-
-def register_user_on_idms(user, created):
-    if created:
-        payload = {
-
-        }
-        access_token = create_idms_access_token()
-        headers = headers = {'Authorization': f'Bearer {access_token}'}
-
-def create_idms_code():
-    url = f"{settings.IDMS_BASE_URL}v1/o/authorize/"
-    payload = {
-        "client_id": settings.IDMS_CLIENT_ID,
-        "redirect_uri": settings.IDMS_REDIRECT_URL,
-        "scope": ["openid"],
-        "response_type": "code"
-        }
-    resp = requests.post(url,json=payload)
-    return resp.json().get("code")
-
-def create_idms_access_token():
-    code = create_idms_code()
-    access_token = ''
-    payload = {
-        "client_id": settings.IDMS_CLIENT_ID,
-        "client_secret": settings.IDMS_CLIENT_SECRET,
-        "redirect_uri": settings.IDMS_REDIRECT_URL,
-        "grant_type": "authorization_code",
-        "code": code
-        }
-    return access_token

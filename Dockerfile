@@ -63,7 +63,7 @@ COPY ./entrypoint.sh .
 RUN chmod 755 entrypoint.sh
 ENTRYPOINT ["sh", "/app/payouts_portal/entrypoint.sh"]
 
-#CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+#CMD [ "uwsgi", "--ini", "/app/payouts_portal/uwsgi.ini" ]
 
 # Switch to app user
 # USER payouts_user

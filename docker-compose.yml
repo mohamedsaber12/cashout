@@ -13,12 +13,12 @@ services:
       - .:/app/payouts_portal
       - static_volume:/app/staticfiles/static
       - media_volume:/app/mediafiles/media
+      - uwsgi_data:/tmp/uwsgi/
     ports:
       - 8000:8000
       - 3000:3000
     command: >
-      sh -c "
-             python manage.py makemigrations users &&
+      sh -c "python manage.py makemigrations users &&
              python manage.py migrate users &&
              python manage.py makemigrations data &&
              python manage.py migrate data &&
@@ -33,36 +33,39 @@ services:
              python manage.py makemigrations &&
              python manage.py migrate &&
              mkdocs build &&
+             python manage.py collectstatic --no-input &&
              python manage.py runserver_plus 0.0.0.0:8000"
     networks:
       - payouts_network
     depends_on:
-      - postgres
+#      - postgres
       - rabbitmq
 
-  postgres:
-    container_name: PostgreSQL
-    image: postgres:11
-    restart: always
-    environment:
-      POSTGRES_USER: payouts_user
-      POSTGRES_DB: payouts_database
-      POSTGRES_PASSWORD: PayoutsPortalPassword
-    volumes:
-      - .:/var/lib/postgresql
-      - postgresql_volume:/var/lib/postgresql/data
-    networks:
-      - payouts_network
-    ports:
-      - "5432:5432"
+#  postgres:
+#    container_name: PostgreSQL
+#    image: postgres:11
+#    restart: always
+#    environment:
+#      POSTGRES_USER: payouts_user
+#      POSTGRES_DB: payouts_database
+#      POSTGRES_PASSWORD: PayoutsPortalPassword
+#    volumes:
+#      - .:/var/lib/postgresql
+#      - postgresql_volume:/var/lib/postgresql/data
+#    networks:
+#      - payouts_network
+#    ports:
+#      - "5432:5432"
 
   rabbitmq:
     container_name: RabbitMQ
-    image: rabbitmq:3.9
+    image: rabbitmq:3.8
     volumes:
       - rabbit_volume:/var/lib/rabbitmq
     networks:
       - payouts_network
+    ports:
+      - 5672:5672
 
   celery_worker:
     <<: *payouts
@@ -76,26 +79,36 @@ services:
     links:
       - payouts
 
-  nginx:
-    container_name: nginx
-    build:
-      context: ./docker/nginx
-      dockerfile: ./Dockerfile
-      args:
-        - NGINX_ENVIRONMENT=prod
-    volumes:
-      - /var/www/:/www:rw
-      - /etc/letsencrypt/:/etc/letsencrypt/:ro
+  webserver:
+    image: nginx:latest
     ports:
-      - "80:80"
+      - 80:80
+      - 443:443
+    restart: always
+    volumes:
+      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+      - uwsgi_data:/tmp/uwsgi/
+      - static_volume:/app/staticfiles/static:rw
+      - media_volume:/app/mediafiles/media:rw
+    networks:
+      - payouts_network
     depends_on:
       - payouts
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
 
 volumes:
   static_volume:
   media_volume:
-  postgresql_volume:
+#  postgresql_volume:
   rabbit_volume:
+  uwsgi_data:
 
 networks:
   payouts_network:

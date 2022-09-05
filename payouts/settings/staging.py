@@ -3,10 +3,9 @@ from .server import *
 
 
 ALLOWED_HOSTS += (
-    'stagingpayouts.paymobsolutions.com',
-    'stagingvodafonepayouts.paymob.com',
-    '18.220.141.7',
+    'stagingpayouts-pak.paymob.com',
+    '3.14.102.53',
 )
 
 # base url
-BASE_URL = 'https://stagingpayouts.paymobsolutions.com'
+BASE_URL = 'https://stagingpayouts-pak.paymob.com/'

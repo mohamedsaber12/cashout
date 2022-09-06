@@ -70,7 +70,7 @@ services:
   celery_worker:
     <<: *payouts
     container_name: Celery_Worker
-    command: [ "celery", "worker", "--app", "payouts.settings", "--events", "--beat", "--scheduler", "django", "--loglevel", "info" ]
+    command: [ "celery", "worker", "--app", "payouts.settings", "--events", "--scheduler", "django", "--loglevel", "info" ]
     ports: [ ]
     networks:
       - payouts_network

@@ -348,6 +348,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/vodafone_facilitator_daily_report.log',
         },
+        'sso_integration': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/sso_integration.log',
+        },
     },
 
     'loggers': {
@@ -577,6 +584,11 @@ CUSTOM_LOGGING = {
         },
         'vodafone_facilitator_daily_report': {
             'handlers': ['vodafone_facilitator_daily_report'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'sso_integration': {
+            'handlers': ['sso_integration'],
             'level': 'DEBUG',
             'propagate': True,
         },

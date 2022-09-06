@@ -1,4 +1,5 @@
 from __future__ import print_function, unicode_literals
+from curses.ascii import US
 
 import logging
 
@@ -14,6 +15,7 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
+from users.sso import SSOIntegration
 
 from ..forms import OTPTokenForm, ProfileEditForm, CallbackURLEditForm
 from ..mixins import ProfileOwnerOrMemberRequiredMixin
@@ -139,10 +141,12 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        user = authenticate(request=request, username=username, password=password)
+        # user = authenticate(request=request, username=username, password=password)
+        sso = SSOIntegration()
+        user = sso.authenticate(username, password)
         if user and not user.is_instantapichecker:
             if user.is_active:
-                login(request, user)
+                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
 
                 # this is special case based on business demand for prevent \

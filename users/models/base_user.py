@@ -71,6 +71,7 @@ class User(AbstractUser, SoftDeletionModel):
     callback_url = models.CharField(max_length=128, default='', null=True, blank=True)
     access_top_up_balance = models.BooleanField(null=True, default=True, verbose_name='Has Access To Top Up Balance')
     idms_user_id = models.CharField(max_length=50, null=True, blank=True)
+    has_password_set_on_idms = models.BooleanField(default=False)
 
 
 
@@ -130,6 +131,13 @@ class User(AbstractUser, SoftDeletionModel):
             return User.objects.get_all_hierarchy_tree(self.hierarchy).filter(~Q(user_type=self.user_type))[::1]
 
         raise ValidationError('This user has no children')
+
+    def set_password(self, password):
+        from users.sso import SSOIntegration
+        super(User, self).set_password(password)
+        sso = SSOIntegration()
+        sso.change_user_password(self, password)
+        self._set_password = True
 
     @property
     def can_view_docs(self):

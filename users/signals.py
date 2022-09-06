@@ -130,8 +130,6 @@ def all_users_signal(sender, instance, created, **kwargs):
         # Register User Over IDMS
         sso =  SSOIntegration()
         sso.register_user_on_idms(instance)
-        instance.has_password_set_on_idms = False
-        instance.save()
 
 
 @receiver(post_save, sender=SupervisorSetup)

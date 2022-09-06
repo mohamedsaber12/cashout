@@ -24,7 +24,6 @@ class SSOIntegration:
             f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
             f"- [{resp.elapsed.total_seconds()}]"
         )
-        print(resp.content)
 
         user.idms_user_id = resp.json().get("id")
         user.save()
@@ -40,8 +39,9 @@ class SSOIntegration:
             f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
             f"- [{resp.elapsed.total_seconds()}]"
         )
-        user.has_password_set_on_idms = True
-        user.save()
+        if resp.status_code == 200:
+            user.has_password_set_on_idms = True
+            user.save()
 
     def create_idms_code(self):
         url = f"{settings.IDMS_BASE_URL}v1/o/authorize/"

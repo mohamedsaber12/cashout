@@ -2274,3 +2274,71 @@ def create_recuring_docs():
 
         recu_doc.recuring_latest_date = today
         recu_doc.save()
+
+def generate_distince_reciever_per_client_instant(client_user_name):
+    """Write exported transactions data to excel file"""
+    wb = xlwt.Workbook(encoding="utf-8")
+    ws = wb.add_sheet("report")
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/distinct_number_{client_user_name}.xlsx"
+
+
+    row_num = 1
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+    trns = (
+        InstantTransaction.objects.filter(from_user__root__username=client_user_name)
+        .order_by("anon_recipient")
+        .distinct("anon_recipient")
+    )
+    ws.write(0, 0, "Number", font_style)
+    ws.write(0, 1, "Name", font_style)
+
+    for trn in trns:
+        ws.write(row_num, 0, trn.anon_recipient, font_style)
+        ws.write(row_num, 1, trn.recipient_name, font_style)
+        row_num += 1
+    
+    wb.save(file_path)
+    report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename=distinct_number_{client_user_name}.xlsx"
+    return report_download_url
+
+
+def generate_distince_reciever_per_client_portal(client_user_name):
+    """Write exported transactions data to excel file"""
+    wb = xlwt.Workbook(encoding="utf-8")
+    ws = wb.add_sheet("report")
+    file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/distinct_number_{client_user_name}.xlsx"
+
+
+    row_num = 1
+    font_style = xlwt.XFStyle()
+    font_style.font.bold = True
+    trns = (
+        InstantTransaction.objects.filter(document__owner__root__username=client_user_name)
+        .order_by("anon_recipient")
+        .distinct("anon_recipient")
+    )
+    ws.write(0, 0, "Number", font_style)
+    ws.write(0, 1, "Name", font_style)
+
+    for trn in trns:
+        ws.write(row_num, 0, trn.anon_recipient, font_style)
+        ws.write(row_num, 1, trn.recipient_name, font_style)
+        row_num += 1
+
+    trns = (
+        DisbursementData.objects.filter(doc__owner__root__username=client_user_name)
+        .order_by("msisdn")
+        .distinct("msisdn")
+    )
+    for trn in trns:
+        ws.write(row_num, 0, trn.msisdn, font_style)
+        ws.write(row_num, 1, "", font_style)
+        row_num += 1
+
+    
+    wb.save(file_path)
+    report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename=distinct_number_{client_user_name}.xlsx"
+    return report_download_url
+
+

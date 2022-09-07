@@ -63,6 +63,8 @@ def redirect_home(request):
         return redirect(reverse('admin:index'))
     if request.user.is_finance:
         return redirect(reverse('admin:index'))
+    if request.user.is_vodafone_monthly_report:
+        return redirect(reverse('admin:index'))
     if request.user.is_finance_with_instant_transaction_view:
         return redirect(reverse('admin:index'))
     elif request.user.is_support:

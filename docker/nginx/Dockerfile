@@ -1,5 +1,5 @@
 FROM nginx:latest
-ARG NGINX_ENV=staging
+ARG NGINX_ENV=prod
 ENV NGINX_ENV=${NGINX_ENV}
 RUN rm /etc/nginx/conf.d/default.conf
 RUN mkdir /www

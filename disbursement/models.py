@@ -19,7 +19,7 @@ from core.models import AbstractTimeStamp
 from utilities.models import (
     AbstractBaseDocStatus, AbstractBaseVMTData,
     AbstractTransactionCategory, AbstractTransactionCurrency,
-    AbstractTransactionPurpose,
+    AbstractTransactionPurpose, AbstractBaseOneLinkBulkIBFTFields
 )
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
@@ -236,7 +236,8 @@ class BankTransaction(AbstractTimeStamp,
                       AbstractBaseACHTransactionStatus,
                       AbstractTransactionCategory,
                       AbstractTransactionCurrency,
-                      AbstractTransactionPurpose):
+                      AbstractTransactionPurpose,
+                      AbstractBaseOneLinkBulkIBFTFields):
     """
     Model for managing bank transactions.
     """

@@ -4,7 +4,9 @@ from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
 from core.utils.validations import phonenumber_form_validate
-from disbursement.utils import VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST
+from disbursement.utils import (
+    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST, VALID_BANK_IMD_BIN_LIST
+)
 
 
 def msisdn_validator(msisdn):
@@ -63,12 +65,19 @@ def cashin_issuer_validator(issuer):
 def bank_code_validator(bank_code):
     """
     """
-
     if str(bank_code).upper() not in VALID_BANK_CODES_LIST:
         msg = _(f"The passed bank code is not valid, please make sure that the passed code value is one of"
                 f" {VALID_BANK_CODES_LIST} and try again!")
         raise serializers.ValidationError(msg)
 
+def bank_imd_bin_validator(bank_imd_or_bin):
+    """
+    validate on imd/bin of pakistan banks
+    """
+    if str(bank_imd_or_bin) not in VALID_BANK_IMD_BIN_LIST:
+        msg = _(f"The passed bank IMD/BIN of acquiring bank is not valid, please make sure that the passed IMD/BIN "
+                f"value is one of {VALID_BANK_IMD_BIN_LIST} and try again!")
+        raise serializers.ValidationError(msg)
 
 def bank_transaction_type_validator(transaction_type):
     """

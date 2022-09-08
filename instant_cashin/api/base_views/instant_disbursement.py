@@ -21,7 +21,7 @@ from payouts.settings import TIMEOUT_CONSTANTS
 from utilities.logging import logging_message
 
 from ...models import InstantTransaction
-from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
+from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel, OneLinkBulkIBFTBankTransactionsChannel
 from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
 from ..serializers import (
@@ -114,51 +114,36 @@ class InstantDisbursementAPIView(views.APIView):
         """Create a bank transaction out of the passed serializer data"""
         amount = serializer.validated_data["amount"]
         issuer = serializer.validated_data["issuer"].lower()
-        full_name = serializer.validated_data["full_name"]
         client_reference_id = serializer.validated_data.get("client_reference_id")
-        instant_transaction = False
         fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
             amount, issuer
         )
-        if issuer in ["bank_wallet", "orange"]:
-            creditor_account_number = serializer.validated_data["msisdn"]
-            creditor_bank = "MIDG"
-            transaction_type = "MOBILE"
-            instant_transaction = InstantTransaction.objects.create(
-                    from_user=disburser, anon_recipient=creditor_account_number, amount=amount,
-                    issuer_type=self.match_issuer_type(issuer), recipient_name=full_name,
-                    is_single_step=serializer.validated_data["is_single_step"],
-                    fees=fees, vat=vat,
-                    client_transaction_reference = client_reference_id,
-                    disbursed_date=timezone.now()
-            )
-        else:
-            creditor_account_number = serializer.validated_data["bank_card_number"]
-            creditor_bank = serializer.validated_data["bank_code"]
-            transaction_type = serializer.validated_data["bank_transaction_type"]
-
+        creditor_bank = serializer.validated_data["bank_imd_or_bin"]
+        creditor_account_number = serializer.validated_data["bank_card_number"]
         transaction_dict = {
-            "currency": "EGP",
-            "debtor_address_1": "EG",
-            "creditor_address_1": "EG",
-            "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
-            "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
+            "currency": "PKR",
+            "debtor_address_1": "PK",
+            "creditor_address_1": "PK",
+            "corporate_code": get_from_env("REQUEST_INITIATOR"),
+            "debtor_account": get_from_env("ACCOUNT_NUMBER_FROM"),
             "user_created": disburser,
             "amount": amount,
-            "creditor_name": full_name,
+            "creditor_name": "",
             "creditor_account_number": creditor_account_number,
             "creditor_bank": creditor_bank,
-            "end_to_end": "" if issuer == "bank_card" else instant_transaction.uid,
-            "disbursed_date": timezone.now() if issuer == "bank_card" else instant_transaction.disbursed_date,
+            "end_to_end": "",
+            "disbursed_date": timezone.now(),
             "is_single_step":serializer.validated_data["is_single_step"],
             "client_transaction_reference":client_reference_id,
             "fees": fees,
             "vat": vat,
-            "comment": serializer.validated_data.get("comment")
+            "comment": get_from_env("PAYMENT_DETAILS"),
+            "stan": "", # generate stan
+            "rrn": "", # generate rrn
+            "pan": "", # generate pan
         }
-        transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
-        return bank_transaction, instant_transaction
+        return bank_transaction
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -399,52 +384,46 @@ class InstantDisbursementAPIView(views.APIView):
             transaction.save()
             return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-        elif issuer == "bank_card" \
-            or (issuer in ["bank_wallet", "orange"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER=="ACH"):
+        elif issuer == "bank_card":
 
             try:
-                bank_trx_obj, instant_trx_obj = self.create_bank_transaction(user, serializer)
+                bank_trx_obj = self.create_bank_transaction(user, serializer)
                 balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
                 bank_trx_obj.balance_before = balance_before
                 bank_trx_obj.balance_after = balance_after
                 bank_trx_obj.save()
-                if instant_trx_obj:
-                    instant_trx_obj.balance_before = balance_before
-                    instant_trx_obj.balance_after = balance_after
-                    instant_trx_obj.save()
-
 
             except Exception as e:
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [ACH EXCEPTION]", request, e.args)
+                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [One Link EXCEPTION]", request, e.args)
                 return default_response_structure(
-                        transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                        field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK
+                    transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
+                    field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK
                 )
 
-            # check if msisdn is test number
-            if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
-                    (bank_trx_obj.creditor_account_number == get_from_env(f"test_number_for_{issuer}") or \
-                     bank_trx_obj.creditor_account_number == get_from_env(f"test_IBAN_number")):
-                bank_trx_obj.mark_successful("8333", "success")
-                instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
-                balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
-                balance_after = bank_trx_obj.user_created.root. \
-                    budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-                bank_trx_obj.balance_before = balance_before
-                bank_trx_obj.balance_after = balance_after
-                bank_trx_obj.save()
-                if instant_trx_obj:
-                    instant_trx_obj.balance_before = balance_before
-                    instant_trx_obj.balance_after = balance_after
-                    instant_trx_obj.save()
+            # # check if msisdn is test number
+            # if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
+            #         (bank_trx_obj.creditor_account_number == get_from_env(f"test_number_for_{issuer}") or \
+            #          bank_trx_obj.creditor_account_number == get_from_env(f"test_IBAN_number")):
+            #     bank_trx_obj.mark_successful("8333", "success")
+            #     instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
+            #     balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
+            #     balance_after = bank_trx_obj.user_created.root. \
+            #         budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
+            #     bank_trx_obj.balance_before = balance_before
+            #     bank_trx_obj.balance_after = balance_after
+            #     bank_trx_obj.save()
+            #     if instant_trx_obj:
+            #         instant_trx_obj.balance_before = balance_before
+            #         instant_trx_obj.balance_after = balance_after
+            #         instant_trx_obj.save()
+            #
+            #     if instant_trx_obj:
+            #         return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
+            #     else:
+            #         return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
-                if instant_trx_obj:
-                    return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
-                else:
-                    return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
-
-            return BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
+            return OneLinkBulkIBFTBankTransactionsChannel.send_transaction(bank_trx_obj)
 
 
 class SingleStepDisbursementAPIView(InstantDisbursementAPIView):

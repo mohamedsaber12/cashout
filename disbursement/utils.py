@@ -379,3 +379,10 @@ def get_error_description_from_error_code(code):
         return str(code).capitalize()
 
     return _('External error, please contact your support team for further details')
+
+#################### payouts pakistan data #######################
+
+VALID_BANK_IMD_BIN_LIST = [
+    "999962",
+    "100196",
+]

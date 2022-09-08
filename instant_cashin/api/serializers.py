@@ -15,6 +15,7 @@ from .fields import CustomChoicesField, UUIDListField, CardNumberField
 from .validators import (
     bank_code_validator, cashin_issuer_validator,
     fees_validator, issuer_validator, msisdn_validator, bank_transaction_type_validator,
+    bank_imd_bin_validator
 )
 
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
@@ -32,27 +33,30 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
     issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])
     msisdn = serializers.CharField(max_length=11, required=False, allow_blank=False, validators=[msisdn_validator])
+    bank_imd_or_bin = serializers.CharField(
+        max_length=11, required=False, allow_blank=False, validators=[bank_imd_bin_validator]
+    )
     bank_code = serializers.CharField(max_length=10, required=False, allow_blank=False, validators=[bank_code_validator])
     bank_card_number = CardNumberField(required=False, allow_blank=False)
     amount = serializers.DecimalField(
-            required=True,
-            decimal_places=2,
-            max_digits=9,
-            min_value=Decimal(1.0)
+        required=True,
+        decimal_places=2,
+        max_digits=9,
+        min_value=Decimal(1.0)
     )
     bank_transaction_type = serializers.CharField(
-            min_length=6,
-            max_length=13,
-            required=False,
-            allow_blank=False,
-            validators=[bank_transaction_type_validator]
+        min_length=6,
+        max_length=13,
+        required=False,
+        allow_blank=False,
+        validators=[bank_transaction_type_validator]
     )
     fees = serializers.CharField(
-            max_length=4,
-            required=False,
-            allow_blank=True,
-            allow_null=True,
-            validators=[fees_validator]
+        max_length=4,
+        required=False,
+        allow_blank=True,
+        allow_null=True,
+        validators=[fees_validator]
     )
     full_name = serializers.CharField(max_length=254, required=False, allow_blank=False)
     first_name = serializers.CharField(max_length=254, required=False)
@@ -71,7 +75,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         first_name = attrs.get('first_name', '')
         last_name = attrs.get('last_name', '')
         email = attrs.get('email', '')
-        bank_code = attrs.get('bank_code', '')
+        bank_imd_or_bin = attrs.get('bank_imd_or_bin', '')
         bank_card_number = attrs.get('bank_card_number', '')
         bank_transaction_type = attrs.get('bank_transaction_type', '')
         full_name = attrs.get('full_name', '')
@@ -87,10 +91,9 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                         _("You must pass valid values for fields [first_name, last_name, email]")
                 )
         elif issuer == 'bank_card':
-            if not bank_code or not bank_card_number or not bank_transaction_type or not full_name:
+            if not bank_imd_or_bin or not bank_card_number:
                 raise serializers.ValidationError(
-                        _("You must pass valid values for fields [bank_code, bank_card_number, bank_transaction_type, "
-                          "full_name]")
+                    _("You must pass valid values for fields [bank_imd_or_bin, bank_card_number")
                 )
             if any(e in str(full_name) for e in '!%*+&,<=>'):
                 raise serializers.ValidationError(
@@ -110,7 +113,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                         _("client_reference_id is used before.")
                 )
-               
+
         if issuer in ["bank_wallet", "bank_card", "orange"] and attrs.get('client_reference_id'):
                if BankTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
                 raise serializers.ValidationError(
@@ -281,6 +284,5 @@ class InstantUserInquirySerializer(serializers.Serializer):
 
 
 class CancelAmanTransactionSerializer(serializers.Serializer):
-    
+
     transaction_id = serializers.UUIDField(required=True)
-    

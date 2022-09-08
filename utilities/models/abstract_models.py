@@ -6,6 +6,7 @@ import copy
 from django.conf import settings
 from django.db import models
 from django.utils.translation import gettext_lazy as _
+from django.core.validators import RegexValidator, MinLengthValidator
 
 from core.models import AbstractTimeStamp
 
@@ -487,3 +488,39 @@ class AbstractBaseACHTransactionStatus(models.Model):
 
     class Meta:
         abstract = True
+
+
+class AbstractBaseOneLinkBulkIBFTFields(models.Model):
+    """
+    Base One Link Integration Fields Model.
+    """
+    # regex needed for this model
+    numeric_regex_with_length_6 = RegexValidator(
+        regex='^[0-9]{6}$',
+        message='Only numeric characters are allowed with length 6 digits',
+        code='nomatch'
+    )
+    numeric_regex_start_with_zero = RegexValidator(
+        regex='^0[0-9]{11}$',
+        message='Only numeric characters are allowed with length 12 digit start with zero.',
+        code='nomatch'
+    )
+    numeric_regex_with_length_4 = RegexValidator(
+        regex='^[0-9]{4}$',
+        message='Only numeric characters are allowed with length 4 digits',
+        code='nomatch'
+    )
+
+    stan = models.CharField(
+        _('System Trace Audit Number'), max_length=6, validators=[numeric_regex_with_length_6]
+    )
+    rrn = models.CharField(
+        _('Retrieval Reference Number'), max_length=12, validators=[numeric_regex_start_with_zero]
+    )
+    pan = models.CharField(
+        _('Primary Account Number'), max_length=19
+    )
+    settlement_date = models.CharField(
+        _('Date, Settlement'), max_length=4, validators=[numeric_regex_with_length_4]
+    )
+    bulk_ibft_json_data = models.JSONField()

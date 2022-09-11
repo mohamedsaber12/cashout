@@ -306,6 +306,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/ach_send_transaction.log',
         },
+        'one_link_send_transaction': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/one_link_send_transaction.log',
+        },
         'ach_get_transaction_status': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -547,6 +554,11 @@ CUSTOM_LOGGING = {
         },
         'ach_send_transaction': {
             'handlers': ['ach_send_transaction'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'one_link_send_transaction': {
+            'handlers': ['one_link_send_transaction'],
             'level': 'DEBUG',
             'propagate': True,
         },

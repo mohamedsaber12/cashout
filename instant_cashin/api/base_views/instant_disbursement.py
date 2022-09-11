@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import uuid
+from datetime import date
 import copy
 import logging
 from users.models.base_user import User
@@ -138,9 +140,8 @@ class InstantDisbursementAPIView(views.APIView):
             "fees": fees,
             "vat": vat,
             "comment": get_from_env("PAYMENT_DETAILS"),
-            "stan": "", # generate stan
-            "rrn": "", # generate rrn
-            "pan": "", # generate pan
+            "stan": date.today().strftime("%m%d%y"), # generate stan
+            "rrn": f"0{str(uuid.uuid4().int)[:11]}", # generate rrn
         }
         bank_transaction = BankTransaction.objects.create(**transaction_dict)
         return bank_transaction

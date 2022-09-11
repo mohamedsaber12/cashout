@@ -2,6 +2,8 @@
 from __future__ import unicode_literals
 
 import copy
+import uuid
+from datetime import date
 
 from django.conf import settings
 from django.db import models
@@ -512,15 +514,21 @@ class AbstractBaseOneLinkBulkIBFTFields(models.Model):
     )
 
     stan = models.CharField(
-        _('System Trace Audit Number'), max_length=6, validators=[numeric_regex_with_length_6]
+        _('System Trace Audit Number'), max_length=6, validators=[numeric_regex_with_length_6],
+        default=date.today().strftime("%m%d%y"),
     )
     rrn = models.CharField(
-        _('Retrieval Reference Number'), max_length=12, validators=[numeric_regex_start_with_zero]
+        _('Retrieval Reference Number'), max_length=12, validators=[numeric_regex_start_with_zero],
+        db_index=True, null=False, blank=False, default=""
     )
     pan = models.CharField(
-        _('Primary Account Number'), max_length=19
+        _('Primary Account Number'), max_length=19, default="", null=True
     )
     settlement_date = models.CharField(
-        _('Date, Settlement'), max_length=4, validators=[numeric_regex_with_length_4]
+        _('Date, Settlement'), max_length=4, validators=[numeric_regex_with_length_4],
+        null=True, blank=True
     )
-    bulk_ibft_json_data = models.JSONField()
+    bulk_ibft_json_data = models.JSONField(default=dict)
+
+    class Meta:
+        abstract = True

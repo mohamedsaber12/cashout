@@ -62,7 +62,8 @@ from .utils import (VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
-                    determine_trx_category_and_purpose)
+                    determine_trx_category_and_purpose,
+                    VALID_BANK_IMD_BIN_LIST)
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from data.utils import deliver_mail, export_excel, randomword
 from instant_cashin.utils import get_from_env
@@ -1089,18 +1090,17 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
         """Generate bank cards sample data frame"""
         filename = 'bank_cards_sample_file.xlsx'
         fake = fake_factory.create()
-        bank_cards_headers = ['account number / IBAN', 'amount', 'full name', 'bank swift code', 'transaction type']
+        bank_cards_headers = ['account number / IBAN', 'amount', 'full name', 'Bank IMD / BIN']
         bank_cards_sample_records = []
 
         for _ in range(9):
             account_number = f"{fake.numerify(text='#'*random.randint(6, 20))}"
             if _ % 3 == 0:
-                account_number = f"{fake.numerify(text='EG'+'#'*random.randint(27, 27))}"
+                account_number = f"{fake.numerify(text='PK36SCBL'+'#'*random.randint(16, 16))}"
             amount = round(random.random() * 1000, 2)
             full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
-            bank_code = random.choice(VALID_BANK_CODES_LIST)
-            transaction_type = random.choice(VALID_BANK_TRANSACTION_TYPES_LIST).lower()
-            bank_cards_sample_records.append([account_number, amount, full_name, bank_code, transaction_type])
+            bank_imd_or_bin = random.choice(VALID_BANK_IMD_BIN_LIST)
+            bank_cards_sample_records.append([account_number, amount, full_name, bank_imd_or_bin])
 
         bank_cards_df = pd.DataFrame(bank_cards_sample_records, columns=bank_cards_headers)
         return filename, bank_cards_df

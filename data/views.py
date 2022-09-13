@@ -167,7 +167,7 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
 
     def get(self, request, *args, **kwargs):
         """
-        Lists all documents related to the currently logged in user hierarchy.
+        Lists all documents related to the currently logged-in user hierarchy.
         Users: Any Admin/Maker/Checker user can view his family list of disbursement documents.
         Notes:
             1. Documents can be filtered by date.
@@ -213,50 +213,6 @@ class BanksHomeView(UserWithAcceptVFOnboardingPermissionRequired, UserWithDisbur
                 return JsonResponse(form_doc.errors, status=400)
         else:
             return HttpResponseRedirect(request.path)
-
-
-@login_required
-@setup_required
-@collection_users
-def collection_home(request):
-    """
-    POST:
-    View that allows the maker with a file category to upload a disbursement file.
-    The file is later processed by the task 'handle_disbursement_file'.
-
-    GET:
-    View that list all documents related to logged in user hierarchy.
-    Documents can be filtered by date.
-    Documents are paginated ("docs_paginated") but not used in template.
-    """
-    format_qs = Format.objects.filter(hierarchy=request.user.hierarchy)
-    collection = CollectionData.objects.filter(user__hierarchy=request.user.hierarchy).first()
-    can_upload = bool(collection)
-    user_has_upload_perm = request.user.is_uploader or request.user.is_upmaker
-
-    if request.method == 'POST' and can_upload and user_has_upload_perm and request.user.root.client.is_active:
-        form_doc = FileDocumentForm(request.POST, request.FILES, request=request, collection=collection)
-
-        if form_doc.is_valid():
-            file_doc = form_doc.save()
-            msg = f"uploaded collection file with doc_id: {file_doc.id}"
-            UPLOAD_LOGGER.debug(f"[message] [COLLECTION FILE UPLOAD] [{request.user}] -- {msg}")
-            handle_uploaded_file.delay(file_doc.id, language=translation.get_language())
-            return HttpResponseRedirect(request.path)               # Redirect to the document list after POST
-        else:
-            msg = f"collection upload error: {form_doc.errors['file'][0]}"
-            UPLOAD_LOGGER.debug(f"[message] [COLLECTION FILE UPLOAD ERROR] [{request.user}] -- {msg}")
-            return JsonResponse(form_doc.errors, status=400)
-
-    doc_list_collection = Doc.objects.filter(owner__hierarchy=request.user.hierarchy, type_of=Doc.COLLECTION)
-    context = {
-        'doc_list_collection': doc_list_collection,
-        'format_qs': format_qs,
-        'can_upload': can_upload,
-        'user_has_upload_perm': user_has_upload_perm,
-    }
-
-    return render(request, 'data/collection_home.html', context=context)
 
 
 @method_decorator([root_only, setup_required, login_required], name='dispatch')
@@ -375,7 +331,7 @@ def document_view(request, doc_id):
                 'code': can_user_disburse[2]
             }
 
-        
+
 
     # 2. The user who is trying to access the doc is NOT from the same hierarchy (NOT privileged)
     else:
@@ -535,28 +491,3 @@ class FormatListView(SupportOrRootOrMakerUserPassesTestMixin, TemplateView):
             return redirect(self.get_success_url())
 
         return self.render_to_response(self.get_context_data(form=form))
-
-
-@method_decorator([collection_users, setup_required, login_required], name='dispatch')
-class RetrieveCollectionData(DetailView):
-    http_method_names = ['get']
-    template_name = "data/document_viewer_collection.html"
-
-    def get_queryset(self, *args, **kwargs):
-        return Doc.objects.filter(id=self.kwargs['pk'])
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        doc_obj = context['object']
-        xl_workbook = xlrd.open_workbook(doc_obj.file.path)
-        xl_sheet = xl_workbook.sheet_by_index(0)
-
-        excl_data = []
-        for row in xl_sheet.get_rows():
-            row_data = []
-            for x, data in enumerate(row):
-                row_data.append(data.value)
-            excl_data.append(row_data)
-
-        context['excel_data'] = excl_data
-        return context

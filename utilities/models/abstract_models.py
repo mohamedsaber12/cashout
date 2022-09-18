@@ -492,7 +492,7 @@ class AbstractBaseACHTransactionStatus(models.Model):
         abstract = True
 
 
-class AbstractBaseOneLinkBulkIBFTFields(models.Model):
+class AbstractBaseOneLinkIBFTFields(models.Model):
     """
     Base One Link Integration Fields Model.
     """
@@ -500,17 +500,22 @@ class AbstractBaseOneLinkBulkIBFTFields(models.Model):
     numeric_regex_with_length_6 = RegexValidator(
         regex='^[0-9]{6}$',
         message='Only numeric characters are allowed with length 6 digits',
-        code='nomatch'
+        code='no match'
     )
     numeric_regex_start_with_zero = RegexValidator(
         regex='^0[0-9]{11}$',
         message='Only numeric characters are allowed with length 12 digit start with zero.',
-        code='nomatch'
+        code='no match'
     )
     numeric_regex_with_length_4 = RegexValidator(
         regex='^[0-9]{4}$',
         message='Only numeric characters are allowed with length 4 digits',
-        code='nomatch'
+        code='no match'
+    )
+    alpha_numeric_regex_with_length_6 = RegexValidator(
+            regex='[a-zA-Z0-9\b]{6}$',
+            message='Only alpha numeric characters are allowed with length 6',
+            code='no match'
     )
 
     stan = models.CharField(
@@ -526,6 +531,18 @@ class AbstractBaseOneLinkBulkIBFTFields(models.Model):
     )
     settlement_date = models.CharField(
         _('Date, Settlement'), max_length=4, validators=[numeric_regex_with_length_4],
+        null=True, blank=True
+    )
+    transaction_local_time = models.CharField(
+        _('Time, Local Transaction'), max_length=6, validators=[numeric_regex_with_length_6],
+        null=True, blank=True
+    )
+    transaction_local_date = models.CharField(
+        _('Date, Local Transaction'), max_length=4, validators=[numeric_regex_with_length_4],
+        null=True, blank=True
+    )
+    authorization_id_response = models.CharField(
+        _('Authorization Identification Response'), max_length=6, validators=[alpha_numeric_regex_with_length_6],
         null=True, blank=True
     )
     bulk_ibft_json_data = models.JSONField(default=dict)

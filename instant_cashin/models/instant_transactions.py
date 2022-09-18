@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
+from utilities.models import AbstractBaseOneLinkIBFTFields
 
 from core.models import AbstractBaseTransaction
 from rest_framework.validators import UniqueValidator
@@ -43,7 +44,9 @@ class AbstractBaseIssuer(models.Model):
         abstract = True
 
 
-class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
+class InstantTransaction(AbstractBaseTransaction,
+                         AbstractBaseIssuer,
+                         AbstractBaseOneLinkIBFTFields):
     """
     Model for instant transactions
     """
@@ -115,14 +118,14 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     )
     is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
     disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
-    
+
     client_transaction_reference = models.UUIDField(
             unique=True,
             blank=True,
             null=True,
             verbose_name=_("Client Transaction Reference")
     )
-    
+
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
 
@@ -137,7 +140,7 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         decimal_places=2,
         default=0
     )
-    
+
     # Not needed fields
     to_user = None
     external_reference_1 = None

@@ -4,7 +4,7 @@ from django.db import models
 from django.contrib.contenttypes.fields import GenericRelation
 from django.utils.translation import gettext_lazy as _
 from rest_framework import status
-from utilities.models import AbstractBaseOneLinkIBFTFields
+from utilities.models import AbstractBaseOneLinkIBFTFields, AbstractTransactionCurrency
 
 from core.models import AbstractBaseTransaction
 from rest_framework.validators import UniqueValidator
@@ -46,7 +46,8 @@ class AbstractBaseIssuer(models.Model):
 
 class InstantTransaction(AbstractBaseTransaction,
                          AbstractBaseIssuer,
-                         AbstractBaseOneLinkIBFTFields):
+                         AbstractBaseOneLinkIBFTFields,
+                         AbstractTransactionCurrency):
     """
     Model for instant transactions
     """
@@ -109,6 +110,11 @@ class InstantTransaction(AbstractBaseTransaction,
             help_text=_('The customer/recipient name'),
             blank=True,
             null=True
+    )
+    creditor_bank = models.CharField(
+        _('Beneficiary Bank'),
+        max_length=40,
+        help_text=_('The bank where the customer/receiver maintains its accounts')
     )
     aman_obj = GenericRelation(
             "instant_cashin.AmanTransaction",

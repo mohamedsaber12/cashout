@@ -1,1 +1,1 @@
-from .instant_cashin import OneLinkBulkIBFTBankTransactionsChannel
+from .instant_cashin import OneLinkTransactionsChannel

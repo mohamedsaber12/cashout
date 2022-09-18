@@ -306,12 +306,26 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/ach_send_transaction.log',
         },
-        'one_link_send_transaction': {
+        'one_link_access_token_requests': {
             'level': 'DEBUG',
             'filters': ['request_id'],
             'formatter': 'detail',
             'class': 'logging.FileHandler',
-            'filename': 'logs/one_link_send_transaction.log',
+            'filename': 'logs/one_link_access_token_requests.log',
+        },
+        'one_link_fetch_title_requests': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/one_link_fetch_title_requests.log',
+        },
+        'one_link_push_transaction_requests': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/one_link_push_transaction_requests.log',
         },
         'ach_get_transaction_status': {
             'level': 'DEBUG',
@@ -557,8 +571,18 @@ CUSTOM_LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
-        'one_link_send_transaction': {
-            'handlers': ['one_link_send_transaction'],
+        'one_link_access_token_requests': {
+            'handlers': ['one_link_access_token_requests'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'one_link_fetch_title_requests': {
+            'handlers': ['one_link_fetch_title_requests'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'one_link_push_transaction_requests': {
+            'handlers': ['one_link_push_transaction_requests'],
             'level': 'DEBUG',
             'propagate': True,
         },

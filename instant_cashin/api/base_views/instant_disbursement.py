@@ -23,7 +23,7 @@ from payouts.settings import TIMEOUT_CONSTANTS
 from utilities.logging import logging_message
 
 from ...models import InstantTransaction
-from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel, OneLinkBulkIBFTBankTransactionsChannel
+from ...specific_issuers_integrations import AmanChannel, OneLinkTransactionsChannel
 from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
 from ..serializers import (
@@ -112,39 +112,38 @@ class InstantDisbursementAPIView(views.APIView):
 
         return category_purpose_dict
 
-    def create_bank_transaction(self, disburser, serializer):
-        """Create a bank transaction out of the passed serializer data"""
+    def create_instant_transaction_for_bank(self, disburser, serializer):
+        """Create a instant transaction out of the passed serializer data"""
         amount = serializer.validated_data["amount"]
         issuer = serializer.validated_data["issuer"].lower()
         client_reference_id = serializer.validated_data.get("client_reference_id")
+        full_name = serializer.validated_data["full_name"]
         fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
             amount, issuer
         )
         creditor_bank = serializer.validated_data["bank_imd_or_bin"]
         creditor_account_number = serializer.validated_data["bank_card_number"]
+
         transaction_dict = {
+            "issuer_type": self.match_issuer_type(issuer),
             "currency": "PKR",
-            "debtor_address_1": "PK",
-            "creditor_address_1": "PK",
-            "corporate_code": get_from_env("REQUEST_INITIATOR"),
-            "debtor_account": get_from_env("ACCOUNT_NUMBER_FROM"),
-            "user_created": disburser,
+            "from_user": disburser,
+            "anon_sender": get_from_env("ACCOUNT_NUMBER_FROM"),
+            "anon_recipient": creditor_account_number,
             "amount": amount,
-            "creditor_name": "",
-            "creditor_account_number": creditor_account_number,
             "creditor_bank": creditor_bank,
-            "end_to_end": "",
+            "status": "P",
+            "recipient_name": full_name,
             "disbursed_date": timezone.now(),
             "is_single_step":serializer.validated_data["is_single_step"],
-            "client_transaction_reference":client_reference_id,
+            "client_transaction_reference": client_reference_id,
             "fees": fees,
             "vat": vat,
-            "comment": get_from_env("PAYMENT_DETAILS"),
             "stan": date.today().strftime("%m%d%y"), # generate stan
             "rrn": f"0{str(uuid.uuid4().int)[:11]}", # generate rrn
         }
-        bank_transaction = BankTransaction.objects.create(**transaction_dict)
-        return bank_transaction
+        instant_transaction = InstantTransaction.objects.create(**transaction_dict)
+        return instant_transaction
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -388,11 +387,11 @@ class InstantDisbursementAPIView(views.APIView):
         elif issuer == "bank_card":
 
             try:
-                bank_trx_obj = self.create_bank_transaction(user, serializer)
-                balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
-                bank_trx_obj.balance_before = balance_before
-                bank_trx_obj.balance_after = balance_after
-                bank_trx_obj.save()
+                instant_trx_obj = self.create_instant_transaction_for_bank(user, serializer)
+                balance_before = balance_after = instant_trx_obj.from_user.root.budget.get_current_balance()
+                instant_trx_obj.balance_before = balance_before
+                instant_trx_obj.balance_after = balance_after
+                instant_trx_obj.save()
 
             except Exception as e:
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [One Link EXCEPTION]", request, e.args)
@@ -424,7 +423,7 @@ class InstantDisbursementAPIView(views.APIView):
             #         return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
 
-            return OneLinkBulkIBFTBankTransactionsChannel.send_transaction(bank_trx_obj)
+            return OneLinkTransactionsChannel.send_transaction(instant_trx_obj)
 
 
 class SingleStepDisbursementAPIView(InstantDisbursementAPIView):

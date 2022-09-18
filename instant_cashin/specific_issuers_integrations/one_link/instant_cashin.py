@@ -35,14 +35,14 @@ from ...models import AbstractBaseIssuer, InstantTransaction
 from ...utils import get_from_env
 
 ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
-ONE_LINK_SEND_TRX_LOGGER = logging.getLogger('one_link_send_transaction.log')
+ONE_LINK_ACCESS_TOKEN_LOGGER = logging.getLogger('one_link_access_token_requests.log')
+ONE_LINK_FETCH_TITLE_LOGGER = logging.getLogger('one_link_fetch_title_requests.log')
+ONE_LINK_PUSH_TRANSACTIONS_LOGGER = logging.getLogger('one_link_push_transaction_requests.log')
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
-from instant_cashin.specific_issuers_integrations.aman.instant_cashin import UUIDEncoder
 
 
-
-class OneLinkBulkIBFTBankTransactionsChannel:
+class OneLinkTransactionsChannel:
     """
     Handles disbursement for bank account/cards in pakistan
     """
@@ -95,15 +95,13 @@ class OneLinkBulkIBFTBankTransactionsChannel:
         return False
 
     @staticmethod
-    def accumulate_send_transaction_payload(trx_obj):
+    def accumulate_send_transaction_payload_for_bank(trx_obj):
         """
         Accumulates SendTransaction API request payload
         :param trx_obj: transaction object that saved after serializer passed validations
         :return: payload dictionary ready to be shipped to One Link
         """
         payload = dict()
-        payload['RequestInitiator'] = get_from_env('REQUEST_INITIATOR')
-        payload['TransactionCode'] = get_from_env('TRANSACTION_CODE')
         payload['Date'] = datetime.now().strftime("%m%d")
         payload['Time'] = datetime.now().strftime("%H%M%S")
         payload['STAN'] = trx_obj.stan
@@ -118,6 +116,42 @@ class OneLinkBulkIBFTBankTransactionsChannel:
         payload['PaymentDetail'] = get_from_env('PAYMENT_DETAILS')
         payload['SenderName'] = get_from_env('SENDER_NAME')
         payload['SenderIBAN'] = get_from_env('SENDER_IBAN')
+
+        return payload
+
+    @staticmethod
+    def accumulate_fetch_payload_for_bank(trx_obj):
+        """
+        Accumulates fetch title API request payload
+        :param trx_obj: transaction object that saved after serializer passed validations
+        :return: payload dictionary ready to be shipped to One Link
+        """
+        payload = dict()
+        payload['Date'] = datetime.now().strftime("%m%d")
+        payload['Time'] = datetime.now().strftime("%H%M%S")
+        payload['TransmissionDateTime'] = f"{payload['Date']}{payload['Time']}"
+        payload['TransactionAmount'] = trx_obj.amount
+        payload['STAN'] = trx_obj.stan
+        payload['MerchantType'] = get_from_env('MERCHANT_TYPE')
+        payload['FromBankIMD'] = get_from_env('FROM_BANK_IMD')
+        payload['RRN'] = trx_obj.rrn
+        payload['CardAcceptorTerminalId'] = get_from_env('CARD_ACCEPTOR_TERMINAL_ID')
+        payload['CardAcceptorIdCode'] = get_from_env('CARD_ACCEPTOR_ID_CODE')
+        payload['CardAcceptorNameLocation'] = {
+            "Location": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_LOCATION'),
+            "City": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_CITY'),
+            "State": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_STATE'),
+            "ZipCode": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_ZIP_CODE'),
+            "AgentName": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_AGENT_NAME'),
+            "AgentCity": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_AGENT_CITY'),
+            "ADCLiteral": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_ADC_LITERAL'),
+            "BankName": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_BANK_NAME'),
+            "Country": get_from_env('CARD_ACCEPTOR_NAME_LOCATION_COUNTRY')
+        }
+        payload['CurrencyCodeTransaction'] = get_from_env('CURRENCY_CODE_TRANSACTION')
+        payload['AccountNumberFrom'] = get_from_env('ACCOUNT_NUMBER_FROM')
+        payload['ToBankIMD'] = trx_obj.creditor_bank
+        payload['AccountNumberTo'] = trx_obj.creditor_account_number
 
         return payload
 
@@ -158,7 +192,7 @@ class OneLinkBulkIBFTBankTransactionsChannel:
             "username"      : "XXXXX",
             "password"      : "XXXXX",
         }
-        ONE_LINK_SEND_TRX_LOGGER.debug(
+        ONE_LINK_ACCESS_TOKEN_LOGGER.debug(
             _(f"[request] [{log_header}] -- {request_body_for_logging}")
         )
         try:
@@ -175,45 +209,46 @@ class OneLinkBulkIBFTBankTransactionsChannel:
         else:
             return response.json()['access_token']
         finally:
-            ONE_LINK_SEND_TRX_LOGGER.debug(
+            ONE_LINK_ACCESS_TOKEN_LOGGER.debug(
                 _(f"[response] [{log_header}] -- {response_log_message}")
             )
 
         raise ValidationError(_(response_log_message))
 
     @staticmethod
-    def post(url, payload, bank_trx_obj):
-        """Handles POST requests to One Link using requests package"""
-
-        # get access token
-        current_access_token = OneLinkBulkIBFTBankTransactionsChannel.get_access_token()
-
-        log_header = "SEND Bank TRANSACTION TO ONE LINK"
-
-        headers = {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'Authorization': f"Bearer {current_access_token}",
-            'X-IBM-Client-Id': get_from_env('ONE_LINK_CLIENT_ID'),
-            'BulkId': datetime.now().strftime("%Y%m%d%H%M%S%f"),
-        }
-        payload['TransactionAmount'] = str(payload['TransactionAmount'])
-        length_of_amount = len(str(payload['TransactionAmount']))
+    def add_leading_zeros_to_amount(amount):
+        length_of_amount = len(str(amount))
 
         # add leading zeros to make amount length equal to 12
-        for i in range(0, 12-length_of_amount):
-            payload['TransactionAmount'] = f"0{payload['TransactionAmount']}"
+        for i in range(0, 12 - length_of_amount):
+            amount = f"0{amount}"
 
-        request_data = [payload]
-        ONE_LINK_SEND_TRX_LOGGER.debug(
-            _(f"[request] [{log_header}] -- [{bank_trx_obj.user_created}] -- [BulkId: {headers['BulkId']}] -- {request_data}")
+        return amount
+    @staticmethod
+    def fetch_title(instant_trx_obj, current_access_token):
+        """Handles POST requests to One Link to fetch title of transaction"""
+
+        log_header = "SEND FETCH TITLE REQUEST TO ONE LINK"
+
+        payload = OneLinkTransactionsChannel.accumulate_fetch_payload_for_bank(instant_trx_obj)
+
+        payload['TransactionAmount'] = OneLinkTransactionsChannel.add_leading_zeros_to_amount(
+            payload['TransactionAmount'])
+
+        one_link_fetch_title_url = get_from_env('ONE_LINK_FETCH_TITLE_URL')
+
+        headers = {
+            'Content-Type'   : 'application/json',
+            'Accept'         : 'application/json',
+            'Authorization'  : f"Bearer {current_access_token}",
+            'X-IBM-Client-Id': get_from_env('ONE_LINK_CLIENT_ID'),
+        }
+        ONE_LINK_FETCH_TITLE_LOGGER.debug(
+            _(f"[request] [{log_header}] -- {payload}")
         )
         try:
             response = requests.post(
-                url,
-                json=request_data,
-                headers=headers,
-                timeout=30
+                one_link_fetch_title_url, json=payload, headers=headers
             )
             response_log_message = f"Response: {response.json()}"
         except HTTPError as http_err:
@@ -223,13 +258,65 @@ class OneLinkBulkIBFTBankTransactionsChannel:
         except Exception as err:
             response_log_message = f"Other error occurred: {err}"
         else:
-            return response
+            return response.json()
         finally:
-            ONE_LINK_SEND_TRX_LOGGER.debug(
-                _(f"[response] [{log_header}] [{bank_trx_obj.user_created}] -- {response_log_message}")
+            ONE_LINK_FETCH_TITLE_LOGGER.debug(
+                _(f"[response] [{log_header}] -- {response_log_message}")
             )
 
         raise ValidationError(_(response_log_message))
+
+    @staticmethod
+    def post(url, instant_trx_obj):
+        """Handles POST requests to One Link using requests package"""
+
+        # get access token
+        current_access_token = OneLinkTransactionsChannel.get_access_token()
+
+        # send fetch title request
+        fetch_title_response_obj = OneLinkTransactionsChannel.fetch_title(instant_trx_obj, current_access_token)
+
+        if fetch_title_response_obj['ResponseCode'] == "00":
+            # this means fetch request success
+            payload = OneLinkTransactionsChannel.accumulate_send_transaction_payload_for_bank(instant_trx_obj)
+
+            log_header = "SEND Bank TRANSACTION TO ONE LINK"
+
+            headers = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'Authorization': f"Bearer {current_access_token}",
+                'X-IBM-Client-Id': get_from_env('ONE_LINK_CLIENT_ID'),
+            }
+
+            request_data = [payload]
+            ONE_LINK_SEND_TRX_LOGGER.debug(
+                _(f"[request] [{log_header}] -- [{bank_trx_obj.user_created}] -- [BulkId: {headers['BulkId']}] -- {request_data}")
+            )
+            try:
+                response = requests.post(
+                    url,
+                    json=request_data,
+                    headers=headers,
+                    timeout=30
+                )
+                response_log_message = f"Response: {response.json()}"
+            except HTTPError as http_err:
+                response_log_message = f"HTTP error occurred: {http_err}"
+            except ConnectionError as connect_err:
+                response_log_message = f"Connection establishment error: {connect_err}"
+            except Exception as err:
+                response_log_message = f"Other error occurred: {err}"
+            else:
+                return response
+            finally:
+                ONE_LINK_SEND_TRX_LOGGER.debug(
+                    _(f"[response] [{log_header}] [{bank_trx_obj.user_created}] -- {response_log_message}")
+                )
+
+            raise ValidationError(_(response_log_message))
+        else:
+            pass
 
     @staticmethod
     def get(url, payload, bank_trx_obj):
@@ -404,26 +491,25 @@ class OneLinkBulkIBFTBankTransactionsChannel:
             return new_trx_obj
 
     @staticmethod
-    def send_transaction(bank_trx_obj):
+    def send_transaction(instant_trx_obj):
         """Make a new send transaction request to One Link"""
 
         has_valid_response = True
 
         try:
-            payload = OneLinkBulkIBFTBankTransactionsChannel.accumulate_send_transaction_payload(bank_trx_obj)
-            response = OneLinkBulkIBFTBankTransactionsChannel.post(get_from_env("ONE_LINK_API_BULK_URL"), payload, bank_trx_obj)
+            response = OneLinkTransactionsChannel.post(get_from_env("ONE_LINK_API_BULK_URL"), instant_trx_obj)
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
-            ONE_LINK_SEND_TRX_LOGGER.debug(_(f"[message] [ONE LINK EXCEPTION] [{bank_trx_obj.user_created}] -- {e}"))
-            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
-            bank_trx_obj.balance_before = balance_before
-            bank_trx_obj.balance_after = balance_after
-            bank_trx_obj.save()
-            bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+            ONE_LINK_SEND_TRX_LOGGER.debug(_(f"[message] [ONE LINK EXCEPTION] [{instant_trx_obj.from_user}] -- {e}"))
+            balance_before = balance_after = instant_trx_obj.from_user.root.budget.get_current_balance()
+            instant_trx_obj.balance_before = balance_before
+            instant_trx_obj.balance_after = balance_after
+            instant_trx_obj.save()
+            instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
 
         if has_valid_response:
-            bank_trx_obj = OneLinkBulkIBFTBankTransactionsChannel. \
-                map_response_code_and_message(bank_trx_obj, response.json())
+            bank_trx_obj = OneLinkTransactionsChannel. \
+                map_response_code_and_message(instant_trx_obj, response.json())
             return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
     @staticmethod

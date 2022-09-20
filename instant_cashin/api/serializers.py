@@ -77,7 +77,6 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         email = attrs.get('email', '')
         bank_imd_or_bin = attrs.get('bank_imd_or_bin', '')
         bank_card_number = attrs.get('bank_card_number', '')
-        bank_transaction_type = attrs.get('bank_transaction_type', '')
         full_name = attrs.get('full_name', '')
 
         if issuer in ['vodafone', 'etisalat']:
@@ -135,14 +134,13 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     status_description = serializers.SerializerMethodField()
     bank_card_number = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
-    bank_code = serializers.SerializerMethodField()
-    bank_transaction_type = serializers.SerializerMethodField()
+    bank_imd_or_bin = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
     def get_transaction_id(self, transaction):
         """Retrieves parent transaction transaction_id"""
-        return transaction.parent_transaction.transaction_id
+        return transaction.uid
 
     def get_issuer(self, transaction):
         """Retrieves transaction issuer"""
@@ -158,42 +156,30 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
 
     def get_bank_card_number(self, transaction):
         """Retrieves bank card number"""
-        return transaction.creditor_account_number
+        return transaction.anon_recipient
 
     def get_full_name(self, transaction):
         """Retrieves transaction recipient name"""
-        return transaction.creditor_name
+        return transaction.recipient_name
 
-    def get_bank_code(self, transaction):
+    def get_bank_imd_or_bin(self, transaction):
         """Retrieves transaction cashing details"""
         return transaction.creditor_bank
 
-    def get_bank_transaction_type(self, transaction):
-        """Retrieves transaction type"""
-        if transaction.purpose == "SALA":
-            bank_transaction_type = "salary"
-        elif transaction.purpose == "CCRD":
-            bank_transaction_type = "credit_card"
-        elif transaction.category_code == "PCRD":
-            bank_transaction_type = "prepaid_card"
-        else:
-            bank_transaction_type = "cash_transfer"
-
-        return bank_transaction_type
-
     def get_created_at(self, transaction):
         """Retrieves transaction created_at time formatted"""
-        return transaction.parent_transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+        return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     def get_updated_at(self, transaction):
         """Retrieves transaction updated_at time formatted"""
         return transaction.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
 
     class Meta:
-        model = BankTransaction
+        model = InstantTransaction
         fields = [
-            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_code', 'bank_transaction_type',
-            'disbursement_status', 'status_code', 'status_description', 'client_transaction_reference',  'created_at', 'updated_at'
+            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_imd_or_bin',
+            'disbursement_status', 'status_code', 'status_description', 'client_transaction_reference',
+            'created_at', 'updated_at'
         ]
 
 

@@ -5,7 +5,7 @@ from users.models.base_user import User
 import logging
 
 
-SSO_INTEGRATION_LOGGER = logging.getLogger("login_failed")
+SSO_INTEGRATION_LOGGER = logging.getLogger("sso_integration")
 
 
 class SSOIntegration:

@@ -8,7 +8,7 @@ from django_admin_multiple_choice_list_filter.list_filters import MultipleChoice
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import resolve_url
+from django.shortcuts import resolve_url, render
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpResponse
@@ -20,6 +20,14 @@ from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
 from core.models import AbstractBaseStatus
 from utilities.date_range_filter import CustomDateRangeFilter
+from django.urls import path, reverse
+from django import forms
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+import datetime
+from openpyxl import load_workbook
+from openpyxl.utils import get_column_letter
+
 
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
@@ -191,3 +199,51 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         return response
 
     export_bank_transactions_ids.short_description = "Export Bank Transactions Ids"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        new_urls = [path('upload-timeouts/', self.upload_csv),]
+        return new_urls + urls
+
+    def upload_csv(self, request):
+
+        if request.method == "POST":
+            xlsx_file = request.FILES["timeouts_upload"]
+            
+            if not xlsx_file.name.endswith('.xlsx'):
+                messages.warning(request, 'The wrong file type was uploaded')
+                return HttpResponseRedirect(request.path_info)
+            
+            wb = load_workbook(xlsx_file)
+            vodafone_data_list = []
+            ws = wb.active
+            last_column = len(list(ws.columns))
+            last_row = len(list(ws.rows))
+            print('')
+            print("number of rows in vodafone report ==>", last_row)
+            print("================================================")
+            print("number of columns in vodafone report ==>", last_column)
+            my_dict = {}
+
+            for row in range(2, last_row + 1):
+                if int(ws["AA" + str(row)].value) < 0:
+                    my_dict[ws["L" + str(row)].value] = {
+                        "wallet": ws["H" + str(row)].value,
+                        "success": not bool(ws["V" + str(row)].value),
+                        "amount": ws["J" + str(row)].value,
+                    }
+
+            print(my_dict["002252211223"])
+
+            # url = reverse('admin:index')
+            # return HttpResponseRedirect(url)
+
+        form = CsvImportForm()
+        data = {"form": form}
+        return render(request, "admin/timeouts_upload.html", data)
+
+
+class CsvImportForm(forms.Form):
+    timeouts_upload = forms.FileField()
+    date_from = forms.DateField()
+    date_to = forms.DateField()

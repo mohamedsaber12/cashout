@@ -384,10 +384,10 @@ class OneLinkTransactionsChannel:
                 budget.update_disbursed_amount_and_current_balance(instant_trx_obj.amount, issuer)
             instant_trx_obj.balance_before = balance_before
             instant_trx_obj.balance_after = balance_after
-            ACH_SEND_TRX_LOGGER.debug(
+            ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(
                 f"[message] balance before {balance_before} balance after {balance_after}")
             instant_trx_obj.save()
-            ACH_SEND_TRX_LOGGER.debug(
+            ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(
                 f"[message] obj balance before {instant_trx_obj.balance_before} obj balance after {instant_trx_obj.balance_after}")
 
             instant_trx_obj.mark_successful(response_code, response_detail)

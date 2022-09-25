@@ -868,7 +868,7 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             elif trx['issuer'] in ['bank_wallet', 'B']:
                 bank_wallet_transactions = bank_wallet_transactions + trx['count']
             elif trx['issuer'] in ['bank_card', 'C']:
-                bank_wallet_transactions = bank_card_transactions + trx['count']
+                bank_card_transactions = bank_card_transactions + trx['count']
             total = total + trx['count']
 
         context = {

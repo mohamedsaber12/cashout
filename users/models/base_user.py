@@ -111,6 +111,10 @@ class User(AbstractUser, SoftDeletionModel):
                 "has_custom_budget_view_permission",
                 "has custom budget view permission"
             ),
+            (
+                "has_instant_transaction_view",
+                "has instant transaction view"
+            ),
         )
         ordering = ['-id', '-hierarchy']
 

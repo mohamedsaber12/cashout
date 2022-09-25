@@ -798,7 +798,7 @@ class BalanceInquiry(SuperOrRootOwnsCustomizedBudgetClientRequiredMixin, View):
 @method_decorator([setup_required], name='dispatch')
 class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
-    model = BankTransaction
+    model = InstantTransaction
     template_name = 'disbursement/home_root.html'
 
     def validate_export_issuer(self, issuer):
@@ -839,15 +839,8 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
                 )
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
 
-        vf_et_aman_trx = []
         instant_trx = []
-        bank_count = 0
         if request.user.is_root or request.user.is_instantapiviewer:
-            vf_et_aman_trx = DisbursementData.objects.filter(
-                Q(doc__disbursed_by__root=request.user.root),
-                Q(doc__disbursement_txn__doc_status='5')
-            ).values('issuer').annotate(count=Count('id')).order_by('issuer')
-
             instant_trx = InstantTransaction.objects.filter(
                 ~Q(disbursed_date=None),
                 (Q(document__disbursed_by__root=request.user.root) |
@@ -855,21 +848,14 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             ).extra(select={'issuer': 'issuer_type'}).values('issuer'). \
                 annotate(count=Count('uid')).order_by('issuer')
 
-            bank_count = BankTransaction.objects.filter(
-                ~Q(disbursed_date=None),
-                Q(end_to_end=""),
-                (Q(document__disbursed_by__root=request.user.root) |
-                 Q(user_created__root=request.user.root))
-            ).order_by("parent_transaction__transaction_id", "-id"). \
-                distinct("parent_transaction__transaction_id").values('id').count()
-
         vodafone_transactions = 0
         etisalat_transactions = 0
         aman_transactions = 0
         orange_transactions = 0
         bank_wallet_transactions = 0
-        total = bank_count
-        all_issuers =[*vf_et_aman_trx, *instant_trx]
+        bank_card_transactions = 0
+        total = 0
+        all_issuers =[*instant_trx]
         for trx in all_issuers:
             if trx['issuer'] in ['vodafone', 'V']:
                 vodafone_transactions = vodafone_transactions + trx['count']
@@ -881,6 +867,8 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
                 orange_transactions = orange_transactions + trx['count']
             elif trx['issuer'] in ['bank_wallet', 'B']:
                 bank_wallet_transactions = bank_wallet_transactions + trx['count']
+            elif trx['issuer'] in ['bank_card', 'C']:
+                bank_wallet_transactions = bank_card_transactions + trx['count']
             total = total + trx['count']
 
         context = {
@@ -890,7 +878,7 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             "orange_transactions": orange_transactions,
             "aman_transactions": aman_transactions,
             "bank_wallet_transactions": bank_wallet_transactions,
-            "banks_transactions": bank_count,
+            "banks_transactions": bank_card_transactions,
         }
         # render issuer options based on user type
         if request.user.is_instant_model_onboarding:

@@ -348,6 +348,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/vodafone_facilitator_daily_report.log',
         },
+        'timeouts_updates': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/timeouts_updates.log',
+        },
     },
 
     'loggers': {
@@ -577,6 +584,11 @@ CUSTOM_LOGGING = {
         },
         'vodafone_facilitator_daily_report': {
             'handlers': ['vodafone_facilitator_daily_report'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'timeouts_updates': {
+            'handlers': ['timeouts_updates'],
             'level': 'DEBUG',
             'propagate': True,
         },

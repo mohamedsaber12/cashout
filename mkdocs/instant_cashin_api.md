@@ -111,147 +111,6 @@
 
 ### Samples
 
-1. **Instant cashin request through Vodafone as an issuer**
-
-    * > request
-
-            {
-                "amount": "90.56",
-                "issuer": "vodafone",
-                "msisdn": "01092737975"
-            }
-
-    * > response
-
-            {
-                "transaction_id": "92134d2b-d1a5-4dde-859c-a1175e94582c",
-                "msisdn": "01092737975",
-                "issuer": "vodafone",
-                "amount": "90.56",
-                "full_name": "",
-                "disbursement_status": "success",
-                "status_code": "200",
-                "status_description": "تم إيداع 90.56 جنيه إلى رقم 01010101010 بنجاح",
-                "aman_cashing_details": null,
-                "created_at": "2020-10-12 06:54:31.849561",
-                "updated_at": "2020-10-12 06:54:33.146926"
-            }
-
-
-2. **Instant cashin request through Etisalat as an issuer**
-
-    * > request
-
-            {
-                "issuer": "etisalat",
-                "amount": 100.0,
-                "msisdn": "01112131415"
-            }
-
-    * > response
-
-            {
-                "transaction_id": "4d8d2215-6b15-4cf0-8a5a-e62e3eb5fdb3",
-                "msisdn": "01112131415",
-                "issuer": "etisalat",
-                "amount": 100.0,
-                "full_name": "",
-                "disbursement_status": "failed",
-                "status_code": "90040",
-                "status_description": "عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778",
-                "aman_cashing_details": null,
-                "created_at": "2020-10-12 07:00:23.453577",
-                "updated_at": "2020-10-12 07:00:24.615864"
-            }
-
-
-3. **Instant cashin request through Aman as an issuer**
-
-    * > request
-
-            {
-                "issuer": "aman",
-                "amount": 100.0,
-                "msisdn": "01092737975",
-                "first_name": "Tom",
-                "last_name": "Bernardo",
-                "email": "tom.bernardo@gmail.com"
-            }
-
-    * > response
-
-            {
-                "transaction_id": "df1ee23f-c146-4c99-88ef-d6355c727d4b",
-                "msisdn": "01092737975",
-                "issuer": "aman",
-                "amount": 100.0,
-                "full_name": "Tom Bernardo",
-                "disbursement_status": "successful",
-                "status_code": "200",
-                "status_description": "“برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص 3988885. لصرف مبلغ 100.00 جنيه. شكراً لاختيارك مدفوعات أكسبت.“",
-                "aman_cashing_details": {
-                    "bill_reference": 3988885,
-                    "is_paid": false
-                },
-                "created_at": "2020-10-12 07:04:05.313545",
-                "updated_at": "2020-10-12 07:04:11.172575"
-            }
-
-
-4. **Instant cashin request through Orange as an issuer**
-
-    * > request
-
-            {
-                "issuer": "orange",
-                "amount": 100.0,
-                "msisdn": "01092737975"
-            }
-
-    * > response
-
-            {
-                "transaction_id": "7ce037de-a8d8-411c-be19-65ceb4e0dbd3",
-                "issuer": "orange",
-                "msisdn": "01092737975",
-                "amount": 100.0,
-                "full_name": "",
-                "disbursement_status": "success",
-                "status_code": "200",
-                "status_description": "amount is deposited successfully",
-                "aman_cashing_details": null,
-                "created_at": "2020-10-12 07:19:46.121389",
-                "updated_at": "2020-10-12 07:19:47.550900"
-            }
-
-
-5. **Instant cashin request through Bank Wallets as an issuer**
-
-    * > request
-
-            {
-                "issuer": "bank_wallet",
-                "amount": 100.0,
-                "msisdn": "01092737975"
-            }
-
-    * > response
-
-            {
-                "transaction_id": "d9707a55-16af-4d35-9c69-2bce5ecc6cfb",
-                "issuer": "bank_wallet",
-                "msisdn": "01092737975",
-                "amount": 100.0,
-                "full_name": "",
-                "disbursement_status": "success",
-                "status_code": "200",
-                "status_description": "amount is deposited successfully",
-                "aman_cashing_details": null,
-                "created_at": "2020-10-12 07:23:17.540219",
-                "updated_at": "2020-10-12 07:23:18.113919"
-            }
-
-
 6. **Instant cashin request through Bank Cards / Accounts as an issuer**
 
     * > request
@@ -260,9 +119,8 @@
                 "issuer": "bank_card",
                 "amount": 100.0,
                 "full_name": "Tom Bernard Ceisar",
-                "bank_card_number": "1111-2222-3333-4444",
-                "bank_code": "CIB",
-                "bank_transaction_type": "cash_transfer"
+                "bank_card_number": "6304532132598659",
+                "bank_imd_or_bin": "221166"
             }
 
     * > response
@@ -271,13 +129,12 @@
                 "transaction_id": "01ea2cd1-f01f-4857-b5ae-1e6359d1c779",
                 "issuer": "bank_card",
                 "amount": "100.00",
-                "bank_card_number": "1111 2222 3333 4444",
+                "bank_card_number": "6304532132598659",
                 "full_name": "Tom Bernard Ceisar",
-                "bank_code": "MISR",
-                "bank_transaction_type": "salary",
-                "disbursement_status": "pending",
-                "status_code": "8000",
-                "status_description": "Transaction received and validated successfully. Dispatched for being processed by the bank",
+                "bank_imd_or_bin": "221166",
+                "disbursement_status": "successful",
+                "status_code": "00",
+                "status_description": "PROCESSED OK",
                 "created_at": "2020-10-12 07:25:51.631701",
                 "updated_at": "2020-10-12 07:25:52.263173"
             }
@@ -315,43 +172,3 @@
                 "status_description": "Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team",
                 "status_code": "400"
             }
-
-
-8. **Test e-wallet numbers**
-
-    **IMPORTANT Note**:
-
-        these numbers will get success response on staging environment only
-
-    1. Test number for vodafone issuer
-
-             01023456789
-
-    2. Test number for etisalat issuer
-
-            01123456789
-
-    3. Test number for orange issuer
-
-             01223456789
-
-    4. Test number for bank_wallet issuer
-
-            01123416789
-
-    5. Test number for bank_card issuer
-
-            1111222233334444
-
-    6. Test IBAN number for bank_card issuer
-
-            EG829299835722904511873050307
-
-
----
-
-> **_NOTE:_** Transactions on wallet take notime to get final status (on the spot)
-
-> **_NOTE:_** Transactions on bank take 2 Working Days to get final status
-
----

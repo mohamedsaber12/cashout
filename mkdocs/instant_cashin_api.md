@@ -45,60 +45,59 @@
             |  Bank Name                                       |  Bank IMD/BIN |
             |-------	                                       |------         |
             |  Al Baraka Bank Limited                          |   639530      |
-            |  Allied Bank Limited                             |   CITI        |
-            |  Askari Commercial Bank Limited                  |   MIDB        |
-            |  Bank AL Habib Limited                           |   BDC         |
-            |  Bank Alfalah Limited                            |   HSBC        |
-            |  Faysal Bank Limited                             |   CAE         |
-            |  Habib Bank Limited                              |   EGB         |
-            |  Meezan Bank Limited                             |   UB          |
-            |  National Bank of Pakistan                       |   QNB         |
-            |  Soneri Bank Limited                             |   ARAB        |
-            |  Standard Chartered Bank                         |   ENBD        |
-            |  United Bank Limited                             |   ABK         |
-            |  SAMBA Bank                                      |   NBK         |
-            |  Dubai Islamic Bank Pakistan Limited             |   ABC         |
-            |  BankIslami Pakistan Limited                     |   FAB         |
-            |  Bank of Khyber                                  |   ADIB        |
-            |  Bank of Punjab                                  |   CIB         |
-            |  Telenor Microfinance Bank                       |   HDB         |
-            |  JS Bank                                         |   MISR        |
-            |  Silk Bank                                       |   AAIB        |
-            |  Summit Bank                                     |   EALB        |
-            |  Habib Metropolitan Bank Limited                 |   EDBE        |
-            |  FINCA Microfinance Bank                         |   FAIB        |
-            |  Sindh Bank                                      |   BLOM        |
-            |  Citi Bank                                       |   ADCB        |
-            |  Apna Microfinance Bank                          |   BOA         |
-            |  Ubank                                           |   SAIB        |
-            |  First Women Bank Limited                        |   NBE         |
-            |  Mobilink Microfinance Bank Limited              |   ABRK        |
-            |  ICBC                                            |   POST        |
-            |  Advans Pakistan Microfinance Ltd.               |   NSB         |
-            |  NRSP Microfinance Bank Ltd.                     |   IDB         |
-            |  MCB Islamic Banking                             |   SCB         |
-            |  FirstPay/HBL MFB                                |   MASH        |
-            |  MCB Bank Limited                                |   AIB         |
-            |  SME Bank Limited                                |   AUDI        |
-            |  Khushali Microfinance Bank                      |   GASC        |
-            |  Zarai Taraqiati Bank                            |   ARIB        |
-            |  MCB ARIF HABIB                                  |   PDAC        |
-            |  WHITE LABEL ATM                                 |   NBG         |
-            |  HBL ASSET MANAGEMENT                            |   CBE         |
-            |  NayaPay Private Limited                         |   BBE         |
-            |  NBP Funds                                       |   BBE         |
-            |  Central Directorate of National Savings (CDNS)  |   BBE         |
-            |  PayMax (Zong)                                   |   BBE         |
-            |  SadaPay                                         |   BBE         |
-            |  BYKEA                                           |   BBE         |
-            |  SimPaisa                                        |   BBE         |
-            |  Abhi Finance                                    |   BBE         |
-            |  TAG                                             |   BBE         |
-            |  Barwaqt                                         |   BBE         |
-            |  OPay                                            |   BBE         |
-            |  Keenu                                           |   BBE         |
-            |  FINJA EMI                                       |   BBE         |
-
+            |  Allied Bank Limited                             |   589430      |
+            |  Askari Commercial Bank Limited                  |   603011      |
+            |  Bank AL Habib Limited                           |   627197      |
+            |  Bank Alfalah Limited                            |   627100      |
+            |  Faysal Bank Limited                             |   601373      |
+            |  Habib Bank Limited                              |   600648      |
+            |  Meezan Bank Limited                             |   627873      |
+            |  National Bank of Pakistan                       |   958600      |
+            |  Soneri Bank Limited                             |   786110      |
+            |  Standard Chartered Bank                         |   627271      |
+            |  United Bank Limited                             |   588974      |
+            |  SAMBA Bank                                      |   606101      |
+            |  Dubai Islamic Bank Pakistan Limited             |   428273      |
+            |  BankIslami Pakistan Limited                     |   639357      |
+            |  Bank of Khyber                                  |   627618      |
+            |  Bank of Punjab                                  |   623977      |
+            |  Telenor Microfinance Bank                       |   639390      |
+            |  JS Bank                                         |   603733      |
+            |  Silk Bank                                       |   627544      |
+            |  Summit Bank                                     |   604781      |
+            |  Habib Metropolitan Bank Limited                 |   627408      |
+            |  FINCA Microfinance Bank                         |   502841      |
+            |  Sindh Bank                                      |   505439      |
+            |  Citi Bank                                       |   508117      |
+            |  Apna Microfinance Bank                          |   581862      |
+            |  Ubank                                           |   581886      |
+            |  First Women Bank Limited                        |   628138      |
+            |  Mobilink Microfinance Bank Limited              |   585953      |
+            |  ICBC                                            |   621464      |
+            |  Advans Pakistan Microfinance Ltd.               |   505895      |
+            |  NRSP Microfinance Bank Ltd.                     |   586010      |
+            |  MCB Islamic Banking                             |   507642      |
+            |  FirstPay/HBL MFB                                |   220557      |
+            |  MCB Bank Limited                                |   589388      |
+            |  SME Bank Limited                                |   604889      |
+            |  Khushali Microfinance Bank                      |   220563      |
+            |  Zarai Taraqiati Bank                            |   220564      |
+            |  MCB ARIF HABIB                                  |   220561      |
+            |  WHITE LABEL ATM                                 |   999914      |
+            |  HBL ASSET MANAGEMENT                            |   220565      |
+            |  NayaPay Private Limited                         |   478278      |
+            |  NBP Funds                                       |   629113      |
+            |  Central Directorate of National Savings (CDNS)  |   62911600    |
+            |  PayMax (Zong)                                   |   999919      |
+            |  SadaPay                                         |   559049      |
+            |  BYKEA                                           |   999921      |
+            |  SimPaisa                                        |   999922      |
+            |  Abhi Finance                                    |   999926      |
+            |  TAG                                             |   999925      |
+            |  Barwaqt                                         |   999955      |
+            |  OPay                                            |   999947      |
+            |  Keenu                                           |   999906      |
+            |  FINJA EMI                                       |   220591      |
 
 ### Response
 1. **Response Parameters**

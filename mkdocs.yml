@@ -8,7 +8,6 @@ nav:
   - Definitions and Acronyms: definitions_and_acronyms.md
   - Generate and Refresh Token API: generate_and_refresh_token_api.md
   - Instant Cashin API: instant_cashin_api.md
-  - Cancel Aman Transaction API: cancel_aman_transaction_api.md
   - Bulk Transaction Inquiry API: bulk_transaction_inquiry_api.md
   - Budget Inquiry API: budget_inquiry_api.md
   - CallBack Url: callback_url.md

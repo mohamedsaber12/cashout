@@ -15,6 +15,6 @@
 * Environments/Web service locations will be generalized at the urls with {ENV} variable
 
 ```
-{STAGING_ENV}     >  stagingpayouts.paymobsolutions.com/api/secure/
-{PRODUCTION_ENV}  >  payouts.paymobsolutions.com/api/secure/
+{STAGING_ENV}     >  stagingpayouts-pak.paymob.com/api/secure/
+{PRODUCTION_ENV}  >  payouts-pak.paymob.com/api/secure/
 ```

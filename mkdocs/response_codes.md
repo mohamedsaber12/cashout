@@ -1,98 +1,107 @@
 # General Responses
 
 
-### Vodafone / Etisalat / Orange / Bank Wallet Codes
+### Response Codes
 
-   | Errot Code | Description                                                |
-   |----------  |----------                                                  |
-   | 403        | Channel Authentication Failed
-   | 404        | Undefined request type
-   | 406        | Incorrect input given to request
-   | 501        | Internal Error
-   | 583        | Exceeded Maximum Limit Per Single Transaction
-   | 604        | Below Minimum Transaction Limit Per Single Transaction
-   | 610        | User Not Eligible To Perform Transaction
-   | 615        | Sender and Recipient Accounts are the Same
-   | 618        | Recipient Is Unregistered
-   | 1051       | MSISDN Does Not Exist
-   | 1056       | Invalid Consumer PIN
-   | 1033       | Initial MPIN has not been changed
-   | 1069       | Sender and Recipient Accounts are the Same
-   | 1102       | M-PIN is Empty
-   | 1118       | MSISDN is Locked
-   | 1301       | Invalid Client ID
-   | 1996       | Catch All SE Errors
-   | 1997       | Inactive Service
-   | 4011       | Initial MPIN has not been changed.
-   | 4037       | Consumer MSISDN Does Not Exist
-   | 4051       | Agent MSISDN Does Not Exist
-   | 4055       | Consumer Account Status is Not Active
-   | 4056       | Invalid Agent M-PIN
-   | 4070       | Agent Type is Invalid
-   | 4081       | Consumer has No Default Funding Account
-   | 4139       | Agent MSISDN does not exist
-   | 4140       | Agent ID Does Not Exist
-   | 4333       | Recipient Consumers MPIN has not been changed
-   | 4334       | Recipient Consumers has exceeded transaction count limit
-   | 5465       | Service Call Failed
-   | 6001       | Funding Account Status is Referral
-   | 6003       | Invalid Agent
-   | 6004       | Funding Account Status is Pick-up CR Problem or Fraud/Capture Card
-   | 6005       | Funding Account was not Honored/General Decline
-   | 6012       | Invalid Transaction
-   | 6013       | Invalid Amount
-   | 6014       | Invalid Funding Account Card Number
-   | 6015       | Invalid Issuer
-   | 6030       | Format Error
-   | 6041       | Funding Account Status is Lost
-   | 6043       | Funding Account Status is Stolen
-   | 6051       | Service temporarily suspended
-   | 6054       | Funding Account is Expired
-   | 6055       | Invalid C-PIN
-   | 6057       | Transaction Not Permitted to Issuer/Card Holder
-   | 6058       | Transaction Not Permitted to Acquirer/Terminal
-   | 6061       | Exceeded Transaction Amount Limit
-   | 6062       | Restricted Card
-   | 6063       | Security Violation
-   | 6065       | Exceeded Transaction Count Limit
-   | 6070       | Contact Card Issuer
-   | 6071       | C-PIN Not Changed
-   | 6075       | Allowable Number of C-PIN Tries Exceeded
-   | 6076       | Invalid/Non-Existent "To Account"
-   | 6077       | Invalid/Non-Existent "From Account"
-   | 6078       | Invalid/Non-Existent Account
-   | 6084       | Invalid Authorization Life Cycle
-   | 6086       | C-PIN Validation Not Possible
-   | 6088       | Cryptographic Failure
-   | 6089       | Unacceptable C-PIN
-   | 6091       | Authorization System/Issuer System Inoperative
-   | 6092       | Unable to Route Transaction
-   | 6094       | Duplicate Authorization Request
-   | 6096       | General System Error
-   | 6097       | MIP is Down/Not Connected
-   | 6098       | No Response from MIP
-   | 6099       | Catch All Acquirer SE Error
-
-
-[//]: # (### Etisalat Cash Codes)
-
-[//]: # ()
-[//]: # (   | Errot Code | Description                       )
-
-[//]: # (   |----------  |----------                        )
-
-[//]: # (   | 0          | Successful transaction)
-
-[//]: # (   | 90002      | Invalid disbursement request)
-
-[//]: # (   | 90003      | Invalid or missing parameters)
-
-[//]: # (   | 90007      | Invalid or missing parameters)
-
-[//]: # (   | 90005      | Service is down)
-
-[//]: # (   | 90006      | Service is down)
-
-[//]: # (   | 90093      | Service temporarily suspended)
-
-[//]: # (   | 90040      | عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778 )
+   | Error Code   | Description
+     |---     |----------
+   | 00           | PROCESSED OK
+   | 01           | LIMIT EXCEEDED
+   | 02           | INVALID ACCOUNT
+   | 03           | ACCOUNT INACTIVE
+   | 04           | LOW BALANCE
+   | 05           | INVALID CARD
+   | 06           | INVALID IMD
+   | 07           | INVALID CARD DATA
+   | 08           | INVALID CARD RECORD
+   | 09           | FIELD ERROR
+   | 10           | DUPLICATE TRANSACTION
+   | 11           | BAD TRANSACTION CODE
+   | 12           | INVALID CARD STATUS
+   | 13           | INTERNAL DATABASE ERROR
+   | 14           | WARM CARD
+   | 15           | HOT CARD
+   | 16           | BAD CARD STATUS
+   | 17           | UNKNOWN AUTH MODE
+   | 18           | INVALID TRANSACTION DATE
+   | 19           | INVALID CURRENCY CODE
+   | 20           | NO TRANSACTION ON IMD
+   | 21           | NO TRANSACTION ON ACCT
+   | 22           | BAD CARD CYCLE DAT E
+   | 23           | BAD CARD CYCLE LENGTH
+   | 24           | BAD PIN
+   | 25           | CARD EXPIRED
+   | 26           | INTERNAL ERROR
+   | 27           | INTERNAL ERROR
+   | 28           | NO ACCOUNTS LINKED
+   | 29           | INTERNAL ERROR
+   | 30           | ORIGINAL TRANSACTION NOT FOUND
+   | 31           | INTERNAL ERROR
+   | 32           | INTERNAL ERROR
+   | 33           | INTERNAL ERROR
+   | 34           | ORIGINAL NOT AUTHORIZED
+   | 35           | ORIGINAL ALREADY REVERSED
+   | 36           | ACQUIRER REVERSAL
+   | 37           | INVALID REPLACEMENT AMOUNT
+   | 38           | TRANSACTION CODE MISMATCH
+   | 39           | BAD TRANSACTION TYPE
+   | 40           | INTERNAL ERROR
+   | 41           | EXPIRY DATE MISMATCH
+   | 42           | ACQUIRER ADJUSTMENT
+   | 43           | ACQUIRER NACK
+   | 44           | ORIGINAL ALREADY NACKED
+   | 45           | T2 DATA MISMATCH
+   | 46           | UNABLE TO PROCESS
+   | 47           | ERR CURRENCY CONVERSION
+   | 48           | BAD AMOUNT
+   | 49           | INTERNAL ERROR
+   | 50           | HOST STATUS UNKNOWN
+   | 51           | HOST NOT PROCESSING
+   | 52           | HOST IN STANDIN MODE
+   | 53           | HOST IN BAL DWNLD MODE
+   | 54           | SAF TRANSMIT MODE
+   | 55           | HOST LINK DOWN
+   | 56           | SENT TO HOST
+   | 57           | INTERNAL ERROR
+   | 58           | TRANSACTION TIMEDOUT
+   | 59           | HOST REJECT
+   | 60           | PIN RETRIES EXHAUSTED
+   | 61           | TRANSACTION REJECTED, PLEASE SWITCH TO CONTACT INTERFACE
+   | 62           | TRANSACTION REJECTED, PERFORM TRANSACTION AGAIN WITH CARDHOLDER AUTHENTICATION REQUIRED
+   | 63           | DESTINATION NOT FOUND
+   | 64           | DESTINATION NOT REGISTERED
+   | 65           | CASH TRANSACTION NOT ALLOWED
+   | 66           | NO TRANSACTION ALLOWED
+   | 67           | INVALID ACCOUNT STATUS
+   | 68           | INVALID TO ACCOUNT
+   | 69           | BAD PIN COMPARE
+   | 70           | REFUSED IMD
+   | 71           | NO PROFILE AVAILABLE
+   | 72           | CURRENCY NOT ALLOWED
+   | 73           | CHECK DIGIT FAILED
+   | 74           | TRANSACTION SOURCE NOT ALLOWED
+   | 75           | UNKNOWN TRANSACTION SOURCE
+   | 76           | MANUAL ENTRY NOT ALLOWED
+   | 77           | REFER TO ISSUER
+   | 78           | INVALID MERCHANT
+   | 79           | HONOR WITH ID
+   | 80           | MESSAGE FORMAT ERROR
+   | 81           | SECURITY VIOLATION
+   | 82           | MAIL ORDER NOT ALLOWED
+   | 83           | NO COMMS KEY
+   | 84           | NO PIN KEY
+   | 85           | NO DEC TAB
+   | 86           | INCORRECT PIN LEN
+   | 87           | CASH RETRACT
+   | 88           | FAULTY DISPENSE
+   | 89           | SHORT DISPENSE
+   | 90           | CUSTOMER NOT FOUND
+   | 91           | ISSUER REVERSAL
+   | 92           | ACCOUNT LOCKED
+   | 93           | CUSTOMER RELATION NOT FOUND
+   | 94           | PERMISSION DENIED
+   | 95           | TRANSACTION REJECTED
+   | 96           | ORIGINAL ALREADY REJECTED
+   | 97           | BAD EXP DATE
+   | 98           | ORIGINAL AMOUNT INCORRECT
+   | 99           | ORIGINAL DATA ELEMENT MISMATCH

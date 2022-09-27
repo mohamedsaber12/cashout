@@ -10,9 +10,7 @@ nav:
   - Instant Cashin API: instant_cashin_api.md
   - Bulk Transaction Inquiry API: bulk_transaction_inquiry_api.md
   - Budget Inquiry API: budget_inquiry_api.md
-  - CallBack Url: callback_url.md
   - Response Codes: response_codes.md
-  - Swagger Api: swagger-ui/
 
 theme:
     name: readthedocs

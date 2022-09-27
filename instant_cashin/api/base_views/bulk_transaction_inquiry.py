@@ -16,8 +16,7 @@ from utilities.logging import logging_message
 
 from ...models import InstantTransaction
 from ..mixins import APIViewPaginatorMixin, IsInstantAPICheckerUser
-from ..serializers import (BankTransactionResponseModelSerializer,
-                           BulkInstantTransactionReadSerializer,
+from ..serializers import (BulkInstantTransactionReadSerializer,
                            InstantTransactionResponseModelSerializer)
 
 
@@ -35,23 +34,14 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
     throttle_classes = [UserRateThrottle]
     read_serializer = BulkInstantTransactionReadSerializer
     instant_trx_write_serializer = InstantTransactionResponseModelSerializer
-    bank_trx_write_serializer = BankTransactionResponseModelSerializer
 
     def list(self, request, serializer, *args, **kwargs):
         """
         Serializes response of instant transaction objects list
         """
-        if serializer.validated_data["bank_transactions"]:
-            write_serializer = self.bank_trx_write_serializer
-            queryset = BankTransaction.objects.filter(user_created=request.user).\
-                filter(~Q(creditor_bank__in=["THWL", "MIDG"])).\
-                filter(Q(parent_transaction__transaction_id__in=self.kwargs["trx_ids_list"]) | Q(parent_transaction__client_transaction_reference__in=self.kwargs["trx_ids_list"])).\
-                order_by("parent_transaction__transaction_id", "-id").distinct("parent_transaction__transaction_id")
-
-        else:
-            write_serializer = self.instant_trx_write_serializer
-            queryset = InstantTransaction.objects.filter(from_user=request.user).\
-                filter(Q(uid__in=self.kwargs["trx_ids_list"]) | Q(client_transaction_reference__in=self.kwargs["trx_ids_list"]))
+        write_serializer = self.instant_trx_write_serializer
+        queryset = InstantTransaction.objects.filter(from_user=request.user).\
+            filter(Q(uid__in=self.kwargs["trx_ids_list"]) | Q(client_transaction_reference__in=self.kwargs["trx_ids_list"]))
 
         page = self.paginate_queryset(queryset)
         if page is not None:
@@ -84,7 +74,7 @@ class BulkTransactionInquiryAPIView(APIViewPaginatorMixin, views.APIView):
         except Exception as err:
             logging_message(BULK_TRX_INQUIRY_LOGGER, "[message] [GENERAL ERROR]", request, f"{err.args}")
             return Response({"Internal Error": INTERNAL_ERROR_MSG}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
     def post(self, request, *args, **kwargs):
         """
         Handles POST requests to retrieve list of detailed instant transactions corresponding to the uuid inputs

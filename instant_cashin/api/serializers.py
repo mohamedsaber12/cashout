@@ -200,7 +200,6 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
-    aman_cashing_details = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
@@ -224,17 +223,6 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         """Retrieves transaction recipient name"""
         return transaction.recipient_name
 
-    def get_aman_cashing_details(self, transaction):
-        """Retrieves aman cashing details of aman channel transaction"""
-        aman_cashing_details = transaction.aman_transaction
-
-        if aman_cashing_details:
-            return {
-                'bill_reference': aman_cashing_details.bill_reference,
-                'is_paid': aman_cashing_details.is_paid,
-                'is_cancelled': aman_cashing_details.is_cancelled
-            }
-
     def get_created_at(self, transaction):
         """Retrieves transaction created_at time formatted"""
         return transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f")
@@ -247,7 +235,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         model = InstantTransaction
         fields = [
             'transaction_id', 'issuer', 'msisdn', 'amount', 'full_name', 'disbursement_status', 'status_code',
-            'status_description', 'aman_cashing_details', 'client_transaction_reference',  'created_at', 'updated_at'
+            'status_description', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 
@@ -257,8 +245,6 @@ class BulkInstantTransactionReadSerializer(serializers.Serializer):
     """
 
     transactions_ids_list = UUIDListField(required=True, allow_null=False, allow_empty=False)
-    bank_transactions = serializers.BooleanField(default=False)
-
 
 class InstantUserInquirySerializer(serializers.Serializer):
     """

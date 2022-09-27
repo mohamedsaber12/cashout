@@ -67,7 +67,7 @@
                         "msisdn": "3110539217",
                         "amount": 500.0,
                         "full_name": "",
-                        "disbursement_status": "successful",
+                        "disbursement_status": "failed",
                         "status_code": "01",
                         "status_description": "LIMIT EXCEEDED",
                         "created_at": "2020-04-21 09:14:01.884397",

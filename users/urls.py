@@ -106,8 +106,8 @@ urlpatterns = [
 
     path('profile/<username>/', views.ProfileView.as_view(), name='profile'),
     path('profile/edit/<username>/', views.ProfileUpdateView.as_view(), name='edit_profile'),
-    path('callback/edit/<username>/', CallbackURLEdit.as_view(), name='api_viewer_callback'),
-    
+    # path('callback/edit/<username>/', CallbackURLEdit.as_view(), name='api_viewer_callback'),
+
 ]
 
 

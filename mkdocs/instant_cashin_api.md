@@ -35,8 +35,8 @@
 
     * **Usage:**
         * **{issuer}** options list: [vodafone, etisalat, orange, aman, bank_wallet, bank_card] -case insensitive-.
-        * **{amount}** it's valid to use decimal point numbers up to 2 decimal points ex: 53.99
-        * **{msisdn}**: the +2 added automatically, so it consists of 11 numbers, ex: 01020304050
+        * **{amount}** it's valid to use decimal point numbers up to 2 decimal point ex: 53.99
+        * **{msisdn}**: the +92 added automatically, so it consists of 10 numbers, ex: 3110539217
         * **{bank_card_number}**: expected: [bank account number, IBAN, card number]
         * **{bank_imd_or_bin}**: the banks IMD/BIN list.
         * **{client_reference_id}** generated UUID by the client to be saved as reference in case of timeouts.

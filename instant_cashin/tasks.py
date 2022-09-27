@@ -186,47 +186,55 @@ def update_instant_timeouts_from_vodafone_report(
         ),
     )
     trns = InstantTransaction.objects.filter(
-        disbursed_date__range=date_range, status="U", transaction_status_code=6005
+        disbursed_date__range=date_range, status="U", transaction_status_code__in=[6005,501]
     )
     total_timeouts = trns.count()
     total_failed = 0
     total_success = 0
     for trn in trns:
-        if trn.reference_id in vodafone_data:
-            if vodafone_data[trn.reference_id]["success"]:
-                TIMEOUTS_UPDATE_LOGGER.debug(
-                    f"[Timeouts updates] update transaction {trn.uid} and ref {trn.reference_id} with Succesful status"
-                )
-                trn.status = "S"
-                trn.transaction_status_code = "200"
-                trn.transaction_status_description = (
-                    "تم ايداع "
-                    + str(trn.amount)
-                    + " جنيه إلى رقم "
-                    + str(trn.anon_recipient)
-                    + "بنجاح"
-                )
-                trn.save()
-                # update budget
-                balance_before = trn.from_user.root.budget.get_current_balance()
-                balance_after = trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
-                    trn.amount, issuer_mapper[trn.issuer_type]
-                )
-                trn.balance_before = balance_before
-                trn.balance_after = balance_after
-                trn.save()
-                total_success = total_success + 1
+        if trn.reference_id:
+            if trn.reference_id in vodafone_data:
+                if vodafone_data[trn.reference_id]["success"]:
+                    TIMEOUTS_UPDATE_LOGGER.debug(
+                        f"[Timeouts updates] update transaction {trn.uid} and ref {trn.reference_id} with Succesful status"
+                    )
+                    trn.status = "S"
+                    trn.transaction_status_code = "200"
+                    trn.transaction_status_description = (
+                        "تم ايداع "
+                        + str(trn.amount)
+                        + " جنيه إلى رقم "
+                        + str(trn.anon_recipient)
+                        + "بنجاح"
+                    )
+                    trn.save()
+                    # update budget
+                    balance_before = trn.from_user.root.budget.get_current_balance()
+                    balance_after = trn.from_user.root.budget.update_disbursed_amount_and_current_balance(
+                        trn.amount, issuer_mapper[trn.issuer_type]
+                    )
+                    trn.balance_before = balance_before
+                    trn.balance_after = balance_after
+                    trn.save()
+                    total_success = total_success + 1
+                else:
+                    TIMEOUTS_UPDATE_LOGGER.debug(
+                        f"[Timeouts updates] [found on report ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
+                    )
+                    trn.status = "F"
+                    trn.save()
+                    total_failed = total_failed + 1
             else:
                 TIMEOUTS_UPDATE_LOGGER.debug(
-                    f"[Timeouts updates] [found on report ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
-                )
+                        f"[Timeouts updates] [not found on report ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
+                    )
                 trn.status = "F"
                 trn.save()
                 total_failed = total_failed + 1
         else:
             TIMEOUTS_UPDATE_LOGGER.debug(
-                    f"[Timeouts updates] [not found on report ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
-                )
+                        f"[Timeouts updates] [has no ref number ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
+                    )
             trn.status = "F"
             trn.save()
             total_failed = total_failed + 1

@@ -156,7 +156,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstantTransaction
         fields = [
-            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_imd_or_bin',
+            'transaction_id', 'issuer', 'amount', 'bank_card_number', 'full_name', 'bank_name',
             'disbursement_status', 'status_code', 'status_description', 'client_transaction_reference',
             'created_at', 'updated_at'
         ]

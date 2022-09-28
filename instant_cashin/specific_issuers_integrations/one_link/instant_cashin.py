@@ -371,6 +371,8 @@ class OneLinkTransactionsChannel:
 
         try:
             response = OneLinkTransactionsChannel.post(get_from_env("ONE_LINK_IBFT_PUSH_URL"), instant_trx_obj)
+            if response == None:
+                has_valid_response = False
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
             ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(_(f"[message] [ONE LINK EXCEPTION] [{instant_trx_obj.from_user}] -- {e}"))

@@ -31,6 +31,7 @@ from ..serializers import (
     BankTransactionResponseModelSerializer
 )
 from django.conf import settings
+from disbursement.utils import BANK_NAME_IMD
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -67,7 +68,10 @@ class InstantDisbursementAPIView(views.APIView):
         for choice in InstantTransaction.ISSUER_TYPE_CHOICES:
             if issuer.lower() == choice[1].lower():
                 return choice[0]
-        return 'V'
+        return 'JC'
+
+    def get_imd_from_bank_name(self, bank_name):
+        return BANK_NAME_IMD[bank_name]
 
     def create_instant_transaction_for_bank(self, disburser, serializer):
         """Create instant transaction out of the passed serializer data"""
@@ -78,7 +82,7 @@ class InstantDisbursementAPIView(views.APIView):
         fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
             amount, issuer
         )
-        creditor_bank = serializer.validated_data["bank_imd_or_bin"]
+        bank_name = serializer.validated_data["bank_name"]
         creditor_account_number = serializer.validated_data["bank_card_number"]
 
         transaction_dict = {
@@ -88,7 +92,8 @@ class InstantDisbursementAPIView(views.APIView):
             "anon_sender": get_from_env("ACCOUNT_NUMBER_FROM"),
             "anon_recipient": creditor_account_number,
             "amount": amount,
-            "creditor_bank": creditor_bank,
+            "creditor_bank_imd": self.get_imd_from_bank_name(bank_name),
+            "creditor_bank_name": bank_name,
             "status": "P",
             "recipient_name": full_name,
             "disbursed_date": timezone.now(),

@@ -124,13 +124,6 @@ class InstantTransaction(AbstractBaseTransaction,
         blank=True,
         null=True
     )
-    creditor_bank = models.CharField(
-        _('Beneficiary Bank'),
-        blank=True,
-        null=True,
-        max_length=40,
-        help_text=_('The bank where the customer/receiver maintains its accounts')
-    )
     aman_obj = GenericRelation(
         "instant_cashin.AmanTransaction",
         object_id_field="transaction_id",

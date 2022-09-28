@@ -545,6 +545,20 @@ class AbstractBaseOneLinkIBFTFields(models.Model):
         _('Authorization Identification Response'), max_length=6, validators=[alpha_numeric_regex_with_length_6],
         null=True, blank=True
     )
+    creditor_bank_imd = models.CharField(
+        _('Recipient Operator IMD/Bin'),
+        blank=True,
+        null=True,
+        max_length=40,
+        help_text=_('The bank imd where the customer/receiver maintains its accounts')
+    )
+    creditor_bank_name = models.CharField(
+        _('Beneficiary Bank Name'),
+        blank=True,
+        null=True,
+        max_length=100,
+        help_text=_('The bank where the customer/receiver maintains its accounts')
+    )
     bulk_ibft_json_data = models.JSONField(default=dict)
 
     class Meta:

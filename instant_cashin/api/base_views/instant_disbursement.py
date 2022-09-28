@@ -53,23 +53,10 @@ class InstantDisbursementAPIView(views.APIView):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.specific_issuers = ['orange', 'aman', 'bank_wallet', 'bank_card']
-
-    def get_superadmin_pin(self, instant_user, wallet_issuer, serializer):
-        """
-        Placed at the .env, formatted like {InstantSuperUsername}_{issuer}_PIN=pin
-        :param instant_user: the user who can initiate the instant cash in request
-        :param wallet_issuer: type of the passed wallet issuer
-        :param serializer: the serializer which contains the data
-        :return: It returns the PIN of the instant user's superadmin from request's data or .env file
-        """
-        if wallet_issuer.lower() in self.specific_issuers: return True
-
-        if serializer.data.get('is_single_step', None) or \
-            not serializer.data.get('pin', None):
-            return get_from_env(f"{instant_user.root.super_admin.username}_{wallet_issuer}_PIN")
-
-        return serializer.validated_data['pin']
+        self.wallet_issuers = ["jazzcash", "easypaisa", "zong", "sadapay", "ubank",
+                               "bykea", "simpaisa", "tag", "opay"]
+        self.bank_wallet_issuers = [ "bank_wallet"]
+        self.bank_issuers = [ "bank_card"]
 
     def match_issuer_type(self, issuer):
         """
@@ -82,38 +69,8 @@ class InstantDisbursementAPIView(views.APIView):
                 return choice[0]
         return 'V'
 
-    def determine_trx_category_and_purpose(self, transaction_type):
-        """Determine transaction category code and purpose based on the passed transaction_type"""
-        if transaction_type.upper() == "MOBILE":
-            category_purpose_dict = {
-                "category_code": "MOBI",
-                "purpose": "CASH"
-            }
-        elif transaction_type.upper() == "SALARY":
-            category_purpose_dict = {
-                "category_code": "CASH",
-                "purpose": "SALA"
-            }
-        elif transaction_type.upper() == "PREPAID_CARD":
-            category_purpose_dict = {
-                "category_code": "PCRD",
-                "purpose": "CASH"
-            }
-        elif transaction_type.upper() == "CREDIT_CARD":
-            category_purpose_dict = {
-                "category_code": "CASH",
-                "purpose": "CCRD"
-            }
-        else:
-            category_purpose_dict = {
-                "category_code": "CASH",
-                "purpose": "CASH"
-            }
-
-        return category_purpose_dict
-
     def create_instant_transaction_for_bank(self, disburser, serializer):
-        """Create a instant transaction out of the passed serializer data"""
+        """Create instant transaction out of the passed serializer data"""
         amount = serializer.validated_data["amount"]
         issuer = serializer.validated_data["issuer"].lower()
         client_reference_id = serializer.validated_data.get("client_reference_id")
@@ -135,7 +92,7 @@ class InstantDisbursementAPIView(views.APIView):
             "status": "P",
             "recipient_name": full_name,
             "disbursed_date": timezone.now(),
-            "is_single_step":serializer.validated_data["is_single_step"],
+            "is_single_step": serializer.validated_data["is_single_step"],
             "client_transaction_reference": client_reference_id,
             "fees": fees,
             "vat": vat,
@@ -145,54 +102,35 @@ class InstantDisbursementAPIView(views.APIView):
         instant_transaction = InstantTransaction.objects.create(**transaction_dict)
         return instant_transaction
 
-    def aman_api_authentication_params(self, aman_channel_object):
-        """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
-        api_auth_response = aman_channel_object.api_authentication()
-        api_auth_token = merchant_id = None
+    def create_instant_transaction_for_wallet(self, disburser, serializer):
+        """Create a instant transaction out of the passed serializer data"""
+        amount = serializer.validated_data["amount"]
+        issuer = serializer.validated_data["issuer"].lower()
+        client_reference_id = serializer.validated_data.get("client_reference_id")
+        fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
+            amount, issuer
+        )
+        msisdn = serializer.validated_data["msisdn"]
 
-        if api_auth_response.status_code == status.HTTP_201_CREATED:
-            api_auth_token = api_auth_response.data.get('api_auth_token', '')
-            merchant_id = str(api_auth_response.data.get('merchant_id', ''))
-
-        return api_auth_token, merchant_id
-
-    def aman_issuer_handler(self, request, transaction_object, serializer, user):
-        """Handle aman operations/transactions separately"""
-
-        aman_object = AmanChannel(request, transaction_object, user=user)
-
-        try:
-            api_auth_token, merchant_id = self.aman_api_authentication_params(aman_object)
-            order_registration = aman_object.order_registration(api_auth_token, merchant_id, transaction_object.uid)
-
-            if order_registration.status_code == status.HTTP_201_CREATED:
-                api_auth_token, _ = self.aman_api_authentication_params(aman_object)
-                payment_key_params = {
-                    "api_auth_token": api_auth_token,
-                    "order_id": order_registration.data.get('order_id', ''),
-                    "first_name": f"{serializer.validated_data['first_name']}",
-                    "last_name": f"{serializer.validated_data['last_name']}",
-                    "email": f"{serializer.validated_data['email']}",
-                    "phone_number": f"+2{serializer.validated_data['msisdn']}"
-                }
-                payment_key_obtained = aman_object.obtain_payment_key(**payment_key_params)
-
-                if payment_key_obtained.status_code == status.HTTP_201_CREATED:
-                    payment_key = payment_key_obtained.data.get('payment_token', '')
-                    make_payment_request = aman_object.make_pay_request(payment_key)
-
-                    if make_payment_request.status_code == status.HTTP_200_OK:
-                        return make_payment_request
-
-        except Exception as err:
-            user = request.user if not request.user.is_anonymous else user
-            balance_before = balance_after = user.root.budget.get_current_balance()
-            transaction_object.balance_before = balance_before
-            transaction_object.balance_after = balance_after
-            transaction_object.save()
-            aman_object.log_message(request, f"[failed instant trx]", f"exception: {err.args[0]}")
-            transaction_object.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
-            return Response(InstantTransactionResponseModelSerializer(transaction_object).data)
+        transaction_dict = {
+            "issuer_type": self.match_issuer_type(issuer),
+            "currency": "PKR",
+            "from_user": disburser,
+            "anon_sender": get_from_env("ACCOUNT_NUMBER_FROM"),
+            "anon_recipient": msisdn,
+            "amount": amount,
+            "creditor_bank": "",
+            "status": "P",
+            "disbursed_date": timezone.now(),
+            "is_single_step": serializer.validated_data["is_single_step"],
+            "client_transaction_reference": client_reference_id,
+            "fees": fees,
+            "vat": vat,
+            "stan": date.today().strftime("%m%d%y"), # generate stan
+            "rrn": f"0{str(uuid.uuid4().int)[:11]}", # generate rrn
+        }
+        instant_transaction = InstantTransaction.objects.create(**transaction_dict)
+        return instant_transaction
 
     def post(self, request, *args, **kwargs):
         """
@@ -224,206 +162,27 @@ class InstantDisbursementAPIView(views.APIView):
 
         issuer = serializer.validated_data["issuer"].lower()
 
-        if issuer in ["vodafone", "etisalat", "aman"] or \
-            (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
-            transaction = None
+        try:
+            if issuer in self.wallet_issuers:
+                instant_trx_obj = self.create_instant_transaction_for_wallet(user, serializer)
+            elif issuer in self.bank_wallet_issuers:
+                pass
+            elif issuer in self.bank_issuers:
+                instant_trx_obj = self.create_instant_transaction_for_bank(user, serializer)
 
-            try:
-                instant_user = user
-                vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
-                data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
-                data_dict['MSISDN2'] = serializer.validated_data["msisdn"]
-                data_dict['AMOUNT'] = str(serializer.validated_data["amount"])
-                data_dict['WALLETISSUER'] = issuer.upper()
+            balance_before = balance_after = instant_trx_obj.from_user.root.budget.get_current_balance()
+            instant_trx_obj.balance_before = balance_before
+            instant_trx_obj.balance_after = balance_after
+            instant_trx_obj.save()
 
-                new_issuer = issuer
-
-                if (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE") or \
-                    (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE") or issuer == "vodafone":
-                    new_issuer = "VODAFONE"
-                data_dict['MSISDN'] = instant_user.root.super_admin.first_non_super_agent(new_issuer)
-                if issuer.lower() == 'aman':
-                    full_name = f"{serializer.validated_data['first_name']} {serializer.validated_data['last_name']}"
-                else:
-                    full_name = ""
-                fees, vat = user.root.budget.calculate_fees_and_vat_for_amount(
-                    data_dict['AMOUNT'], issuer
-                )
-                transaction = InstantTransaction.objects.create(
-                        from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
-                        amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
-                        anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
-                        disbursed_date=timezone.now(), fees=fees, vat=vat,
-                        client_transaction_reference=serializer.validated_data.get("client_reference_id")
-                )
-                if issuer in ["orange", "bank_wallet"] or \
-                (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE"):
-                    data_dict['WALLETISSUER'] = "VODAFONE"
-                data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
-
-            except Exception as e:
-                if transaction:
-                    transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
-                    balance_before = user.root.budget.get_current_balance()
-                    transaction.balance_before = balance_before
-                    transaction.balance_after = balance_before
-                    transaction.save()
-
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [INTERNAL SYSTEM ERROR]", request, e.args)
-                return default_response_structure(
-                        transaction_id=transaction.uid if transaction else None,
-                        status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                        field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
-            #  add uid to the payload
-            if issuer in ['etisalat', 'vodafone'] or \
-                (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
-                data_dict['EXTREFNUM'] = str(transaction.uid)
-
-            if issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE" or \
-                issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE":
-                data_dict["WALLETISSUER"] = "VODAFONE"
-                data_dict["TYPE"] = "DPSTREQ"
-
-            request_data_dictionary_without_pins = copy.deepcopy(data_dict)
-            request_data_dictionary_without_pins['PIN'] = 'xxxxxx'
-            logging_message(
-                INSTANT_CASHIN_REQUEST_LOGGER, "[request] [DATA DICT TO CENTRAL]", request,
-                f"{request_data_dictionary_without_pins}"
+        except Exception as e:
+            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [One Link EXCEPTION]", request, e.args)
+            return default_response_structure(
+                transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
+                field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK
             )
 
-            try:
-                if issuer == "aman":
-                    return self.aman_issuer_handler(request, transaction, serializer, user)
-
-                # check if msisdn is test number
-                if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
-                    (issuer in ['vodafone', 'etisalat'] or
-                    (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE")) and \
-                    data_dict['MSISDN2'] == get_from_env(f"test_number_for_{issuer}"):
-                    transaction.mark_successful(200, "")
-                    balance_before = user.root.budget.get_current_balance()
-                    balance_after = user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
-                    transaction.balance_before = balance_before
-                    transaction.balance_after = balance_after
-                    transaction.save()
-                    return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-
-                trx_response = requests.post(
-                    get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
-                    timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"]
-                )
-
-                if trx_response.ok:
-                    json_trx_response = trx_response.json()
-                    transaction.reference_id = json_trx_response["TXNID"]
-                else:
-                    raise ImproperlyConfigured(trx_response.text)
-
-            except ValidationError as e:
-                logging_message(
-                        INSTANT_CASHIN_FAILURE_LOGGER, "[message] [DISBURSEMENT VALIDATION ERROR]", request, e.args
-                )
-
-                transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
-                balance_before = user.root.budget.get_current_balance()
-                transaction.balance_before = balance_before
-                transaction.balance_after = balance_before
-                transaction.save()
-                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-            except (requests.Timeout, TimeoutError) as e:
-                logging_message(
-                    INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
-                )
-                transaction.mark_unknown(status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG)
-                balance_before = user.root.budget.get_current_balance()
-                transaction.balance_before = balance_before
-                transaction.balance_after = balance_before
-                transaction.save()
-                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-            except (ImproperlyConfigured, Exception) as e:
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, e.args)
-                transaction.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
-                balance_before = user.root.budget.get_current_balance()
-                transaction.balance_before = balance_before
-                transaction.balance_after = balance_before
-                transaction.save()
-                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-            if json_trx_response["TXNSTATUS"] == "200":
-                logging_message(
-                        INSTANT_CASHIN_SUCCESS_LOGGER, "[response] [SUCCESSFUL TRX]", request, f"{json_trx_response}"
-                )
-                transaction.mark_successful(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
-                balance_before = user.root.budget.get_current_balance()
-                balance_after = user.root.budget.update_disbursed_amount_and_current_balance(data_dict['AMOUNT'], issuer)
-                transaction.balance_before = balance_before
-                transaction.balance_after = balance_after
-                transaction.save()
-                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-            elif json_trx_response["TXNSTATUS"] == "501" or \
-                 json_trx_response["TXNSTATUS"] == "6005" :
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"timeout, {json_trx_response}")
-                transaction.mark_unknown(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
-                balance_before = user.root.budget.get_current_balance()
-                transaction.balance_before = balance_before
-                transaction.balance_after = balance_before
-                transaction.save()
-                return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-
-            logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"{json_trx_response}")
-            transaction.mark_failed(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
-            balance_before = user.root.budget.get_current_balance()
-            transaction.balance_before = balance_before
-            transaction.balance_after = balance_before
-            transaction.save()
-            return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
-
-        elif issuer == "bank_card":
-
-            try:
-                instant_trx_obj = self.create_instant_transaction_for_bank(user, serializer)
-                balance_before = balance_after = instant_trx_obj.from_user.root.budget.get_current_balance()
-                instant_trx_obj.balance_before = balance_before
-                instant_trx_obj.balance_after = balance_after
-                instant_trx_obj.save()
-
-            except Exception as e:
-                logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [One Link EXCEPTION]", request, e.args)
-                return default_response_structure(
-                    transaction_id=None, status_description={"Internal Error": INTERNAL_ERROR_MSG},
-                    field_status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, response_status_code=status.HTTP_200_OK
-                )
-
-            # # check if msisdn is test number
-            # if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \
-            #         (bank_trx_obj.creditor_account_number == get_from_env(f"test_number_for_{issuer}") or \
-            #          bank_trx_obj.creditor_account_number == get_from_env(f"test_IBAN_number")):
-            #     bank_trx_obj.mark_successful("8333", "success")
-            #     instant_trx_obj.mark_successful("8222", "success") if instant_trx_obj else None
-            #     balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
-            #     balance_after = bank_trx_obj.user_created.root. \
-            #         budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
-            #     bank_trx_obj.balance_before = balance_before
-            #     bank_trx_obj.balance_after = balance_after
-            #     bank_trx_obj.save()
-            #     if instant_trx_obj:
-            #         instant_trx_obj.balance_before = balance_before
-            #         instant_trx_obj.balance_after = balance_after
-            #         instant_trx_obj.save()
-            #
-            #     if instant_trx_obj:
-            #         return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
-            #     else:
-            #         return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
-
-
-            return OneLinkTransactionsChannel.send_transaction(instant_trx_obj)
+        return OneLinkTransactionsChannel.send_transaction(instant_trx_obj)
 
 
 class SingleStepDisbursementAPIView(InstantDisbursementAPIView):

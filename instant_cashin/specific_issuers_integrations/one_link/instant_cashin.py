@@ -44,7 +44,7 @@ CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
 
 class OneLinkTransactionsChannel:
     """
-    Handles disbursement for bank account/cards in pakistan
+    Handles disbursement for wallet, bank wallet and bank account/cards in pakistan
     """
 
     @staticmethod

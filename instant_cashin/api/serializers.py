@@ -13,8 +13,8 @@ from disbursement.models import BankTransaction
 from ..models import AbstractBaseIssuer, InstantTransaction
 from .fields import CustomChoicesField, UUIDListField, CardNumberField
 from .validators import (
-    bank_code_validator, cashin_issuer_validator,
-    fees_validator, issuer_validator, msisdn_validator, bank_transaction_type_validator,
+    bank_name_validator, cashin_issuer_validator,
+    fees_validator, issuer_validator, msisdn_validator,
     bank_imd_bin_validator
 )
 
@@ -33,23 +33,12 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
     """
     issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])
     msisdn = serializers.CharField(max_length=11, required=False, allow_blank=False, validators=[msisdn_validator])
-    bank_imd_or_bin = serializers.CharField(
-        max_length=11, required=False, allow_blank=False, validators=[bank_imd_bin_validator]
-    )
-    bank_code = serializers.CharField(max_length=10, required=False, allow_blank=False, validators=[bank_code_validator])
     bank_card_number = CardNumberField(required=False, allow_blank=False)
     amount = serializers.DecimalField(
         required=True,
         decimal_places=2,
         max_digits=9,
         min_value=Decimal(1.0)
-    )
-    bank_transaction_type = serializers.CharField(
-        min_length=6,
-        max_length=13,
-        required=False,
-        allow_blank=False,
-        validators=[bank_transaction_type_validator]
     )
     fees = serializers.CharField(
         max_length=4,
@@ -59,9 +48,9 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         validators=[fees_validator]
     )
     full_name = serializers.CharField(max_length=254, required=False, allow_blank=False)
-    first_name = serializers.CharField(max_length=254, required=False)
-    last_name = serializers.CharField(max_length=254, required=False)
-    email = serializers.EmailField(max_length=254, required=False)
+    bank_name = serializers.CharField(
+        max_length=254, required=False, allow_blank=False, validators=[bank_name_validator]
+    )
     pin = serializers.CharField(min_length=6, max_length=6, required=False, allow_null=True, allow_blank=True)
     user = serializers.CharField(max_length=254, required=False, allow_blank=False)
     is_single_step = serializers.BooleanField(required=False, default=False)
@@ -72,52 +61,42 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
         """Validate Aman issuer needed attributes"""
         issuer = str(attrs.get('issuer', '')).lower()
         msisdn = attrs.get('msisdn', '')
-        first_name = attrs.get('first_name', '')
-        last_name = attrs.get('last_name', '')
-        email = attrs.get('email', '')
-        bank_imd_or_bin = attrs.get('bank_imd_or_bin', '')
         bank_card_number = attrs.get('bank_card_number', '')
         full_name = attrs.get('full_name', '')
+        bank_name = attrs.get('bank_name', '')
 
-        if issuer in ['vodafone', 'etisalat']:
+        if attrs.get('client_reference_id'):
+            if InstantTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
+                raise serializers.ValidationError(
+                    _("client_reference_id is used before.")
+                )
+
+        if issuer in ["jazzcash", "easypaisa", "zong", "sadapay", "ubank",
+                      "bykea", "simpaisa", "tag", "opay"]:
             if not msisdn:
                 raise serializers.ValidationError(
-                        _("You must pass valid msisdn")
+                    _("You must pass valid msisdn")
                 )
-        elif issuer == 'aman':
-            if not msisdn or not first_name or not last_name or not email:
+
+        elif issuer == 'bank_wallet':
+            if not msisdn:
                 raise serializers.ValidationError(
-                        _("You must pass valid values for fields [first_name, last_name, email]")
+                    _("You must pass valid msisdn")
                 )
+            if not bank_name:
+                raise serializers.ValidationError(
+                    _("You must pass valid bank name")
+                )
+
         elif issuer == 'bank_card':
-            if not bank_imd_or_bin or not bank_card_number:
+            if not bank_name or not bank_card_number:
                 raise serializers.ValidationError(
-                    _("You must pass valid values for fields [bank_imd_or_bin, bank_card_number")
+                    _("You must pass valid values for fields [bank_name, bank_card_number]")
                 )
             if any(e in str(full_name) for e in '!%*+&,<=>'):
                 raise serializers.ValidationError(
                     _("Symbols like !%*+&,<=> not allowed in full_name")
                 )
-        elif issuer in ['bank_wallet', 'orange']:
-            if not msisdn:
-                raise serializers.ValidationError(
-                        _("You must pass valid value for field msisdn")
-                )
-            if any(e in str(full_name) for e in '!%*+&,<=>'):
-                raise serializers.ValidationError(
-                        _("Symbols like !%*+&,<=> not allowed in full_name")
-                )
-        if issuer in ["vodafone", "etisalat", "aman"] and attrs.get('client_reference_id'):
-            if InstantTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
-                raise serializers.ValidationError(
-                        _("client_reference_id is used before.")
-                )
-
-        if issuer in ["bank_wallet", "bank_card", "orange"] and attrs.get('client_reference_id'):
-               if BankTransaction.objects.filter(client_transaction_reference=attrs.get('client_reference_id')).exists():
-                raise serializers.ValidationError(
-                            _("client_reference_id is used before.")
-                    )
 
         return attrs
 

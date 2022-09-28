@@ -16,24 +16,34 @@ class AbstractBaseIssuer(models.Model):
     """
 
     # Issuer choices
-    VODAFONE = "V"
-    ETISALAT = "E"
-    ORANGE = "O"
-    AMAN = "A"
-    BANK_WALLET = "B"
-    BANK_CARD = "C"
+    JAZZCASH = "JC"
+    EASYPAISA = "EP"
+    ZONG = "ZO"
+    SADAPAY = "SP"
+    UBANK = "UB"
+    BYKEA = "BY"
+    SIMPAISA = "SI"
+    TAG = "TA"
+    OPAY = "OP"
+    BANK_WALLET = "BW"
+    BANK_CARD = "BC"
     ISSUER_TYPE_CHOICES = [
-        (VODAFONE, "Vodafone"),
-        (ETISALAT, "Etisalat"),
-        (ORANGE, "Orange"),
-        (AMAN, "Aman"),
+        (JAZZCASH, "JazzCash"),
+        (EASYPAISA, "Easypaisa"),
+        (ZONG, "Zong"),
+        (SADAPAY, "SadaPay"),
+        (UBANK, "Ubank"),
+        (BYKEA, "BYKEA"),
+        (SIMPAISA, "SimPaisa"),
+        (TAG, "TAG"),
+        (OPAY, "OPay"),
         (BANK_WALLET, "Bank_Wallet"),
         (BANK_CARD, "Bank_Card"),
     ]
 
     issuer_type = models.CharField(
             _("Issuer Type"),
-            max_length=1,
+            max_length=2,
             choices=ISSUER_TYPE_CHOICES,
             blank=True,
             null=True,

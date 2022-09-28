@@ -5,7 +5,8 @@ from rest_framework.exceptions import ValidationError
 
 from core.utils.validations import phonenumber_form_validate
 from disbursement.utils import (
-    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST, VALID_BANK_IMD_BIN_LIST
+    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST, VALID_BANK_IMD_BIN_LIST,
+    VALID_BANK_NAMES_LIST
 )
 
 
@@ -15,7 +16,7 @@ def msisdn_validator(msisdn):
     :param msisdn: the wallet/phone-number being inquired at
     :return:
     """
-    msisdn = f"+2{msisdn}"
+    msisdn = f"+92{msisdn}"
 
     try:
         phonenumber_form_validate(msisdn)
@@ -48,13 +49,24 @@ def fees_validator(fees):
         raise serializers.ValidationError(msg)
 
 
+def bank_name_validator(bank_name):
+
+    if str(bank_name).lower() not in VALID_BANK_NAMES_LIST:
+        msg = _(f"The passed bank name is not valid, please make sure that the passed name value is one of"
+                f" {VALID_BANK_NAMES_LIST} and try again!")
+        raise serializers.ValidationError(msg)
+
+
 def cashin_issuer_validator(issuer):
     """
     Validate that the cashin issuer being used is one of the valid issuers
     :param issuer: The way that the consumer will use
     :return: If valid it just will return the passed issuer value if not it'll raise validation error
     """
-    cashin_valid_issuers_list = ["vodafone", "etisalat", "orange", "aman", "bank_wallet", "bank_card"]
+    cashin_valid_issuers_list = [
+        "jazzcash", "easypaisa", "zong", "sadapay", "ubank", "bykea",
+        "simpaisa", "tag", "opay", "bank_wallet", "bank_card"
+    ]
 
     if issuer.lower() not in cashin_valid_issuers_list:
         msg = _(f"The passed issuer is not valid, please make sure that the passed issuer value is one of"
@@ -63,8 +75,7 @@ def cashin_issuer_validator(issuer):
 
 
 def bank_code_validator(bank_code):
-    """
-    """
+
     if str(bank_code).upper() not in VALID_BANK_CODES_LIST:
         msg = _(f"The passed bank code is not valid, please make sure that the passed code value is one of"
                 f" {VALID_BANK_CODES_LIST} and try again!")

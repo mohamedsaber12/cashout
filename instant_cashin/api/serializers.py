@@ -113,7 +113,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     status_description = serializers.SerializerMethodField()
     bank_card_number = serializers.SerializerMethodField()
     full_name = serializers.SerializerMethodField()
-    bank_imd_or_bin = serializers.SerializerMethodField()
+    bank_name = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
@@ -141,9 +141,9 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
         """Retrieves transaction recipient name"""
         return transaction.recipient_name
 
-    def get_bank_imd_or_bin(self, transaction):
+    def get_bank_name(self, transaction):
         """Retrieves transaction cashing details"""
-        return transaction.creditor_bank
+        return transaction.creditor_bank_name
 
     def get_created_at(self, transaction):
         """Retrieves transaction created_at time formatted"""

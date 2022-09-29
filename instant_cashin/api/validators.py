@@ -1,13 +1,34 @@
+from phonenumber_field.phonenumber import PhoneNumber
+import phonenumbers
+
 from django.utils.translation import gettext_lazy as _
+from django import forms
 
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 
-from core.utils.validations import phonenumber_form_validate
 from disbursement.utils import (
     VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST, VALID_BANK_IMD_BIN_LIST,
     VALID_BANK_NAMES_LIST
 )
+
+def phonenumber_form_validate(msisdn):
+    """
+    Function to validate an Egyptian phone number.
+    The function raises appropriate validation exceptions for forms usage.
+    """
+    try:
+        number = PhoneNumber.from_string(msisdn)
+    except phonenumbers.NumberParseException as error:
+        raise forms.ValidationError(error._msg)
+    if (
+        not number.is_valid()
+        or phonenumbers.phonenumberutil.region_code_for_country_code(
+            phonenumbers.parse(number.as_international).country_code
+        )
+        != "PK"
+    ):
+        raise forms.ValidationError(_("Phonenumbers entered are incorrect"))
 
 
 def msisdn_validator(msisdn):

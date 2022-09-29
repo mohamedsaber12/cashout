@@ -34,12 +34,9 @@ from ...api.serializers import (BankTransactionResponseModelSerializer,
 from ...models import AbstractBaseIssuer, InstantTransaction
 from ...utils import get_from_env
 
-ACH_SEND_TRX_LOGGER = logging.getLogger('ach_send_transaction.log')
 ONE_LINK_ACCESS_TOKEN_LOGGER = logging.getLogger('one_link_access_token_requests.log')
 ONE_LINK_FETCH_TITLE_LOGGER = logging.getLogger('one_link_fetch_title_requests.log')
 ONE_LINK_PUSH_TRANSACTIONS_LOGGER = logging.getLogger('one_link_push_transaction_requests.log')
-ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
-CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
 
 
 class OneLinkTransactionsChannel:
@@ -48,7 +45,7 @@ class OneLinkTransactionsChannel:
     """
 
     @staticmethod
-    def accumulate_push_transaction_payload_for_bank(trx_obj, fetch_title_response_obj):
+    def accumulate_push_transaction_payload(trx_obj, fetch_title_response_obj):
         """
         Accumulates SendTransaction API request payload
         :param trx_obj: transaction object that saved after serializer passed validations
@@ -79,16 +76,16 @@ class OneLinkTransactionsChannel:
         payload['CurrencyCodeTransaction'] = get_from_env('CURRENCY_CODE_TRANSACTION')
         payload['FromBankIMD'] = get_from_env('FROM_BANK_IMD')
         payload['AccountNumberFrom'] = get_from_env('ACCOUNT_NUMBER_FROM')
-        payload['ToBankIMD'] = trx_obj.creditor_bank_imd
-        payload['AccountNumberTo'] = trx_obj.anon_recipient
         payload['PosEntryMode'] = get_from_env('POS_ENTRY_MODE')
         payload['SenderName'] = get_from_env('SENDER_NAME')
         payload['SenderIBAN'] = get_from_env('SENDER_IBAN_OR_MOBILE_NUMBER')
+        payload['ToBankIMD'] = trx_obj.creditor_bank_imd
+        payload['AccountNumberTo'] = trx_obj.anon_recipient
 
         return payload
 
     @staticmethod
-    def accumulate_fetch_payload_for_bank(trx_obj):
+    def accumulate_fetch_payload(trx_obj):
         """
         Accumulates fetch title API request payload
         :param trx_obj: transaction object that saved after serializer passed validations
@@ -184,7 +181,7 @@ class OneLinkTransactionsChannel:
 
         log_header = "SEND FETCH TITLE REQUEST TO ONE LINK"
 
-        payload = OneLinkTransactionsChannel.accumulate_fetch_payload_for_bank(instant_trx_obj)
+        payload = OneLinkTransactionsChannel.accumulate_fetch_payload(instant_trx_obj)
 
         payload['TransactionAmount'] = OneLinkTransactionsChannel.add_leading_zeros_to_amount(
             payload['TransactionAmount'])
@@ -232,7 +229,7 @@ class OneLinkTransactionsChannel:
 
         if fetch_title_response_obj['ResponseCode'] == "00":
             # this means fetch request success
-            payload = OneLinkTransactionsChannel.accumulate_push_transaction_payload_for_bank(
+            payload = OneLinkTransactionsChannel.accumulate_push_transaction_payload(
                     instant_trx_obj, fetch_title_response_obj)
 
             payload['TransactionAmount'] = OneLinkTransactionsChannel.add_leading_zeros_to_amount(
@@ -276,35 +273,6 @@ class OneLinkTransactionsChannel:
             response_code = fetch_title_response_obj['ResponseCode']
             instant_trx_obj.mark_failed(
                     response_code , ONE_LINK_ERROR_CODES_MESSAGES[response_code])
-
-    @staticmethod
-    def get(url, payload, bank_trx_obj):
-        """Handles GET requests to EBC via requests package"""
-        log_header = "get ach transaction status from EBC"
-        ACH_GET_TRX_STATUS_LOGGER.debug(_(f"[request] [{log_header}] [{bank_trx_obj.user_created}] -- {payload}"))
-
-        try:
-            response = requests.get(
-                    url + "?",
-                    params={"request": json.dumps(payload, separators=(",", ":"))},
-                    headers={'Content-Type': 'application/json'},
-                    timeout=10
-            )
-            response_log_message = f"{response.json()}"
-        except HTTPError as http_err:
-            response_log_message = f"HTTP error occurred: {http_err}"
-        except ConnectionError as connect_err:
-            response_log_message = f"Connection establishment error: {connect_err}"
-        except Exception as err:
-            response_log_message = f"Other error occurred: {err}"
-        else:
-            return response
-        finally:
-            ACH_GET_TRX_STATUS_LOGGER.debug(
-                    _(f"[response] [{log_header}] [{bank_trx_obj.user_created}] -- {response_log_message}")
-            )
-
-        raise ValidationError(_(response_log_message))
 
     @staticmethod
     def map_response_code_and_message(instant_trx_obj, json_response):

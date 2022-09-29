@@ -31,7 +31,7 @@ from ..serializers import (
     BankTransactionResponseModelSerializer
 )
 from django.conf import settings
-from disbursement.utils import BANK_NAME_IMD
+from disbursement.utils import BANK_NAME_IMD, WALLET_ISSUER_IMD
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -73,58 +73,24 @@ class InstantDisbursementAPIView(views.APIView):
     def get_imd_from_bank_name(self, bank_name):
         return BANK_NAME_IMD[bank_name]
 
-    def create_instant_transaction_for_bank(self, disburser, serializer):
+    def get_imd_from_wallet_issuer(self, issuer_name):
+        return WALLET_ISSUER_IMD[issuer_name]
+
+    def create_instant_transaction(self, disburser, serializer):
         """Create instant transaction out of the passed serializer data"""
         amount = serializer.validated_data["amount"]
         issuer = serializer.validated_data["issuer"].lower()
         client_reference_id = serializer.validated_data.get("client_reference_id")
-        full_name = serializer.validated_data["full_name"]
         fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
             amount, issuer
         )
-        bank_name = serializer.validated_data["bank_name"]
-        creditor_account_number = serializer.validated_data["bank_card_number"]
-
+        # build transaction record
         transaction_dict = {
             "issuer_type": self.match_issuer_type(issuer),
             "currency": "PKR",
             "from_user": disburser,
             "anon_sender": get_from_env("ACCOUNT_NUMBER_FROM"),
-            "anon_recipient": creditor_account_number,
             "amount": amount,
-            "creditor_bank_imd": self.get_imd_from_bank_name(bank_name),
-            "creditor_bank_name": bank_name,
-            "status": "P",
-            "recipient_name": full_name,
-            "disbursed_date": timezone.now(),
-            "is_single_step": serializer.validated_data["is_single_step"],
-            "client_transaction_reference": client_reference_id,
-            "fees": fees,
-            "vat": vat,
-            "stan": date.today().strftime("%m%d%y"), # generate stan
-            "rrn": f"0{str(uuid.uuid4().int)[:11]}", # generate rrn
-        }
-        instant_transaction = InstantTransaction.objects.create(**transaction_dict)
-        return instant_transaction
-
-    def create_instant_transaction_for_wallet(self, disburser, serializer):
-        """Create a instant transaction out of the passed serializer data"""
-        amount = serializer.validated_data["amount"]
-        issuer = serializer.validated_data["issuer"].lower()
-        client_reference_id = serializer.validated_data.get("client_reference_id")
-        fees, vat = disburser.root.budget.calculate_fees_and_vat_for_amount(
-            amount, issuer
-        )
-        msisdn = serializer.validated_data["msisdn"]
-
-        transaction_dict = {
-            "issuer_type": self.match_issuer_type(issuer),
-            "currency": "PKR",
-            "from_user": disburser,
-            "anon_sender": get_from_env("ACCOUNT_NUMBER_FROM"),
-            "anon_recipient": msisdn,
-            "amount": amount,
-            "creditor_bank": "",
             "status": "P",
             "disbursed_date": timezone.now(),
             "is_single_step": serializer.validated_data["is_single_step"],
@@ -134,8 +100,29 @@ class InstantDisbursementAPIView(views.APIView):
             "stan": date.today().strftime("%m%d%y"), # generate stan
             "rrn": f"0{str(uuid.uuid4().int)[:11]}", # generate rrn
         }
+        if issuer in self.wallet_issuers:
+
+            transaction_dict['creditor_bank_imd'] = self.get_imd_from_wallet_issuer(issuer)
+            transaction_dict['anon_recipient'] = serializer.validated_data["msisdn"]
+
+        elif issuer in self.bank_wallet_issuers:
+
+            bank_name = serializer.validated_data["bank_name"]
+            transaction_dict['creditor_bank_imd'] = self.get_imd_from_bank_name(bank_name)
+            transaction_dict['creditor_bank_name'] = bank_name
+            transaction_dict['anon_recipient'] = serializer.validated_data["msisdn"]
+
+        elif issuer in self.bank_issuers:
+
+            bank_name = serializer.validated_data["bank_name"]
+            transaction_dict['creditor_bank_imd'] = self.get_imd_from_bank_name(bank_name)
+            transaction_dict['creditor_bank_name'] = bank_name
+            transaction_dict['recipient_name'] = serializer.validated_data["full_name"]
+            transaction_dict['anon_recipient'] = serializer.validated_data["bank_card_number"]
+
         instant_transaction = InstantTransaction.objects.create(**transaction_dict)
         return instant_transaction
+
 
     def post(self, request, *args, **kwargs):
         """
@@ -165,15 +152,9 @@ class InstantDisbursementAPIView(views.APIView):
                 "status_code": str(status.HTTP_400_BAD_REQUEST)
             }, status=status.HTTP_400_BAD_REQUEST)
 
-        issuer = serializer.validated_data["issuer"].lower()
-
         try:
-            if issuer in self.wallet_issuers:
-                instant_trx_obj = self.create_instant_transaction_for_wallet(user, serializer)
-            elif issuer in self.bank_wallet_issuers:
-                pass
-            elif issuer in self.bank_issuers:
-                instant_trx_obj = self.create_instant_transaction_for_bank(user, serializer)
+
+            instant_trx_obj = self.create_instant_transaction(user, serializer)
 
             balance_before = balance_after = instant_trx_obj.from_user.root.budget.get_current_balance()
             instant_trx_obj.balance_before = balance_before

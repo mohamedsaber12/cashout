@@ -280,7 +280,7 @@ class OneLinkTransactionsChannel:
 
         response_code = json_response.get("ResponseCode", status.HTTP_424_FAILED_DEPENDENCY)
         response_detail = ONE_LINK_ERROR_CODES_MESSAGES[str(response_code)]
-        issuer = "bank_card"
+        issuer = instant_trx_obj.issuer_type
         # 1. Transaction is validated and accepted by EBC, and or dispatched for being processed by the bank
         if response_code in ["00"]:
             balance_before = instant_trx_obj.from_user.root.budget.get_current_balance()

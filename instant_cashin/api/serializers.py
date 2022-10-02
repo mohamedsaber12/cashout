@@ -178,7 +178,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     )
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
-    full_name = serializers.SerializerMethodField()
+    bank_name = serializers.SerializerMethodField()
     created_at = serializers.SerializerMethodField()
     updated_at = serializers.SerializerMethodField()
 
@@ -198,9 +198,11 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
         """Retrieves transaction status description"""
         return transaction.transaction_status_description
 
-    def get_full_name(self, transaction):
-        """Retrieves transaction recipient name"""
-        return transaction.recipient_name
+    def get_bank_name (self, transaction):
+        """Retrieves transaction bank name"""
+        if transaction.issuer == InstantTransaction.BANK_WALLET:
+            return transaction.creditor_bank_name
+        return ""
 
     def get_created_at(self, transaction):
         """Retrieves transaction created_at time formatted"""
@@ -213,8 +215,8 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstantTransaction
         fields = [
-            'transaction_id', 'issuer', 'msisdn', 'amount', 'full_name', 'disbursement_status', 'status_code',
-            'status_description', 'client_transaction_reference',  'created_at', 'updated_at'
+            'transaction_id', 'issuer', 'msisdn', 'amount', 'disbursement_status', 'status_code',
+            'status_description', 'bank_name', 'client_transaction_reference',  'created_at', 'updated_at'
         ]
 
 

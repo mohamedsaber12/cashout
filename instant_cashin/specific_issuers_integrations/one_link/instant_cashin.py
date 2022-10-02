@@ -31,12 +31,12 @@ from utilities.ssl_certificate import SSLCertificate
 
 from ...api.serializers import (BankTransactionResponseModelSerializer,
                                 InstantTransactionResponseModelSerializer)
-from ...models import AbstractBaseIssuer, InstantTransaction
+from ...models import InstantTransaction
 from ...utils import get_from_env
 
-ONE_LINK_ACCESS_TOKEN_LOGGER = logging.getLogger('one_link_access_token_requests.log')
-ONE_LINK_FETCH_TITLE_LOGGER = logging.getLogger('one_link_fetch_title_requests.log')
-ONE_LINK_PUSH_TRANSACTIONS_LOGGER = logging.getLogger('one_link_push_transaction_requests.log')
+ONE_LINK_ACCESS_TOKEN_LOGGER = logging.getLogger('one_link_access_token_requests')
+ONE_LINK_FETCH_TITLE_LOGGER = logging.getLogger('one_link_fetch_title_requests')
+ONE_LINK_PUSH_TRANSACTIONS_LOGGER = logging.getLogger('one_link_push_transaction_requests')
 
 
 class OneLinkTransactionsChannel:
@@ -195,7 +195,7 @@ class OneLinkTransactionsChannel:
             'X-IBM-Client-Id': get_from_env('ONE_LINK_CLIENT_ID'),
         }
         ONE_LINK_FETCH_TITLE_LOGGER.debug(
-            _(f"[request] [{log_header}] -- {payload}")
+            _(f"[request] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {payload}")
         )
         try:
             response = requests.post(
@@ -212,7 +212,7 @@ class OneLinkTransactionsChannel:
             return response.json()
         finally:
             ONE_LINK_FETCH_TITLE_LOGGER.debug(
-                _(f"[response] [{log_header}] -- {response_log_message}")
+                _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {response_log_message}")
             )
 
         raise ValidationError(_(response_log_message))
@@ -245,7 +245,7 @@ class OneLinkTransactionsChannel:
             }
 
             ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(
-                _(f"[request] [{log_header}] -- [{instant_trx_obj.from_user}] -- {payload}")
+                _(f"[request] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {payload}")
             )
             try:
                 response = requests.post(
@@ -265,7 +265,7 @@ class OneLinkTransactionsChannel:
                 return response
             finally:
                 ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(
-                    _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] -- {response_log_message}")
+                    _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {response_log_message}")
                 )
 
             raise ValidationError(_(response_log_message))
@@ -353,5 +353,7 @@ class OneLinkTransactionsChannel:
         if has_valid_response:
             instant_trx_obj = OneLinkTransactionsChannel. \
                 map_response_code_and_message(instant_trx_obj, response.json())
+        if instant_trx_obj.issuer_type == InstantTransaction.BANK_CARD:
+            return Response(BankTransactionResponseModelSerializer(instant_trx_obj).data)
 
-        return Response(BankTransactionResponseModelSerializer(instant_trx_obj).data)
+        return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)

@@ -169,18 +169,28 @@ class Budget(AbstractTimeStamp):
         actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
         # 1. Determine the type of the issuer to calculate the fees for
-        if issuer_type == "vodafone" or issuer_type == "V":
-            issuer_type_refined = FeeSetup.VODAFONE
-        elif issuer_type == "etisalat" or issuer_type == "E":
-            issuer_type_refined = FeeSetup.ETISALAT
-        elif issuer_type == "orange" or issuer_type == "O":
-            issuer_type_refined = FeeSetup.ORANGE
-        elif issuer_type == "aman" or issuer_type == "A":
-            issuer_type_refined = FeeSetup.AMAN
-        elif issuer_type == "bank_card" or issuer_type == "C":
-            issuer_type_refined = FeeSetup.BANK_CARD
-        elif issuer_type == "bank_wallet" or issuer_type == "B":
+        if issuer_type=="jazzcash" or issuer_type=="JC" or issuer_type=="jc":
+            issuer_type_refined = FeeSetup.JAZZCASH
+        elif issuer_type=="easypaisa" or issuer_type=="EP" or issuer_type=="ep":
+            issuer_type_refined = FeeSetup.EASYPAISA
+        elif issuer_type=="zong" or issuer_type=="ZO" or issuer_type=="zo":
+            issuer_type_refined = FeeSetup.ZONG
+        elif issuer_type=="sadapay" or issuer_type=="SP" or issuer_type=="sp":
+            issuer_type_refined = FeeSetup.SADAPAY
+        elif issuer_type=="ubank" or issuer_type=="UB" or issuer_type=="ub":
+            issuer_type_refined = FeeSetup.UBANK
+        elif issuer_type=="bykea" or issuer_type=="BY" or issuer_type=="by":
+            issuer_type_refined = FeeSetup.BYKEA
+        elif issuer_type=="simpaisa" or issuer_type=="SI" or issuer_type=="si":
+            issuer_type_refined = FeeSetup.SIMPAISA
+        elif issuer_type=="tag" or issuer_type=="TA" or issuer_type=="ta":
+            issuer_type_refined = FeeSetup.TAG
+        elif issuer_type=="opay" or issuer_type=="OP" or issuer_type=="op":
+            issuer_type_refined = FeeSetup.OPAY
+        elif issuer_type=="bank_wallet" or issuer_type=="BW" or issuer_type=="bw":
             issuer_type_refined = FeeSetup.BANK_WALLET
+        elif issuer_type=="bank_card" or issuer_type=="BC" or issuer_type=="bc":
+            issuer_type_refined = FeeSetup.BANK_CARD
         elif issuer_type == 'default' or issuer_type in ["D", 'd']:
             return 0, 0
 

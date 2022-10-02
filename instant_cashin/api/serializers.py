@@ -200,7 +200,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
 
     def get_bank_name (self, transaction):
         """Retrieves transaction bank name"""
-        if transaction.issuer == InstantTransaction.BANK_WALLET:
+        if transaction.issuer_type == InstantTransaction.BANK_WALLET:
             return transaction.creditor_bank_name
         return ""
 

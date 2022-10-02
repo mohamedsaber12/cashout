@@ -195,7 +195,7 @@ class OneLinkTransactionsChannel:
             'X-IBM-Client-Id': get_from_env('ONE_LINK_CLIENT_ID'),
         }
         ONE_LINK_FETCH_TITLE_LOGGER.debug(
-            _(f"[request] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {payload}")
+            _(f"[request] [{log_header}] [{instant_trx_obj.from_user}] [trx_uid:- {instant_trx_obj.uid}] -- {payload}")
         )
         try:
             response = requests.post(
@@ -212,7 +212,7 @@ class OneLinkTransactionsChannel:
             return response.json()
         finally:
             ONE_LINK_FETCH_TITLE_LOGGER.debug(
-                _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {response_log_message}")
+                _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] [trx_uid:- {instant_trx_obj.uid}] -- {response_log_message}")
             )
 
         raise ValidationError(_(response_log_message))
@@ -245,7 +245,7 @@ class OneLinkTransactionsChannel:
             }
 
             ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(
-                _(f"[request] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {payload}")
+                _(f"[request] [{log_header}] [{instant_trx_obj.from_user}] [trx_uid:- {instant_trx_obj.uid}] -- {payload}")
             )
             try:
                 response = requests.post(
@@ -265,7 +265,7 @@ class OneLinkTransactionsChannel:
                 return response
             finally:
                 ONE_LINK_PUSH_TRANSACTIONS_LOGGER.debug(
-                    _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] [uid:- {instant_trx_obj.uid}] -- {response_log_message}")
+                    _(f"[response] [{log_header}] [{instant_trx_obj.from_user}] [trx_uid:- {instant_trx_obj.uid}] -- {response_log_message}")
                 )
 
             raise ValidationError(_(response_log_message))

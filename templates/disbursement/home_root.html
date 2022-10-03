@@ -201,11 +201,11 @@
       background: rgba(234, 84, 85, 0.15) !important;
     }
     .et-icon {
-      width: 80px;
-      height: 50px;
+      width: 95px;
+      height: 60px;
     }
     .et-m-b {
-      height: 20px;
+      height: 10px;
     }
     .bg-rgba-info {
       background: rgba(0, 207, 232, 0.15) !important;
@@ -296,7 +296,7 @@
     </div>
   {% endif %}
   {% if request.user.has_custom_budget or  request.user.root.has_custom_budget%}
-    <div class="col-lg-2 col-md-6 col-sm-6">
+    <div class="col-lg-4 col-md-6 col-sm-6">
       <div class="card text-center">
         <div class="card-content">
           <div class="card-body">
@@ -312,8 +312,11 @@
       </div>
     </div>
   {% endif %}
-  {% if request.user.is_root or request.user.is_instantapiviewer %}
-    <div class="col-lg-2 col-md-6 col-sm-6">
+</div>
+
+{% if request.user.is_root or request.user.is_instantapiviewer %}
+  <div class="row">
+    <div class="col-lg-2 col-md-4 col-sm-4">
       <div class="card text-center">
         <div class="card-content">
           <div class="card-body">
@@ -328,19 +331,15 @@
         </div>
       </div>
     </div>
-  {% endif %}
-</div>
-{% if request.user.is_root or request.user.is_instantapiviewer %}
-  <div class="row">
     <div class="col-lg-2 col-md-4 col-sm-4">
         <div class="card text-center">
           <div class="card-content">
             <div class="card-body">
               <div class="avatar m-0 mb-1" style="width:70px;height:70px;">
-                <img class="icon-logo" src="{% static 'img/vf_cash.png' %}">
+                <img class="icon-logo" src="{% static 'img/jazz_logo.png' %}">
               </div>
-              <h2 class="count text-bold-700">{{ vodafone_transactions }}</h2>
-              <p class="mb-0 line-ellipsis">{% trans 'VODAFONE' %}</p>
+              <h2 class="count text-bold-700">{{ JazzCash }}</h2>
+              <p class="mb-0 line-ellipsis">{% trans 'JazzCash' %}</p>
             </div>
           </div>
         </div>
@@ -350,11 +349,11 @@
           <div class="card-content">
             <div class="card-body">
               <div class="m-0 mb-1">
-                <img class="et-icon" src="{% static 'img/etisalat_cash.png' %}">
+                <img class="et-icon" src="{% static 'img/easypaisa_logo.png' %}">
               </div>
               <div class="et-m-b"></div>
-              <h2 class="count text-bold-700">{{ etisalat_transactions }}</h2>
-              <p class="mb-0 line-ellipsis">{% trans 'ETISALAT' %}</p>
+              <h2 class="count text-bold-700">{{ Easypaisa }}</h2>
+              <p class="mb-0 line-ellipsis">{% trans 'Easypaisa' %}</p>
             </div>
           </div>
         </div>
@@ -363,11 +362,12 @@
         <div class="card text-center">
           <div class="card-content">
             <div class="card-body">
-              <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
-                <img class="icon-logo" src="{% static 'img/orange_cash.png' %}">
+              <div class="m-0 mb-1">
+                <img style="width: 100px;margin-top: 30px;" src="{% static 'img/zong_logo.png' %}">
               </div>
-              <h2 class="count text-bold-700">{{ orange_transactions }}</h2>
-              <p class="mb-0 line-ellipsis">{% trans 'ORANGE' %}</p>
+              <div class="et-m-b"></div>
+              <h2 class="count text-bold-700">{{ Zong }}</h2>
+              <p class="mb-0 line-ellipsis">{% trans 'Zong' %}</p>
             </div>
           </div>
         </div>
@@ -381,6 +381,74 @@
               </div>
               <h2 class="count text-bold-700">{{ aman_transactions }}</h2>
               <p class="mb-0 line-ellipsis">{% trans 'AMAN' %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="col-lg-2 col-md-4 col-sm-4">
+        <div class="card text-center">
+          <div class="card-content">
+            <div class="card-body">
+              <div class="avatar m-0 mb-1"
+                   style="width:70px;height:70px;background-color: white;border-radius:0%;">
+                <img class="icon-logo" src="{% static 'img/bank-wallet.png' %}">
+              </div>
+              <h2 class="count text-bold-700">{{ bank_wallet_transactions }}</h2>
+              <p class="mb-0 line-ellipsis" style="font-size:17px;">{% trans 'BANK WALLET' %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+  </div>
+  <div class="row">
+    <div class="col-lg-2 col-md-4 col-sm-4">
+        <div class="card text-center">
+          <div class="card-content">
+            <div class="card-body">
+              <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
+                <img class="icon-logo" src="{% static 'img/bank_card.png' %}">
+              </div>
+              <h2 class="count text-bold-700">{{ banks_transactions }}</h2>
+              <p class="mb-0 line-ellipsis">{% trans ' BANKS' %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="col-lg-2 col-md-4 col-sm-4">
+          <div class="card text-center">
+            <div class="card-content">
+              <div class="card-body">
+                <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
+                  <img class="icon-logo" src="{% static 'img/bank_card.png' %}">
+                </div>
+                <h2 class="count text-bold-700">{{ banks_transactions }}</h2>
+                <p class="mb-0 line-ellipsis">{% trans ' BANKS' %}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+    <div class="col-lg-2 col-md-4 col-sm-4">
+        <div class="card text-center">
+          <div class="card-content">
+            <div class="card-body">
+              <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
+                <img class="icon-logo" src="{% static 'img/bank_card.png' %}">
+              </div>
+              <h2 class="count text-bold-700">{{ banks_transactions }}</h2>
+              <p class="mb-0 line-ellipsis">{% trans ' BANKS' %}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    <div class="col-lg-2 col-md-4 col-sm-4">
+        <div class="card text-center">
+          <div class="card-content">
+            <div class="card-body">
+              <div class="avatar m-0 mb-1" style="width:70px;height:70px;background-color: white;">
+                <img class="icon-logo" src="{% static 'img/bank_card.png' %}">
+              </div>
+              <h2 class="count text-bold-700">{{ banks_transactions }}</h2>
+              <p class="mb-0 line-ellipsis">{% trans ' BANKS' %}</p>
             </div>
           </div>
         </div>
@@ -414,6 +482,7 @@
       </div>
   </div>
 {% endif %}
+
 <div class="row">
   <div id="export_message" class="col-lg-12 col-md-12 col-sm-12"
        style="{% if request.GET.export_message %}display:block;{% endif %}">

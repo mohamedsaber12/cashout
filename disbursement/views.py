@@ -802,13 +802,8 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
     template_name = 'disbursement/home_root.html'
 
     def validate_export_issuer(self, issuer):
-        """method for issuer validation based on user type"""
-        if self.request.user.is_instant_model_onboarding and \
-            issuer in ['wallets', 'banks']:
-            return True
-        elif self.request.user.is_accept_vodafone_onboarding and \
-            issuer in ['vodafone/etisalat/aman', 'bank wallets/orange',
-                       'bank accounts/cards']:
+        """method for issuer validation"""
+        if issuer in ['wallets', 'banks']:
             return True
         return False
 
@@ -848,37 +843,30 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             ).extra(select={'issuer': 'issuer_type'}).values('issuer'). \
                 annotate(count=Count('uid')).order_by('issuer')
 
-        vodafone_transactions = 0
-        etisalat_transactions = 0
-        aman_transactions = 0
-        orange_transactions = 0
-        bank_wallet_transactions = 0
-        bank_card_transactions = 0
+        issuers_dict = dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)
+        transaction_issuer_numbers_dict = {
+            issuers_dict[InstantTransaction.JAZZCASH] : 0,
+            issuers_dict[InstantTransaction.EASYPAISA] : 0,
+            issuers_dict[InstantTransaction.ZONG] : 0,
+            issuers_dict[InstantTransaction.SADAPAY] : 0,
+            issuers_dict[InstantTransaction.UBANK] : 0,
+            issuers_dict[InstantTransaction.BYKEA] : 0,
+            issuers_dict[InstantTransaction.SIMPAISA] : 0,
+            issuers_dict[InstantTransaction.TAG] : 0,
+            issuers_dict[InstantTransaction.OPAY] : 0,
+            issuers_dict[InstantTransaction.BANK_WALLET] : 0,
+            issuers_dict[InstantTransaction.BANK_CARD] : 0,
+        }
         total = 0
         all_issuers =[*instant_trx]
         for trx in all_issuers:
-            if trx['issuer'] in ['vodafone', 'V']:
-                vodafone_transactions = vodafone_transactions + trx['count']
-            elif trx['issuer'] in ['etisalat', 'E']:
-                etisalat_transactions = etisalat_transactions + trx['count']
-            elif trx['issuer'] in ['aman', 'A']:
-                aman_transactions = aman_transactions + trx['count']
-            elif trx['issuer'] in ['orange', 'O']:
-                orange_transactions = orange_transactions + trx['count']
-            elif trx['issuer'] in ['bank_wallet', 'B']:
-                bank_wallet_transactions = bank_wallet_transactions + trx['count']
-            elif trx['issuer'] in ['bank_card', 'C']:
-                bank_card_transactions = bank_card_transactions + trx['count']
+            if trx['issuer'] in issuers_dict.keys():
+                transaction_issuer_numbers_dict[issuers_dict[trx['issuer']]] += trx['count']
             total = total + trx['count']
 
         context = {
             "all_transactions": total,
-            "vodafone_transactions": vodafone_transactions,
-            "etisalat_transactions": etisalat_transactions,
-            "orange_transactions": orange_transactions,
-            "aman_transactions": aman_transactions,
-            "bank_wallet_transactions": bank_wallet_transactions,
-            "banks_transactions": bank_card_transactions,
+            **transaction_issuer_numbers_dict
         }
         # render issuer options based on user type
         if request.user.is_instant_model_onboarding:

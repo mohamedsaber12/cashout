@@ -48,8 +48,8 @@
 
             {
                 "transactions_ids_list": [
-                    "2a08d70c-49a9-48ed-bcbf-734343065477",
-                    "3690056a-0b61-4ae8-b59b-9013122abf7f",
+                    "d1ef5f35-be1d-4e56-9587-ba17818ad38e",
+                    "bf1e8555-36b6-4c77-8fed-cfe45284e4ad",
                     ...
                 ]
             }
@@ -57,33 +57,35 @@
     > response
 
             {
-                "count": 120,
+                "count": 2,
                 "next": "{ENV}/api/secure/transaction/inquire/?page=3",
                 "previous": "{ENV}/api/secure/transaction/inquire/",
                 "results": [
                     {
-                        "transaction_id": "2a08d70c-49a9-48ed-bcbf-734343065477",
-                        "issuer": "vodafone",
-                        "msisdn": "3110539217",
-                        "amount": 500.0,
-                        "full_name": "",
-                        "disbursement_status": "failed",
-                        "status_code": "01",
-                        "status_description": "LIMIT EXCEEDED",
-                        "created_at": "2020-04-21 09:14:01.884397",
-                        "updated_at": "2020-04-21 09:14:17.807927"
-                    },
-                    {
-                        "transaction_id": "3690056a-0b61-4ae8-b59b-9013122abf7f",
+                        "transaction_id": "d1ef5f35-be1d-4e56-9587-ba17818ad38e",
                         "issuer": "bank_card",
                         "msisdn": "6304532132598659",
-                        "amount": 100.00,
-                        "full_name": "",
-                        "disbursement_status": "successful",
-                        "status_code": "00",
-                        "status_description": "PROCESSED OK",
-                        "created_at": "2020-04-16 17:55:57.761411",
-                        "updated_at": "2020-04-16 17:55:59.915782"
+                        "amount": 150.0,
+                        "disbursement_status": "failed",
+                        "status_code": "58",
+                        "status_description": "TRANSACTION TIMEDOUT",
+                        "bank_name": "",
+                        "client_transaction_reference": null,
+                        "created_at": "2022-10-02 11:49:38.303247",
+                        "updated_at": "2022-10-02 11:50:35.146930"
+                    },
+                    {
+                        "transaction_id": "bf1e8555-36b6-4c77-8fed-cfe45284e4ad",
+                        "issuer": "ubank",
+                        "msisdn": "03162410002",
+                        "amount": 150.0,
+                        "disbursement_status": "failed",
+                        "status_code": "72",
+                        "status_description": "CURRENCY NOT ALLOWED",
+                        "bank_name": "",
+                        "client_transaction_reference": null,
+                        "created_at": "2022-10-02 11:45:02.023340",
+                        "updated_at": "2022-10-02 11:45:05.205252"
                     },
                     ...
                 ]

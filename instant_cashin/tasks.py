@@ -27,8 +27,12 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
     """Task for updating pending bank transactions from EBC for the last 5 days at max"""
 
     # check if EBC is up , if not return False
+    if get_from_env("ENVIRONMENT") == "staging":
+        ebc_url = "http://52.28.44.31:443/EG-ACH-Corporate-Webstation-Token/CorpayWebAPI/api/Transactions"
+    else:
+        ebc_url = "https://cibcorpay.egyptianbanks.net"
     try:
-        requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
+        requests.get(ebc_url, timeout=10)
     except Exception as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(
             f"[message] [check for EBC status] [celery_task] -- "
@@ -86,8 +90,12 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
 @respects_language
 def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
     # check if EBC is up , if not return False
+    if get_from_env("ENVIRONMENT") == "staging":
+        ebc_url = "http://52.28.44.31:443/EG-ACH-Corporate-Webstation-Token/CorpayWebAPI/api/Transactions"
+    else:
+        ebc_url = "https://cibcorpay.egyptianbanks.net"
     try:
-        requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
+        requests.get(ebc_url, timeout=10)
     except Exception as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(
             f"[message] [check for EBC status more than 6 days] [celery_task] -- "

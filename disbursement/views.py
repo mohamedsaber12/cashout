@@ -854,8 +854,7 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
         total = 0
         all_issuers =[*instant_trx]
         for trx in all_issuers:
-            if trx['issuer'] in issuers_dict.keys():
-                transaction_issuer_numbers_dict[issuers_dict[trx['issuer']]] += trx['count']
+            transaction_issuer_numbers_dict[issuers_dict[trx['issuer']]] += trx['count']
             total = total + trx['count']
 
         context = {

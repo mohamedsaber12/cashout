@@ -29,6 +29,11 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['admin'] = self.request.GET.get('client')
+
+        # add admin flag to context if path has banks
+        if self.request.path == '/instant-cashin/instant-transactions/banks/':
+            context['is_bank_transactions'] = 'yes'
+
         # pagination query string
         query_string = ""
         if self.request.GET.get('client', None):
@@ -51,6 +56,8 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
             filter_dict['uid__contains'] = self.request.GET.get('transaction_id')
         if self.request.GET.get('number'):
             filter_dict['anon_recipient__contains'] = self.request.GET.get('number')
+        if self.request.GET.get('account_number'):
+            filter_dict['anon_recipient__contains'] = self.request.GET.get('account_number')
         if self.request.GET.get('issuer'):
             filter_dict['issuer_type'] = self.request.GET.get('issuer')
         if self.request.GET.get('start_date'):
@@ -73,8 +80,11 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
             )
             filter_dict['disbursed_date__lte'] = make_aware(last_day)
 
-        queryset = super().get_queryset().filter(**filter_dict) \
-            .filter(~Q(issuer_type=InstantTransaction.BANK_CARD)).order_by("-created_at")
+        queryset = super().get_queryset().filter(**filter_dict).order_by("-created_at")
+        if self.request.path == '/instant-cashin/instant-transactions/banks/':
+            queryset = queryset.filter(Q(issuer_type=InstantTransaction.BANK_CARD)).order_by("-created_at")
+        else:
+            queryset = queryset.filter(~Q(issuer_type=InstantTransaction.BANK_CARD)).order_by("-created_at")
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
         return paginator.get_page(page)

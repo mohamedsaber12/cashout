@@ -47,6 +47,8 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
             'from_user__hierarchy':hierarchy_to_filter_with,
         }
         # add filters to filter dict
+        if self.request.GET.get('transaction_id'):
+            filter_dict['uid__contains'] = self.request.GET.get('transaction_id')
         if self.request.GET.get('number'):
             filter_dict['anon_recipient__contains'] = self.request.GET.get('number')
         if self.request.GET.get('issuer'):

@@ -1577,7 +1577,7 @@ class ExportPortalRootOrDashboardUserTransactions(ExportTransactionsBaseView, Ta
                 ws.write(row_num, 3, str(row.fees))
                 ws.write(row_num, 4, str(row.vat))
                 ws.write(row_num, 5, str(row.issuer_choice_verbose))
-                ws.write(row_num, 6, str(row.bank_name))
+                ws.write(row_num, 6, str(row.creditor_bank_name))
                 ws.write(row_num, 7, str(row.status_choice_verbose))
                 ws.write(row_num, 8, str(row.updated_at))
                 ws.write(row_num, 9, str(row.balance_before))

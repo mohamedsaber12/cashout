@@ -35,7 +35,7 @@ from .models import CollectionData, Doc, DocReview, FileCategory, Format
 from .tasks import (
     BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor, doc_review_maker_mail,
     handle_uploaded_file, notify_checkers, notify_disbursers, ExportPortalRootTransactionsEwallet,
-    ExportPortalRootOrDashboardUserTransactionsEwallets, ExportPortalRootOrDashboardUserTransactionsBanks
+    ExportPortalRootOrDashboardUserTransactionsBanks
 )
 
 UPLOAD_LOGGER = logging.getLogger("upload")

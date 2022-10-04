@@ -1544,10 +1544,10 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         return True
 
 
-class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBaseView, Task):
+class ExportPortalRootOrDashboardUserTransactions(ExportTransactionsBaseView, Task):
 
     def create_transactions_report(self):
-        filename = f"ewallets_transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
+        filename = f"transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
 
@@ -1555,7 +1555,9 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At", "Balance before", "Balance After"]
+            column_names_list = [
+                "Transaction ID","Recipient","Amount","Fees","Vat",
+                "Issuer", "Bank Name", "Status","Updated At", "Balance before", "Balance After"]
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1575,10 +1577,11 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
                 ws.write(row_num, 3, str(row.fees))
                 ws.write(row_num, 4, str(row.vat))
                 ws.write(row_num, 5, str(row.issuer_choice_verbose))
-                ws.write(row_num, 6, str(row.status_choice_verbose))
-                ws.write(row_num, 7, str(row.updated_at))
-                ws.write(row_num, 8, str(row.balance_before))
-                ws.write(row_num, 9, str(row.balance_after))
+                ws.write(row_num, 6, str(row.bank_name))
+                ws.write(row_num, 7, str(row.status_choice_verbose))
+                ws.write(row_num, 8, str(row.updated_at))
+                ws.write(row_num, 9, str(row.balance_before))
+                ws.write(row_num, 10, str(row.balance_after))
                 row_num = row_num + 1
 
         wb.save(file_path)
@@ -1589,7 +1592,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
         return report_download_url
 
-    def run(self, user_id, start_date, end_date):
+    def run(self, user_id, start_date, end_date, issuer):
         self.start_date = start_date
         self.end_date = end_date
         self.user = User.objects.get(id=user_id)
@@ -1606,6 +1609,11 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
                 Q(disbursed_date__gte=self.first_day),
                 Q(disbursed_date__lte=self.last_day),
             )
+            if issuer == 'wallets':
+                self.data = self.data.filter(~Q(issuer_type=InstantTransaction.BANK_CARD))
+            elif issuer=='banks':
+                self.data = self.data.filter(Q(issuer_type=InstantTransaction.BANK_CARD))
+
         elif self.user.is_maker:
             self.data = InstantTransaction.objects.filter(
                 Q(document__owner=self.user),
@@ -1625,7 +1633,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
             f"transactions report within the period of {self.start_date} to {self.end_date} "
             f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
         )
-        mail_subject = "Ewallets Report"
+        mail_subject = "Transactions Report"
         deliver_mail(self.user, _(mail_subject), mail_content)
 
 
@@ -1811,7 +1819,7 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
 BankWalletsAndCardsSheetProcessor = app.register_task(BankWalletsAndCardsSheetProcessor())
 EWalletsSheetProcessor = app.register_task(EWalletsSheetProcessor())
 ExportClientsTransactionsMonthlyReportTask = app.register_task(ExportClientsTransactionsMonthlyReportTask())
-ExportPortalRootOrDashboardUserTransactionsEwallets = app.register_task(ExportPortalRootOrDashboardUserTransactionsEwallets())
+ExportPortalRootOrDashboardUserTransactions = app.register_task(ExportPortalRootOrDashboardUserTransactions())
 ExportPortalRootOrDashboardUserTransactionsBanks = app.register_task(ExportPortalRootOrDashboardUserTransactionsBanks())
 ExportPortalRootTransactionsEwallet = app.register_task(ExportPortalRootTransactionsEwallet())
 

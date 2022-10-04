@@ -36,7 +36,7 @@ from data.models import Doc
 from data.tasks import (
     generate_all_disbursed_data, generate_failed_disbursed_data,
     generate_success_disbursed_data, ExportPortalRootTransactionsEwallet,
-    ExportPortalRootOrDashboardUserTransactionsEwallets,
+    ExportPortalRootOrDashboardUserTransactions,
     ExportPortalRootOrDashboardUserTransactionsBanks
 )
 from data.utils import redirect_params
@@ -803,7 +803,7 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
     def validate_export_issuer(self, issuer):
         """method for issuer validation"""
-        if issuer in ['wallets', 'banks']:
+        if issuer in ['all', 'wallets', 'banks']:
             return True
         return False
 
@@ -822,16 +822,10 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
         if export_start_date and export_end_date and export_issuer:
             EXPORT_MESSAGE = f"Please check your mail for report {request.user.email} after a few minutes"
-            if export_issuer == 'vodafone/etisalat/aman':
-                ExportPortalRootTransactionsEwallet.delay(self.request.user.id, export_start_date, export_end_date)
-            elif export_issuer in ['bank wallets/orange', 'wallets']:
-                ExportPortalRootOrDashboardUserTransactionsEwallets.delay(
-                    self.request.user.id, export_start_date, export_end_date
-                )
-            elif export_issuer in ['bank accounts/cards', 'banks']:
-                ExportPortalRootOrDashboardUserTransactionsBanks.delay(
-                    self.request.user.id, export_start_date, export_end_date
-                )
+            ExportPortalRootOrDashboardUserTransactions.delay(
+                self.request.user.id, export_start_date, export_end_date, export_issuer
+            )
+
             return HttpResponseRedirect(f"{self.request.path}?export_message={EXPORT_MESSAGE}")
 
         instant_trx = []
@@ -870,7 +864,7 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
         }
         # render issuer options based on user type
         if request.user.is_instant_model_onboarding:
-            context['issuer_options'] = ['wallets', 'banks']
+            context['issuer_options'] = ['all', 'wallets', 'banks']
         elif request.user.is_accept_vodafone_onboarding:
             context['issuer_options'] = [
                 'vodafone/etisalat/aman', 'bank wallets/orange', 'bank accounts/cards'

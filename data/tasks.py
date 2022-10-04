@@ -1546,8 +1546,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
 class ExportPortalRootOrDashboardUserTransactions(ExportTransactionsBaseView, Task):
 
-    def create_transactions_report(self):
+    def create_transactions_report(self, issuer):
         filename = f"transactions_report_from_{self.start_date}_to_{self.end_date}_{randomword(8)}.xls"
+        if issuer=='wallets':
+            filename = f"wallets_{filename}"
+        elif issuer=='banks':
+            filename = f"banks_{filename}"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
         wb = xlwt.Workbook(encoding='utf-8')
 
@@ -1627,7 +1631,7 @@ class ExportPortalRootOrDashboardUserTransactions(ExportTransactionsBaseView, Ta
                 Q(disbursed_date__lte=self.last_day),
             )
 
-        download_url = self.create_transactions_report()
+        download_url = self.create_transactions_report(issuer)
         mail_content = _(
             f"Dear <strong>{self.user.get_full_name}</strong><br><br>You can download "
             f"transactions report within the period of {self.start_date} to {self.end_date} "

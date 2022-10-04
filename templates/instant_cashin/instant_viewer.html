@@ -68,7 +68,7 @@
             </div>
 
             {% if is_bank_transactions == 'yes' %}
-              {% include 'instant_cashin/banks_transactions.html' with transactions=bank_transactions %}
+              {% include 'instant_cashin/banks_transactions.html' with transactions=instant_transactions %}
             {% else %}
               {% include 'instant_cashin/wallets_transactions.html' with transactions=instant_transactions %}
             {% endif %}
@@ -212,8 +212,6 @@
         {% if bank_transactions %}
           let creditor_bank_name = $(this).data('creditor_bank_name');
           appendedTags += `<li><span>{% trans 'Bank Name' %}</span><strong>: </strong>${creditor_bank_name}</li>`;
-          let transaction_type = $(this).data('transaction_type');
-          appendedTags += `<li><span>{% trans 'Transaction Type' %}</span><strong>: </strong>${transaction_type}</li>`;
         {% else %}
           if (issuer_type === 'Bank_Wallet') {
             let creditor_bank_name = $(this).data('bank_name');

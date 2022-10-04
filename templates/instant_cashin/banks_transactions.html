@@ -16,21 +16,19 @@
     </thead>
     <tbody>
     {% for trx in transactions %}
-      <tr data-id="{{ trx.parent_transaction.transaction_id }}"
+      <tr data-id="{{ trx.uid }}"
           data-creditor_name="{{ trx.creditor_name }}"
           data-creditor_account_number="{{ trx.creditor_account_number }}"
-          data-creditor_bank_code="{{ trx.creditor_bank }}"
-          data-creditor_bank_name="{{ trx.creditor_bank|bank_name }}"
-          data-transaction_type="{{ trx|transaction_type }}"
+          data-creditor_bank_name="{{ trx.creditor_bank_name }}"
           data-amount="{{ trx.amount }}"
           data-status="{{ trx.status_choice_verbose }}"
           data-status_code="{{ trx.transaction_status_code }}"
           data-updated_at="{{ trx.updated_at }}"
-          data-created_at="{{ trx.parent_transaction.created_at }}"
+          data-created_at="{{ trx.created_at }}"
           data-status_description="{{ trx.transaction_status_description }}"
           class="row-hover"
           data-href="#">
-        <td>{{ trx.parent_transaction.transaction_id }}</td>
+        <td>{{ trx.uid }}</td>
         <td>{{ trx.creditor_account_number }}</td>
         <td>{{ trx.amount }}</td>
         <td>{{ trx.fees }}</td>

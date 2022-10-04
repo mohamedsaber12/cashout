@@ -20,6 +20,7 @@
         <tr data-id="{{ transaction.uid }}"
             data-anon_recipient="{{ transaction.anon_recipient }}"
             data-recipient_name="{{ transaction.recipient_name }}"
+            data-bank_name="{{ transaction.creditor_bank_name }}"
             data-amount="{{ transaction.amount }}"
             data-status="{{ transaction.status_choice_verbose }}"
             data-issuer_type="{{ transaction.issuer_choice_verbose }}"
@@ -93,4 +94,3 @@
 
   {% include 'pagination.html' %}
 </div>
-

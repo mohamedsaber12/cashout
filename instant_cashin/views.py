@@ -71,7 +71,8 @@ class InstantTransactionsListView(IntegrationUserAndSupportUserPassesTestMixin, 
             )
             filter_dict['disbursed_date__lte'] = make_aware(last_day)
 
-        queryset = super().get_queryset().filter(**filter_dict).order_by("-created_at")
+        queryset = super().get_queryset().filter(**filter_dict) \
+            .filter(~Q(issuer_type=InstantTransaction.BANK_CARD)).order_by("-created_at")
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
         return paginator.get_page(page)

@@ -17,19 +17,14 @@
           {% if query_string != "" %}
             <input type="hidden" name="client" value="{{admin}}">
           {% endif %}
-          {% if type == 'banks' %}
           <div class="col-sm-12 data-field-col">
-            <label for="data-name">Transaction ID / Reference ID</label>
+            <label>Transaction ID</label>
             <input name="transaction_id" type="text" class="form-control">
           </div>
+          {% if type == 'banks' %}
           <div class="col-sm-12 data-field-col">
-            <label for="data-name">IBAN/Account Number</label>
+            <label>IBAN/Account Number</label>
             <input name="account_number" type="text" class="form-control">
-          </div>
-          {% elif type == 'instant_portal_wallets' %}
-          <div class="col-sm-12 data-field-col">
-            <label for="data-name">Recipient Number</label>
-            <input name="number" type="text" class="form-control" id="data-name">
           </div>
           {% else %}
           <div class="col-sm-12 data-field-col">
@@ -37,35 +32,21 @@
             <input name="number" type="text" class="form-control" id="data-name">
           </div>
           {% endif %}
-          {% if type == 'portal_wallets' %}
-          <div class="col-sm-12 data-field-col">
-            <label for="data-category"> Issuer </label>
-            <select name="issuer" class="form-control">
-              <option value="">All</option>
-              <option value="vodafone">Vodafone</option>
-              <option value="etisalat">Etisalat</option>
-              <option value="aman">Aman</option>
-            </select>
-          </div>
-          {% elif type == 'wallets' %}
+          {% if type == 'wallets' %}
           <div class="col-sm-12 data-field-col">
             <label for="data-category"> Issuer </label>
             <select name="issuer" class="form-control" id="data-category">
               <option value="">All</option>
-              <option value="V">Vodafone</option>
-              <option value="E">Etisalat</option>
-              <option value="A">Aman</option>
-              <option value="O">Orange</option>
-              <option value="B">Bank Wallet</option>
-            </select>
-          </div>
-          {% elif type == 'instant_portal_wallets' %}
-          <div class="col-sm-12 data-field-col">
-            <label for="data-category"> Issuer </label>
-            <select name="issuer" class="form-control">
-              <option value="">All</option>
-              <option value="O">Orange</option>
-              <option value="B">Bank Wallet</option>
+              <option value="JC">JazzCash</option>
+              <option value="EP">Easypaisa</option>
+              <option value="ZO">Zong</option>
+              <option value="SP">SadaPay</option>
+              <option value="UB">Ubank</option>
+              <option value="BY">BYKEA</option>
+              <option value="SI">SimPaisa</option>
+              <option value="TA">TAG</option>
+              <option value="OP">OPay</option>
+              <option value="BW">Bank Wallet</option>
             </select>
           </div>
           {% endif %}

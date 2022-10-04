@@ -17,8 +17,8 @@
     <tbody>
     {% for trx in transactions %}
       <tr data-id="{{ trx.uid }}"
-          data-creditor_name="{{ trx.creditor_name }}"
-          data-creditor_account_number="{{ trx.creditor_account_number }}"
+          data-creditor_name="{{ trx.recipient_name }}"
+          data-creditor_account_number="{{ trx.anon_recipient }}"
           data-creditor_bank_name="{{ trx.creditor_bank_name }}"
           data-amount="{{ trx.amount }}"
           data-status="{{ trx.status_choice_verbose }}"

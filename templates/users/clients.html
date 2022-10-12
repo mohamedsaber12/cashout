@@ -153,7 +153,11 @@
                         </div>
                         <div class="col-xs-12 bottom text-center">
                           <div class="col-xs-12 col-sm-3 emphasis" style="padding-right:10px;padding-left:10px;">
+                            {% if client_setup.is_active %}
                             <p class="ratings pull-{{'left'|invert_dir:LANGUAGE_CODE}}"><a>{% trans 'Active' %}</a></p>
+                            {% else %}
+                            <p class="ratings pull-{{'left'|invert_dir:LANGUAGE_CODE}}"><a>{% trans 'Inactive' %}</a></p>
+                            {% endif %}
                           </div>
                           <div class="col-xs-12 col-sm-9 emphasis text-right" style="padding-right:10px;padding-left:10px;">
                             {% if request.user.is_onboard_user %}

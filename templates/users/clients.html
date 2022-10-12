@@ -117,11 +117,11 @@
                         <div class="col-sm-12">
                           <h4 class="brief">
                             <em>
-                              {% ifequal client_setup.is_active True %}
+                              {% if client_setup.is_active %}
                                 {% trans 'Active' %}
                               {% else %}
                                 {% trans 'InActive' %}
-                              {% endifequal %}
+                              {% endif %}
                             </em>
                             <em class="pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                               {% if client_setup.client.is_instant_model_onboarding %}

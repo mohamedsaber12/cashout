@@ -38,7 +38,8 @@ class SSOIntegration:
                 "email": user.email,
                 "phone_number": user.mobile_no,
                 "first_name": user.first_name,
-                "last_name": user.last_name
+                "last_name": user.last_name,
+                "is_active":user.is_active
             }
             url = f"{settings.IDMS_BASE_URL}v1/analytics/users/{user.idms_user_id}"
             resp = requests.put(url, json=payload)

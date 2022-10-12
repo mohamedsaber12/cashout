@@ -126,10 +126,14 @@ def onboard_user_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, sender=models.SupportUser)
 @receiver(post_save, sender=models.SupervisorUser)
 def all_users_signal(sender, instance, created, **kwargs):
+    sso =  SSOIntegration()
     if created:
         # Register User Over IDMS
-        sso =  SSOIntegration()
         sso.register_user_on_idms(instance)
+    else:
+        # Edit User on IDMS
+        sso.edit_user_on_idms(instance)
+
 
 
 @receiver(post_save, sender=SupervisorSetup)

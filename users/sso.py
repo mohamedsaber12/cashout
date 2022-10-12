@@ -28,6 +28,30 @@ class SSOIntegration:
         user.idms_user_id = resp.json().get("id")
         user.save()
 
+    def edit_user_on_idms(self, user):
+        SSO_INTEGRATION_LOGGER.debug(
+            f"SSO INTEGRATION EDIT USER ON IDMS User {user}"
+        )
+        if user.idms_user_id:
+            payload = {
+                "username": user.username,
+                "email": user.email,
+                "phone_number": user.mobile_no,
+                "first_name": user.first_name,
+                "last_name": user.last_name
+            }
+            url = f"{settings.IDMS_BASE_URL}v1/analytics/users/{user.idms_user_id}"
+            resp = requests.post(url, json=payload)
+            SSO_INTEGRATION_LOGGER.debug(
+                f"SSO INTEGRATION SEND SIGNUP REQUEST [URL - CONTENT - STATUS_CODE - DELTA]"
+                f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
+                f"- [{resp.elapsed.total_seconds()}]"
+            )
+        else:
+            SSO_INTEGRATION_LOGGER.debug(
+            f"SSO INTEGRATION EDIT USER ON IDMS User {user} FAILED [NO IDMS USER ID ATTACHED]"
+        )
+
     def change_user_password(self, user, password):
         SSO_INTEGRATION_LOGGER.debug(f"SSO INTEGRATION CHANGE USER PASSWORD {user}")
         payload = {"username": user.username, "password": password}

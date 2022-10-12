@@ -43,7 +43,7 @@ class SSOIntegration:
             url = f"{settings.IDMS_BASE_URL}v1/analytics/users/{user.idms_user_id}"
             resp = requests.put(url, json=payload)
             SSO_INTEGRATION_LOGGER.debug(
-                f"SSO INTEGRATION SEND SIGNUP REQUEST [URL - CONTENT - STATUS_CODE - DELTA]"
+                f"SSO INTEGRATION EDIT USER ON IDMS REQUEST [URL - CONTENT - STATUS_CODE - DELTA]"
                 f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
                 f"- [{resp.elapsed.total_seconds()}]"
             )

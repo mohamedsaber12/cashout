@@ -17,6 +17,13 @@ class SSOIntegration:
             "username": user.username,
             "email": user.email,
         }
+        if user.first_name:
+            payload["first_name"] = user.first_name
+        if user.last_name:
+            payload["last_name"] = user.last_name
+        if user.mobile_no:
+            payload["phone_number"] = user.mobile_no
+
         url = f"{settings.IDMS_BASE_URL}accounts/signup/"
         resp = requests.post(url, json=payload)
         SSO_INTEGRATION_LOGGER.debug(

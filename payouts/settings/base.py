@@ -27,7 +27,7 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', "172.31.8.189"]
 
 # Application definition
 THIRD_PARTY_APPS = [

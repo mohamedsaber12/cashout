@@ -68,6 +68,7 @@ class CustomRootFilter(admin.SimpleListFilter):
     parameter_name = 'root__id'
 
     def lookups(self, request, model_admin):
+
         return RootUser.objects.all().values_list('id', 'username')
 
     def queryset(self, request, queryset):
@@ -208,18 +209,25 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     def upload_csv(self, request):
 
         if request.method == "POST":
+            xlsx_file = request.FILES["timeouts_upload"]
+            file_name=xlsx_file.name
+            date=file_name.split(".")[0]
+
+            """
+                check if the format of date is valid
+            """
+
             try:
-                datetime.datetime.strptime(request.POST['date_from'], '%Y-%m-%d')
-                datetime.datetime.strptime(request.POST['date_to'], '%Y-%m-%d')
+                datetime.datetime.strptime(date, '%Y-%m-%d')
             except ValueError:
-                messages.warning(request,"Incorrect data format, should be YYYY-MM-DD")
+                messages.warning(request,"Incorrect file name format, should be YYYY-MM-DD.xlsx")
                 return HttpResponseRedirect(request.path_info)
 
-            xlsx_file = request.FILES["timeouts_upload"]
             
             if not xlsx_file.name.endswith('.xlsx'):
                 messages.warning(request, 'The wrong file type was uploaded')
                 return HttpResponseRedirect(request.path_info)
+
             wb = load_workbook(xlsx_file)
             ws = wb.active
             last_row = len(list(ws.rows))
@@ -233,8 +241,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
                     }
             
 
-            print(request.POST['date_from'], request.POST['date_to'], request.user.email)
-            update_instant_timeouts_from_vodafone_report.run(my_dict, request.POST['date_from'], request.POST['date_to'], request.user.email)
+            # print(request.POST['date_from'], request.POST['date_to'], request.user.email)
+            update_instant_timeouts_from_vodafone_report.run(my_dict, date,date, request.user.email)
 
 
             # url = reverse('admin:index')
@@ -247,5 +255,5 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
 
 class CsvImportForm(forms.Form):
     timeouts_upload = forms.FileField()
-    date_from = forms.DateField()
-    date_to = forms.DateField()
+    # date_from = forms.DateField()
+    # date_to = forms.DateField()

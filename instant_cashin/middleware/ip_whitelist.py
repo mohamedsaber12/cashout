@@ -18,10 +18,10 @@ class FilterIPMiddleware(object):
 
     # Check if client IP address is allowed
     def process_view(self, request, view_func, view_args, view_kwargs):
-        whitelisted_ip = '34.251.217.198'
+        whitelisted_ip = ['34.251.217.198', "172.31.8.189"]
         if request.user.is_authenticated and request.user.is_instantapichecker:
             ip = request.META.get('REMOTE_ADDR')
-            if 'eksab' in request.user.root.username and ip != whitelisted_ip:
-                raise PermissionDenied()         
+            if 'eksab' in request.user.root.username and ip not in whitelisted_ip:
+                raise PermissionDenied()  
 
         return None

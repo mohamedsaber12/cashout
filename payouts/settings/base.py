@@ -162,6 +162,9 @@ CELERY_RESULT_PERSISTENT = False
 MAX_TASK_RETRIES = 10
 CELERY_TIMEZONE = 'Africa/Cairo'
 
+#The validity period of the link Reset password
+PASSWORD_RESET_TIMEOUT=env.int("PASSWORD_RESET_TIMEOUT")
+
 # Password validation
 CUSTOM_PASSWORD_VALIDATOR = [
     {

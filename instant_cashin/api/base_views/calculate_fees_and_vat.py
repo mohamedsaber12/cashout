@@ -23,7 +23,7 @@ class Calculate_fees_and_vat_APIView(views.APIView):
             fees, vat = request.user.root.budget.calculate_fees_and_vat_for_amount(
                     serializer.validated_data.get('amount'),serializer.validated_data.get('issuer')
             )
-            return Response({"fees":str(fees),"vat":str(vat)}, status=status.HTTP_200_OK)
+            return Response({"fees":str(fees),"vat":str(vat),"total_amount":str(serializer.validated_data.get('amount')+fees+vat)}, status=status.HTTP_200_OK)
 
         except (ValidationError, ValueError, Exception) as e:
           

@@ -22,5 +22,5 @@ urlpatterns = [
     path('disburse/single-step/', SingleStepDisbursementAPIView.as_view(), name='disburse_single_step'),
     path('transaction/aman/cancel/', CancelAmanTransactionAPIView.as_view(), name='cancel_aman_transaction'),
     # path('topupbalance-request/',TopupbalanceAPIView.as_view(),name='topupbalance_request'),
-    path('Calc-fees-vat/',Calculate_fees_and_vat_APIView.as_view(),name='Calc_fees_vat')
+    path('calc-fees-vat/',Calculate_fees_and_vat_APIView.as_view(),name='calc_fees_vat')
 ]

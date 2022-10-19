@@ -27,7 +27,7 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost','0.0.0.0']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost', "172.31.8.189", "172.31.23.159", "75.2.116.217", "99.83.194.66"]
 
 # Application definition
 THIRD_PARTY_APPS = [
@@ -420,3 +420,14 @@ CSP_BASE_URI = (
 ADMIN_RANGEFILTER_NONCE_ENABLED = False
 # add x-xss-protection header
 SECURE_BROWSER_XSS_FILTER = True
+
+
+
+
+# SSO 
+
+IDMS_BASE_URL = env.str('IDMS_BASE_URL')
+IDMS_CLIENT_ID = env.str('IDMS_CLIENT_ID')
+IDMS_REDIRECT_URL = env.str('IDMS_REDIRECT_URL')
+IDMS_CLIENT_SECRET = env.str('IDMS_CLIENT_SECRET')
+IDMS_SSO_UID = env.str('IDMS_SSO_UID')

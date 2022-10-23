@@ -1,3 +1,4 @@
+from instant_cashin.models import instant_transactions
 from rest_framework import serializers
 
 from ..models import DisbursementData
@@ -35,3 +36,13 @@ class DisbursementCallBackSerializer(serializers.ModelSerializer):
         return super(DisbursementCallBackSerializer, self).update(instance, validated_data)
 
 
+class DisbursementDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DisbursementData
+        fields = '__all__'
+
+
+class InstantTransactionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model =instant_transactions.InstantTransaction
+        fields = '__all__'

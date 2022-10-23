@@ -2,6 +2,10 @@ from decimal import Decimal
 from datetime import datetime
 import json
 import logging
+from urllib import request
+from data.utils import paginator
+from rest_framework import status, viewsets
+from instant_cashin.models import  InstantTransaction
 
 from requests.exceptions import HTTPError
 import xlrd
@@ -19,6 +23,7 @@ from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthentication
+from rest_framework.pagination import PageNumberPagination
 
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
@@ -29,10 +34,13 @@ from utilities.messages import MSG_DISBURSEMENT_ERROR, MSG_DISBURSEMENT_IS_RUNNI
 
 from ..models import Agent, DisbursementData, DisbursementDocData
 from .permission_classes import BlacklistPermission
-from .serializers import DisbursementCallBackSerializer, DisbursementSerializer
+from .serializers import DisbursementCallBackSerializer, DisbursementSerializer,DisbursementDataSerializer, InstantTransactionSerializer
 from ..tasks import BulkDisbursementThroughOneStepCashin
 import requests
 import json
+
+from django.utils.timezone import datetime, make_aware
+
 
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
@@ -484,3 +492,52 @@ class CancelAmanTransactionView(APIView):
         }
         resp = requests.post(f"{self.void_url}{token}", data=json.dumps(payload), headers=self.req_headers)
         return resp
+
+
+class DisbursementDataViewSet(viewsets.ModelViewSet):
+    """
+    A simple ViewSet for viewing.
+    """
+
+    serializer_class = DisbursementSerializer
+    permission_classes = (IsAuthenticated,)
+    queryset=DisbursementData.objects.all()
+
+    # def get_queryset(self):
+    #     return self.request.user
+
+
+class InstantTransactionViewSet(viewsets.ModelViewSet):
+    serializer_class = InstantTransactionSerializer
+    permission_classes = (IsAuthenticated,)
+    pagination_classes =PageNumberPagination.page_size = 2
+   
+    def get_queryset(self,):
+        filter_dict = {'document__owner__root':User.objects.get(username='accept_vodafone_internal_admin')}
+
+        # add filters to filter dict
+        if self.request.data.get('number'):
+            filter_dict['anon_recipient__contains'] = self.request.data.get('number')
+        if self.request.data.get('issuer'):
+            filter_dict['issuer_type'] = self.request.data.get('issuer')
+        if self.request.data.get('start_date'):
+            start_date = self.request.data.get('start_date')
+            first_day = datetime(
+                year=int(start_date.split('-')[0]),
+                month=int(start_date.split('-')[1]),
+                day=int(start_date.split('-')[2]),
+            )
+            filter_dict['disbursed_date__gte'] = make_aware(first_day)
+        if self.request.data.get('end_date'):
+            end_date = self.request.data.get('end_date')
+            last_day = datetime(
+                year=int(end_date.split('-')[0]),
+                month=int(end_date.split('-')[1]),
+                day=int(end_date.split('-')[2]),
+                hour=23,
+                minute=59,
+                second=59,
+            )
+            filter_dict['disbursed_date__lte'] = make_aware(last_day)
+            
+        return InstantTransaction.objects.all().filter(**filter_dict).order_by("-created_at")

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import unicode_literals
-
 import logging
 
 from django.conf import settings
@@ -20,6 +17,8 @@ from .models import (
     Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser,
     OnboardUserSetup, SupervisorSetup
 )
+from users.sso import SSOIntegration
+from users import models
 
 
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
@@ -104,7 +103,34 @@ def onboard_user_post_save(sender, instance, created, **kwargs):
         onboard_user = instance.onboard_user
         onboard_user.brand = instance.user_created.brand
         onboard_user.save()
+        # Register User Over IDMS
+        sso =  SSOIntegration()
+        sso.register_user_on_idms(onboard_user)
         notify_user(onboard_user, created)
+
+
+@receiver(post_save, sender=models.User)
+@receiver(post_save, sender=models.InstantAPIViewerUser)
+@receiver(post_save, sender=models.RootUser)
+@receiver(post_save, sender=models.CheckerUser)
+@receiver(post_save, sender=models.MakerUser)
+@receiver(post_save, sender=models.UploaderUser)
+@receiver(post_save, sender=models.UpmakerUser)
+@receiver(post_save, sender=models.InstantAPICheckerUser)
+@receiver(post_save, sender=models.SuperAdminUser)
+@receiver(post_save, sender=models.OnboardUser)
+@receiver(post_save, sender=models.SupportUser)
+@receiver(post_save, sender=models.SupervisorUser)
+def all_users_signal(sender, instance, created, **kwargs):
+    sso =  SSOIntegration()
+    if created:
+        # Register User Over IDMS
+        sso.register_user_on_idms(instance)
+    else:
+        # Edit User on IDMS
+        sso.edit_user_on_idms(instance)
+
+
 
 @receiver(post_save, sender=SupervisorSetup)
 def supervisor_post_save(sender, instance, created, **kwargs):

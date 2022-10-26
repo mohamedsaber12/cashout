@@ -91,11 +91,11 @@
                     <td>{{ user.client.username }}</td>
                     <td>{{ user.client.email }}</td>
                     <td>
-                      {% ifequal user.is_active True %}
+                      {% if user.is_active %}
                         {% trans 'Active' %}
                       {% else %}
                         {% trans 'InActive' %}
-                      {% endifequal %}
+                      {% endif %}
                     </td>
                   </tr>
                 {% empty %}

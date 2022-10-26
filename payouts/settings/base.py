@@ -426,7 +426,6 @@ SECURE_BROWSER_XSS_FILTER = True
 
 
 
-
 # SSO 
 
 IDMS_BASE_URL = env.str('IDMS_BASE_URL')

@@ -33,9 +33,18 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
     """Task for updating pending bank transactions from EBC for the last 5 days at max"""
 
     # check if EBC is up , if not return False
-    try:
-        requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
-    except Exception as e:
+    if get_from_env("ENVIRONMENT") != "staging":
+        try:
+            requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
+        except Exception as e:
+            ACH_GET_TRX_STATUS_LOGGER.debug(
+                f"[message] [check for EBC status] [celery_task] -- "
+                f"Exeption: {e}"
+            )
+            return False
+        # check if there's same task is running
+        active_tasks = control.inspect().active()
+        ach_worker = get_from_env("ach_worker")
         ACH_GET_TRX_STATUS_LOGGER.debug(
             f"[message] [check for EBC status] [celery_task] -- " f"Exeption: {e}"
         )
@@ -98,9 +107,17 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
 @respects_language
 def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
     # check if EBC is up , if not return False
-    try:
-        requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
-    except Exception as e:
+    if get_from_env("ENVIRONMENT") != "staging":
+        try:
+            requests.get("https://cibcorpay.egyptianbanks.net", timeout=10)
+        except Exception as e:
+            ACH_GET_TRX_STATUS_LOGGER.debug(
+                f"[message] [check for EBC status more than 6 days] [celery_task] -- "
+                f"Exeption: {e}"
+            )
+            return False
+        active_tasks = control.inspect().active()
+        ach_worker = get_from_env("ach_worker")
         ACH_GET_TRX_STATUS_LOGGER.debug(
             f"[message] [check for EBC status more than 6 days] [celery_task] -- "
             f"Exeption: {e}"
@@ -121,8 +138,6 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
             == "instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions"
         ):
             return False
-    if num_of_current_tasks > 1:
-        return False
     try:
         start_date = timezone.now()
         end_date = timezone.now() - datetime.timedelta(int(16))

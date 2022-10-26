@@ -99,6 +99,26 @@ class User(AbstractUser, SoftDeletionModel):
                 "banks_standard_model_onboaring",
                 "like the vodafone_default_onboarding but with different issuers"
             ),
+            (
+                "has_custom_budget_add_permission",
+                "has custom budget add permission"
+            ),
+            (
+                "has_custom_budget_change_permission",
+                "has custom budget change permission"
+            ),
+            (
+                "has_custom_budget_delete_permission",
+                "has custom budget delete permission"
+            ),
+            (
+                "has_custom_budget_view_permission",
+                "has custom budget view permission"
+            ),
+            (
+                "has_instant_transaction_view",
+                "has instant transaction view"
+            ),
         )
         ordering = ['-id', '-hierarchy']
 

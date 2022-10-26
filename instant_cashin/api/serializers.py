@@ -284,3 +284,121 @@ class CancelAmanTransactionSerializer(serializers.Serializer):
     
     transaction_id = serializers.UUIDField(required=True)
     
+
+class TopupBalanceserializer(serializers.Serializer):
+
+
+    amount = serializers.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        default=0
+    )
+    currency = serializers.CharField(
+        max_length=20,
+    )
+    transfer_type = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+    username = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+
+    from_bank = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+    to_bank = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+    from_account_number = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+    to_account_number = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+    from_account_name = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+    to_account_name = serializers.CharField(
+        max_length=100,
+        required=False
+    )
+    from_date = serializers.DateField(
+        required=False
+    )
+    to_attach_proof = serializers.FileField(
+        max_length=500,
+        required=False
+    )
+
+    def validate(self, attr):
+        is_required_msg = 'This field is required'
+        Currency = attr.get('currency','')
+        transfer_type = attr.get('transfer_type','')
+
+        if not Currency in ['egyptian_pound','american_dollar']:
+            raise serializers.ValidationError(_("Currency must be (egyptian_pound or american_dollar)")
+            )
+
+        if not transfer_type in ['from_accept_balance','from_bank_deposit','from_bank_transfer',]:
+
+            raise serializers.ValidationError(
+                            _("transfer type must be (from_accept_balance or from_bank_deposit or from_bank_transfer).")
+                    )
+        if transfer_type == 'from_accept_balance':
+            if not attr.get('username'):
+                 raise serializers.ValidationError(
+                    _(f"username {is_required_msg}")
+                 )
+        elif transfer_type == 'from_bank_transfer':
+            if not attr.get('from_bank'):
+                 raise serializers.ValidationError(
+                    _(f"from_bank {is_required_msg}")
+                 )
+            if not attr.get('from_account_number'):
+                 raise serializers.ValidationError(
+                    _(f"from_account_number {is_required_msg}")
+                 )
+        # validate shared fields between bank deposit and bank transfer
+        if transfer_type == 'from_bank_deposit' or transfer_type == 'from_bank_transfer':
+            if not attr.get('to_bank'):
+                raise serializers.ValidationError(
+                    _(f"to_bank {is_required_msg}")
+                 )
+            if not attr.get('to_account_number'):
+                raise serializers.ValidationError(
+                    _(f"to_account_number {is_required_msg}")
+                 )
+            if not attr.get('from_account_name'):
+                raise serializers.ValidationError(
+                    _(f"from_account_name {is_required_msg}")
+                 )
+            if not attr.get('to_account_name'):
+                raise serializers.ValidationError(
+                    _(f"to_account_name {is_required_msg}")
+                 )
+            if not attr.get('from_date'):
+                raise serializers.ValidationError(
+                    _(f"from_date {is_required_msg}")
+                 )
+            # if not data.get('to_attach_proof'):
+            #     raise serializers.validationErrors(
+            #         _(f"to_attach_proof {is_required_msg}")
+            #      )
+        return attr
+
+
+class Costserializer(serializers.Serializer):
+    amount = serializers.DecimalField(
+            required=True,
+            decimal_places=2,
+            max_digits=9,
+            min_value=Decimal(100.0)
+    )
+    issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])

@@ -2,13 +2,12 @@
 from __future__ import unicode_literals
 
 import csv
-
 from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
 
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import resolve_url
+from django.shortcuts import resolve_url, render
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 from django.http import HttpResponse
@@ -20,6 +19,15 @@ from .models import AmanTransaction, InstantTransaction
 from .mixins import ExportCsvMixin
 from core.models import AbstractBaseStatus
 from utilities.date_range_filter import CustomDateRangeFilter
+from django.urls import path, reverse
+from django import forms
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+import datetime
+from openpyxl import load_workbook
+from instant_cashin.tasks import update_instant_timeouts_from_vodafone_report
+
+
 
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
@@ -60,6 +68,7 @@ class CustomRootFilter(admin.SimpleListFilter):
     parameter_name = 'root__id'
 
     def lookups(self, request, model_admin):
+
         return RootUser.objects.all().values_list('id', 'username')
 
     def queryset(self, request, queryset):
@@ -161,11 +170,11 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     )
 
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.is_finance_with_instant_transaction_view:
+        if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):
             return True
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.is_finance_with_instant_transaction_view:
+        if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):
             return True
 
     def has_add_permission(self, request):
@@ -191,3 +200,58 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         return response
 
     export_bank_transactions_ids.short_description = "Export Bank Transactions Ids"
+
+    def get_urls(self):
+        urls = super().get_urls()
+        new_urls = [path('upload-timeouts/', self.upload_csv),]
+        return new_urls + urls
+
+    def upload_csv(self, request):
+
+        if request.method == "POST":
+            xlsx_file = request.FILES["timeouts_upload"]
+            file_name=xlsx_file.name
+            date=file_name.split(".")[0]
+
+            """
+                check if the format of date is valid
+            """
+
+            try:
+                datetime.datetime.strptime(date, '%Y-%m-%d')
+            except ValueError:
+                messages.warning(request,"Incorrect file name format, should be YYYY-MM-DD.xlsx")
+                return HttpResponseRedirect(request.path_info)
+
+            
+            if not xlsx_file.name.endswith('.xlsx'):
+                messages.warning(request, 'The wrong file type was uploaded')
+                return HttpResponseRedirect(request.path_info)
+
+            wb = load_workbook(xlsx_file)
+            ws = wb.active
+            last_row = len(list(ws.rows))
+            my_dict = {}
+            for row in range(2, last_row + 1):
+                if int(ws["AA" + str(row)].value) < 0:
+                    my_dict[ws["L" + str(row)].value] = {
+                        "wallet": ws["H" + str(row)].value,
+                        "success": not bool(ws["V" + str(row)].value),
+                        "amount": ws["J" + str(row)].value,
+                    }
+            
+            update_instant_timeouts_from_vodafone_report.run(my_dict, date,date, request.user.email)
+
+
+            # url = reverse('admin:index')
+            # return HttpResponseRedirect(url)
+
+        form = CsvImportForm()
+        data = {"form": form}
+        return render(request, "admin/timeouts_upload.html", data)
+
+
+class CsvImportForm(forms.Form):
+    timeouts_upload = forms.FileField()
+    # date_from = forms.DateField()
+    # date_to = forms.DateField()

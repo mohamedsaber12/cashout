@@ -29,6 +29,7 @@ from rangefilter.filter import DateRangeFilter
 from disbursement.mixins import ExportCsvMixin
 
 
+
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
 
 
@@ -91,6 +92,31 @@ class FeeSetupAdmin(CustomInlineAdmin):
 
     model = FeeSetup
     extra = 0
+
+    def has_add_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_add_permission"):
+            return True 
+        return False
+    
+    def has_change_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_change_permission"):
+            return True 
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_delete_permission"):
+            return True
+        return False
+
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_view_permission"):
+            return True
+        return False
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_view_permission"):
+            return True
+        return False
 
 
 @admin.register(Budget)

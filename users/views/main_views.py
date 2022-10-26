@@ -1,6 +1,3 @@
-from __future__ import print_function, unicode_literals
-from curses.ascii import US
-
 import logging
 
 from django.contrib.auth import authenticate, login, logout

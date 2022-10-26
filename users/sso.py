@@ -1,4 +1,3 @@
-from curses.ascii import US
 from django.conf import settings
 import requests
 from users.models.base_user import User

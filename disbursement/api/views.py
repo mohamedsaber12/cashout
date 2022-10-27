@@ -541,3 +541,151 @@ class InstantTransactionViewSet(viewsets.ModelViewSet):
             filter_dict['disbursed_date__lte'] = make_aware(last_day)
             
         return InstantTransaction.objects.all().filter(**filter_dict).order_by("-created_at")
+
+import random
+import array
+
+
+ROOT_CREATE_LOGGER = logging.getLogger("root_create")
+
+DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+LOCASE_CHARACTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
+                     'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q',
+                     'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
+                     'z']
+UPCASE_CHARACTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                     'I', 'J', 'K', 'M', 'N', 'O', 'p', 'Q',
+                     'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
+                     'Z']
+SYMBOLS = ['#']
+# combines all the character arrays above to form one array
+COMBINED_LIST = DIGITS + UPCASE_CHARACTERS + LOCASE_CHARACTERS + SYMBOLS
+from users.models import (
+    Client, SupportSetup, SupportUser, RootUser, SuperAdminUser, User, Setup,
+    EntitySetup, InstantAPIViewerUser, InstantAPICheckerUser)
+from utilities.models import Budget, CallWalletsModerator, FeeSetup
+from instant_cashin.utils import get_from_env
+from utilities.logging import logging_message
+from django.contrib.auth.models import Permission
+
+class CreateSingleStepTransacton(APIView):
+    """
+     view for single step 
+    """
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to onboard new client"""
+        user_name=self.request.data.get("username")
+        root=self.onbordnewadmin(user_name)
+        return Response(data={"status":"created"}, status=status.HTTP_200_OK)
+
+    def define_new_admin_hierarchy(self, new_user):
+        """
+        Generate/Define the hierarchy of the new admin user
+        :param new_user: the new admin user to be created
+        :return: the new admin user with its new hierarchy
+        """
+        maximum = max(RootUser.objects.values_list('hierarchy', flat=True), default=False)
+        maximum = 0 if not maximum else maximum
+
+        try:
+            new_user.hierarchy = maximum + 1
+        except TypeError:
+            new_user.hierarchy = 1
+
+        return new_user
+
+    def onbordnewadmin(self,user_name):
+        
+        root =RootUser.objects.filter(username=user_name).first()
+        
+        if root:
+           
+            return root
+
+        else:
+            try:
+                client_name=user_name
+                # create root
+                root = RootUser.objects.create(
+                username=client_name,
+                email=f"{client_name}_portal_admin@paymob.com",
+                user_type=3
+                )
+
+                # set root password
+                root.set_password(get_from_env('PORTAL_ADMIN_DEFAULT_PASSWORD'))
+                # set admin hierarchy
+                root = self.define_new_admin_hierarchy(root)
+                # add root field when create root
+                root.root = root
+                root.save()
+                # add permissions
+                root.user_permissions.add(
+                Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'),
+                Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement')
+                )
+                # start create extra setup
+                superadmin=User.objects.get(username="accept_vodafone_internal_super_admin")
+                entity_dict = {
+                "user": superadmin,
+                "entity": root,
+                "agents_setup": True,
+                "fees_setup": True
+                }
+                client_dict = {
+                "creator": superadmin,
+                "client": root,
+                }
+                Setup.objects.create(
+                user=root, pin_setup=True, levels_setup=True,
+                maker_setup=True, checker_setup=True, category_setup=True
+                )
+                CallWalletsModerator.objects.create(
+                user_created=root, disbursement=False, change_profile=False,
+                set_pin=False, user_inquiry=False, balance_inquiry=False
+                )
+                root.user_permissions. \
+                add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
+                EntitySetup.objects.create(**entity_dict)
+                Client.objects.create(**client_dict)
+                # finish create extra setup
+                msg = f"New Root/Admin created with username: {root.username} by {superadmin.username}"
+                logging_message(ROOT_CREATE_LOGGER, "[message] [NEW ADMIN CREATED]", self.request, msg)
+                # handle budget and fees setup
+                root_budget = Budget.objects.create(
+                disburser=root, created_by=superadmin, current_balance=0
+                )
+                FeeSetup.objects.create(budget_related=root_budget, issuer='vf',
+                fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='es',
+                fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='og',
+                   fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='bw',
+                fee_type='p', percentage_value=2.25)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='am',
+                fee_type='p', percentage_value=3.0)
+                FeeSetup.objects.create(budget_related=root_budget, issuer='bc',
+                    fee_type='f', fixed_value=20)                
+                return root
+            
+            except Exception as err:
+                logging_message(
+                    ROOT_CREATE_LOGGER, "[error] [error when onboarding new client]",
+                    self.request, f"error :-  Error: {err.args}"
+                )
+                error_msg = "Process stopped during an internal error, please can you try again."
+                error = {
+                "message": error_msg
+                }
+            
+
+
+        
+
+    
+
+        
+        
+          
+        

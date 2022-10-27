@@ -555,3 +555,157 @@ class VodafoneBalance(AbstractTimeStamp):
         verbose_name = "Vodafone Balance"
         verbose_name_plural = "Vodafone Monthly Balances"
         ordering = ["-id"]
+
+
+class RateTear(models.Model):
+    """
+    Moderator to manage calls/requests to the wallets
+    """
+    tear_one_wallets_percentage = models.DecimalField(
+            _("Percentage value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0))),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_one_bank_card_percentage = models.DecimalField(
+            _("Percentage value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0))),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_one_bank_card_min_value = models.DecimalField(
+            _("Minimum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_one_bank_card_max_value = models.DecimalField(
+            _("Maximum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(10000.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_one_threshold = models.DecimalField(
+            max_digits=15,
+            decimal_places=2,
+            default=0,
+            null=False,
+            blank=False,
+    )
+
+    tear_two_wallets_percentage = models.DecimalField(
+            _("Percentage value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0))),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_two_bank_card_percentage = models.DecimalField(
+            _("Percentage value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0))),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_two_bank_card_min_value = models.DecimalField(
+            _("Minimum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_two_bank_card_max_value = models.DecimalField(
+            _("Maximum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(10000.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_two_threshold = models.DecimalField(
+            max_digits=15,
+            decimal_places=2,
+            default=0,
+            null=False,
+            blank=False,
+    )
+
+    tear_three_wallets_percentage = models.DecimalField(
+            _("Percentage value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0))),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_three_bank_card_percentage = models.DecimalField(
+            _("Percentage value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0))),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_three_bank_card_min_value = models.DecimalField(
+            _("Minimum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(100.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_three_bank_card_max_value = models.DecimalField(
+            _("Maximum value"),
+            validators=[
+                MinValueValidator(round(Decimal(0.0), 0)),
+                MaxValueValidator(round(Decimal(10000.0), 1))
+            ],
+            max_digits=5,
+            decimal_places=2,
+            default=0,
+    )
+    tear_three_threshold = models.DecimalField(
+            max_digits=15,
+            decimal_places=2,
+            default=0,
+            null=False,
+            blank=False,
+    )
+
+    admins = models.ManyToManyField(
+            "users.RootUser",
+            related_name="tears",
+    )

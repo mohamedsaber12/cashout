@@ -561,12 +561,14 @@ SYMBOLS = ['#']
 # combines all the character arrays above to form one array
 COMBINED_LIST = DIGITS + UPCASE_CHARACTERS + LOCASE_CHARACTERS + SYMBOLS
 from users.models import (
-    Client, SupportSetup, SupportUser, RootUser, SuperAdminUser, User, Setup,
-    EntitySetup, InstantAPIViewerUser, InstantAPICheckerUser)
+    Client,  RootUser, User, Setup,
+    EntitySetup)
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
 from instant_cashin.utils import get_from_env
 from utilities.logging import logging_message
 from django.contrib.auth.models import Permission
+from django.urls import reverse_lazy
+from .serializers import SingleStepserializer
 
 class CreateSingleStepTransacton(APIView):
     """
@@ -576,7 +578,57 @@ class CreateSingleStepTransacton(APIView):
         """Handles POST requests to onboard new client"""
         user_name=self.request.data.get("username")
         root=self.onbordnewadmin(user_name)
-        return Response(data={"status":"created"}, status=status.HTTP_200_OK)
+        serializer = SingleStepserializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            data = serializer.validated_data
+            payload = {
+                "is_single_step": True,
+                "pin": 123456,
+                "user": root.username,
+                "amount": str(data["amount"]),
+                "issuer": data["issuer"],
+                "msisdn": data["msisdn"]
+            }
+            if data["issuer"] in ["orange", "bank_wallet"]:
+                payload["full_name"] = data["full_name"]
+            if data["issuer"] == "bank_card":
+                payload["full_name"] = data["creditor_name"]
+                payload["bank_card_number"] = data["creditor_account_number"]
+                payload["bank_code"] =  data["creditor_bank"]
+                payload["bank_transaction_type"] = data["transaction_type"]
+                del payload['msisdn']
+            if data["issuer"] == "aman":
+                payload["first_name"] =  data["first_name"]
+                payload["last_name"] =  data["last_name"]
+                payload["email"] =  data["email"]
+            http_or_https = "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
+            budget=root.budget
+            fees, vat = root.budget.calculate_fees_and_vat_for_amount(data["amount"],data["issuer"])
+            total_amount = data["amount"] + fees + vat
+            budget.current_balance += total_amount
+            budget.save()
+            response = requests.post(
+                    http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
+                    json=payload
+            )
+            if response.json().get("status_code") not in ["201", "200"]:
+                budget.current_balance -= total_amount
+                budget.save()
+            data = {
+                    "status" : response.json().get('status_code'),
+                    "message": response.json().get('status_description')
+            }
+            return Response(data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            error_msg = "Process stopped during an internal error, please can you try again."
+            data = {
+                "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "message": error_msg
+            }
+
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
     def define_new_admin_hierarchy(self, new_user):
         """
@@ -625,7 +677,7 @@ class CreateSingleStepTransacton(APIView):
                 Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement')
                 )
                 # start create extra setup
-                superadmin=User.objects.get(username="accept_vodafone_internal_super_admin")
+                superadmin=User.objects.get(username=get_from_env("ACCEPT_VODAFONE_INTERNAL_SUPERADMIN"))
                 entity_dict = {
                 "user": superadmin,
                 "entity": root,
@@ -656,17 +708,17 @@ class CreateSingleStepTransacton(APIView):
                 disburser=root, created_by=superadmin, current_balance=0
                 )
                 FeeSetup.objects.create(budget_related=root_budget, issuer='vf',
-                fee_type='p', percentage_value=2.25)
+                fee_type='p', percentage_value=get_from_env("VF_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='es',
-                fee_type='p', percentage_value=2.25)
+                fee_type='p', percentage_value=get_from_env("ES_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='og',
-                   fee_type='p', percentage_value=2.25)
+                   fee_type='p', percentage_value=get_from_env("OG_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='bw',
-                fee_type='p', percentage_value=2.25)
+                fee_type='p', percentage_value=get_from_env("BW_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='am',
-                fee_type='p', percentage_value=3.0)
+                fee_type='p', percentage_value=get_from_env("AM_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='bc',
-                    fee_type='f', fixed_value=20)                
+                    fee_type='f', fixed_value=get_from_env("BC_FIXED_VALUE"))                
                 return root
             
             except Exception as err:

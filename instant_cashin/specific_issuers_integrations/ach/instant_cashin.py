@@ -142,7 +142,7 @@ class BankTransactionsChannel:
         """Handles POST requests to EBC using requests package"""
         log_header = "SEND ACH TRANSACTION TO EBC"
         ACH_SEND_TRX_LOGGER.debug(_(f"[request] [{log_header}] [{bank_trx_obj.user_created}] -- {payload}"))
-
+        print("ffffffffffffffffffffffff")
         try:
             response = requests.post(
                     url,

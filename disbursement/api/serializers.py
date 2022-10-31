@@ -112,7 +112,14 @@ class SingleStepserializer(serializers.Serializer):
         max_length=100,
         required=False
     )
-
+    root_email=serializers.EmailField(
+        max_length=100,
+        required=True
+    )
+    idms_user_id = serializers.CharField(
+        max_length=100,
+        required=True
+    )
    
 
     def validate(self, attr):

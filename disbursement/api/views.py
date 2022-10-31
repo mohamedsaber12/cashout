@@ -40,9 +40,19 @@ import requests
 import json
 
 from django.utils.timezone import datetime, make_aware
+from users.models import (
+    Client,  RootUser, User, Setup,
+    EntitySetup)
+from utilities.models import Budget, CallWalletsModerator, FeeSetup
+from instant_cashin.utils import get_from_env
+from utilities.logging import logging_message
+from django.contrib.auth.models import Permission
+from django.urls import reverse_lazy
+from .serializers import SingleStepserializer
 
 
 
+ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -542,33 +552,6 @@ class InstantTransactionViewSet(viewsets.ModelViewSet):
             
         return InstantTransaction.objects.all().filter(**filter_dict).order_by("-created_at")
 
-import random
-import array
-
-
-ROOT_CREATE_LOGGER = logging.getLogger("root_create")
-
-DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
-LOCASE_CHARACTERS = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h',
-                     'i', 'j', 'k', 'm', 'n', 'o', 'p', 'q',
-                     'r', 's', 't', 'u', 'v', 'w', 'x', 'y',
-                     'z']
-UPCASE_CHARACTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
-                     'I', 'J', 'K', 'M', 'N', 'O', 'p', 'Q',
-                     'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y',
-                     'Z']
-SYMBOLS = ['#']
-# combines all the character arrays above to form one array
-COMBINED_LIST = DIGITS + UPCASE_CHARACTERS + LOCASE_CHARACTERS + SYMBOLS
-from users.models import (
-    Client,  RootUser, User, Setup,
-    EntitySetup)
-from utilities.models import Budget, CallWalletsModerator, FeeSetup
-from instant_cashin.utils import get_from_env
-from utilities.logging import logging_message
-from django.contrib.auth.models import Permission
-from django.urls import reverse_lazy
-from .serializers import SingleStepserializer
 
 class CreateSingleStepTransacton(APIView):
     """
@@ -576,9 +559,25 @@ class CreateSingleStepTransacton(APIView):
     """
     def post(self, request, *args, **kwargs):
         """Handles POST requests to onboard new client"""
-        user_name=self.request.data.get("username")
-        root=self.onbordnewadmin(user_name)
-        serializer = SingleStepserializer(data=request.data)
+        try:
+            serializer = SingleStepserializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            data = serializer.validated_data
+            user_name=data["username"]
+            root_email= data["root_email"]
+            idms_user_id=data["idms_user_id"]
+            root=RootUser.objects.filter(idms_user_id=idms_user_id).first()
+            if root:
+                return Response(data={"message":"idms_user_id already exist"}, status=status.HTTP_400_BAD_REQUEST)
+            root=self.onbordnewadmin(user_name,root_email,idms_user_id)
+        except Exception as e:
+            error_msg = "Process stopped during an internal error, please can you try again."
+            data = {
+                "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "message": error_msg
+            }
+
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
         try:
             serializer.is_valid(raise_exception=True)
             data = serializer.validated_data
@@ -646,7 +645,7 @@ class CreateSingleStepTransacton(APIView):
 
         return new_user
 
-    def onbordnewadmin(self,user_name):
+    def onbordnewadmin(self,user_name,root_email,idms_user_id):
         
         root =RootUser.objects.filter(username=user_name).first()
         
@@ -660,12 +659,11 @@ class CreateSingleStepTransacton(APIView):
                 # create root
                 root = RootUser.objects.create(
                 username=client_name,
-                email=f"{client_name}_portal_admin@paymob.com",
-                user_type=3
+                email=root_email,
+                user_type=3,
+                has_password_set_on_idms=True,
+                idms_user_id=idms_user_id
                 )
-
-                # set root password
-                root.set_password(get_from_env('PORTAL_ADMIN_DEFAULT_PASSWORD'))
                 # set admin hierarchy
                 root = self.define_new_admin_hierarchy(root)
                 # add root field when create root

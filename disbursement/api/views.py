@@ -564,19 +564,26 @@ class CreateSingleStepTransacton(APIView):
             serializer.is_valid(raise_exception=True)
             data = serializer.validated_data
             user_name=data["username"]
-            root_email= data["root_email"]
+            admin_email= data["admin_email"]
             idms_user_id=data["idms_user_id"]
+            root=RootUser.objects.filter(email=admin_email).first()
+            if root:
+                return Response(data={"message":"admin email already exist with another admin"}, status=status.HTTP_400_BAD_REQUEST)
             root=RootUser.objects.filter(idms_user_id=idms_user_id).first()
             if root:
                 return Response(data={"message":"idms_user_id already exist"}, status=status.HTTP_400_BAD_REQUEST)
-            root=self.onbordnewadmin(user_name,root_email,idms_user_id)
-        except Exception as e:
+            root=self.onbordnewadmin(user_name,admin_email,idms_user_id)
+        except (Exception,ValueError) as e:
+            print(e.args)
             error_msg = "Process stopped during an internal error, please can you try again."
+            if len(serializer.errors) > 0:
+                failure_message = serializer.errors
+            else:
+                failure_message = error_msg
             data = {
-                "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
-                "message": error_msg
+                "status" : status.HTTP_400_BAD_REQUEST,
+                "message": failure_message
             }
-
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
         try:
             serializer.is_valid(raise_exception=True)

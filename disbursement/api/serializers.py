@@ -108,13 +108,13 @@ class SingleStepserializer(serializers.Serializer):
         max_length=100,
         required=False
     )
-    email= serializers.EmailField(
-        max_length=100,
-        required=False
-    )
-    root_email=serializers.EmailField(
+    admin_email= serializers.EmailField(
         max_length=100,
         required=True
+    )
+    email=serializers.EmailField(
+        max_length=100,
+        required=False
     )
     idms_user_id = serializers.CharField(
         max_length=100,
@@ -125,8 +125,6 @@ class SingleStepserializer(serializers.Serializer):
     def validate(self, attr):
         is_required_msg = 'This field is required'
         issuer = attr.get('issuer','')
-
-
         if not issuer in ['bank_card','vodafone','etisalat','orange','bank_wallet','aman']:
 
             raise serializers.ValidationError(

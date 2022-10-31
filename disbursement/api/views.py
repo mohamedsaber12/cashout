@@ -566,12 +566,10 @@ class CreateSingleStepTransacton(APIView):
             user_name=data["username"]
             admin_email= data["admin_email"]
             idms_user_id=data["idms_user_id"]
-            root=RootUser.objects.filter(email=admin_email).first()
-            if root:
-                return Response(data={"message":"admin email already exist with another admin"}, status=status.HTTP_400_BAD_REQUEST)
-            root=RootUser.objects.filter(idms_user_id=idms_user_id).first()
-            if root:
-                return Response(data={"message":"idms_user_id already exist"}, status=status.HTTP_400_BAD_REQUEST)
+            # root =RootUser.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name).first()
+            # if root:
+            #     return Response(data={"message":"idms is already taken by another admin"}, status=status.HTTP_400_BAD_REQUEST)
+
             root=self.onbordnewadmin(user_name,admin_email,idms_user_id)
         except (Exception,ValueError) as e:
             print(e.args)

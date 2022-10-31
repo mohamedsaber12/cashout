@@ -1,6 +1,7 @@
 import email
 from instant_cashin.models import instant_transactions
 from rest_framework import serializers
+from users.models.root import RootUser
 
 from ..models import DisbursementData
 
@@ -126,7 +127,6 @@ class SingleStepserializer(serializers.Serializer):
         is_required_msg = 'This field is required'
         issuer = attr.get('issuer','')
         if not issuer in ['bank_card','vodafone','etisalat','orange','bank_wallet','aman']:
-
             raise serializers.ValidationError(
                             _("issuer type must be (bank_card or vodafone or etisalat or orange or bank_wallet or aman ).")
                     )
@@ -188,5 +188,13 @@ class SingleStepserializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     _(f"full_name {is_required_msg}")
                 )
-           
+            
+        user_name=attr.get("username")
+        idms_user_id=attr.get("idms_user_id")
+        root =RootUser.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name)
+        if root.exists():
+            raise serializers.ValidationError(
+                _(f"idms is already taken by another admin.")
+            )  
+                
         return attr

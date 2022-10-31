@@ -662,7 +662,8 @@ class CreateSingleStepTransacton(APIView):
                 email=root_email,
                 user_type=3,
                 has_password_set_on_idms=True,
-                idms_user_id=idms_user_id
+                idms_user_id=idms_user_id,
+                from_accept=True
                 )
                 # set admin hierarchy
                 root = self.define_new_admin_hierarchy(root)

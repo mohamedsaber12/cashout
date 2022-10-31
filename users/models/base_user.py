@@ -72,6 +72,7 @@ class User(AbstractUser, SoftDeletionModel):
     access_top_up_balance = models.BooleanField(null=True, default=True, verbose_name='Has Access To Top Up Balance')
     idms_user_id = models.CharField(max_length=50, null=True, blank=True)
     has_password_set_on_idms = models.BooleanField(default=False)
+    from_accept = models.BooleanField(default=False)
 
 
 

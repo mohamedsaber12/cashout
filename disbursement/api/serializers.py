@@ -1,6 +1,7 @@
 import email
 from instant_cashin.models import instant_transactions
 from rest_framework import serializers
+from users.models.base_user import User
 from users.models.root import RootUser
 
 from ..models import DisbursementData
@@ -191,10 +192,16 @@ class SingleStepserializer(serializers.Serializer):
             
         user_name=attr.get("username")
         idms_user_id=attr.get("idms_user_id")
-        root =RootUser.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name)
+        admin_email=attr.get("admin_email")
+        root =User.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name)
         if root.exists():
             raise serializers.ValidationError(
                 _(f"idms is already taken by another admin.")
             )  
-                
+
+        _root = User.objects.filter(email=admin_email).exclude(username=user_name)
+        if _root.exists():
+            raise serializers.ValidationError(
+                _(f"email is already taken by another admin.")
+            )      
         return attr

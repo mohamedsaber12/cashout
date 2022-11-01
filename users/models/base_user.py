@@ -28,7 +28,8 @@ TYPES = (
     (7, 'InstantAPIViewer'),
     (8, 'Support'),
     (9, 'OnboardUser'),
-    (12, 'SuperVisor')
+    (12, 'SuperVisor'),
+    (14, 'systemadmin')
 )
 
 
@@ -257,6 +258,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_vodafone_monthly_report(self):
         return self.user_type == 13
+    
+    @cached_property
+    def is_system_admin(self):
+        return self.user_type == 14
 
     @cached_property
     def is_instant_member(self):

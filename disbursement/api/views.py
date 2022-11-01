@@ -557,6 +557,7 @@ class CreateSingleStepTransacton(APIView):
     """
      view for single step 
     """
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         """Handles POST requests to onboard new client"""
         try:
@@ -566,13 +567,12 @@ class CreateSingleStepTransacton(APIView):
             user_name=data["username"]
             admin_email= data["admin_email"]
             idms_user_id=data["idms_user_id"]
-            # root =RootUser.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name).first()
-            # if root:
-            #     return Response(data={"message":"idms is already taken by another admin"}, status=status.HTTP_400_BAD_REQUEST)
-
             root=self.onbordnewadmin(user_name,admin_email,idms_user_id)
+            if not root.is_system_admin:
+                data={"status" : status.HTTP_403_FORBIDDEN,
+                "message": "You do not have permission"}
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
         except (Exception,ValueError) as e:
-            print(e.args)
             error_msg = "Process stopped during an internal error, please can you try again."
             if len(serializer.errors) > 0:
                 failure_message = serializer.errors
@@ -652,7 +652,7 @@ class CreateSingleStepTransacton(APIView):
 
     def onbordnewadmin(self,user_name,root_email,idms_user_id):
         
-        root =RootUser.objects.filter(username=user_name).first()
+        root =User.objects.filter(username=user_name).first()
         
         if root:
            
@@ -665,7 +665,7 @@ class CreateSingleStepTransacton(APIView):
                 root = RootUser.objects.create(
                 username=client_name,
                 email=root_email,
-                user_type=3,
+                user_type=14,
                 has_password_set_on_idms=True,
                 idms_user_id=idms_user_id,
                 from_accept=True
@@ -722,7 +722,11 @@ class CreateSingleStepTransacton(APIView):
                 FeeSetup.objects.create(budget_related=root_budget, issuer='am',
                 fee_type='p', percentage_value=get_from_env("AM_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='bc',
-                    fee_type='f', fixed_value=get_from_env("BC_FIXED_VALUE"))                
+                    fee_type='m', fixed_value=get_from_env("BC_FIXED_VALUE"),
+                    percentage_value=get_from_env("Bc_PERCENTAGE_VALUE"),
+                    min_value=get_from_env("BC_min_VALUE"),
+                    max_value=get_from_env("BC_max_VALUE")
+                )                
                 return root
             
             except Exception as err:

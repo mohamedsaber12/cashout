@@ -560,6 +560,11 @@ class CreateSingleStepTransacton(APIView):
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         """Handles POST requests to onboard new client"""
+
+        if not request.user.is_system_admin:
+                data={"status" : status.HTTP_403_FORBIDDEN,
+                "message": "You do not have permission"}
+                return Response(data, status=status.HTTP_400_BAD_REQUEST)
         try:
             serializer = SingleStepserializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -568,10 +573,6 @@ class CreateSingleStepTransacton(APIView):
             admin_email= data["admin_email"]
             idms_user_id=data["idms_user_id"]
             root=self.onbordnewadmin(user_name,admin_email,idms_user_id)
-            if not root.is_system_admin:
-                data={"status" : status.HTTP_403_FORBIDDEN,
-                "message": "You do not have permission"}
-                return Response(data, status=status.HTTP_400_BAD_REQUEST)
         except (Exception,ValueError) as e:
             error_msg = "Process stopped during an internal error, please can you try again."
             if len(serializer.errors) > 0:
@@ -665,7 +666,7 @@ class CreateSingleStepTransacton(APIView):
                 root = RootUser.objects.create(
                 username=client_name,
                 email=root_email,
-                user_type=14,
+                user_type=3,
                 has_password_set_on_idms=True,
                 idms_user_id=idms_user_id,
                 from_accept=True

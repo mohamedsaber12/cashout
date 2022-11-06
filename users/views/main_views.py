@@ -1,9 +1,3 @@
-<<<<<<< HEAD
-=======
-from __future__ import print_function, unicode_literals
-from curses.ascii import US
-
->>>>>>> ed612bcc45d81f0add0f1fddf19e394f87abe1e8
 import logging
 
 from django.contrib.auth import authenticate, login, logout

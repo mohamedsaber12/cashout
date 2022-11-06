@@ -28,7 +28,8 @@ TYPES = (
     (7, 'InstantAPIViewer'),
     (8, 'Support'),
     (9, 'OnboardUser'),
-    (12, 'SuperVisor')
+    (12, 'SuperVisor'),
+    (14, 'SystemAdmin')
 )
 
 
@@ -72,6 +73,7 @@ class User(AbstractUser, SoftDeletionModel):
     access_top_up_balance = models.BooleanField(null=True, default=True, verbose_name='Has Access To Top Up Balance')
     idms_user_id = models.CharField(max_length=50, null=True, blank=True)
     has_password_set_on_idms = models.BooleanField(default=False)
+    from_accept = models.BooleanField(default=False)
 
 
 
@@ -256,6 +258,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_vodafone_monthly_report(self):
         return self.user_type == 13
+    
+    @cached_property
+    def is_system_admin(self):
+        return self.user_type == 14
 
     @cached_property
     def is_instant_member(self):

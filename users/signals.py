@@ -84,7 +84,8 @@ def client_post_save(sender, instance, created, **kwargs):
         root_user = instance.client
         root_user.brand = instance.creator.brand
         root_user.save()
-        notify_user(root_user, created)
+        if not root_user.from_accept:
+            notify_user(root_user, created)
 
 
 @receiver(post_save, sender=SupportSetup)

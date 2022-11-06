@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 import copy
 import logging
+from time import pthread_getcpuclockid
 from users.models.base_user import User
 
 import requests
@@ -213,8 +214,10 @@ class InstantDisbursementAPIView(views.APIView):
         """
         Handles POST HTTP requests
         """
+        
         serializer = InstantDisbursementRequestSerializer(data=request.data)
         try:
+            
             serializer.is_valid(raise_exception=True)
             if 'user' in serializer.validated_data:
                 user = User.objects.get(username=serializer.validated_data['user'])
@@ -231,6 +234,7 @@ class InstantDisbursementAPIView(views.APIView):
                 failure_message = BUDGET_EXCEEDED_MSG
             else:
                 failure_message = INTERNAL_ERROR_MSG
+
             logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[message] [VALIDATION ERROR]", request, e.args)
             return Response({
                 "disbursement_status": _("failed"), "status_description": failure_message,
@@ -242,7 +246,6 @@ class InstantDisbursementAPIView(views.APIView):
         if issuer in ["vodafone", "etisalat", "aman"] or \
             (issuer in ["orange", "bank_wallet"] and settings.BANK_WALLET_AND_ORNAGE_ISSUER == "VODAFONE"):
             transaction = None
-
             try:
                 instant_user = user
                 vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
@@ -275,7 +278,6 @@ class InstantDisbursementAPIView(views.APIView):
                 (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE"):
                     data_dict['WALLETISSUER'] = "VODAFONE"
                 data_dict['PIN'] = self.get_superadmin_pin(instant_user, data_dict['WALLETISSUER'], serializer)
-
             except Exception as e:
                 if transaction:
                     transaction.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
@@ -325,12 +327,11 @@ class InstantDisbursementAPIView(views.APIView):
                     transaction.save()
                     return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-
                 trx_response = requests.post(
                     get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
                     timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"]
                 )
-
+                
                 if trx_response.ok:
                     json_trx_response = trx_response.json()
                     transaction.reference_id = json_trx_response["TXNID"]
@@ -338,6 +339,7 @@ class InstantDisbursementAPIView(views.APIView):
                     raise ImproperlyConfigured(trx_response.text)
 
             except ValidationError as e:
+
                 logging_message(
                         INSTANT_CASHIN_FAILURE_LOGGER, "[message] [DISBURSEMENT VALIDATION ERROR]", request, e.args
                 )
@@ -349,7 +351,7 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            except (requests.Timeout, TimeoutError) as e:
+            except (requests.Timeout, TimeoutError) as e:               
                 logging_message(
                     INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )
@@ -382,6 +384,7 @@ class InstantDisbursementAPIView(views.APIView):
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
             elif json_trx_response["TXNSTATUS"] == "501" or \
                  json_trx_response["TXNSTATUS"] == "6005" :
+
                 logging_message(INSTANT_CASHIN_FAILURE_LOGGER, "[response] [FAILED TRX]", request, f"timeout, {json_trx_response}")
                 transaction.mark_unknown(json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"])
                 balance_before = user.root.budget.get_current_balance()

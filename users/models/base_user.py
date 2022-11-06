@@ -29,7 +29,7 @@ TYPES = (
     (8, 'Support'),
     (9, 'OnboardUser'),
     (12, 'SuperVisor'),
-    (14, 'systemadmin')
+    (14, 'SystemAdmin')
 )
 
 

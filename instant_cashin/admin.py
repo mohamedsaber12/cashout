@@ -240,8 +240,6 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
                         "amount": ws["J" + str(row)].value,
                     }
             
-
-            # print(request.POST['date_from'], request.POST['date_to'], request.user.email)
             update_instant_timeouts_from_vodafone_report.run(my_dict, date,date, request.user.email)
 
 

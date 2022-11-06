@@ -6,6 +6,7 @@
 
 {% block content %}
     <div>
+        <p>NOTE:-file name format should be YYYY-MM-DD.xlsx<p>
         <form action="." method="POST" enctype="multipart/form-data">
             {{ form.as_p }}
             {% csrf_token %}

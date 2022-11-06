@@ -14,6 +14,9 @@
     <form action="." method="get" class="data-items pb-3 ps ps--active-y">
       <div class="data-fields px-2 mt-3">
         <div class="row">
+          {% if query_string != "" %}
+            <input type="hidden" name="client" value="{{admin}}">
+          {% endif %}
           {% if type == 'banks' %}
           <div class="col-sm-12 data-field-col">
             <label for="data-name">Transaction ID / Reference ID</label>

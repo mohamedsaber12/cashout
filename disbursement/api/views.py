@@ -723,7 +723,7 @@ class CreateSingleStepTransacton(APIView):
                 FeeSetup.objects.create(budget_related=root_budget, issuer='am',
                 fee_type='p', percentage_value=get_from_env("AM_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='bc',
-                    fee_type='m', fixed_value=get_from_env("BC_FIXED_VALUE"),
+                    fee_type='m',
                     percentage_value=get_from_env("Bc_PERCENTAGE_VALUE"),
                     min_value=get_from_env("BC_min_VALUE"),
                     max_value=get_from_env("BC_max_VALUE")

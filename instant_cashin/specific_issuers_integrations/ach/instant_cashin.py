@@ -353,6 +353,16 @@ class BankTransactionsChannel:
 
         has_valid_response = True
 
+        # Temp code to be removed 
+        balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+        bank_trx_obj.balance_before = balance_before
+        bank_trx_obj.balance_after = balance_after
+        bank_trx_obj.save()
+        bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
+        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)S
+        # end of temp code 
+
+
         try:
             # UVA issue remaining money
             # TODO Remove this code after all remaining money is zero (UVA-Admin)

@@ -359,7 +359,7 @@ class BankTransactionsChannel:
         bank_trx_obj.balance_after = balance_after
         bank_trx_obj.save()
         bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
-        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)S
+        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
         # end of temp code 
 
 

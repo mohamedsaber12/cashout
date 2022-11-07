@@ -118,26 +118,19 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
             return False
         active_tasks = control.inspect().active()
         ach_worker = get_from_env("ach_worker")
-        ACH_GET_TRX_STATUS_LOGGER.debug(
-            f"[message] [check for EBC status more than 6 days] [celery_task] -- "
-            f"Exeption: {e}"
-        )
-        return False
-    active_tasks = control.inspect().active()
-    ach_worker = get_from_env("ach_worker")
-    ACH_GET_TRX_STATUS_LOGGER.debug(f"Active Tasks {active_tasks.get(ach_worker)}")
-    num_of_current_tasks = 0
-    for tsk in active_tasks.get(ach_worker):
-        if (
-            tsk["type"]
-            == "instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions_more_than_6_days"
-        ):
-            num_of_current_tasks += 1
-        if (
-            tsk["type"]
-            == "instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions"
-        ):
-            return False
+        ACH_GET_TRX_STATUS_LOGGER.debug(f"Active Tasks {active_tasks.get(ach_worker)}")
+        num_of_current_tasks = 0
+        for tsk in active_tasks.get(ach_worker):
+            if (
+                tsk["type"]
+                == "instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions_more_than_6_days"
+            ):
+                num_of_current_tasks += 1
+            if (
+                tsk["type"]
+                == "instant_cashin.tasks.check_for_status_updates_for_latest_bank_transactions"
+            ):
+                return False
     try:
         start_date = timezone.now()
         end_date = timezone.now() - datetime.timedelta(int(16))

@@ -66,6 +66,8 @@
           <tr>
             <th>{% trans 'Document ID' %}</th>
             <th>{% trans 'Document Name' %}</th>
+            <th>{% trans 'Count' %}</th>
+            <th>{% trans 'Total Amount' %}</th>
             <th>{% trans 'Reviews' %}</th>
             <th>{% trans 'Disbursed By' %}</th>
             <th>{% trans 'Disbursement Progress' %}</th>
@@ -86,6 +88,12 @@
               </td>
               <td>
                 <small>{% firstof doc.original_file_name doc.filename %}</small>
+              </td>
+              <td>
+                <small>{{ doc.total_count }}</small>
+              </td>
+              <td>
+                <small>{{ doc.total_amount }}</small>
               </td>
 
               <td>

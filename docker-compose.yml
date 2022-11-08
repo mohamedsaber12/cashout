@@ -18,7 +18,7 @@ services:
       - 8000:8000
       - 3000:3000
     command: >
-      sh -c "
+      sh -c """
              python manage.py makemigrations users &&
              python manage.py migrate users &&
              python manage.py makemigrations data &&
@@ -35,7 +35,9 @@ services:
              python manage.py migrate &&
              mkdocs build &&
              python manage.py collectstatic --no-input &&
-             python manage.py runserver_plus 0.0.0.0:8000"
+             celery multi restart worker1 --app=payouts.settings --events --beat --scheduler=django --loglevel=info --pidfile="./var/run/celery/%n.pid" --logfile="./logs/celery_logs/$$(date +'%Y_%m_%d_%I_%M_%p').log" &&
+             celery multi restart ach_worker1 --app=payouts.settings --events --scheduler=django --loglevel=info --queue=ach_queue --pidfile="./var/run/celery/%n.pid" --logfile="./logs/celery_logs/ach_$$(date +'%Y_%m_%d_%I_%M_%p').log" &&
+             python manage.py runserver_plus 0.0.0.0:8000"""
     networks:
       - payouts_network
     depends_on:
@@ -71,10 +73,7 @@ services:
   celery_worker:
     <<: *payouts
     container_name: Celery_Worker
-    command: >
-      sh -c """
-             celery multi restart worker1 --app=payouts.settings --events --beat --scheduler=django --loglevel=info --pidfile="./var/run/celery/%n.pid" --logfile="./logs/celery_logs/$$(date +'%Y_%m_%d_%I_%M_%p').log" &&
-             celery multi restart ach_worker1 --app=payouts.settings --events --scheduler=django --loglevel=info --queue=ach_queue --pidfile="./var/run/celery/%n.pid" --logfile="./logs/celery_logs/ach_$$(date +'%Y_%m_%d_%I_%M_%p').log""""
+    command: [ "celery", "worker", "--app", "payouts.settings", "--events", "--beat", "--scheduler", "django", "--loglevel", "info" ]
     ports: [ ]
     networks:
       - payouts_network

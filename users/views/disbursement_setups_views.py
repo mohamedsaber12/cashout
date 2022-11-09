@@ -1,17 +1,16 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from django.contrib.auth.models import Permission
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, FormView, TemplateView
-
+from django.views import View
 from data.forms import FileCategoryFormSet
 from data.models import FileCategory
 from disbursement.forms import PinForm
-from ..forms import CheckerCreationForm, CheckerMemberFormSet, LevelFormSet, MakerCreationForm, MakerMemberFormSet
+from ..forms import CheckerCreationForm, CheckerMemberFormSet, LevelFormSet, MakerCreationForm, MakerMemberFormSet, Vodafone_ChangePinForm
 from ..mixins import DisbursementRootRequiredMixin
 from ..models import CheckerUser, Levels, MakerUser, Setup
 from django import forms
@@ -387,56 +386,11 @@ def change_pin_view(request, template_name='users/change_pin.html', form_class=C
         form = form_class(request.user)
     return render(request, template_name, {'form': form})
 
+class vodafone_change_pin_view(View):
+    template_name='users/vodafone_change_pin.html'
+    form_class=Vodafone_ChangePinForm
 
-class Vodafone_ChangePinForm(forms.Form):
-    def __init__(self, user, *args, **kwargs):
-        self.user = user
-        super(Vodafone_ChangePinForm, self).__init__(*args, **kwargs)
-
-    new_pin = forms.CharField(min_length=6, max_length=6)
-    confirm_pin = forms.CharField(min_length=6, max_length=6)
-    password = forms.CharField(widget=forms.PasswordInput(), max_length=254)
-
-    def clean(self):
-        cleaned_data = super(Vodafone_ChangePinForm, self).clean()
-        password = cleaned_data.get('password')
-        new_pin = cleaned_data.get('new_pin')
-        confirm_pin= cleaned_data.get('confirm_pin')
-        if not self.user.check_password(password):
-            raise forms.ValidationError('Invalid password')
-        if not new_pin.isdigit():
-            raise forms.ValidationError('pin must be numeric only')
-
-        if not new_pin == confirm_pin:
-            raise forms.ValidationError('new pin must be equal to the confirm_pin')
-
-
-def vodafone_change_pin_view(request, template_name='users/vodafone_change_pin.html', form_class=Vodafone_ChangePinForm):
-
-    if request.method == 'POST':
-        form = form_class(request.user, request.POST)
-        def call_wallet(root, pin, msisdns):
-            superadmin = root.client.creator
-            payload, payload_without_pin = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
-            try:
-                WALLET_API_LOGGER.debug(f"[request] [set pin] [{root}] -- {payload_without_pin}")
-                response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
-            except Exception as e:
-                WALLET_API_LOGGER.debug(f"[message] [set pin error] [{root}] -- {e.args}")
-                return None, MSG_PIN_SETTING_ERROR
-            else:
-                WALLET_API_LOGGER.debug(f"[response] [set pin] [{root}] -- {str(response.text)}")
-
-            if response.ok:
-                response_dict = response.json()
-                transactions = response_dict.get('TRANSACTIONS', None)
-                if not transactions:
-                    error_message = response_dict.get('MESSAGE', None) or _("Failed to set pin")
-                    return None, error_message
-                return transactions, None
-            return None, MSG_PIN_SETTING_ERROR
-
-        def get_transactions_error(transactions):
+    def get_transactions_error(self,transactions):
             failed_trx = list(filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
 
             if failed_trx:
@@ -459,6 +413,30 @@ def vodafone_change_pin_view(request, template_name='users/vodafone_change_pin.h
             return None
 
 
+    def call_wallet(self,root, pin, msisdns):
+            superadmin = root.client.creator
+            payload, payload_without_pin = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
+            env = get_dot_env()
+            try:
+                WALLET_API_LOGGER.debug(f"[request] [set pin] [{root}] -- {payload_without_pin}")
+                response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
+            except Exception as e:
+                WALLET_API_LOGGER.debug(f"[message] [set pin error] [{root}] -- {e.args}")
+                return None, MSG_PIN_SETTING_ERROR
+            else:
+                WALLET_API_LOGGER.debug(f"[response] [set pin] [{root}] -- {str(response.text)}")
+
+            if response.ok:
+                response_dict = response.json()
+                transactions = response_dict.get('TRANSACTIONS', None)
+                if not transactions:
+                    error_message = response_dict.get('MESSAGE', None) or _("Failed to set pin")
+                    return None, error_message
+                return transactions, None
+            return None, MSG_PIN_SETTING_ERROR
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.user, request.POST)
         if form.is_valid():
             raw_pin=form.cleaned_data['new_pin']
             root= request.user.root
@@ -466,7 +444,6 @@ def vodafone_change_pin_view(request, template_name='users/vodafone_change_pin.h
                 agents = Agent.objects.filter(wallet_provider=root)
             else:
                 agents = Agent.objects.filter(wallet_provider=root.super_admin)
-            env = get_dot_env()
 
             if request.user.root.client.agents_onboarding_choice in [Client.NEW_SUPERAGENT_AGENTS, Client.P2M]:
                 msisdns = list(agents.values_list('msisdn', flat=True))
@@ -476,17 +453,17 @@ def vodafone_change_pin_view(request, template_name='users/vodafone_change_pin.h
                 msisdns = False
 
             if msisdns:
-                transactions, error = call_wallet(root,raw_pin, msisdns)
-                
-                error = get_transactions_error(transactions) 
+                transactions, error =self.call_wallet(root,raw_pin, msisdns)
+                error =self.get_transactions_error(transactions) 
                 if error:     # handle transactions list
-                    return render(request, template_name, {'message': error, 'form': form})
-
+                    return render(request, self.template_name, {'message': error, 'form': form})
 
             request.user.set_pin(form.cleaned_data['new_pin'])
             agents.update(pin=True)
+            return render(request, self.template_name, {'message': 'Pin changed Successfully', 'form': form})
 
-            return render(request, template_name, {'message': 'Pin changed Successfully', 'form': form})
-    else:
-        form = form_class(request.user)
-    return render(request, template_name, {'form': form})
+        else:
+            return render(request, self.template_name, {'form': form})    
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(request.user)
+        return render(request, self.template_name, {'form': form})

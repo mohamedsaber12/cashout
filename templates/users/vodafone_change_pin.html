@@ -9,14 +9,12 @@
 {% block body %}
 
 
-        <div class="page-title">
+<div class="page-title">
             <div class="title_left">
                 <h3>{% trans 'Change Pin' %} </h3>
             </div>
-
-
-        <div class="clearfix"></div>
-
+    <div class="clearfix">     
+    </div>
     <div class="row">
         <div class="col-lg-12">
             <div class="panel panel-default">
@@ -37,19 +35,10 @@
                         <center><h4>{{ message }}</h4></center>
                         <input type="submit" value="submit" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                     </form>
-
-
-                    <!-- /.table-responsive -->
                 </div>
-                <!-- /.panel-body -->
             </div>
-            <!-- /.panel -->
         </div>
-        <!-- /.col-lg-12 -->
     </div>
-    <!-- /.row -->
-    </div>
-    <!-- /#page-wrapper -->
+</div>
 
-    </div>
 {% endblock %}

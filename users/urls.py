@@ -66,7 +66,7 @@ disbursement_setups_urls = [
     path('members/checker/add/', views.AddCheckerView.as_view(), name='add_checker'),
     path('levels/', views.LevelsView.as_view(), name='levels'),
     path('change_pin/', views.change_pin_view, name='change_pin'),
-    path('v_change_pin/', views.vodafone_change_pin_view, name='vodafone_change_pin')
+    path('vodafone/change-pin/', views.vodafone_change_pin_view.as_view(), name='vodafone_change_pin')
 ]
 
 instant_urls = [

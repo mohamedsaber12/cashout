@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
-from utilities.date_range_filter import CustomDateRangeFilter
+from utilities.date_range_filter import CustomDateRangeFilter,CustomDateTimeRangeFilter
 
 class DistinctFilter(admin.SimpleListFilter):
     title = "Distinct"
@@ -117,7 +117,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
     readonly_fields = [
         field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
-        ('disbursed_date', CustomDateRangeFilter),
+        ('disbursed_date', CustomDateTimeRangeFilter),
         ('created_at', CustomDateRangeFilter),
         DistinctFilter, EndToEndFilter,
         'status',

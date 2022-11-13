@@ -35,7 +35,7 @@ services:
              python manage.py migrate &&
              mkdocs build &&
              python manage.py collectstatic --no-input &&
-             python manage.py runserver_plus 0.0.0.0:8000"
+             uwsgi -i uwsgi.ini"
     networks:
       - payouts_network
     depends_on:

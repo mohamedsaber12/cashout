@@ -354,12 +354,14 @@ class BankTransactionsChannel:
         has_valid_response = True
 
         # Temp code to be removed 
-        balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+        balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
+        balance_after = bank_trx_obj.user_created.root.\
+        budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, "bank_card")
         bank_trx_obj.balance_before = balance_before
         bank_trx_obj.balance_after = balance_after
+        bank_trx_obj.mark_pending("8000", "Transaction received and validated successfully. Dispatched for being processed by the bank")
         bank_trx_obj.save()
-        bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
-        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+
         # end of temp code 
 
 

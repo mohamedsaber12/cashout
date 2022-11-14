@@ -120,6 +120,8 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
         ('disbursed_date', CustomDateTimeRangeFilter),
         ('created_at', CustomDateRangeFilter),
         DistinctFilter, EndToEndFilter,
+        'is_manual_batch',
+        'is_exported_for_manual_batch',
         'status',
         'category_code',
         'transaction_status_code',
@@ -153,6 +155,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
             'fields': ('created_at', 'updated_at')
         }),
         (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
+        (_('Manual Batch'), {'fields': ('is_manual_batch', 'is_exported_for_manual_batch')}),
     )
     actions = ["export_as_csv"]
 
@@ -172,6 +175,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
 
     def has_change_permission(self, request, obj=None):
         return False
+        
 
 
 @admin.register(Agent)

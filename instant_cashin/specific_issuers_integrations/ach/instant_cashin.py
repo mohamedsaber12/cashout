@@ -360,7 +360,9 @@ class BankTransactionsChannel:
         bank_trx_obj.balance_before = balance_before
         bank_trx_obj.balance_after = balance_after
         bank_trx_obj.mark_pending("8000", "Transaction received and validated successfully. Dispatched for being processed by the bank")
+        bank_trx_obj.is_manual_batch = True
         bank_trx_obj.save()
+        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
         # end of temp code 
 
@@ -423,3 +425,17 @@ class BankTransactionsChannel:
                 _(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}] -- {e.args}")
             )
             return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+
+    @staticmethod
+    def update_manual_batch_transactions(trn_data):
+        for trn in trn_data:
+            ACH_GET_TRX_STATUS_LOGGER.debug(
+                    _(f"[message] [Bank Manual batch update] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}")
+                )
+            try:
+                bank_trx_obj = BankTransaction.objects.get(transaction_id=trn.get("trn_id"))
+            except Exception as e:
+                ACH_GET_TRX_STATUS_LOGGER.debug(
+                    _(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}] -- {e.args}")
+                )
+

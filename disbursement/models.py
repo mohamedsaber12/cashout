@@ -412,7 +412,7 @@ class BankTransaction(AbstractTimeStamp,
         blank=True
     )
     is_manual_batch = models.BooleanField(default=False)
-    is_exported_for_manual_batch = 
+    is_exported_for_manual_batch = models.BooleanField(default=False)
     
     class Meta:
         verbose_name = 'Bank Transaction'

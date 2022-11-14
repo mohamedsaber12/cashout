@@ -91,7 +91,7 @@ class BankExportCsvMixin:
     """
     mixin class to add  export to any model
     """
-    def export_as_csv(self, request, queryset):
+    def export_bulk_as_csv(self, request, queryset):
 
         meta = self.model._meta
         # field_names = [field.name for field in meta.fields]
@@ -110,4 +110,4 @@ class BankExportCsvMixin:
 
         return response
 
-    export_as_csv.short_description = "Export Selected"
+    export_bulk_as_csv.short_description = "Export Bulk Transaction"

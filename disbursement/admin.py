@@ -103,7 +103,7 @@ class TimeoutFilter(admin.SimpleListFilter):
             return queryset.filter(~Q(disbursed_date=None), reason='', is_disbursed=False)
 
 @admin.register(BankTransaction)
-class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin):
+class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvMixin):
     """
     Admin model for customizing BankTransaction model admin view
     """
@@ -153,7 +153,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin):
         }),
         (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
     )
-    actions = ["export_as_csv"]
+    actions = ["export_as_csv","export_bulk_as_csv"]
 
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):

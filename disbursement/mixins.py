@@ -111,3 +111,47 @@ class BankExportCsvMixin:
         return response
 
     export_bulk_as_csv.short_description = "Export Bulk Transaction"
+
+
+
+from datetime import datetime
+from datetime import timedelta
+from openpyxl import Workbook
+from django.http import HttpResponse
+
+class BankExportExcelMixin:
+
+    def export_bulk_as_excel(self, request, queryset):
+        bank_queryset=queryset
+        response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        )
+        response['Content-Disposition'] = 'attachment; filename={}.xls'.format("bank_transaction")
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = 'Bulk Transaction'
+        columns = ["TransactionID","CreditorAccountNumber","CreditorBank","CreditorBankBranch","TransactionAmount","TransactionPurpose","Comments","ReceiverEmail"]
+        row_num = 1
+
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+
+        for recored in bank_queryset:
+            row_num += 1
+            row = [
+            str(recored.transaction_id),
+            recored.creditor_account_number,
+            recored.creditor_bank,
+            recored.creditor_bank_branch,
+            recored.amount,
+            "",
+            recored.comment,
+            ]
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+
+        workbook.save(response)
+
+        return response

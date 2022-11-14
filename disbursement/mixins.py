@@ -115,7 +115,6 @@ class BankExportCsvMixin:
 
 
 from datetime import datetime
-from datetime import timedelta
 from openpyxl import Workbook
 from django.http import HttpResponse
 
@@ -126,7 +125,7 @@ class BankExportExcelMixin:
         response = HttpResponse(
         content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         )
-        response['Content-Disposition'] = 'attachment; filename={}.xls'.format("bank_transaction")
+        response['Content-Disposition'] = 'attachment; filename={}{}.xls'.format("Payouts bulk ", datetime.now().strftime('%Y-%m-%d'))
         workbook = Workbook()
         worksheet = workbook.active
         worksheet.title = 'Bulk Transaction'
@@ -146,8 +145,10 @@ class BankExportExcelMixin:
             recored.creditor_bank_branch,
             recored.amount,
             "",
-            recored.comment,
+            str(recored.transaction_id),
             ]
+            recored.is_exported_for_manual_batch = True
+            recored.save()
             for col_num, cell_value in enumerate(row, 1):
                 cell = worksheet.cell(row=row_num, column=col_num)
                 cell.value = cell_value

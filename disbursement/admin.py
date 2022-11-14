@@ -8,7 +8,7 @@ from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
+from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin,BankExportCsvMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
 from utilities.date_range_filter import CustomDateRangeFilter
@@ -102,9 +102,8 @@ class TimeoutFilter(admin.SimpleListFilter):
         if self.value() == 'yes':
             return queryset.filter(~Q(disbursed_date=None), reason='', is_disbursed=False)
 
-
 @admin.register(BankTransaction)
-class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
+class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin):
     """
     Admin model for customizing BankTransaction model admin view
     """

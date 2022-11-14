@@ -70,7 +70,7 @@ class ExportCsvMixin:
 
         meta = self.model._meta
         field_names = [field.name for field in meta.fields]
-
+        
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
         writer = csv.writer(response)
@@ -80,7 +80,33 @@ class ExportCsvMixin:
             if queryset.model is BankTransaction:
                 obj.status = [st for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
                               if st[0] == obj.status][0][1]
-            row = writer.writerow([getattr(obj, field) for field in field_names])
+            row = writer.writerow([ getattr(obj, field) for field in field_names])
+
+        return response
+
+    export_as_csv.short_description = "Export Selected"
+
+
+class BankExportCsvMixin:
+    """
+    mixin class to add  export to any model
+    """
+    def export_as_csv(self, request, queryset):
+
+        meta = self.model._meta
+        # field_names = [field.name for field in meta.fields]
+        field_names=["TransactionID","CreditorAccountNumber","CreditorBank","CreditorBankBranch","TransactionAmount","TransactionPurpose","Comments","ReceiverEmail"]
+        _field_names=["transaction_id","creditor_account_number","creditor_bank","creditor_bank_branch","amount","purpose","comment"]
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
+        writer = csv.writer(response)
+
+        writer.writerow(field_names)
+        for obj in queryset:
+            if queryset.model is BankTransaction:
+                obj.status = [st for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
+                              if st[0] == obj.status][0][1]
+            row = writer.writerow([ getattr(obj, field) if not field == "purpose" else "" for field in _field_names])
 
         return response
 

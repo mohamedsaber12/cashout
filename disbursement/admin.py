@@ -8,7 +8,7 @@ from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
+from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin,BankExportCsvMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
 from utilities.date_range_filter import CustomDateRangeFilter,CustomDateTimeRangeFilter
@@ -102,9 +102,8 @@ class TimeoutFilter(admin.SimpleListFilter):
         if self.value() == 'yes':
             return queryset.filter(~Q(disbursed_date=None), reason='', is_disbursed=False)
 
-
 @admin.register(BankTransaction)
-class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
+class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvMixin):
     """
     Admin model for customizing BankTransaction model admin view
     """
@@ -157,7 +156,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
         (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
         (_('Manual Batch'), {'fields': ('is_manual_batch', 'is_exported_for_manual_batch')}),
     )
-    actions = ["export_as_csv"]
+    actions = ["export_as_csv","export_bulk_as_csv"]
 
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):

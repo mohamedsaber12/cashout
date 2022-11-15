@@ -486,7 +486,7 @@ class BankTransactionsChannel:
                         )
             except Exception as e:
                 ACH_GET_TRX_STATUS_LOGGER.debug(
-                    _(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}] -- {e.args}")
+                    _(f"[message] [ACH EXCEPTION] [bank_trx_id ==> {trn.get('bank_transaction_id')}] -- {e.args}")
                 )
     @staticmethod
     def map_manual_batch_status_code_desc(status):

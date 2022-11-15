@@ -165,7 +165,11 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvM
             'fields': ('created_at', 'updated_at')
         }),
         (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
-        (_('Manual Batch'), {'fields': ('is_manual_batch', 'is_exported_for_manual_batch')}),
+        (_('Manual Batch'), {
+            'fields': (
+                'is_manual_batch', 'is_exported_for_manual_batch',
+                'bank_batch_id','bank_transaction_id', 'bank_end_to_end_identifier'
+                )}),
     )
     actions = ["export_as_csv","export_bulk_as_csv","export_bulk_as_excel"]
 
@@ -208,17 +212,16 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvM
             for row in range(2, last_row + 1):
                 my_dict.append(
                     {
-                        "transaction_id": ws["X" + str(row)].value,
+                        "transaction_id": ws["X" + str(row)].value.replace("\n", ""),
                         "bank_batch_id": ws["A" + str(row)].value,
                         "bank_transaction_id": ws["G" + str(row)].value,
                         "bank_end_to_end_identifier": ws["F" + str(row)].value,
                         "amount": ws["H" + str(row)].value,
-                        "status": ws["Y" + str(row)].value,
+                        "status": ws["AC" + str(row)].value,
                         "status_decription": ws["AC" + str(row)].value,
 
                     }
                 )
-            print(my_dict)
             update_manual_batch_transactions_task.run(my_dict)
             
 

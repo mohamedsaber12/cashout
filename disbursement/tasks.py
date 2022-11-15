@@ -160,6 +160,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
         _, ets_agents = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin="000000")
 
         for recipient in ets_recipients:
+            # check if balance is greater than amount plus fees and vat
+            if checker.root.has_custom_budget:
+                if not checker.root.budget.within_threshold(recipient['amount'], 'etisalat'):
+                    current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                    current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                    current_trx.disbursed_date = datetime.datetime.now()
+                    current_trx.save()
+                    continue
             ets_payload, ets_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
                 random.choice(ets_agents), recipient['msisdn'], recipient['amount'],
                 ets_pin, 'etisalat', recipient['uid']
@@ -180,6 +188,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
         smsc_sender_name = checker.root.client.smsc_sender_name
 
         for recipient in vf_recipients:
+            # check if balance is greater than amount plus fees and vat
+            if checker.root.has_custom_budget:
+                if not checker.root.budget.within_threshold(recipient['amount'], 'vodafone'):
+                    current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                    current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                    current_trx.disbursed_date = datetime.datetime.now()
+                    current_trx.save()
+                    continue
             vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
                 random.choice(vf_agents)['MSISDN'], recipient['msisdn'], recipient['amount'],
                 vf_pin, 'vodafone', recipient['uid'], smsc_sender_name
@@ -208,6 +224,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
         request = { "user": checker }
 
         for recipient in aman_recipients:
+            # check if balance is greater than amount plus fees and vat
+            if checker.root.has_custom_budget:
+                if not checker.root.budget.within_threshold(recipient['amount'], 'vodafone'):
+                    current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                    current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                    current_trx.disbursed_date = datetime.datetime.now()
+                    current_trx.save()
+                    continue
             aman_object = AmanChannel(request, amount=Decimal(str(recipient["amount"])))
 
             try:
@@ -278,6 +302,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 vf_agents, _ = DisburseAPIView.prepare_agents_list(provider=checker.root, raw_pin=pin)
                 smsc_sender_name = checker.root.client.smsc_sender_name
                 for instant_trx_obj in bank_wallets_transactions:
+                    if checker.root.has_custom_budget:
+                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'vodafone'):
+                            instant_trx_obj.mark_failed(
+                                '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
+                            instant_trx_obj.disbursed_date = datetime.datetime.now()
+                            instant_trx_obj.save()
+                            continue
                     vf_payload, vf_log_payload = superadmin.vmt.accumulate_instant_disbursement_payload(
                         random.choice(vf_agents)['MSISDN'], instant_trx_obj.anon_recipient, instant_trx_obj.amount,
                         vf_pin, 'vodafone', instant_trx_obj.uid, smsc_sender_name
@@ -289,6 +320,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             else:
                 for instant_trx_obj in bank_wallets_transactions:
+                    if checker.root.has_custom_budget:
+                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'vodafone'):
+                            instant_trx_obj.mark_failed(
+                                '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
+                            instant_trx_obj.disbursed_date = datetime.datetime.now()
+                            instant_trx_obj.save()
+                            continue
                     try:
                         instant_trx_obj.disbursed_date = timezone.now()
                         instant_trx_obj.save()
@@ -301,6 +339,13 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
             for bank_trx_obj in bank_cards_transactions:
                 try:
+                    if checker.root.has_custom_budget:
+                        if not checker.root.budget.within_threshold(bank_trx_obj.amount, 'vodafone'):
+                            bank_trx_obj.mark_failed(
+                                '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
+                            bank_trx_obj.disbursed_date = datetime.datetime.now()
+                            bank_trx_obj.save()
+                            continue
                     bank_trx_obj.disbursed_date = timezone.now()
                     bank_trx_obj.save()
                     BankTransactionsChannel.send_transaction(bank_trx_obj, False)

@@ -438,4 +438,19 @@ class BankTransactionsChannel:
                 ACH_GET_TRX_STATUS_LOGGER.debug(
                     _(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}] -- {e.args}")
                 )
+    @staticmethod
+    def map_manual_batch_status_code_desc(status):
+        if "Settled ,Opened For Return" in status:
+            return "8222", "Successful with warning, A transfer will take place once authorized by the receiver bank"
+        elif "Returned Final" in status:
+            return "000100", "Incorrect Account Number"
+        elif "Settled Final" in status:
+            return "8333", "Successful, transaction is settled by the receiver bank"
+        elif "Rejected Final" in status:
+            return "000005", "Incorrect Account Number"
+        elif "Accepted" in status:
+            return "8111", "Transaction received and validated successfully. Dispatched for being processed by the bank"
+        else:
+            return "", ""
+
 

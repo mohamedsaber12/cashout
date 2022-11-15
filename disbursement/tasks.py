@@ -340,7 +340,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             for bank_trx_obj in bank_cards_transactions:
                 try:
                     if checker.root.has_custom_budget:
-                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'vodafone'):
+                        if not checker.root.budget.within_threshold(bank_trx_obj.amount, 'vodafone'):
                             bank_trx_obj.mark_failed(
                                '424' , 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
                             bank_trx_obj.disbursed_date = datetime.datetime.now()

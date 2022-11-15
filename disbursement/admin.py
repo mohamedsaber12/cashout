@@ -218,8 +218,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvM
                         "bank_end_to_end_identifier": ws["F" + str(row)].value,
                         "amount": ws["H" + str(row)].value,
                         "status": ws["AC" + str(row)].value,
-                        "status_decription": ws["AC" + str(row)].value,
-
+                        "status_decription": ws["AA" + str(row)].value,
                     }
                 )
             update_manual_batch_transactions_task.run(my_dict)

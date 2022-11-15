@@ -252,3 +252,8 @@ def update_instant_timeouts_from_vodafone_report(
         )
         mail_to_be_sent.attach_alternative(message_body, "text/html")
         mail_to_be_sent.send()
+
+
+@app.task()
+def update_manual_batch_transactions_task(data):
+    BankTransactionsChannel.update_manual_batch_transactions(data)

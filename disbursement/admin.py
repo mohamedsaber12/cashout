@@ -12,6 +12,17 @@ from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin,BankExport
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
 from utilities.date_range_filter import CustomDateRangeFilter,CustomDateTimeRangeFilter
+from django.urls import path
+from openpyxl import load_workbook
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django import forms
+from django.shortcuts import resolve_url, render
+from instant_cashin.tasks import update_manual_batch_transactions_task
+
+
+
+
 
 class DistinctFilter(admin.SimpleListFilter):
     title = "Distinct"
@@ -174,6 +185,50 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvM
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        new_urls = [path('manual-batch-updates/', self.manual_batch_updates),]
+        return new_urls + urls
+
+    def manual_batch_updates(self, request):
+
+        if request.method == "POST":
+            xlsx_file = request.FILES["manual_batch_file"]
+
+            
+            if not xlsx_file.name.endswith('.xlsx'):
+                messages.warning(request, 'Wrong file type was uploaded')
+                return HttpResponseRedirect(request.path_info)
+
+            wb = load_workbook(xlsx_file)
+            ws = wb.active
+            last_row = len(list(ws.rows))
+            my_dict = []
+            for row in range(2, last_row + 1):
+                my_dict.append(
+                    {
+                        "transaction_id": ws["X" + str(row)].value,
+                        "bank_batch_id": ws["A" + str(row)].value,
+                        "bank_transaction_id": ws["G" + str(row)].value,
+                        "bank_end_to_end_identifier": ws["F" + str(row)].value,
+                        "amount": ws["H" + str(row)].value,
+                        "status": ws["Y" + str(row)].value,
+                        "status_decription": ws["AC" + str(row)].value,
+
+                    }
+                )
+            print(my_dict)
+            update_manual_batch_transactions_task.run(my_dict)
+            
+
+        form = ManualBatchUpdateStatusForm()
+        data = {"form": form}
+        return render(request, "admin/manual_batch.html", data)
+
+class ManualBatchUpdateStatusForm(forms.Form):
+    manual_batch_file = forms.FileField()
+
         
 
 

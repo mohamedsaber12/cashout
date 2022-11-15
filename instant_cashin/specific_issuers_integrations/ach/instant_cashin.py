@@ -429,11 +429,61 @@ class BankTransactionsChannel:
     @staticmethod
     def update_manual_batch_transactions(trn_data):
         for trn in trn_data:
-            ACH_GET_TRX_STATUS_LOGGER.debug(
-                    _(f"[message] [Bank Manual batch update] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}")
-                )
             try:
-                bank_trx_obj = BankTransaction.objects.get(transaction_id=trn.get("trn_id"))
+                bank_trx_obj = BankTransaction.objects.get(transaction_id=trn.get("transaction_id"))
+                ACH_GET_TRX_STATUS_LOGGER.debug(
+                    _(f"[message] [Bank Manual batch update] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}")
+
+                )
+                status, status_desc = BankTransactionsChannel.map_manual_batch_status_code_desc(trn.get("status"))
+                if bank_trx_obj.get_last_updated_transaction().transaction_status_code != status:
+                    new_trn_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(bank_trx_obj)
+                    if status in ["8222", "8333"]:
+                        new_trn_obj.mark_successful(status, status_desc)
+                    elif status == "8111":
+                        new_trn_obj.mark_pending(status, status_desc)
+                    elif status == "000100":
+                        new_trn_obj.mark_returned(status, trn.get("status_decription"))
+                    elif status == "000005":
+                        new_trn_obj.mark_rejected(status, trn.get("status_decription"))
+                    if status in ["000100", "000005"]:
+                        balance_before = new_trn_obj.user_created.root.budget.get_current_balance()
+                        balance_after = new_trn_obj.user_created.root.budget.return_disbursed_amount_for_cancelled_trx(new_trn_obj.amount)
+                        new_trn_obj.balance_before = balance_before
+                        new_trn_obj.balance_after = balance_after
+                    new_trn_obj.save()
+                    # update all trns with bank data
+                    for single_trn in BankTransaction.objects.filter(parent_transaction=bank_trx_obj.parent_transaction):
+                        single_trn.bank_batch_id = trn.get("bank_batch_id")
+                        single_trn.bank_transaction_id = trn.get("bank_transaction_id")
+                        single_trn.bank_end_to_end_identifier = trn.get("bank_end_to_end_identifier")
+                        single_trn.save()
+                    if bank_trx_obj.user_created.root.root.callback_url:
+                        callback_url = bank_trx_obj.user_created.root.callback_url
+                        callback_payload = {
+                            'transaction_id': str(new_trn_obj.parent_transaction.transaction_id),
+                            'issuer': 'bank_card',
+                            'amount': str(new_trn_obj.amount),
+                            'bank_card_number': str(new_trn_obj.creditor_account_number),
+                            'full_name': str(new_trn_obj.creditor_name),
+                            'bank_code': str(new_trn_obj.creditor_bank),
+                            'bank_transaction_type': str(bank_trx_obj.get_transaction_type),
+                            'disbursement_status': str(new_trn_obj.status_choice_verbose),
+                            'status_code': str(new_trn_obj.transaction_status_code),
+                            'status_description': str(new_trn_obj.transaction_status_description),
+                            'client_transaction_reference': str(new_trn_obj.client_transaction_reference),
+                            'created_at': new_trn_obj.parent_transaction.created_at.strftime("%Y-%m-%d %H:%M:%S.%f"),
+                            'updated_at': new_trn_obj.updated_at.strftime("%Y-%m-%d %H:%M:%S.%f")
+                        }
+                        response = requests.post(callback_url, json=callback_payload)
+                        log_header = "send callback request to ==> "
+                        CALLBACK_REQUESTS_LOGGER.debug(
+                            _(f"[callback request] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {callback_payload}")
+                        )
+                        log_header = "received callback response from ==> "
+                        CALLBACK_REQUESTS_LOGGER.debug(
+                            _(f"[callback response] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {response.json()}")
+                        )
             except Exception as e:
                 ACH_GET_TRX_STATUS_LOGGER.debug(
                     _(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] [bank_trx_id ==> {str(bank_trx_obj.transaction_id)}] -- {e.args}")

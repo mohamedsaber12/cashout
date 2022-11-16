@@ -834,7 +834,17 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
     def Instanttransaction_queryset(self):
         
         filter_dict = {}
-        if self.request.user.is_root:
+        if self.request.user.is_instant_model_onboarding:
+            client_username_query_parameter = self.request.GET.get('client')
+            if self.request.user.is_support and client_username_query_parameter:
+                user = get_object_or_404(User, username=client_username_query_parameter)
+                hierarchy_to_filter_with = user.hierarchy
+            else:
+                hierarchy_to_filter_with = self.request.user.hierarchy
+            filter_dict = {
+            'from_user__hierarchy': hierarchy_to_filter_with,
+            }
+        elif self.request.user.is_root and not self.request.user.is_instant_model_onboarding:
             filter_dict = {
                 'document__owner__root': self.request.user,
             }
@@ -853,7 +863,19 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
     def BankTransaction_queryset(self):
         
         filter_dict = {}
-        if self.request.user.is_root:
+        
+        if self.request.user.is_instant_model_onboarding:
+            client_username_query_parameter = self.request.GET.get('client')
+            if self.request.user.is_support and client_username_query_parameter:
+                user = get_object_or_404(User, username=client_username_query_parameter)
+                hierarchy_to_filter_with = user.hierarchy
+            else:
+                hierarchy_to_filter_with = self.request.user.hierarchy
+
+            filter_dict = {
+            'user_created__hierarchy': hierarchy_to_filter_with,
+            }
+        elif self.request.user.is_root and not self.request.user.is_instant_model_onboarding:
             filter_dict = {
                 'document__owner__root': self.request.user,
             }
@@ -870,10 +892,12 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
         return query_set
     
     def Recent_transaction(self):
-
-        disbursementdata_queryset=self.disbursementdata_queryset()
         instanttransaction_queryset=self.Instanttransaction_queryset()
         banktransaction_queryset=self.BankTransaction_queryset()
+        disbursementdata_queryset=[]
+        if not self.request.user.is_instant_model_onboarding:
+            disbursementdata_queryset=self.disbursementdata_queryset()
+        
         ini_list=list(disbursementdata_queryset)+list(instanttransaction_queryset)+list(banktransaction_queryset)
         _list=[]
         for i in ini_list:

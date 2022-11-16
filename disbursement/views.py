@@ -811,6 +811,76 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             return True
         return False
 
+    def disbursementdata_queryset(self):
+        
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'doc__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'doc__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'doc__disbursed_by': self.request.user,
+            }
+
+        query_set=DisbursementData.objects.filter(**filter_dict).order_by("-created_at")[:10]
+        return query_set
+        
+
+    def Instanttransaction_queryset(self):
+        
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+
+        query_set=InstantTransaction.objects.filter(**filter_dict).order_by("-created_at")[:10]
+        return query_set
+
+    def BankTransaction_queryset(self):
+        
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+
+        query_set=BankTransaction.objects.filter(**filter_dict).order_by("-created_at")[:10]
+        return query_set
+    
+    def Recent_transaction(self):
+
+        disbursementdata_queryset=self.disbursementdata_queryset()
+        instanttransaction_queryset=self.Instanttransaction_queryset()
+        banktransaction_queryset=self.BankTransaction_queryset()
+        ini_list=list(disbursementdata_queryset)+list(instanttransaction_queryset)+list(banktransaction_queryset)
+        _list=[]
+        for i in ini_list:
+            if i.disbursed_date != None:
+                _list.append(i)
+        _list.sort(key = lambda x: x.disbursed_date,reverse=True)
+        return _list[0:10]
     def get(self, request, *args, **kwargs):
         """Handles GET requests for Dashboard view"""
 
@@ -882,7 +952,11 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
                 bank_wallet_transactions = bank_wallet_transactions + trx['count']
             total = total + trx['count']
 
+        list_transaction=self.Recent_transaction()
+
+
         context = {
+            "transactions":list_transaction,
             "all_transactions": total,
             "vodafone_transactions": vodafone_transactions,
             "etisalat_transactions": etisalat_transactions,

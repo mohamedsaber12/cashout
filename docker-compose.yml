@@ -17,6 +17,10 @@ services:
     ports:
       - 8000:8000
       - 3000:3000
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
     command: >
       sh -c "
              python manage.py makemigrations users &&
@@ -35,7 +39,7 @@ services:
              python manage.py migrate &&
              mkdocs build &&
              python manage.py collectstatic --no-input &&
-             python manage.py runserver_plus 0.0.0.0:8000"
+             uwsgi -i uwsgi.ini"
     networks:
       - payouts_network
     depends_on:
@@ -67,6 +71,10 @@ services:
       - payouts_network
     ports:
       - 5672:5672
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
 
   celery_worker:
     <<: *payouts
@@ -79,12 +87,20 @@ services:
       - rabbitmq
     links:
       - payouts
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
 
   webserver:
     image: nginx:latest
     ports:
       - 80:80
       - 443:443
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
     restart: always
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d/:ro

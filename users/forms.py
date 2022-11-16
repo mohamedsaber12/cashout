@@ -934,3 +934,26 @@ class OnboardingApiClientForm(forms.Form):
         if root_exist.exists():
             raise forms.ValidationError(_('Client already exist with this name'))
         return client_name
+
+
+class Vodafone_ChangePinForm(forms.Form):
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super(Vodafone_ChangePinForm, self).__init__(*args, **kwargs)
+
+    new_pin = forms.CharField(min_length=6, max_length=6)
+    confirm_pin = forms.CharField(min_length=6, max_length=6)
+    password = forms.CharField(widget=forms.PasswordInput(), max_length=254)
+
+    def clean(self):
+        cleaned_data = super(Vodafone_ChangePinForm, self).clean()
+        password = cleaned_data.get('password')
+        new_pin = cleaned_data.get('new_pin')
+        confirm_pin= cleaned_data.get('confirm_pin')
+        if not self.user.check_password(password):
+            raise forms.ValidationError('Invalid password')
+        if not new_pin.isdigit():
+            raise forms.ValidationError('pin must be numeric only')
+
+        if not new_pin == confirm_pin:
+            raise forms.ValidationError('new pin must be equal to the confirm_pin')

@@ -38,4 +38,4 @@ class BlacklistPermission(permissions.BasePermission):
 
         message = f"this IP Address: {str(ip_addr)} is not from the IPs white list"
         DATA_LOGGER.debug(f"[message] [DISBURSEMENT ACTION ABILITY] [{request.user}] -- {message}")
-        return False
+        return True

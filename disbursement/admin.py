@@ -8,10 +8,21 @@ from django.shortcuts import resolve_url
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
 
-from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin
+from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin,BankExportCsvMixin, BankExportExcelMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
-from utilities.date_range_filter import CustomDateRangeFilter
+from utilities.date_range_filter import CustomDateRangeFilter,CustomDateTimeRangeFilter
+from django.urls import path
+from openpyxl import load_workbook
+from django.contrib import messages
+from django.http import HttpResponseRedirect
+from django import forms
+from django.shortcuts import resolve_url, render
+from instant_cashin.tasks import update_manual_batch_transactions_task
+
+
+
+
 
 class DistinctFilter(admin.SimpleListFilter):
     title = "Distinct"
@@ -102,9 +113,8 @@ class TimeoutFilter(admin.SimpleListFilter):
         if self.value() == 'yes':
             return queryset.filter(~Q(disbursed_date=None), reason='', is_disbursed=False)
 
-
 @admin.register(BankTransaction)
-class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
+class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvMixin, BankExportExcelMixin):
     """
     Admin model for customizing BankTransaction model admin view
     """
@@ -117,9 +127,11 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
     readonly_fields = [
         field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
-        ('disbursed_date', CustomDateRangeFilter),
+        ('disbursed_date', CustomDateTimeRangeFilter),
         ('created_at', CustomDateRangeFilter),
         DistinctFilter, EndToEndFilter,
+        'is_manual_batch',
+        'is_exported_for_manual_batch',
         'status',
         'category_code',
         'transaction_status_code',
@@ -153,8 +165,13 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
             'fields': ('created_at', 'updated_at')
         }),
         (_('Balance updates'), {'fields': ('balance_before', 'balance_after')}),
+        (_('Manual Batch'), {
+            'fields': (
+                'is_manual_batch', 'is_exported_for_manual_batch',
+                'bank_batch_id','bank_transaction_id', 'bank_end_to_end_identifier'
+                )}),
     )
-    actions = ["export_as_csv"]
+    actions = ["export_as_csv","export_bulk_as_csv","export_bulk_as_excel"]
 
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):
@@ -172,6 +189,49 @@ class BankTransactionAdminModel(admin.ModelAdmin, ExportCsvMixin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+    def get_urls(self):
+        urls = super().get_urls()
+        new_urls = [path('manual-batch-updates/', self.manual_batch_updates),]
+        return new_urls + urls
+
+    def manual_batch_updates(self, request):
+
+        if request.method == "POST":
+            xlsx_file = request.FILES["manual_batch_file"]
+
+            
+            if not xlsx_file.name.endswith('.xlsx'):
+                messages.warning(request, 'Wrong file type was uploaded')
+                return HttpResponseRedirect(request.path_info)
+
+            wb = load_workbook(xlsx_file)
+            ws = wb.active
+            last_row = len(list(ws.rows))
+            my_dict = []
+            for row in range(2, last_row + 1):
+                my_dict.append(
+                    {
+                        "transaction_id": ws["X" + str(row)].value.replace("\n", ""),
+                        "bank_batch_id": ws["A" + str(row)].value,
+                        "bank_transaction_id": ws["G" + str(row)].value,
+                        "bank_end_to_end_identifier": ws["F" + str(row)].value,
+                        "amount": ws["H" + str(row)].value,
+                        "status": ws["AC" + str(row)].value,
+                        "status_decription": ws["AA" + str(row)].value,
+                    }
+                )
+            update_manual_batch_transactions_task.run(my_dict)
+            
+
+        form = ManualBatchUpdateStatusForm()
+        data = {"form": form}
+        return render(request, "admin/manual_batch.html", data)
+
+class ManualBatchUpdateStatusForm(forms.Form):
+    manual_batch_file = forms.FileField()
+
+        
 
 
 @admin.register(Agent)

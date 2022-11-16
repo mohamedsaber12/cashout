@@ -155,7 +155,9 @@ class InstantDisbursementAPIView(views.APIView):
             "client_transaction_reference":client_reference_id,
             "fees": fees,
             "vat": vat,
-            "comment": serializer.validated_data.get("comment")
+            "comment": serializer.validated_data.get("comment"),
+            "is_manual_batch": False,
+            "is_exported_for_manual_batch": False
         }
         transaction_dict.update(self.determine_trx_category_and_purpose(transaction_type))
         bank_transaction = BankTransaction.objects.create(**transaction_dict)

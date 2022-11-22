@@ -76,6 +76,15 @@ class Budget(AbstractTimeStamp):
             blank=True,
             help_text=_("Updated automatically after any disbursement callback or any addition from add_new_amount")
     )
+    hold_balance = models.DecimalField(
+            _("Hold Balance"),
+            max_digits=10,
+            decimal_places=2,
+            default=0,
+            null=True,
+            blank=True,
+            help_text=_("Updated automatically before any transaction and after transaction get final status")
+    )
     total_disbursed_amount = models.DecimalField(
             _("Total Disbursed Amount"),
             max_digits=15,
@@ -85,7 +94,7 @@ class Budget(AbstractTimeStamp):
             blank=False,
             help_text=_("Updated automatically after any disbursement callback")
     )
-    
+
     history = HistoricalRecords()
 
     class Meta:

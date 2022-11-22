@@ -45,6 +45,21 @@ def get_client_ip(request):
     return None
 
 
+def upload_filename(instance, filename):
+    """
+    update document name
+    :param instance: doc instance
+    :param filename: filename of uploaded file
+    :return:
+    """
+    now = datetime.now()
+    path = "contract/%d/%s/" %(now.year, now.month)
+    file, ext = filename.split('.')
+    filename = file + '_' +\
+               ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9)) + \
+               '.' + ext
+    return os.path.join(path, filename)
+
 def update_filename(instance, filename):
     """
     update document name

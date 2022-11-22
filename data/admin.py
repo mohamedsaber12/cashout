@@ -5,7 +5,32 @@ from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
 from .forms import FileCategoryForm
-from .models import Doc, DocReview, FileCategory
+from .models import Doc, DocReview, FileCategory,LegalDoc,FileLegalDocs
+
+from django.utils.html import format_html
+from django.urls import reverse
+class InlineFile(admin.StackedInline):
+    model= FileLegalDocs
+    can_delete = True
+    extra = 1
+    def Download(self, instance):
+        url = reverse('data:download_file',
+                      args=(instance.id,))
+        return format_html(u'<button type="button"><a href="{}">Download</a></button>', url)
+    readonly_fields = ('Download',)
+
+
+
+@admin.register(LegalDoc)
+class LegalDocAdmin(admin.ModelAdmin):
+    def client_name(self, obj):
+        return f'{obj.Client.client}'
+
+    list_display = ['id','client_name','creator']
+    list_display_links = ['id','client_name']
+    list_filter = ['Client__client','creator']
+    search_fields = ['Client',]
+    inlines = [InlineFile]
 
 
 @admin.register(Doc)

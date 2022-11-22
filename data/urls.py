@@ -15,4 +15,6 @@ urlpatterns = [
     path('download_doc/<doc_id>/', views.doc_download, name='download_doc'),
     path('format/list',views.FormatListView.as_view(),name='list_format'),
     path('document/collection/<pk>/', views.RetrieveCollectionData.as_view(), name='doc_collection_detail'),
+    path('download_file/<file_id>/', views.DownloadFile.as_view(), name='download_file'),
+
 ]

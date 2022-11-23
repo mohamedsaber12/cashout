@@ -62,6 +62,7 @@ USER_DEFINED_APPS = [
     'payment',
     'instant_cashin',
     'utilities',
+    'merchants',
 ]
 
 INSTALLED_APPS = [

@@ -94,7 +94,6 @@
             |  Suez Canal Bank                              |   SCB         |
             |  Mashreq Bank                                 |   MASH        |
             |  Arab Investment Bank                         |   AIB         |
-            |  Audi Bank                                    |   AUDI        |
             |  General Authority For Supply Commodities     |   GASC        |
             |  Arab International Bank                      |   ARIB        |
             |  Agricultural Bank of Egypt                   |   PDAC        |

@@ -1,27 +1,53 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
+from cgitb import lookup
+from logging import root
+from urllib import request
 
 from django.contrib import admin
 from django.utils.translation import gettext_lazy as _
 
+from users.models.root import RootUser
+
 from .forms import FileCategoryForm
 from .models import Doc, DocReview, FileCategory
+
+
+
+class Root_filter(admin.SimpleListFilter):
+    title = 'Root'
+    parameter_name = 'root'
+
+    def lookups(self, request, model_admin):
+        return RootUser.objects.all().values_list("username","username")
+    
+    def queryset(self, request, queryset):
+        try:
+            owner_hierarchy=RootUser.objects.filter(username=self.value()).values_list("hierarchy")[0][0]
+            return queryset.filter(owner__hierarchy=owner_hierarchy)
+        except:
+            return queryset
+
+
 @admin.register(Doc)
 class DocAdmin(admin.ModelAdmin):
     """
     Admin manager for the Doc model
     """
+    def root(self,object):
+        return RootUser.objects.filter(hierarchy=object.owner.hierarchy).first()
 
     list_display = [
-        'id', 'type_of', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at'
+        'id', 'type_of', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at', 'root'
     ]
-    list_filter = ['is_disbursed', 'has_change_profile_callback', 'is_processed', 'type_of', 'created_at', 'owner']
+    list_filter = (Root_filter, 'is_disbursed', 'has_change_profile_callback', 'is_processed', 'type_of', 'created_at', 'owner'
+    )
     search_fields = ['id']
     readonly_fields = ['file']
     fieldsets = (
         (None, {
             'fields': (
-                'id', 'file', 'type_of', 'file_category', 'owner', 'disbursed_by', 'txn_id',
+                'id', 'file', 'type_of', 'file_category', 'owner', 'disbursed_by', 'root', 'txn_id',
                 'has_change_profile_callback', 'is_processed', 'processing_failure_reason', 'can_be_disbursed',
                 'is_disbursed', 'total_amount', 'total_amount_with_fees_vat', 'total_count'
             )
@@ -31,6 +57,7 @@ class DocAdmin(admin.ModelAdmin):
         }),
     )
 
+
     def has_add_permission(self, request):
         return False
 
@@ -39,6 +66,11 @@ class DocAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+
+
+
+   
+   
 
 
 @admin.register(DocReview)

@@ -404,6 +404,7 @@ class UserAdmin(UserAdmin):
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Important dates', {'fields': ('last_login',)}),
+        ('IDMS', {'fields': ('idms_user_id','has_password_set_on_idms')}),
     )
     add_fieldsets = (
         (None, {

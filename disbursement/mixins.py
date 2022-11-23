@@ -19,10 +19,17 @@ class AdminSiteOwnerOnlyPermissionMixin:
         return False
 
     def has_delete_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user == obj.doc.owner.root.super_admin or \
-                request.user == obj.doc.owner.root:
+        if (
+            request.user.is_superuser
+            or request.user == obj.doc.owner.root.super_admin
+            or request.user == obj.doc.owner.root
+        ):
             return True
-        raise PermissionError(_("Only admin family member users allowed to delete records from this table."))
+        raise PermissionError(
+            _(
+                "Only admin family member users allowed to delete records from this table."
+            )
+        )
 
     def has_change_permission(self, request, obj=None):
         return False
@@ -36,9 +43,11 @@ class AdminOrCheckerRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
         status = self.request.user.get_status(self.request)
 
-        if not (status == "disbursement" and
-                self.request.user.is_accept_vodafone_onboarding and
-                (self.request.user.is_checker or self.request.user.is_root)):
+        if not (
+            status == "disbursement"
+            and self.request.user.is_accept_vodafone_onboarding
+            and (self.request.user.is_checker or self.request.user.is_root)
+        ):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -50,14 +59,19 @@ class AdminOrCheckerOrSupportRequiredMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if self.request.user.is_support and self.request.user.is_accept_vodafone_onboarding:
+        if (
+            self.request.user.is_support
+            and self.request.user.is_accept_vodafone_onboarding
+        ):
             return super().dispatch(request, *args, **kwargs)
         else:
             status = self.request.user.get_status(self.request)
 
-            if not (status == "disbursement" and
-                    self.request.user.is_accept_vodafone_onboarding and
-                    (self.request.user.is_checker or self.request.user.is_root)):
+            if not (
+                status == "disbursement"
+                and self.request.user.is_accept_vodafone_onboarding
+                and (self.request.user.is_checker or self.request.user.is_root)
+            ):
                 return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -66,22 +80,136 @@ class ExportCsvMixin:
     """
     mixin class to add  export to any model
     """
+
     def export_as_csv(self, request, queryset):
 
         meta = self.model._meta
         field_names = [field.name for field in meta.fields]
 
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'attachment; filename={}.csv'.format(meta)
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename={}.csv".format(meta)
         writer = csv.writer(response)
 
         writer.writerow(field_names)
         for obj in queryset:
             if queryset.model is BankTransaction:
-                obj.status = [st for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
-                              if st[0] == obj.status][0][1]
+                obj.status = [
+                    st
+                    for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
+                    if st[0] == obj.status
+                ][0][1]
             row = writer.writerow([getattr(obj, field) for field in field_names])
 
         return response
 
     export_as_csv.short_description = "Export Selected"
+
+
+class BankExportCsvMixin:
+    """
+    mixin class to add  export to any model
+    """
+
+    def export_bulk_as_csv(self, request, queryset):
+
+        meta = self.model._meta
+        # field_names = [field.name for field in meta.fields]
+        field_names = [
+            "TransactionID",
+            "CreditorAccountNumber",
+            "CreditorBank",
+            "CreditorBankBranch",
+            "TransactionAmount",
+            "TransactionPurpose",
+            "Comments",
+            "ReceiverEmail",
+        ]
+        _field_names = [
+            "transaction_id",
+            "creditor_account_number",
+            "creditor_bank",
+            "creditor_bank_branch",
+            "amount",
+            "purpose",
+            "comment",
+        ]
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "attachment; filename={}.csv".format(meta)
+        writer = csv.writer(response)
+
+        writer.writerow(field_names)
+        for obj in queryset:
+            if queryset.model is BankTransaction:
+                obj.status = [
+                    st
+                    for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
+                    if st[0] == obj.status
+                ][0][1]
+            row = writer.writerow(
+                [
+                    getattr(obj, field) if not field == "purpose" else ""
+                    for field in _field_names
+                ]
+            )
+
+        return response
+
+    export_bulk_as_csv.short_description = "Export Bulk Transaction"
+
+
+from datetime import datetime
+from openpyxl import Workbook
+from django.http import HttpResponse
+
+
+class BankExportExcelMixin:
+    def export_bulk_as_excel(self, request, queryset):
+        bank_queryset = queryset
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = "attachment; filename={}{}.xls".format(
+            "Payouts bulk ", datetime.now().strftime("%Y-%m-%d")
+        )
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Bulk Transaction"
+        columns = [
+            "TransactionID",
+            "CreditorName",
+            "CreditorAccountNumber",
+            "CreditorBank",
+            "CreditorBankBranch",
+            "TransactionAmount",
+            "TransactionPurpose",
+            "Comments",
+            "ReceiverEmail",
+        ]
+        row_num = 1
+
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+
+        for recored in bank_queryset:
+            row_num += 1
+            row = [
+                str(recored.transaction_id),
+                recored.creditor_name,
+                recored.creditor_account_number,
+                recored.creditor_bank,
+                recored.creditor_bank_branch,
+                recored.amount,
+                "",
+                str(recored.transaction_id),
+                "",
+            ]
+            recored.is_exported_for_manual_batch = True
+            recored.save()
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+
+        workbook.save(response)
+
+        return response

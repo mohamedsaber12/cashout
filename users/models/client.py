@@ -89,6 +89,8 @@ class Client(models.Model):
         """Toggle user activation status from active to non-active and vice versa"""
         self.is_active = not self.is_active
         self.save()
+        self.client.is_active = self.is_active
+        self.client.save()
 
     def delete_client(self):
         """Delete all users (makers & checkers) created by specific client whenever deleting it"""

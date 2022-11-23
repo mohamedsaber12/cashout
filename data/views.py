@@ -562,3 +562,4 @@ class RetrieveCollectionData(DetailView):
 
         context['excel_data'] = excl_data
         return context
+

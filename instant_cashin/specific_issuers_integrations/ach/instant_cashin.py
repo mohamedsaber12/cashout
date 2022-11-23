@@ -196,7 +196,7 @@ class BankTransactionsChannel:
         raise ValidationError(_(response_log_message))
 
     @staticmethod
-    def map_response_code_and_message(bank_trx_obj, instant_trx_obj, json_response):
+    def map_response_code_and_message(bank_trx_obj, instant_trx_obj, json_response, balance_before=0):
         """Map EBC response code and message"""
         response_code = json_response.get("ResponseCode", status.HTTP_424_FAILED_DEPENDENCY)
 
@@ -213,18 +213,20 @@ class BankTransactionsChannel:
             else:
                 bank_message = BANK_TRX_BEING_PROCESSED
                 instant_message = INSTANT_TRX_BEING_PROCESSED
-            balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
-            balance_after = bank_trx_obj.user_created.root.\
-                budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, issuer)
+
+            # release hold balance
+            amount_plus_fees_vat = bank_trx_obj.user_created.root.budget.release_hold_balance(
+                bank_trx_obj.amount, issuer)
+            # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
-            bank_trx_obj.balance_after = balance_after
-            ACH_SEND_TRX_LOGGER.debug(f"[message] balance before {balance_before} balance after {balance_after}")
+            bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat
+            ACH_SEND_TRX_LOGGER.debug(f"[message] balance before {balance_before} balance after {bank_trx_obj.balance_after}")
             bank_trx_obj.save()
             ACH_SEND_TRX_LOGGER.debug(f"[message] obj balance before {bank_trx_obj.balance_before} obj balance after {bank_trx_obj.balance_after}")
 
             if instant_trx_obj:
                 instant_trx_obj.balance_before = balance_before
-                instant_trx_obj.balance_after = balance_after
+                instant_trx_obj.balance_after = balance_before + amount_plus_fees_vat
                 instant_trx_obj.save()
 
             bank_trx_obj.mark_pending(response_code, bank_message)
@@ -232,32 +234,41 @@ class BankTransactionsChannel:
 
         # 2. Transaction validation is rejected by EBC because of invalid bank swift code
         elif response_code == "8002":
-            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+            # return hold balance
+            bank_trx_obj.user_created.root.budget.return_hold_balance(bank_trx_obj.amount, 'bank_card')
+            # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
-            bank_trx_obj.balance_after = balance_after
+            bank_trx_obj.balance_after = balance_before
             bank_trx_obj.save()
             bank_trx_obj.mark_failed(response_code, _("Invalid bank swift code"))
 
         # 3. Transaction validation is rejected by EBC because of internal errors
         elif response_code in ["8001", "8003", "8004", "8005", "8006", "8007", "8008", "8011", "8888"]:
-            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+            # return hold balance
+            bank_trx_obj.user_created.root.budget.return_hold_balance(bank_trx_obj.amount, 'bank_card')
+            # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
-            bank_trx_obj.balance_after = balance_after
+            bank_trx_obj.balance_after = balance_before
             bank_trx_obj.save()
             bank_trx_obj.mark_failed(status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG)
+
         else:
             # 4. Transaction is failed due to unexpected response code for the send transaction api endpoint
-            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+            # return hold balance
+            bank_trx_obj.user_created.root.budget.return_hold_balance(bank_trx_obj.amount, 'bank_card')
+            # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
-            bank_trx_obj.balance_after = balance_after
+            bank_trx_obj.balance_after = balance_before
             bank_trx_obj.save()
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
 
         # If the bank transaction isn't accepted and it is bank wallet/orange mark it as failed at the instant trx table
         if instant_trx_obj and response_code not in ["8000", "8111"]:
-            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
+            # return hold balance
+            bank_trx_obj.user_created.root.budget.return_hold_balance(bank_trx_obj.amount, 'bank_card')
+            # save balance before and after with transaction
             instant_trx_obj.balance_before = balance_before
-            instant_trx_obj.balance_after = balance_after
+            instant_trx_obj.balance_after = balance_before
             instant_trx_obj.save()
             instant_trx_obj.mark_failed("8888", INSTANT_TRX_IS_REJECTED)
 
@@ -348,12 +359,12 @@ class BankTransactionsChannel:
             return new_trx_obj
 
     @staticmethod
-    def send_transaction(bank_trx_obj, instant_trx_obj):
+    def send_transaction(bank_trx_obj, instant_trx_obj, balance_before=0):
         """Make a new send transaction request to EBC"""
 
         has_valid_response = True
 
-        # Temp code to be removed 
+        # Temp code to be removed
         balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
         balance_after = bank_trx_obj.user_created.root.\
         budget.update_disbursed_amount_and_current_balance(bank_trx_obj.amount, "bank_card")
@@ -364,7 +375,7 @@ class BankTransactionsChannel:
         bank_trx_obj.save()
         return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
-        # end of temp code 
+        # end of temp code
 
 
         try:
@@ -391,21 +402,29 @@ class BankTransactionsChannel:
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
             ACH_SEND_TRX_LOGGER.debug(_(f"[message] [ACH EXCEPTION] [{bank_trx_obj.user_created}] -- {e}"))
-            balance_before = balance_after = bank_trx_obj.user_created.root.budget.get_current_balance()
             bank_trx_obj.balance_before = balance_before
-            bank_trx_obj.balance_after = balance_after
+            bank_trx_obj.balance_after = balance_before
             bank_trx_obj.save()
             if instant_trx_obj:
                 instant_trx_obj.balance_before = balance_before
-                instant_trx_obj.balance_after = balance_after
+                instant_trx_obj.balance_after = balance_before
                 instant_trx_obj.save()
+                # return hold balance
+                instant_trx_obj.user_created.root.budget.return_hold_balance(
+                    instant_trx_obj.amount, instant_trx_obj.issuer_choice_verbose.lower()
+                )
+            else:
+                # return hold balance
+                bank_trx_obj.user_created.root.budget.return_hold_balance(
+                    bank_trx_obj.amount, 'bank_card'
+                )
             bank_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             instant_trx_obj.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG) if instant_trx_obj \
                 else None
 
         if has_valid_response:
             bank_trx_obj, instant_trx_obj = BankTransactionsChannel. \
-                map_response_code_and_message(bank_trx_obj, instant_trx_obj, json.loads(response.json()))
+                map_response_code_and_message(bank_trx_obj, instant_trx_obj, json.loads(response.json()), balance_before)
 
         if instant_trx_obj:
             return Response(InstantTransactionResponseModelSerializer(instant_trx_obj).data)
@@ -488,6 +507,7 @@ class BankTransactionsChannel:
                 ACH_GET_TRX_STATUS_LOGGER.debug(
                     _(f"[message] [ACH EXCEPTION] [bank_trx_id ==> {trn.get('bank_transaction_id')}] -- {e.args}")
                 )
+
     @staticmethod
     def map_manual_batch_status_code_desc(status):
         if "Settled ,Opened For Return" in status:
@@ -502,5 +522,3 @@ class BankTransactionsChannel:
             return "8111", "Transaction received and validated successfully. Dispatched for being processed by the bank"
         else:
             return "", ""
-
-

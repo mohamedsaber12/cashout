@@ -259,6 +259,86 @@ class Budget(AbstractTimeStamp):
 
         return balance_after
 
+    def within_threshold_and_hold_balance(self, amount, issuer_type, num_of_trns = 1):
+        """
+            Check if the amount to be disbursed won't exceed the current balance
+            :param amount: Amount to be disbursed at the currently running transaction
+            :param issuer_type: Channel/Issuer used to disburse the amount over
+            :return: True/False
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                    amount, issuer_type.lower(), num_of_trns)
+                if amount_plus_fees_vat <= round(budget_obj.current_balance, 2):
+                    current_balance_before = budget_obj.current_balance
+                    applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
+                    budget_obj.current_balance -= amount_plus_fees_vat
+                    budget_obj.hold_balance += amount_plus_fees_vat
+                    budget_obj.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- hold amount: {amount}, "
+                        f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
+                        f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                    )
+                    return current_balance_before, True
+                return budget_obj.current_balance, False
+        except (ValueError, Exception) as e:
+            raise ValueError(_(f"Error while checking the amount to be disbursed if within threshold and hold balance - {e.args}"))
+
+    def return_hold_balance(self, amount, issuer_type, num_of_trns = 1):
+        """
+            Check if the amount to be disbursed won't exceed the current balance
+            :param amount: Amount to be disbursed at the currently running transaction
+            :param issuer_type: Channel/Issuer used to disburse the amount over
+            :return: True/False
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                    amount, issuer_type.lower(), num_of_trns)
+                current_balance_before = budget_obj.current_balance
+                budget_obj.current_balance += amount_plus_fees_vat
+                budget_obj.hold_balance -= amount_plus_fees_vat
+                budget_obj.save()
+                BUDGET_LOGGER.debug(
+                    f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- "
+                    f"return hold amount plus fees and vat: {amount_plus_fees_vat}, "
+                    f"used issuer: {issuer_type.lower()}, "
+                    f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                )
+        except (ValueError, Exception) as e:
+            raise ValueError(_(f"Error while returning the amount to balance from hold balance - {e.args}"))
+
+    def release_hold_balance(self, amount, issuer_type, num_of_trns = 1):
+        """
+            Check if the amount to be disbursed won't exceed the current balance
+            :param amount: Amount to be disbursed at the currently running transaction
+            :param issuer_type: Channel/Issuer used to disburse the amount over
+            :return: True/False
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                        amount, issuer_type.lower(), num_of_trns)
+                current_hold_balance_before = budget_obj.hold_balance
+                applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
+                budget_obj.hold_balance -= amount_plus_fees_vat
+                budget_obj.total_disbursed_amount += amount_plus_fees_vat
+                budget_obj.save()
+                BUDGET_LOGGER.debug(
+                    f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- "
+                    f"release hold amount : {amount}, fees and vat: {applied_fees_and_vat}, "
+                    f"used issuer: {issuer_type.lower()}, current hold balance before: {current_hold_balance_before},"
+                    f"current hold balance after: {budget_obj.hold_balance}"
+                )
+                return amount_plus_fees_vat
+        except (ValueError, Exception) as e:
+            raise ValueError(_(f"Error while releasing the amount from hold balance - {e.args}"))
+
     def return_disbursed_amount_for_cancelled_trx(self, amount):
         """
         Update the total disbursement amount and the current balance after each pending -> failed transaction

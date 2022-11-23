@@ -226,7 +226,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
         for recipient in aman_recipients:
             # check if balance is greater than amount plus fees and vat
             if checker.root.has_custom_budget:
-                if not checker.root.budget.within_threshold(recipient['amount'], 'vodafone'):
+                if not checker.root.budget.within_threshold(recipient['amount'], 'aman'):
                     current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
                     current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
                     current_trx.disbursed_date = datetime.datetime.now()
@@ -303,7 +303,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 smsc_sender_name = checker.root.client.smsc_sender_name
                 for instant_trx_obj in bank_wallets_transactions:
                     if checker.root.has_custom_budget:
-                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'vodafone'):
+                        if not checker.root.budget.within_threshold(
+                                instant_trx_obj.amount, instant_trx_obj.issuer_choice_verbose.lower()):
                             instant_trx_obj.mark_failed(
                                 '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
                             instant_trx_obj.disbursed_date = datetime.datetime.now()
@@ -321,7 +322,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
             else:
                 for instant_trx_obj in bank_wallets_transactions:
                     if checker.root.has_custom_budget:
-                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'bank_wallet'):
+                        if not checker.root.budget.within_threshold(
+                                instant_trx_obj.amount, instant_trx_obj.issuer_choice_verbose.lower()):
                             instant_trx_obj.mark_failed(
                                 '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
                             instant_trx_obj.disbursed_date = datetime.datetime.now()

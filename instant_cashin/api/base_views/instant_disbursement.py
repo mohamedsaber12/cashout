@@ -3,32 +3,31 @@ from __future__ import unicode_literals
 
 import copy
 import logging
-from users.models.base_user import User
 
 import requests
-
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.utils.translation import gettext as _
 from django.utils import timezone
-
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
+from django.utils.translation import gettext as _
+from oauth2_provider.contrib.rest_framework import (TokenHasReadWriteScope,
+                                                    permissions)
 from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 
 from disbursement.models import BankTransaction, VMTData
 from payouts.settings import TIMEOUT_CONSTANTS
+from users.models.base_user import User
 from utilities.logging import logging_message
 
 from ...models import InstantTransaction
-from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
+from ...specific_issuers_integrations import (AmanChannel,
+                                              BankTransactionsChannel)
 from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
-from ..serializers import (
-    InstantDisbursementRequestSerializer, InstantTransactionResponseModelSerializer,
-    BankTransactionResponseModelSerializer
-)
-from django.conf import settings
+from ..serializers import (BankTransactionResponseModelSerializer,
+                           InstantDisbursementRequestSerializer,
+                           InstantTransactionResponseModelSerializer)
 
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
@@ -173,7 +172,7 @@ class InstantDisbursementAPIView(views.APIView):
 
         return api_auth_token, merchant_id
 
-    def aman_issuer_handler(self, request, transaction_object, serializer, user):
+    def aman_issuer_handler(self, request, transaction_object, serializer, user, balance_before=0):
         """Handle aman operations/transactions separately"""
 
         aman_object = AmanChannel(request, transaction_object, user=user)
@@ -196,7 +195,7 @@ class InstantDisbursementAPIView(views.APIView):
 
                 if payment_key_obtained.status_code == status.HTTP_201_CREATED:
                     payment_key = payment_key_obtained.data.get('payment_token', '')
-                    make_payment_request = aman_object.make_pay_request(payment_key)
+                    make_payment_request = aman_object.make_pay_request(payment_key, balance_before)
 
                     if make_payment_request.status_code == status.HTTP_200_OK:
                         return make_payment_request
@@ -317,7 +316,7 @@ class InstantDisbursementAPIView(views.APIView):
 
             try:
                 if issuer == "aman":
-                    return self.aman_issuer_handler(request, transaction, serializer, user)
+                    return self.aman_issuer_handler(request, transaction, serializer, user, balance_before)
 
                 # check if msisdn is test number
                 if get_from_env("ENVIRONMENT") in ['staging', 'local'] and \

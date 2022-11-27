@@ -114,7 +114,6 @@ class DisburseAPIView(APIView):
         """
         DisbursementData.objects.filter(doc_id=doc_id).update(disbursed_date=datetime.now())
 
-
     @staticmethod
     def disburse_for_recipients(url, payload, username, refined_payload, jsoned_response=False, txn_id=None):
         """

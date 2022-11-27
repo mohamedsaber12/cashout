@@ -66,7 +66,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         return vf_recipients, list(etisalat_recipients), list(aman_recipients)
 
-    def handle_disbursement_callback(self, recipient, callback, issuer):
+    def handle_disbursement_callback(self, recipient, callback, issuer, balance_before=0):
         """Handle disbursement callback depending on issuer based recipients"""
         try:
             trx_callback_status = status.HTTP_424_FAILED_DEPENDENCY
@@ -82,12 +82,9 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 trx_callback_status = callback_json["TXNSTATUS"]
                 reference_id = callback_json["TXNID"]
                 trx_callback_msg = callback_json["MESSAGE"]
-                # ToDo: After adding status_code & status_description fields to DisbursementData model
-                # trx_callback_status_code = callback_json["TXNSTATUS"]
-                # trx_callback_status_description = callback_json["MESSAGE"]
             elif issuer == "aman":
                 if callback and callback.status_code == status.HTTP_200_OK:
-                    trx_callback_status = "200"
+                    trx_callback_status = "200" if callback.disbursement_status == 'success' else None
                     trx_callback_msg = callback.data["status_description"]
                     send_sms(f"+{str(recipient['msisdn'])[2:]}", trx_callback_msg, "PayMob")
                     reference_id = callback.data["cashing_details"]["bill_reference"]
@@ -95,24 +92,25 @@ class BulkDisbursementThroughOneStepCashin(Task):
             disbursement_data_record = DisbursementData.objects.get(id=recipient["txn_id"])
             disbursement_data_record.reference_id = reference_id
             doc_obj = disbursement_data_record.doc
-            balance_before = balance_after = 0
-            if doc_obj.owner.root.has_custom_budget:
-                balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
 
             if trx_callback_status == "200":
                 disbursement_data_record.is_disbursed = True
                 disbursement_data_record.reason = trx_callback_msg
                 if doc_obj.owner.root.has_custom_budget:
-                    balance_after = doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
-                        disbursement_data_record.amount, issuer
-                    )
+                    # release hold balance
+                    amount_plus_fees_vat = doc_obj.owner.root.budget.release_hold_balance(
+                        disbursement_data_record.amount, issuer)
+                    disbursement_data_record.balance_after = balance_before + amount_plus_fees_vat
             else:
+                # return hold balance
+                doc_obj.owner.root.budget.return_hold_balance(disbursement_data_record.amount, issuer)
                 disbursement_data_record.is_disbursed = False
+                disbursement_data_record.balance_after = balance_before
                 if not trx_callback_status in ["501"]:
                     disbursement_data_record.reason = trx_callback_status
+
             disbursement_data_record.disbursed_date=datetime.datetime.now()
             disbursement_data_record.balance_before = balance_before
-            disbursement_data_record.balance_after = balance_after
             disbursement_data_record.save()
             if issuer == "aman":
                 AmanTransaction.objects.create(transaction=disbursement_data_record, bill_reference=reference_id)
@@ -120,7 +118,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
         except (DisbursementData.DoesNotExist, Exception):
             return False
 
-    def handle_disbursement_callback_deposit(self, inst_obj, callback):
+    def handle_disbursement_callback_deposit(self, inst_obj, callback, balance_before=0):
         """Handle disbursement callback depending on issuer based recipients"""
         try:
             callback_json = callback.json()
@@ -128,24 +126,27 @@ class BulkDisbursementThroughOneStepCashin(Task):
             reference_id = callback_json["TXNID"]
             trx_callback_msg = callback_json["MESSAGE"]
             doc_obj = inst_obj.document
-            balance_before = balance_after = 0
-            if doc_obj.owner.root.has_custom_budget:
-                balance_before = balance_after = doc_obj.owner.root.budget.get_current_balance()
 
+            inst_obj.balance_before = balance_before
             if trx_callback_status == "200":
                 inst_obj.is_disbursed = True
                 inst_obj.mark_successful("200", trx_callback_msg)
                 if doc_obj.owner.root.has_custom_budget:
-                    balance_after = doc_obj.owner.root.budget.update_disbursed_amount_and_current_balance(
-                        inst_obj.amount, inst_obj.issuer_type
-                    )
+                    # release hold balance
+                    amount_plus_fees_vat = doc_obj.owner.root.budget.release_hold_balance(
+                        inst_obj.amount, inst_obj.issuer_choice_verbose.lower())
+                    inst_obj.balance_after = balance_before + amount_plus_fees_vat
             else:
+                # return hold balance
+                doc_obj.owner.root.budget.return_hold_balance(
+                    inst_obj.amount, inst_obj.issuer_choice_verbose.lower())
+                inst_obj.balance_after = balance_before
+
                 if not trx_callback_status in ["501"]:
                     inst_obj.mark_failed(trx_callback_status, trx_callback_msg)
             inst_obj.reference_id = reference_id
             inst_obj.disbursed_date=datetime.datetime.now()
             inst_obj.balance_before = balance_before
-            inst_obj.balance_after = balance_after
             inst_obj.save()
         except Exception as err:
             inst_obj.mark_failed(500, "External Error")
@@ -172,6 +173,15 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 random.choice(ets_agents), recipient['msisdn'], recipient['amount'],
                 ets_pin, 'etisalat', recipient['uid']
             )
+            balance_before, has_enough_balance = checker.root.budget.within_threshold_and_hold_balance(
+                    recipient['amount'], 'etisalat')
+            # check for balance greater than trx amount with fees and vat then hold balance
+            if not has_enough_balance:
+                current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                current_trx.disbursed_date = datetime.datetime.now()
+                current_trx.save()
+                continue
             ets_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url, ets_payload, checker.username, ets_log_payload
             )
@@ -203,10 +213,20 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if deposit:
                vf_payload["TYPE"] =  "DPSTREQ"
                vf_log_payload["TYPE"] = "DPSTREQ"
+
+            balance_before, has_enough_balance = checker.root.budget.within_threshold_and_hold_balance(
+                recipient['amount'], 'vodafone')
+            # check for balance greater than trx amount with fees and vat then hold balance
+            if not has_enough_balance:
+                current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                current_trx.disbursed_date = datetime.datetime.now()
+                current_trx.save()
+                continue
             vf_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url, vf_payload, checker.username, vf_log_payload, txn_id=recipient["txn_id"]
             )
-            self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone')
+            self.handle_disbursement_callback(recipient, vf_callback, issuer='vodafone', balance_before=balance_before)
 
     def aman_api_authentication_params(self, aman_channel_object):
         """Handle retrieving token/merchant_id from api_authentication method of aman channel"""
@@ -257,8 +277,18 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
                     if payment_key_obtained.status_code == status.HTTP_201_CREATED:
                         payment_key = payment_key_obtained.data.get("payment_token", "")
+                        balance_before, has_enough_balance = checker.root.budget.within_threshold_and_hold_balance(
+                                recipient['amount'], 'aman')
+                        # check for balance greater than trx amount with fees and vat then hold balance
+                        if not has_enough_balance:
+                            current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                            current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                            current_trx.disbursed_date = datetime.datetime.now()
+                            current_trx.save()
+                            continue
                         aman_callback = aman_object.make_pay_request(payment_key)
-                        self.handle_disbursement_callback(recipient, aman_callback, issuer="aman")
+                        self.handle_disbursement_callback(
+                            recipient, aman_callback, issuer="aman", balance_before=balance_before)
 
             except Exception as err:
                 aman_object.log_message(request, f"[general failure - aman bulk channel]", f"Exception: {err.args[0]}")
@@ -303,7 +333,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
                 smsc_sender_name = checker.root.client.smsc_sender_name
                 for instant_trx_obj in bank_wallets_transactions:
                     if checker.root.has_custom_budget:
-                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'vodafone'):
+                        if not checker.root.budget.within_threshold(instant_trx_obj.amount, 'bank_wallet'):
                             instant_trx_obj.mark_failed(
                                 '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
                             instant_trx_obj.disbursed_date = datetime.datetime.now()
@@ -313,10 +343,20 @@ class BulkDisbursementThroughOneStepCashin(Task):
                         random.choice(vf_agents)['MSISDN'], instant_trx_obj.anon_recipient, instant_trx_obj.amount,
                         vf_pin, 'vodafone', instant_trx_obj.uid, smsc_sender_name
                     )
+                    balance_before, has_enough_balance = checker.root.budget.within_threshold_and_hold_balance(
+                        instant_trx_obj.amount, 'bank_wallet')
+                    # check for balance greater than trx amount with fees and vat then hold balance
+                    if not has_enough_balance:
+                        instant_trx_obj.mark_failed(
+                            '424', 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
+                        instant_trx_obj.disbursed_date = datetime.datetime.now()
+                        instant_trx_obj.save()
+                        continue
                     vf_callback = DisburseAPIView.disburse_for_recipients_deposit(
                         wallets_env_url, vf_payload, checker.username, vf_log_payload, inst_obj=instant_trx_obj
                     )
-                    self.handle_disbursement_callback_deposit(callback=vf_callback, inst_obj=instant_trx_obj)
+                    self.handle_disbursement_callback_deposit(
+                        callback=vf_callback, inst_obj=instant_trx_obj, balance_before=balance_before)
 
             else:
                 for instant_trx_obj in bank_wallets_transactions:

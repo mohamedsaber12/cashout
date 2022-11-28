@@ -8,28 +8,24 @@ from django.utils.translation import gettext_lazy as _
 from core.models import  AbstractTimeStamp
 
 from data.utils import upload_filename
+from users.models import Client, RootUser
+from users.models.base_user import  UserManager
 
 
-class Merchant(AbstractTimeStamp):
+class MerchantManager(UserManager):
+    """
+    Manager for Merchant user
+    """
+    def get_queryset(self):
+        return super().get_queryset()
 
-    id = models.CharField(
-        primary_key=True, editable=False, unique=True, db_index=True,
-        max_length=36, default=uuid.uuid4
-    )
-    merchant = models.ForeignKey(
-            "users.Client",
-            on_delete=models.CASCADE,
-            related_name='legaldocument',
-            verbose_name=_("merchant"),
-            null=False
-    )
+class Merchant(Client):
+
+    objects = MerchantManager()
 
     class Meta:
-        verbose_name_plural = 'Merchant'
-
-    
-    def __str__(self):
-        return str(f"{self.merchant.client.username}")
+        # verbose_name_plural = 'Merchant'
+        proxy = True
 
 class FileLegalDocs(models.Model):
     
@@ -45,7 +41,8 @@ class FileLegalDocs(models.Model):
     )
     filename=models.CharField(max_length=255, null=True, blank=True, help_text=_("File name"))
     file = models.FileField(upload_to=upload_filename,  blank=False,null=True,default="")    
-    merchant = models.ForeignKey("merchants.Merchant", on_delete=models.CASCADE, related_name='my_legal_docs',null=True)
+    Merchant = models.ForeignKey(
+           "merchants.Merchant" ,on_delete=models.CASCADE, null=True,related_name="my_legal_docs")
     comment= models.CharField(max_length=255, null=True, blank=True, help_text=_("Empty if the verified is ok"))
     timestamp = models.DateField(auto_now_add=True)
 

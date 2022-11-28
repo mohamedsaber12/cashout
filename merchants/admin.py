@@ -28,13 +28,6 @@ class FilelLegalDocsAdmin(admin.ModelAdmin):
 
 @admin.register(Merchant)
 class MerchantAdmin(admin.ModelAdmin):
-    def client_name(self, obj):
-        return f'{obj.merchant.client}'
-
-    list_display = ['client_name',]
-    list_display_links = ['client_name']
-    list_filter = ['merchant__client',]
-    search_fields = ['merchant',]
     inlines = [InlineFile]
     
     def save_formset(self, request, form, formset, change):

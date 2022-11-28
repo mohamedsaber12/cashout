@@ -17,8 +17,10 @@ from rest_framework import status
 
 from core.models import AbstractTimeStamp
 from utilities.models import (
-    AbstractBaseDocStatus, AbstractBaseVMTData,
-    AbstractTransactionCategory, AbstractTransactionCurrency,
+    AbstractBaseDocStatus,
+    AbstractBaseVMTData,
+    AbstractTransactionCategory,
+    AbstractTransactionCurrency,
     AbstractTransactionPurpose,
 )
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
@@ -26,7 +28,8 @@ from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 from .utils import determine_transaction_type
 
 INTERNAL_ERROR = _(
-    "Process stopped during an internal error, can you try again or contact your support team.")
+    "Process stopped during an internal error, can you try again or contact your support team."
+)
 
 
 class VMTData(AbstractBaseVMTData):
@@ -35,10 +38,10 @@ class VMTData(AbstractBaseVMTData):
     """
 
     vmt = models.OneToOneField(
-        'users.SuperAdminUser',
+        "users.SuperAdminUser",
         related_name="vmt",
         on_delete=models.CASCADE,
-        verbose_name=_("VMT Credentials Owner")
+        verbose_name=_("VMT Credentials Owner"),
     )
 
     class Meta:
@@ -51,15 +54,15 @@ class Agent(models.Model):
     Model for representing every admin related super-agent and agents
     """
 
-    VODAFONE = 'V'
-    ETISALAT = 'E'
-    ORANGE = 'O'
-    P2M = 'P'
+    VODAFONE = "V"
+    ETISALAT = "E"
+    ORANGE = "O"
+    P2M = "P"
     AGENT_TYPE_CHOICES = [
-        (VODAFONE, _('vodafone')),
-        (ETISALAT, _('etisalat')),
-        (ORANGE, _('orange')),
-        (P2M, _('P2M'))
+        (VODAFONE, _("vodafone")),
+        (ETISALAT, _("etisalat")),
+        (ORANGE, _("orange")),
+        (P2M, _("P2M")),
     ]
 
     msisdn = models.CharField(max_length=14, verbose_name=_("Mobile number"))
@@ -76,8 +79,7 @@ class Agent(models.Model):
         settings.AUTH_USER_MODEL,
         related_name="agents",
         on_delete=models.CASCADE,
-        help_text=_(
-            "Each super-agent or agent MUST be related to specific Root user")
+        help_text=_("Each super-agent or agent MUST be related to specific Root user"),
     )
 
     def __str__(self):
@@ -100,16 +102,16 @@ class DisbursementDocData(AbstractBaseDocStatus):
     """
 
     doc = models.OneToOneField(
-        'data.Doc', null=True, related_name='disbursement_txn', on_delete=models.CASCADE)
+        "data.Doc", null=True, related_name="disbursement_txn", on_delete=models.CASCADE
+    )
     txn_id = models.CharField(max_length=16, null=True, blank=True)
     txn_status = models.CharField(max_length=16, null=True, blank=True)
-    has_callback = models.BooleanField(
-        default=False, verbose_name=_('Has Callback?'))
+    has_callback = models.BooleanField(default=False, verbose_name=_("Has Callback?"))
     doc_status = models.CharField(
         _("Document disbursement status"),
         max_length=1,
         choices=AbstractBaseDocStatus.STATUS_CHOICES,
-        default=AbstractBaseDocStatus.DEFAULT
+        default=AbstractBaseDocStatus.DEFAULT,
     )
     status = None
 
@@ -131,7 +133,9 @@ class DisbursementDocData(AbstractBaseDocStatus):
         self.doc_status = DisbursementDocData.PROCESSING_FAILURE
         self.save()
 
-    def mark_doc_status_disbursed_successfully(self, transaction_id, transaction_status):
+    def mark_doc_status_disbursed_successfully(
+        self, transaction_id, transaction_status
+    ):
         """
         Mark disbursement doc status as disbursed successfully
         :param transaction_id: transaction id from the disbursement response
@@ -154,66 +158,56 @@ class DisbursementData(AbstractTimeStamp):
     """
 
     doc = models.ForeignKey(
-        'data.Doc', null=True, related_name='disbursement_data', on_delete=models.CASCADE)
+        "data.Doc",
+        null=True,
+        related_name="disbursement_data",
+        on_delete=models.CASCADE,
+    )
     is_disbursed = models.BooleanField(default=0)
-    amount = models.FloatField(verbose_name=_('AMOUNT'))
-    msisdn = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
-    issuer = models.CharField(max_length=8, verbose_name=_(
-        'Issuer Option'), default='default', db_index=True)
+    amount = models.FloatField(verbose_name=_("AMOUNT"))
+    msisdn = models.CharField(max_length=16, verbose_name=_("Mobile Number"))
+    issuer = models.CharField(
+        max_length=8, verbose_name=_("Issuer Option"), default="default", db_index=True
+    )
     # ToDo: Replace reason field with status_code and status_description fields
     reason = models.TextField()
     reference_id = models.CharField(
-        _('Reference ID'),
-        max_length=30,
-        default='None',
-        null=True
+        _("Reference ID"), max_length=30, default="None", null=True
     )
     aman_obj = GenericRelation(
         "instant_cashin.AmanTransaction",
         object_id_field="transaction_id",
         content_type_field="transaction_type",
-        related_query_name="aman_manual"
+        related_query_name="aman_manual",
     )
 
-    disbursed_date = models.DateTimeField(
-        _("Disbursed At"), null=True, blank=True)
+    disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
     uid = models.UUIDField(
-        default=uuid.uuid4,
-        null=True,
-        blank=True,
-        verbose_name=_("Transaction UID")
+        default=uuid.uuid4, null=True, blank=True, verbose_name=_("Transaction UID")
     )
     balance_before = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        null=True,
-        blank=True
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
 
     balance_after = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        null=True,
-        blank=True
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
 
     class Meta:
         verbose_name = "Disbursement Data Record"
         verbose_name_plural = "Disbursement Data Records"
-        unique_together = ('doc', 'msisdn')
-        index_together = ['doc', 'msisdn']
-        get_latest_by = ['id']
+        unique_together = ("doc", "msisdn")
+        index_together = ["doc", "msisdn"]
+        get_latest_by = ["id"]
 
     def __str__(self):
         return self.msisdn
 
     @property
     def get_is_disbursed(self):
-        return 'Successful' if self.is_disbursed else 'Failed'
+        return "Successful" if self.is_disbursed else "Failed"
 
     @property
     def aman_transaction_is_paid(self):
@@ -232,11 +226,13 @@ class DisbursementData(AbstractTimeStamp):
             return None
 
 
-class BankTransaction(AbstractTimeStamp,
-                      AbstractBaseACHTransactionStatus,
-                      AbstractTransactionCategory,
-                      AbstractTransactionCurrency,
-                      AbstractTransactionPurpose):
+class BankTransaction(
+    AbstractTimeStamp,
+    AbstractBaseACHTransactionStatus,
+    AbstractTransactionCategory,
+    AbstractTransactionCurrency,
+    AbstractTransactionPurpose,
+):
     """
     Model for managing bank transactions.
     """
@@ -244,179 +240,140 @@ class BankTransaction(AbstractTimeStamp,
     user_created = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name=_('bank_transactions'),
-        verbose_name=_('Disburser')
+        related_name=_("bank_transactions"),
+        verbose_name=_("Disburser"),
     )
     document = models.ForeignKey(
-        'data.Doc',
+        "data.Doc",
         on_delete=models.CASCADE,
-        related_name=_('bank_cards_transactions'),
-        verbose_name=_('Bank Cards Document'),
-        null=True
+        related_name=_("bank_cards_transactions"),
+        verbose_name=_("Bank Cards Document"),
+        null=True,
     )
     parent_transaction = models.ForeignKey(
-        'self',
+        "self",
         on_delete=models.CASCADE,
-        related_name=_('children_transactions'),
-        verbose_name=_('Parent Transaction'),
-        null=True
+        related_name=_("children_transactions"),
+        verbose_name=_("Parent Transaction"),
+        null=True,
     )
     transaction_id = models.UUIDField(
-        _('Transaction ID'),
+        _("Transaction ID"),
         db_index=True,
         unique=True,
         default=uuid.uuid4,
         blank=False,
         null=False,
-        help_text=_("New one generated everytime send_trx request made to EBC")
+        help_text=_("New one generated everytime send_trx request made to EBC"),
     )
     message_id = models.UUIDField(
-        _('Message ID'),
+        _("Message ID"),
         db_index=True,
         unique=True,
         default=uuid.uuid4,
         blank=False,
         null=False,
         help_text=_(
-            "New one generated everytime send_trx or get_trx_status request made to EBC")
+            "New one generated everytime send_trx or get_trx_status request made to EBC"
+        ),
     )
     transaction_status_code = models.CharField(
-        _('Transaction Status Code'),
-        max_length=6,
-        blank=True,
-        null=True
+        _("Transaction Status Code"), max_length=6, blank=True, null=True
     )
     transaction_status_description = models.CharField(
-        _('Transaction Status Description'),
-        max_length=500,
-        blank=True,
-        null=True
+        _("Transaction Status Description"), max_length=500, blank=True, null=True
     )
     debtor_account = models.CharField(
-        _('Corporate Account Number'),
+        _("Corporate Account Number"),
         max_length=34,
-        help_text=_('The company/service provider account number')
+        help_text=_("The company/service provider account number"),
     )
     amount = models.DecimalField(
-        _('Amount'),
+        _("Amount"),
         max_digits=12,
         decimal_places=2,
     )
     creditor_name = models.CharField(
-        _('Beneficiary Name'),
-        max_length=70,
-        help_text=_('The customer/receiver name')
+        _("Beneficiary Name"), max_length=70, help_text=_("The customer/receiver name")
     )
     creditor_account_number = models.CharField(
-        _('Beneficiary Account Number'),
+        _("Beneficiary Account Number"),
         max_length=34,
-        help_text=_('The customer/receiver bank account')
+        help_text=_("The customer/receiver bank account"),
     )
     creditor_bank = models.CharField(
-        _('Beneficiary Bank'),
+        _("Beneficiary Bank"),
         max_length=11,
-        help_text=_(
-            'The bank where the customer/receiver maintains its accounts')
+        help_text=_("The bank where the customer/receiver maintains its accounts"),
     )
     creditor_bank_branch = models.CharField(
-        _('Beneficiary Bank Branch'),
+        _("Beneficiary Bank Branch"),
         max_length=35,
         blank=True,
-        default='',
+        default="",
     )
     end_to_end = models.CharField(
-        _('Optional Transaction Identifier 1'),
-        max_length=36,
-        blank=True,
-        default=''
+        _("Optional Transaction Identifier 1"), max_length=36, blank=True, default=""
     )
     creditor_email = models.EmailField(
-        _('Beneficiary Email'),
-        max_length=70,
-        blank=True,
-        null=True
+        _("Beneficiary Email"), max_length=70, blank=True, null=True
     )
     creditor_mobile_number = PhoneNumberField(
-        _('Beneficiary Mobile Number'),
-        region='EG',
-        blank=True,
-        null=True
+        _("Beneficiary Mobile Number"), region="EG", blank=True, null=True
     )
     corporate_code = models.CharField(
-        _('Corporate Code'),
+        _("Corporate Code"),
         max_length=50,
-        help_text=_('Corporate Code to identify corporate')
+        help_text=_("Corporate Code to identify corporate"),
     )
-    sender_id = models.CharField(
-        _('Sender ID'),
-        max_length=35,
-        blank=True,
-        default=''
-    )
+    sender_id = models.CharField(_("Sender ID"), max_length=35, blank=True, default="")
     creditor_id = models.CharField(
-        _('Creditor ID'),
-        max_length=35,
-        blank=True,
-        default=''
+        _("Creditor ID"), max_length=35, blank=True, default=""
     )
     creditor_address_1 = models.CharField(
-        _('Creditor Address 1'),
-        max_length=70,
-        blank=True,
-        default=''
+        _("Creditor Address 1"), max_length=70, blank=True, default=""
     )
     debtor_address_1 = models.CharField(
-        _('Debtor Address 1'),
-        max_length=70,
-        blank=True,
-        default=''
+        _("Debtor Address 1"), max_length=70, blank=True, default=""
     )
     additional_info_1 = models.CharField(
-        _('Remittance Info 1'),
-        max_length=140,
-        blank=True,
-        default=''
+        _("Remittance Info 1"), max_length=140, blank=True, default=""
     )
-    is_single_step = models.BooleanField(default=False, verbose_name=_(
-        'Is manual patch single step transaction?'))
-    disbursed_date = models.DateTimeField(
-        _("Disbursed At"), null=True, blank=True)
+    is_single_step = models.BooleanField(
+        default=False, verbose_name=_("Is manual patch single step transaction?")
+    )
+    disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
     client_transaction_reference = models.UUIDField(
-        blank=True,
-        null=True,
-        verbose_name=_("Client Transaction Reference")
+        blank=True, null=True, verbose_name=_("Client Transaction Reference")
     )
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
     comment = models.CharField(
-        _('Optional Transaction Comment'),
+        _("Optional Transaction Comment"),
         max_length=36,
         blank=True,
         null=True,
-        default=''
+        default="",
     )
 
     balance_before = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        null=True,
-        blank=True
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
 
     balance_after = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        null=True,
-        blank=True
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
+    is_manual_batch = models.BooleanField(default=False)
+    is_exported_for_manual_batch = models.BooleanField(default=False)
+    bank_batch_id = models.CharField(max_length=100, blank=True, null=True)
+    bank_transaction_id = models.CharField(max_length=100, blank=True, null=True)
+    bank_end_to_end_identifier = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
-        verbose_name = 'Bank Transaction'
-        verbose_name_plural = 'Bank Transactions'
-        get_latest_by = '-created_at'
-        ordering = ['-created_at', '-updated_at']
+        verbose_name = "Bank Transaction"
+        verbose_name_plural = "Bank Transactions"
+        get_latest_by = "-created_at"
+        ordering = ["-created_at", "-updated_at"]
 
     def __str__(self):
         return str(self.transaction_id)
@@ -432,43 +389,47 @@ class BankTransaction(AbstractTimeStamp,
         return dict(AbstractBaseACHTransactionStatus.STATUS_CHOICES)[self.status]
 
     def update_status_code_and_description(self, code=None, description=None):
-        self.transaction_status_code = code if code else status.HTTP_500_INTERNAL_SERVER_ERROR
-        self.transaction_status_description = description if description else INTERNAL_ERROR
+        self.transaction_status_code = (
+            code if code else status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+        self.transaction_status_description = (
+            description if description else INTERNAL_ERROR
+        )
 
     def mark_returned(self, status_code, status_description):
         """Mark transaction status as returned"""
-        self.update_status_code_and_description(
-            status_code, status_description)
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.RETURNED
         self.save()
 
     def mark_successful(self, status_code, status_description):
         """Mark transaction status as successful"""
-        self.update_status_code_and_description(
-            status_code, status_description)
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.SUCCESSFUL
         self.save()
 
     def mark_rejected(self, status_code, status_description):
         """Mark transaction status as rejected"""
-        self.update_status_code_and_description(
-            status_code, status_description)
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.REJECTED
         self.save()
 
     def mark_failed(self, status_code, status_description):
         """Mark transaction status as failed"""
-        self.update_status_code_and_description(
-            status_code, status_description)
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.FAILED
         self.save()
 
     def mark_pending(self, status_code, status_description):
         """Mark transaction status as pending"""
-        self.update_status_code_and_description(
-            status_code, status_description)
+        self.update_status_code_and_description(status_code, status_description)
         self.status = self.PENDING
         self.save()
+
+    def get_last_updated_transaction(self):
+        return BankTransaction.objects.filter(
+            parent_transaction__transaction_id=self.parent_transaction.transaction_id
+        ).first()
 
 
 @receiver(post_save, sender=BankTransaction)
@@ -486,7 +447,8 @@ class RemainingAmounts(AbstractTimeStamp):
     base_amount = models.DecimalField(max_digits=7, decimal_places=2)
     remaining_amount = models.DecimalField(max_digits=7, decimal_places=2)
     bank_transactions = models.ManyToManyField(
-        BankTransaction, related_name="remaining_amount", blank=True)
+        BankTransaction, related_name="remaining_amount", blank=True
+    )
 
     class Meta:
         verbose_name = _("Remaining amount")

@@ -1555,7 +1555,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status","Updated At", "Balance before", "Balance After"]
+            column_names_list = ["Transaction ID","Recipient","Amount","Fees","Vat","Issuer","Status", "Status Description","Updated At", "Balance before", "Balance After"]
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1576,6 +1576,7 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(ExportTransactionsBase
                 ws.write(row_num, 4, str(row.vat))
                 ws.write(row_num, 5, str(row.issuer_choice_verbose))
                 ws.write(row_num, 6, str(row.status_choice_verbose))
+                ws.write(row_num, 7, str(row.transaction_status_description))
                 ws.write(row_num, 7, str(row.updated_at))
                 ws.write(row_num, 8, str(row.balance_before))
                 ws.write(row_num, 9, str(row.balance_after))
@@ -1639,7 +1640,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
         paginator = Paginator(self.data, 65535)
         for page_number in paginator.page_range:
             queryset = paginator.page(page_number)
-            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status","Updated At", "balance_before", "balance_after"]
+            column_names_list = ["Reference ID","Recipient","Amount","Fees","Vat","Status", "Status Description", "Updated At", "balance_before", "balance_after"]
             ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
 
         # 1. Write sheet header/column names - first row
@@ -1659,6 +1660,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(ExportTransactionsBaseVie
                 ws.write(row_num, 3, str(row.fees))
                 ws.write(row_num, 4, str(row.vat))
                 ws.write(row_num, 6, str(row.status_choice_verbose))
+                ws.write(row_num, 7, str(row.transaction_status_description))
                 ws.write(row_num, 7, str(row.updated_at))
                 ws.write(row_num, 8, str(row.balance_before))
                 ws.write(row_num, 9, str(row.balance_after))

@@ -41,4 +41,11 @@ class BudgetInquiryAPIView(views.APIView):
                 disburser, f"Current budget: {budget} LE", disburser, head="[message] [CUSTOM BUDGET - API INQUIRY]"
         )
 
-        return Response({'current_budget': f"Your current budget is {budget} LE"}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                'current_budget' : f"Your current budget is {budget} LE",
+                'current_balance': budget,
+                'currency'       : 'EGP'
+            },
+            status=status.HTTP_200_OK
+        )

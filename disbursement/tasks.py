@@ -370,8 +370,18 @@ class BulkDisbursementThroughOneStepCashin(Task):
                     try:
                         instant_trx_obj.disbursed_date = timezone.now()
                         instant_trx_obj.save()
+                        balance_before, has_enough_balance = checker.root.budget.within_threshold_and_hold_balance(
+                                instant_trx_obj.amount, 'bank_wallet')
+                        # check for balance greater than trx amount with fees and vat then hold balance
+                        if not has_enough_balance:
+                            instant_trx_obj.mark_failed(
+                                '424',
+                                'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
+                            instant_trx_obj.disbursed_date = datetime.datetime.now()
+                            instant_trx_obj.save()
+                            continue
                         bank_trx_obj = self.create_bank_transaction_from_instant_transaction(checker, instant_trx_obj)
-                        BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj)
+                        BankTransactionsChannel.send_transaction(bank_trx_obj, instant_trx_obj, balance_before)
                     except:
                         pass
         else:
@@ -388,7 +398,17 @@ class BulkDisbursementThroughOneStepCashin(Task):
                             continue
                     bank_trx_obj.disbursed_date = timezone.now()
                     bank_trx_obj.save()
-                    BankTransactionsChannel.send_transaction(bank_trx_obj, False)
+                    balance_before, has_enough_balance = checker.root.budget.within_threshold_and_hold_balance(
+                        bank_trx_obj.amount, 'bank_card')
+                    # check for balance greater than trx amount with fees and vat then hold balance
+                    if not has_enough_balance:
+                        bank_trx_obj.mark_failed(
+                            '424',
+                            'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team')
+                        bank_trx_obj.disbursed_date = datetime.datetime.now()
+                        bank_trx_obj.save()
+                        continue
+                    BankTransactionsChannel.send_transaction(bank_trx_obj, False, balance_before)
                 except:
                     pass
 

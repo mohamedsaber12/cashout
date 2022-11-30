@@ -1,5 +1,4 @@
 {% load i18n rangefilter_compat %}
-<h3>{{ title }}</h3>
 <link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}">
 <style>
     {% default_css_vars_if_needed %}
@@ -12,7 +11,11 @@
         color: var(--button-fg);
         cursor: pointer;
     }
-    .admindatefilter {
+    .admindatefilter, .form-group {
+        display: block;
+        width: 100%;
+        min-width: 100% !important;
+
         padding-left: 15px;
         padding-bottom: 10px;
         border-bottom: 1px solid var(--border-color);
@@ -126,14 +129,9 @@
     });
 </script>
 <div class="admindatefilter">
-    <form method="GET" action="." id="{{ choices.0.system_name }}-form">
+    <h5>{{ title }}</h5>
         {{ spec.form.as_p }}
         {% for choice in choices %}
             <input type="hidden" id="{{ choice.system_name }}-query-string" value="{{ choice.query_string }}">
         {% endfor %}
-        <div class="controls">
-            <input type="submit" class="button" value="{% trans "Search" %}" onclick="datefilter_apply(event, '{{ choices.0.system_name }}-query-string')">
-            <input type="reset" class="button" value="{% trans "Reset" %}" onclick="datefilter_reset(event, '{{ choices.0.system_name }}-query-string')">
-        </div>
-    </form>
 </div>

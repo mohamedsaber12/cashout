@@ -13,17 +13,18 @@ from .forms import FileCategoryForm
 from .models import Doc, DocReview, FileCategory
 
 
-
 class Root_filter(admin.SimpleListFilter):
-    title = 'Root'
-    parameter_name = 'root'
+    title = "Root"
+    parameter_name = "root"
 
     def lookups(self, request, model_admin):
-        return RootUser.objects.all().values_list("username","username")
-    
+        return RootUser.objects.all().values_list("username", "username")
+
     def queryset(self, request, queryset):
         try:
-            owner_hierarchy=RootUser.objects.filter(username=self.value()).values_list("hierarchy")[0][0]
+            owner_hierarchy = RootUser.objects.filter(
+                username=self.value()
+            ).values_list("hierarchy")[0][0]
             return queryset.filter(owner__hierarchy=owner_hierarchy)
         except:
             return queryset
@@ -34,29 +35,59 @@ class DocAdmin(admin.ModelAdmin):
     """
     Admin manager for the Doc model
     """
-    def root(self,object):
+
+    def root(self, object):
         return RootUser.objects.filter(hierarchy=object.owner.hierarchy).first()
 
     list_display = [
-        'id', 'type_of', 'owner', 'txn_id', 'has_change_profile_callback', 'is_processed', 'is_disbursed', 'created_at', 'root'
+        "id",
+        "type_of",
+        "owner",
+        "txn_id",
+        "has_change_profile_callback",
+        "is_processed",
+        "is_disbursed",
+        "created_at",
+        "root",
     ]
-    list_filter = (Root_filter, 'is_disbursed', 'has_change_profile_callback', 'is_processed', 'type_of', 'created_at', 'owner'
+    list_filter = (
+        "owner__root",
+        "is_disbursed",
+        "has_change_profile_callback",
+        "is_processed",
+        "type_of",
+        "created_at",
+        "owner",
+        "id",
     )
-    search_fields = ['id']
-    readonly_fields = ['file']
+    search_fields = ["id"]
+    readonly_fields = ["file"]
     fieldsets = (
-        (None, {
-            'fields': (
-                'id', 'file', 'type_of', 'file_category', 'owner', 'disbursed_by', 'root', 'txn_id',
-                'has_change_profile_callback', 'is_processed', 'processing_failure_reason', 'can_be_disbursed',
-                'is_disbursed', 'total_amount', 'total_amount_with_fees_vat', 'total_count'
-            )
-        }),
-        (_('Important Dates'), {
-            'fields': ('created_at', 'updated_at')
-        }),
+        (
+            None,
+            {
+                "fields": (
+                    "id",
+                    "file",
+                    "type_of",
+                    "file_category",
+                    "owner",
+                    "disbursed_by",
+                    "root",
+                    "txn_id",
+                    "has_change_profile_callback",
+                    "is_processed",
+                    "processing_failure_reason",
+                    "can_be_disbursed",
+                    "is_disbursed",
+                    "total_amount",
+                    "total_amount_with_fees_vat",
+                    "total_count",
+                )
+            },
+        ),
+        (_("Important Dates"), {"fields": ("created_at", "updated_at")}),
     )
-
 
     def has_add_permission(self, request):
         return False
@@ -68,21 +99,16 @@ class DocAdmin(admin.ModelAdmin):
         return False
 
 
-
-   
-   
-
-
 @admin.register(DocReview)
 class DocReviewAdmin(admin.ModelAdmin):
     """
     Admin class for tweaking the DocReview model at the admin panel
     """
 
-    list_display = ['doc', 'user_created', 'is_ok', 'comment', 'timestamp']
+    list_display = ["doc", "user_created", "is_ok", "comment", "timestamp"]
     readonly_fields = list_display
-    search_fields = ['doc__file']
-    list_filter = ['is_ok', 'user_created']
+    search_fields = ["doc__file"]
+    list_filter = ["is_ok", "user_created"]
 
 
 # @admin.register(FileCategory)
@@ -91,13 +117,22 @@ class FileCategoryAdmin(admin.ModelAdmin):
     Customize admin panel view for FileCategory model
     """
 
-    list_display = ['name', 'user_created', 'unique_field', 'amount_field', 'issuer_field', 'no_of_reviews_required']
-    list_filter = ['user_created']
+    list_display = [
+        "name",
+        "user_created",
+        "unique_field",
+        "amount_field",
+        "issuer_field",
+        "no_of_reviews_required",
+    ]
+    list_filter = ["user_created"]
 
     form = FileCategoryForm
 
     def get_form(self, request, obj=None, **kwargs):
-        FileCategoryForm = super(FileCategoryAdmin, self).get_form(request, obj=obj, **kwargs)
+        FileCategoryForm = super(FileCategoryAdmin, self).get_form(
+            request, obj=obj, **kwargs
+        )
         FileCategoryForm.request = request
         if obj:
             FileCategoryForm.obj = obj
@@ -127,9 +162,9 @@ class FileCategoryAdmin(admin.ModelAdmin):
 
 # @admin.register(FileData)
 class FileDataAdmin(admin.ModelAdmin):
-    list_filter = ['date', 'user']
-    list_display = ['doc', 'user']
-    readonly_fields = ['doc', 'data']
+    list_filter = ["date", "user"]
+    list_display = ["doc", "user"]
+    readonly_fields = ["doc", "data"]
 
     def has_add_permission(self, request):
         return False
@@ -137,7 +172,7 @@ class FileDataAdmin(admin.ModelAdmin):
 
 # @admin.register(Format)
 class FormatAdmin(admin.ModelAdmin):
-    list_filter = ['hierarchy']
+    list_filter = ["hierarchy"]
 
     def has_add_permission(self, request):
         return False

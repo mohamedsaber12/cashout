@@ -25,8 +25,9 @@ else:
     from django.utils.encoding import force_str
 
 from users.models import InstantAPICheckerUser, User
-from rangefilter.filter import DateRangeFilter
 from disbursement.mixins import ExportCsvMixin
+from utilities.date_range_filter import CustomDateRangeFilter
+
 
 
 
@@ -339,7 +340,7 @@ class TopupRequestAdmin(admin.ModelAdmin):
     list_filter = [
         "client",
         "currency",
-        ("created_at", DateRangeFilter),
+        ("created_at", CustomDateRangeFilter),
     ]
 
 
@@ -359,7 +360,7 @@ class TopupActionAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         "client",
-        ("created_at", DateRangeFilter),
+        ("created_at", CustomDateRangeFilter),
     ]
 
     def has_add_permission(self, request):
@@ -381,7 +382,7 @@ class VodafoneBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
         "created_at",
     ]
     list_filter = [
-        ("created_at", DateRangeFilter),
+        ("created_at", CustomDateRangeFilter),
     ]
 
     actions = ["export_as_csv"]

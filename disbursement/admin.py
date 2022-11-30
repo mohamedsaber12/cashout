@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from .mixins import AdminSiteOwnerOnlyPermissionMixin, ExportCsvMixin,BankExportCsvMixin, BankExportExcelMixin
 from .models import Agent, BankTransaction, DisbursementData, DisbursementDocData, VMTData, RemainingAmounts
 from .utils import custom_titled_filter
-from utilities.date_range_filter import CustomDateRangeFilter
+from utilities.date_range_filter import CustomDateRangeFilter,CustomDateTimeRangeFilter
 from django.urls import path
 from openpyxl import load_workbook
 from django.contrib import messages
@@ -30,14 +30,13 @@ class DistinctFilter(admin.SimpleListFilter):
 
     def lookups(self, request, model_admin):
         return(
-            ("yes", "Yes"),
-            ("no", "No"),
+            ("distinct", "Distinct"),
         )
 
     def queryset(self, request, queryset):
         if not self.value():
             return queryset
-        if self.value() == 'yes':
+        if self.value() == 'distinct':
             # return queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")
             return queryset.filter(id__in=[trn.id for trn in queryset.distinct("parent_transaction__transaction_id").order_by("parent_transaction__transaction_id", "-id")])
 
@@ -128,9 +127,8 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvM
     readonly_fields = [
         field.name for field in BankTransaction._meta.local_fields]
     list_filter = [
-        ('disbursed_date', CustomDateRangeFilter),
+        ('disbursed_date', CustomDateTimeRangeFilter),
         ('created_at', CustomDateRangeFilter),
-        'disbursed_date',
         DistinctFilter, EndToEndFilter,
         'is_manual_batch',
         'is_exported_for_manual_batch',
@@ -138,10 +136,7 @@ class BankTransactionAdminModel(admin.ModelAdmin, BankExportCsvMixin, ExportCsvM
         'category_code',
         'transaction_status_code',
         'is_single_step',
-        'user_created__root',
-        'parent_transaction__transaction_id',
-        'creditor_account_number',
-        'creditor_bank',
+        'user_created__root'
     ]
     ordering = ['-id']
     fieldsets = (
@@ -267,10 +262,7 @@ class DisbursementDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin,
         ('doc__file_category__user_created__client__creator',
          custom_titled_filter('Super Admin')),
         ('doc__file_category__user_created', custom_titled_filter('Entity Admin')),
-        ('doc__owner', custom_titled_filter('Document Owner/Uploader')),
-        'doc__id',
-        'msisdn',
-        'reason'
+        ('doc__owner', custom_titled_filter('Document Owner/Uploader'))
     ]
     search_fields = ['id', 'doc__id', 'msisdn', 'reason']
     ordering = ['-updated_at', '-created_at']

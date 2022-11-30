@@ -80,7 +80,7 @@ class CustomRootFilter(admin.SimpleListFilter):
 
 
 class IssuerTypeListFilter(MultipleChoiceListFilter):
-    title = ''
+    title = 'Issuer Type'
     parameter_name = 'issuer_type__in'
 
     def lookups(self, request, model_admin):
@@ -147,12 +147,10 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         ('disbursed_date', CustomDateRangeFilter),
         ('created_at', CustomDateRangeFilter),
         CustomStatusFilter,
+        IssuerTypeListFilter,
         'anon_sender', 'from_user',
         CustomRootFilter,
-        'is_single_step', 'transaction_status_code',
-        'anon_recipient',
-        'uid',
-        IssuerTypeListFilter,
+        'is_single_step', 'transaction_status_code'
     ]
     actions = ["export_as_csv","export_bank_transactions_ids"]
     fieldsets = (

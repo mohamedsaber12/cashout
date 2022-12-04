@@ -43,9 +43,9 @@ class BudgetInquiryAPIView(views.APIView):
 
         return Response(
             {
-                'current_budget': f"Your current budget is {budget} LE",
+                'current_budget' : f"Your current budget is {budget} LE",
                 'current_balance': budget,
-                'currency': 'EGP'
+                'currency'       : 'EGP'
             },
             status=status.HTTP_200_OK
         )

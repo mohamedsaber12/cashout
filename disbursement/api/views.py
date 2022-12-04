@@ -624,7 +624,7 @@ class CreateSingleStepTransacton(APIView):
                     "status" : response.json().get('status_code'),
                     "message": response.json().get('status_description')
             }
-            return Response(data, status=status.HTTP_201_CREATED)
+            return Response(response.json(), status=status.HTTP_201_CREATED)
 
         except Exception as e:
             error_msg = "Process stopped during an internal error, please can you try again."

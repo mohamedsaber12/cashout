@@ -812,7 +812,7 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
         return False
 
     def disbursementdata_queryset(self):
-        
+
         filter_dict = {}
         if self.request.user.is_root:
             filter_dict = {
@@ -829,10 +829,10 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
         query_set=DisbursementData.objects.filter(**filter_dict).order_by("-created_at")[:10]
         return query_set
-        
+
 
     def Instanttransaction_queryset(self):
-        
+
         filter_dict = {}
         if self.request.user.is_instant_model_onboarding:
             client_username_query_parameter = self.request.GET.get('client')
@@ -861,9 +861,9 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
         return query_set
 
     def BankTransaction_queryset(self):
-        
+
         filter_dict = {}
-        
+
         if self.request.user.is_instant_model_onboarding:
             client_username_query_parameter = self.request.GET.get('client')
             if self.request.user.is_support and client_username_query_parameter:
@@ -890,14 +890,14 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
 
         query_set=BankTransaction.objects.filter(**filter_dict).order_by("-created_at")[:10]
         return query_set
-    
+
     def Recent_transaction(self):
         instanttransaction_queryset=self.Instanttransaction_queryset()
         banktransaction_queryset=self.BankTransaction_queryset()
         disbursementdata_queryset=[]
         if not self.request.user.is_instant_model_onboarding:
             disbursementdata_queryset=self.disbursementdata_queryset()
-        
+
         ini_list=list(disbursementdata_queryset)+list(instanttransaction_queryset)+list(banktransaction_queryset)
         _list=[]
         for i in ini_list:
@@ -1057,7 +1057,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         queryset = paginator.get_page(page)
 
         context = {
-            'form': SingleStepTransactionForm(checker_user=request.user),
+            'form': SingleStepTransactionForm(current_user=request.user),
             'transactions_list': queryset
         }
         # pagination query string
@@ -1080,7 +1080,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""
         context = {
-            'form': SingleStepTransactionForm(request.POST, checker_user=request.user),
+            'form': SingleStepTransactionForm(request.POST, current_user=request.user),
             'transactions_list': self.get_queryset(),
             'show_add_form': True
         }
@@ -1090,7 +1090,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         if context['form'].is_valid():
             form = context['form']
             context = {
-                'form': SingleStepTransactionForm(checker_user=request.user),
+                'form': SingleStepTransactionForm(current_user=request.user),
                 'transactions_list': self.get_queryset(),
                 'show_pop_up': True
             }

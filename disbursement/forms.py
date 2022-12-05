@@ -352,7 +352,7 @@ class SingleStepTransactionForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.checker_user = kwargs.pop('checker_user', None)
+        self.current_user = kwargs.pop('current_user', None)
         super().__init__(*args, **kwargs)
 
     def clean_pin(self):
@@ -360,7 +360,7 @@ class SingleStepTransactionForm(forms.Form):
 
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_('Pin must be numeric'))
-        if not pin or self.checker_user.root.pin and not self.checker_user.root.check_pin(pin):
+        if not pin or self.current_user.root.pin and not self.current_user.root.check_pin(pin):
             raise forms.ValidationError(_('Invalid pin'))
 
         return pin
@@ -370,9 +370,9 @@ class SingleStepTransactionForm(forms.Form):
 
         if not amount or not (str(amount).replace('.', '', 1).isdigit() and Decimal(amount) >= 1):
             raise forms.ValidationError(_('Invalid amount'))
-        if Decimal(self.checker_user.level.max_amount_can_be_disbursed) < amount:
+        if self.current_user.is_checker and Decimal(self.current_user.level.max_amount_can_be_disbursed) < amount:
             raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))
-        if not self.checker_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
+        if not self.current_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
             raise forms.ValidationError(_("Entered amount exceeds your current balance"))
 
         return round(Decimal(amount), 2)
@@ -522,7 +522,7 @@ class SingleStepTransactionForm(forms.Form):
     def save(self, commit=True):
         single_step_bank_transaction = super().save(commit=False)
 
-        single_step_bank_transaction.user_created = self.checker_user
+        single_step_bank_transaction.user_created = self.current_user
         category_purpose_dict = determine_trx_category_and_purpose(self.cleaned_data.get('transaction_type'))
         single_step_bank_transaction.category_code = category_purpose_dict.get('category_code', 'CASH')
         single_step_bank_transaction.purpose = category_purpose_dict.get('purpose', 'CASH')

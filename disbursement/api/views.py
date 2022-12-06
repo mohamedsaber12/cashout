@@ -505,15 +505,17 @@ class CancelAmanTransactionView(APIView):
 
 class OnboardMerchant(APIView):
     """
-     view for onboard merchant 
+     view for onboard merchant
     """
     permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         """Handles POST requests to onboard new client"""
 
         # if not request.user.is_system_admin:
-        #         data={"status" : status.HTTP_403_FORBIDDEN,
-        #         "message": "You do not have permission"}
+        #         data={
+        #             "status" : status.HTTP_403_FORBIDDEN,
+        #             "message": "You do not have permission"
+        #         }
         #         return Response(data, status=status.HTTP_400_BAD_REQUEST)
         try:
             serializer = Merchantserializer(data=request.data)
@@ -567,85 +569,84 @@ class OnboardMerchant(APIView):
     def onbordnewadmin(self,user_name,root_email,idms_user_id,mobile_number):
         exists = False
         root =User.objects.filter(username=user_name)
-        
+
         if root.exists():
             exists = True
             return root, exists
 
         else:
             try:
-                client_name = user_name
                 if root_email == "":
-                    root_email=f"{client_name}_integration_admin@paymob.com"
+                    root_email=f"{user_name}_portal_admin@paymob.com"
                 # create root
                 root = RootUser.objects.create(
-                username=client_name,
-                email=root_email,
-                user_type=3,
-                has_password_set_on_idms=True,
-                mobile_no = mobile_number,
-                from_accept=True
+                    username=user_name,
+                    email=root_email,
+                    user_type=3,
+                    has_password_set_on_idms=True,
+                    mobile_no = mobile_number,
+                    from_accept=True
                 )
                 # set admin hierarchy
                 root = self.define_new_admin_hierarchy(root)
                 # add root field when create root
                 root.root = root
                 root.idms_user_id = idms_user_id
-                root.save()
+
                 # add permissions
                 root.user_permissions.add(
-                Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'),
-                Permission.objects.get(content_type__app_label='users', codename='has_instant_disbursement')
+                    Permission.objects.get(content_type__app_label='users', codename='accept_vodafone_onboarding'),
+                    Permission.objects.get(content_type__app_label='users', codename='has_disbursement')
                 )
-                # start create extra setup
+                root.save()
+
                 superadmin=User.objects.get(username=get_from_env("ACCEPT_VODAFONE_INTERNAL_SUPERADMIN"))
+
                 entity_dict = {
-                "user": superadmin,
-                "entity": root,
-                "agents_setup": True,
-                "fees_setup": True
+                    "user": superadmin,
+                    "entity": root,
+                    "agents_setup": True,
+                    "fees_setup"  : True,
+                    "is_normal_flow" : False,
                 }
                 client_dict = {
-                "creator": superadmin,
-                "client": root,
+                    "creator": superadmin,
+                    "client": root,
                 }
-                Setup.objects.create(
-                user=root, pin_setup=True, levels_setup=True,
-                maker_setup=True, checker_setup=True, category_setup=True
-                )
+
+                Setup.objects.create(user=root)
                 CallWalletsModerator.objects.create(
-                user_created=root, disbursement=False, change_profile=False,
-                set_pin=False, user_inquiry=False, balance_inquiry=False
+                    user_created=root, instant_disbursement=False, set_pin=False,
+                    user_inquiry=False, balance_inquiry=False
                 )
-                root.user_permissions. \
-                add(Permission.objects.get(content_type__app_label='users', codename='has_disbursement'))
+
                 EntitySetup.objects.create(**entity_dict)
                 Client.objects.create(**client_dict)
-                # finish create extra setup
-                msg = f"New Root/Admin created with username: {root.username} by {superadmin.username}"
-                logging_message(ROOT_CREATE_LOGGER, "[message] [NEW ADMIN CREATED]", self.request, msg)
+
+                msg = f"New Root/Admin created with username: {root.username} by {self.request.user}"
+                logging_message(ROOT_CREATE_LOGGER, "[message] [NEW ADMIN CREATED FROM ACCEPT]", self.request, msg)
+
                 # handle budget and fees setup
-                root_budget = Budget.objects.create(
-                disburser=root, created_by=superadmin, current_balance=0
-                )
+                root_budget = Budget.objects.create(disburser=root, created_by=superadmin)
+
                 FeeSetup.objects.create(budget_related=root_budget, issuer='vf',
-                fee_type='p', percentage_value=get_from_env("VF_PERCENTAGE_VALUE"))
+                    fee_type='p', percentage_value=get_from_env("VF_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='es',
-                fee_type='p', percentage_value=get_from_env("ES_PERCENTAGE_VALUE"))
+                    fee_type='p', percentage_value=get_from_env("ES_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='og',
                    fee_type='p', percentage_value=get_from_env("OG_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='bw',
-                fee_type='p', percentage_value=get_from_env("BW_PERCENTAGE_VALUE"))
+                    fee_type='p', percentage_value=get_from_env("BW_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='am',
-                fee_type='p', percentage_value=get_from_env("AM_PERCENTAGE_VALUE"))
+                    fee_type='p', percentage_value=get_from_env("AM_PERCENTAGE_VALUE"))
                 FeeSetup.objects.create(budget_related=root_budget, issuer='bc',
                     fee_type='m', fixed_value=0.0,
                     percentage_value=get_from_env("Bc_PERCENTAGE_VALUE"),
                     min_value=get_from_env("BC_min_VALUE"),
                     max_value=get_from_env("BC_max_VALUE")
-                )                
-                return root,exists
-            
+                )
+                return root, exists
+
             except Exception as err:
                 logging_message(
                     ROOT_CREATE_LOGGER, "[error] [error when onboarding new client]",
@@ -653,6 +654,5 @@ class OnboardMerchant(APIView):
                 )
                 error_msg = "Process stopped during an internal error, please can you try again."
                 error = {
-                "message": error_msg
+                    "message": error_msg
                 }
-                

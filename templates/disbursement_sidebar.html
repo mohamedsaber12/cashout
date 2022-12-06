@@ -17,15 +17,30 @@
           <li><a><i class="fa fa-home"></i>{% trans 'Home' %}<span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a href="{% url 'disbursement:home_root' %}">{% trans 'Dashboard' %}</a></li>
-              <li><a href="{% url 'disbursement:vf_et_aman_list' %}">{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
-              <li><a href="{% url 'disbursement:orange_bank_wallet_list' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
-              <li><a href="{% url 'disbursement:banks_list' %}">{% trans 'Bank Accounts/Cards' %}</a></li>
+              {% if not request.user.from_accept %}
+                <li><a href="{% url 'disbursement:vf_et_aman_list' %}">{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
+                <li><a href="{% url 'disbursement:orange_bank_wallet_list' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+                <li><a href="{% url 'disbursement:banks_list' %}">{% trans 'Bank Accounts/Cards' %}</a></li>
+              {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                <li><a href="{% url 'disbursement:vf_et_aman_list' %}">{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
+                <li><a href="{% url 'disbursement:orange_bank_wallet_list' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+                <li><a href="{% url 'disbursement:banks_list' %}">{% trans 'Bank Accounts/Cards' %}</a></li>
+              {% endif %}
             </ul>
           </li>
-          <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
-          <li><a href="{% url 'data:bank_wallets_home' %}">
-            <img style="width: 20px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
-          <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
+          {% if not request.user.from_accept %}
+            <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
+            <li><a href="{% url 'data:bank_wallets_home' %}">
+              <img style="width: 20px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+            <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
+          {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+            <li><a href="{% url 'data:e_wallets_home' %}"><i class="fa fa-money"></i>{% trans 'Vodafone/Etisalat/Aman' %}</a></li>
+            <li><a href="{% url 'data:bank_wallets_home' %}">
+              <img style="width: 20px;margin-{{'right'|invert_dir:LANGUAGE_CODE}}: 6px;margin-bottom: 9px;" src="{% static 'img/wallet_money.png' %}">{% trans 'Bank Wallets/Orange Cash' %}</a></li>
+            <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
+          {% endif %}
+
+
 
           {% if request.user.is_root or request.user.is_checker %}
             <li>
@@ -37,7 +52,8 @@
         {% endif %}
 
         {% if request.user.is_root %}
-          <li><a><i class="fa fa-users"></i>{% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
+          {% if not request.user.from_accept %}
+            <li><a><i class="fa fa-users"></i>{% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
                 <ul class="nav child_menu">
@@ -47,21 +63,55 @@
               </li>
               <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
             </ul>
-          </li>
-          <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
-            <i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}
-          </a>
-          </li>
+            </li>
+            <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+              <i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}
+            </a>
+            </li>
+          {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+            <li><a><i class="fa fa-users"></i>{% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              <li><a>{% trans 'Add member' %}<span class="fa fa-chevron-down"></span></a>
+                <ul class="nav child_menu">
+                  <li><a href="{% url 'users:add_maker' %}">{% trans 'Maker' %}</a></li>
+                  <li><a href="{% url 'users:add_checker' %}">{% trans 'Checker' %}</a></li>
+                </ul>
+              </li>
+              <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
+            </ul>
+            </li>
+            <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+              <i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}
+            </a>
+            </li>
+          {% endif %}
+
+
+
           {% if not request.user.is_vodafone_default_onboarding and not request.user.is_banks_standard_model_onboaring%}
-          <li><a>
+            {% if not request.user.from_accept %}
+              <li>
+              <a>
             <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Topup balance' %}
             <span class="fa fa-chevron-down"></span>
-          </a>
-            <ul class="nav child_menu">
+              </a>
+              <ul class="nav child_menu">
               <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add topup balance Request' %}</a></li>
               <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All topup balance requests' %}</a></li>
-            </ul>
-          </li>
+              </ul>
+              </li>
+            {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+            <li>
+              <a>
+            <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Topup balance' %}
+            <span class="fa fa-chevron-down"></span>
+              </a>
+              <ul class="nav child_menu">
+              <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add topup balance Request' %}</a></li>
+              <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All topup balance requests' %}</a></li>
+              </ul>
+              </li>
+            {% endif %}
           {% endif %}
         {% endif %}
 
@@ -77,6 +127,7 @@
         </li>
 
         {% if request.user.is_root or request.user.is_maker %}
+          {% if not request.user.from_accept %}
           <li><a><i class="fa fa-cog"></i>{% trans 'Settings' %}<span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">
               {% if request.user.is_root %}
@@ -90,6 +141,21 @@
               {% endif %}
             </ul>
           </li>
+          {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+          <li><a><i class="fa fa-cog"></i>{% trans 'Settings' %}<span class="fa fa-chevron-down"></span></a>
+            <ul class="nav child_menu">
+              {% if request.user.is_root %}
+                <li><a href="{% url 'users:levels' %}">{% trans 'levels' %}</a></li>
+                <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+                {% if request.user.is_accept_vodafone_onboarding %}
+                <li><a href="{% url 'users:change_pin' %}">{% trans 'Change Pin' %}</a></li>
+                {% endif %}
+              {% elif request.user.is_maker  %}
+                <li><a href="{% url 'data:list_format' %}">{% trans 'Formats' %}</a></li>
+              {% endif %}
+            </ul>
+          </li>
+          {% endif %}
         {% endif %}
       </ul>
     </div>

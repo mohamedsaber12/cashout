@@ -73,6 +73,7 @@ class User(AbstractUser, SoftDeletionModel):
     idms_user_id = models.CharField(max_length=50, null=True, blank=True)
     has_password_set_on_idms = models.BooleanField(default=False)
     from_accept = models.BooleanField(default=False)
+    allowed_to_be_bulk = models.BooleanField(default=False)
 
 
     objects = UserManager()

@@ -49,6 +49,11 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     """
     # new status for timeout transactions
     UNKNOWN = 'U'
+    FROM_ACCEPT_CHOICES = [
+        ("no", "No"),
+        ("single", "Single"),
+        ("bulk", "Bulk"),
+    ]
 
     document = models.ForeignKey(
             'data.Doc',
@@ -136,6 +141,14 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         max_digits=10,
         decimal_places=2,
         default=0
+    )
+    from_accept = models.CharField(
+            _("From Accept"),
+            max_length=10,
+            choices=FROM_ACCEPT_CHOICES,
+            blank=True,
+            null=True,
+            db_index=True,
     )
     
     # Not needed fields

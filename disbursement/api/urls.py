@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .views import (AllowDocDisburse, DisburseAPIView, DisburseCallBack, RetrieveDocData,ChangeProfileCallBack, CancelAmanTransactionView)
+from .views import (AllowDocDisburse, DisburseAPIView, DisburseCallBack, RetrieveDocData,ChangeProfileCallBack, CancelAmanTransactionView, OnboardMerchant)
 
 
 app_name = 'disb_api'
@@ -12,4 +12,6 @@ urlpatterns = [
      path('change-profile/callback/', ChangeProfileCallBack.as_view(), name='change_profile_callback'),
      path('doc/<doc_id>/', RetrieveDocData.as_view(), name='docrows'),
      path('aman/transaction/cancel/', CancelAmanTransactionView.as_view(), name='cancel_aman_transaction'),
+     path('onboard-merchant/', OnboardMerchant.as_view(), name='onboard_new_merchant'),
+
 ]

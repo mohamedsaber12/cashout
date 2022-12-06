@@ -1,5 +1,6 @@
 from rest_framework import serializers
-
+from users.models.base_user import User
+from users.models.root import RootUser
 from ..models import DisbursementData
 
 
@@ -35,3 +36,64 @@ class DisbursementCallBackSerializer(serializers.ModelSerializer):
         return super(DisbursementCallBackSerializer, self).update(instance, validated_data)
 
 
+
+from django.utils.translation import gettext as _
+
+
+class Merchantserializer(serializers.Serializer):
+
+
+    
+    username = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+    mobile_number = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+
+    email=serializers.EmailField(
+        max_length=100,
+        required=False
+    )
+    idms_user_id = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+   
+
+    def validate(self, attr):
+
+        is_required_msg = 'This field is required'
+
+        if not attr.get('username'):
+            raise serializers.ValidationError(
+                _(f"username {is_required_msg}")
+            )
+        if not attr.get('mobile_number'):
+            raise serializers.ValidationError(
+                _(f"mobile_number {is_required_msg}")
+            )
+        if not attr.get('idms_user_id'):
+            raise serializers.ValidationError(
+                _(f"idms_user_id {is_required_msg}")
+            )
+            
+        user_name=attr.get("username")
+        idms_user_id=attr.get("idms_user_id")
+        email=attr.get("email")
+        root =User.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name)
+        if root.exists():
+            raise serializers.ValidationError(
+                _(f"idms is already taken by another admin.")
+            )  
+
+        _root = User.objects.filter(email=email).exclude(username=user_name)
+        if _root.exists():
+            raise serializers.ValidationError(
+                _(f"email is already taken by another admin.")
+            )      
+
+        return attr
+        

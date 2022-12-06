@@ -511,12 +511,12 @@ class OnboardMerchant(APIView):
     def post(self, request, *args, **kwargs):
         """Handles POST requests to onboard new client"""
 
-        # if not request.user.is_system_admin:
-        #         data={
-        #             "status" : status.HTTP_403_FORBIDDEN,
-        #             "message": "You do not have permission"
-        #         }
-        #         return Response(data, status=status.HTTP_400_BAD_REQUEST)
+        if not request.user.is_system_admin:
+            data={
+                "status" : status.HTTP_403_FORBIDDEN,
+                "message": "You do not have permission"
+            }
+            return Response(data, status=status.HTTP_400_BAD_REQUEST)
         try:
             serializer = Merchantserializer(data=request.data)
             serializer.is_valid(raise_exception=True)

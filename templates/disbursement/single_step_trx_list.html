@@ -71,7 +71,7 @@
           <div class="x_panel">
             <div class="x_title">
               <h2><strong>{% trans 'Transactions Summary' %}</strong></h2>
-              {% if user.is_checker %}
+              {% if user.is_checker or user.is_root %}
                 {% if user.root.client.is_active %}
                   <div class="dialogButtonDiv pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                     <button id="addSingleTransaction" class="btn btn-primary">{% trans 'Make New Transaction' %}</button>
@@ -515,9 +515,10 @@
   var table = $('#transaction-table').DataTable({
     "bLengthChange" : false,
     "bPaginate": false,
-    "bInfo" : false
+    "bInfo" : false,
+    "ordering": false
   });
-  
+
   var buttons = new $.fn.dataTable.Buttons( table, {
         buttons: [
           {
@@ -534,7 +535,7 @@
             {
                 extend: 'excelHtml5',
                 text : "{% trans 'Export' %}",
-                
+
                 customize: function( xlsx ) {
 
                   var sheet = xlsx.xl.worksheets['sheet1.xml'];
@@ -543,7 +544,7 @@
             }
         ]
     });
-  
+
   table.buttons( 0, null ).container().prependTo(
         table.table().container()
     );

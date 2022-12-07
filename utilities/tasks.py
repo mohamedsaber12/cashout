@@ -86,7 +86,7 @@ def generate_onboarded_entities_report(recipients_list, superadmin_username, **k
 
 @app.task()
 @respects_language
-def send_transfer_request_email(admin_username, message, attachment_file_name=None, **kwargs):
+def send_transfer_request_email(admin_username, message, attachment_file_name=None, automatic=False, **kwargs):
     """"""
     # 1. Prepare recipients list
     business_team = [dict(email=email) for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')]
@@ -94,15 +94,16 @@ def send_transfer_request_email(admin_username, message, attachment_file_name=No
     # 2. Get admin user object
     admin_user = User.objects.get(username=admin_username)
 
+    subject = "Automatic " if automatic else ""
     # 3. Send the email
     if attachment_file_name:
         file = default_storage.open(attachment_file_name)
         deliver_mail_to_multiple_recipients_with_attachment(
-                admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team, file
+            admin_user, _(f" {subject}Transfer Request By User {admin_username}"), message, business_team, file
         )
     else:
         deliver_mail_to_multiple_recipients_with_attachment(
-                admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team
+            admin_user, _(f" {subject}Transfer Request By User {admin_username}"), message, business_team
         )
 
     BUDGET_LOGGER.debug(

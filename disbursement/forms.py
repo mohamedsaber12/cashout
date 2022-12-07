@@ -354,6 +354,12 @@ class SingleStepTransactionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
         super().__init__(*args, **kwargs)
+        if self.current_user.from_accept and not self.current_user.allowed_to_be_bulk:
+            self.fields['pin'].widget = forms.HiddenInput()
+            self.fields['pin'].widget.attrs.setdefault('required', False)
+
+
+
 
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)

@@ -614,7 +614,10 @@ class OnboardMerchant(APIView):
                     "client": root,
                 }
 
-                Setup.objects.create(user=root)
+                Setup.objects.create(
+                    user=root, pin_setup=True, levels_setup=True,
+                    maker_setup=True, checker_setup=True, category_setup=True
+                )
                 CallWalletsModerator.objects.create(
                     user_created=root, instant_disbursement=False, set_pin=False,
                     user_inquiry=False, balance_inquiry=False

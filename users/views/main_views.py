@@ -184,6 +184,12 @@ def login_view(request):
             context['error_invalid'] = 'Invalid login details supplied.'
             return render(request, login_template, context=context)
     else:
+        idms_token = request.COOKIES.get("IDMS_TOKEN")
+        if idms_token:
+            sso = SSOIntegration()
+            user_found , user_obj = sso.get_user_with_idms_access_token(idms_token)
+            if user_found:
+                login(request, user_obj, backend="django.contrib.auth.backends.ModelBackend")
         return render(request, login_template, context=context)
 
 

@@ -27,7 +27,7 @@ env.read_env(os.path.join(BASE_DIR, '.env'))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost', "172.31.8.189", "172.31.23.159", "75.2.116.217", "99.83.194.66", "172.31.29.238"]
+ALLOWED_HOSTS = ['0.0.0.0','127.0.0.1', 'localhost', "172.31.8.189", "172.31.23.159", "75.2.116.217", "99.83.194.66", "172.31.29.238"]
 
 # Application definition
 THIRD_PARTY_APPS = [
@@ -426,7 +426,7 @@ SECURE_BROWSER_XSS_FILTER = True
 
 
 
-# SSO 
+# SSO
 
 IDMS_BASE_URL = env.str('IDMS_BASE_URL')
 IDMS_CLIENT_ID = env.str('IDMS_CLIENT_ID')

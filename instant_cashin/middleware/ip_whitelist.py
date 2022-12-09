@@ -1,4 +1,8 @@
+import logging
+
 from django.core.exceptions import PermissionDenied
+
+IP_LOGGER = logging.getLogger("access")
 
 
 class FilterIPMiddleware(object):
@@ -25,6 +29,9 @@ class FilterIPMiddleware(object):
         ]
         if request.user.is_authenticated and request.user.is_instantapichecker:
             ip = request.META.get('REMOTE_ADDR')
+            IP_LOGGER.debug(
+                f"[message] [IP] [{request.user.username}] -- request Ip :-  {ip}"
+            )
             if 'eksab' in request.user.root.username and ip not in whitelisted_ip:
                 raise PermissionDenied()
 

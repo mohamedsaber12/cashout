@@ -388,16 +388,18 @@
             <!-- pin row -->
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                {% if not request.user.from_accept  %}
                 <label>
-                    <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
+                  <span class="glyphicon glyphicon-pushpin"></span>
+                  {% if not request.user.from_accept  %}
+                    {% trans 'Pin' %} *
+                  {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                    {% trans 'Pin' %} *
+                  {% else %}
+                    {% trans 'Transaction Reason' %} *
+                  {% endif %}
                 </label>
-                {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
-                <label>
-                  <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
-                </label>
-                {% endif %}
                 {{form.pin}}
+                {{form.transaction_reason}}
                 <span class="respond-span"></span>
                 <div class="help-block">
                   {{form.pin.errors}}

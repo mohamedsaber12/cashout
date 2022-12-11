@@ -350,6 +350,12 @@ class SingleStepTransactionForm(forms.Form):
             'name': 'email', 'placeholder': 'Enter Your Email'
         })
     )
+    # user that came from accept
+    transaction_reason = forms.CharField(
+        label=_('Transaction Reason'),
+        required=False,
+        widget=forms.HiddenInput()
+    )
 
     def __init__(self, *args, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
@@ -357,9 +363,11 @@ class SingleStepTransactionForm(forms.Form):
         if self.current_user.from_accept and not self.current_user.allowed_to_be_bulk:
             self.fields['pin'].widget = forms.HiddenInput()
             self.fields['pin'].widget.attrs.setdefault('required', False)
-
-
-
+            self.fields['transaction_reason'].widget = forms.TextInput(attrs={
+                'class': 'form-control', 'id': 'transaction_reason',
+                'name' : 'transaction_reason', 'placeholder': 'Enter transaction reason'
+            })
+            self.fields['pin'].widget.attrs.setdefault('required', True)
 
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)

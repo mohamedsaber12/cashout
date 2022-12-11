@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+from decimal import Decimal
 import copy
 from datetime import datetime
 import logging
@@ -234,7 +234,7 @@ class InstantDisbursementAPIView(views.APIView):
             'username': accept_username
         }
         BUDGET_LOGGER.debug(
-            f"[message] [ automatic transfer request] [{disburser}] -- payload: {payload}"
+            f"[message] [Automatic Transfer Request] [{disburser}] -- payload: {payload}"
         )
         # Prepare email message
         message = _(f"""Dear All,<br><br>
@@ -260,19 +260,21 @@ class InstantDisbursementAPIView(views.APIView):
 
     def create_automatic_topup_action(self, disburser, amount_plus_fees_vat):
         # increase current balance with fees and vat
-        # create topup action
+        # create TopUp action
         balance_before = disburser.root.budget.current_balance
         disburser.root.budget.current_balance += amount_plus_fees_vat
-        # BUDGET_LOGGER.debug(
-        #     f"FX rate applied ({fx_rate}) amount before {amount_being_added} amount after {new_amount}"
-        # )
-        # TopupAction.objects.create(
-        #     client=self.instance.disburser,
-        #     amount=Decimal(amount_being_added),
-        #     balance_before=Decimal(balance_before),
-        #     balance_after=Decimal(self.instance.current_balance),
-        #     fx_ratio_amount=Decimal(fx_amount),
-        # )
+        disburser.root.budget.save()
+        BUDGET_LOGGER.debug(
+            f"[message] [ Automatic Balance Increase] [{disburser}] ==> balance before:- {balance_before}, "
+            f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
+        )
+        TopupAction.objects.create(
+            client=disburser.root,
+            amount=Decimal(amount_plus_fees_vat),
+            balance_before=Decimal(balance_before),
+            balance_after=Decimal(balance_before) + Decimal(amount_plus_fees_vat),
+            automatic=True,
+        )
 
     def post(self, request, *args, **kwargs):
         """
@@ -287,13 +289,15 @@ class InstantDisbursementAPIView(views.APIView):
                 user = request.user
 
             if user.from_accept and not user.allowed_to_be_bulk:
+                # calculate amount plus fees and vat
+                amount_plus_fees_vat = user.root.budget.accumulate_amount_with_fees_and_vat(
+                    serializer.validated_data['amount'],
+                    serializer.validated_data['issuer']
+                )
 
                 # check merchant has enough balance in accept account
                 has_enough_balance, accept_username = self.check_merchant_has_enough_balance_in_accept(
-                    user.root.budget.accumulate_amount_with_fees_and_vat(
-                        serializer.validated_data['amount'],
-                        serializer.validated_data['issuer']
-                    )
+                    amount_plus_fees_vat
                 )
                 if not has_enough_balance:
                     raise ValidationError(BUDGET_EXCEEDED_MSG)
@@ -302,7 +306,7 @@ class InstantDisbursementAPIView(views.APIView):
                 self.create_automatic_topup_request(user, accept_username, serializer)
 
                 # create automatic topup action
-
+                self.create_automatic_topup_action(user, amount_plus_fees_vat)
 
             if not user.root.\
                     budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):
@@ -347,13 +351,19 @@ class InstantDisbursementAPIView(views.APIView):
                 fees, vat = user.root.budget.calculate_fees_and_vat_for_amount(
                     data_dict['AMOUNT'], issuer
                 )
-                transaction = InstantTransaction.objects.create(
-                        from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
-                        amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
-                        anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
-                        disbursed_date=timezone.now(), fees=fees, vat=vat,
-                        client_transaction_reference=serializer.validated_data.get("client_reference_id")
+                transaction = InstantTransaction(
+                    from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
+                    amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
+                    anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
+                    disbursed_date=timezone.now(), fees=fees, vat=vat,
+                    client_transaction_reference=serializer.validated_data.get("client_reference_id")
                 )
+                if user.from_accept and not user.allowed_to_be_bulk:
+                    transaction.from_accept = 'single'
+                    transaction.transaction_reason = serializer.validated_data.get('transaction_reason')
+                elif user.from_accept and user.allowed_to_be_bulk:
+                    transaction.from_accept = 'bulk'
+                transaction.save()
                 if issuer in ["orange", "bank_wallet"] or \
                 (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE"):
                     data_dict['WALLETISSUER'] = "VODAFONE"

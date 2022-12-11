@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import copy
+from datetime import datetime
 import logging
 from users.models.base_user import User
 
@@ -29,7 +30,10 @@ from ..serializers import (
     BankTransactionResponseModelSerializer
 )
 from django.conf import settings
+from utilities.tasks import send_transfer_request_email
+from utilities.models import TopupRequest, TopupAction
 
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
@@ -211,6 +215,65 @@ class InstantDisbursementAPIView(views.APIView):
             transaction_object.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             return Response(InstantTransactionResponseModelSerializer(transaction_object).data)
 
+    def check_merchant_has_enough_balance_in_accept(self, amount_plus_fees_and_vat):
+        # todo
+        # send request amount with fees and vat to accept to check merchant balance
+        # has enough amount and deduct it from accept balance
+        # return accept user.username
+
+        # mock it for now
+        return True, 'accept_user'
+
+    def create_automatic_topup_request(self, disburser, accept_username, serializer):
+        # send topup request email
+        # create topup request object in database
+        payload = {
+            'amount':serializer.validated_data['amount'],
+            'type': 'from_accept_balance',
+            'currency': 'egyptian_pound',
+            'username': accept_username
+        }
+        BUDGET_LOGGER.debug(
+            f"[message] [ automatic transfer request] [{disburser}] -- payload: {payload}"
+        )
+        # Prepare email message
+        message = _(f"""Dear All,<br><br>
+        <label>Admin Username:       </label> {disburser.root.username}<br/>
+        <label>Admin E-mail:         </label> {disburser.root.user.email}<br/>
+        <label>Request Date/Time:    </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
+        <label>Amount To Be Added:   </label> {serializer.validated_data['amount']}<br/>
+        <label>Transfer Type:        </label> From Accept Balance <br/>
+        <label>Currency:             </label> Egyptian Pound <br/><br/>
+        <label>Accept username:  </label> {accept_username} <br/><br/>Best Regards,"
+        """)
+
+        send_transfer_request_email.delay(disburser.root.username, message, automatic=True)
+        # save topup information
+        TopupRequest.objects.create(
+            client=disburser.root,
+            amount=serializer.validated_data['amount'],
+            currency="egyptian_pound",
+            transfer_type="from_accept_balance",
+            username=accept_username,
+            automatic=True
+        )
+
+    def create_automatic_topup_action(self, disburser, amount_plus_fees_vat):
+        # increase current balance with fees and vat
+        # create topup action
+        balance_before = disburser.root.budget.current_balance
+        disburser.root.budget.current_balance += amount_plus_fees_vat
+        # BUDGET_LOGGER.debug(
+        #     f"FX rate applied ({fx_rate}) amount before {amount_being_added} amount after {new_amount}"
+        # )
+        # TopupAction.objects.create(
+        #     client=self.instance.disburser,
+        #     amount=Decimal(amount_being_added),
+        #     balance_before=Decimal(balance_before),
+        #     balance_after=Decimal(self.instance.current_balance),
+        #     fx_ratio_amount=Decimal(fx_amount),
+        # )
+
     def post(self, request, *args, **kwargs):
         """
         Handles POST HTTP requests
@@ -222,6 +285,24 @@ class InstantDisbursementAPIView(views.APIView):
                 user = User.objects.get(username=serializer.validated_data['user'])
             else:
                 user = request.user
+
+            if user.from_accept and not user.allowed_to_be_bulk:
+
+                # check merchant has enough balance in accept account
+                has_enough_balance, accept_username = self.check_merchant_has_enough_balance_in_accept(
+                    user.root.budget.accumulate_amount_with_fees_and_vat(
+                        serializer.validated_data['amount'],
+                        serializer.validated_data['issuer']
+                    )
+                )
+                if not has_enough_balance:
+                    raise ValidationError(BUDGET_EXCEEDED_MSG)
+
+                # create automatic topup request
+                self.create_automatic_topup_request(user, accept_username, serializer)
+
+                # create automatic topup action
+
 
             if not user.root.\
                     budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):

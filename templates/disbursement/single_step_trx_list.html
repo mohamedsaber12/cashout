@@ -388,9 +388,15 @@
             <!-- pin row -->
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                {% if not request.user.from_accept  %}
                 <label>
                     <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
                 </label>
+                {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                <label>
+                  <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
+                </label>
+                {% endif %}
                 {{form.pin}}
                 <span class="respond-span"></span>
                 <div class="help-block">

@@ -1002,12 +1002,17 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 data = form.cleaned_data
                 payload = {
                     "is_single_step": True,
-                    "pin": data["pin"],
                     "user": request.user.username,
                     "amount": str(data["amount"]),
                     "issuer": data["issuer"],
                     "msisdn": data["msisdn"]
                 }
+                if not request.user.is_accept:
+                    payload["pin"]=data["pin"]
+                elif request.user.from_accept and request.user.allowed_to_be_bulk:
+                    payload["pin"]=data["pin"]
+
+
                 if data["issuer"] in ["orange", "bank_wallet"]:
                     payload["full_name"] = data["full_name"]
                 if data["issuer"] == "bank_card":

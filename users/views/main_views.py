@@ -138,9 +138,9 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        # user = authenticate(request=request, username=username, password=password)
-        sso = SSOIntegration()
-        user = sso.authenticate(username, password)
+        user = authenticate(request=request, username=username, password=password)
+        # sso = SSOIntegration()
+        # user = sso.authenticate(username, password)
         if user and not user.is_instantapichecker:
             if user.is_active:
                 login(request, user, backend="django.contrib.auth.backends.ModelBackend")
@@ -205,7 +205,7 @@ def ourlogout(request):
 
 
 class CallbackURLEdit(UpdateView):
-        
+
     model = User
     template_name = 'users/callback_url.html'
     form_class = CallbackURLEditForm
@@ -213,7 +213,7 @@ class CallbackURLEdit(UpdateView):
     def get_object(self, queryset=None):
         user = get_object_or_404(User, username=self.kwargs['username'])
         return user.root.root
-    
+
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.save()

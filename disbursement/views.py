@@ -1008,7 +1008,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     "issuer": data["issuer"],
                     "msisdn": data["msisdn"]
                 }
-                if not request.user.is_accept:
+                if not request.user.from_accept:
                     payload["pin"]=data["pin"]
                 elif request.user.from_accept and request.user.allowed_to_be_bulk:
                     payload["pin"]=data["pin"]

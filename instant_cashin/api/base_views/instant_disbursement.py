@@ -239,7 +239,7 @@ class InstantDisbursementAPIView(views.APIView):
         # Prepare email message
         message = _(f"""Dear All,<br><br>
         <label>Admin Username:       </label> {disburser.root.username}<br/>
-        <label>Admin E-mail:         </label> {disburser.root.user.email}<br/>
+        <label>Admin E-mail:         </label> {disburser.root.email}<br/>
         <label>Request Date/Time:    </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
         <label>Amount To Be Added:   </label> {serializer.validated_data['amount']}<br/>
         <label>Transfer Type:        </label> From Accept Balance <br/>

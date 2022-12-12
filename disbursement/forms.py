@@ -374,10 +374,11 @@ class SingleStepTransactionForm(forms.Form):
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)
 
-        if pin and not pin.isnumeric():
-            raise forms.ValidationError(_('Pin must be numeric'))
-        if not pin or self.current_user.root.pin and not self.current_user.root.check_pin(pin):
-            raise forms.ValidationError(_('Invalid pin'))
+        if not self.current_user.from_accept or self.current_user.allowed_to_be_bulk:
+            if pin and not pin.isnumeric():
+                raise forms.ValidationError(_('Pin must be numeric'))
+            if not pin or self.current_user.root.pin and not self.current_user.root.check_pin(pin):
+                raise forms.ValidationError(_('Invalid pin'))
 
         return pin
 

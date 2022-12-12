@@ -248,7 +248,7 @@ class SingleStepTransactionForm(forms.Form):
         })
     )
     pin = forms.CharField(
-        required=True,
+        required=False,
         min_length=6,
         max_length=6,
         widget=forms.PasswordInput(attrs={
@@ -368,6 +368,8 @@ class SingleStepTransactionForm(forms.Form):
                 'name' : 'transaction_reason', 'placeholder': 'Enter transaction reason'
             })
             self.fields['transaction_reason'].widget.attrs.setdefault('required', True)
+        else:
+            self.fields['pin'].widget.attrs.setdefault('required', True)
 
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)

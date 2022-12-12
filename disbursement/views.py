@@ -70,6 +70,7 @@ from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 
 DATA_LOGGER = logging.getLogger("disburse")
+SINGLE_STEP_TRANSACTIONS_LOGGER = logging.getLogger("single_step_transactions")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
 FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger("failed_disbursement_download")
 FAILED_VALIDATION_DOWNLOAD = logging.getLogger("failed_validation_download")
@@ -1038,12 +1039,13 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 }
                 return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
 
-            except:
+            except Exception as err:
                 error_msg = "Process stopped during an internal error, please can you try again."
                 data = {
                     "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "message": error_msg
                 }
+                SINGLE_STEP_TRANSACTIONS_LOGGER.debug(f"[Error] [message] [{request.user}] -- {err.args}")
                 return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)

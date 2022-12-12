@@ -285,6 +285,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/custom_budgets.log',
         },
+        'single_step_transactions': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/single_step_transactions.log',
+        },
         'change_fees_profile': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -354,7 +361,7 @@ CUSTOM_LOGGING = {
             'formatter': 'detail',
             'class': 'logging.FileHandler',
             'filename': 'logs/sso_integration.log',
-        },   
+        },
         'timeouts_updates': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -546,6 +553,11 @@ CUSTOM_LOGGING = {
         },
         'custom_budgets': {
             'handlers': ['custom_budgets'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'single_step_transactions': {
+            'handlers': ['single_step_transactions'],
             'level': 'DEBUG',
             'propagate': True,
         },

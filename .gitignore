@@ -96,3 +96,4 @@ docs/_build/
 
 !/logs/.gitkeep
 /logs/*
+.pre-commit-config.yaml

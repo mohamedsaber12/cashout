@@ -22,24 +22,7 @@ services:
       options:
         max-size: "100m"
     command: >
-      sh -c "
-             python manage.py makemigrations users &&
-             python manage.py migrate users &&
-             python manage.py makemigrations data &&
-             python manage.py migrate data &&
-             python manage.py makemigrations disbursement &&
-             python manage.py migrate disbursement &&
-             python manage.py makemigrations instant_cashin &&
-             python manage.py migrate instant_cashin &&
-             python manage.py makemigrations payment &&
-             python manage.py migrate payment &&
-             python manage.py makemigrations utilities &&
-             python manage.py migrate utilities &&
-             python manage.py makemigrations &&
-             python manage.py migrate &&
-             mkdocs build &&
-             python manage.py collectstatic --no-input &&
-             uwsgi -i uwsgi.ini"
+      sh -c "uwsgi -i uwsgi.ini"
     networks:
       - payouts_network
     depends_on:

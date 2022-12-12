@@ -398,11 +398,22 @@
                     {% trans 'Transaction Reason' %} *
                   {% endif %}
                 </label>
-                {{form.pin}}
-                {{form.transaction_reason}}
+                {% if not request.user.from_accept  %}
+                  {{form.pin}}
+                {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                  {{form.pin}}
+                {% else %}
+                  {{form.transaction_reason}}
+                {% endif %}
                 <span class="respond-span"></span>
                 <div class="help-block">
-                  {{form.pin.errors}}
+                  {% if not request.user.from_accept  %}
+                    {{form.pin.errors}}
+                  {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                    {{form.pin.errors}}
+                  {% else %}
+                    {{form.transaction_reason.errors}}
+                  {% endif %}
                 </div>
               </div>
             </div>

@@ -363,7 +363,7 @@ class InstantDisbursementAPIView(views.APIView):
                 )
                 if user.from_accept and not user.allowed_to_be_bulk:
                     transaction.from_accept = 'single'
-                    transaction.transaction_reason = serializer.validated_data.get('transaction_reason')
+                    transaction.transaction_type = serializer.validated_data.get('transaction_reason', "")
                 elif user.from_accept and user.allowed_to_be_bulk:
                     transaction.from_accept = 'bulk'
                 transaction.save()

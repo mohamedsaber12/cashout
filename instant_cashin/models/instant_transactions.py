@@ -143,17 +143,17 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         default=0
     )
     from_accept = models.CharField(
-            _("From Accept"),
-            max_length=10,
-            choices=FROM_ACCEPT_CHOICES,
-            default='no',
-            db_index=True,
+        _("From Accept"),
+        max_length=10,
+        choices=FROM_ACCEPT_CHOICES,
+        default='no',
+        db_index=True,
     )
-    transaction_reason = models.CharField(
-            _("Transaction Reason"),
-            max_length=500,
-            blank=True,
-            null=True,
+    transaction_type = models.CharField(
+        _("Transaction Reason"),
+        max_length=500,
+        blank=True,
+        null=True,
     )
 
     # Not needed fields

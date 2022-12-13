@@ -278,7 +278,7 @@
               <div class="row">
               <div class="form-group col-md-6 col-sm-6 col-xs-12">
                 <label>
-                    <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Type' %}
+                  <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
                 </label>
                 {{ form.transaction_type }}
                 <span class="respond-span"></span>
@@ -389,31 +389,12 @@
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
                 <label>
-                  <span class="glyphicon glyphicon-pushpin"></span>
-                  {% if not request.user.from_accept  %}
-                    {% trans 'Pin' %} *
-                  {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
-                    {% trans 'Pin' %} *
-                  {% else %}
-                    {% trans 'Transaction Reason' %} *
-                  {% endif %}
+                  <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
                 </label>
-                {% if not request.user.from_accept  %}
-                  {{form.pin}}
-                {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
-                  {{form.pin}}
-                {% else %}
-                  {{form.transaction_reason}}
-                {% endif %}
+                {{form.pin}}
                 <span class="respond-span"></span>
                 <div class="help-block">
-                  {% if not request.user.from_accept  %}
-                    {{form.pin.errors}}
-                  {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
-                    {{form.pin.errors}}
-                  {% else %}
-                    {{form.transaction_reason.errors}}
-                  {% endif %}
+                  {{form.pin.errors}}
                 </div>
               </div>
             </div>

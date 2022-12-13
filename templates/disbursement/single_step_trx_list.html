@@ -585,7 +585,7 @@
   });
 
   {% if show_pop_up == True %}
-    {% if status_code != "8000" and status_code != "200" %}
+    {% if status_code != "8000" and status_code != "200" and status_code != "8333" %}
       $('#failedModal').modal({
         backdrop: 'static',
         keyboard: false

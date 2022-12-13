@@ -1078,6 +1078,9 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
         return render(request, template_name=self.template_name, context=context)
 
+    def revert_balance_to_accept_account(self, reverted_amount):
+        pass
+
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""
         context = {
@@ -1130,6 +1133,18 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
                     json=payload
                 )
+                print('==========================================')
+                print(response.json())
+                print('==========================================')
+                if response.json().get("disbursement_status") == 'failed':
+                    current_reverted_amount = data['amount']
+                    if data["issuer"] != "bank_card":
+                        current_reverted_amount = request.user.root.budget.accumulate_amount_with_fees_and_vat(
+                            data['amount'],
+                            data['issuer']
+                        )
+
+                    self.revert_balance_to_accept_account(current_reverted_amount)
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {
                     "status" : response.json().get('status_code'),

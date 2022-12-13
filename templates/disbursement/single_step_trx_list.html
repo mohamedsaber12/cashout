@@ -598,7 +598,7 @@
     {% endif %}
   {% endif %}
   {% if request.GET.status%}
-    {% if request.GET.status == '8000' or request.GET.status == '200' %}
+    {% if request.GET.status == '8000' or request.GET.status == '200' or request.GET.status == '8333' %}
       $("#status_description_success").html('{{request.GET.message}}');
       $('#successModal').modal({
             backdrop: 'static',

@@ -34,7 +34,7 @@ from utilities.messages import MSG_DISBURSEMENT_ERROR, MSG_DISBURSEMENT_IS_RUNNI
 
 from ..models import Agent, DisbursementData, DisbursementDocData
 from .permission_classes import BlacklistPermission
-from .serializers import DisbursementCallBackSerializer, DisbursementSerializer,DisbursementDataSerializer, InstantTransactionSerializer
+from .serializers import DisbursementCallBackSerializer, DisbursementSerializer,DisbursementDataSerializer, InstantTransactionSerializer, Merchantserializer
 from ..tasks import BulkDisbursementThroughOneStepCashin
 import requests
 import json

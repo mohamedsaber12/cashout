@@ -388,14 +388,16 @@
             <!-- pin row -->
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                <label>
-                  <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
-                </label>
-                {{form.pin}}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{form.pin.errors}}
-                </div>
+                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+                  <label>
+                    <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
+                  </label>
+                  {{form.pin}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.pin.errors}}
+                  </div>
+                {% endif %}
               </div>
             </div>
 
@@ -719,7 +721,7 @@ let bankCardForm = `<div id="bank_card_fields">
   <div class="row">
   <div class="form-group col-md-6 col-sm-6 col-xs-12">
     <label>
-        <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Type' %}
+        <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
     </label>
     {{ form.transaction_type }}
     <span class="respond-span"></span>

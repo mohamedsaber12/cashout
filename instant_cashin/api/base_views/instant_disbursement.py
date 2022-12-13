@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
+from decimal import Decimal
 import copy
+from datetime import datetime
 import logging
 from time import pthread_getcpuclockid
 from users.models.base_user import User
@@ -30,7 +31,10 @@ from ..serializers import (
     BankTransactionResponseModelSerializer
 )
 from django.conf import settings
+from utilities.tasks import send_transfer_request_email
+from utilities.models import TopupRequest, TopupAction
 
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
@@ -212,19 +216,100 @@ class InstantDisbursementAPIView(views.APIView):
             transaction_object.mark_failed(status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG)
             return Response(InstantTransactionResponseModelSerializer(transaction_object).data)
 
+    def check_merchant_has_enough_balance_in_accept(self, amount_plus_fees_and_vat):
+        # todo
+        # send request amount with fees and vat to accept to check merchant balance
+        # has enough amount and deduct it from accept balance
+        # return accept user.username
+
+        # mock it for now
+        return True, 'accept_user'
+
+    def create_automatic_topup_request(self, disburser, accept_username, serializer):
+        # send topup request email
+        # create topup request object in database
+        payload = {
+            'amount':serializer.validated_data['amount'],
+            'type': 'from_accept_balance',
+            'currency': 'egyptian_pound',
+            'username': accept_username
+        }
+        BUDGET_LOGGER.debug(
+            f"[message] [Automatic Transfer Request] [{disburser}] -- payload: {payload}"
+        )
+        # Prepare email message
+        message = _(f"""Dear All,<br><br>
+        <label>Admin Username:       </label> {disburser.root.username}<br/>
+        <label>Admin E-mail:         </label> {disburser.root.email}<br/>
+        <label>Request Date/Time:    </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
+        <label>Amount To Be Added:   </label> {serializer.validated_data['amount']}<br/>
+        <label>Transfer Type:        </label> From Accept Balance <br/>
+        <label>Currency:             </label> Egyptian Pound <br/><br/>
+        <label>Accept username:  </label> {accept_username} <br/><br/>Best Regards,"
+        """)
+
+        send_transfer_request_email.delay(disburser.root.username, message, automatic=True)
+        # save topup information
+        TopupRequest.objects.create(
+            client=disburser.root,
+            amount=serializer.validated_data['amount'],
+            currency="egyptian_pound",
+            transfer_type="from_accept_balance",
+            username=accept_username,
+            automatic=True
+        )
+
+    def create_automatic_topup_action(self, disburser, amount_plus_fees_vat):
+        # increase current balance with fees and vat
+        # create TopUp action
+        balance_before = disburser.root.budget.current_balance
+        disburser.root.budget.current_balance += amount_plus_fees_vat
+        disburser.root.budget.save()
+        BUDGET_LOGGER.debug(
+            f"[message] [ Automatic Balance Increase] [{disburser}] ==> balance before:- {balance_before}, "
+            f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
+        )
+        TopupAction.objects.create(
+            client=disburser.root,
+            amount=Decimal(amount_plus_fees_vat),
+            balance_before=Decimal(balance_before),
+            balance_after=Decimal(balance_before) + Decimal(amount_plus_fees_vat),
+            automatic=True,
+        )
+
     def post(self, request, *args, **kwargs):
         """
         Handles POST HTTP requests
         """
-        
+
         serializer = InstantDisbursementRequestSerializer(data=request.data)
         try:
-            
+
             serializer.is_valid(raise_exception=True)
             if 'user' in serializer.validated_data:
                 user = User.objects.get(username=serializer.validated_data['user'])
             else:
                 user = request.user
+
+            if user.from_accept and not user.allowed_to_be_bulk:
+                # calculate amount plus fees and vat
+                amount_plus_fees_vat = user.root.budget.accumulate_amount_with_fees_and_vat(
+                    serializer.validated_data['amount'],
+                    serializer.validated_data['issuer']
+                )
+
+                # check merchant has enough balance in accept account
+                has_enough_balance, accept_username = self.check_merchant_has_enough_balance_in_accept(
+                    amount_plus_fees_vat
+                )
+                if not has_enough_balance:
+                    raise ValidationError(BUDGET_EXCEEDED_MSG)
+
+                # create automatic topup request
+                self.create_automatic_topup_request(user, accept_username, serializer)
+
+                # create automatic topup action
+                self.create_automatic_topup_action(user, amount_plus_fees_vat)
 
             if not user.root.\
                     budget.within_threshold(serializer.validated_data['amount'], serializer.validated_data['issuer']):
@@ -269,13 +354,19 @@ class InstantDisbursementAPIView(views.APIView):
                 fees, vat = user.root.budget.calculate_fees_and_vat_for_amount(
                     data_dict['AMOUNT'], issuer
                 )
-                transaction = InstantTransaction.objects.create(
-                        from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
-                        amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
-                        anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
-                        disbursed_date=timezone.now(), fees=fees, vat=vat,
-                        client_transaction_reference=serializer.validated_data.get("client_reference_id")
+                transaction = InstantTransaction(
+                    from_user=user, anon_recipient=data_dict['MSISDN2'], status="P",
+                    amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
+                    anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
+                    disbursed_date=timezone.now(), fees=fees, vat=vat,
+                    client_transaction_reference=serializer.validated_data.get("client_reference_id")
                 )
+                if user.from_accept and not user.allowed_to_be_bulk:
+                    transaction.from_accept = 'single'
+                    transaction.transaction_reason = serializer.validated_data.get('transaction_reason')
+                elif user.from_accept and user.allowed_to_be_bulk:
+                    transaction.from_accept = 'bulk'
+                transaction.save()
                 if issuer in ["orange", "bank_wallet"] or \
                 (issuer == "etisalat" and settings.ETISALAT_ISSUER == "VODAFONE"):
                     data_dict['WALLETISSUER'] = "VODAFONE"
@@ -333,7 +424,7 @@ class InstantDisbursementAPIView(views.APIView):
                     get_from_env(vmt_data.vmt_environment), json=data_dict, verify=False,
                     timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"]
                 )
-                
+
                 if trx_response.ok:
                     json_trx_response = trx_response.json()
                     transaction.reference_id = json_trx_response["TXNID"]
@@ -353,7 +444,7 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.save()
                 return Response(InstantTransactionResponseModelSerializer(transaction).data, status=status.HTTP_200_OK)
 
-            except (requests.Timeout, TimeoutError) as e:               
+            except (requests.Timeout, TimeoutError) as e:
                 logging_message(
                     INSTANT_CASHIN_FAILURE_LOGGER, "[response] [ERROR FROM CENTRAL]", request, f"timeout, {e.args}"
                 )

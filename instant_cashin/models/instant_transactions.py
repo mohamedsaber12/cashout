@@ -49,6 +49,11 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     """
     # new status for timeout transactions
     UNKNOWN = 'U'
+    FROM_ACCEPT_CHOICES = [
+        ("no", "No"),
+        ("single", "Single"),
+        ("bulk", "Bulk"),
+    ]
 
     document = models.ForeignKey(
             'data.Doc',
@@ -115,14 +120,14 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
     )
     is_single_step = models.BooleanField(default=False, verbose_name=_('Is manual patch single step transaction?'))
     disbursed_date = models.DateTimeField(_("Disbursed At"), null=True, blank=True)
-    
+
     client_transaction_reference = models.UUIDField(
             unique=True,
             blank=True,
             null=True,
             verbose_name=_("Client Transaction Reference")
     )
-    
+
     fees = models.FloatField(_("Fees"), default=0.0)
     vat = models.FloatField(_("Vat"), default=0.0)
 
@@ -137,7 +142,20 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         decimal_places=2,
         default=0
     )
-    
+    from_accept = models.CharField(
+            _("From Accept"),
+            max_length=10,
+            choices=FROM_ACCEPT_CHOICES,
+            default='no',
+            db_index=True,
+    )
+    transaction_reason = models.CharField(
+            _("Transaction Reason"),
+            max_length=500,
+            blank=True,
+            null=True,
+    )
+
     # Not needed fields
     to_user = None
     external_reference_1 = None

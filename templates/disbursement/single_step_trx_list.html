@@ -389,12 +389,31 @@
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
                 <label>
-                    <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
+                  <span class="glyphicon glyphicon-pushpin"></span>
+                  {% if not request.user.from_accept  %}
+                    {% trans 'Pin' %} *
+                  {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                    {% trans 'Pin' %} *
+                  {% else %}
+                    {% trans 'Transaction Reason' %} *
+                  {% endif %}
                 </label>
-                {{form.pin}}
+                {% if not request.user.from_accept  %}
+                  {{form.pin}}
+                {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                  {{form.pin}}
+                {% else %}
+                  {{form.transaction_reason}}
+                {% endif %}
                 <span class="respond-span"></span>
                 <div class="help-block">
-                  {{form.pin.errors}}
+                  {% if not request.user.from_accept  %}
+                    {{form.pin.errors}}
+                  {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
+                    {{form.pin.errors}}
+                  {% else %}
+                    {{form.transaction_reason.errors}}
+                  {% endif %}
                 </div>
               </div>
             </div>
@@ -566,7 +585,7 @@
   });
 
   {% if show_pop_up == True %}
-    {% if status_code != "8000" and status_code != "200" %}
+    {% if status_code != "8000" and status_code != "200" and status_code != "8333" %}
       $('#failedModal').modal({
         backdrop: 'static',
         keyboard: false
@@ -579,7 +598,7 @@
     {% endif %}
   {% endif %}
   {% if request.GET.status%}
-    {% if request.GET.status == '8000' or request.GET.status == '200' %}
+    {% if request.GET.status == '8000' or request.GET.status == '200' or request.GET.status == '8333' %}
       $("#status_description_success").html('{{request.GET.message}}');
       $('#successModal').modal({
             backdrop: 'static',

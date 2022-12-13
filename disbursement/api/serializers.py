@@ -1,8 +1,12 @@
 import email
+
+from django.utils.translation import gettext as _
+
 from instant_cashin.models import instant_transactions
 from rest_framework import serializers
 from users.models.base_user import User
 from users.models.root import RootUser
+from disbursement.utils import VALID_BANK_CODES_LIST
 
 from ..models import DisbursementData
 
@@ -50,12 +54,8 @@ class InstantTransactionSerializer(serializers.ModelSerializer):
         model =instant_transactions.InstantTransaction
         fields = '__all__'
 
-from disbursement.utils import VALID_BANK_CODES_LIST
-from django.utils.translation import gettext as _
-
 
 class SingleStepserializer(serializers.Serializer):
-
 
     amount = serializers.DecimalField(
         max_digits=10,
@@ -122,7 +122,7 @@ class SingleStepserializer(serializers.Serializer):
         max_length=100,
         required=True
     )
-   
+
 
     def validate(self, attr):
         is_required_msg = 'This field is required'
@@ -140,7 +140,7 @@ class SingleStepserializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     _(f"creditor_account_number {is_required_msg}")
                 )
-            
+
             if not attr.get('transaction_type'):
                 raise serializers.ValidationError(
                     _(f"transaction_type {is_required_msg}")
@@ -157,7 +157,7 @@ class SingleStepserializer(serializers.Serializer):
             if not attr.get("creditor_bank") in VALID_BANK_CODES_LIST :
                 raise serializers.ValidationError(
                     _(f"transaction_type must be one of VALID_BANK_CODES_LIST ")
-                ) 
+                )
         elif issuer == 'aman':
             if not attr.get('first_name'):
                  raise serializers.ValidationError(
@@ -184,12 +184,12 @@ class SingleStepserializer(serializers.Serializer):
             if not attr.get('msisdn'):
                 raise serializers.ValidationError(
                     _(f"msisdn {is_required_msg}")
-                 )    
+                 )
             if not attr.get('full_name'):
                 raise serializers.ValidationError(
                     _(f"full_name {is_required_msg}")
                 )
-            
+
         user_name=attr.get("username")
         idms_user_id=attr.get("idms_user_id")
         admin_email=attr.get("admin_email")
@@ -197,11 +197,67 @@ class SingleStepserializer(serializers.Serializer):
         if root.exists():
             raise serializers.ValidationError(
                 _(f"idms is already taken by another admin.")
-            )  
+            )
 
         _root = User.objects.filter(email=admin_email).exclude(username=user_name)
         if _root.exists():
             raise serializers.ValidationError(
                 _(f"email is already taken by another admin.")
-            )      
+            )
+        return attr
+
+
+class Merchantserializer(serializers.Serializer):
+
+    username = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+    mobile_number = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+
+    email=serializers.EmailField(
+        max_length=100,
+        required=False
+    )
+    idms_user_id = serializers.CharField(
+        max_length=100,
+        required=True
+    )
+
+
+    def validate(self, attr):
+
+        is_required_msg = 'This field is required'
+
+        if not attr.get('username'):
+            raise serializers.ValidationError(
+                _(f"username {is_required_msg}")
+            )
+        if not attr.get('mobile_number'):
+            raise serializers.ValidationError(
+                _(f"mobile_number {is_required_msg}")
+            )
+        if not attr.get('idms_user_id'):
+            raise serializers.ValidationError(
+                _(f"idms_user_id {is_required_msg}")
+            )
+
+        user_name=attr.get("username")
+        idms_user_id=attr.get("idms_user_id")
+        email=attr.get("email")
+        root =User.objects.filter(idms_user_id=idms_user_id).exclude(username=user_name)
+        if root.exists():
+            raise serializers.ValidationError(
+                _(f"idms is already taken by another admin.")
+            )
+
+        _root = User.objects.filter(email=email).exclude(username=user_name)
+        if _root.exists():
+            raise serializers.ValidationError(
+                _(f"email is already taken by another admin.")
+            )
+
         return attr

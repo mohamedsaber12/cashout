@@ -1,6 +1,11 @@
 from django.urls import path
 
-from .views import (CreateSingleStepTransacton, AllowDocDisburse, DisburseAPIView, DisburseCallBack, DisbursementDataViewSet, InstantTransactionViewSet, RetrieveDocData,ChangeProfileCallBack, CancelAmanTransactionView)
+from .views import (
+     CreateSingleStepTransacton, AllowDocDisburse, DisburseAPIView,
+     DisburseCallBack, DisbursementDataViewSet, InstantTransactionViewSet,
+     RetrieveDocData,ChangeProfileCallBack, CancelAmanTransactionView,
+     OnboardMerchant,
+)
 
 
 app_name = 'disb_api'
@@ -15,5 +20,6 @@ urlpatterns = [
      path('portal-transactions/',DisbursementDataViewSet.as_view({ 'get': 'list',}),name="vf-et-aman"),
      path("portal-transactions-orange/",InstantTransactionViewSet.as_view({ 'get': 'list',})),
      path('portal-create-single-step/', CreateSingleStepTransacton.as_view(), name='create_single_step_transacton'),
+     path('onboard-merchant/', OnboardMerchant.as_view(), name='onboard_new_merchant'),
 
 ]

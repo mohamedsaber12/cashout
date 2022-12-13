@@ -95,12 +95,12 @@ class FeeSetupAdmin(CustomInlineAdmin):
 
     def has_add_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_add_permission"):
-            return True 
+            return True
         return False
-    
+
     def has_change_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_change_permission"):
-            return True 
+            return True
         return False
 
     def has_delete_permission(self, request, obj=None):
@@ -337,9 +337,10 @@ class TopupRequestAdmin(admin.ModelAdmin):
 
     list_display = ["client", "amount", "currency", "created_at", "updated_at"]
     list_filter = [
-        "client",
-        "currency",
         ("created_at", DateRangeFilter),
+        "automatic",
+        "currency",
+        "client",
     ]
 
 
@@ -358,8 +359,9 @@ class TopupActionAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = [
-        "client",
         ("created_at", DateRangeFilter),
+        "automatic",
+        "client",
     ]
 
     def has_add_permission(self, request):

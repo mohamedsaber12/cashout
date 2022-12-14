@@ -248,7 +248,7 @@ class SingleStepTransactionForm(forms.Form):
         })
     )
     pin = forms.CharField(
-        required=True,
+        required=False,
         min_length=6,
         max_length=6,
         widget=forms.PasswordInput(attrs={
@@ -354,14 +354,20 @@ class SingleStepTransactionForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
         super().__init__(*args, **kwargs)
+        if self.current_user.from_accept and not self.current_user.allowed_to_be_bulk:
+            self.fields['pin'].widget = forms.HiddenInput()
+            self.fields['pin'].widget.attrs.setdefault('required', False)
+        else:
+            self.fields['pin'].widget.attrs.setdefault('required', True)
 
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)
 
-        if pin and not pin.isnumeric():
-            raise forms.ValidationError(_('Pin must be numeric'))
-        if not pin or self.current_user.root.pin and not self.current_user.root.check_pin(pin):
-            raise forms.ValidationError(_('Invalid pin'))
+        if not self.current_user.from_accept or self.current_user.allowed_to_be_bulk:
+            if pin and not pin.isnumeric():
+                raise forms.ValidationError(_('Pin must be numeric'))
+            if not pin or self.current_user.root.pin and not self.current_user.root.check_pin(pin):
+                raise forms.ValidationError(_('Invalid pin'))
 
         return pin
 
@@ -372,8 +378,9 @@ class SingleStepTransactionForm(forms.Form):
             raise forms.ValidationError(_('Invalid amount'))
         if self.current_user.is_checker and Decimal(self.current_user.level.max_amount_can_be_disbursed) < amount:
             raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))
-        if not self.current_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
-            raise forms.ValidationError(_("Entered amount exceeds your current balance"))
+        if not self.current_user.from_accept or self.current_user.allowed_to_be_bulk:
+            if not self.current_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
+                raise forms.ValidationError(_("Entered amount exceeds your current balance"))
 
         return round(Decimal(amount), 2)
 
@@ -487,9 +494,10 @@ class SingleStepTransactionForm(forms.Form):
             if valid_full_name != True:
                 validationErrors['full_name'] = [valid_full_name]
         elif issuer == 'bank_card':
-            valid_trx_type = self.validate_transaction_type()
-            if valid_trx_type != True:
-                validationErrors['transaction_type'] = [valid_trx_type]
+            if not self.current_user.from_accept or self.current_user.allowed_to_be_bulk:
+                valid_trx_type = self.validate_transaction_type()
+                if valid_trx_type != True:
+                    validationErrors['transaction_type'] = [valid_trx_type]
             valid_cr_ac_num = self.validate_creditor_account_number()
             if valid_cr_ac_num != True:
                 validationErrors['creditor_account_number'] = [valid_cr_ac_num]
@@ -512,6 +520,11 @@ class SingleStepTransactionForm(forms.Form):
             valid_email = self.validate_email()
             if valid_email != True:
                 validationErrors['email'] = [valid_email]
+
+        if self.current_user.from_accept and not self.current_user.allowed_to_be_bulk:
+            valid_trx_type = self.validate_transaction_type()
+            if valid_trx_type!=True:
+                validationErrors['transaction_type'] = [valid_trx_type]
 
         if len(validationErrors.keys()) == 0:
             return data

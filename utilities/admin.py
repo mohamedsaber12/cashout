@@ -397,9 +397,10 @@ class TopupRequestAdmin(admin.ModelAdmin):
 
     list_display = ["client", "amount", "currency", "created_at", "updated_at"]
     list_filter = [
-        "client",
-        "currency",
         ("created_at", DateRangeFilter),
+        "automatic",
+        "currency",
+        "client",
     ]
 
 
@@ -418,8 +419,9 @@ class TopupActionAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = [
-        "client",
         ("created_at", DateRangeFilter),
+        "automatic",
+        "client",
     ]
 
     def has_add_permission(self, request):

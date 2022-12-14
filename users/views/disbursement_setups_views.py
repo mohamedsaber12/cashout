@@ -1,22 +1,29 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-
 from django.contrib.auth.models import Permission
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, FormView, TemplateView
-
+from django.views import View
 from data.forms import FileCategoryFormSet
 from data.models import FileCategory
 from disbursement.forms import PinForm
-from ..forms import CheckerCreationForm, CheckerMemberFormSet, LevelFormSet, MakerCreationForm, MakerMemberFormSet
+from ..forms import CheckerCreationForm, CheckerMemberFormSet, LevelFormSet, MakerCreationForm, MakerMemberFormSet, Vodafone_ChangePinForm
 from ..mixins import DisbursementRootRequiredMixin
 from ..models import CheckerUser, Levels, MakerUser, Setup
 from django import forms
 from users.decorators import root_only
+from payouts.utils import get_dot_env
+from users.models import Client
+from disbursement.models import Agent
+import logging
+WALLET_API_LOGGER = logging.getLogger("wallet_api")
 
+MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
+MSG_PIN_SETTING_ERROR = _(f"Set pin process stopped during an internal error, {MSG_TRY_OR_CONTACT}")
+import requests
 
 class BaseFormsetView(TemplateView):
     """
@@ -379,4 +386,84 @@ def change_pin_view(request, template_name='users/change_pin.html', form_class=C
         form = form_class(request.user)
     return render(request, template_name, {'form': form})
 
+class vodafone_change_pin_view(View):
+    template_name='users/vodafone_change_pin.html'
+    form_class=Vodafone_ChangePinForm
 
+    def get_transactions_error(self,transactions):
+            failed_trx = list(filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
+
+            if failed_trx:
+                error_message = MSG_PIN_SETTING_ERROR
+                for agent_index in range(len(failed_trx)):
+                    if failed_trx[agent_index]['TXNSTATUS'] == "407":
+                        error_message = failed_trx[agent_index]['MESSAGE']
+                        break
+
+                    elif failed_trx[agent_index]['TXNSTATUS'] == "608":
+                        error_message = "Pin has been already registered for those agents. For assistance call 7001"
+                        break
+
+                    elif failed_trx[agent_index]['TXNSTATUS'] == "1661":
+                        error_message = "You cannot use an old PIN. For assistance call 7001"
+                        break
+
+                return error_message
+
+            return None
+
+
+    def call_wallet(self,root, pin, msisdns):
+            superadmin = root.client.creator
+            payload, payload_without_pin = superadmin.vmt.accumulate_set_pin_payload(msisdns, pin)
+            env = get_dot_env()
+            try:
+                WALLET_API_LOGGER.debug(f"[request] [set pin] [{root}] -- {payload_without_pin}")
+                response = requests.post(env.str(superadmin.vmt.vmt_environment), json=payload, verify=False)
+            except Exception as e:
+                WALLET_API_LOGGER.debug(f"[message] [set pin error] [{root}] -- {e.args}")
+                return None, MSG_PIN_SETTING_ERROR
+            else:
+                WALLET_API_LOGGER.debug(f"[response] [set pin] [{root}] -- {str(response.text)}")
+
+            if response.ok:
+                response_dict = response.json()
+                transactions = response_dict.get('TRANSACTIONS', None)
+                if not transactions:
+                    error_message = response_dict.get('MESSAGE', None) or _("Failed to set pin")
+                    return None, error_message
+                return transactions, None
+            return None, MSG_PIN_SETTING_ERROR
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.user, request.POST)
+        if form.is_valid():
+            raw_pin=form.cleaned_data['new_pin']
+            root= request.user.root
+            if request.user.root.is_vodafone_default_onboarding :
+                agents = Agent.objects.filter(wallet_provider=root)
+            else:
+                agents = Agent.objects.filter(wallet_provider=root.super_admin)
+
+            if request.user.root.client.agents_onboarding_choice in [Client.NEW_SUPERAGENT_AGENTS, Client.P2M]:
+                msisdns = list(agents.values_list('msisdn', flat=True))
+            elif request.user.root.client.agents_onboarding_choice == Client.EXISTING_SUPERAGENT_NEW_AGENTS:
+                msisdns = list(agents.filter(super=False).values_list('msisdn', flat=True))
+            else:
+                msisdns = False
+
+            if msisdns:
+                transactions, error =self.call_wallet(root,raw_pin, msisdns)
+                error =self.get_transactions_error(transactions) 
+                if error:     # handle transactions list
+                    return render(request, self.template_name, {'message': error, 'form': form})
+
+            request.user.set_pin(form.cleaned_data['new_pin'])
+            agents.update(pin=True)
+            return render(request, self.template_name, {'message': 'Pin changed Successfully', 'form': form})
+
+        else:
+            return render(request, self.template_name, {'form': form})    
+    def get(self, request, *args, **kwargs):
+        form = self.form_class(request.user)
+        return render(request, self.template_name, {'form': form})

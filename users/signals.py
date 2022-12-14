@@ -84,7 +84,8 @@ def client_post_save(sender, instance, created, **kwargs):
         root_user = instance.client
         root_user.brand = instance.creator.brand
         root_user.save()
-        notify_user(root_user, created)
+        if not root_user.from_accept:
+            notify_user(root_user, created)
 
 
 @receiver(post_save, sender=SupportSetup)
@@ -103,32 +104,29 @@ def onboard_user_post_save(sender, instance, created, **kwargs):
         onboard_user = instance.onboard_user
         onboard_user.brand = instance.user_created.brand
         onboard_user.save()
-        # Register User Over IDMS
-        sso =  SSOIntegration()
-        sso.register_user_on_idms(onboard_user)
         notify_user(onboard_user, created)
 
 
-@receiver(post_save, sender=models.User)
-@receiver(post_save, sender=models.InstantAPIViewerUser)
-@receiver(post_save, sender=models.RootUser)
-@receiver(post_save, sender=models.CheckerUser)
-@receiver(post_save, sender=models.MakerUser)
-@receiver(post_save, sender=models.UploaderUser)
-@receiver(post_save, sender=models.UpmakerUser)
-@receiver(post_save, sender=models.InstantAPICheckerUser)
-@receiver(post_save, sender=models.SuperAdminUser)
-@receiver(post_save, sender=models.OnboardUser)
-@receiver(post_save, sender=models.SupportUser)
-@receiver(post_save, sender=models.SupervisorUser)
-def all_users_signal(sender, instance, created, **kwargs):
-    sso =  SSOIntegration()
-    if created:
-        # Register User Over IDMS
-        sso.register_user_on_idms(instance)
-    else:
-        # Edit User on IDMS
-        sso.edit_user_on_idms(instance)
+# @receiver(post_save, sender=models.User)
+# @receiver(post_save, sender=models.InstantAPIViewerUser)
+# @receiver(post_save, sender=models.RootUser)
+# @receiver(post_save, sender=models.CheckerUser)
+# @receiver(post_save, sender=models.MakerUser)
+# @receiver(post_save, sender=models.UploaderUser)
+# @receiver(post_save, sender=models.UpmakerUser)
+# @receiver(post_save, sender=models.InstantAPICheckerUser)
+# @receiver(post_save, sender=models.SuperAdminUser)
+# @receiver(post_save, sender=models.OnboardUser)
+# @receiver(post_save, sender=models.SupportUser)
+# @receiver(post_save, sender=models.SupervisorUser)
+# def all_users_signal(sender, instance, created, **kwargs):
+#     sso =  SSOIntegration()
+#     if created:
+#         # Register User Over IDMS
+#         sso.register_user_on_idms(instance)
+#     else:
+#         # Edit User on IDMS
+#         sso.edit_user_on_idms(instance)
 
 
 

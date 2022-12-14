@@ -85,7 +85,7 @@ class Budget(AbstractTimeStamp):
             blank=False,
             help_text=_("Updated automatically after any disbursement callback")
     )
-    
+
     history = HistoricalRecords()
 
     class Meta:
@@ -479,6 +479,7 @@ class TopupRequest(AbstractTimeStamp):
         blank=True,
         null=True
     )
+    automatic = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Topup Request"
@@ -526,6 +527,8 @@ class TopupAction(AbstractTimeStamp):
         blank=True,
         null=True
     )
+
+    automatic = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = "Topup Action"

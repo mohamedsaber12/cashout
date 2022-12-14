@@ -70,6 +70,7 @@ from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 
 DATA_LOGGER = logging.getLogger("disburse")
+SINGLE_STEP_TRANSACTIONS_LOGGER = logging.getLogger("single_step_transactions")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
 FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger("failed_disbursement_download")
 FAILED_VALIDATION_DOWNLOAD = logging.getLogger("failed_validation_download")
@@ -811,6 +812,100 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
             return True
         return False
 
+    def disbursementdata_queryset(self):
+
+        filter_dict = {}
+        if self.request.user.is_root:
+            filter_dict = {
+                'doc__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'doc__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'doc__disbursed_by': self.request.user,
+            }
+
+        query_set=DisbursementData.objects.filter(**filter_dict).order_by("-created_at")[:10]
+        return query_set
+
+
+    def Instanttransaction_queryset(self):
+
+        filter_dict = {}
+        if self.request.user.is_instant_model_onboarding:
+            client_username_query_parameter = self.request.GET.get('client')
+            if self.request.user.is_support and client_username_query_parameter:
+                user = get_object_or_404(User, username=client_username_query_parameter)
+                hierarchy_to_filter_with = user.hierarchy
+            else:
+                hierarchy_to_filter_with = self.request.user.hierarchy
+            filter_dict = {
+            'from_user__hierarchy': hierarchy_to_filter_with,
+            }
+        elif self.request.user.is_root and not self.request.user.is_instant_model_onboarding:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+
+        query_set=InstantTransaction.objects.filter(**filter_dict).order_by("-created_at")[:10]
+        return query_set
+
+    def BankTransaction_queryset(self):
+
+        filter_dict = {}
+
+        if self.request.user.is_instant_model_onboarding:
+            client_username_query_parameter = self.request.GET.get('client')
+            if self.request.user.is_support and client_username_query_parameter:
+                user = get_object_or_404(User, username=client_username_query_parameter)
+                hierarchy_to_filter_with = user.hierarchy
+            else:
+                hierarchy_to_filter_with = self.request.user.hierarchy
+
+            filter_dict = {
+            'user_created__hierarchy': hierarchy_to_filter_with,
+            }
+        elif self.request.user.is_root and not self.request.user.is_instant_model_onboarding:
+            filter_dict = {
+                'document__owner__root': self.request.user,
+            }
+        elif self.request.user.is_maker:
+            filter_dict = {
+                'document__owner': self.request.user,
+            }
+        elif self.request.user.is_checker:
+            filter_dict = {
+                'document__disbursed_by': self.request.user,
+            }
+
+        query_set=BankTransaction.objects.filter(**filter_dict).order_by("-created_at")[:10]
+        return query_set
+
+    def Recent_transaction(self):
+        instanttransaction_queryset=self.Instanttransaction_queryset()
+        banktransaction_queryset=self.BankTransaction_queryset()
+        disbursementdata_queryset=[]
+        if not self.request.user.is_instant_model_onboarding:
+            disbursementdata_queryset=self.disbursementdata_queryset()
+
+        ini_list=list(disbursementdata_queryset)+list(instanttransaction_queryset)+list(banktransaction_queryset)
+        _list=[]
+        for i in ini_list:
+            if i.disbursed_date != None:
+                _list.append(i)
+        _list.sort(key = lambda x: x.disbursed_date,reverse=True)
+        return _list[0:10]
     def get(self, request, *args, **kwargs):
         """Handles GET requests for Dashboard view"""
 
@@ -882,7 +977,11 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
                 bank_wallet_transactions = bank_wallet_transactions + trx['count']
             total = total + trx['count']
 
+        list_transaction=self.Recent_transaction()
+
+
         context = {
+            "transactions":list_transaction,
             "all_transactions": total,
             "vodafone_transactions": vodafone_transactions,
             "etisalat_transactions": etisalat_transactions,
@@ -979,6 +1078,10 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
         return render(request, template_name=self.template_name, context=context)
 
+    def revert_balance_to_accept_account(self, reverted_amount):
+        # mock revert balance to accept for now
+        pass
+
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""
         context = {
@@ -1002,19 +1105,27 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 data = form.cleaned_data
                 payload = {
                     "is_single_step": True,
-                    "pin": data["pin"],
                     "user": request.user.username,
                     "amount": str(data["amount"]),
                     "issuer": data["issuer"],
                     "msisdn": data["msisdn"]
                 }
+                if not request.user.from_accept:
+                    payload["pin"]=data["pin"]
+                elif request.user.from_accept and request.user.allowed_to_be_bulk:
+                    payload["pin"]=data["pin"]
+
+                if request.user.from_accept and not request.user.allowed_to_be_bulk:
+                    payload["bank_transaction_type"] = data["transaction_type"]
+
                 if data["issuer"] in ["orange", "bank_wallet"]:
                     payload["full_name"] = data["full_name"]
                 if data["issuer"] == "bank_card":
                     payload["full_name"] = data["creditor_name"]
                     payload["bank_card_number"] = data["creditor_account_number"]
                     payload["bank_code"] =  data["creditor_bank"]
-                    payload["bank_transaction_type"] = data["transaction_type"]
+                    if not request.user.from_accept:
+                        payload["bank_transaction_type"] = data["transaction_type"]
                     del payload['msisdn']
                 if data["issuer"] == "aman":
                     payload["first_name"] =  data["first_name"]
@@ -1026,6 +1137,16 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
                     json=payload
                 )
+
+                if response.json().get("disbursement_status") == 'failed':
+                    current_reverted_amount = data['amount']
+                    if data["issuer"] != "bank_card":
+                        current_reverted_amount = request.user.root.budget.accumulate_amount_with_fees_and_vat(
+                            data['amount'],
+                            data['issuer']
+                        )
+
+                    self.revert_balance_to_accept_account(current_reverted_amount)
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {
                     "status" : response.json().get('status_code'),
@@ -1033,12 +1154,13 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 }
                 return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
 
-            except:
+            except Exception as err:
                 error_msg = "Process stopped during an internal error, please can you try again."
                 data = {
                     "status" : status.HTTP_500_INTERNAL_SERVER_ERROR,
                     "message": error_msg
                 }
+                SINGLE_STEP_TRANSACTIONS_LOGGER.debug(f"[Error] [message] [{request.user}] -- {err.args}")
                 return redirect(request.get_full_path() + '&page=1&' + urllib.parse.urlencode(data))
 
         return render(request, template_name=self.template_name, context=context)

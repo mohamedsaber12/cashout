@@ -276,29 +276,33 @@
                 </div>
               </div>
               <div class="row">
-              <div class="form-group col-md-6 col-sm-6 col-xs-12">
                 {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
-                  <label>
-                    <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
-                  </label>
-                  {{ form.transaction_type }}
-                  <span class="respond-span"></span>
-                  <div class="help-block">
-                    {{ form.transaction_type.errors }}
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+                    </label>
+                    {{ form.transaction_type }}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{ form.transaction_type.errors }}
+                    </div>
                   </div>
                 {% endif %}
-              </div>
-              <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                <label>
+                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                {% else %}
+                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                {% endif %}
+                  <label>
                     <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
-                </label>
-                {{form.creditor_bank}}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{form.creditor_bank.errors}}
+                  </label>
+                  {{form.creditor_bank}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.creditor_bank.errors}}
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
             <!-- vodafone/etisalat form -->
             <div id="vodafone_etisalat_fields">
@@ -730,19 +734,25 @@ let bankCardForm = `<div id="bank_card_fields">
     </div>
   </div>
   <div class="row">
-  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+        </label>
+        {{ form.transaction_type }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.transaction_type.errors }}
+        </div>
+      </div>
+    {% endif %}
+    {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    {% else %}
+      <div class="form-group col-md-12 col-sm-12 col-xs-12">
+    {% endif %}
     <label>
-        <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
-    </label>
-    {{ form.transaction_type }}
-    <span class="respond-span"></span>
-    <div class="help-block">
-      {{ form.transaction_type.errors }}
-    </div>
-  </div>
-  <div class="form-group col-md-6 col-sm-6 col-xs-12">
-    <label>
-        <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
+      <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
     </label>
     {{form.creditor_bank}}
     <span class="respond-span"></span>

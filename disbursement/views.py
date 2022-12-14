@@ -1079,6 +1079,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         return render(request, template_name=self.template_name, context=context)
 
     def revert_balance_to_accept_account(self, reverted_amount):
+        # mock revert balance to accept for now
         pass
 
     def post(self, request, *args, **kwargs):
@@ -1114,6 +1115,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 elif request.user.from_accept and request.user.allowed_to_be_bulk:
                     payload["pin"]=data["pin"]
 
+                if request.user.from_accept and not request.user.allowed_to_be_bulk:
+                    payload["bank_transaction_type"] = data["transaction_type"]
 
                 if data["issuer"] in ["orange", "bank_wallet"]:
                     payload["full_name"] = data["full_name"]
@@ -1121,7 +1124,8 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     payload["full_name"] = data["creditor_name"]
                     payload["bank_card_number"] = data["creditor_account_number"]
                     payload["bank_code"] =  data["creditor_bank"]
-                    payload["bank_transaction_type"] = data["transaction_type"]
+                    if not request.user.from_accept:
+                        payload["bank_transaction_type"] = data["transaction_type"]
                     del payload['msisdn']
                 if data["issuer"] == "aman":
                     payload["first_name"] =  data["first_name"]
@@ -1133,9 +1137,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     http_or_https + request.get_host() + str(reverse_lazy("instant_api:disburse_single_step")),
                     json=payload
                 )
-                print('==========================================')
-                print(response.json())
-                print('==========================================')
+
                 if response.json().get("disbursement_status") == 'failed':
                     current_reverted_amount = data['amount']
                     if data["issuer"] != "bank_card":

@@ -359,7 +359,8 @@ class InstantDisbursementAPIView(views.APIView):
                     amount=data_dict['AMOUNT'], issuer_type=self.match_issuer_type(data_dict['WALLETISSUER']),
                     anon_sender=data_dict['MSISDN'], recipient_name=full_name, is_single_step=serializer.validated_data["is_single_step"],
                     disbursed_date=timezone.now(), fees=fees, vat=vat,
-                    client_transaction_reference=serializer.validated_data.get("client_reference_id")
+                    client_transaction_reference=serializer.validated_data.get("client_reference_id"),
+                    transaction_type=serializer.validated_data.get("bank_transaction_type"),
                 )
                 if user.from_accept and not user.allowed_to_be_bulk:
                     transaction.from_accept = 'single'

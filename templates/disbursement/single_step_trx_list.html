@@ -277,14 +277,16 @@
               </div>
               <div class="row">
               <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                <label>
-                  <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
-                </label>
-                {{ form.transaction_type }}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{ form.transaction_type.errors }}
-                </div>
+                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+                  <label>
+                    <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+                  </label>
+                  {{ form.transaction_type }}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{ form.transaction_type.errors }}
+                  </div>
+                {% endif %}
               </div>
               <div class="form-group col-md-6 col-sm-6 col-xs-12">
                 <label>
@@ -396,6 +398,15 @@
                   <span class="respond-span"></span>
                   <div class="help-block">
                     {{form.pin.errors}}
+                  </div>
+                {% else %}
+                  <label>
+                    <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+                  </label>
+                  {{ form.transaction_type }}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{ form.transaction_type.errors }}
                   </div>
                 {% endif %}
               </div>
@@ -693,7 +704,7 @@
 
 <!-- generate pdf script-->
 <!-- Important Not this script should be after transaction details script because   -->
-<!-- because it use trx object that exist in  transaction details script above -->
+<!-- because it uses trx object that exist in  transaction details script above -->
 {% include 'disbursement/transaction_details_pdf_js.html' %}
 
 <script>

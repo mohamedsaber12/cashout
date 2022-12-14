@@ -7,7 +7,7 @@ from rest_framework import status
 
 from core.models import AbstractBaseTransaction
 from rest_framework.validators import UniqueValidator
-
+from disbursement.utils import VALID_BANK_TRANSACTION_TYPES_LIST
 
 class AbstractBaseIssuer(models.Model):
     """
@@ -154,6 +154,7 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         max_length=500,
         blank=True,
         null=True,
+        choices=VALID_BANK_TRANSACTION_TYPES_LIST,
     )
 
     # Not needed fields

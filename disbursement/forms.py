@@ -494,9 +494,10 @@ class SingleStepTransactionForm(forms.Form):
             if valid_full_name != True:
                 validationErrors['full_name'] = [valid_full_name]
         elif issuer == 'bank_card':
-            valid_trx_type = self.validate_transaction_type()
-            if valid_trx_type != True:
-                validationErrors['transaction_type'] = [valid_trx_type]
+            if not self.current_user.from_accept or self.current_user.allowed_to_be_bulk:
+                valid_trx_type = self.validate_transaction_type()
+                if valid_trx_type != True:
+                    validationErrors['transaction_type'] = [valid_trx_type]
             valid_cr_ac_num = self.validate_creditor_account_number()
             if valid_cr_ac_num != True:
                 validationErrors['creditor_account_number'] = [valid_cr_ac_num]
@@ -519,6 +520,11 @@ class SingleStepTransactionForm(forms.Form):
             valid_email = self.validate_email()
             if valid_email != True:
                 validationErrors['email'] = [valid_email]
+
+        if self.current_user.from_accept and not self.current_user.allowed_to_be_bulk:
+            valid_trx_type = self.validate_transaction_type()
+            if valid_trx_type!=True:
+                validationErrors['transaction_type'] = [valid_trx_type]
 
         if len(validationErrors.keys()) == 0:
             return data

@@ -451,7 +451,7 @@ class BankTransactionsChannel:
                 log_header = "received callback response from ==> "
                 CALLBACK_REQUESTS_LOGGER.debug(
                     _(
-                        f"[callback response] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {response.json()}"
+                        f"[callback response] [{log_header}] [{callback_url}] [{bank_trx_obj.user_created}] -- {response.status_code}"
                     )
                 )
 

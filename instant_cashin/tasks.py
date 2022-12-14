@@ -261,8 +261,12 @@ def update_manual_batch_transactions_task(data):
 
 @app.task()
 def self_update_bank_transactions_staging():
+    start_date = timezone.now()
+    end_date = timezone.now() - datetime.timedelta(int(16))
+
     latest_bank_trx_ids = (
-        BankTransaction.objects.all()
+        BankTransaction.objects.filter(Q(created_at__gte=end_date))
+        .filter(Q(created_at__lte=start_date))
         .order_by("parent_transaction__transaction_id", "-id")
         .distinct("parent_transaction__transaction_id")
         .values_list("id", flat=True)

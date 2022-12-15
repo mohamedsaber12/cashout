@@ -42,7 +42,7 @@ class FilterIPMiddleware(object):
                 f"[message] [IP] [{request.user.username}] -- request Ip [X FORWARDED] :-  {x_forwarded_for}"
             )
             IP_LOGGER.debug(
-                f"[message] [IP] [{request.user.username}] -- request data :-  {request.data}"
+                f"[message] [IP] [{request.user.username}] -- request data :-  {request.post}"
             )
 
             # if 'eksab' in request.user.root.username and ip not in whitelisted_ip:

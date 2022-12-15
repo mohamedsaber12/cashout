@@ -44,7 +44,6 @@ class FilterIPMiddleware(object):
             IP_LOGGER.debug(
                 f"[message] [IP] [{request.user.username}] -- request data :-  {request}"
             )
-
             # if 'eksab' in request.user.root.username and ip not in whitelisted_ip:
             # raise PermissionDenied()
 

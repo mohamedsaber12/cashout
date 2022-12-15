@@ -39,8 +39,12 @@ class FilterIPMiddleware(object):
             )
             x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
             IP_LOGGER.debug(
-                f"[message] [IP] [{request.user.username}] -- request Ip [REMOTE_ADDR] :-  {x_forwarded_for}"
+                f"[message] [IP] [{request.user.username}] -- request Ip [X FORWARDED] :-  {x_forwarded_for}"
             )
+            IP_LOGGER.debug(
+                f"[message] [IP] [{request.user.username}] -- request data :-  {request.data}"
+            )
+
             # if 'eksab' in request.user.root.username and ip not in whitelisted_ip:
             # raise PermissionDenied()
 

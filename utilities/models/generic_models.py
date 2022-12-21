@@ -540,3 +540,8 @@ class ClientIpAddress(AbstractTimeStamp):
         related_name="ip_address",
     )
     ip_address = models.CharField(max_length=100, null=False, blank=False)
+    
+    class Meta:
+        verbose_name = "Client IP Address"
+        verbose_name_plural = "Client IP Addresses"
+        ordering = ["-id"]

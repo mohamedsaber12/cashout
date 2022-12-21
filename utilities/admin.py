@@ -17,6 +17,7 @@ from .models import (
     TopupAction,
     VodafoneBalance,
     VodafoneDailyBalance,
+    ClientIpAddress,
 )
 from simple_history.admin import SimpleHistoryAdmin
 from django.core.exceptions import PermissionDenied
@@ -492,3 +493,14 @@ class VodafoneDailyBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(ClientIpAddress)
+class ClientIpAddressAdmin(admin.ModelAdmin, ExportCsvMixin):
+
+    list_display = [
+        "client",
+        "ip_address",
+        "created_at",
+    ]
+    list_filter = [("created_at", DateRangeFilter), "client"]

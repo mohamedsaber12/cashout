@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import PermissionDenied
+from utilities.models.generic_models import ClientIpAddress
 
 IP_LOGGER = logging.getLogger("access")
 
@@ -44,7 +45,11 @@ class FilterIPMiddleware(object):
             IP_LOGGER.debug(
                 f"[message] [IP] [{request.user.username}] -- request data :-  {request}"
             )
-            # if 'eksab' in request.user.root.username and ip not in whitelisted_ip:
-            # raise PermissionDenied()
+            print(request.META)
 
+            if not ClientIpAddress.objects.filter(
+                ip_address=x_forwarded_for or ip, client=request.user.root
+            ).exists():
+                ClientIpAddress.objects.create(ip_address=x_forwarded_for or ip, client=request.user.root)
+                # raise PermissionDenied()
         return None

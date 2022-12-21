@@ -531,3 +531,12 @@ class VodafoneDailyBalance(VodafoneBalance):
         verbose_name = "Vodafone Daily Balance"
         verbose_name_plural = "Vodafone Daily Balances"
         ordering = ["-id"]
+
+
+class ClientIpAddress(AbstractTimeStamp):
+    client = models.ForeignKey(
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="ip_address",
+    )
+    ip_address = models.CharField(max_length=100, null=False, blank=False)

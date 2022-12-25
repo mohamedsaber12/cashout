@@ -1,4 +1,9 @@
+import logging
+
 from django.core.exceptions import PermissionDenied
+from utilities.models.generic_models import ClientIpAddress
+
+IP_LOGGER = logging.getLogger("access")
 
 
 class FilterIPMiddleware(object):
@@ -18,11 +23,33 @@ class FilterIPMiddleware(object):
 
     # Check if client IP address is allowed
     def process_view(self, request, view_func, view_args, view_kwargs):
- 
-        whitelisted_ip = ['34.251.217.198', "172.31.8.189", "172.31.23.159","75.2.116.217", "99.83.194.66", "172.31.29.238"]
-        if request.user.is_authenticated and request.user.is_instantapichecker:
-            ip = request.META.get('REMOTE_ADDR')
-            if 'eksab' in request.user.root.username and ip not in whitelisted_ip:
-                raise PermissionDenied()  
 
+        whitelisted_ip = [
+            "34.251.217.198",
+            "172.31.8.189",
+            "172.31.23.159",
+            "75.2.116.217",
+            "99.83.194.66",
+            "172.31.29.238",
+            "52.31.227.79",
+        ]
+        if request.user.is_authenticated and request.user.is_instantapichecker:
+            ip = request.META.get("REMOTE_ADDR")
+            IP_LOGGER.debug(
+                f"[message] [IP] [{request.user.username}] -- request Ip [REMOTE_ADDR] :-  {ip}"
+            )
+            x_forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR")
+            IP_LOGGER.debug(
+                f"[message] [IP] [{request.user.username}] -- request Ip [X FORWARDED] :-  {x_forwarded_for}"
+            )
+            IP_LOGGER.debug(
+                f"[message] [IP] [{request.user.username}] -- request data :-  {request}"
+            )
+            print(request.META)
+
+            if not ClientIpAddress.objects.filter(
+                ip_address=x_forwarded_for or ip, client=request.user.root
+            ).exists():
+                ClientIpAddress.objects.create(ip_address=x_forwarded_for or ip, client=request.user.root)
+                # raise PermissionDenied()
         return None

@@ -604,7 +604,7 @@ class BankTransactionsChannel:
                     and bank_trx_obj.get_last_updated_transaction().transaction_status_code
                     not in ["8333", "000100", "000005"]
                     and not (
-                        bank_trx_obj.get_last_updated_transaction() == "8222"
+                        bank_trx_obj.get_last_updated_transaction().transaction_status_code == "8222"
                         and status == "8111"
                     )
                 ):

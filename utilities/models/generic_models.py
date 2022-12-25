@@ -30,10 +30,10 @@ class CallWalletsModerator(models.Model):
     user_inquiry = models.BooleanField(default=True)
     balance_inquiry = models.BooleanField(default=True)
     user_created = models.ForeignKey(
-            settings.AUTH_USER_MODEL,
-            on_delete=models.CASCADE,
-            related_name=_("callwallets_moderator"),
-            verbose_name=_("The moderator admin")
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name=_("callwallets_moderator"),
+        verbose_name=_("The moderator admin"),
     )
 
     class Meta:
@@ -52,38 +52,42 @@ class Budget(AbstractTimeStamp):
     """
 
     disburser = models.OneToOneField(
-            "users.RootUser",
-            on_delete=models.CASCADE,
-            related_name="budget",
-            verbose_name=_("Owner/Admin of the Disburser"),
-            help_text=_("Before every cashin transaction, the amount to be disbursed "
-                        "will be validated against the current balance of the (API)-Checker owner")
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="budget",
+        verbose_name=_("Owner/Admin of the Disburser"),
+        help_text=_(
+            "Before every cashin transaction, the amount to be disbursed "
+            "will be validated against the current balance of the (API)-Checker owner"
+        ),
     )
     created_by = models.ForeignKey(
-            "users.SuperAdminUser",
-            on_delete=models.CASCADE,
-            related_name='budget_creator',
-            verbose_name=_("Maintainer - Super Admin"),
-            null=True,
-            help_text=_("Super Admin who created/updated this budget values")
+        "users.SuperAdminUser",
+        on_delete=models.CASCADE,
+        related_name="budget_creator",
+        verbose_name=_("Maintainer - Super Admin"),
+        null=True,
+        help_text=_("Super Admin who created/updated this budget values"),
     )
     current_balance = models.DecimalField(
-            _("Current Balance"),
-            max_digits=10,
-            decimal_places=2,
-            default=0,
-            null=True,
-            blank=True,
-            help_text=_("Updated automatically after any disbursement callback or any addition from add_new_amount")
+        _("Current Balance"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Updated automatically after any disbursement callback or any addition from add_new_amount"
+        ),
     )
     total_disbursed_amount = models.DecimalField(
-            _("Total Disbursed Amount"),
-            max_digits=15,
-            decimal_places=2,
-            default=0,
-            null=False,
-            blank=False,
-            help_text=_("Updated automatically after any disbursement callback")
+        _("Total Disbursed Amount"),
+        max_digits=15,
+        decimal_places=2,
+        default=0,
+        null=False,
+        blank=False,
+        help_text=_("Updated automatically after any disbursement callback"),
     )
 
     history = HistoricalRecords()
@@ -100,9 +104,13 @@ class Budget(AbstractTimeStamp):
 
     def get_absolute_url(self):
         """Success form submit - object saving url"""
-        return reverse("utilities:budget_update", kwargs={"username": self.disburser.username})
+        return reverse(
+            "utilities:budget_update", kwargs={"username": self.disburser.username}
+        )
 
-    def accumulate_amount_with_fees_and_vat(self, amount_to_be_disbursed, issuer_type, num_of_trns = 1):
+    def accumulate_amount_with_fees_and_vat(
+        self, amount_to_be_disbursed, issuer_type, num_of_trns=1
+    ):
         """Accumulate amount being disbursed with fees percentage and 14 % VAT"""
         actual_amount = round(Decimal(amount_to_be_disbursed), 2)
 
@@ -131,11 +139,15 @@ class Budget(AbstractTimeStamp):
                 fees_aggregated_value = fixed_value * num_of_trns
             elif fees_obj.fee_type == FeeSetup.PERCENTAGE_FEE:
                 percentage_value = fees_obj.percentage_value
-                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 4)
+                fees_aggregated_value = round(
+                    ((actual_amount * percentage_value) / 100), 4
+                )
             elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
                 fixed_value = fees_obj.fixed_value
                 percentage_value = fees_obj.percentage_value
-                fees_aggregated_value = round(((actual_amount * percentage_value) / 100), 4) + fixed_value
+                fees_aggregated_value = (
+                    round(((actual_amount * percentage_value) / 100), 4) + fixed_value
+                )
 
             # 3.1 Check the total fees_aggregated_value if it complies against the min and max values
             if 0 < fees_obj.min_value > fees_aggregated_value:
@@ -145,13 +157,21 @@ class Budget(AbstractTimeStamp):
                 fees_aggregated_value = fees_obj.max_value
 
             vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 4)
-            total_amount_with_fees_and_vat = round((actual_amount + fees_aggregated_value + vat_value), 2)
+            total_amount_with_fees_and_vat = round(
+                (actual_amount + fees_aggregated_value + vat_value), 2
+            )
 
             return total_amount_with_fees_and_vat
         else:
-            raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
+            raise ValueError(
+                _(
+                    f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"
+                )
+            )
 
-    def calculate_fees_and_vat_for_amount(self, amount_to_be_disbursed, issuer_type, num_of_trns = 1):
+    def calculate_fees_and_vat_for_amount(
+        self, amount_to_be_disbursed, issuer_type, num_of_trns=1
+    ):
         """
         Calculate fees percentage and 14 % VAT regarding specific amount and issuer.
         TODO: Remove the repeated code via exporting the main part into a generic method
@@ -171,7 +191,7 @@ class Budget(AbstractTimeStamp):
             issuer_type_refined = FeeSetup.BANK_CARD
         elif issuer_type == "bank_wallet" or issuer_type == "B":
             issuer_type_refined = FeeSetup.BANK_WALLET
-        elif issuer_type == 'default' or issuer_type in ["D", 'd']:
+        elif issuer_type == "default" or issuer_type in ["D", "d"]:
             return 0, 0
 
         # 2. Pick the fees objects corresponding to the determined issuer type
@@ -189,7 +209,9 @@ class Budget(AbstractTimeStamp):
             elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
                 fixed_value = fees_obj.fixed_value
                 percentage_value = fees_obj.percentage_value
-                fees_value = round(((actual_amount * percentage_value) / 100), 4) + fixed_value
+                fees_value = (
+                    round(((actual_amount * percentage_value) / 100), 4) + fixed_value
+                )
 
             # 3.1 Check the total fees_value if it complies against the min and max values
             if 0 < fees_obj.min_value > fees_value:
@@ -201,7 +223,11 @@ class Budget(AbstractTimeStamp):
             vat_value = round(((fees_value * Decimal(14.00)) / 100), 4)
             return fees_value, vat_value
         else:
-            raise ValueError(_(f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"))
+            raise ValueError(
+                _(
+                    f"Fees type and value for the passed issuer -{issuer_type}- does not exist!"
+                )
+            )
 
     def within_threshold(self, amount_to_be_disbursed, issuer_type):
         """
@@ -211,15 +237,23 @@ class Budget(AbstractTimeStamp):
         :return: True/False
         """
         try:
-            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(amount_to_be_disbursed, issuer_type.lower())
+            amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(
+                amount_to_be_disbursed, issuer_type.lower()
+            )
 
             if amount_plus_fees_vat <= round(self.current_balance, 2):
                 return True
             return False
         except (ValueError, Exception) as e:
-            raise ValueError(_(f"Error while checking the amount to be disbursed if within threshold - {e.args}"))
+            raise ValueError(
+                _(
+                    f"Error while checking the amount to be disbursed if within threshold - {e.args}"
+                )
+            )
 
-    def update_disbursed_amount_and_current_balance(self, amount, issuer_type, num_of_trns = 1):
+    def update_disbursed_amount_and_current_balance(
+        self, amount, issuer_type, num_of_trns=1
+    ):
         """
         Update the total disbursement amount and the current balance after each successful transaction
         :param amount: the amount being disbursed
@@ -230,7 +264,9 @@ class Budget(AbstractTimeStamp):
             with transaction.atomic():
                 budget_obj = Budget.objects.select_for_update().get(id=self.id)
                 print("===============ATOMIC=================")
-                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(amount, issuer_type.lower(), num_of_trns)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                    amount, issuer_type.lower(), num_of_trns
+                )
                 current_balance_before = budget_obj.current_balance
                 applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
                 budget_obj.total_disbursed_amount += amount_plus_fees_vat
@@ -238,15 +274,17 @@ class Budget(AbstractTimeStamp):
                 balance_after = budget_obj.current_balance
                 budget_obj.save()
                 BUDGET_LOGGER.debug(
-                        f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- disbursed amount: {amount}, "
-                        f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
-                        f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                    f"[message] [CUSTOM BUDGET UPDATE] [{budget_obj.disburser.username}] -- disbursed amount: {amount}, "
+                    f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
+                    f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
                 )
         except Exception as e:
-            raise ValueError(_(
+            raise ValueError(
+                _(
                     f"Error updating the total disbursed amount and the current balance, please retry again later, "
                     f"exception: {e.args}"
-            ))
+                )
+            )
 
         return balance_after
 
@@ -262,11 +300,15 @@ class Budget(AbstractTimeStamp):
             self.current_balance += round(Decimal(amount), 2)
             self.save()
             BUDGET_LOGGER.debug(
-                    f"[message] [CUSTOM BUDGET UPDATE] [{self.disburser.username}] -- returned amount: {amount}, "
-                    f"current balance before: {current_balance_before}, current balance after: {self.current_balance}"
+                f"[message] [CUSTOM BUDGET UPDATE] [{self.disburser.username}] -- returned amount: {amount}, "
+                f"current balance before: {current_balance_before}, current balance after: {self.current_balance}"
             )
         except Exception:
-            raise ValueError(_(f"Error adding to the current balance and cutting from the total disbursed amount"))
+            raise ValueError(
+                _(
+                    f"Error adding to the current balance and cutting from the total disbursed amount"
+                )
+            )
 
         return self.current_balance
 
@@ -304,87 +346,76 @@ class FeeSetup(models.Model):
 
     FEE_CHOICES = [
         (FIXED_FEE, _("Fixed Fee")),
-        (PERCENTAGE_FEE , _("Percentage Fee")),
+        (PERCENTAGE_FEE, _("Percentage Fee")),
         (MIXED_FEE, _("Mixed Fee")),
     ]
 
     budget_related = models.ForeignKey(
-            Budget,
-            on_delete=models.CASCADE,
-            related_name="fees",
-            verbose_name=_("Budget")
+        Budget, on_delete=models.CASCADE, related_name="fees", verbose_name=_("Budget")
     )
     issuer = models.CharField(
-            _("Issuer type"),
-            max_length=2,
-            choices=ISSUER_CHOICES,
-            null=False,
-            blank=False
+        _("Issuer type"), max_length=2, choices=ISSUER_CHOICES, null=False, blank=False
     )
     fee_type = models.CharField(
-            _("Fee type"),
-            max_length=1,
-            choices=FEE_CHOICES,
-            null=False,
-            blank=False
+        _("Fee type"), max_length=1, choices=FEE_CHOICES, null=False, blank=False
     )
     fixed_value = models.DecimalField(
-            _("Fixed value"),
-            validators=[
-                MinValueValidator(round(Decimal(0.0), 0)),
-                MaxValueValidator(round(Decimal(100.0), 1))
-            ],
-            max_digits=5,
-            decimal_places=2,
-            default=0,
-            null=True,
-            blank=True,
-            help_text=_("Applied with transactions of type fixed or mixed fees")
+        _("Fixed value"),
+        validators=[
+            MinValueValidator(round(Decimal(0.0), 0)),
+            MaxValueValidator(round(Decimal(100.0), 1)),
+        ],
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_("Applied with transactions of type fixed or mixed fees"),
     )
     percentage_value = models.DecimalField(
-            _("Percentage value"),
-            validators=[
-                MinValueValidator(round(Decimal(0.0))),
-                MaxValueValidator(round(Decimal(100.0), 1))
-            ],
-            max_digits=5,
-            decimal_places=2,
-            default=0,
-            null=True,
-            blank=True,
-            help_text=_("Applied with transactions of type percentage or mixed fees")
+        _("Percentage value"),
+        validators=[
+            MinValueValidator(round(Decimal(0.0))),
+            MaxValueValidator(round(Decimal(100.0), 1)),
+        ],
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_("Applied with transactions of type percentage or mixed fees"),
     )
     min_value = models.DecimalField(
-            _("Minimum value"),
-            validators=[
-                MinValueValidator(round(Decimal(0.0), 0)),
-                MaxValueValidator(round(Decimal(100.0), 1))
-            ],
-            max_digits=5,
-            decimal_places=2,
-            default=0,
-            null=True,
-            blank=True,
-            help_text=_(
-                    "Fees value to be added instead of the fixed/percentage fees when "
-                        "the total calculated fees before 14% is less than this min value"
-            )
+        _("Minimum value"),
+        validators=[
+            MinValueValidator(round(Decimal(0.0), 0)),
+            MaxValueValidator(round(Decimal(100.0), 1)),
+        ],
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Fees value to be added instead of the fixed/percentage fees when "
+            "the total calculated fees before 14% is less than this min value"
+        ),
     )
     max_value = models.DecimalField(
-            _("Maximum value"),
-            validators=[
-                MinValueValidator(round(Decimal(0.0), 0)),
-                MaxValueValidator(round(Decimal(10000.0), 1))
-            ],
-            max_digits=5,
-            decimal_places=2,
-            default=0,
-            null=True,
-            blank=True,
-            help_text=_(
-                    "Fees value to be added instead of the fixed/percentage fees when "
-                    "the total calculated fees before 14% is greater than this max value"
-            )
+        _("Maximum value"),
+        validators=[
+            MinValueValidator(round(Decimal(0.0), 0)),
+            MaxValueValidator(round(Decimal(10000.0), 1)),
+        ],
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Fees value to be added instead of the fixed/percentage fees when "
+            "the total calculated fees before 14% is greater than this max value"
+        ),
     )
 
     @property
@@ -416,11 +447,7 @@ class TopupRequest(AbstractTimeStamp):
         on_delete=models.CASCADE,
         related_name="topup_request",
     )
-    amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     currency = models.CharField(
         max_length=20,
         choices=[
@@ -494,39 +521,19 @@ class TopupAction(AbstractTimeStamp):
         on_delete=models.CASCADE,
         related_name="topup_action",
     )
-    amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    fx_ratio_amount = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0
-    )
+    fx_ratio_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     balance_before = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        null=True,
-        blank=True
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
 
     balance_after = models.DecimalField(
-        max_digits=10,
-        decimal_places=2,
-        default=0,
-        null=True,
-        blank=True
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
 
-    notes = models.CharField(
-        max_length=500,
-        blank=True,
-        null=True
-    )
+    notes = models.CharField(max_length=500, blank=True, null=True)
 
     automatic = models.BooleanField(default=False)
 
@@ -540,12 +547,13 @@ class ExcelFile(AbstractTimeStamp):
     """
     Model for store Excel files with their users
     """
-    file_name = models.CharField(max_length=100, null=False, blank=False, default='')
+
+    file_name = models.CharField(max_length=100, null=False, blank=False, default="")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='my_excel_files',
-        verbose_name=_("Owner")
+        related_name="my_excel_files",
+        verbose_name=_("Owner"),
     )
 
 
@@ -557,4 +565,25 @@ class VodafoneBalance(AbstractTimeStamp):
     class Meta:
         verbose_name = "Vodafone Balance"
         verbose_name_plural = "Vodafone Monthly Balances"
+        ordering = ["-id"]
+
+
+class VodafoneDailyBalance(VodafoneBalance):
+    class Meta:
+        verbose_name = "Vodafone Daily Balance"
+        verbose_name_plural = "Vodafone Daily Balances"
+        ordering = ["-id"]
+
+
+class ClientIpAddress(AbstractTimeStamp):
+    client = models.ForeignKey(
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="ip_address",
+    )
+    ip_address = models.CharField(max_length=100, null=False, blank=False)
+    
+    class Meta:
+        verbose_name = "Client IP Address"
+        verbose_name_plural = "Client IP Addresses"
         ordering = ["-id"]

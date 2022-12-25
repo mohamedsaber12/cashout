@@ -16,6 +16,8 @@ from .models import (
     TopupRequest,
     TopupAction,
     VodafoneBalance,
+    VodafoneDailyBalance,
+    ClientIpAddress,
 )
 from simple_history.admin import SimpleHistoryAdmin
 from django.core.exceptions import PermissionDenied
@@ -36,7 +38,6 @@ from rangefilter.filter import DateRangeFilter
 from disbursement.mixins import ExportCsvMixin
 from django.http import HttpResponse
 from openpyxl import Workbook
-
 
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
@@ -463,3 +464,45 @@ class VodafoneBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(VodafoneDailyBalance)
+class VodafoneDailyBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
+
+    list_display = [
+        "super_agent",
+        "balance",
+        "created_at",
+    ]
+    list_filter = [
+        ("created_at", DateRangeFilter),
+    ]
+
+    actions = ["export_as_csv"]
+
+    def has_add_permission(self, request):
+        if not request.user.is_superuser or not request.user.is_superadmin:
+            return False
+        return True
+
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_vodafone_monthly_report:
+            return True
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_vodafone_monthly_report:
+            return True
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ClientIpAddress)
+class ClientIpAddressAdmin(admin.ModelAdmin, ExportCsvMixin):
+
+    list_display = [
+        "client",
+        "ip_address",
+        "created_at",
+    ]
+    list_filter = [("created_at", DateRangeFilter), "client"]

@@ -37,6 +37,7 @@ BUDGET_LOGGER = logging.getLogger("custom_budgets")
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
 INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
 INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
+ACCEPT_BALANCE_TRANSFER_LOGGER = logging.getLogger("accept_balance_transfer")
 
 INTERNAL_ERROR_MSG = _(
     "Process stopped during an internal error, can you try again or contact your support team"
@@ -247,8 +248,15 @@ class InstantDisbursementAPIView(views.APIView):
             "ssouser": user.idms_user_id,
             "amount_cents": amount_plus_fees_and_vat * 100,
         }
+        ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
+            f"[request] [balance transfer] [{user}] -- {payload} "
+        )
         balance_response = requests.post(url, json=payload, headers=headers)
-        return balance_response.json()
+        json_response = balance_response.json()
+        ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
+            f"[response] [balance transfer] [{user}] -- {json_response} "
+        )
+        return json_response
 
     def create_automatic_topup_request(self, disburser, transfer_id, serializer):
         # send topup request email

@@ -75,6 +75,7 @@ AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
 FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger("failed_disbursement_download")
 FAILED_VALIDATION_DOWNLOAD = logging.getLogger("failed_validation_download")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
+ACCEPT_BALANCE_TRANSFER_LOGGER = logging.getLogger("accept_balance_transfer")
 
 MSG_TRY_OR_CONTACT = "can you try again or contact you support team"
 MSG_AGENT_CREATION_ERROR = _(
@@ -1346,7 +1347,14 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     def revert_balance_to_accept_account(self, payload):
         url = get_from_env('DECLINE_SINGLE_STEP_URL')
         headers = {"Authorization": get_from_env('SINGLE_STEP_TOKEN')}
+        ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
+            f"[request] [revert balance] -- {payload} "
+        )
         revert_response = requests.post(url, json=payload, headers=headers)
+        json_response = revert_response.json()
+        ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
+            f"[response] [revert balance] -- {json_response} "
+        )
 
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""

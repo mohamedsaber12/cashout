@@ -285,6 +285,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/custom_budgets.log',
         },
+        'access': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/access.log',
+        },
         'single_step_transactions': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -556,8 +563,13 @@ CUSTOM_LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'access': {
+            'handlers': ['access'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
         'single_step_transactions': {
-            'handlers': ['single_step_transactions'],
+            'handlers': ['access'],
             'level': 'DEBUG',
             'propagate': True,
         },

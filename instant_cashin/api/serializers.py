@@ -69,27 +69,27 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
 
     def validate(self, attrs):
         """Validate Aman issuer needed attributes"""
-        issuer = str(attrs.get('issuer', '')).lower()
-        msisdn = attrs.get('msisdn', '')
-        first_name = attrs.get('first_name', '')
-        last_name = attrs.get('last_name', '')
-        email = attrs.get('email', '')
-        bank_code = attrs.get('bank_code', '')
-        bank_card_number = attrs.get('bank_card_number', '')
-        bank_transaction_type = attrs.get('bank_transaction_type', '')
-        full_name = attrs.get('full_name', '')
+        issuer = str(attrs.get("issuer", "")).lower()
+        msisdn = attrs.get("msisdn", "")
+        first_name = attrs.get("first_name", "")
+        last_name = attrs.get("last_name", "")
+        email = attrs.get("email", "")
+        bank_code = attrs.get("bank_code", "")
+        bank_card_number = attrs.get("bank_card_number", "")
+        bank_transaction_type = attrs.get("bank_transaction_type", "")
+        full_name = attrs.get("full_name", "")
 
-        if issuer in ['vodafone', 'etisalat']:
+        if issuer in ["vodafone", "etisalat"]:
             if not msisdn:
                 raise serializers.ValidationError(_("You must pass valid msisdn"))
-        elif issuer == 'aman':
+        elif issuer == "aman":
             if not msisdn or not first_name or not last_name or not email:
                 raise serializers.ValidationError(
                     _(
                         "You must pass valid values for fields [first_name, last_name, email]"
                     )
                 )
-        elif issuer == 'bank_card':
+        elif issuer == "bank_card":
             if (
                 not bank_code
                 or not bank_card_number
@@ -102,34 +102,34 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                         "full_name]"
                     )
                 )
-            if any(e in str(full_name) for e in '!%*+&,<=>'):
+            if any(e in str(full_name) for e in "!%*+&,<=>"):
                 raise serializers.ValidationError(
                     _("Symbols like !%*+&,<=> not allowed in full_name")
                 )
-        elif issuer in ['bank_wallet', 'orange']:
+        elif issuer in ["bank_wallet", "orange"]:
             if not msisdn:
                 raise serializers.ValidationError(
                     _("You must pass valid value for field msisdn")
                 )
-            if any(e in str(full_name) for e in '!%*+&,<=>'):
+            if any(e in str(full_name) for e in "!%*+&,<=>"):
                 raise serializers.ValidationError(
                     _("Symbols like !%*+&,<=> not allowed in full_name")
                 )
         if issuer in ["vodafone", "etisalat", "aman"] and attrs.get(
-            'client_reference_id'
+            "client_reference_id"
         ):
             if InstantTransaction.objects.filter(
-                client_transaction_reference=attrs.get('client_reference_id')
+                client_transaction_reference=attrs.get("client_reference_id")
             ).exists():
                 raise serializers.ValidationError(
                     _("client_reference_id is used before.")
                 )
 
         if issuer in ["bank_wallet", "bank_card", "orange"] and attrs.get(
-            'client_reference_id'
+            "client_reference_id"
         ):
             if BankTransaction.objects.filter(
-                client_transaction_reference=attrs.get('client_reference_id')
+                client_transaction_reference=attrs.get("client_reference_id")
             ).exists():
                 raise serializers.ValidationError(
                     _("client_reference_id is used before.")
@@ -146,7 +146,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     transaction_id = serializers.SerializerMethodField()
     issuer = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(
-        source='status', choices=AbstractBaseACHTransactionStatus.STATUS_CHOICES
+        source="status", choices=AbstractBaseACHTransactionStatus.STATUS_CHOICES
     )
     status_code = serializers.SerializerMethodField()
     status_description = serializers.SerializerMethodField()
@@ -216,20 +216,21 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = BankTransaction
         fields = [
-            'transaction_id',
-            'issuer',
-            'amount',
-            'bank_card_number',
-            'full_name',
-            'bank_code',
-            'bank_transaction_type',
-            'disbursement_status',
-            'status_code',
-            'status_description',
-            'client_transaction_reference',
-            'created_at',
-            'updated_at',
-            'accept_balance_transfer_id',
+            "transaction_id",
+            "issuer",
+            "amount",
+            "bank_card_number",
+            "full_name",
+            "bank_code",
+            "bank_transaction_type",
+            "disbursement_status",
+            "status_code",
+            "status_description",
+            "client_transaction_reference",
+            "fees",
+            "vat",
+            "created_at",
+            "updated_at",
         ]
 
 
@@ -240,11 +241,11 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
 
     transaction_id = serializers.SerializerMethodField()
     issuer = CustomChoicesField(
-        source='issuer_type', choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES
+        source="issuer_type", choices=AbstractBaseIssuer.ISSUER_TYPE_CHOICES
     )
     msisdn = serializers.SerializerMethodField()
     disbursement_status = CustomChoicesField(
-        source='status',
+        source="status",
         choices=[
             *AbstractBaseStatus.STATUS_CHOICES,
             ("U", _("Unknown")),
@@ -284,9 +285,9 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
 
         if aman_cashing_details:
             return {
-                'bill_reference': aman_cashing_details.bill_reference,
-                'is_paid': aman_cashing_details.is_paid,
-                'is_cancelled': aman_cashing_details.is_cancelled,
+                "bill_reference": aman_cashing_details.bill_reference,
+                "is_paid": aman_cashing_details.is_paid,
+                "is_cancelled": aman_cashing_details.is_cancelled,
             }
 
     def get_created_at(self, transaction):
@@ -304,19 +305,21 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
     class Meta:
         model = InstantTransaction
         fields = [
-            'transaction_id',
-            'issuer',
-            'msisdn',
-            'amount',
-            'full_name',
-            'disbursement_status',
-            'status_code',
-            'status_description',
-            'aman_cashing_details',
-            'client_transaction_reference',
-            'created_at',
-            'updated_at',
-            'accept_balance_transfer_id',
+            "transaction_id",
+            "issuer",
+            "msisdn",
+            "amount",
+            "full_name",
+            "disbursement_status",
+            "status_code",
+            "fees",
+            "vat",
+            "reference_id",
+            "status_description",
+            "aman_cashing_details",
+            "client_transaction_reference",
+            "created_at",
+            "updated_at",
         ]
 
 
@@ -371,19 +374,19 @@ class TopupBalanceserializer(serializers.Serializer):
     to_attach_proof = serializers.FileField(max_length=500, required=False)
 
     def validate(self, attr):
-        is_required_msg = 'This field is required'
-        Currency = attr.get('currency', '')
-        transfer_type = attr.get('transfer_type', '')
+        is_required_msg = "This field is required"
+        Currency = attr.get("currency", "")
+        transfer_type = attr.get("transfer_type", "")
 
-        if not Currency in ['egyptian_pound', 'american_dollar']:
+        if not Currency in ["egyptian_pound", "american_dollar"]:
             raise serializers.ValidationError(
                 _("Currency must be (egyptian_pound or american_dollar)")
             )
 
         if not transfer_type in [
-            'from_accept_balance',
-            'from_bank_deposit',
-            'from_bank_transfer',
+            "from_accept_balance",
+            "from_bank_deposit",
+            "from_bank_transfer",
         ]:
 
             raise serializers.ValidationError(
@@ -391,36 +394,36 @@ class TopupBalanceserializer(serializers.Serializer):
                     "transfer type must be (from_accept_balance or from_bank_deposit or from_bank_transfer)."
                 )
             )
-        if transfer_type == 'from_accept_balance':
-            if not attr.get('username'):
+        if transfer_type == "from_accept_balance":
+            if not attr.get("username"):
                 raise serializers.ValidationError(_(f"username {is_required_msg}"))
-        elif transfer_type == 'from_bank_transfer':
-            if not attr.get('from_bank'):
+        elif transfer_type == "from_bank_transfer":
+            if not attr.get("from_bank"):
                 raise serializers.ValidationError(_(f"from_bank {is_required_msg}"))
-            if not attr.get('from_account_number'):
+            if not attr.get("from_account_number"):
                 raise serializers.ValidationError(
                     _(f"from_account_number {is_required_msg}")
                 )
         # validate shared fields between bank deposit and bank transfer
         if (
-            transfer_type == 'from_bank_deposit'
-            or transfer_type == 'from_bank_transfer'
+            transfer_type == "from_bank_deposit"
+            or transfer_type == "from_bank_transfer"
         ):
-            if not attr.get('to_bank'):
+            if not attr.get("to_bank"):
                 raise serializers.ValidationError(_(f"to_bank {is_required_msg}"))
-            if not attr.get('to_account_number'):
+            if not attr.get("to_account_number"):
                 raise serializers.ValidationError(
                     _(f"to_account_number {is_required_msg}")
                 )
-            if not attr.get('from_account_name'):
+            if not attr.get("from_account_name"):
                 raise serializers.ValidationError(
                     _(f"from_account_name {is_required_msg}")
                 )
-            if not attr.get('to_account_name'):
+            if not attr.get("to_account_name"):
                 raise serializers.ValidationError(
                     _(f"to_account_name {is_required_msg}")
                 )
-            if not attr.get('from_date'):
+            if not attr.get("from_date"):
                 raise serializers.ValidationError(_(f"from_date {is_required_msg}"))
             # if not data.get('to_attach_proof'):
             #     raise serializers.validationErrors(

@@ -7,7 +7,8 @@ from .disbursement_setups_views import (AddCheckerView, AddMakerView,
                                         BaseFormsetView, CategoryFormView,
                                         CheckerFormView, LevelsFormView,
                                         LevelsView, MakerFormView, PinFormView,
-                                        change_pin_view)
+                                        change_pin_view,
+                                        vodafone_change_pin_view)
 from .instant_views import (APICheckerCreateView, OAuth2ApplicationDetailView,
                             ViewerCreateView)
 from .main_views import (ExpiringAuthToken, LevelUpdateView, OTPLoginView,

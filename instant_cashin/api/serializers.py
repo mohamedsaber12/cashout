@@ -231,6 +231,7 @@ class BankTransactionResponseModelSerializer(serializers.ModelSerializer):
             "vat",
             "created_at",
             "updated_at",
+            "accept_balance_transfer_id",
         ]
 
 
@@ -320,6 +321,7 @@ class InstantTransactionResponseModelSerializer(serializers.ModelSerializer):
             "client_transaction_reference",
             "created_at",
             "updated_at",
+            "accept_balance_transfer_id",
         ]
 
 

@@ -12,9 +12,9 @@ from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
 from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
-from users.sso import SSOIntegration
 
-from ..forms import OTPTokenForm, ProfileEditForm, CallbackURLEditForm
+from ..forms import (CallbackURLEditForm, LevelEditForm, OTPTokenForm,
+                     ProfileEditForm)
 from ..mixins import ProfileOwnerOrMemberRequiredMixin
 from ..models import User
 
@@ -48,6 +48,31 @@ class ProfileUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
         return get_object_or_404(User, username=self.kwargs['username'])
 
 
+class LevelUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
+    """
+    user levels update
+    """
+
+    model = User
+    template_name = 'users/level_update.html'
+    form_class = LevelEditForm
+
+    def get_form_kwargs(self):
+        """
+        pass request to form kwargs
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs.update({'request': self.request})
+        return kwargs
+
+    def get_success_url(self):
+        """Redirect URL after saving edits successfully"""
+        return reverse("users:members")
+
+    def get_object(self, queryset=None):
+        return get_object_or_404(User, username=self.kwargs['username'])
+
+
 class OTPLoginView(FormView):
     """
     View for OTP login for checker users
@@ -70,14 +95,15 @@ class OTPLoginView(FormView):
 
 
 class RedirectPageView(View):
-    """
-
-    """
+    """ """
 
     template_name = 'users/redirect_page.html'
 
     def get(self, request, *args, **kwargs):
-        if not (request.user.is_upmaker or (request.user.is_root and request.user.data_type() == 3)):
+        if not (
+            request.user.is_upmaker
+            or (request.user.is_root and request.user.data_type() == 3)
+        ):
             return redirect('/')
         status = request.GET.get('status', None)
         if status is not None and status in ['disbursement', 'collection']:
@@ -94,15 +120,21 @@ class ExpiringAuthToken(ObtainExpiringAuthToken):
 
     def post(self, request):
         """Respond to POSTed username/password with token."""
-        serializer = AuthTokenSerializer(data=request.data, context={"request": request})
+        serializer = AuthTokenSerializer(
+            data=request.data, context={"request": request}
+        )
 
         if serializer.is_valid():
-            token, _ = self.model.objects.get_or_create(user=serializer.validated_data['user'])
+            token, _ = self.model.objects.get_or_create(
+                user=serializer.validated_data['user']
+            )
 
             if token.expired():
                 # If the token is expired, generate a new one.
                 token.delete()
-                token = self.model.objects.create(user=serializer.validated_data['user'])
+                token = self.model.objects.create(
+                    user=serializer.validated_data['user']
+                )
 
             data = {'token': token.key}
             return Response(data)
@@ -117,7 +149,11 @@ def login_view(request):
     Non active users can't login.
     """
     context = {}
-    login_template = 'data/vodafone_login.html' if "vodafone" in request.get_host() else 'data/login.html'
+    login_template = (
+        'data/vodafone_login.html'
+        if "vodafone" in request.get_host()
+        else 'data/login.html'
+    )
     user = None
 
     if request.user.is_authenticated:
@@ -127,12 +163,19 @@ def login_view(request):
         if request.user.username == 'Careem_Admin':
             return redirect('data:main_view')
 
-        if request.user.is_vodafone_default_onboarding or \
-                request.user.is_banks_standard_model_onboaring or\
-                request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
-                request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
-            if not request.user.is_superuser and \
-                    (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
+        if (
+            request.user.is_vodafone_default_onboarding
+            or request.user.is_banks_standard_model_onboaring
+            or request.user.is_accept_vodafone_onboarding
+            and request.user.is_checker
+            or request.user.is_vodafone_facilitator_onboarding
+            and request.user.is_checker
+        ):
+            if not request.user.is_superuser and (
+                request.user.is_checker
+                or request.user.is_root
+                or request.user.is_superadmin
+            ):
                 return HttpResponseRedirect(reverse('two_factor:profile'))
         return redirect('data:main_view')
     if request.method == 'POST':
@@ -143,7 +186,9 @@ def login_view(request):
         # user = sso.authenticate(username, password)
         if user and not user.is_instantapichecker:
             if user.is_active:
-                login(request, user, backend="django.contrib.auth.backends.ModelBackend")
+                login(
+                    request, user, backend="django.contrib.auth.backends.ModelBackend"
+                )
                 LOGIN_LOGGER.debug(f"[message] [LOGIN] [{request.user}] -- ")
 
                 # this is special case based on business demand for prevent \
@@ -151,11 +196,17 @@ def login_view(request):
                 if request.user.username == 'Careem_Admin':
                     return HttpResponseRedirect(reverse('data:main_view'))
 
-                if request.user.is_vodafone_default_onboarding or \
-                        request.user.is_banks_standard_model_onboaring or\
-                        request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
-                        request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
-                    if not request.user.is_superuser and (user.is_checker or user.is_root or user.is_superadmin):
+                if (
+                    request.user.is_vodafone_default_onboarding
+                    or request.user.is_banks_standard_model_onboaring
+                    or request.user.is_accept_vodafone_onboarding
+                    and request.user.is_checker
+                    or request.user.is_vodafone_facilitator_onboarding
+                    and request.user.is_checker
+                ):
+                    if not request.user.is_superuser and (
+                        user.is_checker or user.is_root or user.is_superadmin
+                    ):
                         user.is_totp_verified = False
                         user.save()
                         return HttpResponseRedirect(reverse('two_factor:profile'))
@@ -166,20 +217,21 @@ def login_view(request):
                 return HttpResponseRedirect(reverse('data:main_view'))
             else:
                 FAILED_LOGIN_LOGGER.debug(
-                        f"[message] [FAILED LOGIN] [{username}] -- "
-                        f"Failed Attempt from non active user with username: {username}"
+                    f"[message] [FAILED LOGIN] [{username}] -- "
+                    f"Failed Attempt from non active user with username: {username}"
                 )
                 return HttpResponse("Your account has been disabled")
         elif user is not None and user.is_instantapichecker:
             FAILED_LOGIN_LOGGER.debug(
-                    f"[message] [API USER LOGIN ATTEMPT] [{username}] -- "
-                    f"Failed Attempt from instant API user with username: {username}")
+                f"[message] [API USER LOGIN ATTEMPT] [{username}] -- "
+                f"Failed Attempt from instant API user with username: {username}"
+            )
             context['error_invalid'] = "You're not permitted to login."
             return render(request, login_template, context=context)
         else:
             # Bad login details were provided. So we can't log the user in.
             FAILED_LOGIN_LOGGER.debug(
-                    f"[message] [FAILED LOGIN] [anonymous] -- Failed Login Attempt from user with username: {username}"
+                f"[message] [FAILED LOGIN] [anonymous] -- Failed Login Attempt from user with username: {username}"
             )
             context['error_invalid'] = 'Invalid login details supplied.'
             return render(request, login_template, context=context)
@@ -187,9 +239,13 @@ def login_view(request):
         idms_token = request.COOKIES.get("IDMS_TOKEN")
         if idms_token:
             sso = SSOIntegration()
-            user_found , user_obj = sso.get_user_with_idms_access_token(idms_token)
+            user_found, user_obj = sso.get_user_with_idms_access_token(idms_token)
             if user_found:
-                login(request, user_obj, backend="django.contrib.auth.backends.ModelBackend")
+                login(
+                    request,
+                    user_obj,
+                    backend="django.contrib.auth.backends.ModelBackend",
+                )
         return render(request, login_template, context=context)
 
 
@@ -223,4 +279,9 @@ class CallbackURLEdit(UpdateView):
     def form_valid(self, form):
         self.object = form.save(commit=False)
         self.object.save()
-        return redirect(reverse("users:api_viewer_callback", kwargs={'username': self.request.user.username}))
+        return redirect(
+            reverse(
+                "users:api_viewer_callback",
+                kwargs={'username': self.request.user.username},
+            )
+        )

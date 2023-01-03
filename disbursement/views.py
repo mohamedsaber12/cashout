@@ -1416,22 +1416,27 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     json=payload,
                 )
 
-                if response.json().get("disbursement_status") in ['failed', 'Failed']:
-                    current_fees_and_vat = 0
-                    if data["issuer"] != "bank_card":
-                        current_amount_plus_fess_and_vat = request.user.root.budget.accumulate_amount_with_fees_and_vat(
-                            data['amount'], data['issuer']
-                        )
-                        current_fees_and_vat = Decimal(
-                            current_amount_plus_fess_and_vat
-                        ) - Decimal(data['amount'])
-                    revert_balance_payload = {
-                        "transaction_id": response.json().get(
-                            "accept_balance_transfer_id"
-                        ),
-                        "fees_amount_cents": current_fees_and_vat * 100,
-                    }
-                    self.revert_balance_to_accept_account(revert_balance_payload)
+                if request.user.from_accept and not request.user.allowed_to_be_bulk:
+                    if response.json().get("disbursement_status") in [
+                        'failed',
+                        'Failed',
+                    ]:
+                        current_fees_and_vat = 0
+                        if data["issuer"] != "bank_card":
+                            current_amount_plus_fess_and_vat = request.user.root.budget.accumulate_amount_with_fees_and_vat(
+                                data['amount'], data['issuer']
+                            )
+                            current_fees_and_vat = Decimal(
+                                current_amount_plus_fess_and_vat
+                            ) - Decimal(data['amount'])
+                        revert_balance_payload = {
+                            "transaction_id": response.json().get(
+                                "accept_balance_transfer_id"
+                            ),
+                            "fees_amount_cents": current_fees_and_vat * 100,
+                        }
+                        self.revert_balance_to_accept_account(revert_balance_payload)
+
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {
                     "status": response.json().get('status_code'),

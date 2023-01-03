@@ -70,7 +70,6 @@ class LevelUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
         return reverse("users:members")
 
     def get_object(self, queryset=None):
-        print(get_object_or_404(User, username=self.kwargs['username']).root.level)
         return get_object_or_404(User, username=self.kwargs['username'])
 
 

@@ -19,7 +19,6 @@ from ..forms import (CallbackURLEditForm, LevelEditForm, OTPTokenForm,
                      ProfileEditForm)
 from ..mixins import ProfileOwnerOrMemberRequiredMixin
 from ..models import User
-from users.sso import SSOIntegration
 
 LOGIN_LOGGER = logging.getLogger("login")
 LOGOUT_LOGGER = logging.getLogger("logout")

@@ -62,7 +62,7 @@ class Budget(AbstractTimeStamp):
     created_by = models.ForeignKey(
         "users.SuperAdminUser",
         on_delete=models.CASCADE,
-        related_name='budget_creator',
+        related_name="budget_creator",
         verbose_name=_("Maintainer - Super Admin"),
         null=True,
         help_text=_("Super Admin who created/updated this budget values"),
@@ -200,7 +200,7 @@ class Budget(AbstractTimeStamp):
             issuer_type_refined = FeeSetup.BANK_CARD
         elif issuer_type == "bank_wallet" or issuer_type == "B":
             issuer_type_refined = FeeSetup.BANK_WALLET
-        elif issuer_type == 'default' or issuer_type in ["D", 'd']:
+        elif issuer_type == "default" or issuer_type in ["D", "d"]:
             return 0, 0
 
         # 2. Pick the fees objects corresponding to the determined issuer type
@@ -553,8 +553,8 @@ class TopupRequest(AbstractTimeStamp):
     currency = models.CharField(
         max_length=20,
         choices=[
-            ('egyptian_pound', _('Egyptian Pound (L.E)')),
-            ('american_dollar', _('American Dollar ($)')),
+            ("egyptian_pound", _("Egyptian Pound (L.E)")),
+            ("american_dollar", _("American Dollar ($)")),
         ],
         default="egyptian_pound",
     )
@@ -608,11 +608,11 @@ class ExcelFile(AbstractTimeStamp):
     Model for store Excel files with their users
     """
 
-    file_name = models.CharField(max_length=100, null=False, blank=False, default='')
+    file_name = models.CharField(max_length=100, null=False, blank=False, default="")
     owner = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name='my_excel_files',
+        related_name="my_excel_files",
         verbose_name=_("Owner"),
     )
 
@@ -625,4 +625,25 @@ class VodafoneBalance(AbstractTimeStamp):
     class Meta:
         verbose_name = "Vodafone Balance"
         verbose_name_plural = "Vodafone Monthly Balances"
+        ordering = ["-id"]
+
+
+class VodafoneDailyBalance(VodafoneBalance):
+    class Meta:
+        verbose_name = "Vodafone Daily Balance"
+        verbose_name_plural = "Vodafone Daily Balances"
+        ordering = ["-id"]
+
+
+class ClientIpAddress(AbstractTimeStamp):
+    client = models.ForeignKey(
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="ip_address",
+    )
+    ip_address = models.CharField(max_length=100, null=False, blank=False)
+
+    class Meta:
+        verbose_name = "Client IP Address"
+        verbose_name_plural = "Client IP Addresses"
         ordering = ["-id"]

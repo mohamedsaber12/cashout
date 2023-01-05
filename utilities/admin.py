@@ -9,7 +9,16 @@ from django.utils.timezone import datetime, make_aware
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
-from .models import Budget, CallWalletsModerator, FeeSetup, TopupRequest, TopupAction, VodafoneBalance
+from .models import (
+    Budget,
+    CallWalletsModerator,
+    FeeSetup,
+    TopupRequest,
+    TopupAction,
+    VodafoneBalance,
+    VodafoneDailyBalance,
+    ClientIpAddress,
+)
 from simple_history.admin import SimpleHistoryAdmin
 from django.core.exceptions import PermissionDenied
 from django import http
@@ -27,7 +36,8 @@ else:
 from users.models import InstantAPICheckerUser, User
 from rangefilter.filter import DateRangeFilter
 from disbursement.mixins import ExportCsvMixin
-
+from django.http import HttpResponse
+from openpyxl import Workbook
 
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
@@ -94,27 +104,37 @@ class FeeSetupAdmin(CustomInlineAdmin):
     extra = 0
 
     def has_add_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_add_permission"):
-            return True 
+        if request.user.is_superuser or request.user.has_perm(
+            "users.has_custom_budget_add_permission"
+        ):
+            return True
         return False
-    
+
     def has_change_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_change_permission"):
-            return True 
+        if request.user.is_superuser or request.user.has_perm(
+            "users.has_custom_budget_change_permission"
+        ):
+            return True
         return False
 
     def has_delete_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_delete_permission"):
+        if request.user.is_superuser or request.user.has_perm(
+            "users.has_custom_budget_delete_permission"
+        ):
             return True
         return False
 
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_view_permission"):
+        if request.user.is_superuser or request.user.has_perm(
+            "users.has_custom_budget_view_permission"
+        ):
             return True
         return False
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.has_perm("users.has_custom_budget_view_permission"):
+        if request.user.is_superuser or request.user.has_perm(
+            "users.has_custom_budget_view_permission"
+        ):
             return True
         return False
 
@@ -128,6 +148,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
     object_history_template = "admin/list_history.html"
     form = BudgetAdminModelForm
     inlines = [FeeSetupAdmin]
+    actions = ["export_as_excel"]
     list_filter = ["updated_at", "created_at", "created_by"]
     list_display = [
         "disburser",
@@ -163,6 +184,46 @@ class BudgetAdmin(SimpleHistoryAdmin):
         ),
     )
 
+    def export_as_excel(self, request, queryset):
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+        response["Content-Disposition"] = "attachment; filename={}{}.xls".format(
+            "Clients budget ", datetime.now().strftime("%Y-%m-%d")
+        )
+        workbook = Workbook()
+        worksheet = workbook.active
+        worksheet.title = "Bulk Transaction"
+        columns = [
+            "Client",
+            "Balance",
+            "Last update",
+            "Total disbursed",
+        ]
+        row_num = 1
+
+        for col_num, column_title in enumerate(columns, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = column_title
+
+        for recored in queryset:
+            row_num += 1
+            row = [
+                str(recored.disburser),
+                recored.current_balance,
+                recored.updated_at,
+                recored.total_disbursed_amount,
+            ]
+            for col_num, cell_value in enumerate(row, 1):
+                cell = worksheet.cell(row=row_num, column=col_num)
+                cell.value = cell_value
+
+        workbook.save(response)
+
+        return response
+
+    export_as_excel.short_description = "Export Selected"
+
     def get_readonly_fields(self, request, obj=None):
         readonly_fields = super().get_readonly_fields(request, obj)
         if not request.user.is_superuser or not request.user.is_superadmin:
@@ -182,7 +243,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
         if request.user.is_superuser or request.user.is_finance:
             return True
 
-    def save_model(self, request, obj, form,change):
+    def save_model(self, request, obj, form, change):
         if not request.user.is_superuser or not request.user.is_superadmin:
             raise PermissionError(
                 _("Only super users allowed to create/update at this table.")
@@ -365,7 +426,7 @@ class TopupActionAdmin(admin.ModelAdmin):
     def has_add_permission(self, request):
         return False
 
-    def has_change_permission(self, request,obj=None):
+    def has_change_permission(self, request, obj=None):
         return False
 
 
@@ -401,3 +462,45 @@ class VodafoneBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+
+@admin.register(VodafoneDailyBalance)
+class VodafoneDailyBalanceAdmin(admin.ModelAdmin, ExportCsvMixin):
+
+    list_display = [
+        "super_agent",
+        "balance",
+        "created_at",
+    ]
+    list_filter = [
+        ("created_at", DateRangeFilter),
+    ]
+
+    actions = ["export_as_csv"]
+
+    def has_add_permission(self, request):
+        if not request.user.is_superuser or not request.user.is_superadmin:
+            return False
+        return True
+
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_vodafone_monthly_report:
+            return True
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_vodafone_monthly_report:
+            return True
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(ClientIpAddress)
+class ClientIpAddressAdmin(admin.ModelAdmin, ExportCsvMixin):
+
+    list_display = [
+        "client",
+        "ip_address",
+        "created_at",
+    ]
+    list_filter = [("created_at", DateRangeFilter), "client"]

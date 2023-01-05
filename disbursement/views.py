@@ -959,7 +959,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         queryset = paginator.get_page(page)
 
         context = {
-            'form': SingleStepTransactionForm(checker_user=request.user),
+            'form': SingleStepTransactionForm(current_user=request.user),
             'transactions_list': queryset
         }
         # pagination query string
@@ -982,7 +982,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""
         context = {
-            'form': SingleStepTransactionForm(request.POST, checker_user=request.user),
+            'form': SingleStepTransactionForm(request.POST, current_user=request.user),
             'transactions_list': self.get_queryset(),
             'show_add_form': True
         }
@@ -992,7 +992,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         if context['form'].is_valid():
             form = context['form']
             context = {
-                'form': SingleStepTransactionForm(checker_user=request.user),
+                'form': SingleStepTransactionForm(current_user=request.user),
                 'transactions_list': self.get_queryset(),
                 'show_pop_up': True
             }

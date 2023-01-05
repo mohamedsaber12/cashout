@@ -381,7 +381,7 @@ class Budget(AbstractTimeStamp):
                 BUDGET_LOGGER.debug(
                     f"[message] [RELEASE HOLD BALANCE] [{budget_obj.disburser.username}] -- "
                     f"release hold amount : {amount}, fees and vat: {applied_fees_and_vat}, "
-                    f"used issuer: {issuer_type.lower()}, current hold balance before: {current_hold_balance_before},"
+                    f"used issuer: {issuer_type.lower()}, current hold balance before: {current_hold_balance_before}, "
                     f"current hold balance after: {budget_obj.hold_balance}"
                 )
                 return amount_plus_fees_vat

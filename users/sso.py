@@ -163,7 +163,7 @@ class SSOIntegration:
         url = f"{settings.IDMS_BASE_URL}v1/o/userinfo/"
 
         payload = {
-            "access_token": access_token.replace("SSO_"),
+            "access_token": access_token.replace("SSO_", ""),
         }
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
         resp = requests.post(url, data=payload, headers=headers)

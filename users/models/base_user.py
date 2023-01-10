@@ -222,6 +222,10 @@ class User(AbstractUser, SoftDeletionModel):
         return self.user_type == 3
 
     @cached_property
+    def is_system_admin(self):
+        return self.user_type == 14
+
+    @cached_property
     def has_access_to_topUp_balance(self):
         return self.access_top_up_balance == True
 

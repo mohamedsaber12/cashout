@@ -4,25 +4,19 @@ from __future__ import unicode_literals
 from decimal import Decimal
 
 from django.utils.translation import ugettext_lazy as _
-
 from rest_framework import serializers
 
 from core.models import AbstractBaseStatus
 from disbursement.models import BankTransaction
+from users.models import RootUser
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from ..models import AbstractBaseIssuer, InstantTransaction
-from .fields import CustomChoicesField, UUIDListField, CardNumberField
-from .validators import (
-    bank_code_validator,
-    cashin_issuer_validator,
-    fees_validator,
-    issuer_validator,
-    msisdn_validator,
-    bank_transaction_type_validator,
-)
-
-from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
-import uuid
+from .fields import CardNumberField, CustomChoicesField, UUIDListField
+from .validators import (bank_code_validator, bank_transaction_type_validator,
+                         cashin_issuer_validator, fees_validator,
+                         issuer_validator, msisdn_validator,
+                         source_product_validator)
 
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
@@ -435,3 +429,36 @@ class Costserializer(serializers.Serializer):
         required=True, decimal_places=2, max_digits=9, min_value=Decimal(100.0)
     )
     issuer = serializers.CharField(required=True, validators=[cashin_issuer_validator])
+
+
+class HoldBalanceRequestSerializer(serializers.Serializer):
+    """
+    Serializes Hold Balance requests
+    """
+
+    amount = serializers.DecimalField(
+        required=True, decimal_places=2, max_digits=9, min_value=Decimal(1.0)
+    )
+    source_product = serializers.CharField(
+        max_length=10,
+        required=True,
+        allow_blank=False,
+        validators=[source_product_validator],
+    )
+    operation_id = serializers.UUIDField(required=True)
+    sso_user_id = serializers.UUIDField(required=True)
+
+    def validate(self, attrs):
+        """Validate Aman issuer needed attributes"""
+        sso_user_id = str(attrs.get("sso_user_id", "")).lower()
+        root_user = RootUser.objects.filter(idms_user_id=sso_user_id, user_type=3)
+        if not root_user.exists():
+            raise serializers.ValidationError(
+                _(f"client with this sso user id {sso_user_id} not found")
+            )
+        root_user = root_user.first()
+        if not root_user.has_custom_budget:
+            raise serializers.ValidationError(
+                _(f"client with this sso user id {sso_user_id} does not has badget")
+            )
+        return attrs

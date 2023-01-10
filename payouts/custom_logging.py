@@ -1,30 +1,26 @@
 CUSTOM_LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
-    "filters": {
-        "request_id": {
-            "()": "log_request_id.filters.RequestIDFilter"
-        }
-    },
+    "filters": {"request_id": {"()": "log_request_id.filters.RequestIDFilter"}},
     'formatters': {
         'console_default': {
             'format': "%(asctime)s %(message)s",
-            'datefmt': "[%d-%m-%Y %H:%M:%S]"
+            'datefmt': "[%d-%m-%Y %H:%M:%S]",
         },
         'console_detail': {
             'format': "%(asctime)s - %(levelname)-5s [%(name)s] [request_id=%(request_id)s] %(message)s",
-            'datefmt': "[%d-%m-%Y %H:%M:%S]"
+            'datefmt': "[%d-%m-%Y %H:%M:%S]",
         },
         'detail': {
             'format': "%(asctime)s - [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s"
-        }
+        },
     },
     'handlers': {
         'console': {
             'level': 'INFO',
             'filters': ['request_id'],
             'class': 'logging.StreamHandler',
-            'formatter': 'console_default'
+            'formatter': 'console_default',
         },
         'file': {
             'level': 'DEBUG',
@@ -278,6 +274,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/database_queries.log',
         },
+        'balance_management_operations': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/balance_management_operations.log',
+        },
         'custom_budgets': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -370,12 +373,8 @@ CUSTOM_LOGGING = {
             'filename': 'logs/timeouts_updates.log',
         },
     },
-
     'loggers': {
-        "": {
-            "level": "DEBUG",
-            "handlers": ["console"]
-        },
+        "": {"level": "DEBUG", "handlers": ["console"]},
         'django': {
             'handlers': ['file', 'mail_admins'],
             'level': 'DEBUG',
@@ -553,6 +552,11 @@ CUSTOM_LOGGING = {
         },
         'custom_budgets': {
             'handlers': ['custom_budgets'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'balance_management_operations': {
+            'handlers': ['balance_management_operations'],
             'level': 'DEBUG',
             'propagate': True,
         },

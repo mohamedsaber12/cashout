@@ -47,3 +47,12 @@ class IsInstantAPICheckerUser(BasePermission):
 
     def has_permission(self, request, view):
         return request.user.is_instantapichecker
+
+
+class IsSystemAdminUser(BasePermission):
+    """
+    Verify that the current user is an system admin user
+    """
+
+    def has_permission(self, request, view):
+        return request.user.is_system_admin

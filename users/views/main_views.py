@@ -264,8 +264,9 @@ def ourlogout(request):
     request.user.is_totp_verified = False
     request.user.save()
     logout(request)
-
-    return HttpResponseRedirect(reverse('users:user_login_view'))
+    response = HttpResponseRedirect(reverse('users:user_login_view'))
+    response.delete_cookie("IDMS_TOKEN")
+    return response
 
 
 class CallbackURLEdit(UpdateView):

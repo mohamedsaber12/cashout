@@ -1433,7 +1433,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                             "transaction_id": response.json().get(
                                 "accept_balance_transfer_id"
                             ),
-                            "fees_amount_cents": current_fees_and_vat * 100,
+                            "fees_amount_cents": str(current_fees_and_vat * 100),
                         }
                         self.revert_balance_to_accept_account(revert_balance_payload)
 

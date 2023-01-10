@@ -246,7 +246,7 @@ class InstantDisbursementAPIView(views.APIView):
         headers = {"Authorization": get_from_env('SINGLE_STEP_TOKEN')}
         payload = {
             "ssouser": user.idms_user_id,
-            "amount_cents": amount_plus_fees_and_vat * 100,
+            "amount_cents": str(amount_plus_fees_and_vat * 100),
         }
         ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
             f"[request] [balance transfer] [{user}] -- {payload} "
@@ -345,17 +345,17 @@ class InstantDisbursementAPIView(views.APIView):
                 json_response = self.check_merchant_has_enough_balance_in_accept(
                     user, amount_plus_fees_vat
                 )
-                if not json_response.success:
-                    raise ValidationError(json_response.message)
+                if not json_response.get("success"):
+                    raise ValidationError(json_response.get("message"))
 
                 # create automatic topup request
                 self.create_automatic_topup_request(
-                    user, json_response.transaction, serializer
+                    user, json_response.get("transaction"), serializer
                 )
 
                 # create automatic topup action
                 self.create_automatic_topup_action(
-                    user, json_response.transaction, amount_plus_fees_vat
+                    user, json_response.get("transaction"), amount_plus_fees_vat
                 )
 
             if not user.root.budget.within_threshold(
@@ -440,11 +440,12 @@ class InstantDisbursementAPIView(views.APIView):
                 if user.from_accept and not user.allowed_to_be_bulk:
                     transaction.from_accept = 'single'
                     transaction.accept_balance_transfer_id = (
-                        json_response.transaction,
+                        json_response.get("transaction"),
                     )
                     transaction.transaction_type = serializer.validated_data.get(
                         'transaction_type'
                     )
+                    
                 elif user.from_accept and user.allowed_to_be_bulk:
                     transaction.from_accept = 'bulk'
                 transaction.save()
@@ -680,7 +681,7 @@ class InstantDisbursementAPIView(views.APIView):
             try:
                 if user.from_accept and not user.allowed_to_be_bulk:
                     bank_trx_obj, instant_trx_obj = self.create_bank_transaction(
-                        user, serializer, json_response.transaction
+                        user, serializer, json_response.get("transaction")
                     )
                 else:
                     bank_trx_obj, instant_trx_obj = self.create_bank_transaction(

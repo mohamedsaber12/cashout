@@ -408,8 +408,10 @@ class BalanceManagementOperationsAdmin(admin.ModelAdmin):
         "budget__disburser",
         "amount",
         "operation_type",
+        "source_product",
+        "hold_balance_before",
+        "hold_balance_after",
         "created_at",
-        "updated_at",
     ]
     list_filter = [
         "source_product",

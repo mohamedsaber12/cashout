@@ -1,44 +1,37 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
+from django import http
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
-from django.utils.translation import gettext_lazy as _
+from django.contrib.admin.utils import unquote
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
+from django.utils.text import capfirst
 from django.utils.timezone import datetime, make_aware
+from django.utils.translation import gettext_lazy as _
+from simple_history.admin import SimpleHistoryAdmin
 
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
-from .models import (
-    Budget,
-    CallWalletsModerator,
-    FeeSetup,
-    TopupRequest,
-    TopupAction,
-    VodafoneBalance,
-    VodafoneDailyBalance,
-    ClientIpAddress,
-)
-from simple_history.admin import SimpleHistoryAdmin
-from django.core.exceptions import PermissionDenied
-from django import http
-from django.contrib.admin.utils import unquote
-from django.conf import settings
-from django.utils.text import capfirst
-import django
-from django.core.paginator import Paginator
+from .models import (BalanceManagementOperations, Budget, CallWalletsModerator,
+                     ClientIpAddress, FeeSetup, TopupAction, TopupRequest,
+                     VodafoneBalance, VodafoneDailyBalance)
 
 if django.VERSION < (2,):
     from django.utils.encoding import force_text as force_str
 else:
     from django.utils.encoding import force_str
 
-from users.models import InstantAPICheckerUser, User
-from rangefilter.filter import DateRangeFilter
-from disbursement.mixins import ExportCsvMixin
 from django.http import HttpResponse
 from openpyxl import Workbook
+from rangefilter.filter import DateRangeFilter
 
+from disbursement.mixins import ExportCsvMixin
+from users.models import InstantAPICheckerUser, User
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
 
@@ -401,6 +394,25 @@ class TopupRequestAdmin(admin.ModelAdmin):
         "client",
         "currency",
         ("created_at", DateRangeFilter),
+    ]
+
+
+@admin.register(BalanceManagementOperations)
+class BalanceManagementOperationsAdmin(admin.ModelAdmin):
+    """
+    Customize the list view of balance management operations model
+    """
+
+    list_display = [
+        "operation_id",
+        "budget__disburser",
+        "amount",
+        "operation_type",
+        "created_at",
+        "updated_at",
+    ]
+    list_filter = [
+        "source_product",
     ]
 
 

@@ -405,13 +405,12 @@ class BalanceManagementOperationsAdmin(admin.ModelAdmin):
 
     list_display = [
         "operation_id",
-        "budget__disburser",
+        "budget",
         "amount",
         "operation_type",
         "source_product",
         "hold_balance_before",
         "hold_balance_after",
-        "created_at",
     ]
     list_filter = [
         "source_product",

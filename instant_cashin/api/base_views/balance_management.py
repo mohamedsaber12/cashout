@@ -63,7 +63,7 @@ class HoldBalanceAPIView(views.APIView):
             BalanceManagementOperations.objects.create(
                 operation_id=serializer.validated_data['operation_id'],
                 source_product=serializer.validated_data['source_product'],
-                operation_type="Hold",
+                operation_type="hold",
                 amount=serializer.validated_data['amount'],
                 idms_user_id=serializer.validated_data['sso_user_id'],
                 budget=user.root.budget,

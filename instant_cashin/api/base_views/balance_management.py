@@ -77,6 +77,13 @@ class HoldBalanceAPIView(views.APIView):
                 f" with idms_user_id: {serializer.validated_data['sso_user_id']},"
                 f" from {serializer.validated_data['source_product']} product"
             )
+            return Response(
+                {
+                    "hold_status": _("Success"),
+                    "description": "successfully hold bance",
+                },
+                status=status.HTTP_200_OK,
+            )
         except (ValidationError, ValueError, Exception) as e:
             if len(serializer.errors) > 0:
                 failure_message = serializer.errors

@@ -440,7 +440,7 @@ class InstantDisbursementAPIView(views.APIView):
                 if user.from_accept and not user.allowed_to_be_bulk:
                     transaction.from_accept = 'single'
                     transaction.accept_balance_transfer_id = (
-                        json_response.get("transaction"),
+                        json_response.get("transaction")
                     )
                     transaction.transaction_type = serializer.validated_data.get(
                         'transaction_type'

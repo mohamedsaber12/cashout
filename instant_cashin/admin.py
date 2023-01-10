@@ -158,7 +158,7 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         (_('Transaction Details'), {
             'fields': (
                 'uid', 'reference_id', 'status_choice_verbose', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient',
-                'recipient_name', 'transaction_status_code', 'transaction_status_description', 'document'
+                'recipient_name', 'transaction_status_code', 'transaction_status_description', 'document', 'accept_balance_transfer_id'
             )
         }),
         (_('Important Dates'), {

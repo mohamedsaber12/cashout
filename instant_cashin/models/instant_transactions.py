@@ -137,7 +137,7 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         default='no',
         db_index=True,
     )
-    accept_balance_transfer_id = models.IntegerField(default=0, null=True)
+    accept_balance_transfer_id = models.CharField(max_length=100, blank=True, null=True)
     transaction_type = models.CharField(
         _("Transaction Reason"),
         max_length=500,

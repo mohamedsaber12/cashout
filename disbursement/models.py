@@ -362,7 +362,7 @@ class BankTransaction(
     bank_batch_id = models.CharField(max_length=100, blank=True, null=True)
     bank_transaction_id = models.CharField(max_length=100, blank=True, null=True)
     bank_end_to_end_identifier = models.CharField(max_length=100, blank=True, null=True)
-    accept_balance_transfer_id = models.IntegerField(default=0, null=True)
+    accept_balance_transfer_id = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         verbose_name = "Bank Transaction"

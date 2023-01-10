@@ -466,7 +466,7 @@ class TopupRequest(AbstractTimeStamp):
     from_date = models.DateField(blank=True, null=True)
     to_attach_proof = models.CharField(max_length=500, blank=True, null=True)
     automatic = models.BooleanField(default=False)
-    accept_balance_transfer_id = models.IntegerField(default=0, null=True)
+    accept_balance_transfer_id = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         verbose_name = "Topup Request"
@@ -496,7 +496,7 @@ class TopupAction(AbstractTimeStamp):
     notes = models.CharField(max_length=500, blank=True, null=True)
 
     automatic = models.BooleanField(default=False)
-    accept_balance_transfer_id = models.IntegerField(default=0, null=True)
+    accept_balance_transfer_id = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         verbose_name = "Topup Action"

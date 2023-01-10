@@ -265,7 +265,7 @@ def ourlogout(request):
     request.user.save()
     logout(request)
     response = HttpResponseRedirect(reverse('users:user_login_view'))
-    response.delete_cookie("IDMS_TOKEN")
+    response.delete_cookie("IDMS_TOKEN", domain=".paymobsolutions.com")
     return response
 
 

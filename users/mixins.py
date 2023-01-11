@@ -3,39 +3,61 @@ from __future__ import unicode_literals
 
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 
-from .models import SupportSetup, Client, User, SuperAdminUser, OnboardUserSetup, SupervisorSetup
+from .models import (Client, OnboardUserSetup, SuperAdminUser, SupervisorSetup,
+                     SupportSetup, User)
 
 
 class ParentPermissionMixin(object):
     def has_add_permission(self, request):
-        if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.add_group'):
+        if (
+            request.user.is_root
+            or request.user.is_superuser
+            or request.user.has_perm('auth.add_group')
+        ):
             super(ParentPermissionMixin, self).has_add_permission(request)
             return True
 
     def has_change_permission(self, request, obj=None):
-        if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.change_group'):
+        if (
+            request.user.is_root
+            or request.user.is_superuser
+            or request.user.has_perm('auth.change_group')
+        ):
             super(ParentPermissionMixin, self).has_change_permission(request, obj)
             return True
 
     def has_delete_permission(self, request, obj=None):
-        if request.user.is_root or request.user.is_superuser or request.user.has_perm('auth.delete_group'):
+        if (
+            request.user.is_root
+            or request.user.is_superuser
+            or request.user.has_perm('auth.delete_group')
+        ):
             super(ParentPermissionMixin, self).has_delete_permission(request, obj)
             return True
 
 
 class RootRequiredMixin(LoginRequiredMixin):
-
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_root:
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
 
-class RootUserORDashboardUserOrMakerORCheckerRequiredMixin(LoginRequiredMixin):
-
+class DjangoAdminRequiredMixin(LoginRequiredMixin):
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.is_instantapiviewer or request.user.is_root or
-            request.user.is_maker or request.user.is_checker):
+        if not request.user.is_staff and request.user.user_type == 0:
+            return self.handle_no_permission()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class RootUserORDashboardUserOrMakerORCheckerRequiredMixin(LoginRequiredMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if not (
+            request.user.is_instantapiviewer
+            or request.user.is_root
+            or request.user.is_maker
+            or request.user.is_checker
+        ):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -46,16 +68,16 @@ class MakeTransferRequestPermissionRequired(UserPassesTestMixin, LoginRequiredMi
     """
 
     def test_func(self):
-        if not (self.request.user.is_vodafone_default_onboarding or self.request.user.is_banks_standard_model_onboaring) and (
-                self.request.user.is_root or self.request.user.is_instantapiviewer
-        ):
+        if not (
+            self.request.user.is_vodafone_default_onboarding
+            or self.request.user.is_banks_standard_model_onboaring
+        ) and (self.request.user.is_root or self.request.user.is_instantapiviewer):
             return True
 
         return False
 
 
 class CollectionRootRequiredMixin(RootRequiredMixin):
-
     def dispatch(self, request, *args, **kwargs):
         if not request.user.get_status(request) == 'collection':
             return self.handle_no_permission()
@@ -63,7 +85,6 @@ class CollectionRootRequiredMixin(RootRequiredMixin):
 
 
 class DisbursementRootRequiredMixin(RootRequiredMixin):
-
     def dispatch(self, request, *args, **kwargs):
         if not request.user.get_status(request) == 'disbursement':
             return self.handle_no_permission()
@@ -71,7 +92,6 @@ class DisbursementRootRequiredMixin(RootRequiredMixin):
 
 
 class SuperRequiredMixin(LoginRequiredMixin):
-
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superadmin:
             return self.handle_no_permission()
@@ -79,7 +99,6 @@ class SuperRequiredMixin(LoginRequiredMixin):
 
 
 class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
-
     def dispatch(self, request, *args, **kwargs):
         if not (request.user.is_superadmin or request.user.is_onboard_user):
             return self.handle_no_permission()
@@ -87,26 +106,32 @@ class SuperOrOnboardUserRequiredMixin(LoginRequiredMixin):
 
 
 class SuperAdminOrSupervisorUserRequiredMixin(LoginRequiredMixin):
-
     def dispatch(self, request, *args, **kwargs):
         if not (request.user.is_superadmin or request.user.is_supervisor):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
 
-class UserWithDefaultOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+class UserWithDefaultOnboardingPermissionRequired(
+    UserPassesTestMixin, LoginRequiredMixin
+):
     """
     Check if the user has the default vodafone onboarding permission
     """
 
     def test_func(self):
-        if self.request.user.is_vodafone_default_onboarding or self.request.user.is_banks_standard_model_onboaring:
+        if (
+            self.request.user.is_vodafone_default_onboarding
+            or self.request.user.is_banks_standard_model_onboaring
+        ):
             return True
 
         return False
 
 
-class UserWithInstantOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+class UserWithInstantOnboardingPermissionRequired(
+    UserPassesTestMixin, LoginRequiredMixin
+):
     """
     Check if the user has the instant model onboarding permission
     """
@@ -128,11 +153,20 @@ class AgentsListPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
     """
 
     def test_func(self):
-        if self.request.user.is_superadmin and not self.request.user.is_vodafone_default_onboarding:
+        if (
+            self.request.user.is_superadmin
+            and not self.request.user.is_vodafone_default_onboarding
+        ):
             return True
-        elif self.request.user.is_support and self.request.user.is_vodafone_default_onboarding:
+        elif (
+            self.request.user.is_support
+            and self.request.user.is_vodafone_default_onboarding
+        ):
             return True
-        elif self.request.user.is_support and self.request.user.is_banks_standard_model_onboaring:
+        elif (
+            self.request.user.is_support
+            and self.request.user.is_banks_standard_model_onboaring
+        ):
             return True
 
         return False
@@ -144,12 +178,17 @@ class SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired(LoginRequire
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if not (request.user.is_accept_vodafone_onboarding or request.user.is_vodafone_facilitator_onboarding):
+        if not (
+            request.user.is_accept_vodafone_onboarding
+            or request.user.is_vodafone_facilitator_onboarding
+        ):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
 
-class UserWithAcceptVFOnboardingPermissionRequired(UserPassesTestMixin, LoginRequiredMixin):
+class UserWithAcceptVFOnboardingPermissionRequired(
+    UserPassesTestMixin, LoginRequiredMixin
+):
     """
     Check if the user has the accept vodafone onboarding permission
     """
@@ -169,8 +208,11 @@ class UserWithDisbursementPermissionRequired(UserPassesTestMixin, LoginRequiredM
     def test_func(self):
         status = self.request.user.get_status(self.request)
 
-        if status == "disbursement" and \
-                (self.request.user.is_maker or self.request.user.is_checker or self.request.user.is_root):
+        if status == "disbursement" and (
+            self.request.user.is_maker
+            or self.request.user.is_checker
+            or self.request.user.is_root
+        ):
             return True
 
         return False
@@ -245,14 +287,18 @@ class SuperOwnsClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
         elif self.request.user.is_onboard_user:
             entity_admin_username = self.request.resolver_match.kwargs.get('username')
 
-            for client_obj in self.request.user.my_onboard_setups.user_created.clients.all():
+            for (
+                client_obj
+            ) in self.request.user.my_onboard_setups.user_created.clients.all():
                 if client_obj.client.username == entity_admin_username:
                     return True
 
         return False
 
 
-class SuperOrRootOwnsCustomizedBudgetClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+class SuperOrRootOwnsCustomizedBudgetClientRequiredMixin(
+    UserPassesTestMixin, LoginRequiredMixin
+):
     """
     Give the access permission of a certain view to only Super or Root users,
     Considering:
@@ -273,7 +319,9 @@ class SuperOrRootOwnsCustomizedBudgetClientRequiredMixin(UserPassesTestMixin, Lo
         return self.request.user.is_root or self.request.user.is_instantapiviewer
 
 
-class SuperOwnsCustomizedBudgetClientRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
+class SuperOwnsCustomizedBudgetClientRequiredMixin(
+    UserPassesTestMixin, LoginRequiredMixin
+):
     """
     Give the access permission of a certain view to only SuperAdmin users,
     Considering:
@@ -301,7 +349,10 @@ class SuperFinishedSetupMixin(LoginRequiredMixin):
     """
 
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_superadmin and not request.user.has_uncomplete_entity_creation():
+        if (
+            request.user.is_superadmin
+            and not request.user.has_uncomplete_entity_creation()
+        ):
             return self.handle_no_permission()
         return super().dispatch(request, *args, **kwargs)
 
@@ -319,25 +370,39 @@ class ProfileOwnerOrMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin)
             if profile_username == current_user.username:
                 return True
             elif current_user.is_superadmin:
-                client_setups = Client.objects.filter(creator=current_user).select_related('client')
-                support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
-                onboard_user_setups = OnboardUserSetup.objects.filter(user_created=current_user). \
-                    select_related('onboard_user')
-                supervisor_setups = SupervisorSetup.objects.filter(user_created=current_user). \
-                    select_related('supervisor_user')
+                client_setups = Client.objects.filter(
+                    creator=current_user
+                ).select_related('client')
+                support_setups = SupportSetup.objects.filter(
+                    user_created=current_user
+                ).select_related('support_user')
+                onboard_user_setups = OnboardUserSetup.objects.filter(
+                    user_created=current_user
+                ).select_related('onboard_user')
+                supervisor_setups = SupervisorSetup.objects.filter(
+                    user_created=current_user
+                ).select_related('supervisor_user')
                 members_list = [obj.client.username for obj in client_setups]
                 members_list += [obj.support_user.username for obj in support_setups]
-                members_list += [obj.onboard_user.username for obj in onboard_user_setups]
-                members_list += [obj.supervisor_user.username for obj in supervisor_setups]
+                members_list += [
+                    obj.onboard_user.username for obj in onboard_user_setups
+                ]
+                members_list += [
+                    obj.supervisor_user.username for obj in supervisor_setups
+                ]
                 if profile_username in members_list:
                     return True
             elif current_user.is_root:
-                members_objects = User.objects.get_all_hierarchy_tree(current_user.hierarchy)
+                members_objects = User.objects.get_all_hierarchy_tree(
+                    current_user.hierarchy
+                )
                 members_list = [user.username for user in members_objects]
                 if profile_username in members_list:
                     return True
             elif current_user.is_supervisor:
-                support_setups = SupportSetup.objects.filter(user_created=current_user.my_setup.user_created).select_related('support_user')
+                support_setups = SupportSetup.objects.filter(
+                    user_created=current_user.my_setup.user_created
+                ).select_related('support_user')
                 members_list = [obj.support_user.username for obj in support_setups]
                 if profile_username in members_list:
                     return True
@@ -365,14 +430,24 @@ class UserOwnsMemberRequiredMixin(UserPassesTestMixin, LoginRequiredMixin):
         current_user = self.request.user
 
         if target_id:
-            if current_user.is_superadmin and (target_is_client_member or target_is_support_member):
-                client_setups = Client.objects.filter(creator=current_user).select_related('client')
-                support_setups = SupportSetup.objects.filter(user_created=current_user).select_related('support_user')
-                members_ids_list = [obj.id for obj in client_setups] + [obj.id for obj in support_setups]
+            if current_user.is_superadmin and (
+                target_is_client_member or target_is_support_member
+            ):
+                client_setups = Client.objects.filter(
+                    creator=current_user
+                ).select_related('client')
+                support_setups = SupportSetup.objects.filter(
+                    user_created=current_user
+                ).select_related('support_user')
+                members_ids_list = [obj.id for obj in client_setups] + [
+                    obj.id for obj in support_setups
+                ]
                 if target_id in members_ids_list:
                     return True
             elif current_user.is_root and target_is_entity_member:
-                members_objects = User.objects.get_all_hierarchy_tree(current_user.hierarchy)
+                members_objects = User.objects.get_all_hierarchy_tree(
+                    current_user.hierarchy
+                )
                 members_ids_list = [user.id for user in members_objects]
                 if target_id in members_ids_list:
                     return True
@@ -395,8 +470,12 @@ class SupportOrRootOrMakerUserPassesTestMixin(UserPassesTestMixin, LoginRequired
         username = self.request.resolver_match.kwargs.get('username')
         admin_username = admin if admin else username
 
-        if self.request.user.is_root or self.request.user.is_maker or self.request.user.is_uploader or \
-                self.request.user.is_upmaker:
+        if (
+            self.request.user.is_root
+            or self.request.user.is_maker
+            or self.request.user.is_uploader
+            or self.request.user.is_upmaker
+        ):
             return True
         elif self.request.user.is_support and admin_username:
             support_creator = self.request.user.my_setups.user_created
@@ -404,17 +483,39 @@ class SupportOrRootOrMakerUserPassesTestMixin(UserPassesTestMixin, LoginRequired
 
             # get all super admins that has same permission
             if support_creator.is_vodafone_default_onboarding:
-                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_vodafone_default_onboarding]
+                all_super_admins = [
+                    x
+                    for x in SuperAdminUser.objects.all()
+                    if x.is_vodafone_default_onboarding
+                ]
             elif support_creator.is_instant_model_onboarding:
-                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_instant_model_onboarding]
+                all_super_admins = [
+                    x
+                    for x in SuperAdminUser.objects.all()
+                    if x.is_instant_model_onboarding
+                ]
             elif support_creator.is_accept_vodafone_onboarding:
-                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_accept_vodafone_onboarding]
+                all_super_admins = [
+                    x
+                    for x in SuperAdminUser.objects.all()
+                    if x.is_accept_vodafone_onboarding
+                ]
             elif support_creator.is_vodafone_facilitator_onboarding:
-                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_vodafone_facilitator_onboarding]
+                all_super_admins = [
+                    x
+                    for x in SuperAdminUser.objects.all()
+                    if x.is_vodafone_facilitator_onboarding
+                ]
             elif support_creator.is_banks_standard_model_onboaring:
-                all_super_admins = [x for x in SuperAdminUser.objects.all() if x.is_banks_standard_model_onboaring]
+                all_super_admins = [
+                    x
+                    for x in SuperAdminUser.objects.all()
+                    if x.is_banks_standard_model_onboaring
+                ]
 
-            client_setups = Client.objects.filter(creator__in=all_super_admins).select_related('client')
+            client_setups = Client.objects.filter(
+                creator__in=all_super_admins
+            ).select_related('client')
             members_list = [obj.client.username for obj in client_setups]
             if admin_username in members_list:
                 return True

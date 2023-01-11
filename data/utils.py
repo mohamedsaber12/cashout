@@ -1,22 +1,23 @@
+import logging
 import os
-import random, string, logging
-import xlsxwriter
+import random
+import string
 from urllib.parse import urlencode
 
-from django.core.mail import EmailMultiAlternatives
+import pysftp
+import xlsxwriter
 from django.conf import settings
-from django.core.paginator import PageNotAnInteger, EmptyPage
-from django.core.paginator import Paginator
-from django.utils.timezone import datetime, make_aware, now
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.contrib.auth.base_user import BaseUserManager
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
+from django.core.mail import EmailMultiAlternatives
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.timezone import datetime, make_aware, now
 
-from instant_cashin.utils import get_from_env
-from data.models.filecategory import FileCategory
 from data.models.category_data import Format
-import pysftp
+from data.models.filecategory import FileCategory
+from instant_cashin.utils import get_from_env
 
 DOWNLOAD_LOGGER = logging.getLogger("download_serve")
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
@@ -53,11 +54,19 @@ def update_filename(instance, filename):
     :return:
     """
     now = datetime.now()
-    path = "documents/files_uploaded/%d/%s/" %(now.year, now.month)
+    path = "documents/files_uploaded/%d/%s/" % (now.year, now.month)
     file, ext = filename.split('.')
-    filename = file + '_' + instance.owner.username + '_' +\
-               ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(9)) + \
-               '.' + ext
+    filename = (
+        file
+        + '_'
+        + instance.owner.username
+        + '_'
+        + ''.join(
+            random.choice(string.ascii_uppercase + string.digits) for _ in range(9)
+        )
+        + '.'
+        + ext
+    )
     return os.path.join(path, filename)
 
 
@@ -72,7 +81,7 @@ def redirect_params(url, kw, params=None):
     else:
         query_string = ''
 
-    return redirect(response + '?' +query_string)
+    return redirect(response + '?' + query_string)
 
 
 def update_user_last_seen(user, end_date=None, clients_data=None):
@@ -111,7 +120,7 @@ def update_user_last_seen(user, end_date=None, clients_data=None):
     except ValidationError:
         # Can't save user
         DOWNLOAD_LOGGER.debug(
-                f"[message] [DOWNLOAD VALIDATION ERROR] [{user}] -- cannot be saved with new transaction seen dates"
+            f"[message] [DOWNLOAD VALIDATION ERROR] [{user}] -- cannot be saved with new transaction seen dates"
         )
     return
 
@@ -149,7 +158,7 @@ def combine_data():
             identifier9=category.identifier9,
             identifier10=category.identifier10,
             category=category,
-            hierarchy=category.user_created.hierarchy
+            hierarchy=category.user_created.hierarchy,
         )
 
 
@@ -162,13 +171,13 @@ def excell_letter_to_index(col_name):
     return num
 
 
-def excell_position(col_index,row_index):
+def excell_position(col_index, row_index):
     """
     @param col_index int: excel column index (zero indexed).
     @param row_index int: excel row index (zero indexed).
     return string: corresponding column row position, ex: 'A1'.
     """
-    return xlsxwriter.utility.xl_col_to_name(col_index) + str(row_index+1)
+    return xlsxwriter.utility.xl_col_to_name(col_index) + str(row_index + 1)
 
 
 def export_excel(file_path, data):
@@ -211,27 +220,27 @@ def deliver_mail(user_obj, subject_tail, message_body, recipients=None):
         recipient_list = [recipient.email for recipient in recipients]
 
         for mail in recipient_list:
-            mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, [mail])
+            mail_to_be_sent = EmailMultiAlternatives(
+                subject, message_body, from_email, [mail]
+            )
             mail_to_be_sent.attach_alternative(message_body, "text/html")
             mail_to_be_sent.send()
             SEND_EMAIL_LOGGER.debug(
                 f"[{subject}] [{recipient_list[0]}] -- {message_body}"
             )
         return
-    mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
+    mail_to_be_sent = EmailMultiAlternatives(
+        subject, message_body, from_email, recipient_list
+    )
     mail_to_be_sent.attach_alternative(message_body, "text/html")
     mail_to_be_sent.send()
-    SEND_EMAIL_LOGGER.debug(
-        f"[{subject}] [{recipient_list[0]}] -- {message_body}"
-    )
+    SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message_body}")
     return
 
 
-def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
-                                                        subject_tail,
-                                                        message_body,
-                                                        recipients=None,
-                                                        attached_file=None):
+def deliver_mail_to_multiple_recipients_with_attachment(
+    user_obj, subject_tail, message_body, recipients=None, attached_file=None
+):
     """
     Send a message to inform the user with disbursement/collection related action.
     :param user_obj: Request's user instance that the mail will be sent to.
@@ -244,10 +253,14 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
     subject = None
     if user_obj.is_instantapiviewer:
         subject = f'[{user_obj.root.brand.mail_subject}]' + subject_tail
+    elif user_obj.is_system_admin:
+        subject = subject_tail
     else:
         subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
     recipient_list = [recipient.get('email') for recipient in recipients]
-    mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, recipient_list)
+    mail_to_be_sent = EmailMultiAlternatives(
+        subject, message_body, from_email, recipient_list
+    )
     mail_to_be_sent.attach_alternative(message_body, "text/html")
 
     if attached_file:
@@ -257,12 +270,17 @@ def deliver_mail_to_multiple_recipients_with_attachment(user_obj,
 
 
 def upload_file_to_vodafone(file_path):
-    private_key = get_from_env("VF_PRIVATE_KEY")  # can use password keyword in Connection instead
+    private_key = get_from_env(
+        "VF_PRIVATE_KEY"
+    )  # can use password keyword in Connection instead
     srv = pysftp.Connection(
-        host=get_from_env("VF_HOST"), username=get_from_env("VF_USERNAME"),
-        private_key=private_key, password=get_from_env("VF_PASSWORD"))
+        host=get_from_env("VF_HOST"),
+        username=get_from_env("VF_USERNAME"),
+        private_key=private_key,
+        password=get_from_env("VF_PASSWORD"),
+    )
     srv.chdir(get_from_env("VF_DIRECTORY"))  # change directory on remote server
-    srv.put(file_path) 
+    srv.put(file_path)
     srv.close()
 
 

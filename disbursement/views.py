@@ -1422,7 +1422,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                         'Failed',
                     ]:
                         current_fees_and_vat = 0
-                        if data["issuer"] != "bank_card":
+                        if data["issuer"] == "bank_card":
                             current_amount_plus_fess_and_vat = request.user.root.budget.accumulate_amount_with_fees_and_vat(
                                 data['amount'], data['issuer']
                             )

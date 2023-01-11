@@ -185,9 +185,9 @@ def login_view(request):
     if request.method == "POST":
         username = request.POST["username"]
         password = request.POST["password"]
-        # user = authenticate(request=request, username=username, password=password)
-        sso = SSOIntegration()
-        user = sso.authenticate(username, password)
+        user = authenticate(request=request, username=username, password=password)
+        # sso = SSOIntegration()
+        # user = sso.authenticate(username, password)
         if user and not user.is_instantapichecker:
             if user.is_active:
                 login(
@@ -268,7 +268,6 @@ def ourlogout(request):
     request.user.save()
     logout(request)
     response = HttpResponseRedirect(reverse("users:user_login_view"))
-    response.set_cookie("IDMS_TOKEN", "", domain=".paymobsolutions.com", max_age=1)
     return response
 
 

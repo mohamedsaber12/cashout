@@ -52,10 +52,33 @@
             {% trans 'Switch to' %} {{other_status}}</a></li>
           {%endif%}
          
-          <li><a href="{% url 'users:logout' %}"><i class="fa fa-sign-out pull-{{'right'|invert_dir:LANGUAGE_CODE}}"></i> {% trans 'Log Out' %}</a></li>
+          <li><a onclick="logout()" href="javascript:void(0);"><i class="fa fa-sign-out pull-{{'right'|invert_dir:LANGUAGE_CODE}}"></i> {% trans 'Log Out' %}</a></li>
         </ul>
       </li>
 
     </ul>
   </nav>
 </div>
+
+<script>
+  function logout(){
+    delete_cookie("IDMS_TOKEN", "/", window.location.hostname);
+    document.location = "/user/logout";
+  }
+
+  function delete_cookie( name, path, domain ) {
+    if( get_cookie( name ) ) {
+      document.cookie = name + "=" +
+        ((path) ? ";path="+path:"")+
+        ((domain)?";domain="+domain:"") +
+        ";expires=Thu, 01 Jan 1970 00:00:01 GMT";
+    }
+  }
+
+  function get_cookie(name){
+    return document.cookie.split(';').some(c => {
+        return c.trim().startsWith(name + '=');
+    });
+}
+
+</script>

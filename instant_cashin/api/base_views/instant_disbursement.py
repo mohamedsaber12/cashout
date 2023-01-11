@@ -3,8 +3,6 @@ from __future__ import unicode_literals
 
 import copy
 import logging
-from datetime import datetime
-from decimal import Decimal
 
 import requests
 from django.conf import settings
@@ -21,8 +19,6 @@ from disbursement.models import BankTransaction, VMTData
 from payouts.settings import TIMEOUT_CONSTANTS
 from users.models.base_user import User
 from utilities.logging import logging_message
-from utilities.models import TopupAction, TopupRequest
-from utilities.tasks import send_transfer_request_email
 
 from ...models import InstantTransaction
 from ...specific_issuers_integrations import (AmanChannel,
@@ -258,66 +254,6 @@ class InstantDisbursementAPIView(views.APIView):
         )
         return json_response
 
-    def create_automatic_topup_request(self, disburser, transfer_id, serializer):
-        # send topup request email
-        # create topup request object in database
-        payload = {
-            'amount': serializer.validated_data['amount'],
-            'type': 'from_accept_balance',
-            'currency': 'egyptian_pound',
-            'username': disburser.username,
-        }
-        BUDGET_LOGGER.debug(
-            f"[message] [Automatic Transfer Request] [{disburser}] -- payload: {payload}"
-        )
-        # Prepare email message
-        message = _(
-            f"""Dear All,<br><br>
-        <label>Admin Username:       </label> {disburser.root.username}<br/>
-        <label>Admin E-mail:         </label> {disburser.root.email}<br/>
-        <label>Request Date/Time:    </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
-        <label>Amount To Be Added:   </label> {serializer.validated_data['amount']}<br/>
-        <label>Transfer Type:        </label> From Accept Balance <br/>
-        <label>Currency:             </label> Egyptian Pound <br/><br/>
-        <label>Accept username:  </label> {disburser.username} <br/><br/>Best Regards,"
-        """
-        )
-
-        send_transfer_request_email.delay(
-            disburser.root.username, message, automatic=True
-        )
-        # save topup information
-        TopupRequest.objects.create(
-            client=disburser.root,
-            amount=serializer.validated_data['amount'],
-            currency="egyptian_pound",
-            transfer_type="from_accept_balance",
-            username=disburser.username,
-            automatic=True,
-            accept_balance_transfer_id=transfer_id,
-        )
-
-    def create_automatic_topup_action(
-        self, disburser, transfer_id, amount_plus_fees_vat
-    ):
-        # increase current balance with fees and vat
-        # create TopUp action
-        balance_before = disburser.root.budget.current_balance
-        disburser.root.budget.current_balance += amount_plus_fees_vat
-        disburser.root.budget.save()
-        BUDGET_LOGGER.debug(
-            f"[message] [ Automatic Balance Increase] [{disburser}] ==> balance before:- {balance_before}, "
-            f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
-        )
-        TopupAction.objects.create(
-            client=disburser.root,
-            amount=Decimal(amount_plus_fees_vat),
-            balance_before=Decimal(balance_before),
-            balance_after=Decimal(balance_before) + Decimal(amount_plus_fees_vat),
-            automatic=True,
-            accept_balance_transfer_id=transfer_id,
-        )
-
     def post(self, request, *args, **kwargs):
         """
         Handles POST HTTP requests
@@ -347,16 +283,6 @@ class InstantDisbursementAPIView(views.APIView):
                 )
                 if not json_response.get("success"):
                     raise ValidationError(json_response.get("message"))
-
-                # create automatic topup request
-                self.create_automatic_topup_request(
-                    user, json_response.get("transaction"), serializer
-                )
-
-                # create automatic topup action
-                self.create_automatic_topup_action(
-                    user, json_response.get("transaction"), amount_plus_fees_vat
-                )
 
             if not user.root.budget.within_threshold(
                 serializer.validated_data['amount'], serializer.validated_data['issuer']
@@ -439,13 +365,13 @@ class InstantDisbursementAPIView(views.APIView):
                 )
                 if user.from_accept and not user.allowed_to_be_bulk:
                     transaction.from_accept = 'single'
-                    transaction.accept_balance_transfer_id = (
-                        json_response.get("transaction")
+                    transaction.accept_balance_transfer_id = json_response.get(
+                        "transaction"
                     )
                     transaction.transaction_type = serializer.validated_data.get(
                         'transaction_type'
                     )
-                    
+
                 elif user.from_accept and user.allowed_to_be_bulk:
                     transaction.from_accept = 'bulk'
                 transaction.save()

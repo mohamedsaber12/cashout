@@ -4,7 +4,7 @@ from .base_views import (  # TopupbalanceAPIView,
     AmanTransactionCallbackHandlerAPIView, BudgetInquiryAPIView,
     BulkTransactionInquiryAPIView, Calculate_fees_and_vat_APIView,
     CancelAmanTransactionAPIView, HoldBalanceAPIView,
-    InstantDisbursementAPIView, ReleaseBalanceAPIView,
+    InstantDisbursementAPIView, ReleaseBalanceAPIView, ReturnBalanceAPIView,
     SingleStepDisbursementAPIView)
 
 app_name = 'instant_api'
@@ -26,6 +26,7 @@ urlpatterns = [
     path('disburse/', InstantDisbursementAPIView.as_view(), name='instant_disburse'),
     path('hold-balance/', HoldBalanceAPIView.as_view(), name='hold_balance'),
     path('release-balance/', ReleaseBalanceAPIView.as_view(), name='release_balance'),
+    path('return-balance/', ReturnBalanceAPIView.as_view(), name='return_balance'),
     path(
         'disburse/single-step/',
         SingleStepDisbursementAPIView.as_view(),

@@ -359,7 +359,7 @@ class Budget(AbstractTimeStamp):
                 )
             )
 
-    def has_enough_hold_balance_release_balance(self, amount):
+    def has_enough_hold_balance_and_release_balance(self, amount):
         """
         Check if the amount to be released won't exceed the current hold balance
         """
@@ -381,6 +381,31 @@ class Budget(AbstractTimeStamp):
             raise ValueError(
                 _(
                     f"Error while checking the amount to be released if within threshold and API Release balance - {e.args}"
+                )
+            )
+
+    def has_enough_hold_balance_and_return_balance(self, amount):
+
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                if amount <= round(budget_obj.hold_balance, 2):
+                    hold_balance_before = budget_obj.hold_balance
+                    current_balance_before = budget_obj.current_balance
+                    budget_obj.current_balance += amount
+                    budget_obj.hold_balance -= amount
+                    budget_obj.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [RETURN HOLD BALANCE API] [{budget_obj.disburser.username}] -- "
+                        f"return hold amount : {amount}, "
+                        f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                    )
+                    return hold_balance_before, True
+                return budget_obj.hold_balance, False
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(
+                    f"Error while returning the amount to balance from hold balance api - {e.args}"
                 )
             )
 

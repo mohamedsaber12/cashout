@@ -62,7 +62,7 @@
 
 <script>
   function logout(){
-    delete_cookie("IDMS_TOKEN", "/", window.location.hostname);
+    delete_cookie("IDMS_TOKEN", "/", ".paymobsolutions.com");
     document.location = "/user/logout";
   }
 

@@ -55,8 +55,9 @@ from users.mixins import (AgentsListPermissionRequired, RootRequiredMixin,
                           UserWithDisbursementPermissionRequired)
 from users.models import Client, EntitySetup, User
 from utilities import messages
-from utilities.models import Budget, ExcelFile
+from utilities.models import Budget, ExcelFile, TopupAction, TopupRequest
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+from utilities.tasks import send_transfer_request_email
 
 from .forms import (AgentForm, AgentFormSet, BalanceInquiryPinForm,
                     ExistingAgentForm, ExistingAgentFormSet,
@@ -69,6 +70,7 @@ from .utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
                     determine_trx_category_and_purpose)
 
+BUDGET_LOGGER = logging.getLogger("custom_budgets")
 DATA_LOGGER = logging.getLogger("disburse")
 SINGLE_STEP_TRANSACTIONS_LOGGER = logging.getLogger("single_step_transactions")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
@@ -1356,6 +1358,66 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
             f"[response] [revert balance] -- {json_response} "
         )
 
+    def create_automatic_topup_request(self, disburser, transfer_id, amount):
+        # send top up request email
+        # create top up request object in database
+        payload = {
+            'amount': amount,
+            'type': 'from_accept_balance',
+            'currency': 'egyptian_pound',
+            'username': disburser.username,
+        }
+        BUDGET_LOGGER.debug(
+            f"[message] [Automatic Transfer Request] [{disburser}] -- payload: {payload}"
+        )
+        # Prepare email message
+        message = _(
+            f"""Dear All,<br><br>
+                <label>Admin Username:       </label> {disburser.root.username}<br/>
+                <label>Admin E-mail:         </label> {disburser.root.email}<br/>
+                <label>Request Date/Time:    </label> {datetime.now().strftime("%d-%m-%Y %H:%M:%S")}<br/>
+                <label>Amount To Be Added:   </label> {amount}<br/>
+                <label>Transfer Type:        </label> From Accept Balance <br/>
+                <label>Currency:             </label> Egyptian Pound <br/><br/>
+                <label>Accept username:  </label> {disburser.username} <br/><br/>Best Regards,"
+            """
+        )
+
+        send_transfer_request_email.delay(
+            disburser.root.username, message, automatic=True
+        )
+        # save top up information
+        TopupRequest.objects.create(
+            client=disburser.root,
+            amount=amount,
+            currency="egyptian_pound",
+            transfer_type="from_accept_balance",
+            username=disburser.username,
+            automatic=True,
+            accept_balance_transfer_id=transfer_id,
+        )
+
+    def create_automatic_topup_action(
+        self, disburser, transfer_id, amount_plus_fees_vat
+    ):
+        # increase current balance with fees and vat
+        # create TopUp action
+        balance_before = disburser.root.budget.current_balance
+        disburser.root.budget.current_balance += amount_plus_fees_vat
+        disburser.root.budget.save()
+        BUDGET_LOGGER.debug(
+            f"[message] [ Automatic Balance Increase] [{disburser}] ==> balance before:- {balance_before}, "
+            f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
+        )
+        TopupAction.objects.create(
+            client=disburser.root,
+            amount=Decimal(amount_plus_fees_vat),
+            balance_before=Decimal(balance_before),
+            balance_after=Decimal(balance_before) + Decimal(amount_plus_fees_vat),
+            automatic=True,
+            accept_balance_transfer_id=transfer_id,
+        )
+
     def post(self, request, *args, **kwargs):
         """Handles POST requests to single step bank transaction"""
         context = {
@@ -1417,15 +1479,17 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 )
 
                 if request.user.from_accept and not request.user.allowed_to_be_bulk:
+                    current_amount_plus_fess_and_vat = (
+                        request.user.root.budget.accumulate_amount_with_fees_and_vat(
+                            data['amount'], data['issuer']
+                        )
+                    )
                     if response.json().get("disbursement_status") in [
                         'failed',
                         'Failed',
                     ]:
                         current_fees_and_vat = 0
                         if data["issuer"] == "bank_card":
-                            current_amount_plus_fess_and_vat = request.user.root.budget.accumulate_amount_with_fees_and_vat(
-                                data['amount'], data['issuer']
-                            )
                             current_fees_and_vat = Decimal(
                                 current_amount_plus_fess_and_vat
                             ) - Decimal(data['amount'])
@@ -1436,6 +1500,23 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                             "fees_amount_cents": str(current_fees_and_vat * 100),
                         }
                         self.revert_balance_to_accept_account(revert_balance_payload)
+                    elif response.json().get("disbursement_status") in [
+                        'Successful',
+                        'successful',
+                    ]:
+                        # create automatic top up request
+                        self.create_automatic_topup_request(
+                            request.user,
+                            response.json().get("accept_balance_transfer_id"),
+                            data["amount"],
+                        )
+
+                        # create automatic topup action
+                        self.create_automatic_topup_action(
+                            request.user,
+                            response.json().get("accept_balance_transfer_id"),
+                            current_amount_plus_fess_and_vat,
+                        )
 
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)
                 data = {

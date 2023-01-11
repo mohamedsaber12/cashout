@@ -157,7 +157,10 @@ def login_view(request):
         else 'data/login.html'
     )
     user = None
-
+    print(request.GET)
+    if request.GET.get("refresh"):
+        return redirect('data:main_view')
+    
     if request.user.is_authenticated:
 
         # this is special case based on business demand for prevent \

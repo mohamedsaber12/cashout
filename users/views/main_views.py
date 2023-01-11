@@ -159,7 +159,7 @@ def login_view(request):
     user = None
     print(request.GET)
     if request.GET.get("refresh"):
-        return redirect('data:main_view')
+        return redirect("/")
     
     if request.user.is_authenticated:
 

@@ -251,6 +251,7 @@ def login_view(request):
                     user_obj,
                     backend="django.contrib.auth.backends.ModelBackend",
                 )
+                return HttpResponseRedirect(reverse('data:main_view'))
         return render(request, login_template, context=context)
 
 

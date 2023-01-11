@@ -449,7 +449,38 @@ class HoldBalanceRequestSerializer(serializers.Serializer):
     sso_user_id = serializers.UUIDField(required=True)
 
     def validate(self, attrs):
-        """Validate Aman issuer needed attributes"""
+        sso_user_id = str(attrs.get("sso_user_id", "")).lower()
+        root_user = RootUser.objects.filter(idms_user_id=sso_user_id, user_type=3)
+        if not root_user.exists():
+            raise serializers.ValidationError(
+                _(f"client with this sso user id {sso_user_id} not found")
+            )
+        root_user = root_user.first()
+        if not root_user.has_custom_budget:
+            raise serializers.ValidationError(
+                _(f"client with this sso user id {sso_user_id} does not has badget")
+            )
+        return attrs
+
+
+class ReleaseBalanceRequestSerializer(serializers.Serializer):
+    """
+    Serializes Release Balance requests
+    """
+
+    amount = serializers.DecimalField(
+        required=True, decimal_places=2, max_digits=9, min_value=Decimal(1.0)
+    )
+    source_product = serializers.CharField(
+        max_length=10,
+        required=True,
+        allow_blank=False,
+        validators=[source_product_validator],
+    )
+    operation_id = serializers.UUIDField(required=True)
+    sso_user_id = serializers.UUIDField(required=True)
+
+    def validate(self, attrs):
         sso_user_id = str(attrs.get("sso_user_id", "")).lower()
         root_user = RootUser.objects.filter(idms_user_id=sso_user_id, user_type=3)
         if not root_user.exists():

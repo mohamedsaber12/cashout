@@ -14,6 +14,7 @@ from django.utils.timezone import datetime, make_aware
 from django.utils.translation import gettext_lazy as _
 from simple_history.admin import SimpleHistoryAdmin
 
+from .date_range_filter import CustomDateRangeFilter
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
@@ -415,6 +416,7 @@ class BalanceManagementOperationsAdmin(admin.ModelAdmin):
         "hold_balance_after",
     ]
     list_filter = [
+        ('created_at', CustomDateRangeFilter),
         "source_product",
         "operation_type",
         "budget",

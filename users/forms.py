@@ -23,12 +23,29 @@ from django.utils.translation import gettext_lazy as _
 from django_otp.forms import OTPAuthenticationFormMixin
 from oauth2_provider.models import Application
 
-from .models import (Brand, CheckerUser, Client, EntitySetup,
-                     InstantAPICheckerUser, InstantAPIViewerUser, Levels,
-                     MakerUser, OnboardUser, RootUser, SupervisorUser,
-                     SupportUser, UploaderUser, User)
-from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
-                      ALLOWED_UPPER_CHARS, send_activation_message)
+from .models import (
+    Brand,
+    CheckerUser,
+    Client,
+    EntitySetup,
+    InstantAPICheckerUser,
+    InstantAPIViewerUser,
+    Levels,
+    MakerUser,
+    OnboardUser,
+    RootUser,
+    SupervisorUser,
+    SupportUser,
+    UploaderUser,
+    User,
+)
+from .signals import (
+    ALLOWED_LOWER_CHARS,
+    ALLOWED_NUMBERS,
+    ALLOWED_SYMBOLS,
+    ALLOWED_UPPER_CHARS,
+    send_activation_message,
+)
 
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 
@@ -36,24 +53,24 @@ SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 def determine_onboarding_permission(user):
     if user.is_vodafone_default_onboarding:
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users', codename='vodafone_default_onboarding'
+            content_type__app_label="users", codename="vodafone_default_onboarding"
         )
     elif user.is_accept_vodafone_onboarding:
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users', codename='accept_vodafone_onboarding'
+            content_type__app_label="users", codename="accept_vodafone_onboarding"
         )
     elif user.is_vodafone_facilitator_onboarding:
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users',
-            codename='vodafone_facilitator_accept_vodafone_onboarding',
+            content_type__app_label="users",
+            codename="vodafone_facilitator_accept_vodafone_onboarding",
         )
     elif user.is_banks_standard_model_onboaring:
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users', codename='banks_standard_model_onboaring'
+            content_type__app_label="users", codename="banks_standard_model_onboaring"
         )
     else:
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users', codename='instant_model_onboarding'
+            content_type__app_label="users", codename="instant_model_onboarding"
         )
     return onboarding_permission
 
@@ -65,11 +82,11 @@ class SetPasswordForm(forms.Form):
     """
 
     password_widget = forms.TextInput(
-        attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'}
+        attrs={"class": "form-control", "type": "password", "autocomplete": "off"}
     )
     error_messages = {
-        'password_mismatch': _("The two passwords fields didn't match."),
-        'weak_password': _("Password must contain at least 8 characters"),
+        "password_mismatch": _("The two passwords fields didn't match."),
+        "weak_password": _("Password must contain at least 8 characters"),
     }
     new_password1 = forms.CharField(
         label=_("New password"),
@@ -90,16 +107,16 @@ class SetPasswordForm(forms.Form):
 
     def clean_new_password2(self):
         """Clean password2 against password1"""
-        password1 = self.cleaned_data.get('new_password1')
-        password2 = self.cleaned_data.get('new_password2')
+        password1 = self.cleaned_data.get("new_password1")
+        password2 = self.cleaned_data.get("new_password2")
 
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError(
-                self.error_messages['password_mismatch'], code='password_mismatch'
+                self.error_messages["password_mismatch"], code="password_mismatch"
             )
         if len(password1) < 8:
             raise forms.ValidationError(
-                self.error_messages['weak_password'], code='weak_password'
+                self.error_messages["weak_password"], code="weak_password"
             )
 
         password_validation.validate_password(password2, self.user)
@@ -120,15 +137,15 @@ class PasswordChangeForm(SetPasswordForm):
     """
 
     password_widget = forms.TextInput(
-        attrs={'class': 'form-control', 'type': 'password', 'autocomplete': 'off'}
+        attrs={"class": "form-control", "type": "password", "autocomplete": "off"}
     )
     error_messages = dict(
         SetPasswordForm.error_messages,
         **{
-            'password_incorrect': _(
+            "password_incorrect": _(
                 "Your old password was entered incorrectly. Please enter it again."
             ),
-            'similar_password': _("Your old password is similar to the new password. "),
+            "similar_password": _("Your old password is similar to the new password. "),
         },
     )
     old_password = forms.CharField(
@@ -136,25 +153,25 @@ class PasswordChangeForm(SetPasswordForm):
         strip=False,
         widget=password_widget,
     )
-    field_order = ['old_password', 'new_password1', 'new_password2']
+    field_order = ["old_password", "new_password1", "new_password2"]
 
     def clean_new_password2(self):
         """Clean password2 against password1 and the old password"""
-        password1 = self.cleaned_data.get('new_password1')
-        password2 = self.cleaned_data.get('new_password2')
-        old_password = self.cleaned_data.get('old_password')
+        password1 = self.cleaned_data.get("new_password1")
+        password2 = self.cleaned_data.get("new_password2")
+        old_password = self.cleaned_data.get("old_password")
 
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError(
-                self.error_messages['password_mismatch'], code='password_mismatch'
+                self.error_messages["password_mismatch"], code="password_mismatch"
             )
         if old_password == password2:
             raise forms.ValidationError(
-                self.error_messages['similar_password'], code='similar_password'
+                self.error_messages["similar_password"], code="similar_password"
             )
         if len(password1) < 8:
             raise forms.ValidationError(
-                self.error_messages['weak_password'], code='weak_password'
+                self.error_messages["weak_password"], code="weak_password"
             )
 
         password_validation.validate_password(password2, self.user)
@@ -166,7 +183,7 @@ class PasswordChangeForm(SetPasswordForm):
 
         if not self.user.check_password(old_password):
             raise forms.ValidationError(
-                self.error_messages['password_incorrect'], code='password_incorrect'
+                self.error_messages["password_incorrect"], code="password_incorrect"
             )
         return old_password
 
@@ -175,7 +192,7 @@ class GroupAdminForm(forms.ModelForm):
     users = forms.ModelMultipleChoiceField(
         queryset=User.objects.none(),
         required=False,
-        widget=FilteredSelectMultiple(verbose_name=_('Users'), is_stacked=False),
+        widget=FilteredSelectMultiple(verbose_name=_("Users"), is_stacked=False),
     )
 
     def __init__(self, *args, **kwargs):
@@ -201,10 +218,10 @@ class GroupAdminForm(forms.ModelForm):
 
     class Meta:
         model = Group
-        fields = ['name', 'users', 'permissions']
+        fields = ["name", "users", "permissions"]
 
     def clean_name(self):
-        name = self.cleaned_data['name']
+        name = self.cleaned_data["name"]
         if not self.request.user.is_superuser and self.request.user.username in name:
             return name
         elif self.request.user.is_superuser:
@@ -219,7 +236,7 @@ class GroupAdminForm(forms.ModelForm):
         group.hierarchy = self.request.user.hierarchy
         group.save()
         if group.pk:
-            user_choices = self.cleaned_data['users']
+            user_choices = self.cleaned_data["users"]
             group.user_set.clear()
             for user in user_choices:
                 group.user_set.add(user)
@@ -232,7 +249,7 @@ class GroupAdminForm(forms.ModelForm):
 class UserForm(UserCreationForm):
     class Meta:
         model = User
-        exclude = ['otp', 'hierarchy']
+        exclude = ["otp", "hierarchy"]
 
     def __init__(self, *args, **kwargs):
         super(UserForm, self).__init__(*args, **kwargs)
@@ -249,7 +266,7 @@ class UserForm(UserCreationForm):
                 pass
 
     def clean_username(self):
-        name = self.cleaned_data['username']
+        name = self.cleaned_data["username"]
         if not self.request.user.is_superuser and self.request.user.username in name:
             return name
         elif self.request.user.is_superuser:
@@ -287,12 +304,12 @@ class RootCreationForm(forms.ModelForm):
     """
 
     numeric_regex = RegexValidator(
-        regex='^[0-9.]*$',
-        message='Only numeric characters are allowed.',
-        code='nomatch',
+        regex="^[0-9.]*$",
+        message="Only numeric characters are allowed.",
+        code="nomatch",
     )
     alphaCharacters = RegexValidator(
-        r'^[a-zA-Z]*$', 'Only alpha characters are allowed.'
+        r"^[a-zA-Z]*$", "Only alpha characters are allowed."
     )
 
     # Agents onboarding choices
@@ -309,66 +326,66 @@ class RootCreationForm(forms.ModelForm):
     ]
 
     vodafone_facilitator_identifier = forms.CharField(
-        label=_('Unique identifier ex: 5.10593.00.00.100000'),
+        label=_("Unique identifier ex: 5.10593.00.00.100000"),
         required=False,
         max_length=150,
         validators=[MinLengthValidator(10), numeric_regex],
     )
     mobile_number = forms.CharField(
-        label=_('Mobile number'),
+        label=_("Mobile number"),
         required=False,
         max_length=11,
         validators=[MinLengthValidator(11)],
     )
     smsc_sender_name = forms.CharField(
-        label=_('SMSC sender name'),
+        label=_("SMSC sender name"),
         required=False,
         max_length=11,
         validators=[alphaCharacters],
     )
     agents_onboarding_choice = forms.ChoiceField(
-        label=_('Agent Onboarding Choice'),
+        label=_("Agent Onboarding Choice"),
         required=False,
         choices=AGENTS_ONBOARDING_CHOICES,
     )
 
     class Meta:
         model = RootUser
-        fields = ['username', 'email']
+        fields = ["username", "email"]
         field_classes = {}
 
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request', None)
+        self.request = kwargs.pop("request", None)
         super(RootCreationForm, self).__init__(*args, **kwargs)
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault(
-                'placeholder', self.fields[field].label
+                "placeholder", self.fields[field].label
             )
 
         if (
             not self.request.user.is_vodafone_default_onboarding
             and not self.request.user.is_banks_standard_model_onboaring
         ):
-            self.fields['smsc_sender_name'].widget = forms.HiddenInput()
-            self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
-            self.fields['mobile_number'].widget = forms.HiddenInput()
+            self.fields["smsc_sender_name"].widget = forms.HiddenInput()
+            self.fields["agents_onboarding_choice"].widget = forms.HiddenInput()
+            self.fields["mobile_number"].widget = forms.HiddenInput()
 
         if self.request.user.is_banks_standard_model_onboaring:
-            self.fields['agents_onboarding_choice'].widget = forms.HiddenInput()
-            self.fields['smsc_sender_name'].widget = forms.HiddenInput()
+            self.fields["agents_onboarding_choice"].widget = forms.HiddenInput()
+            self.fields["smsc_sender_name"].widget = forms.HiddenInput()
 
         if self.request.user.is_vodafone_facilitator_onboarding:
-            self.fields['vodafone_facilitator_identifier'].required = True
+            self.fields["vodafone_facilitator_identifier"].required = True
         else:
-            self.fields['vodafone_facilitator_identifier'].widget = forms.HiddenInput()
+            self.fields["vodafone_facilitator_identifier"].widget = forms.HiddenInput()
 
     def clean_username(self):
-        name = self.cleaned_data['username']
+        name = self.cleaned_data["username"]
         return name
 
     def clean_vodafone_facilitator_identifier(self):
-        facilitator_identifier = self.cleaned_data['vodafone_facilitator_identifier']
+        facilitator_identifier = self.cleaned_data["vodafone_facilitator_identifier"]
 
         if (
             facilitator_identifier
@@ -386,7 +403,7 @@ class RootCreationForm(forms.ModelForm):
         :return: the new admin user with its new hierarchy
         """
         maximum = max(
-            RootUser.objects.values_list('hierarchy', flat=True), default=False
+            RootUser.objects.values_list("hierarchy", flat=True), default=False
         )
         maximum = 0 if not maximum else maximum
 
@@ -419,51 +436,51 @@ class RootCreationForm(forms.ModelForm):
         user.save()
 
         if self.request.user.is_vodafone_default_onboarding:
-            user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
-            user.mobile_no = self.cleaned_data['mobile_number'].strip()
+            user.smsc_sender_name = self.cleaned_data["smsc_sender_name"].strip()
+            user.mobile_no = self.cleaned_data["mobile_number"].strip()
             user.agents_onboarding_choice = int(
-                self.cleaned_data['agents_onboarding_choice'].strip()
+                self.cleaned_data["agents_onboarding_choice"].strip()
             )
             user.user_permissions.add(
                 Permission.objects.get(
-                    content_type__app_label='users',
-                    codename='vodafone_default_onboarding',
+                    content_type__app_label="users",
+                    codename="vodafone_default_onboarding",
                 )
             )
         elif self.request.user.is_accept_vodafone_onboarding:
             user.user_permissions.add(
                 Permission.objects.get(
-                    content_type__app_label='users',
-                    codename='accept_vodafone_onboarding',
+                    content_type__app_label="users",
+                    codename="accept_vodafone_onboarding",
                 )
             )
         elif self.request.user.is_vodafone_facilitator_onboarding:
             user.vodafone_facilitator_identifier = self.cleaned_data[
-                'vodafone_facilitator_identifier'
+                "vodafone_facilitator_identifier"
             ].strip()
             user.user_permissions.add(
                 Permission.objects.get(
-                    content_type__app_label='users',
-                    codename='vodafone_facilitator_accept_vodafone_onboarding',
+                    content_type__app_label="users",
+                    codename="vodafone_facilitator_accept_vodafone_onboarding",
                 )
             )
         elif self.request.user.is_banks_standard_model_onboaring:
-            user.smsc_sender_name = self.cleaned_data['smsc_sender_name'].strip()
-            user.mobile_no = self.cleaned_data['mobile_number'].strip()
+            user.smsc_sender_name = self.cleaned_data["smsc_sender_name"].strip()
+            user.mobile_no = self.cleaned_data["mobile_number"].strip()
             user.agents_onboarding_choice = 0
             user.user_permissions.add(
                 Permission.objects.get(
-                    content_type__app_label='users',
-                    codename='banks_standard_model_onboaring',
+                    content_type__app_label="users",
+                    codename="banks_standard_model_onboaring",
                 )
             )
         else:
             user.user_permissions.add(
                 Permission.objects.get(
-                    content_type__app_label='users', codename='instant_model_onboarding'
+                    content_type__app_label="users", codename="instant_model_onboarding"
                 ),
                 Permission.objects.get(
-                    content_type__app_label='users', codename='has_instant_disbursement'
+                    content_type__app_label="users", codename="has_instant_disbursement"
                 ),
             )
 
@@ -476,12 +493,12 @@ class SupportUserCreationForm(forms.ModelForm):
     """
 
     can_onboard_entities = forms.BooleanField(
-        initial=False, required=False, label=_('Can On-board Entities?')
+        initial=False, required=False, label=_("Can On-board Entities?")
     )
 
     class Meta:
         model = SupportUser
-        fields = ['username', 'email', 'can_onboard_entities']
+        fields = ["username", "email", "can_onboard_entities"]
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -489,10 +506,10 @@ class SupportUserCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault(
-                'placeholder', self.fields[field].label
+                "placeholder", self.fields[field].label
             )
             # TODO: Enable only integration patch users to onboard other entities
-            self.fields['can_onboard_entities'].widget = forms.HiddenInput()
+            self.fields["can_onboard_entities"].widget = forms.HiddenInput()
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -510,7 +527,7 @@ class OnboardUserCreationForm(forms.ModelForm):
 
     class Meta:
         model = OnboardUser
-        fields = ['username', 'email']
+        fields = ["username", "email"]
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -518,7 +535,7 @@ class OnboardUserCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault(
-                'placeholder', self.fields[field].label
+                "placeholder", self.fields[field].label
             )
 
     def save(self, commit=True):
@@ -538,7 +555,7 @@ class SupervisorUserCreationForm(forms.ModelForm):
 
     class Meta:
         model = SupervisorUser
-        fields = ['username', 'email']
+        fields = ["username", "email"]
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
@@ -546,7 +563,7 @@ class SupervisorUserCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault(
-                'placeholder', self.fields[field].label
+                "placeholder", self.fields[field].label
             )
 
     def save(self, commit=True):
@@ -562,10 +579,10 @@ class SupervisorUserCreationForm(forms.ModelForm):
 class UserChangeForm(AbstractUserChangeForm):
     class Meta:
         model = User
-        fields = '__all__'
+        fields = "__all__"
 
     def clean_groups(self):
-        form_groups = self.cleaned_data['groups']
+        form_groups = self.cleaned_data["groups"]
         try:
             parent_joined_groups = self.instance.groups_joined().exclude(
                 hierarchy=self.instance.hierarchy
@@ -580,58 +597,58 @@ class ProfileEditForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
-            'first_name',
-            'last_name',
-            'mobile_no',
-            'email',
-            'title',
-            'avatar_thumbnail',
+            "first_name",
+            "last_name",
+            "mobile_no",
+            "email",
+            "title",
+            "avatar_thumbnail",
         ]
 
 
 class LevelEditForm(forms.ModelForm):
     class Meta:
         model = User
-        fields = ['level']
+        fields = ["level"]
 
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["level"].choices = [('', '------')] + [
-            (r.id, f'{r}')
+        self.fields["level"].choices = [("", "------")] + [
+            (r.id, f"{r}")
             for r in Levels.objects.filter(
                 created__hierarchy=request.user.hierarchy
-            ).order_by('max_amount_can_be_disbursed')
+            ).order_by("max_amount_can_be_disbursed")
         ]
 
-        self.fields["level"].label = _('Level')
+        self.fields["level"].label = _("Level")
 
 
 class CallbackURLEditForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
-            'callback_url',
+            "callback_url",
         ]
 
 
 class LevelForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
-        self.request = kwargs.pop('request')
+        self.request = kwargs.pop("request")
         super().__init__(*args, **kwargs)
 
     class Meta:
         model = Levels
-        exclude = ['created', 'level_of_authority']
+        exclude = ["created", "level_of_authority"]
 
     def clean_max_amount_can_be_disbursed(self):
-        amount = self.cleaned_data.get('max_amount_can_be_disbursed')
+        amount = self.cleaned_data.get("max_amount_can_be_disbursed")
 
         if not amount and amount != 0:
             return amount
 
         if amount <= 0:
-            raise forms.ValidationError(_('Amount must be greater than 0'))
+            raise forms.ValidationError(_("Amount must be greater than 0"))
 
         levels_qs = Levels.objects.filter(
             created=self.request.user, max_amount_can_be_disbursed=amount
@@ -640,7 +657,7 @@ class LevelForm(forms.ModelForm):
             levels_qs = levels_qs.exclude(id=self.instance.id)
 
         if levels_qs.exists():
-            raise forms.ValidationError(_('Level with this amount already exist'))
+            raise forms.ValidationError(_("Level with this amount already exist"))
         return amount
 
     def save(self, commit=True):
@@ -653,12 +670,12 @@ class LevelForm(forms.ModelForm):
 
 class MakerCreationForm(forms.ModelForm):
 
-    first_name = forms.CharField(label=_('First name'))
-    last_name = forms.CharField(label=_('Last name'))
+    first_name = forms.CharField(label=_("First name"))
+    last_name = forms.CharField(label=_("Last name"))
 
     class Meta:
         model = MakerUser
-        fields = ['first_name', 'last_name', 'mobile_no', 'email']
+        fields = ["first_name", "last_name", "mobile_no", "email"]
 
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
@@ -666,22 +683,22 @@ class MakerCreationForm(forms.ModelForm):
         for field in iter(self.fields):
             # get current classes from Meta
             classes = self.fields[field].widget.attrs.get("class")
-            if field == 'is_staff':
+            if field == "is_staff":
                 if classes is not None:
                     classes += " icheckbox_flat-green checked"
                 else:
                     classes = "icheckbox_flat-green"
-                self.fields[field].widget.attrs.update({'class': classes})
+                self.fields[field].widget.attrs.update({"class": classes})
             else:
                 if classes is not None:
                     classes += " form-control"
                 else:
                     classes = "form-control"
-                self.fields[field].widget.attrs.update({'class': classes})
+                self.fields[field].widget.attrs.update({"class": classes})
         self.request = request
 
     def clean_email(self):
-        email = self.cleaned_data.get('email')
+        email = self.cleaned_data.get("email")
         uploader = UploaderUser.objects.filter(email=email).first()
         if uploader and uploader.data_type() == 3:
             uploader.user_type = 5
@@ -711,20 +728,20 @@ class MakerCreationForm(forms.ModelForm):
 
 class CheckerCreationForm(forms.ModelForm):
 
-    first_name = forms.CharField(label=_('First name'))
-    last_name = forms.CharField(label=_('Last name'))
+    first_name = forms.CharField(label=_("First name"))
+    last_name = forms.CharField(label=_("Last name"))
 
     def __init__(self, *args, request, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields["level"].choices = [('', '------')] + [
-            (r.id, f'{r}')
+        self.fields["level"].choices = [("", "------")] + [
+            (r.id, f"{r}")
             for r in Levels.objects.filter(
                 created__hierarchy=request.user.hierarchy
-            ).order_by('max_amount_can_be_disbursed')
+            ).order_by("max_amount_can_be_disbursed")
         ]
 
-        self.fields["level"].label = _('Level')
+        self.fields["level"].label = _("Level")
 
         for field in iter(self.fields):
             # get current classes from Meta
@@ -733,7 +750,7 @@ class CheckerCreationForm(forms.ModelForm):
                 classes += " form-control"
             else:
                 classes = "form-control"
-            self.fields[field].widget.attrs.update({'class': classes})
+            self.fields[field].widget.attrs.update({"class": classes})
         self.request = request
 
     def save(self, commit=True):
@@ -753,7 +770,7 @@ class CheckerCreationForm(forms.ModelForm):
 
     class Meta:
         model = CheckerUser
-        fields = ['first_name', 'last_name', 'email', 'mobile_no', 'level']
+        fields = ["first_name", "last_name", "email", "mobile_no", "level"]
 
 
 class BaseInstantMemberCreationForm(forms.ModelForm):
@@ -762,7 +779,7 @@ class BaseInstantMemberCreationForm(forms.ModelForm):
     """
 
     error_messages = {
-        'password_mismatch': _("The two password fields didn't match."),
+        "password_mismatch": _("The two password fields didn't match."),
     }
     password1 = forms.CharField(
         label=_("Password"),
@@ -783,7 +800,7 @@ class BaseInstantMemberCreationForm(forms.ModelForm):
 
         for field in self.fields:
             self.fields[field].widget.attrs.setdefault(
-                'placeholder', self.fields[field].label
+                "placeholder", self.fields[field].label
             )
 
     def clean_password2(self):
@@ -791,7 +808,7 @@ class BaseInstantMemberCreationForm(forms.ModelForm):
         password2 = self.cleaned_data.get("password2")
         if password1 and password2 and password1 != password2:
             raise forms.ValidationError(
-                self.error_messages['password_mismatch'], code='password_mismatch'
+                self.error_messages["password_mismatch"], code="password_mismatch"
             )
 
         password_validation.validate_password(password2)
@@ -826,10 +843,10 @@ class ViewerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.save()
 
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users', codename='instant_model_onboarding'
+            content_type__app_label="users", codename="instant_model_onboarding"
         )
         api_docs_permission = Permission.objects.get(
-            content_type__app_label='users', codename='can_view_api_docs'
+            content_type__app_label="users", codename="can_view_api_docs"
         )
         user.user_permissions.add(onboarding_permission, api_docs_permission)
         return user
@@ -875,7 +892,7 @@ class APICheckerUserCreationModelForm(BaseInstantMemberCreationForm):
         user.save()
 
         onboarding_permission = Permission.objects.get(
-            content_type__app_label='users', codename='instant_model_onboarding'
+            content_type__app_label="users", codename="instant_model_onboarding"
         )
         user.user_permissions.add(onboarding_permission)
         self.create_oauth2_provider_app(user)
@@ -988,16 +1005,16 @@ class OTPTokenForm(OTPAuthenticationFormMixin, forms.Form):
 
 class ForgotPasswordForm(forms.Form):
 
-    email = forms.EmailField(label='')
-    email2 = forms.EmailField(label='')
-    email.widget.attrs.update({'class': 'form-control', 'placeholder': _('Email')})
+    email = forms.EmailField(label="")
+    email2 = forms.EmailField(label="")
+    email.widget.attrs.update({"class": "form-control", "placeholder": _("Email")})
     email2.widget.attrs.update(
-        {'class': 'form-control', 'placeholder': _('Confirm Email')}
+        {"class": "form-control", "placeholder": _("Confirm Email")}
     )
 
     def clean(self):
-        email = self.cleaned_data.get('email')
-        email2 = self.cleaned_data.get('email2')
+        email = self.cleaned_data.get("email")
+        email2 = self.cleaned_data.get("email2")
         if not (email and email2):
             return
         if email != email2:
@@ -1011,17 +1028,17 @@ class ForgotPasswordForm(forms.Form):
 
     def send_email(self):
         MESSAGE = (
-            'Dear <strong>{0}</strong><br><br>'
+            "Dear <strong>{0}</strong><br><br>"
             'Please follow <a href="{1}" ><strong>this link</strong></a> to reset password, <br>'
-            'Then login with your username: <strong>{2}</strong> and your new password <br><br>'
-            'Thanks, BR'
+            "Then login with your username: <strong>{2}</strong> and your new password <br><br>"
+            "Thanks, BR"
         )
 
         # one time token
         token = default_token_generator.make_token(self.user)
         uid = urlsafe_base64_encode(force_bytes(self.user.pk))
         url = settings.BASE_URL + reverse(
-            'users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}
+            "users:password_reset_confirm", kwargs={"uidb64": uid, "token": token}
         )
 
         # send sms message
@@ -1029,8 +1046,8 @@ class ForgotPasswordForm(forms.Form):
             send_activation_message(self.user, url, True)
 
         from_email = settings.SERVER_EMAIL
-        sub_subject = f'[{self.user.brand.mail_subject}]'
-        subject = "{}{}".format(sub_subject, _(' Password Notification'))
+        sub_subject = f"[{self.user.brand.mail_subject}]"
+        subject = "{}{}".format(sub_subject, _(" Password Notification"))
         recipient_list = [self.user.email]
         message = MESSAGE.format(
             self.user.first_name or self.user.username, url, self.user.username
@@ -1048,14 +1065,14 @@ class ClientFeesForm(forms.ModelForm):
     Form for add client fees profile at the client on-boarding phase
     """
 
-    CHOICES = ((100, 'Full'), (50, 'half'), (0, 'No fees'))
+    CHOICES = ((100, "Full"), (50, "half"), (0, "No fees"))
     fees_percentage = forms.ChoiceField(
         label=_("Fees"), widget=forms.Select, choices=CHOICES
     )
 
     class Meta:
         model = Client
-        fields = ('fees_percentage',)
+        fields = ("fees_percentage",)
 
     def save(self, commit=True):
         client = super().save(commit=False)
@@ -1074,7 +1091,7 @@ class CustomClientProfilesForm(forms.ModelForm):
 
     class Meta:
         model = Client
-        fields = ['custom_profile']
+        fields = ["custom_profile"]
 
 
 class OnboardingApiClientForm(forms.Form):
@@ -1083,14 +1100,14 @@ class OnboardingApiClientForm(forms.Form):
     """
 
     client_name = forms.CharField(
-        label=_('Client Name'),
+        label=_("Client Name"),
         required=True,
         widget=forms.TextInput(
             attrs={
-                'class': 'form-control',
-                'id': 'client_name',
-                'name': 'client_name',
-                'placeholder': 'Enter company name',
+                "class": "form-control",
+                "id": "client_name",
+                "name": "client_name",
+                "placeholder": "Enter company name",
             }
         ),
     )
@@ -1099,10 +1116,10 @@ class OnboardingApiClientForm(forms.Form):
         super().__init__(*args, **kwargs)
 
     def clean_client_name(self):
-        client_name = self.cleaned_data.get('client_name', None)
+        client_name = self.cleaned_data.get("client_name", None)
         if not client_name:
-            raise forms.ValidationError(_('Invalid company name'))
-        elif any(e in str(client_name) for e in '!%@*+&'):
+            raise forms.ValidationError(_("Invalid company name"))
+        elif any(e in str(client_name) for e in "!%@*+&"):
             raise forms.ValidationError(
                 _("Symbols like !%*+@& not allowed in client name")
             )
@@ -1110,7 +1127,7 @@ class OnboardingApiClientForm(forms.Form):
             username=f'{client_name.strip().lower().replace(" ", "_")}_integration_admin'
         )
         if root_exist.exists():
-            raise forms.ValidationError(_('Client already exist with this name'))
+            raise forms.ValidationError(_("Client already exist with this name"))
         return client_name
 
 
@@ -1125,13 +1142,43 @@ class Vodafone_ChangePinForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(Vodafone_ChangePinForm, self).clean()
-        password = cleaned_data.get('password')
-        new_pin = cleaned_data.get('new_pin')
-        confirm_pin = cleaned_data.get('confirm_pin')
+        password = cleaned_data.get("password")
+        new_pin = cleaned_data.get("new_pin")
+        confirm_pin = cleaned_data.get("confirm_pin")
         if not self.user.check_password(password):
-            raise forms.ValidationError('Invalid password')
+            raise forms.ValidationError("Invalid password")
         if not new_pin.isdigit():
-            raise forms.ValidationError('pin must be numeric only')
+            raise forms.ValidationError("pin must be numeric only")
 
         if not new_pin == confirm_pin:
-            raise forms.ValidationError('new pin must be equal to the confirm_pin')
+            raise forms.ValidationError("new pin must be equal to the confirm_pin")
+
+
+class CreationNewMerchantForm(forms.Form):
+
+    username = forms.CharField(max_length=100, required=True)
+
+    mobile_number = forms.CharField(max_length=100, required=True)
+
+    email = forms.EmailField(max_length=100, required=False)
+
+    idms_user_id = forms.CharField(max_length=100, required=True)
+
+    mid = forms.IntegerField(required=True)
+    CHOICES = [
+        ("integration", "Integration"),
+        ("portal", "Portal"),
+    ]
+    onboard_business_model = forms.ChoiceField(
+        widget=forms.RadioSelect,
+        choices=CHOICES,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CreationNewMerchantForm, self).__init__(*args, **kwargs)
+
+        self.fields["username"].widget.attrs["readonly"] = True
+        self.fields["mobile_number"].widget.attrs["readonly"] = True
+        self.fields["email"].widget.attrs["readonly"] = True
+        self.fields["idms_user_id"].widget.attrs["readonly"] = True
+        self.fields["mid"].widget.attrs["readonly"] = True

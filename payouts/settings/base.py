@@ -10,6 +10,9 @@ from django.utils.translation import gettext_lazy as _
 
 from ..custom_logging import CUSTOM_LOGGING
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+
+
 """
 Django settings for payouts project.
 

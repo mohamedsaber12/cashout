@@ -253,6 +253,8 @@ def deliver_mail_to_multiple_recipients_with_attachment(
     subject = None
     if user_obj.is_instantapiviewer:
         subject = f'[{user_obj.root.brand.mail_subject}]' + subject_tail
+    elif user_obj.is_system_admin:
+        subject = subject_tail
     else:
         subject = f'[{user_obj.brand.mail_subject}]' + subject_tail
     recipient_list = [recipient.get('email') for recipient in recipients]

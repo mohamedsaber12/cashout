@@ -211,6 +211,14 @@ sessions_urls = [
     ),
 ]
 
+system_urls = [
+    path(
+        'creation/admin/<token>/',
+        views.OnboardingNewMerchant.as_view(),
+        name='creation_admin',
+    ),
+]
+
 urlpatterns = [
     path('user/login/', views.login_view, name='user_login_view'),
     path('user/logout/', views.ourlogout, name='logout'),
@@ -242,3 +250,4 @@ urlpatterns += instant_urls
 urlpatterns += password_handling_urls
 urlpatterns += oauth2_provider_urls
 urlpatterns += sessions_urls
+urlpatterns += system_urls

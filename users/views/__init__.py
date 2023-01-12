@@ -2,6 +2,7 @@ from .clients_views import (ClientFeesSetup, ClientFeesUpdate, Clients,
                             CustomClientFeesProfilesUpdateView,
                             SuperAdminCancelsRootSetupView,
                             SuperAdminFeesProfileTemplateView,
+                            OnboardingNewMerchant,
                             SuperAdminRootSetup, toggle_client)
 from .disbursement_setups_views import (AddCheckerView, AddMakerView,
                                         BaseFormsetView, CategoryFormView,

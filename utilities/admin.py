@@ -155,6 +155,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
         "created_at",
         "created_by",
         "current_balance",
+        "hold_balance",
     ]
     search_fields = ["disburser__username", "created_by__username"]
     ordering = ["-updated_at", "-created_at"]

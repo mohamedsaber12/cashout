@@ -6,9 +6,11 @@ import json
 import logging
 import random
 
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import Permission
+from django.core.mail import EmailMultiAlternatives
 from django.db.models import Q
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -25,7 +27,6 @@ from users.models.instant_api_checker import InstantAPICheckerUser
 from users.models.instant_api_viewer import InstantAPIViewerUser
 from utilities.logging import logging_message
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
-from utilities.tasks import send_transfer_request_email
 
 from ..forms import (ClientFeesForm, CreationNewMerchantForm,
                      CustomClientProfilesForm, RootCreationForm)
@@ -36,6 +37,8 @@ from ..mixins import (
     SuperRequiredMixin,
     SuperWithAcceptVFAndVFFacilitatorOnboardingPermissionRequired)
 from ..models import Client, EntitySetup, RootUser, Setup, User
+
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 DELETE_USER_VIEW_LOGGER = logging.getLogger("delete_user_view")
@@ -828,8 +831,16 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                     """
                 )
 
-            send_transfer_request_email.delay(root.username, message)
-            return root
+            from_email = settings.SERVER_EMAIL
+            subject = "{}{}".format(root.username, _(" -Paymob Send Credentials"))
+            recipient_list = [dashboard_user.email]
+
+            mail_to_be_sent = EmailMultiAlternatives(
+                subject, message, from_email, recipient_list
+            )
+            mail_to_be_sent.attach_alternative(message, "text/html")
+            mail_to_be_sent.send()
+            SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")
 
         except Exception as err:
             logging_message(

@@ -1,74 +1,55 @@
 import json
 import logging
-from urllib import request
-from data.utils import paginator
-from rest_framework import status, viewsets
-from instant_cashin.models import InstantTransaction
 
 import requests
 import xlrd
+from django.conf import settings
+from django.contrib.auth.models import Permission
+from django.core.mail import EmailMultiAlternatives
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.urls import reverse_lazy
 from django.utils import translation
+from django.utils.timezone import datetime, make_aware
 from django.utils.translation import gettext as _
 from requests.exceptions import HTTPError
-from rest_framework import status
-from rest_framework.authentication import SessionAuthentication, TokenAuthentication
+from rest_framework import status, viewsets
+from rest_framework.authentication import (SessionAuthentication,
+                                           TokenAuthentication)
 from rest_framework.generics import UpdateAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthentication
-from rest_framework.pagination import PageNumberPagination
+from rest_framework_expiring_authtoken.authentication import \
+    ExpiringTokenAuthentication
 
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
+from instant_cashin.models import InstantTransaction
 from instant_cashin.utils import get_from_env
-from users.models import (
-    CheckerUser,
-    Client,
-    EntitySetup,
-    RootUser,
-    Setup,
-    SuperAdminUser,
-    User,
-)
+from users.models import (CheckerUser, Client, EntitySetup, RootUser, Setup,
+                          SuperAdminUser, User)
 from users.models.access_token import AccessToken
 from utilities.custom_requests import CustomRequests
 from utilities.functions import custom_budget_logger, get_value_from_env
-from utilities.messages import (
-    MSG_DISBURSEMENT_ERROR,
-    MSG_DISBURSEMENT_IS_RUNNING,
-    MSG_PIN_INVALID,
-)
-
-from ..models import Agent, DisbursementData, DisbursementDocData
-from .permission_classes import BlacklistPermission
-from .serializers import (
-    DisbursementCallBackSerializer,
-    DisbursementSerializer,
-    DisbursementDataSerializer,
-    InstantTransactionSerializer,
-    Merchantserializer,
-    CreateMerchantserializer,
-)
-from ..tasks import BulkDisbursementThroughOneStepCashin
-import requests
-import json
-
-from django.utils.timezone import datetime, make_aware
-from users.models import Client, RootUser, User, Setup, EntitySetup
-from utilities.models import Budget, CallWalletsModerator, FeeSetup
-from instant_cashin.utils import get_from_env
 from utilities.logging import logging_message
-from django.contrib.auth.models import Permission
-from django.urls import reverse_lazy
-from .serializers import SingleStepserializer
+from utilities.messages import (MSG_DISBURSEMENT_ERROR,
+                                MSG_DISBURSEMENT_IS_RUNNING, MSG_PIN_INVALID)
+from utilities.models import Budget, CallWalletsModerator, FeeSetup
 from utilities.tasks import send_transfer_request_email
 
+from ..models import Agent, DisbursementData, DisbursementDocData
+from ..tasks import BulkDisbursementThroughOneStepCashin
+from .permission_classes import BlacklistPermission
+from .serializers import (CreateMerchantserializer,
+                          DisbursementCallBackSerializer,
+                          DisbursementDataSerializer, DisbursementSerializer,
+                          InstantTransactionSerializer, Merchantserializer,
+                          SingleStepserializer)
 
+SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 DATA_LOGGER = logging.getLogger("disburse")
@@ -729,7 +710,7 @@ class CreateSingleStepTransacton(APIView):
             admin_email = data["admin_email"]
             idms_user_id = data["idms_user_id"]
             root = self.onbordnewadmin(user_name, admin_email, idms_user_id)
-        except (Exception, ValueError) as e:
+        except (Exception, ValueError):
             error_msg = (
                 "Process stopped during an internal error, please can you try again."
             )
@@ -787,7 +768,7 @@ class CreateSingleStepTransacton(APIView):
             }
             return Response(response.json(), status=status.HTTP_201_CREATED)
 
-        except Exception as e:
+        except Exception:
             error_msg = (
                 "Process stopped during an internal error, please can you try again."
             )
@@ -985,7 +966,7 @@ class OnboardMerchant(APIView):
                 data = {"status": status.HTTP_201_CREATED, "message": "Created"}
             return Response(data, status=status.HTTP_201_CREATED)
 
-        except (Exception, ValueError) as e:
+        except (Exception, ValueError):
             error_msg = (
                 "Process stopped during an internal error, please can you try again."
             )
@@ -1205,7 +1186,19 @@ class SendMailForCreationAdmin(APIView):
                 <label>Best Regards</label>,
                 """
             )
+            from_email = settings.SERVER_EMAIL
+            subject = "{}".format(_("Onboarding New Client"))
+            recipient_list = [
+                dict(email=email)
+                for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
+            ]
 
+            mail_to_be_sent = EmailMultiAlternatives(
+                subject, message, from_email, recipient_list
+            )
+            mail_to_be_sent.attach_alternative(message, "text/html")
+            mail_to_be_sent.send()
+            SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")
             send_transfer_request_email.delay(request.user.username, message)
 
             data = {"status": status.HTTP_201_CREATED, "message": "Created"}

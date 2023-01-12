@@ -168,6 +168,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
                 "fields": (
                     "total_disbursed_amount",
                     "current_balance",
+                    "hold_balance",
                     "add_new_amount",
                     "fx_rate",
                     "updated_at",

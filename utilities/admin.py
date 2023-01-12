@@ -416,6 +416,8 @@ class BalanceManagementOperationsAdmin(admin.ModelAdmin):
     ]
     list_filter = [
         "source_product",
+        "operation_type",
+        "budget",
     ]
 
 

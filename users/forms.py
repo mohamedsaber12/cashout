@@ -23,29 +23,12 @@ from django.utils.translation import gettext_lazy as _
 from django_otp.forms import OTPAuthenticationFormMixin
 from oauth2_provider.models import Application
 
-from .models import (
-    Brand,
-    CheckerUser,
-    Client,
-    EntitySetup,
-    InstantAPICheckerUser,
-    InstantAPIViewerUser,
-    Levels,
-    MakerUser,
-    OnboardUser,
-    RootUser,
-    SupervisorUser,
-    SupportUser,
-    UploaderUser,
-    User,
-)
-from .signals import (
-    ALLOWED_LOWER_CHARS,
-    ALLOWED_NUMBERS,
-    ALLOWED_SYMBOLS,
-    ALLOWED_UPPER_CHARS,
-    send_activation_message,
-)
+from .models import (Brand, CheckerUser, Client, EntitySetup,
+                     InstantAPICheckerUser, InstantAPIViewerUser, Levels,
+                     MakerUser, OnboardUser, RootUser, SupervisorUser,
+                     SupportUser, UploaderUser, User)
+from .signals import (ALLOWED_LOWER_CHARS, ALLOWED_NUMBERS, ALLOWED_SYMBOLS,
+                      ALLOWED_UPPER_CHARS, send_activation_message)
 
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 
@@ -1156,15 +1139,54 @@ class Vodafone_ChangePinForm(forms.Form):
 
 class CreationNewMerchantForm(forms.Form):
 
-    username = forms.CharField(max_length=100, required=True)
+    username = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "vTextField",
+            }
+        ),
+    )
 
-    mobile_number = forms.CharField(max_length=100, required=True)
+    mobile_number = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "vTextField",
+            }
+        ),
+    )
 
-    email = forms.EmailField(max_length=100, required=False)
+    email = forms.EmailField(
+        max_length=100,
+        required=False,
+        widget=forms.TextInput(
+            attrs={
+                "class": "vTextField",
+            }
+        ),
+    )
 
-    idms_user_id = forms.CharField(max_length=100, required=True)
+    idms_user_id = forms.CharField(
+        max_length=100,
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "vTextField",
+            }
+        ),
+    )
 
-    mid = forms.IntegerField(required=True)
+    mid = forms.IntegerField(
+        required=True,
+        widget=forms.TextInput(
+            attrs={
+                "class": "vTextField",
+            }
+        ),
+    )
     CHOICES = [
         ("integration", "Integration"),
         ("portal", "Portal"),

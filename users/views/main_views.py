@@ -78,7 +78,7 @@ class LevelUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
 
 
 @method_decorator(
-    ratelimit(key='ip', rate='7/1m', method='POST', block=True), name='post'
+    ratelimit(key='user_or_ip', rate='7/1m', method='POST', block=True), name='post'
 )
 class OTPLoginView(FormView):
     """

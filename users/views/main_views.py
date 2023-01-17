@@ -1,13 +1,15 @@
 import logging
 
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import login, logout
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils.decorators import method_decorator
 from django.views import View
 from django.views.generic import DetailView, UpdateView
 from django.views.generic.edit import FormView
+from ratelimit.decorators import ratelimit
 from rest_framework.authtoken.serializers import AuthTokenSerializer
 from rest_framework.response import Response
 from rest_framework.status import HTTP_400_BAD_REQUEST
@@ -15,7 +17,8 @@ from rest_framework_expiring_authtoken.views import ObtainExpiringAuthToken
 
 from users.sso import SSOIntegration
 
-from ..forms import CallbackURLEditForm, LevelEditForm, OTPTokenForm, ProfileEditForm
+from ..forms import (CallbackURLEditForm, LevelEditForm, OTPTokenForm,
+                     ProfileEditForm)
 from ..mixins import ProfileOwnerOrMemberRequiredMixin
 from ..models import User
 
@@ -74,6 +77,9 @@ class LevelUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
         return get_object_or_404(User, username=self.kwargs["username"])
 
 
+@method_decorator(
+    ratelimit(key='ip', rate='7/1m', method='POST', block=True), name='post'
+)
 class OTPLoginView(FormView):
     """
     View for OTP login for checker users

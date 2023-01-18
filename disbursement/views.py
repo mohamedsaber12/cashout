@@ -1318,8 +1318,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             'mobile number',
             'amount',
             'issuer',
-            'Comment 1',
-            'Comment 2',
+            'comment 1',
+            'comment 2',
         ]
         e_wallets_sample_records = []
 
@@ -1348,8 +1348,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             'amount',
             'full name',
             'issuer',
-            'Comment 1',
-            'Comment 2',
+            'comment 1',
+            'comment 2',
         ]
         bank_wallets_sample_records = []
 
@@ -1382,8 +1382,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             'full name',
             'bank swift code',
             'transaction type',
-            'Comment 1',
-            'Comment 2',
+            'comment 1',
+            'comment 2',
         ]
         bank_cards_sample_records = []
 

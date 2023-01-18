@@ -804,13 +804,15 @@ class EWalletsSheetProcessor(Task):
         """
         total_amount = 0
         valid_issuers_list = ['vodafone', 'etisalat', 'aman']
-        msisdns_list, amounts_list, issuers_list, errors_list, vf_msisdns_list = (
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
+        (
+            msisdns_list,
+            amounts_list,
+            issuers_list,
+            errors_list,
+            vf_msisdns_list,
+            comment1_list,
+            comment2_list,
+        ) = ([], [], [], [], [], [], [])
 
         try:
             for index, record in df.iterrows():
@@ -881,6 +883,17 @@ class EWalletsSheetProcessor(Task):
                 if issuer == "vodafone":
                     vf_msisdns_list.append(msisdn)
 
+                # 5. Check if there is optional data
+                if str(record['comment 1']):
+                    comment1_list.append(str(record['comment 1']))
+                else:
+                    comment1_list.append("")
+
+                if str(record['comment 2']):
+                    comment2_list.append(str(record['comment 2']))
+                else:
+                    comment2_list.append("")
+
         except Exception as e:
             raise Exception(e)
         return (
@@ -890,6 +903,8 @@ class EWalletsSheetProcessor(Task):
             errors_list,
             total_amount,
             vf_msisdns_list,
+            comment1_list,
+            comment2_list,
         )
 
     def validate_doc_total_amount_against_custom_budget(
@@ -1119,6 +1134,8 @@ class EWalletsSheetProcessor(Task):
                     errors_list,
                     total_amount,
                     vf_msisdns_list,
+                    comment1_list,
+                    comment2_list,
                 ) = self.process_and_validate_issuers_specs_records(
                     df, msisdn_header, amount_header, issuer_header
                 )
@@ -1192,7 +1209,13 @@ class EWalletsSheetProcessor(Task):
             # 7.2 For issuer based sheets: Save the refined data as disbursement data records
             else:
                 budget = Budget.objects.get(disburser=self.doc_obj.owner.root)
-                records = zip(amounts_list, msisdn_list, issuers_list)
+                records = zip(
+                    amounts_list,
+                    msisdn_list,
+                    issuers_list,
+                    comment1_list,
+                    comment2_list,
+                )
                 objs = []
                 for record in records:
                     fees, vat = budget.calculate_fees_and_vat_for_amount(
@@ -1206,6 +1229,8 @@ class EWalletsSheetProcessor(Task):
                             issuer=record[2],
                             fees=fees,
                             vat=vat,
+                            comment1=record[3],
+                            comment2=record[4],
                         )
                     )
 

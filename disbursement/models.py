@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from pyexpat import model
 
 import uuid
-
-from phonenumber_field.modelfields import PhoneNumberField
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -12,17 +9,14 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-
+from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework import status
 
 from core.models import AbstractTimeStamp
-from utilities.models import (
-    AbstractBaseDocStatus,
-    AbstractBaseVMTData,
-    AbstractTransactionCategory,
-    AbstractTransactionCurrency,
-    AbstractTransactionPurpose,
-)
+from utilities.models import (AbstractBaseDocStatus, AbstractBaseVMTData,
+                              AbstractTransactionCategory,
+                              AbstractTransactionCurrency,
+                              AbstractTransactionPurpose)
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from .utils import determine_transaction_type
@@ -194,6 +188,8 @@ class DisbursementData(AbstractTimeStamp):
     balance_after = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
+    comment1 = models.TextField()
+    comment2 = models.TextField()
 
     class Meta:
         verbose_name = "Disbursement Data Record"

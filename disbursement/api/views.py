@@ -1186,15 +1186,22 @@ class SendMailForCreationAdmin(APIView):
                 <label>Best Regards</label>,
                 """
             )
+            print("9999")
             from_email = settings.SERVER_EMAIL
-            subject = "{} {}".format(_("Onboarding New Client", user_name))
+            print("//////")
+            subject = "{} {}".format(_("Onboarding New Client"), _(user_name))
+            print("3333333")
             recipient_list = get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
+            print("5555555")
 
             mail_to_be_sent = EmailMultiAlternatives(
                 subject, message, from_email, recipient_list
             )
+            print("888888")
             mail_to_be_sent.attach_alternative(message, "text/html")
+            # print("333333")
             mail_to_be_sent.send()
+            # print("99999999")
             SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")
             data = {"status": status.HTTP_201_CREATED, "message": "Created"}
             return Response(data, status=status.HTTP_201_CREATED)

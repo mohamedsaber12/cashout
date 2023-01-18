@@ -390,7 +390,7 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
         }
         creation_form = CreationNewMerchantForm(initial=intiail_dict)
         context = {'form': creation_form}
-        token = self.kwargs['token']
+        self.token = self.kwargs['token']
         access_token = AccessToken.objects.filter(token=self.token, used=False)
         if not access_token.exists():
             messages.error(request, "invalid link")

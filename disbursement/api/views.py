@@ -1187,11 +1187,8 @@ class SendMailForCreationAdmin(APIView):
                 """
             )
             from_email = settings.SERVER_EMAIL
-            subject = "{} {}".format(_("Onboarding New Client"), user_name)
-            recipient_list = [
-                dict(email=email)
-                for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
-            ]
+            subject = "{}".format(_("Onboarding New Client"))
+            recipient_list = get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
 
             mail_to_be_sent = EmailMultiAlternatives(
                 subject, message, from_email, recipient_list
@@ -1200,11 +1197,12 @@ class SendMailForCreationAdmin(APIView):
             mail_to_be_sent.send()
             SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")
             send_transfer_request_email.delay(request.user.username, message)
+
             data = {"status": status.HTTP_201_CREATED, "message": "Created"}
             return Response(data, status=status.HTTP_201_CREATED)
-        except (Exception, ValueError) as ex:
+        except (Exception, ValueError):
             error_msg = (
-                f"Process stopped during an internal error, please can you try again.{ex}"
+                "Process stopped during an internal error, please can you try again."
             )
             if len(serializer.errors) > 0:
                 failure_message = serializer.errors

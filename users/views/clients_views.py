@@ -390,7 +390,11 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
         }
         creation_form = CreationNewMerchantForm(initial=intiail_dict)
         context = {'form': creation_form}
-
+        token = self.kwargs['token']
+        access_token = AccessToken.objects.filter(token=self.token, used=False)
+        if not access_token.exists():
+            messages.error(request, "invalid link")
+            return redirect(reverse('admin:index'))
         return render(request, template_name=self.template_name, context=context)
 
     def post(self, request, *args, **kwargs):
@@ -418,7 +422,7 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                     root = self.onboard_new_integration_user(
                         user_name, admin_email, idms_user_id, mobile_number, mid
                     )
-            messages.success(request, "Oboarding user sucessfully")
+            messages.success(request, "Merchant onboarded successfully")
             return redirect(reverse('admin:index'))
         else:
             messages.error(request, "invalid link")
@@ -518,12 +522,7 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                 }
 
                 Setup.objects.create(
-                    user=root,
-                    pin_setup=True,
-                    levels_setup=True,
-                    maker_setup=True,
-                    checker_setup=True,
-                    category_setup=True,
+                    user=root
                 )
                 CallWalletsModerator.objects.create(
                     user_created=root,

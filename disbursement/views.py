@@ -391,7 +391,7 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
 
 
 @method_decorator(
-    ratelimit(key='ip', rate='5/1m', method='GET', block=True), name='get'
+    ratelimit(key='user_or_ip', rate='5/1m', method='GET', block=True), name='get'
 )
 class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
     """
@@ -418,7 +418,7 @@ class ExportClientsTransactionsReportPerSuperAdmin(SuperRequiredMixin, View):
 
 @setup_required
 @login_required
-@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
+@ratelimit(key='user_or_ip', rate='5/1m', method='GET', block=True)
 def failed_disbursed_for_download(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (
@@ -462,7 +462,7 @@ def failed_disbursed_for_download(request, doc_id):
 
 
 @login_required
-@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
+@ratelimit(key='user_or_ip', rate='5/1m', method='GET', block=True)
 def download_exported_transactions(request):
     filename = request.GET.get('filename', None)
     if not filename:
@@ -499,7 +499,7 @@ def download_exported_transactions(request):
 
 @setup_required
 @login_required
-@ratelimit(key='ip', rate='5/1m', method='GET', block=True)
+@ratelimit(key='user_or_ip', rate='5/1m', method='GET', block=True)
 def download_failed_validation_file(request, doc_id):
     doc_obj = get_object_or_404(Doc, id=doc_id)
     can_view = (

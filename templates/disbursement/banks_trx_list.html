@@ -82,6 +82,8 @@
                   data-disbursed_at="{{ trx.disbursed_date }}"
                   data-created_at="{{ trx.parent_transaction.created_at }}"
                   data-status_description="{{ trx.transaction_status_description }}"
+                  data-comment1="{{ trx.comment1 }}"
+                  data-comment2="{{ trx.comment2 }}"
                   class="row-hover"
                   data-href="#">
                 <td>{{ trx.parent_transaction.transaction_id }}</td>
@@ -301,6 +303,12 @@
         appendedTags += `<li><span>{% trans 'Transaction Status Code' %}</span><strong>: </strong>${status_code}</li>`;
         let status_description = $(this).data('status_description');
         appendedTags += `<li><span>{% trans 'Transaction Status Description' %}</span><strong>: </strong>${status_description}</li>`;
+
+        let comment1 = $(this).data('comment1');
+        appendedTags += `<li><span>{% trans 'Comment 1' %}</span><strong>: </strong>${comment1}</li>`;
+        let comment2 = $(this).data('comment2');
+        appendedTags += `<li><span>{% trans 'Comment 2' %}</span><strong>: </strong>${comment2}</li>`;
+
         ulLast.empty();
         ulLast.append(appendedTags);
         $("#trxDetails").slideDown();

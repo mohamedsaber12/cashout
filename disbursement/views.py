@@ -2251,3 +2251,10 @@ class BanksListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
         return paginator.get_page(page)
+
+    def get_context_data(self, *args, **kwargs):
+        """Inject Variables to the view based on the Admin user type"""
+        context = super().get_context_data(*args, **kwargs)
+        context['bank_transactions'] = True
+
+        return context

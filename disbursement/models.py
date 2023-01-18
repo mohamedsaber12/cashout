@@ -351,6 +351,8 @@ class BankTransaction(
         null=True,
         default="",
     )
+    comment1 = models.TextField()
+    comment2 = models.TextField()
 
     balance_before = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True

@@ -82,6 +82,8 @@
                     data-status_code="{{ transaction.transaction_status_code }}"
                     data-status_description="{{ transaction.transaction_status_description }}"
                     data-aman_is_paid="{{ transaction.aman_transaction.is_paid }}"
+                    data-comment1="{{ transaction.comment1 }}"
+                    data-comment2="{{ transaction.comment2 }}"
                     class="row-hover"
                     data-href="#">
                   <td>{{ transaction.uid }}</td>
@@ -302,6 +304,12 @@
           appendedTags += `<li><span>{% trans 'Transaction Status Code' %}</span><strong>: </strong>${status_code}</li>`;
           let status_description = $(this).data('status_description');
           appendedTags += `<li><span>{% trans 'Transaction Status Description' %}</span><strong>: </strong>${status_description}</li>`;
+
+          let comment1 = $(this).data('comment1');
+          appendedTags += `<li><span>{% trans 'Comment 1' %}</span><strong>: </strong>${comment1}</li>`;
+          let comment2 = $(this).data('comment2');
+          appendedTags += `<li><span>{% trans 'Comment 2' %}</span><strong>: </strong>${comment2}</li>`;
+
           ulLast.empty();
           ulLast.append(appendedTags);
           $("#trxDetails").slideDown();

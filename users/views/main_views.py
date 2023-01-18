@@ -164,30 +164,23 @@ def login_view(request):
 
         # this is special case based on business demand for prevent \
         # two factor authentication for this admin => Careem_Admin
-        if request.user.username == "Careem_Admin":
-            return redirect("data:main_view")
+        if request.user.username == 'Careem_Admin':
+            return redirect('data:main_view')
 
-        if (
-            request.user.is_vodafone_default_onboarding
-            or request.user.is_banks_standard_model_onboaring
-            or request.user.is_accept_vodafone_onboarding
-            and request.user.is_checker
-            or request.user.is_vodafone_facilitator_onboarding
-            and request.user.is_checker
-        ):
-            if not request.user.is_superuser and (
-                request.user.is_checker
-                or request.user.is_root
-                or request.user.is_superadmin
-            ):
-                return HttpResponseRedirect(reverse("two_factor:profile"))
-        return redirect("data:main_view")
-    if request.method == "POST":
-        username = request.POST["username"]
-        password = request.POST["password"]
-        # user = authenticate(request=request, username=username, password=password)
-        sso = SSOIntegration()
-        user = sso.authenticate(username, password)
+        if request.user.is_vodafone_default_onboarding or \
+                request.user.is_banks_standard_model_onboaring or\
+                request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
+                request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
+            if not request.user.is_superuser and \
+                    (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
+                return HttpResponseRedirect(reverse('two_factor:profile'))
+        return redirect('data:main_view')
+    if request.method == 'POST':
+        username = request.POST['username']
+        password = request.POST['password']
+        user = authenticate(request=request, username=username, password=password)
+        # sso = SSOIntegration()
+        # user = sso.authenticate(username, password)
         if user and not user.is_instantapichecker:
             if user.is_active:
                 login(

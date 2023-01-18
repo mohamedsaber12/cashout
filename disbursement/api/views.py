@@ -1204,7 +1204,7 @@ class SendMailForCreationAdmin(APIView):
             return Response(data, status=status.HTTP_201_CREATED)
         except (Exception, ValueError) as ex:
             error_msg = (
-                "Process stopped during an internal error, please can you try again.{ex}"
+                f"Process stopped during an internal error, please can you try again.{ex}"
             )
             if len(serializer.errors) > 0:
                 failure_message = serializer.errors

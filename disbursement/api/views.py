@@ -1187,11 +1187,8 @@ class SendMailForCreationAdmin(APIView):
                 """
             )
             from_email = settings.SERVER_EMAIL
-            subject = "{}".format(_("Onboarding New Client"))
-            recipient_list = [
-                dict(email=email)
-                for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
-            ]
+            subject = "{} {}".format(_("Onboarding New Client", user_name))
+            recipient_list = get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
 
             mail_to_be_sent = EmailMultiAlternatives(
                 subject, message, from_email, recipient_list

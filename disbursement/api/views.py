@@ -1187,7 +1187,7 @@ class SendMailForCreationAdmin(APIView):
                 """
             )
             from_email = settings.SERVER_EMAIL
-            subject = "{}".format(_("Onboarding New Client"))
+            subject = "{} {}".format(_("Onboarding New Client", user_name))
             recipient_list = get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
 
             mail_to_be_sent = EmailMultiAlternatives(
@@ -1196,8 +1196,6 @@ class SendMailForCreationAdmin(APIView):
             mail_to_be_sent.attach_alternative(message, "text/html")
             mail_to_be_sent.send()
             SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")
-            send_transfer_request_email.delay(request.user.username, message)
-
             data = {"status": status.HTTP_201_CREATED, "message": "Created"}
             return Response(data, status=status.HTTP_201_CREATED)
         except (Exception, ValueError):

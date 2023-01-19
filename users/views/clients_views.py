@@ -418,10 +418,13 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                     root, exists = self.onboard_new_portal_user(
                         user_name, admin_email, idms_user_id, mobile_number, mid
                     )
-                else:
+                if onboard_business_model == "integration":
                     root = self.onboard_new_integration_user(
                         user_name, admin_email, idms_user_id, mobile_number, mid
                     )
+            else:
+                messages.error(request, str(form.errors))
+                return redirect(reverse('admin:index'))
             messages.success(request, "Merchant onboarded successfully")
             return redirect(reverse('admin:index'))
         else:
@@ -606,7 +609,6 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
     def onboard_new_integration_user(
         self, user_name, root_email, idms_user_id, mobile_number, mid
     ):
-
         try:
             # create root
             root = RootUser.objects.create(
@@ -849,7 +851,3 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                 self.request,
                 f"error :-  Error: {err.args}",
             )
-            error_msg = (
-                "Process stopped during an internal error, please can you try again."
-            )
-            error = {"message": error_msg}

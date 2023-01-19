@@ -1151,7 +1151,7 @@ class CreationNewMerchantForm(forms.Form):
 
     mobile_number = forms.CharField(
         max_length=100,
-        required=True,
+        required=False,
         widget=forms.TextInput(
             attrs={
                 "class": "vTextField",

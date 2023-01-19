@@ -284,13 +284,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "\nInvalid issuer option"
 
                 # 5. Check if there is optional data
-                if record.get('comment 1'):
-                    comment1_list.append(str(record['comment 1']))
+                if record[5]:
+                    comment1_list.append(str(record[5]))
                 else:
                     comment1_list.append("")
 
-                if record.get('comment 2'):
-                    comment2_list.append(str(record['comment 2']))
+                if record[6]:
+                    comment2_list.append(str(record[6]))
                 else:
                     comment2_list.append("")
 

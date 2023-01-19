@@ -418,7 +418,7 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                     root, exists = self.onboard_new_portal_user(
                         user_name, admin_email, idms_user_id, mobile_number, mid
                     )
-                else:
+                if onboard_business_model == "integration":
                     root = self.onboard_new_integration_user(
                         user_name, admin_email, idms_user_id, mobile_number, mid
                     )

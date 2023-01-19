@@ -284,12 +284,12 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "\nInvalid issuer option"
 
                 # 5. Check if there is optional data
-                if record[5]:
+                if len(record) > 4 and record[5]:
                     comment1_list.append(str(record[5]))
                 else:
                     comment1_list.append("")
 
-                if record[6]:
+                if len(record) > 4 and record[6]:
                     comment2_list.append(str(record[6]))
                 else:
                     comment2_list.append("")
@@ -396,12 +396,12 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "\nInvalid transaction purpose"
 
                 # 6. Check if there is optional data
-                if str(record[6]):
+                if len(record) > 5 and str(record[6]):
                     comment1_list.append(str(record[6]))
                 else:
                     comment1_list.append("")
 
-                if str(record[7]):
+                if len(record) > 5 and str(record[7]):
                     comment2_list.append(str(record[7]))
                 else:
                     comment2_list.append("")

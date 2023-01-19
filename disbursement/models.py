@@ -188,8 +188,8 @@ class DisbursementData(AbstractTimeStamp):
     balance_after = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
-    comment1 = models.TextField()
-    comment2 = models.TextField()
+    comment1 = models.TextField(default="", null=True)
+    comment2 = models.TextField(default="", null=True)
 
     class Meta:
         verbose_name = "Disbursement Data Record"
@@ -351,8 +351,8 @@ class BankTransaction(
         null=True,
         default="",
     )
-    comment1 = models.TextField()
-    comment2 = models.TextField()
+    comment1 = models.TextField(default="", null=True)
+    comment2 = models.TextField(default="", null=True)
 
     balance_before = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True

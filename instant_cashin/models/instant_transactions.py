@@ -125,8 +125,8 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
 
     balance_after = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
-    comment1 = models.TextField()
-    comment2 = models.TextField()
+    comment1 = models.TextField(default="", null=True)
+    comment2 = models.TextField(default="", null=True)
 
     # Not needed fields
     to_user = None

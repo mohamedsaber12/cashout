@@ -284,12 +284,12 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "\nInvalid issuer option"
 
                 # 5. Check if there is optional data
-                if str(record['comment 1']):
+                if record.get('comment 1'):
                     comment1_list.append(str(record['comment 1']))
                 else:
                     comment1_list.append("")
 
-                if str(record['comment 2']):
+                if record.get('comment 2'):
                     comment2_list.append(str(record['comment 2']))
                 else:
                     comment2_list.append("")
@@ -943,12 +943,12 @@ class EWalletsSheetProcessor(Task):
                     vf_msisdns_list.append(msisdn)
 
                 # 5. Check if there is optional data
-                if str(record['comment 1']):
+                if record.get('comment 1'):
                     comment1_list.append(str(record['comment 1']))
                 else:
                     comment1_list.append("")
 
-                if str(record['comment 2']):
+                if record.get('comment 2'):
                     comment2_list.append(str(record['comment 2']))
                 else:
                     comment2_list.append("")

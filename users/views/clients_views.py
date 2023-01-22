@@ -793,49 +793,50 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
                     f"""Dear Team,<br><br>
                     <label>Kindly find your credentials for initiating the testing phase of the integration</lable><br/>
                     <label>at the staging server https://stagingpayouts.paymobsolutions.com</lable><br/>
-                    <label>Dashboard User:       </label> <br/>
+                    <label><u><b>Dashboard User:</b></u>       </label> <br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Username:       </label> {dashboard_user_username}<br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Password:       </label> {dashboard_user_password}<br/>
-                    <label>API User:       </label> <br/>
+                    <label><u><b>API User:</b></u>       </label> <br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Username:       </label> {api_checker_username}<br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Password:       </label> {api_checker_password}<br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client ID:       </label> {oauth2_app_client_id}<br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client Secret:       </label> {oauth2_app_client_secret}<br/>
-                    <label>Notes::       </label><br/><br/>
-                    <label>&nbsp;&nbsp;.You have full access to the detailed API documentation at the home page's sidebar of the Dashboard user.  </label><br/>
-                    <label>&nbsp;&nbsp;.Dashboard user have the ability to view the cashin transactions and search for specific one.</label><br/>
-                    <label>&nbsp;&nbsp;.The API user won't have the ability to login to the portal, he/she is able to:</label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Generate, refresh tokens.        </label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Make instant disbursement requests.       </label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Inquire about transaction/(s) status.       </label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Inquire about his own current balance.       </label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Your current balance limit is 20000EG.       </label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; You can start testing at any time from now.       </label><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Feel free to ask about any further details.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client ID:      </label> {oauth2_app_client_id}<br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client Secret:  </label> {oauth2_app_client_secret}<br/>
+                    <label><u><b>Notes:</b></u>     </label><br/><br/>
+                    <label>&nbsp;&nbsp;&#x2022;You have full access to the <b>detailed API documentation</b> at the home page's sidebar of the Dashboard user.  </label><br/>
+                    <label>&nbsp;&nbsp;&#x2022;<b>Dashboard user</b> have the ability to view the cashin transactions and search for specific one.</label><br/>
+                    <label>&nbsp;&nbsp;&#x2022;The <b>API user<b/> won't have the ability to login to the portal, he/she is able to:</label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;○Generate, refresh tokens.        </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;○Make instant disbursement requests.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;○Inquire about transaction/(s) status.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;○Inquire about his own current balance.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2022;Your <b>current balance<b/> limit is 20000EG.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2022;You can start testing at any time from now.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&#x2022;Feel free to ask about any further details.       </label><br/>
                     <label>Best Regards</label>,
                     """
                 )
             else:
                 message = _(
                     f"""Dear Team,<br><br>
-                    <label>Dashboard User:       </label> <br/>
+                    <label>Kindly find your credentials</lable><br/>
+                    <label><u><b>Dashboard User:</b></u>       </label> <br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Username:       </label> {dashboard_user_username}<br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Password:       </label> {dashboard_user_password}<br/>
-                    <label>API User:       </label> <br/>
+                    <label><u><b>API User:</b></u>       </label> <br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Username:       </label> {api_checker_username}<br/>
                     <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Password:       </label> {api_checker_password}<br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client ID:       </label> {oauth2_app_client_id}<br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client Secret:       </label> {oauth2_app_client_secret}<br/>
-                    <label>Notes::       </label><br/><br/>
-                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Your current balance limit is 20000EG.       </label><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client ID:      </label> {oauth2_app_client_id}<br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Client Secret:  </label> {oauth2_app_client_secret}<br/>
+                    <label><u><b>Notes:</b></u>     </label><br/><br/>      </label><br/><br/>
+                    <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Your current balance limit is 0EG.       </label><br/>
                     <label>Best Regards</label>,
                     """
                 )
 
             from_email = settings.SERVER_EMAIL
             subject = "{}{}".format(root.username, _(" -Paymob Send Credentials"))
-            recipient_list = [dashboard_user.email]
-
+            business_team = get_from_env('PAYOUTS_TEAM_EMAILS_LIST').split(',')
+            recipient_list = [dashboard_user.email, *business_team]
             mail_to_be_sent = EmailMultiAlternatives(
                 subject, message, from_email, recipient_list
             )

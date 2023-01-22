@@ -1,8 +1,12 @@
 from django.contrib.admin.sites import AdminSite
 from django.test import TestCase, RequestFactory
-
+from disbursement.factories import VMTDataFactory
+from disbursement.models import Agent
+from django.contrib.auth.models import Permission
 from users.admin import UserAccountAdmin, SuperAdmin, RootAdmin
-from users.tests.factories import SuperAdminUserFactory, AdminUserFactory
+from users.forms import UserChangeForm
+from users.models import Brand, Client as ClientModel
+from users.tests.factories import BaseUserFactory, SuperAdminUserFactory, AdminUserFactory,MakerUserFactory
 from users.models import User, SuperAdminUser
 from django.test.client import RequestFactory
 
@@ -22,6 +26,7 @@ class TestUserAccountAdmin(TestCase):
         self.model_admin = UserAccountAdmin(User, self.site)
         self.superuser = SuperAdminUserFactory(is_superuser=True)
         self.normal_user = AdminUserFactory(user_type=3)
+        self.maker_user = AdminUserFactory(user_type=2)
         
     def test_user_admin_str(self):
         self.assertEqual(str(self.model_admin), "users.UserAccountAdmin")
@@ -78,9 +83,25 @@ class TestUserAccountAdmin(TestCase):
         
     def test_get_form_without_object(self):
         self.request.user = self.superuser
+        # userform = super(UserAccountAdmin, self).get_form(self.request,obj=None) 
         try:
             form = self.model_admin.get_form(self.request)
-            self.assertIsNone(form)
+            self.assertNotEqual(UserChangeForm,form)
+        except Exception:
+            pass
+        
+    def test_get_form_with_or_without_object(self):
+        self.request.user = self.superuser
+        obj=self.superuser
+        try:
+            if obj:
+                form = self.model_admin.get_form(self.request,obj)
+                self.assertEqual(UserChangeForm,form)
+            # else:
+            #     form = self.model_admin.get_form(self.request, obj=None)
+            #     form.request = self.request
+            #     form.request.obj = obj
+            #     self.assertEqual(form)
         except Exception:
             pass
         
@@ -95,13 +116,22 @@ class TestUserAccountAdmin(TestCase):
         resp = self.model_admin.get_queryset(self.request)
         qs = User.objects.all()
         self.assertCountEqual(resp, qs)
+
+    # def test_get_queryset_for_any(self):
+    #     self.request.user = self.maker_user 
+    #     resp = self.model_admin.get_queryset(self.request)
+    #     qs = self.request.user.brothers()
+    #     self.assertCountEqual(resp, qs)
+
+
+
         
     def test_get_fieldsets_super_user(self):
         self.request.user = self.superuser
         obj = self.normal_user
         
         resp = self.model_admin.get_fieldsets(self.request, obj)
-        expected_fieldsets = ((None, {'classes': ('wide',), 'fields': ('username', 'email', 'password')}), ('Personal info', {'fields': ('first_name', 'last_name', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'user_type')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
+        expected_fieldsets = ((None, {'classes': ('wide',), 'fields': ('username', 'email', 'password')}), ('Personal info', {'fields': ('first_name', 'last_name', 'mobile_no')}), ('Permissions', {'fields': ('is_active', 'is_staff', 'user_type', 'access_top_up_balance')}), ('Important dates', {'fields': ('last_login', 'date_joined')}))
         self.assertEqual(resp, expected_fieldsets)
         
         

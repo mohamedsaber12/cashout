@@ -184,9 +184,9 @@ def login_view(request):
     if request.method == 'POST':
         username = request.POST['username']
         password = request.POST['password']
-        user = authenticate(request=request, username=username, password=password)
-        # sso = SSOIntegration()
-        # user = sso.authenticate(username, password)
+        # user = authenticate(request=request, username=username, password=password)
+        sso = SSOIntegration()
+        user = sso.authenticate(username, password)
         if user and not user.is_instantapichecker:
             if user.is_active:
                 login(

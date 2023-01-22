@@ -375,7 +375,7 @@ class DisbursementDocTransactionsView(UserWithDisbursementPermissionRequired, Vi
             # add server side pagination
             paginator = Paginator(context['doc_transactions'], 10)
             page = self.request.GET.get('page', 1)
-            paginator.get_page(page)
+            queryset = paginator.get_page(page)
 
             context.update(
                 {
@@ -1553,7 +1553,13 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
         """Generate e-wallets wallets sample data frame"""
         filename = 'e_wallets_sample_file.xlsx'
         fake = fake_factory.create()
-        e_wallets_headers = ['mobile number', 'amount', 'issuer']
+        e_wallets_headers = [
+            'mobile number',
+            'amount',
+            'issuer',
+            'comment 1',
+            'comment 2',
+        ]
         e_wallets_sample_records = []
 
         for _ in range(9):
@@ -1563,7 +1569,11 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             msisdn = f"{fake.numerify(text=msisdn_carrier)}"
             amount = round(random.random() * 1000, 2)
             issuer = random.choice(['vodafone', 'etisalat', 'aman'])
-            e_wallets_sample_records.append([msisdn, amount, issuer])
+            comment1 = "Optional data"
+            comment2 = "Optional data"
+            e_wallets_sample_records.append(
+                [msisdn, amount, issuer, comment1, comment2]
+            )
 
         e_wallets_df = pd.DataFrame(e_wallets_sample_records, columns=e_wallets_headers)
         return filename, e_wallets_df
@@ -1572,7 +1582,14 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
         """Generate bank wallets sample data frame"""
         filename = 'bank_wallets_sample_file.xlsx'
         fake = fake_factory.create()
-        bank_wallets_headers = ['mobile number', 'amount', 'full name', 'issuer']
+        bank_wallets_headers = [
+            'mobile number',
+            'amount',
+            'full name',
+            'issuer',
+            'comment 1',
+            'comment 2',
+        ]
         bank_wallets_sample_records = []
 
         for _ in range(9):
@@ -1583,7 +1600,11 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             amount = round(random.random() * 1000, 2)
             full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
             issuer = random.choice(['orange', 'bank_wallet'])
-            bank_wallets_sample_records.append([msisdn, amount, full_name, issuer])
+            comment1 = "Optional data"
+            comment2 = "Optional data"
+            bank_wallets_sample_records.append(
+                [msisdn, amount, full_name, issuer, comment1, comment2]
+            )
 
         bank_wallets_df = pd.DataFrame(
             bank_wallets_sample_records, columns=bank_wallets_headers
@@ -1600,6 +1621,8 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             'full name',
             'bank swift code',
             'transaction type',
+            'comment 1',
+            'comment 2',
         ]
         bank_cards_sample_records = []
 
@@ -1613,8 +1636,18 @@ class DownloadSampleSheetView(UserWithAcceptVFOnboardingPermissionRequired, View
             full_name = f"{fake.first_name()} {fake.last_name()} {fake.first_name()}"
             bank_code = random.choice(VALID_BANK_CODES_LIST)
             transaction_type = random.choice(VALID_BANK_TRANSACTION_TYPES_LIST).lower()
+            comment1 = "Optional data"
+            comment2 = "Optional data"
             bank_cards_sample_records.append(
-                [account_number, amount, full_name, bank_code, transaction_type]
+                [
+                    account_number,
+                    amount,
+                    full_name,
+                    bank_code,
+                    transaction_type,
+                    comment1,
+                    comment2,
+                ]
             )
 
         bank_cards_df = pd.DataFrame(
@@ -2457,3 +2490,10 @@ class BanksListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
         paginator = Paginator(queryset, 20)
         page = self.request.GET.get('page', 1)
         return paginator.get_page(page)
+
+    def get_context_data(self, *args, **kwargs):
+        """Inject Variables to the view based on the Admin user type"""
+        context = super().get_context_data(*args, **kwargs)
+        context['bank_transactions'] = True
+
+        return context

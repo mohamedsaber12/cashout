@@ -146,6 +146,9 @@ class InstantTransaction(AbstractBaseTransaction, AbstractBaseIssuer):
         choices=VALID_BANK_TRANSACTION_TYPES_LIST,
     )
 
+    comment1 = models.TextField(default="", null=True)
+    comment2 = models.TextField(default="", null=True)
+
     # Not needed fields
     to_user = None
     external_reference_1 = None

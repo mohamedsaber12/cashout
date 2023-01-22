@@ -81,6 +81,8 @@
                     data-doc_id="{{ doc_obj.id }}"
                     data-created_at="{{ transaction.parent_transaction.created_at }}"
                     data-updated_at="{{ transaction.created_at }}"
+                    data-comment1="{{ transaction.comment1 }}"
+                    data-comment2="{{ transaction.comment2 }}"
                     class="row-hover">
                   <td>{{ transaction.anon_recipient }}</td>
                   <td>{{ transaction.amount }}</td>
@@ -123,6 +125,8 @@
                     data-created_at="{{ transaction.parent_transaction.created_at }}"
                     data-updated_at="{{ transaction.created_at }}"
                     data-debtor_account="{{ transaction.debtor_account }}"
+                    data-comment1="{{ transaction.comment1 }}"
+                    data-comment2="{{ transaction.comment2 }}"
                     class="row-hover">
                   <td>{{ transaction.creditor_account_number }}</td>
                   <td>{{ transaction.amount }}</td>
@@ -294,7 +298,7 @@
       "bInfo" : false,
       "searching": false
     });
-  
+
     var buttons = new $.fn.dataTable.Buttons( table, {
       buttons: [
         {
@@ -320,7 +324,7 @@
         }
       ]
     });
-  
+
     table.buttons( 0, null ).container().prependTo(
         table.table().container()
     );
@@ -448,6 +452,11 @@
         appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Code' %}</span><strong>: </strong>${trx.transaction_status_code}</li>`;
         trx.transaction_status_description = $(this).data('transaction_status_description');
         appendedTagsBottom += `<li><span>{% trans 'Disbursement Status Description' %}</span><strong>: </strong>${trx.transaction_status_description}</li>`;
+
+        trx.comment1 = $(this).data('comment1');
+        appendedTagsBottom += `<li><span>{% trans 'Comment 1' %}</span><strong>: </strong>${trx.comment1}</li>`;
+        trx.comment2 = $(this).data('comment2');
+        appendedTagsBottom += `<li><span>{% trans 'Comment 2' %}</span><strong>: </strong>${trx.comment2}</li>`;
 
         ul.empty();
         ul.append(appendedTags);

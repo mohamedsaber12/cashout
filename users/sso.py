@@ -26,8 +26,8 @@ class SSOIntegration:
         url = f"{settings.IDMS_BASE_URL}accounts/signup/"
         resp = requests.post(url, json=payload)
         SSO_INTEGRATION_LOGGER.debug(
-            f"SSO INTEGRATION SEND SIGNUP REQUEST [URL - CONTENT - STATUS_CODE - DELTA]"
-            f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
+            f"SSO INTEGRATION SEND SIGNUP REQUEST [URL - request - STATUS_CODE - DELTA]"
+            f"[{resp.url}] - [{payload}] - [{resp.status_code}] "
             f"- [{resp.elapsed.total_seconds()}]"
         )
 

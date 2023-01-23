@@ -1346,7 +1346,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
         return render(request, template_name=self.template_name, context=context)
 
-    def revert_balance_to_accept_account(self, payload):
+    def revert_balance_to_accept_account(self, payload, user, current_fees_and_vat):
         url = get_from_env('DECLINE_SINGLE_STEP_URL')
         headers = {"Authorization": get_from_env('SINGLE_STEP_TOKEN')}
         ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
@@ -1357,6 +1357,10 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
         ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
             f"[response] [revert balance] -- {json_response} "
         )
+        if json_response.get("success"):
+            user.root.budget.current_balance -= current_fees_and_vat
+            user.root.budget.save()
+            
 
     def create_automatic_topup_request(self, disburser, transfer_id, amount):
         # send top up request email
@@ -1493,7 +1497,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                             ),
                             "fees_amount_cents": str(current_fees_and_vat * 100),
                         }
-                        self.revert_balance_to_accept_account(revert_balance_payload)
+                        self.revert_balance_to_accept_account(revert_balance_payload, request.user, current_fees_and_vat)
                     elif response.json().get("disbursement_status") in [
                         'Successful',
                         'successful',

@@ -291,6 +291,15 @@ class InstantDisbursementAPIView(views.APIView):
                         },
                         status=status.HTTP_400_BAD_REQUEST,
                     )
+                else:
+                    balance_before = user.root.budget.current_balance
+                    user.root.budget.current_balance += amount_plus_fees_vat
+                    user.root.budget.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [ Automatic Balance Increase] [{user}] ==> balance before:- {balance_before}, "
+                        f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
+                    )
+
 
             if not user.root.budget.within_threshold(
                 serializer.validated_data["amount"], serializer.validated_data["issuer"]

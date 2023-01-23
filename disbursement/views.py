@@ -1402,13 +1402,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     ):
         # increase current balance with fees and vat
         # create TopUp action
-        balance_before = disburser.root.budget.current_balance
-        disburser.root.budget.current_balance += amount_plus_fees_vat
-        disburser.root.budget.save()
-        BUDGET_LOGGER.debug(
-            f"[message] [ Automatic Balance Increase] [{disburser}] ==> balance before:- {balance_before}, "
-            f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
-        )
+        balance_before = disburser.root.budget.current_balance - amount_plus_fees_vat
         TopupAction.objects.create(
             client=disburser.root,
             amount=Decimal(amount_plus_fees_vat),

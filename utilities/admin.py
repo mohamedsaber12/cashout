@@ -160,7 +160,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
     ]
     search_fields = ["disburser__username", "created_by__username"]
     ordering = ["-updated_at", "-created_at"]
-    history_list_display = ["current_balance"]
+    history_list_display = ["current_balance", "hold_balance"]
 
     fieldsets = (
         (_("Users Details"), {"fields": ("disburser", "created_by")}),

@@ -151,7 +151,14 @@ class FileDocumentForm(forms.ModelForm):
             ]:
                 if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
                     valid_headers = ['mobile number', 'amount', 'full name', 'issuer']
-                    valid_headers_with_comments = [
+                    valid_headers_with_comments1 = [
+                        'mobile number',
+                        'amount',
+                        'full name',
+                        'issuer',
+                        'comment 1',
+                    ]
+                    valid_headers_with_comments2 = [
                         'mobile number',
                         'amount',
                         'full name',
@@ -167,7 +174,15 @@ class FileDocumentForm(forms.ModelForm):
                         'bank swift code',
                         'transaction type',
                     ]
-                    valid_headers_with_comments = [
+                    valid_headers_with_comments1 = [
+                        'account number',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                        'comment 1',
+                    ]
+                    valid_headers_with_comments2 = [
                         'account number',
                         'amount',
                         'full name',
@@ -183,7 +198,15 @@ class FileDocumentForm(forms.ModelForm):
                         'bank swift code',
                         'transaction type',
                     ]
-                    valid_headers_with_iban_and_comments = [
+                    valid_headers_with_iban_and_comments1 = [
+                        'account number / IBAN',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                        'comment 1',
+                    ]
+                    valid_headers_with_iban_and_comments2 = [
                         'account number / IBAN',
                         'amount',
                         'full name',
@@ -200,15 +223,18 @@ class FileDocumentForm(forms.ModelForm):
                     if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
                         if df.columns.tolist() not in [
                             valid_headers,
-                            valid_headers_with_comments,
+                            valid_headers_with_comments1,
+                            valid_headers_with_comments2,
                         ]:
                             error = HEADERS_ERR_MSG
                     else:
                         if df.columns.tolist() not in [
                             valid_headers,
-                            valid_headers_with_comments,
+                            valid_headers_with_comments1,
+                            valid_headers_with_comments2,
                             valid_headers_with_iban,
-                            valid_headers_with_iban_and_comments,
+                            valid_headers_with_iban_and_comments1,
+                            valid_headers_with_iban_and_comments2,
                         ]:
                             error = HEADERS_ERR_MSG
                     if min(df.count()) < 1:

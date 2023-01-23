@@ -9,7 +9,8 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from oauth2_provider.contrib.rest_framework import TokenHasReadWriteScope, permissions
+from oauth2_provider.contrib.rest_framework import (TokenHasReadWriteScope,
+                                                    permissions)
 from rest_framework import status, views
 from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
@@ -20,14 +21,13 @@ from users.models.base_user import User
 from utilities.logging import logging_message
 
 from ...models import InstantTransaction
-from ...specific_issuers_integrations import AmanChannel, BankTransactionsChannel
+from ...specific_issuers_integrations import (AmanChannel,
+                                              BankTransactionsChannel)
 from ...utils import default_response_structure, get_from_env
 from ..mixins import IsInstantAPICheckerUser
-from ..serializers import (
-    BankTransactionResponseModelSerializer,
-    InstantDisbursementRequestSerializer,
-    InstantTransactionResponseModelSerializer,
-)
+from ..serializers import (BankTransactionResponseModelSerializer,
+                           InstantDisbursementRequestSerializer,
+                           InstantTransactionResponseModelSerializer)
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
@@ -691,7 +691,7 @@ class InstantDisbursementAPIView(views.APIView):
                 ) if instant_trx_obj else None
                 # release hold balance
                 amount_plus_fees_vat = user.root.budget.release_hold_balance(
-                    instant_trx_obj.amount, issuer
+                    bank_trx_obj.amount, issuer
                 )
                 bank_trx_obj.balance_before = balance_before
                 bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat

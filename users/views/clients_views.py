@@ -835,10 +835,10 @@ class OnboardingNewMerchant(DjangoAdminRequiredMixin, View):
 
             from_email = settings.SERVER_EMAIL
             subject = "{}{}".format(root.username, _(" -Paymob Send Credentials"))
-            business_team = get_from_env('PAYOUTS_TEAM_EMAILS_LIST').split(',')
-            recipient_list = [dashboard_user.email, *business_team]
+            payouts_team = get_from_env('PAYOUTS_TEAM_EMAILS_LIST').split(',')
+            recipient_list = [dashboard_user.email]
             mail_to_be_sent = EmailMultiAlternatives(
-                subject, message, from_email, recipient_list
+                subject, message, from_email, recipient_list, cc=payouts_team
             )
             mail_to_be_sent.attach_alternative(message, "text/html")
             mail_to_be_sent.send()

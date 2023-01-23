@@ -300,7 +300,6 @@ class InstantDisbursementAPIView(views.APIView):
                         f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
                     )
 
-
             if not user.root.budget.within_threshold(
                 serializer.validated_data["amount"], serializer.validated_data["issuer"]
             ):
@@ -465,7 +464,10 @@ class InstantDisbursementAPIView(views.APIView):
                     and data_dict["MSISDN2"]
                     == get_from_env(f"test_number_for_{issuer}")
                 ):
-                    transaction.mark_successful(200, "")
+                    transaction.mark_successful(
+                        200,
+                        f"amount {str(transaction.amount)} is disbursed successfully",
+                    )
                     balance_before = user.root.budget.get_current_balance()
                     balance_after = (
                         user.root.budget.update_disbursed_amount_and_current_balance(

@@ -185,7 +185,9 @@ class InstantDisbursementAPIView(views.APIView):
 
         return api_auth_token, merchant_id
 
-    def aman_issuer_handler(self, request, transaction_object, serializer, user):
+    def aman_issuer_handler(
+        self, request, transaction_object, serializer, user, balance_before=0
+    ):
         """Handle aman operations/transactions separately"""
 
         aman_object = AmanChannel(request, transaction_object, user=user)
@@ -213,8 +215,10 @@ class InstantDisbursementAPIView(views.APIView):
                 )
 
                 if payment_key_obtained.status_code == status.HTTP_201_CREATED:
-                    payment_key = payment_key_obtained.data.get("payment_token", "")
-                    make_payment_request = aman_object.make_pay_request(payment_key)
+                    payment_key = payment_key_obtained.data.get('payment_token', '')
+                    make_payment_request = aman_object.make_pay_request(
+                        payment_key, balance_before
+                    )
 
                     if make_payment_request.status_code == status.HTTP_200_OK:
                         return make_payment_request
@@ -300,9 +304,15 @@ class InstantDisbursementAPIView(views.APIView):
                         f"amount added:- {amount_plus_fees_vat}, balance after:- {balance_before + amount_plus_fees_vat}"
                     )
 
-            if not user.root.budget.within_threshold(
-                serializer.validated_data["amount"], serializer.validated_data["issuer"]
-            ):
+            (
+                balance_before,
+                has_enough_balance,
+            ) = user.root.budget.within_threshold_and_hold_balance(
+                serializer.validated_data['amount'], serializer.validated_data['issuer']
+            )
+
+            # check for balance greater than trx amount with fees and vat then hold balance
+            if not has_enough_balance:
                 raise ValidationError(BUDGET_EXCEEDED_MSG)
         except (ValidationError, ValueError, Exception) as e:
             if len(serializer.errors) > 0:
@@ -400,10 +410,15 @@ class InstantDisbursementAPIView(views.APIView):
                 )
             except Exception as e:
                 if transaction:
+                    balance_before = user.root.budget.get_current_balance()
                     transaction.mark_failed(
                         status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG
                     )
-                    balance_before = user.root.budget.get_current_balance()
+                    # return hold balance
+                    user.root.budget.return_hold_balance(
+                        serializer.validated_data["amount"], issuer
+                    )
+                    # save balance before and after with transaction
                     transaction.balance_before = balance_before
                     transaction.balance_after = balance_before
                     transaction.save()
@@ -448,7 +463,7 @@ class InstantDisbursementAPIView(views.APIView):
             try:
                 if issuer == "aman":
                     return self.aman_issuer_handler(
-                        request, transaction, serializer, user
+                        request, transaction, serializer, user, balance_before
                     )
 
                 # check if msisdn is test number
@@ -468,14 +483,12 @@ class InstantDisbursementAPIView(views.APIView):
                         200,
                         f"amount {str(transaction.amount)} is disbursed successfully",
                     )
-                    balance_before = user.root.budget.get_current_balance()
-                    balance_after = (
-                        user.root.budget.update_disbursed_amount_and_current_balance(
-                            data_dict["AMOUNT"], issuer
-                        )
+                    # release hold balance
+                    amount_plus_fees_vat = user.root.budget.release_hold_balance(
+                        transaction.amount, issuer
                     )
                     transaction.balance_before = balance_before
-                    transaction.balance_after = balance_after
+                    transaction.balance_after = balance_before + amount_plus_fees_vat
                     transaction.save()
                     return Response(
                         InstantTransactionResponseModelSerializer(transaction).data,
@@ -507,7 +520,11 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_failed(
                     status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG
                 )
-                balance_before = user.root.budget.get_current_balance()
+                # return hold balance
+                user.root.budget.return_hold_balance(
+                    serializer.validated_data["amount"], issuer
+                )
+                # save balance before and after with transaction
                 transaction.balance_before = balance_before
                 transaction.balance_after = balance_before
                 transaction.save()
@@ -526,7 +543,9 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_unknown(
                     status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG
                 )
-                balance_before = user.root.budget.get_current_balance()
+                transaction.mark_unknown(
+                    status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG
+                )
                 transaction.balance_before = balance_before
                 transaction.balance_after = balance_before
                 transaction.save()
@@ -545,7 +564,11 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_failed(
                     status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG
                 )
-                balance_before = user.root.budget.get_current_balance()
+                # return hold balance
+                user.root.budget.return_hold_balance(
+                    serializer.validated_data["amount"], issuer
+                )
+                # save balance before and after with transaction
                 transaction.balance_before = balance_before
                 transaction.balance_after = balance_before
                 transaction.save()
@@ -564,14 +587,12 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_successful(
                     json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
                 )
-                balance_before = user.root.budget.get_current_balance()
-                balance_after = (
-                    user.root.budget.update_disbursed_amount_and_current_balance(
-                        data_dict["AMOUNT"], issuer
-                    )
+                # release hold balance
+                amount_plus_fees_vat = user.root.budget.release_hold_balance(
+                    transaction.amount, issuer
                 )
                 transaction.balance_before = balance_before
-                transaction.balance_after = balance_after
+                transaction.balance_after = balance_before + amount_plus_fees_vat
                 transaction.save()
                 return Response(
                     InstantTransactionResponseModelSerializer(transaction).data,
@@ -609,7 +630,11 @@ class InstantDisbursementAPIView(views.APIView):
             transaction.mark_failed(
                 json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
             )
-            balance_before = user.root.budget.get_current_balance()
+            # return hold balance
+            user.root.budget.return_hold_balance(
+                serializer.validated_data["amount"], issuer
+            )
+            # save balance before and after with transaction
             transaction.balance_before = balance_before
             transaction.balance_after = balance_before
             transaction.save()
@@ -632,17 +657,13 @@ class InstantDisbursementAPIView(views.APIView):
                     bank_trx_obj, instant_trx_obj = self.create_bank_transaction(
                         user, serializer
                     )
-                balance_before = (
-                    balance_after
-                ) = bank_trx_obj.user_created.root.budget.get_current_balance()
                 bank_trx_obj.balance_before = balance_before
-                bank_trx_obj.balance_after = balance_after
+                bank_trx_obj.balance_after = balance_before
                 bank_trx_obj.save()
                 if instant_trx_obj:
                     instant_trx_obj.balance_before = balance_before
-                    instant_trx_obj.balance_after = balance_after
+                    instant_trx_obj.balance_after = balance_before
                     instant_trx_obj.save()
-
             except Exception as e:
                 logging_message(
                     INSTANT_CASHIN_FAILURE_LOGGER,
@@ -668,18 +689,18 @@ class InstantDisbursementAPIView(views.APIView):
                 instant_trx_obj.mark_successful(
                     "8222", "success"
                 ) if instant_trx_obj else None
-                balance_before = (
-                    bank_trx_obj.user_created.root.budget.get_current_balance()
-                )
-                balance_after = bank_trx_obj.user_created.root.budget.update_disbursed_amount_and_current_balance(
-                    bank_trx_obj.amount, issuer
+                # release hold balance
+                amount_plus_fees_vat = user.root.budget.release_hold_balance(
+                    instant_trx_obj.amount, issuer
                 )
                 bank_trx_obj.balance_before = balance_before
-                bank_trx_obj.balance_after = balance_after
+                bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat
                 bank_trx_obj.save()
                 if instant_trx_obj:
                     instant_trx_obj.balance_before = balance_before
-                    instant_trx_obj.balance_after = balance_after
+                    instant_trx_obj.balance_after = (
+                        balance_before + amount_plus_fees_vat
+                    )
                     instant_trx_obj.save()
 
                 if instant_trx_obj:
@@ -692,7 +713,7 @@ class InstantDisbursementAPIView(views.APIView):
                     )
 
             return BankTransactionsChannel.send_transaction(
-                bank_trx_obj, instant_trx_obj
+                bank_trx_obj, instant_trx_obj, balance_before
             )
 
 

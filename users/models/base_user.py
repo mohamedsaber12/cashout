@@ -82,7 +82,7 @@ class User(AbstractUser, SoftDeletionModel):
     access_top_up_balance = models.BooleanField(
         null=True, default=True, verbose_name='Has Access To Top Up Balance'
     )
-    idms_user_id = models.CharField(max_length=50, null=True, blank=True)
+    idms_user_id = models.CharField(max_length=50, null=True, blank=True, db_index=True)
     has_password_set_on_idms = models.BooleanField(default=False)
     from_accept = models.BooleanField(default=False)
     allowed_to_be_bulk = models.BooleanField(default=False)
@@ -173,6 +173,7 @@ class User(AbstractUser, SoftDeletionModel):
 
     def set_password(self, password):
         from users.sso import SSOIntegration
+
         super(User, self).set_password(password)
         sso = SSOIntegration()
         sso.change_user_password(self, password)
@@ -223,6 +224,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_root(self):
         return self.user_type == 3
+
+    @cached_property
+    def is_system_admin(self):
+        return self.user_type == 14
 
     @cached_property
     def has_access_to_topUp_balance(self):

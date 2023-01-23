@@ -281,6 +281,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/database_queries.log',
         },
+        'balance_management_operations': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/balance_management_operations.log',
+        },
         'custom_budgets': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -564,6 +571,11 @@ CUSTOM_LOGGING = {
         },
         'custom_budgets': {
             'handlers': ['custom_budgets'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'balance_management_operations': {
+            'handlers': ['balance_management_operations'],
             'level': 'DEBUG',
             'propagate': True,
         },

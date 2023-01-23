@@ -150,9 +150,7 @@ class DisburseAPIView(APIView):
         :param doc_id: Id of the document being disbursed
         set disbursed date for all records related to doc ID
         """
-        DisbursementData.objects.filter(doc_id=doc_id).update(
-            disbursed_date=datetime.now()
-        )
+        DisbursementData.objects.filter(doc_id=doc_id).update(disbursed_date=datetime.now())
 
     @staticmethod
     def disburse_for_recipients(

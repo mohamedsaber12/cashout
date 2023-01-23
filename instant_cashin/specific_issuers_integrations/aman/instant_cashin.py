@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from decimal import Decimal
-from requests.exceptions import ConnectionError, HTTPError
 import json
 import logging
-import requests
+from decimal import Decimal
+from uuid import UUID
 
+import requests
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext as _
-
+from requests.exceptions import ConnectionError, HTTPError
 from rest_framework import status
 from rest_framework.response import Response
 
@@ -18,10 +18,6 @@ from data.utils import get_client_ip
 from ...api.serializers import InstantTransactionResponseModelSerializer
 from ...models import AmanTransaction
 from ...utils import get_from_env
-import json
-from uuid import UUID
-
-
 
 EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team.")
 
@@ -157,7 +153,7 @@ class AmanChannel:
         except (HTTPError, ConnectionError, Exception) as e:
             return Exception(f'Failed to obtain order {order_id} payment key, exception: {e.args}')
 
-    def make_pay_request(self, payment_token):
+    def make_pay_request(self, payment_token, balance_before=0):
         """Make payment request done to accept your order"""
         payload = {
             "source": {
@@ -174,6 +170,8 @@ class AmanChannel:
             trx_status = json_response.get('pending', '')
             transaction_id = json_response.get('order', '').get('merchant_order_id', '')
 
+            user = self.request.user if not self.request.user.is_anonymous else self.user
+
             if response.ok and bill_reference and trx_status:
                 msg = _(f"برجاء التوجه إلى فرع أمان. اسأل على خدمة مدفوعات أكسبت. اسخدم الكود الخاص {bill_reference}. لصرف مبلغ {self.amount} جنيه. شكراً لاختيارك مدفوعات أكسبت.")
 
@@ -181,11 +179,11 @@ class AmanChannel:
                     self.transaction.reference_id = bill_reference
                     self.transaction.mark_successful(status.HTTP_200_OK, msg)
                     AmanTransaction.objects.create(transaction=self.transaction, bill_reference=bill_reference)
-                    user = self.request.user if not self.request.user.is_anonymous else self.user
-                    balance_before = user.root.budget.get_current_balance()
-                    balance_after = user.root.budget.update_disbursed_amount_and_current_balance(self.amount, "aman")
+                    # release hold balance
+                    amount_plus_fees_vat = user.root.budget.release_hold_balance(self.amount, "aman")
+                    # save balance before and after with transaction
                     self.transaction.balance_before = balance_before
-                    self.transaction.balance_after = balance_after
+                    self.transaction.balance_after = balance_before + amount_plus_fees_vat
                     self.transaction.save()
                     return Response(InstantTransactionResponseModelSerializer(self.transaction).data)
 
@@ -202,9 +200,11 @@ class AmanChannel:
             else:
                 if self.transaction:
                     self.transaction.mark_failed(status.HTTP_504_GATEWAY_TIMEOUT, EXTERNAL_ERROR_MSG)
+                    # return hold balance
+                    user.root.budget.return_hold_balance(self.amount, "aman")
                     return Response(
-                            InstantTransactionResponseModelSerializer(self.transaction).data,
-                            status=status.HTTP_200_OK
+                        InstantTransactionResponseModelSerializer(self.transaction).data,
+                        status=status.HTTP_200_OK
                     )
                 return Response({
                     "disbursement_status": _("failed"),
@@ -225,14 +225,14 @@ class AmanChannel:
         try:
             if is_success and bill_reference:
                 AmanTransaction.objects.filter(bill_reference=bill_reference).update(is_paid=True)
-                
-                # send callback 
+
+                # send callback
                 aman_trn = AmanTransaction.objects.get(bill_reference=bill_reference)
                 if aman_trn.transaction_type.name == "Instant Transaction" and aman_trn.transaction.from_user.root.root.callback_url:
                     callback_url = aman_trn.transaction.from_user.root.root.callback_url
                     req_body = InstantTransactionResponseModelSerializer(aman_trn.transaction)
                     requests.post(callback_url, data=json.dumps(req_body.data, cls=UUIDEncoder))
-                
+
                 # update related transaction to edit updated_at
                 for trn in AmanTransaction.objects.filter(bill_reference=bill_reference):
                     trn.transaction.save()

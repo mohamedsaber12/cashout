@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import logging
+import uuid
 from decimal import Decimal
 
 from django.conf import settings
@@ -76,6 +77,17 @@ class Budget(AbstractTimeStamp):
         blank=True,
         help_text=_(
             "Updated automatically after any disbursement callback or any addition from add_new_amount"
+        ),
+    )
+    hold_balance = models.DecimalField(
+        _("Hold Balance"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=True,
+        help_text=_(
+            "Updated automatically before any transaction and after transaction get final status"
         ),
     )
     total_disbursed_amount = models.DecimalField(
@@ -285,6 +297,177 @@ class Budget(AbstractTimeStamp):
             )
 
         return balance_after
+
+    def within_threshold_and_hold_balance_without_issuer(self, hold_amount):
+        """
+        Check if the amount to be disbursed won't exceed the current balance
+        :param amount: Amount to be disbursed at the currently running transaction
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                if hold_amount <= round(budget_obj.current_balance, 2):
+                    current_balance_before = budget_obj.current_balance
+                    hold_balance_before = budget_obj.hold_balance
+                    budget_obj.current_balance -= hold_amount
+                    budget_obj.hold_balance += hold_amount
+                    budget_obj.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [API HOLD BALANCE] [{budget_obj.disburser.username}] -- hold amount: {hold_amount},"
+                        f" current balance before: {current_balance_before},"
+                        f" current balance after: {budget_obj.current_balance}"
+                    )
+                    return hold_balance_before, True
+                return budget_obj.hold_balance, False
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(
+                    f"Error while checking the amount to be disbursed if within threshold and API hold balance - {e.args}"
+                )
+            )
+
+    def within_threshold_and_hold_balance(self, amount, issuer_type, num_of_trns=1):
+        """
+        Check if the amount to be disbursed won't exceed the current balance
+        :param amount: Amount to be disbursed at the currently running transaction
+        :param issuer_type: Channel/Issuer used to disburse the amount over
+        :return: True/False
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                    amount, issuer_type.lower(), num_of_trns
+                )
+                if amount_plus_fees_vat <= round(budget_obj.current_balance, 2):
+                    current_balance_before = budget_obj.current_balance
+                    applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
+                    budget_obj.current_balance -= amount_plus_fees_vat
+                    budget_obj.hold_balance += amount_plus_fees_vat
+                    budget_obj.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [HOLD BALANCE] [{budget_obj.disburser.username}] -- hold amount: {amount}, "
+                        f"applied fees plus VAT: {applied_fees_and_vat}, used issuer: {issuer_type.lower()}, "
+                        f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                    )
+                    return current_balance_before, True
+                return budget_obj.current_balance, False
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(
+                    f"Error while checking the amount to be disbursed if within threshold and hold balance - {e.args}"
+                )
+            )
+
+    def has_enough_hold_balance_and_release_balance(self, amount):
+        """
+        Check if the amount to be released won't exceed the current hold balance
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                if amount <= round(budget_obj.hold_balance, 2):
+                    hold_balance_before = budget_obj.hold_balance
+                    budget_obj.hold_balance -= amount
+                    budget_obj.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [API Release BALANCE] [{budget_obj.disburser.username}] -- release amount: {amount},"
+                        f" current hold balance before: {hold_balance_before},"
+                        f" current hold balance after: {budget_obj.hold_balance}"
+                    )
+                    return hold_balance_before, True
+                return budget_obj.hold_balance, False
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(
+                    f"Error while checking the amount to be released if within threshold and API Release balance - {e.args}"
+                )
+            )
+
+    def has_enough_hold_balance_and_return_balance(self, amount):
+
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                if amount <= round(budget_obj.hold_balance, 2):
+                    hold_balance_before = budget_obj.hold_balance
+                    current_balance_before = budget_obj.current_balance
+                    budget_obj.current_balance += amount
+                    budget_obj.hold_balance -= amount
+                    budget_obj.save()
+                    BUDGET_LOGGER.debug(
+                        f"[message] [RETURN HOLD BALANCE API] [{budget_obj.disburser.username}] -- "
+                        f"return hold amount : {amount}, "
+                        f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                    )
+                    return hold_balance_before, True
+                return budget_obj.hold_balance, False
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(
+                    f"Error while returning the amount to balance from hold balance api - {e.args}"
+                )
+            )
+
+    def return_hold_balance(self, amount, issuer_type, num_of_trns=1):
+        """
+        Check if the amount to be disbursed won't exceed the current balance
+        :param amount: Amount to be disbursed at the currently running transaction
+        :param issuer_type: Channel/Issuer used to disburse the amount over
+        :return: True/False
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                    amount, issuer_type.lower(), num_of_trns
+                )
+                current_balance_before = budget_obj.current_balance
+                budget_obj.current_balance += amount_plus_fees_vat
+                budget_obj.hold_balance -= amount_plus_fees_vat
+                budget_obj.save()
+                BUDGET_LOGGER.debug(
+                    f"[message] [RETURN HOLD BALANCE] [{budget_obj.disburser.username}] -- "
+                    f"return hold amount plus fees and vat: {amount_plus_fees_vat}, "
+                    f"used issuer: {issuer_type.lower()}, "
+                    f"current balance before: {current_balance_before}, current balance after: {budget_obj.current_balance}"
+                )
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(
+                    f"Error while returning the amount to balance from hold balance - {e.args}"
+                )
+            )
+
+    def release_hold_balance(self, amount, issuer_type, num_of_trns=1):
+        """
+        Check if the amount to be disbursed won't exceed the current balance
+        :param amount: Amount to be disbursed at the currently running transaction
+        :param issuer_type: Channel/Issuer used to disburse the amount over
+        :return: True/False
+        """
+        try:
+            with transaction.atomic():
+                budget_obj = Budget.objects.select_for_update().get(id=self.id)
+                amount_plus_fees_vat = budget_obj.accumulate_amount_with_fees_and_vat(
+                    amount, issuer_type.lower(), num_of_trns
+                )
+                current_hold_balance_before = budget_obj.hold_balance
+                applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
+                budget_obj.hold_balance -= amount_plus_fees_vat
+                budget_obj.total_disbursed_amount += amount_plus_fees_vat
+                budget_obj.save()
+                BUDGET_LOGGER.debug(
+                    f"[message] [RELEASE HOLD BALANCE] [{budget_obj.disburser.username}] -- "
+                    f"release hold amount : {amount}, fees and vat: {applied_fees_and_vat}, "
+                    f"used issuer: {issuer_type.lower()}, current hold balance before: {current_hold_balance_before}, "
+                    f"current hold balance after: {budget_obj.hold_balance}"
+                )
+                return amount_plus_fees_vat
+        except (ValueError, Exception) as e:
+            raise ValueError(
+                _(f"Error while releasing the amount from hold balance - {e.args}")
+            )
 
     def return_disbursed_amount_for_cancelled_trx(self, amount):
         """
@@ -548,3 +731,59 @@ class ClientIpAddress(AbstractTimeStamp):
         verbose_name = "Client IP Address"
         verbose_name_plural = "Client IP Addresses"
         ordering = ["-id"]
+
+
+class BalanceManagementOperations(AbstractTimeStamp):
+
+    # operation type choices
+    HOLD = "hold"
+    RETURN = "return"
+    RELEASE = "release"
+
+    OPERATION_TYPE_CHOICES = [
+        (HOLD, "Hold"),
+        (RETURN, "Return"),
+        (RELEASE, "Release"),
+    ]
+
+    ACCEPT_PRODUCT = "accept"
+    BILLS_PRODUCT = "bills"
+
+    SOURCE_PRODUCT_CHOICES = [
+        (ACCEPT_PRODUCT, "Accept"),
+        (BILLS_PRODUCT, "Bills"),
+    ]
+    operation_id = models.UUIDField(
+        default=uuid.uuid4,
+        null=True,
+        blank=True,
+        verbose_name=_("Operation UUID"),
+        unique=True,
+    )
+    operation_type = models.CharField(
+        _("operation_type"), max_length=10, choices=OPERATION_TYPE_CHOICES, default=HOLD
+    )
+    source_product = models.CharField(
+        _("source_product"),
+        max_length=10,
+        choices=SOURCE_PRODUCT_CHOICES,
+        default=ACCEPT_PRODUCT,
+    )
+    amount = models.DecimalField(
+        _("Amount"),
+        max_digits=12,
+        decimal_places=2,
+    )
+    budget = models.ForeignKey(
+        Budget,
+        on_delete=models.CASCADE,
+        related_name="balance_operations",
+        verbose_name=_("Budget"),
+    )
+    idms_user_id = models.CharField(max_length=50, null=True, blank=True)
+    hold_balance_before = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
+    )
+    hold_balance_after = models.DecimalField(
+        max_digits=10, decimal_places=2, default=0, null=True, blank=True
+    )

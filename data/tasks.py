@@ -289,7 +289,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 else:
                     comment1_list.append("")
 
-                if len(record) > 5 and record[6]:
+                if len(record) > 6 and record[6]:
                     comment2_list.append(str(record[6]))
                 else:
                     comment2_list.append("")
@@ -401,7 +401,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 else:
                     comment1_list.append("")
 
-                if len(record) > 6 and str(record[7]):
+                if len(record) > 7 and str(record[7]):
                     comment2_list.append(str(record[7]))
                 else:
                     comment2_list.append("")

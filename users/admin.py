@@ -13,11 +13,29 @@ from django.core.exceptions import PermissionDenied
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from .forms import CheckerCreationAdminForm, MakerCreationAdminForm, RootCreationForm, UserChangeForm
+from .forms import (
+    CheckerCreationAdminForm,
+    MakerCreationAdminForm,
+    RootCreationForm,
+    UserChangeForm,
+)
 from .models import (
-    CheckerUser, Client, EntitySetup, InstantAPICheckerUser, InstantAPIViewerUser,
-    MakerUser, RootUser, Setup, SupportUser, SupportSetup, SuperAdminUser, User,
-    OnboardUser, OnboardUserSetup, SupervisorUser, SupervisorSetup
+    CheckerUser,
+    Client,
+    EntitySetup,
+    InstantAPICheckerUser,
+    InstantAPIViewerUser,
+    MakerUser,
+    RootUser,
+    Setup,
+    SupportUser,
+    SupportSetup,
+    SuperAdminUser,
+    User,
+    OnboardUser,
+    OnboardUserSetup,
+    SupervisorUser,
+    SupervisorSetup,
 )
 
 from django.shortcuts import render
@@ -33,10 +51,10 @@ DELETED_USERS_LOGGER = logging.getLogger("delete_users")
 
 
 class UserAccountAdmin(UserAdmin):
-    list_display = ('username', 'first_name', 'last_name', 'email', 'is_active')
-    filter_horizontal = ('groups',)
-    actions = ['activate_selected', 'deactivate_selected']
-    extended_actions = ['activate_selected', 'deactivate_selected']
+    list_display = ("username", "first_name", "last_name", "email", "is_active")
+    filter_horizontal = ("groups",)
+    actions = ["activate_selected", "deactivate_selected"]
+    extended_actions = ["activate_selected", "deactivate_selected"]
 
     def deactivate_selected(self, request, queryset):
         """Deactivate selected list of users"""
@@ -45,7 +63,9 @@ class UserAccountAdmin(UserAdmin):
             raise PermissionDenied
 
         for obj in queryset:
-            user_deactivated_log_msg = f"[message] [User Deactivated] [{request.user}] -- {obj.username}"
+            user_deactivated_log_msg = (
+                f"[message] [User Deactivated] [{request.user}] -- {obj.username}"
+            )
             if not obj.is_active:
                 continue
             else:
@@ -54,7 +74,9 @@ class UserAccountAdmin(UserAdmin):
             obj.is_active = False
             obj.save()
 
-    deactivate_selected.short_description = ugettext_lazy("Deactivate selected %(verbose_name_plural)s")
+    deactivate_selected.short_description = ugettext_lazy(
+        "Deactivate selected %(verbose_name_plural)s"
+    )
 
     def activate_selected(self, request, queryset):
         """Activate selected list of users"""
@@ -72,12 +94,22 @@ class UserAccountAdmin(UserAdmin):
             obj.is_active = True
             obj.save()
 
-    activate_selected.short_description = ugettext_lazy("Activate selected %(verbose_name_plural)s")
+    activate_selected.short_description = ugettext_lazy(
+        "Activate selected %(verbose_name_plural)s"
+    )
 
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
         if request.user.is_superuser:
-            list_display = ('username', 'first_name', 'last_name', 'email', 'groups', 'is_active', 'user_type')
+            list_display = (
+                "username",
+                "first_name",
+                "last_name",
+                "email",
+                "groups",
+                "is_active",
+                "user_type",
+            )
             return list_display
         return list_display
 
@@ -87,52 +119,73 @@ class UserAccountAdmin(UserAdmin):
         userform.request.obj = obj
         defaults = {}
         if obj:
-            defaults['form'] = UserChangeForm
+            defaults["form"] = UserChangeForm
         else:
-            defaults['form'] = userform
+            defaults["form"] = userform
         defaults.update(kwargs)
         return super(UserAccountAdmin, self).get_form(request, obj, **defaults)
 
     def get_fieldsets(self, request, obj=None):
-        perm_fields = ('is_active', 'is_staff')
+        perm_fields = ("is_active", "is_staff")
         if not obj:
             if request.user.is_superuser:
                 perm_fields = (
-                    'is_active', 'is_staff', 'is_superuser', 'parent', 'access_top_up_balance'
+                    "is_active",
+                    "is_staff",
+                    "is_superuser",
+                    "parent",
+                    "access_top_up_balance",
                 )
 
             self.add_fieldsets = (
-                (None, {
-                    'classes': ('wide',),
-                    'fields': ('username', 'password1', 'password2',)}
-                 ),
-                (_('Personal info'), {
-                 'fields': ('first_name', 'last_name', 'email', 'mobile_no')}),
-                (_('Permissions'), {'fields': perm_fields}),
-                (_('Important dates'), {
-                 'fields': ('last_login', 'date_joined')})
+                (
+                    None,
+                    {
+                        "classes": ("wide",),
+                        "fields": (
+                            "username",
+                            "password1",
+                            "password2",
+                        ),
+                    },
+                ),
+                (
+                    _("Personal info"),
+                    {"fields": ("first_name", "last_name", "email", "mobile_no")},
+                ),
+                (_("Permissions"), {"fields": perm_fields}),
+                (_("Important dates"), {"fields": ("last_login", "date_joined")}),
             )
 
         elif obj:
-            perm_fields = ('is_active', 'is_staff', 'user_type', 'access_top_up_balance')
+            perm_fields = (
+                "is_active",
+                "is_staff",
+                "user_type",
+                "access_top_up_balance",
+            )
             self.add_fieldsets = (
-                (None, {
-                    'classes': ('wide',),
-                    'fields': ('username', 'email', 'password')}
-                 ),
-                (_('Personal info'), {
-                 'fields': ('first_name', 'last_name', 'mobile_no')}),
-                (_('Permissions'), {'fields': perm_fields}),
-                (_('Important dates'), {
-                 'fields': ('last_login', 'date_joined')})
+                (
+                    None,
+                    {"classes": ("wide",), "fields": ("username", "email", "password")},
+                ),
+                (
+                    _("Personal info"),
+                    {"fields": ("first_name", "last_name", "mobile_no")},
+                ),
+                (_("Permissions"), {"fields": perm_fields}),
+                (_("Important dates"), {"fields": ("last_login", "date_joined")}),
             )
 
         return self.add_fieldsets
 
     def get_queryset(self, request):
         qs = super(UserAccountAdmin, self).get_queryset(request)
-        if request.user.is_superuser or request.user.is_finance \
-                or request.user.is_finance_with_instant_transaction_view:
+        if (
+            request.user.is_superuser
+            or request.user.is_finance
+            or request.user.is_finance_with_instant_transaction_view
+        ):
             return qs
         elif request.user.is_root:
             qs = qs.filter(hierarchy=request.user.hierarchy)
@@ -145,7 +198,8 @@ class BaseChildAdmin(UserAccountAdmin):
     """
     Base Child Admin Class to be inherited by all of children
     """
-    logged_user_type = 'Child'
+
+    logged_user_type = "Child"
 
     def save_model(self, request, obj, form, change):
 
@@ -153,19 +207,19 @@ class BaseChildAdmin(UserAccountAdmin):
             if obj.pk is not None:
                 obj.hierarchy = obj.root.hierarchy
             else:
-                obj.hierarchy = form.cleaned_data['parent'].hierarchy
+                obj.hierarchy = form.cleaned_data["parent"].hierarchy
         else:
             obj.hierarchy = request.user.hierarchy
 
         if obj.pk is not None:
             MODIFIED_USERS_LOGGER.debug(
-                    f"[message] [{self.logged_user_type.capitalize()} User Modified] [{request.user}] "
-                    f"-- Modified user with username: {obj.username}"
+                f"[message] [{self.logged_user_type.capitalize()} User Modified] [{request.user}] "
+                f"-- Modified user with username: {obj.username}"
             )
         else:
             CREATED_USERS_LOGGER.debug(
-                    f"[message] [{self.logged_user_type} User Created] [{request.user}] "
-                    f"-- Created new {self.logged_user_type.lower()} with username: {obj.username}"
+                f"[message] [{self.logged_user_type} User Created] [{request.user}] "
+                f"-- Created new {self.logged_user_type.lower()} with username: {obj.username}"
             )
         obj.save()
 
@@ -175,8 +229,9 @@ class MakerAdmin(BaseChildAdmin):
     """
     Manages makers from the admin panel
     """
+
     add_form = MakerCreationAdminForm
-    logged_user_type = 'Maker'
+    logged_user_type = "Maker"
 
 
 @admin.register(CheckerUser)
@@ -184,8 +239,9 @@ class CheckerAdmin(BaseChildAdmin):
     """
     Manages checkers from the admin panel
     """
+
     add_form = CheckerCreationAdminForm
-    logged_user_type = 'Checker'
+    logged_user_type = "Checker"
 
 
 @admin.register(InstantAPICheckerUser)
@@ -193,8 +249,9 @@ class InstantAPICheckerAdmin(BaseChildAdmin):
     """
     Manages instant api checkers from the admin panel
     """
+
     add_form = MakerCreationAdminForm
-    logged_user_type = 'Instant API Checker'
+    logged_user_type = "Instant API Checker"
 
 
 @admin.register(InstantAPIViewerUser)
@@ -202,8 +259,9 @@ class InstantAPIViewerAdmin(BaseChildAdmin):
     """
     Manages instant api viewers from the admin panel
     """
+
     add_form = MakerCreationAdminForm
-    logged_user_type = 'Instant API Viewer'
+    logged_user_type = "Instant API Viewer"
 
 
 class RootCreationAdminForm(RootCreationForm):
@@ -229,35 +287,45 @@ class RootAdmin(UserAccountAdmin):
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
         # pop parent field from fieldsets
-        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')
+        fieldsets[2][1]["fields"] = ("is_active", "is_staff", "is_superuser")
         self.fieldsets = fieldsets
         return self.fieldsets
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
             MODIFIED_USERS_LOGGER.debug(
-                    f"[message] [Admin User Modified] [{request.user}] -- Modified user: {obj.username}"
+                f"[message] [Admin User Modified] [{request.user}] -- Modified user: {obj.username}"
             )
         else:
             CREATED_USERS_LOGGER.debug(
-                    f"[message] [Admin User Created] [{request.user}] -- Created new root/admin: {obj.username}"
+                f"[message] [Admin User Created] [{request.user}] -- Created new root/admin: {obj.username}"
             )
         super(RootAdmin, self).save_model(request, obj, form, change)
+
+    def has_delete_permission(self, request, obj=None):
+        return True
+
+    def delete_queryset(self, request, queryset):
+        for ele in queryset:
+            ele.hard_delete()
+
+    def delete_model(self, request, obj):
+        obj.hard_delete()
 
 
 @admin.register(SuperAdminUser)
 class SuperAdmin(UserAccountAdmin):
 
-    actions = ['activate_selected', 'deactivate_selected', "export_report"]
-    extended_actions = ['activate_selected', 'deactivate_selected', "export_report"]
+    actions = ["activate_selected", "deactivate_selected", "export_report"]
+    extended_actions = ["activate_selected", "deactivate_selected", "export_report"]
 
     def get_actions(self, request):
         actions = super(UserAccountAdmin, self).get_actions(request)
         if request.user.is_finance:
-            if 'activate_selected' in actions:
-                del actions['activate_selected']
-            if 'deactivate_selected' in actions:
-                del actions['deactivate_selected']
+            if "activate_selected" in actions:
+                del actions["activate_selected"]
+            if "deactivate_selected" in actions:
+                del actions["deactivate_selected"]
         return actions
 
     # def get_extended_actions(self, request):
@@ -267,57 +335,72 @@ class SuperAdmin(UserAccountAdmin):
     #     return ext_actions
 
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.is_finance \
-                or request.user.is_finance_with_instant_transaction_view:
+        if (
+            request.user.is_superuser
+            or request.user.is_finance
+            or request.user.is_finance_with_instant_transaction_view
+        ):
             return True
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.is_finance \
-                or request.user.is_finance_with_instant_transaction_view:
+        if (
+            request.user.is_superuser
+            or request.user.is_finance
+            or request.user.is_finance_with_instant_transaction_view
+        ):
             return True
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(SuperAdmin, self).get_fieldsets(request, obj)
         # pop parent field from fieldsets
-        fieldsets[2][1]['fields'] = ('is_active', 'is_staff', 'is_superuser')
+        fieldsets[2][1]["fields"] = ("is_active", "is_staff", "is_superuser")
         self.fieldsets = fieldsets
         return self.fieldsets
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:
             MODIFIED_USERS_LOGGER.debug(
-                    f"[message] [SuperAdmin User Modified] [{request.user}] -- Modified user: {obj.username}"
+                f"[message] [SuperAdmin User Modified] [{request.user}] -- Modified user: {obj.username}"
             )
 
         else:
             CREATED_USERS_LOGGER.debug(
-                    f"[message] [SuperAdmin User Created] [{request.user}] -- Created new super-user: {obj.username}"
+                f"[message] [SuperAdmin User Created] [{request.user}] -- Created new super-user: {obj.username}"
             )
         super(SuperAdmin, self).save_model(request, obj, form, change)
 
     def export_report(self, request, queryset):
         """export report for selected list of users"""
 
-        if 'apply' in request.POST:
+        if "apply" in request.POST:
             # queryset.update(env='hard coded response')
             start_date = request.POST.get("start_date")
             end_date = request.POST.get("end_date")
             status = request.POST.get("status")
             ExportClientsTransactionsMonthlyReportTask.delay(
-                request.user.id, start_date, end_date, status,
-                list(queryset.values_list('pk', flat=True))
+                request.user.id,
+                start_date,
+                end_date,
+                status,
+                list(queryset.values_list("pk", flat=True)),
             )
             # exportObject = ExportClientsTransactionsMonthlyReport()
             # report_download_url = exportObject.run(request.user.id, start_date, end_date, status, list(queryset.values_list('pk', flat=True)))
 
-            self.message_user(request, f"The report will send  to your email in a few minutes")
+            self.message_user(
+                request, f"The report will send  to your email in a few minutes"
+            )
             return HttpResponseRedirect(request.get_full_path())
 
-        return render(request,
-                      'admin/all_superadmins_report.html',
-                      context={'superadmins': queryset})
+        return render(
+            request,
+            "admin/all_superadmins_report.html",
+            context={"superadmins": queryset},
+        )
 
-    export_report.short_description = ugettext_lazy("export report selected %(verbose_name_plural)s")
+    export_report.short_description = ugettext_lazy(
+        "export report selected %(verbose_name_plural)s"
+    )
 
 
 @admin.register(Setup)
@@ -327,9 +410,15 @@ class SetupRootAdmin(admin.ModelAdmin):
     """
 
     list_display = [
-        'user', 'pin_setup', 'levels_setup', 'maker_setup', 'checker_setup', 'category_setup', 'collection_setup'
+        "user",
+        "pin_setup",
+        "levels_setup",
+        "maker_setup",
+        "checker_setup",
+        "category_setup",
+        "collection_setup",
     ]
-    readonly_fields = ['user']
+    readonly_fields = ["user"]
 
 
 @admin.register(EntitySetup)
@@ -338,8 +427,8 @@ class EntitySetupAdmin(admin.ModelAdmin):
     Customize entity_setup view at the admin panel
     """
 
-    list_display = ['entity', 'user', 'is_normal_flow', 'agents_setup', 'fees_setup']
-    list_filter = ['user']
+    list_display = ["entity", "user", "is_normal_flow", "agents_setup", "fees_setup"]
+    list_filter = ["user"]
 
 
 @admin.register(SupportUser)
@@ -348,40 +437,28 @@ class SupportUserModelAdmin(UserAccountAdmin):
     Manages support user model at the admin panel
     """
 
-    list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+    list_display = ["username", "first_name", "last_name", "email", "mobile_no"]
 
     def get_fieldsets(self, request, obj=None):
         return (
-            (None, {
-                'classes': ('wide',),
-                'fields': ('username', 'password')
-            }),
-            ('Personal info', {
-                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            })
+            (None, {"classes": ("wide",), "fields": ("username", "password")}),
+            (
+                "Personal info",
+                {"fields": ("first_name", "last_name", "email", "mobile_no")},
+            ),
+            ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
+            ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
     def get_fields(self):
         return (
-            (None, {
-                'classes': ('wide',),
-                'fields': ('username', 'password')
-            }),
-            ('Personal info', {
-                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            })
+            (None, {"classes": ("wide",), "fields": ("username", "password")}),
+            (
+                "Personal info",
+                {"fields": ("first_name", "last_name", "email", "mobile_no")},
+            ),
+            ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
+            ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
 
@@ -391,8 +468,8 @@ class SupportSetupModelAdmin(admin.ModelAdmin):
     Manages support user setup model at the admin panel
     """
 
-    list_display = ['user_created', 'support_user', 'can_onboard_entities']
-    list_filter = ['user_created']
+    list_display = ["user_created", "support_user", "can_onboard_entities"]
+    list_filter = ["user_created"]
 
 
 @admin.register(User)
@@ -400,17 +477,14 @@ class UserAdmin(UserAdmin):
 
     form = UserChangeForm
 
-    list_display = ('email', )
+    list_display = ("email",)
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Important dates', {'fields': ('last_login',)}),
-        ('IDMS', {'fields': ('idms_user_id','has_password_set_on_idms')}),
+        (None, {"fields": ("email", "password")}),
+        ("Important dates", {"fields": ("last_login",)}),
+        ("IDMS", {"fields": ("idms_user_id", "has_password_set_on_idms")}),
     )
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2')}
-        ),
+        (None, {"classes": ("wide",), "fields": ("email", "password1", "password2")}),
     )
 
 
@@ -420,40 +494,28 @@ class OnboardUserModelAdmin(UserAccountAdmin):
     Manages Onboard user model at the admin panel
     """
 
-    list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+    list_display = ["username", "first_name", "last_name", "email", "mobile_no"]
 
     def get_fieldsets(self, request, obj=None):
         return (
-            (None, {
-                'classes': ('wide',),
-                'fields': ('username', 'password')
-            }),
-            ('Personal info', {
-                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            })
+            (None, {"classes": ("wide",), "fields": ("username", "password")}),
+            (
+                "Personal info",
+                {"fields": ("first_name", "last_name", "email", "mobile_no")},
+            ),
+            ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
+            ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
     def get_fields(self):
         return (
-            (None, {
-                'classes': ('wide',),
-                'fields': ('username', 'password')
-            }),
-            ('Personal info', {
-                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            })
+            (None, {"classes": ("wide",), "fields": ("username", "password")}),
+            (
+                "Personal info",
+                {"fields": ("first_name", "last_name", "email", "mobile_no")},
+            ),
+            ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
+            ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
 
@@ -463,8 +525,8 @@ class OnboardUserSetupModelAdmin(admin.ModelAdmin):
     Manages Onboard user setup model at the admin panel
     """
 
-    list_display = ['user_created', 'onboard_user']
-    list_filter = ['user_created']
+    list_display = ["user_created", "onboard_user"]
+    list_filter = ["user_created"]
 
 
 @admin.register(SupervisorUser)
@@ -473,40 +535,28 @@ class SupervisorUserModelAdmin(UserAccountAdmin):
     Manages Supervisor user model at the admin panel
     """
 
-    list_display = ['username', 'first_name', 'last_name', 'email', 'mobile_no']
+    list_display = ["username", "first_name", "last_name", "email", "mobile_no"]
 
     def get_fieldsets(self, request, obj=None):
         return (
-            (None, {
-                'classes': ('wide',),
-                'fields': ('username', 'password')
-            }),
-            ('Personal info', {
-                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            })
+            (None, {"classes": ("wide",), "fields": ("username", "password")}),
+            (
+                "Personal info",
+                {"fields": ("first_name", "last_name", "email", "mobile_no")},
+            ),
+            ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
+            ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
     def get_fields(self):
         return (
-            (None, {
-                'classes': ('wide',),
-                'fields': ('username', 'password')
-            }),
-            ('Personal info', {
-                'fields': ('first_name', 'last_name', 'email', 'mobile_no')
-            }),
-            ('Permissions', {
-                'fields': ('is_active', 'is_staff', 'is_superuser')
-            }),
-            ('Important dates', {
-                'fields': ('last_login', 'date_joined')
-            })
+            (None, {"classes": ("wide",), "fields": ("username", "password")}),
+            (
+                "Personal info",
+                {"fields": ("first_name", "last_name", "email", "mobile_no")},
+            ),
+            ("Permissions", {"fields": ("is_active", "is_staff", "is_superuser")}),
+            ("Important dates", {"fields": ("last_login", "date_joined")}),
         )
 
 
@@ -516,8 +566,9 @@ class SupervisorUserSetupModelAdmin(admin.ModelAdmin):
     Manages Supervisor user setup model at the admin panel
     """
 
-    list_display = ['user_created', 'supervisor_user']
-    list_filter = ['user_created']
+    list_display = ["user_created", "supervisor_user"]
+    list_filter = ["user_created"]
+
 
 # ToDo: Custom general user model
 # admin.site.register(User)

@@ -77,17 +77,26 @@
                         <div class="col-xs-12 col-sm-4 emphasis" style="padding-right:10px;padding-left:10px;">
                           <p class="ratings pull-{{'left'|invert_dir:LANGUAGE_CODE}}"><a>{% trans 'Active' %}</a></p>
                         </div>
-                        <div class="col-xs-12 col-sm-8 emphasis text-right" style="padding-right:10px;padding-left:10px;">
+                        <div class="col-xs-12 col-sm-4 emphasis text-right" style="padding-right:10px;padding-left:10px;">
                           {% if user.user_type == 6 %}
                             <button class="btn btn-default btn-xs" title="Authorization Keys">
                               <a href="{% url 'users:oauth2_detail' username=user.username %}" rel="noopener" target="_blank"><i class="fa fa-key"></i></a>
                             </button>
                           {% endif %}
+                        </div>
+
                           <a href="{% url 'users:profile' user.username %}" type="button"
                              class="btn btn-primary btn-xs pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
                             <i class="fa fa-user"> </i> {% trans 'View Profile' %}
                           </a>
-                        </div>
+                        {% if user.user_type == 2 %}
+                          <div class="col-xs-12 col-sm-4 emphasis text-right" style="padding-right:10px;padding-left:10px;">
+                            <a href="{% url 'users:edit_level' user.username %}" type="button"
+                              class="btn btn-primary btn-xs pull-{{'left'|invert_dir:LANGUAGE_CODE}}">
+                              <em class="glyphicon glyphicon-edit"></em> {% trans 'Edit Level' %}
+                            </a>
+                          </div>
+                        {% endif %}
                       </div>
                     </div>
                   </div>

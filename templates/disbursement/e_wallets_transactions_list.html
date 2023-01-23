@@ -76,6 +76,8 @@
                     data-is_disbursed="{{ transaction.is_disbursed }}"
                     data-reason="{{ transaction.reason }}"
                     data-reason_description="{{ transaction.reason | code_description }}"
+                    data-comment1="{{ transaction.comment1 }}"
+                    data-comment2="{{ transaction.comment2 }}"
                     {% if not is_normal_flow %}
                       data-trx_id="{{ transaction.reference_id }}"
                       data-is_canceled="{{ transaction.aman_transaction_is_canceled }}"
@@ -256,7 +258,7 @@
       "bInfo" : false,
       "searching": false
     });
-  
+
     var buttons = new $.fn.dataTable.Buttons( table, {
       buttons: [
         {
@@ -280,7 +282,7 @@
         }
       ]
     });
-  
+
     table.buttons( 0, null ).container().prependTo(
         table.table().container()
     );
@@ -418,6 +420,11 @@
             appendedTagsBottom += `<center><button onclick="cancel_transaction(${trx_id})" class="btn btn-danger btn-md">Cancel</button></center>`;
           }
         }
+
+        let comment1 = $(this).data('comment1');
+        appendedTagsBottom += `<li><span>{% trans 'Comment 1' %}</span><strong>: </strong>${comment1}</li>`;
+        let comment2 = $(this).data('comment2');
+        appendedTagsBottom += `<li><span>{% trans 'Comment 2' %}</span><strong>: </strong>${comment2}</li>`;
 
         let created_at = $(this).data('created_at');
         appendedTagsRight += `<li><span>{% trans 'Created At' %}</span><strong>: </strong>${created_at}</li>`;

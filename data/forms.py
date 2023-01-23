@@ -5,9 +5,8 @@ import logging
 import os
 import tempfile
 
-import xlrd
 import pandas as pd
-
+import xlrd
 from django import forms
 from django.core.validators import FileExtensionValidator
 from django.db.models import Q
@@ -18,7 +17,6 @@ from utilities.messages import MSG_WRONG_FILE_FORMAT
 from utilities.models import AbstractBaseDocType
 
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
-
 
 UPLOAD_LOGGER = logging.getLogger("upload")
 
@@ -48,7 +46,7 @@ class FileDocumentForm(forms.ModelForm):
     file = forms.FileField(
         label=_('Select a file'),
         help_text=_('max. 42 megabytes'),
-        validators=[FileExtensionValidator(allowed_extensions=['xls', 'xlsx'])]
+        validators=[FileExtensionValidator(allowed_extensions=['xls', 'xlsx'])],
     )
 
     class Meta:
@@ -75,7 +73,11 @@ class FileDocumentForm(forms.ModelForm):
         number_of_dots = len(file.name.split('.'))
         is_valid_sheet_extension = file.name.endswith(('.xls', '.xlsx'))
 
-        if not is_valid_sheet_extension or file_type not in TASK_UPLOAD_FILE_TYPES or number_of_dots != 2:
+        if (
+            not is_valid_sheet_extension
+            or file_type not in TASK_UPLOAD_FILE_TYPES
+            or number_of_dots != 2
+        ):
             error = "File type is not supported. Supported types are .xls or .xlsx"
 
         return file_type, error
@@ -104,7 +106,11 @@ class FileDocumentForm(forms.ModelForm):
         :param file: uploaded file object
         :return: tuple of file size and errors if any
         """
-        error = "Please keep the file size under 5 MB" if file.size > TASK_UPLOAD_FILE_MAX_SIZE else False
+        error = (
+            "Please keep the file size under 5 MB"
+            if file.size > TASK_UPLOAD_FILE_MAX_SIZE
+            else False
+        )
 
         return file.size, error
 
@@ -114,7 +120,9 @@ class FileDocumentForm(forms.ModelForm):
         :param file_category: file category selected at uploading a disbursement file
         :return: the file uploaded written to the disk
         """
-        log_msg = "[message] [upload doc form validation error] [{0}]".format(self.request.user)
+        log_msg = "[message] [upload doc form validation error] [{0}]".format(
+            self.request.user
+        )
         error = False
 
         try:
@@ -130,28 +138,107 @@ class FileDocumentForm(forms.ModelForm):
                     UPLOAD_LOGGER.debug("{} error :--> {}".format(log_msg, {err.args}))
                     error = MSG_WRONG_FILE_FORMAT
                 else:
-                    if file_category.unique_identifiers_number > xl_workbook.sheet_by_index(0).ncols:
+                    if (
+                        file_category.unique_identifiers_number
+                        > xl_workbook.sheet_by_index(0).ncols
+                    ):
                         error = MSG_WRONG_FILE_FORMAT
 
             # Validate bank wallets/cards sheet headers
-            elif self.doc_type in [AbstractBaseDocType.BANK_WALLETS, AbstractBaseDocType.BANK_CARDS]:
+            elif self.doc_type in [
+                AbstractBaseDocType.BANK_WALLETS,
+                AbstractBaseDocType.BANK_CARDS,
+            ]:
                 if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
                     valid_headers = ['mobile number', 'amount', 'full name', 'issuer']
+                    valid_headers_with_comments1 = [
+                        'mobile number',
+                        'amount',
+                        'full name',
+                        'issuer',
+                        'comment 1',
+                    ]
+                    valid_headers_with_comments2 = [
+                        'mobile number',
+                        'amount',
+                        'full name',
+                        'issuer',
+                        'comment 1',
+                        'comment 2',
+                    ]
                 else:
-                    valid_headers = ['account number', 'amount', 'full name', 'bank swift code', 'transaction type']
-                    valid_headersWithIban = ['account number / IBAN', 'amount', 'full name', 'bank swift code', 'transaction type']
+                    valid_headers = [
+                        'account number',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                    ]
+                    valid_headers_with_comments1 = [
+                        'account number',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                        'comment 1',
+                    ]
+                    valid_headers_with_comments2 = [
+                        'account number',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                        'comment 1',
+                        'comment 2',
+                    ]
+                    valid_headers_with_iban = [
+                        'account number / IBAN',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                    ]
+                    valid_headers_with_iban_and_comments1 = [
+                        'account number / IBAN',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                        'comment 1',
+                    ]
+                    valid_headers_with_iban_and_comments2 = [
+                        'account number / IBAN',
+                        'amount',
+                        'full name',
+                        'bank swift code',
+                        'transaction type',
+                        'comment 1',
+                        'comment 2',
+                    ]
                 HEADERS_ERR_MSG = f"File headers are not proper, the valid headers naming and order is {valid_headers}"
 
                 try:
                     df = pd.read_excel(file)
                     error = False
                     if self.doc_type == AbstractBaseDocType.BANK_WALLETS:
-                        if df.columns.tolist() != valid_headers:
+                        if df.columns.tolist() not in [
+                            valid_headers,
+                            valid_headers_with_comments1,
+                            valid_headers_with_comments2,
+                        ]:
                             error = HEADERS_ERR_MSG
                     else:
-                        if df.columns.tolist() != valid_headers and df.columns.tolist() != valid_headersWithIban:
+                        if df.columns.tolist() not in [
+                            valid_headers,
+                            valid_headers_with_comments1,
+                            valid_headers_with_comments2,
+                            valid_headers_with_iban,
+                            valid_headers_with_iban_and_comments1,
+                            valid_headers_with_iban_and_comments2,
+                        ]:
                             error = HEADERS_ERR_MSG
-                    if min(df.count()) < 1: raise ValueError
+                    if min(df.count()) < 1:
+                        raise ValueError
                 except (ValueError, Exception):
                     error = "File data is not proper, check it and upload it again."
 
@@ -168,7 +255,11 @@ class FileDocumentForm(forms.ModelForm):
     def clean_file(self):
         """Function that validates the file type, name and size"""
         file = self.cleaned_data['file']
-        file_category = self.cleaned_data['file_category'] if self.doc_type == AbstractBaseDocType.E_WALLETS else None
+        file_category = (
+            self.cleaned_data['file_category']
+            if self.doc_type == AbstractBaseDocType.E_WALLETS
+            else None
+        )
 
         if file:
             file_type, file_type_error = self._validate_file_type(file)
@@ -184,7 +275,9 @@ class FileDocumentForm(forms.ModelForm):
                     error = file_size_error
 
                 msg = f"file name: {file_name}, file type: {file_type}, file size: {file.size}, error: {error}"
-                UPLOAD_LOGGER.debug(f"[message] [upload doc form validation error] [{self.request.user}] -- {msg}")
+                UPLOAD_LOGGER.debug(
+                    f"[message] [upload doc form validation error] [{self.request.user}] -- {msg}"
+                )
                 raise forms.ValidationError(_(error))
 
             return self.write_file_to_disk(file, file_category)
@@ -212,7 +305,7 @@ class FileCategoryForm(forms.ModelForm):
         labels = {
             'unique_field': _("Mobile number header position. ex: A-1"),
             'amount_field': _("Amount header position. ex: B-1"),
-            'issuer_field': _("Issuers header position. ex: C-1")
+            'issuer_field': _("Issuers header position. ex: C-1"),
         }
         exclude = ["user_created"]
 
@@ -227,16 +320,16 @@ class FileCategoryForm(forms.ModelForm):
         self.fields['issuer_field'].required = True
         self.fields['name'].initial = 'Default Format'
         self.fields['name'].widget.attrs['readonly'] = True
-        
+
         self.fields['unique_field'].initial = 'A-1'
         self.fields['unique_field'].widget.attrs['readonly'] = True
-        
+
         self.fields['amount_field'].initial = 'B-1'
         self.fields['amount_field'].widget.attrs['readonly'] = True
-        
+
         self.fields['issuer_field'].initial = 'C-1'
         self.fields['issuer_field'].widget.attrs['readonly'] = True
-        
+
         self.fields['no_of_reviews_required'].initial = '1'
         self.request = request
 
@@ -247,15 +340,18 @@ class FileCategoryForm(forms.ModelForm):
                 self.is_normal_flow = True
 
         # Handle creating new file category
-        if self.request is not None and self.request.user.root_entity_setups.is_normal_flow:
+        if (
+            self.request is not None
+            and self.request.user.root_entity_setups.is_normal_flow
+        ):
             self.fields.pop('issuer_field')
             self.is_normal_flow = True
 
     def clean_name(self):
         """Clean name field"""
         file_category_qs = FileCategory.objects.filter(
-            Q(name=self.cleaned_data["name"]) &
-            Q(user_created__hierarchy=self.request.user.hierarchy)
+            Q(name=self.cleaned_data["name"])
+            & Q(user_created__hierarchy=self.request.user.hierarchy)
         )
 
         file_category = file_category_qs.first()
@@ -267,24 +363,34 @@ class FileCategoryForm(forms.ModelForm):
                 return self.cleaned_data["name"]
             # updating name but it arleady exist -> not ok
             if file_category_qs.exists() and file_category.id != self.instance.id:
-                raise forms.ValidationError(self.add_error('name', _('This name already exist')))
+                raise forms.ValidationError(
+                    self.add_error('name', _('This name already exist'))
+                )
             # updating name and it doesn't exist -> ok
 
         # creating
         elif file_category_qs.exists():
-            raise forms.ValidationError(self.add_error('name', _('This name already exist')))
+            raise forms.ValidationError(
+                self.add_error('name', _('This name already exist'))
+            )
 
         return self.cleaned_data["name"]
 
     def clean_no_of_reviews_required(self):
         """Clean no_of_reviews_required field"""
-        checkers_users_number = User.objects.get_all_checkers(self.request.user.hierarchy).count()
+        checkers_users_number = User.objects.get_all_checkers(
+            self.request.user.hierarchy
+        ).count()
         no_of_reviews = self.cleaned_data['no_of_reviews_required']
 
         if no_of_reviews == 0:
-            raise forms.ValidationError(_("Number of reviews must be greater than zero"))
+            raise forms.ValidationError(
+                _("Number of reviews must be greater than zero")
+            )
         if no_of_reviews > checkers_users_number:
-            raise forms.ValidationError(_("Number of reviews must be less than or equal the number of checkers"))
+            raise forms.ValidationError(
+                _("Number of reviews must be less than or equal the number of checkers")
+            )
         return self.cleaned_data['no_of_reviews_required']
 
     def clean(self):
@@ -300,9 +406,15 @@ class FileCategoryForm(forms.ModelForm):
             if not (unique_field and amount_field):
                 return super().clean()
 
-        if not self.is_normal_flow and any('-' not in field for field in [unique_field, amount_field, issuer_field]):
-            raise forms.ValidationError(_(f"{self.three_headers} {self.col_row_format}"))
-        if self.is_normal_flow and any('-' not in field for field in [unique_field, amount_field]):
+        if not self.is_normal_flow and any(
+            '-' not in field for field in [unique_field, amount_field, issuer_field]
+        ):
+            raise forms.ValidationError(
+                _(f"{self.three_headers} {self.col_row_format}")
+            )
+        if self.is_normal_flow and any(
+            '-' not in field for field in [unique_field, amount_field]
+        ):
             raise forms.ValidationError(_(f"{self.two_headers} {self.col_row_format}"))
 
         col1, row1 = unique_field.split('-')
@@ -310,22 +422,43 @@ class FileCategoryForm(forms.ModelForm):
         col3, row3 = issuer_field.split('-') if issuer_field else ('', '')
 
         if self.is_normal_flow:
-            if not all([col1.isalpha(), col2.isalpha(), row1.isnumeric(), row2.isnumeric()]):
-                raise forms.ValidationError(_(f"{self.two_headers} {self.col_row_format}"))
+            if not all(
+                [col1.isalpha(), col2.isalpha(), row1.isnumeric(), row2.isnumeric()]
+            ):
+                raise forms.ValidationError(
+                    _(f"{self.two_headers} {self.col_row_format}")
+                )
 
             if row1 != row2:
-                raise forms.ValidationError(_(f"{self.two_headers} must be on the same row"))
+                raise forms.ValidationError(
+                    _(f"{self.two_headers} must be on the same row")
+                )
             elif col1 == col2:
-                raise forms.ValidationError(_(f"{self.two_headers} can not be on the same column"))
+                raise forms.ValidationError(
+                    _(f"{self.two_headers} can not be on the same column")
+                )
         else:
-            if not all([
-                col1.isalpha(), col2.isalpha(), col3.isalpha(), row1.isnumeric(), row2.isnumeric(), row3.isnumeric()
-            ]):
-                raise forms.ValidationError(_(f"{self.three_headers} {self.col_row_format}"))
+            if not all(
+                [
+                    col1.isalpha(),
+                    col2.isalpha(),
+                    col3.isalpha(),
+                    row1.isnumeric(),
+                    row2.isnumeric(),
+                    row3.isnumeric(),
+                ]
+            ):
+                raise forms.ValidationError(
+                    _(f"{self.three_headers} {self.col_row_format}")
+                )
             if not (row1 == row2 == row3):
-                raise forms.ValidationError(_(f"{self.three_headers} must be on the same row"))
+                raise forms.ValidationError(
+                    _(f"{self.three_headers} must be on the same row")
+                )
             if col1 == col2 or col1 == col3 or col2 == col3:
-                raise forms.ValidationError(_(f"{self.three_headers} can not be on the same column"))
+                raise forms.ValidationError(
+                    _(f"{self.three_headers} can not be on the same column")
+                )
 
         return self.cleaned_data
 
@@ -358,6 +491,7 @@ class DocReviewForm(forms.ModelForm):
             raise forms.ValidationError(_('Rejection reason is required'))
         return self.cleaned_data.get('comment')
 
+
 class RecuringForm(forms.ModelForm):
 
     is_recuring = forms.BooleanField(required=False)
@@ -369,16 +503,17 @@ class RecuringForm(forms.ModelForm):
         fields = ['is_recuring', 'recuring_period', 'recuring_starting_date']
 
 
-
 class OtpForm(forms.Form):
 
-    otp_widget = forms.TextInput(attrs={'class': 'form-control', 'type': 'text', 'id': 'pin1'})
+    otp_widget = forms.TextInput(
+        attrs={'class': 'form-control', 'type': 'text', 'id': 'pin1'}
+    )
     pin1 = forms.CharField(
-            max_length=6,
-            label="",
-            widget=otp_widget,
-            strip=False,
-            help_text=_('You will recieve a message on your phone within 30 seconds')
+        max_length=6,
+        label="",
+        widget=otp_widget,
+        strip=False,
+        help_text=_('You will recieve a message on your phone within 30 seconds'),
     )
 
     class Meta:
@@ -402,7 +537,7 @@ class DownloadFilterForm(forms.Form):
                 'style': 'width:125px;',
             }
         ),
-        required=True
+        required=True,
     )
     end_date = forms.DateField(
         input_formats=['%d-%m-%Y', '%d/%m/%Y', '%Y-%m-%d'],
@@ -413,7 +548,7 @@ class DownloadFilterForm(forms.Form):
                 'style': 'width:125px;',
             }
         ),
-        required=True
+        required=True,
     )
 
     def clean(self):
@@ -430,7 +565,6 @@ class DownloadFilterForm(forms.Form):
 
 
 class FormatForm(forms.ModelForm):
-
     def __init__(self, *args, request=None, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -439,7 +573,13 @@ class FormatForm(forms.ModelForm):
     class Meta:
         model = Format
         fields = ['name'] + [f"identifier{num}" for num in range(1, 11)]
-        exclude = ['category', 'num_of_identifiers', 'collection', 'hierarchy', 'data_type']
+        exclude = [
+            'category',
+            'num_of_identifiers',
+            'collection',
+            'hierarchy',
+            'data_type',
+        ]
 
     def clean(self):
         data = self.cleaned_data.copy()
@@ -459,23 +599,36 @@ class FormatForm(forms.ModelForm):
 class FileCategoryViewForm(forms.ModelForm):
 
     name = forms.ModelChoiceField(
-            queryset=None,
-            widget=forms.Select(
-                    attrs={'class': 'form-control', 'style': 'height: 32px;/n' 'margin-top: 2px;'}
-            ),
-            label='File Category',
+        queryset=None,
+        widget=forms.Select(
+            attrs={
+                'class': 'form-control',
+                'style': 'height: 32px;/n' 'margin-top: 2px;',
+            }
+        ),
+        label='File Category',
     )
     from_date = forms.CharField(
-            widget=forms.TextInput(
-                    attrs={'class': 'datepicker', 'type': 'text', 'size': '30', 'style': 'width:125px;'}
-            ),
-            required=False
+        widget=forms.TextInput(
+            attrs={
+                'class': 'datepicker',
+                'type': 'text',
+                'size': '30',
+                'style': 'width:125px;',
+            }
+        ),
+        required=False,
     )
     to_date = forms.CharField(
-            widget=forms.TextInput(
-                    attrs={'class': 'datepicker', 'type': 'text', 'size': '30', 'style': 'width:125px;'}
-            ),
-            required=False
+        widget=forms.TextInput(
+            attrs={
+                'class': 'datepicker',
+                'type': 'text',
+                'size': '30',
+                'style': 'width:125px;',
+            }
+        ),
+        required=False,
     )
 
     class Meta:
@@ -485,12 +638,11 @@ class FileCategoryViewForm(forms.ModelForm):
     def __init__(self):
         super(FileCategoryViewForm, self).__init__()
         self.fields["name"].queryset = FileCategory.objects.filter(
-                Q(user_created__hierarchy=self.request.user.hierarchy)
+            Q(user_created__hierarchy=self.request.user.hierarchy)
         )
 
 
 class CollectionDataForm(forms.ModelForm):
-
     class Meta:
         model = CollectionData
         fields = '__all__'
@@ -498,9 +650,11 @@ class CollectionDataForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop('request')
-        collection_data = CollectionData.objects.filter(user__hierarchy=self.request.user.hierarchy).first()
+        collection_data = CollectionData.objects.filter(
+            user__hierarchy=self.request.user.hierarchy
+        ).first()
 
-        super().__init__(*args, instance=collection_data, ** kwargs)
+        super().__init__(*args, instance=collection_data, **kwargs)
 
         for field_name, field in self.fields.items():
             field.widget.attrs['class'] = 'form-control'
@@ -514,9 +668,19 @@ class CollectionDataForm(forms.ModelForm):
 
 
 FormatFormSet = forms.modelformset_factory(
-        model=Format, form=FormatForm, min_num=1, validate_min=True, can_delete=True, extra=0
+    model=Format,
+    form=FormatForm,
+    min_num=1,
+    validate_min=True,
+    can_delete=True,
+    extra=0,
 )
 
 FileCategoryFormSet = forms.modelformset_factory(
-    model=FileCategory, form=FileCategoryForm, min_num=1, validate_min=True, can_delete=True, extra=0
+    model=FileCategory,
+    form=FileCategoryForm,
+    min_num=1,
+    validate_min=True,
+    can_delete=True,
+    extra=0,
 )

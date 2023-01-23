@@ -1,5 +1,6 @@
 import logging
 
+import requests
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
 from django.core.mail import EmailMultiAlternatives
@@ -10,16 +11,14 @@ from django.utils.crypto import get_random_string
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from django.utils.translation import gettext as _
-import requests
 
 from instant_cashin.utils import get_from_env
-from .models import (
-    Brand, CheckerUser, Client, MakerUser, SuperAdminUser, SupportSetup, UploaderUser,
-    OnboardUserSetup, SupervisorSetup
-)
-from users.sso import SSOIntegration
 from users import models
+from users.sso import SSOIntegration
 
+from .models import (Brand, CheckerUser, Client, MakerUser, OnboardUserSetup,
+                     SuperAdminUser, SupervisorSetup, SupportSetup,
+                     UploaderUser)
 
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 WALLET_API_LOGGER = logging.getLogger("wallet_api")
@@ -27,15 +26,17 @@ ALLOWED_UPPER_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 ALLOWED_LOWER_CHARS = 'abcdefghijklmnopqrstuvwxyz'
 ALLOWED_SYMBOLS = '!#$%&*+-:;<=>?@^_'
 ALLOWED_NUMBERS = '0123456789'
-MESSAGE = _("""Dear <strong>{0}</strong><br><br>
+MESSAGE = _(
+    """Dear <strong>{0}</strong><br><br>
 Your account is created on the panel with email: <strong>{2}</strong> and username: <strong>{3}</strong> <br>
 Please follow <a href="{1}" ><strong>this link</strong></a> to reset password as soon as possible, <br><br>
-Thanks, BR""")
+Thanks, BR"""
+)
 VODAFONE_ACTIVATION_MESSAGE = _(
-        "Your payroll account has been registered successfully. "
-        "Please open your email to activate your payroll account, or you can activate your account by using the "
-        "following credentials: username: {0} and the link to set your password: {1}. To learn more about "
-        "the usage method, click on {2} or view {3}"
+    "Your payroll account has been registered successfully. "
+    "Please open your email to activate your payroll account, or you can activate your account by using the "
+    "following credentials: username: {0} and the link to set your password: {1}. To learn more about "
+    "the usage method, click on {2} or view {3}"
 )
 
 
@@ -84,7 +85,8 @@ def client_post_save(sender, instance, created, **kwargs):
         root_user = instance.client
         root_user.brand = instance.creator.brand
         root_user.save()
-        notify_user(root_user, created)
+        if not root_user.from_accept:
+            notify_user(root_user, created)
 
 
 @receiver(post_save, sender=SupportSetup)
@@ -96,6 +98,7 @@ def support_post_save(sender, instance, created, **kwargs):
         support_user.save()
         notify_user(support_user, created)
 
+
 @receiver(post_save, sender=OnboardUserSetup)
 def onboard_user_post_save(sender, instance, created, **kwargs):
     """Post save signal to send password setup email after creating any onboard user"""
@@ -103,9 +106,6 @@ def onboard_user_post_save(sender, instance, created, **kwargs):
         onboard_user = instance.onboard_user
         onboard_user.brand = instance.user_created.brand
         onboard_user.save()
-        # Register User Over IDMS
-        sso =  SSOIntegration()
-        sso.register_user_on_idms(onboard_user)
         notify_user(onboard_user, created)
 
 
@@ -122,14 +122,13 @@ def onboard_user_post_save(sender, instance, created, **kwargs):
 @receiver(post_save, sender=models.SupportUser)
 @receiver(post_save, sender=models.SupervisorUser)
 def all_users_signal(sender, instance, created, **kwargs):
-    sso =  SSOIntegration()
+    sso = SSOIntegration()
     if created:
         # Register User Over IDMS
         sso.register_user_on_idms(instance)
     else:
         # Edit User on IDMS
         sso.edit_user_on_idms(instance)
-
 
 
 @receiver(post_save, sender=SupervisorSetup)
@@ -185,27 +184,40 @@ def send_activation_message(root_user, set_password_url, forget_password_msg=Fal
             "TYPE": "SMSREQ",
             "MSISDN": f"{root_user.mobile_no}",
             "TEXT": VODAFONE_ACTIVATION_MESSAGE.format(
-                    root_user.username, set_password_url, send_env_url, "Link to an infographic video"
+                root_user.username,
+                set_password_url,
+                send_env_url,
+                "Link to an infographic video",
             ),
-            "SMSSENDER": f"{root_user.client.smsc_sender_name}"
+            "SMSSENDER": f"{root_user.client.smsc_sender_name}",
         }
         if forget_password_msg:
-            payload["TEXT"] = f"Click this link to reset your password {set_password_url}"
+            payload[
+                "TEXT"
+            ] = f"Click this link to reset your password {set_password_url}"
         # delete SMSSENDER from payload if it's empty
         if not root_user.client.smsc_sender_name:
-            del(payload["SMSSENDER"])
+            del payload["SMSSENDER"]
 
         # delete SMSSENDER from payload if root is_vodafone_default_onboarding
         if root_user.is_vodafone_default_onboarding:
-            del(payload["SMSSENDER"])
+            del payload["SMSSENDER"]
 
         try:
-            WALLET_API_LOGGER.debug(f"[request] [activation message] [{root_user}] -- {payload}, url: {msg_env_url}")
-            response = requests.post(get_from_env(msg_env_url), json=payload, verify=False)
+            WALLET_API_LOGGER.debug(
+                f"[request] [activation message] [{root_user}] -- {payload}, url: {msg_env_url}"
+            )
+            response = requests.post(
+                get_from_env(msg_env_url), json=payload, verify=False
+            )
         except Exception as e:
-            WALLET_API_LOGGER.debug(f"[message] [activation message error] [{root_user}] -- {e.args}")
+            WALLET_API_LOGGER.debug(
+                f"[message] [activation message error] [{root_user}] -- {e.args}"
+            )
         else:
-            WALLET_API_LOGGER.debug(f"[response] [activation message] [{root_user}] -- {str(response.text)}")
+            WALLET_API_LOGGER.debug(
+                f"[response] [activation message] [{root_user}] -- {str(response.text)}"
+            )
 
 
 def notify_user(instance, created):
@@ -220,9 +232,14 @@ def notify_user(instance, created):
         # one time token
         token = default_token_generator.make_token(instance)
         uid = urlsafe_base64_encode(force_bytes(instance.pk))
-        url = settings.BASE_URL + reverse('users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token})
+        url = settings.BASE_URL + reverse(
+            'users:password_reset_confirm', kwargs={'uidb64': uid, 'token': token}
+        )
 
-        if instance.is_root and (instance.is_vodafone_default_onboarding or instance.is_banks_standard_model_onboaring):
+        if instance.is_root and (
+            instance.is_vodafone_default_onboarding
+            or instance.is_banks_standard_model_onboaring
+        ):
             send_activation_message(instance, url)
 
         from_email = settings.SERVER_EMAIL
@@ -231,11 +248,13 @@ def notify_user(instance, created):
         else:
             subject = 'Paymob Send'
         subject = subject + _(' Password Notification')
-        message = MESSAGE.format(instance.username, url, instance.email, instance.username)
+        message = MESSAGE.format(
+            instance.username, url, instance.email, instance.username
+        )
         recipient_list = [instance.email]
-        mail_to_be_sent = EmailMultiAlternatives(subject, message, from_email, recipient_list)
+        mail_to_be_sent = EmailMultiAlternatives(
+            subject, message, from_email, recipient_list
+        )
         mail_to_be_sent.attach_alternative(message, "text/html")
         mail_to_be_sent.send()
-        SEND_EMAIL_LOGGER.debug(
-            f"[{subject}] [{recipient_list[0]}] -- {message}"
-        )
+        SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")

@@ -203,13 +203,15 @@ class BankWalletsAndCardsSheetProcessor(Task):
         :return: msisdn_list, amount_list, names_list, errors_list, total_amount
         """
         total_amount = 0
-        msisdns_list, amounts_list, names_list, issuers_list, errors_list = (
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
+        (
+            msisdns_list,
+            amounts_list,
+            names_list,
+            issuers_list,
+            errors_list,
+            comment1_list,
+            comment2_list,
+        ) = ([], [], [], [], [], [], [])
 
         try:
             for record in df.itertuples():
@@ -281,6 +283,17 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     else:
                         errors_list[index] = "\nInvalid issuer option"
 
+                # 5. Check if there is optional data
+                if len(record) > 5 and record[5]:
+                    comment1_list.append(str(record[5]))
+                else:
+                    comment1_list.append("")
+
+                if len(record) > 6 and record[6]:
+                    comment2_list.append(str(record[6]))
+                else:
+                    comment2_list.append("")
+
         except Exception as e:
             raise Exception(e)
         return (
@@ -290,6 +303,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
             issuers_list,
             errors_list,
             total_amount,
+            comment1_list,
+            comment2_list,
         )
 
     def process_and_validate_cards_records(self, df):
@@ -305,7 +320,9 @@ class BankWalletsAndCardsSheetProcessor(Task):
             codes_list,
             purposes_list,
             errors_list,
-        ) = ([], [], [], [], [], [])
+            comment1_list,
+            comment2_list,
+        ) = ([], [], [], [], [], [], [], [])
         iban_regex = re.compile(r'^EG\d{27}')
         try:
             for record in df.itertuples():
@@ -377,6 +394,17 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         errors_list[index] = "Invalid transaction purpose"
                     else:
                         errors_list[index] = "\nInvalid transaction purpose"
+
+                # 6. Check if there is optional data
+                if len(record) > 6 and str(record[6]):
+                    comment1_list.append(str(record[6]))
+                else:
+                    comment1_list.append("")
+
+                if len(record) > 7 and str(record[7]):
+                    comment2_list.append(str(record[7]))
+                else:
+                    comment2_list.append("")
         except:
             pass
         finally:
@@ -388,6 +416,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 purposes_list,
                 errors_list,
                 total_amount,
+                comment1_list,
+                comment2_list,
             )
 
     def save_processed_records_to_db(
@@ -396,6 +426,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
         amounts_list,
         names_list,
         recipients_list,
+        comment1_list,
+        comment2_lis,
         issuers_list=None,
         codes_list=None,
         purposes_list=None,
@@ -407,7 +439,12 @@ class BankWalletsAndCardsSheetProcessor(Task):
         # 1 For bank wallets/Orange: Save the refined data as instant transactions records
         if doc_obj.is_bank_wallet:
             processed_data = zip(
-                amounts_list, names_list, recipients_list, issuers_list
+                amounts_list,
+                names_list,
+                recipients_list,
+                issuers_list,
+                comment1_list,
+                comment2_lis,
             )
             objs = []
             for record in processed_data:
@@ -425,6 +462,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                         anon_recipient=record[2],
                         fees=fees,
                         vat=vat,
+                        comment1=record[4] if record[4] else "",
+                        comment2=record[5] if record[5] else "",
                     )
                 )
 
@@ -433,7 +472,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
         # 2 For bank cards: Save the refined data as bank transactions records
         elif doc_obj.is_bank_card:
             processed_data = zip(
-                amounts_list, names_list, recipients_list, codes_list, purposes_list
+                amounts_list,
+                names_list,
+                recipients_list,
+                codes_list,
+                purposes_list,
+                comment1_list,
+                comment2_lis,
             )
             for record in processed_data:
                 fees, vat = budget.calculate_fees_and_vat_for_amount(
@@ -456,6 +501,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     purpose=category_purpose_dict.get("purpose", "CASH"),
                     fees=fees,
                     vat=vat,
+                    comment1=record[5] if record[5] else "",
+                    comment2=record[6] if record[6] else "",
                 )
 
     def run(self, doc_id, *args, **kwargs):
@@ -496,6 +543,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     issuers_list,
                     errors_list,
                     total_amount,
+                    comment1_list,
+                    comment2_list,
                 ) = self.process_and_validate_wallets_records(df)
 
             # 1.2 For bank cards: Check if all records has no empty values
@@ -523,6 +572,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     purposes_list,
                     errors_list,
                     total_amount,
+                    comment1_list,
+                    comment2_list,
                 ) = self.process_and_validate_cards_records(df)
 
             doc_obj.total_amount = total_amount
@@ -576,7 +627,13 @@ class BankWalletsAndCardsSheetProcessor(Task):
             # 6.1 For bank wallets/Orange: Save the refined data as instant transactions records
             if doc_obj.is_bank_wallet:
                 self.save_processed_records_to_db(
-                    doc_obj, amounts_list, names_list, msisdn_list, issuers_list
+                    doc_obj,
+                    amounts_list,
+                    names_list,
+                    msisdn_list,
+                    comment1_list,
+                    comment2_list,
+                    issuers_list,
                 )
 
             # 6.2 For bank cards: Save the refined data as bank transactions records
@@ -586,6 +643,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     amounts_list,
                     names_list,
                     accounts_list,
+                    comment1_list,
+                    comment2_list,
                     codes_list=codes_list,
                     purposes_list=purposes_list,
                 )
@@ -804,13 +863,15 @@ class EWalletsSheetProcessor(Task):
         """
         total_amount = 0
         valid_issuers_list = ['vodafone', 'etisalat', 'aman']
-        msisdns_list, amounts_list, issuers_list, errors_list, vf_msisdns_list = (
-            [],
-            [],
-            [],
-            [],
-            [],
-        )
+        (
+            msisdns_list,
+            amounts_list,
+            issuers_list,
+            errors_list,
+            vf_msisdns_list,
+            comment1_list,
+            comment2_list,
+        ) = ([], [], [], [], [], [], [])
 
         try:
             for index, record in df.iterrows():
@@ -881,6 +942,17 @@ class EWalletsSheetProcessor(Task):
                 if issuer == "vodafone":
                     vf_msisdns_list.append(msisdn)
 
+                # 5. Check if there is optional data
+                if record.get('comment 1'):
+                    comment1_list.append(str(record['comment 1']))
+                else:
+                    comment1_list.append("")
+
+                if record.get('comment 2'):
+                    comment2_list.append(str(record['comment 2']))
+                else:
+                    comment2_list.append("")
+
         except Exception as e:
             raise Exception(e)
         return (
@@ -890,6 +962,8 @@ class EWalletsSheetProcessor(Task):
             errors_list,
             total_amount,
             vf_msisdns_list,
+            comment1_list,
+            comment2_list,
         )
 
     def validate_doc_total_amount_against_custom_budget(
@@ -1119,6 +1193,8 @@ class EWalletsSheetProcessor(Task):
                     errors_list,
                     total_amount,
                     vf_msisdns_list,
+                    comment1_list,
+                    comment2_list,
                 ) = self.process_and_validate_issuers_specs_records(
                     df, msisdn_header, amount_header, issuer_header
                 )
@@ -1192,7 +1268,13 @@ class EWalletsSheetProcessor(Task):
             # 7.2 For issuer based sheets: Save the refined data as disbursement data records
             else:
                 budget = Budget.objects.get(disburser=self.doc_obj.owner.root)
-                records = zip(amounts_list, msisdn_list, issuers_list)
+                records = zip(
+                    amounts_list,
+                    msisdn_list,
+                    issuers_list,
+                    comment1_list,
+                    comment2_list,
+                )
                 objs = []
                 for record in records:
                     fees, vat = budget.calculate_fees_and_vat_for_amount(
@@ -1206,6 +1288,8 @@ class EWalletsSheetProcessor(Task):
                             issuer=record[2],
                             fees=fees,
                             vat=vat,
+                            comment1=record[3],
+                            comment2=record[4],
                         )
                     )
 

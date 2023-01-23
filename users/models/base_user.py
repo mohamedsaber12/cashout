@@ -1,8 +1,5 @@
 from __future__ import unicode_literals
 
-from imagekit.models import ProcessedImageField
-from imagekit.processors import ResizeToFill
-
 from django.contrib.auth.hashers import check_password, make_password
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import UserManager as AbstractUserManager
@@ -12,23 +9,25 @@ from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from imagekit.models import ProcessedImageField
+from imagekit.processors import ResizeToFill
 
 from disbursement.models import VMTData
 from utilities.models import SoftDeletionModel
 
-
 TYPES = (
-    (0, 'Super'),           # when creating super AN EMAIL MUST be created.
+    (0, 'Super'),  # when creating super AN EMAIL MUST be created.
     (1, 'Maker'),
     (2, 'Checker'),
     (3, 'Root'),
-    (4, 'Uploader'),        # collection only
-    (5, 'UpMaker'),         # maker and uploader
+    (4, 'Uploader'),  # collection only
+    (5, 'UpMaker'),  # maker and uploader
     (6, 'InstantAPIChecker'),
     (7, 'InstantAPIViewer'),
     (8, 'Support'),
     (9, 'OnboardUser'),
-    (12, 'SuperVisor')
+    (12, 'SuperVisor'),
+    (14, 'SystemAdmin')
 )
 
 
@@ -37,21 +36,26 @@ class UserManager(AbstractUserManager):
         return self.filter(hierarchy=hierarchy)
 
     def get_all_makers(self, hierarchy):
-        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=1).order_by('level__max_amount_can_be_disbursed')
+        return (
+            self.get_all_hierarchy_tree(hierarchy)
+            .filter(user_type=1)
+            .order_by('level__max_amount_can_be_disbursed')
+        )
 
     def get_all_checkers(self, hierarchy):
-        return self.get_all_hierarchy_tree(hierarchy).filter(user_type=2).order_by('level__level_of_authority')
+        return (
+            self.get_all_hierarchy_tree(hierarchy)
+            .filter(user_type=2)
+            .order_by('level__level_of_authority')
+        )
 
 
 class User(AbstractUser, SoftDeletionModel):
     """
     User model for all the different types of users
     """
-    root = models.ForeignKey(
-        'users.RootUser',
-        on_delete=models.CASCADE,
-        null=True
-    )
+
+    root = models.ForeignKey('users.RootUser', on_delete=models.CASCADE, null=True)
     mobile_no = models.CharField(max_length=16, verbose_name=_('Mobile Number'))
     user_type = models.PositiveSmallIntegerField(choices=TYPES, default=0)
     hierarchy = models.PositiveSmallIntegerField(null=True, db_index=True, default=0)
@@ -61,19 +65,28 @@ class User(AbstractUser, SoftDeletionModel):
         upload_to='avatars',
         processors=[ResizeToFill(100, 100)],
         format='JPEG',
-        options={'quality': 60}, null=True, default='avatars/user.png'
+        options={'quality': 60},
+        null=True,
+        default='avatars/user.png',
     )
     title = models.CharField(max_length=128, default='', null=True, blank=True)
     is_totp_verified = models.BooleanField(null=True, default=False)
-    level = models.ForeignKey('users.Levels', related_name='users', on_delete=models.SET_NULL, null=True)
+    level = models.ForeignKey(
+        'users.Levels', related_name='users', on_delete=models.SET_NULL, null=True
+    )
     brand = models.ForeignKey('users.Brand', on_delete=models.SET_NULL, null=True)
-    wallet_fees_profile = models.CharField(max_length=30, default='', null=True, blank=True)
+    wallet_fees_profile = models.CharField(
+        max_length=30, default='', null=True, blank=True
+    )
     callback_url = models.CharField(max_length=128, default='', null=True, blank=True)
-    access_top_up_balance = models.BooleanField(null=True, default=True, verbose_name='Has Access To Top Up Balance')
-    idms_user_id = models.CharField(max_length=50, null=True, blank=True)
+    access_top_up_balance = models.BooleanField(
+        null=True, default=True, verbose_name='Has Access To Top Up Balance'
+    )
+    idms_user_id = models.CharField(max_length=50, null=True, blank=True, db_index=True)
     has_password_set_on_idms = models.BooleanField(default=False)
-
-
+    from_accept = models.BooleanField(default=False)
+    allowed_to_be_bulk = models.BooleanField(default=False)
+    mid = models.CharField(max_length=50, null=True, blank=True)
 
     objects = UserManager()
 
@@ -86,39 +99,42 @@ class User(AbstractUser, SoftDeletionModel):
             ("can_use_two_factor", "the user can use two factor"),
             ("has_disbursement", "the client has disbursement options"),
             ("has_collection", "the client has collection options"),
-            ("has_instant_disbursement", "the client/his children has instant disbursement capabilities"),
+            (
+                "has_instant_disbursement",
+                "the client/his children has instant disbursement capabilities",
+            ),
             ("can_view_api_docs", "the user can view the api documentation"),
-            ("vodafone_default_onboarding", "the onboarding will be the old one at the super admin and the admin"),
-            ("instant_model_onboarding", "the onboarding of an instant entity will be only for the mandatory setups"),
-            ("accept_vodafone_onboarding", "the new vf & accept business model of no direct calls to the wallets"),
+            (
+                "vodafone_default_onboarding",
+                "the onboarding will be the old one at the super admin and the admin",
+            ),
+            (
+                "instant_model_onboarding",
+                "the onboarding of an instant entity will be only for the mandatory setups",
+            ),
+            (
+                "accept_vodafone_onboarding",
+                "the new vf & accept business model of no direct calls to the wallets",
+            ),
             (
                 "vodafone_facilitator_accept_vodafone_onboarding",
-                "like our send business model but can only disburse for vodafone"
+                "like our send business model but can only disburse for vodafone",
             ),
             (
                 "banks_standard_model_onboaring",
-                "like the vodafone_default_onboarding but with different issuers"
+                "like the vodafone_default_onboarding but with different issuers",
             ),
-            (
-                "has_custom_budget_add_permission",
-                "has custom budget add permission"
-            ),
+            ("has_custom_budget_add_permission", "has custom budget add permission"),
             (
                 "has_custom_budget_change_permission",
-                "has custom budget change permission"
+                "has custom budget change permission",
             ),
             (
                 "has_custom_budget_delete_permission",
-                "has custom budget delete permission"
+                "has custom budget delete permission",
             ),
-            (
-                "has_custom_budget_view_permission",
-                "has custom budget view permission"
-            ),
-            (
-                "has_instant_transaction_view",
-                "has instant transaction view"
-            ),
+            ("has_custom_budget_view_permission", "has custom budget view permission"),
+            ("has_instant_transaction_view", "has instant transaction view"),
         )
         ordering = ['-id', '-hierarchy']
 
@@ -142,18 +158,22 @@ class User(AbstractUser, SoftDeletionModel):
         """
         if self.user_type == 0:
             from .client import Client
+
             try:
                 return [root.client for root in Client.objects.filter(creator=self)]
             except Client.DoesNotExist:
                 raise ValidationError("Related user does not exist")
 
         if self.user_type == 3:
-            return User.objects.get_all_hierarchy_tree(self.hierarchy).filter(~Q(user_type=self.user_type))[::1]
+            return User.objects.get_all_hierarchy_tree(self.hierarchy).filter(
+                ~Q(user_type=self.user_type)
+            )[::1]
 
         raise ValidationError('This user has no children')
 
     def set_password(self, password):
         from users.sso import SSOIntegration
+
         super(User, self).set_password(password)
         sso = SSOIntegration()
         sso.change_user_password(self, password)
@@ -162,7 +182,11 @@ class User(AbstractUser, SoftDeletionModel):
     @property
     def can_view_docs(self):
         """Check if the user has the permission to view the API documentation"""
-        if self.is_instantapiviewer or self.has_perm('users.can_view_api_docs') or self.is_instant_model_onboarding:
+        if (
+            self.is_instantapiviewer
+            or self.has_perm('users.can_view_api_docs')
+            or self.is_instant_model_onboarding
+        ):
             return True
         return False
 
@@ -177,8 +201,8 @@ class User(AbstractUser, SoftDeletionModel):
         if self.is_superadmin:
             return self
         else:
-            from users.models import SuperAdminUser
-            from users.models import Client
+            from users.models import Client, SuperAdminUser
+
             client = Client.objects.get(client=self.root)
             super_admin = client.creator
             return SuperAdminUser.objects.get(id=super_admin.id)
@@ -200,6 +224,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_root(self):
         return self.user_type == 3
+
+    @cached_property
+    def is_system_admin(self):
+        return self.user_type == 14
 
     @cached_property
     def has_access_to_topUp_balance(self):
@@ -252,16 +280,24 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_supervisor(self):
         return self.user_type == 12
-    
+
     @cached_property
     def is_vodafone_monthly_report(self):
         return self.user_type == 13
 
     @cached_property
+    def is_system_admin(self):
+        return self.user_type == 14
+
+    @cached_property
     def is_instant_member(self):
         """Check if current user belongs to instant cashin family"""
-        if self.is_instantapichecker or self.is_instantapiviewer \
-                or self.is_instant_model_onboarding or self.has_perm('users.has_instant_disbursement'):
+        if (
+            self.is_instantapichecker
+            or self.is_instantapiviewer
+            or self.is_instant_model_onboarding
+            or self.has_perm('users.has_instant_disbursement')
+        ):
             return True
         return False
 
@@ -286,8 +322,9 @@ class User(AbstractUser, SoftDeletionModel):
     def has_custom_budget(self):
         """Check if this user has custom budget"""
         from utilities.models import Budget
+
         try:
-            budget = self.budget
+            self.budget
             return True
         except Budget.DoesNotExist:
             return False
@@ -302,12 +339,10 @@ class User(AbstractUser, SoftDeletionModel):
         return self.entity_setups.uncomplete_entity_creations().first()
 
     def data_type(self):
-        DATA_TYPES = {
-            'Disbursement': 1,
-            'Collection': 2,
-            'Both': 3
-        }
-        if self.has_perm('users.has_disbursement') and self.has_perm('users.has_collection'):
+        DATA_TYPES = {'Disbursement': 1, 'Collection': 2, 'Both': 3}
+        if self.has_perm('users.has_disbursement') and self.has_perm(
+            'users.has_collection'
+        ):
             return DATA_TYPES['Both']
         elif self.has_perm('users.has_disbursement'):
             return DATA_TYPES['Disbursement']
@@ -318,7 +353,12 @@ class User(AbstractUser, SoftDeletionModel):
         data_type = self.data_type()
         if data_type == 3 and (self.is_upmaker or self.is_root):
             return request.session.get('status')
-        if data_type == 1 or self.is_maker or self.is_checker or (self.is_root and data_type == 1):
+        if (
+            data_type == 1
+            or self.is_maker
+            or self.is_checker
+            or (self.is_root and data_type == 1)
+        ):
             return 'disbursement'
         if data_type == 2 or self.is_uploader or (self.is_root and data_type == 2):
             return 'collection'

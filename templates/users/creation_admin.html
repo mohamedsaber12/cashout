@@ -1,0 +1,83 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+{% block title %} {% trans 'Creation Admin' %} {% endblock %}
+{% block content %}
+
+<style>
+    .form-row {
+        overflow: hidden;
+        padding: 10px;
+        font-size: 13px;
+        border-bottom: 1px solid #eee;
+    }
+    .wide label {
+        width: 200px;
+    }
+    .aligned label {
+        display: block;
+        padding: 4px 10px 0 0;
+        float: left;
+        width: 160px;
+        word-wrap: break-word;
+        line-height: 1;
+    }
+    label.required {
+        font-weight: bold;
+        color: #333;
+    }
+    .vTextField {
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 5px 6px;
+        margin-top: 0;
+        width: 20em;
+    }
+    ul li {
+        list-style-type: none;
+        padding: 1px 0;
+    }
+</style>
+
+<div class="page-title">
+    <div class="title_left">
+        <h3>{% trans 'Creation Admin' %} {{ who }}</h3>
+    </div>
+
+    <div class="clearfix">
+    </div>
+
+    <div class="row ">
+        <div class="col-lg-12 ">
+            <div class="panel panel-default">
+                <div class="panel-body align-items-center">
+                    <form action="." method="post" class="form-horizontal" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% for field in form.visible_fields %}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-row">
+                                <div class="aligned wide">
+                                    <label class="required">{{ field.label|capfirst }}</label>
+                                    {% ifequal field.name "has_header" %}
+                                        {{ field }}
+                                    {% else %}
+                                        {{ field.errors.as_ul }}
+                                        {{ field }}
+                                    {% endifequal %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

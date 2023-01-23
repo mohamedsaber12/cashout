@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from datetime import timedelta
 import logging
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.files.storage import default_storage
@@ -32,20 +32,38 @@ def retrieve_onboarded_entities_and_disbursement_records_over_week(superadmin_us
     entities_setup = EntitySetup.objects.filter(user__username=superadmin_username)
 
     for entity_setup in entities_setup:
-        trx_records = DisbursementData.objects.filter(doc__owner__hierarchy=entity_setup.entity.hierarchy).\
-            filter(created_at__gte=one_week_ago).\
-            filter(doc__disbursement_txn__doc_status=AbstractBaseDocStatus.DISBURSED_SUCCESSFULLY).\
-            filter(reason='SUCCESS').values('amount')
+        trx_records = (
+            DisbursementData.objects.filter(
+                doc__owner__hierarchy=entity_setup.entity.hierarchy
+            )
+            .filter(created_at__gte=one_week_ago)
+            .filter(
+                doc__disbursement_txn__doc_status=AbstractBaseDocStatus.DISBURSED_SUCCESSFULLY
+            )
+            .filter(reason='SUCCESS')
+            .values('amount')
+        )
         trx_count = trx_records.count()
-        trx_total_amount = sum([trx['amount'] for trx in trx_records]) if trx_count > 0 else 0.0
-        records_result.append({'admin': entity_setup.entity.username, 'count': trx_count, 'amount': trx_total_amount})
+        trx_total_amount = (
+            sum([trx['amount'] for trx in trx_records]) if trx_count > 0 else 0.0
+        )
+        records_result.append(
+            {
+                'admin': entity_setup.entity.username,
+                'count': trx_count,
+                'amount': trx_total_amount,
+            }
+        )
 
-    last_week_users = entities_setup.filter(entity__date_joined__gte=one_week_ago).\
-        values('entity__username', 'entity__email', 'entity__mobile_no').order_by('-entity__date_joined')
+    last_week_users = (
+        entities_setup.filter(entity__date_joined__gte=one_week_ago)
+        .values('entity__username', 'entity__email', 'entity__mobile_no')
+        .order_by('-entity__date_joined')
+    )
     return {
         'onboarded_entities': last_week_users,
         'onboarded_entities_count': last_week_users.count(),
-        'records_result': records_result
+        'records_result': records_result,
     }
 
 
@@ -70,15 +88,21 @@ def generate_pdf_report(context={}):
 def generate_onboarded_entities_report(recipients_list, superadmin_username, **kwargs):
     """Generate report of the newly onboarded entities per week"""
 
-    context =  retrieve_onboarded_entities_and_disbursement_records_over_week(superadmin_username)
+    context = retrieve_onboarded_entities_and_disbursement_records_over_week(
+        superadmin_username
+    )
     filepath = generate_pdf_report(context)
     GENERATE_REPORT = logging.getLogger('generate_sheet')
-    GENERATE_REPORT.debug(f"[message] [WEEKLY REPORT GENERATED SUCCESSFULLY] [anonymous] -- "
-                          f"Superadmin: {superadmin_username}, recipients: {recipients_list}, Report: {filepath}")
+    GENERATE_REPORT.debug(
+        f"[message] [WEEKLY REPORT GENERATED SUCCESSFULLY] [anonymous] -- "
+        f"Superadmin: {superadmin_username}, recipients: {recipients_list}, Report: {filepath}"
+    )
 
     sender = settings.SERVER_EMAIL
     subject = _('Payouts Weekly Report')
-    message = _('Dear Team,\n\nKindly find the weekly report attached.\n\nBest Regards,')
+    message = _(
+        'Dear Team,\n\nKindly find the weekly report attached.\n\nBest Regards,'
+    )
     mail = EmailMessage(subject, message, sender, recipients_list)
     mail.attach_file(filepath)
     return mail.send()
@@ -86,27 +110,31 @@ def generate_onboarded_entities_report(recipients_list, superadmin_username, **k
 
 @app.task()
 @respects_language
-def send_transfer_request_email(admin_username, message, attachment_file_name=None, **kwargs):
+def send_transfer_request_email(admin_username, message, attachment_file_name=None, automatic=False, **kwargs):
     """"""
     # 1. Prepare recipients list
-    business_team = [dict(email=email) for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')]
+    business_team = [
+        dict(email=email)
+        for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
+    ]
 
     # 2. Get admin user object
     admin_user = User.objects.get(username=admin_username)
 
+    subject = "Automatic " if automatic else ""
     # 3. Send the email
     if attachment_file_name:
         file = default_storage.open(attachment_file_name)
         deliver_mail_to_multiple_recipients_with_attachment(
-                admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team, file
+            admin_user, _(f" {subject}Transfer Request By User {admin_username}"), message, business_team, file
         )
     else:
         deliver_mail_to_multiple_recipients_with_attachment(
-                admin_user, _(f" Transfer Request By User {admin_username}"), message, business_team
+            admin_user, _(f" {subject}Transfer Request By User {admin_username}"), message, business_team
         )
 
     BUDGET_LOGGER.debug(
-            f"[message] [transfer request Email] from :- [{admin_username}]  to:- {business_team}"
+        f"[message] [transfer request Email] from :- [{admin_username}]  to:- {business_team}"
     )
     return True
 
@@ -115,14 +143,16 @@ def send_transfer_request_email(admin_username, message, attachment_file_name=No
 @respects_language
 def check_disk_space_and_send_warning_email():
     import shutil
+
     # get total space and used space and free space
     total, used, free = shutil.disk_usage("/")
 
     # send email if free space <= 3 GiB
     if (free // (2**30)) <= 3:
         developers_team = [admin[1] for admin in settings.ADMINS]
-        subject=f'Warning, Payout {get_from_env("ENVIRONMENT").capitalize()} Server Run Out Of Disk Space'
-        message_body= """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        subject = f'Warning, Payout {get_from_env("ENVIRONMENT").capitalize()} Server Run Out Of Disk Space'
+        message_body = (
+            """<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
                 <html xmlns="http://www.w3.org/1999/xhtml">
                 <head>
                     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
@@ -198,7 +228,8 @@ def check_disk_space_and_send_warning_email():
                                 }
                             }
                     </style>
-                </head>""" + f"""
+                </head>"""
+            + f"""
                 <body style="margin: 0; padding: 0">
                     <table style="border: none" cellpadding="0" cellspacing="0" width="100%">
                         <tr>
@@ -222,8 +253,11 @@ def check_disk_space_and_send_warning_email():
                 </body>
                 </html>
             """
+        )
         from_email = settings.SERVER_EMAIL
-        mail_to_be_sent = EmailMultiAlternatives(subject, message_body, from_email, developers_team)
+        mail_to_be_sent = EmailMultiAlternatives(
+            subject, message_body, from_email, developers_team
+        )
         mail_to_be_sent.attach_alternative(message_body, "text/html")
 
         return mail_to_be_sent.send()

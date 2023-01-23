@@ -276,27 +276,33 @@
                 </div>
               </div>
               <div class="row">
-              <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                <label>
-                    <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Type' %}
-                </label>
-                {{ form.transaction_type }}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{ form.transaction_type.errors }}
-                </div>
-              </div>
-              <div class="form-group col-md-6 col-sm-6 col-xs-12">
-                <label>
+                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+                    </label>
+                    {{ form.transaction_type }}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{ form.transaction_type.errors }}
+                    </div>
+                  </div>
+                {% endif %}
+                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                {% else %}
+                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                {% endif %}
+                  <label>
                     <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
-                </label>
-                {{form.creditor_bank}}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{form.creditor_bank.errors}}
+                  </label>
+                  {{form.creditor_bank}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.creditor_bank.errors}}
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
             <!-- vodafone/etisalat form -->
             <div id="vodafone_etisalat_fields">
@@ -388,14 +394,25 @@
             <!-- pin row -->
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                <label>
+                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+                  <label>
                     <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
-                </label>
-                {{form.pin}}
-                <span class="respond-span"></span>
-                <div class="help-block">
-                  {{form.pin.errors}}
-                </div>
+                  </label>
+                  {{form.pin}}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{form.pin.errors}}
+                  </div>
+                {% else %}
+                  <label>
+                    <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+                  </label>
+                  {{ form.transaction_type }}
+                  <span class="respond-span"></span>
+                  <div class="help-block">
+                    {{ form.transaction_type.errors }}
+                  </div>
+                {% endif %}
               </div>
             </div>
 
@@ -566,7 +583,7 @@
   });
 
   {% if show_pop_up == True %}
-    {% if status_code != "8000" and status_code != "200" %}
+    {% if status_code != "8000" and status_code != "200" and status_code != "8333" %}
       $('#failedModal').modal({
         backdrop: 'static',
         keyboard: false
@@ -579,7 +596,7 @@
     {% endif %}
   {% endif %}
   {% if request.GET.status%}
-    {% if request.GET.status == '8000' or request.GET.status == '200' %}
+    {% if request.GET.status == '8000' or request.GET.status == '200' or request.GET.status == '8333' %}
       $("#status_description_success").html('{{request.GET.message}}');
       $('#successModal').modal({
             backdrop: 'static',
@@ -691,7 +708,7 @@
 
 <!-- generate pdf script-->
 <!-- Important Not this script should be after transaction details script because   -->
-<!-- because it use trx object that exist in  transaction details script above -->
+<!-- because it uses trx object that exist in  transaction details script above -->
 {% include 'disbursement/transaction_details_pdf_js.html' %}
 
 <script>
@@ -717,19 +734,25 @@ let bankCardForm = `<div id="bank_card_fields">
     </div>
   </div>
   <div class="row">
-  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+        </label>
+        {{ form.transaction_type }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.transaction_type.errors }}
+        </div>
+      </div>
+    {% endif %}
+    {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+    {% else %}
+      <div class="form-group col-md-12 col-sm-12 col-xs-12">
+    {% endif %}
     <label>
-        <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Type' %}
-    </label>
-    {{ form.transaction_type }}
-    <span class="respond-span"></span>
-    <div class="help-block">
-      {{ form.transaction_type.errors }}
-    </div>
-  </div>
-  <div class="form-group col-md-6 col-sm-6 col-xs-12">
-    <label>
-        <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
+      <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
     </label>
     {{form.creditor_bank}}
     <span class="respond-span"></span>

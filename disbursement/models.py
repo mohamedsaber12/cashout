@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-from pyexpat import model
 
 import uuid
-
-from phonenumber_field.modelfields import PhoneNumberField
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
@@ -12,17 +9,14 @@ from django.db import models
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.utils.translation import gettext_lazy as _
-
+from phonenumber_field.modelfields import PhoneNumberField
 from rest_framework import status
 
 from core.models import AbstractTimeStamp
-from utilities.models import (
-    AbstractBaseDocStatus,
-    AbstractBaseVMTData,
-    AbstractTransactionCategory,
-    AbstractTransactionCurrency,
-    AbstractTransactionPurpose,
-)
+from utilities.models import (AbstractBaseDocStatus, AbstractBaseVMTData,
+                              AbstractTransactionCategory,
+                              AbstractTransactionCurrency,
+                              AbstractTransactionPurpose)
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from .utils import determine_transaction_type
@@ -194,6 +188,8 @@ class DisbursementData(AbstractTimeStamp):
     balance_after = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
+    comment1 = models.TextField(default="", null=True)
+    comment2 = models.TextField(default="", null=True)
 
     class Meta:
         verbose_name = "Disbursement Data Record"
@@ -355,6 +351,8 @@ class BankTransaction(
         null=True,
         default="",
     )
+    comment1 = models.TextField(default="", null=True)
+    comment2 = models.TextField(default="", null=True)
 
     balance_before = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True
@@ -368,6 +366,7 @@ class BankTransaction(
     bank_batch_id = models.CharField(max_length=100, blank=True, null=True)
     bank_transaction_id = models.CharField(max_length=100, blank=True, null=True)
     bank_end_to_end_identifier = models.CharField(max_length=100, blank=True, null=True)
+    accept_balance_transfer_id = models.CharField(max_length=100, blank=True, null=True)
 
     class Meta:
         verbose_name = "Bank Transaction"

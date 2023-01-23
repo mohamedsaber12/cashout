@@ -1,44 +1,38 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import django
+from django import http
+from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin.models import LogEntry
-from django.utils.translation import gettext_lazy as _
+from django.contrib.admin.utils import unquote
+from django.core.exceptions import PermissionDenied
+from django.core.paginator import Paginator
+from django.utils.text import capfirst
 from django.utils.timezone import datetime, make_aware
+from django.utils.translation import gettext_lazy as _
+from simple_history.admin import SimpleHistoryAdmin
 
+from .date_range_filter import CustomDateRangeFilter
 from .forms import BudgetAdminModelForm
 from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
-from .models import (
-    Budget,
-    CallWalletsModerator,
-    FeeSetup,
-    TopupRequest,
-    TopupAction,
-    VodafoneBalance,
-    VodafoneDailyBalance,
-    ClientIpAddress,
-)
-from simple_history.admin import SimpleHistoryAdmin
-from django.core.exceptions import PermissionDenied
-from django import http
-from django.contrib.admin.utils import unquote
-from django.conf import settings
-from django.utils.text import capfirst
-import django
-from django.core.paginator import Paginator
+from .models import (BalanceManagementOperations, Budget, CallWalletsModerator,
+                     ClientIpAddress, FeeSetup, TopupAction, TopupRequest,
+                     VodafoneBalance, VodafoneDailyBalance)
 
 if django.VERSION < (2,):
     from django.utils.encoding import force_text as force_str
 else:
     from django.utils.encoding import force_str
 
-from users.models import InstantAPICheckerUser, User
-from rangefilter.filter import DateRangeFilter
-from disbursement.mixins import ExportCsvMixin
 from django.http import HttpResponse
 from openpyxl import Workbook
+from rangefilter.filter import DateRangeFilter
 
+from disbursement.mixins import ExportCsvMixin
+from users.models import InstantAPICheckerUser, User
 
 USER_NATURAL_KEY = tuple(key.lower() for key in settings.AUTH_USER_MODEL.split(".", 1))
 
@@ -162,10 +156,11 @@ class BudgetAdmin(SimpleHistoryAdmin):
         "created_at",
         "created_by",
         "current_balance",
+        "hold_balance",
     ]
     search_fields = ["disburser__username", "created_by__username"]
     ordering = ["-updated_at", "-created_at"]
-    history_list_display = ["current_balance"]
+    history_list_display = ["current_balance", "hold_balance"]
 
     fieldsets = (
         (_("Users Details"), {"fields": ("disburser", "created_by")}),
@@ -175,6 +170,7 @@ class BudgetAdmin(SimpleHistoryAdmin):
                 "fields": (
                     "total_disbursed_amount",
                     "current_balance",
+                    "hold_balance",
                     "add_new_amount",
                     "fx_rate",
                     "updated_at",
@@ -398,9 +394,33 @@ class TopupRequestAdmin(admin.ModelAdmin):
 
     list_display = ["client", "amount", "currency", "created_at", "updated_at"]
     list_filter = [
-        "client",
-        "currency",
         ("created_at", DateRangeFilter),
+        "automatic",
+        "currency",
+        "client",
+    ]
+
+
+@admin.register(BalanceManagementOperations)
+class BalanceManagementOperationsAdmin(admin.ModelAdmin):
+    """
+    Customize the list view of balance management operations model
+    """
+
+    list_display = [
+        "operation_id",
+        "budget",
+        "amount",
+        "operation_type",
+        "source_product",
+        "hold_balance_before",
+        "hold_balance_after",
+    ]
+    list_filter = [
+        ('created_at', CustomDateRangeFilter),
+        "source_product",
+        "operation_type",
+        "budget",
     ]
 
 
@@ -419,8 +439,9 @@ class TopupActionAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = [
-        "client",
         ("created_at", DateRangeFilter),
+        "automatic",
+        "client",
     ]
 
     def has_add_permission(self, request):

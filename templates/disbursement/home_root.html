@@ -4,6 +4,8 @@
 {% get_current_language as LANGUAGE_CODE %}
 {% load custom_tags %}
 
+{% load banks_tags i18n %}
+
 {% block title %} {% trans 'Home' %} {% endblock %}
 {% block customcss %}
   <style>
@@ -271,6 +273,30 @@
     #export_message {
       display: none;
     }
+    .successful {
+      color:rgb(44, 119, 94);
+      background-color: #cff3ee;
+      margin: auto;
+      padding: 5px;
+      border-radius: 10px;
+    }
+    .pending {
+      color: rgb(218, 127, 9);
+      background-color: rgb(247, 229, 205);
+      margin: auto;
+      padding: 5px;
+      border-radius: 10px;
+    }
+    .failed {
+      color: rgb(255, 0, 0);
+      background-color: #fdd7d7;
+      margin: auto;
+      padding: 5px;
+      border-radius: 10px;
+    }
+    .border_radius {
+      border-radius: 1rem;
+    }
   </style>
 {% endblock %}
 {% block body %}
@@ -469,6 +495,104 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+<div class="row">
+  <div class="col-md-12 col-sm-12 col-xs-12">
+    <div class="x_panel border_radius">
+      <div class="x_title">
+        <h2>{% trans 'Recent Transactions' %}</h2>
+        <ul class="nav navbar-right panel_toolbox">
+          <li>
+            <a class="collapse-link"><i class="fa fa-chevron-up"></i></a>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      {# transactions table #}
+      <div class="x_content">
+        <table class="table table-bordered" id="transaction-table">
+          <thead>
+            <tr>
+              <th class="trxTableHeader">{% trans ' Identifier' %}</th>
+              <th class="trxTableHeader">{% trans 'Recipient' %}</th>
+              <th class="trxTableHeader">{% trans 'Amount' %}</th>
+              <th class="trxTableHeader">{% trans 'Fees' %}</th>
+              <th class="trxTableHeader">{% trans 'Vat' %}</th>
+              <th class="trxTableHeader">{% trans 'Issuer' %}</th>
+              <th class="trxTableHeader">{% trans 'Status' %}</th>
+              <th class="trxTableHeader">{% trans 'Disbursed At' %}</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for trx in transactions %}
+            <tr>
+              {% if trx.transaction_id %}
+                <td>{{ trx.transaction_id }}</td>
+              {% else %}
+                <td>{{ trx.uid}}</td>
+              {% endif %}
+              {% if trx.anon_recipient %}
+                <td>{{ trx.anon_recipient}}</td>
+              {% elif trx.creditor_account_number %}
+                <td>{{ trx.creditor_account_number }}</td>
+              {% else %}
+                <td>{{ trx.msisdn }}</td>
+              {% endif %}
+              <td>{{ trx.amount }}</td>
+              <td>{{ trx.fees }}</td>
+              <td>{{ trx.vat }}</td>
+              {% if trx.issuer_choice_verbose %}
+                <td>{{ trx.issuer_choice_verbose }}</td>
+              {% elif trx.issuer  %}
+                <td>{{ trx.issuer}}</td>
+              {% else %}
+                <td>{% trans 'Bank Card' %}</td>
+              {% endif %}
+              {% if trx.status_choice_verbose %}
+                <td>
+                  <div class="row {% if trx.status_choice_verbose == 'Failed' %}
+                                     successful
+                                  {% elif trx.status_choice_verbose == 'Pending' %}
+                                     pending
+                                  {% else %}
+                                     failed
+                                  {% endif %}"
+                       style="text-align: center;"
+                  >
+                    {{ trx.status_choice_verbose }}
+                    {% if trx.status_choice_verbose == "Failed" %}
+                      <i class="fa fa-exclamation-circle" aria-hidden="true"></i>
+                    {% endif %}
+                  </div>
+                </td>
+              {% else %}
+                <td>
+                  {% if trx.is_disbursed %}
+                    <div class="row successful" style="text-align: center;">
+                      {% trans "Successful" %}
+                    </div>
+                  {% elif trx.reason == '' and trx.disbursed_date == None %}
+                    <div class="row pending" style="text-align: center;" >
+                      {% trans "Pending" %}
+                    </div>
+                  {% else %}
+                    <div class="row failed" style="text-align: center;" >
+                      {% trans "Failed" %}
+                      <span class="fa fa-exclamation-circle" aria-hidden="true"></span>
+                    </div>
+                  {% endif %}
+                </td>
+              {% endif %}
+
+              <td>{{ trx.disbursed_date }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {# End of transactions table #}
     </div>
   </div>
 </div>

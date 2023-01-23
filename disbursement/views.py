@@ -1515,7 +1515,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                         self.revert_balance_to_accept_account(
                             revert_balance_payload,
                             request.user,
-                            Decimal(data["amount"]) + current_fees_and_vat,
+                            current_amount_plus_fess_and_vat,
                         )
                     elif response.json().get("disbursement_status") in [
                         "Successful",

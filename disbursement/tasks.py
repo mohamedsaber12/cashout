@@ -347,15 +347,19 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
         for recipient in aman_recipients:
             # check if balance is greater than amount plus fees and vat
-            if checker.root.has_custom_budget:
-                if not checker.root.budget.within_threshold(
-                    recipient["amount"], "aman"
-                ):
-                    current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
-                    current_trx.reason = "Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team"
-                    current_trx.disbursed_date = datetime.datetime.now()
-                    current_trx.save()
-                    continue
+            (
+                balance_before,
+                has_enough_balance,
+            ) = checker.root.budget.within_threshold_and_hold_balance(
+                recipient['amount'], 'aman'
+            )
+            # check for balance greater than trx amount with fees and vat then hold balance
+            if not has_enough_balance:
+                current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                current_trx.disbursed_date = datetime.datetime.now()
+                current_trx.save()
+                continue
             aman_object = AmanChannel(request, amount=Decimal(str(recipient["amount"])))
 
             try:
@@ -387,21 +391,6 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
                     if payment_key_obtained.status_code == status.HTTP_201_CREATED:
                         payment_key = payment_key_obtained.data.get("payment_token", "")
-                        (
-                            balance_before,
-                            has_enough_balance,
-                        ) = checker.root.budget.within_threshold_and_hold_balance(
-                            recipient['amount'], 'aman'
-                        )
-                        # check for balance greater than trx amount with fees and vat then hold balance
-                        if not has_enough_balance:
-                            current_trx = DisbursementData.objects.get(
-                                id=recipient["txn_id"]
-                            )
-                            current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
-                            current_trx.disbursed_date = datetime.datetime.now()
-                            current_trx.save()
-                            continue
                         aman_callback = aman_object.make_pay_request(payment_key)
                         self.handle_disbursement_callback(
                             recipient,

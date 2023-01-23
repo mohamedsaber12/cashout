@@ -273,7 +273,7 @@ class BankTransactionsChannel:
         elif response_code == "8002":
             # return hold balance
             bank_trx_obj.user_created.root.budget.return_hold_balance(
-                bank_trx_obj.amount, 'bank_card'
+                bank_trx_obj.amount, "bank_card"
             )
             # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
@@ -295,7 +295,7 @@ class BankTransactionsChannel:
         ]:
             # return hold balance
             bank_trx_obj.user_created.root.budget.return_hold_balance(
-                bank_trx_obj.amount, 'bank_card'
+                bank_trx_obj.amount, "bank_card"
             )
             # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
@@ -309,7 +309,7 @@ class BankTransactionsChannel:
             # 4. Transaction is failed due to unexpected response code for the send transaction api endpoint
             # return hold balance
             bank_trx_obj.user_created.root.budget.return_hold_balance(
-                bank_trx_obj.amount, 'bank_card'
+                bank_trx_obj.amount, "bank_card"
             )
             # save balance before and after with transaction
             bank_trx_obj.balance_before = balance_before
@@ -323,7 +323,7 @@ class BankTransactionsChannel:
         if instant_trx_obj and response_code not in ["8000", "8111"]:
             # return hold balance
             bank_trx_obj.user_created.root.budget.return_hold_balance(
-                bank_trx_obj.amount, 'bank_card'
+                bank_trx_obj.amount, "bank_card"
             )
             # save balance before and after with transaction
             instant_trx_obj.balance_before = balance_before
@@ -477,18 +477,21 @@ class BankTransactionsChannel:
         has_valid_response = True
 
         # Temp code to be removed
-        balance_before = bank_trx_obj.user_created.root.budget.get_current_balance()
-        balance_after = bank_trx_obj.user_created.root.budget.update_disbursed_amount_and_current_balance(
-            bank_trx_obj.amount, "bank_card"
-        )
-        bank_trx_obj.balance_before = balance_before
-        bank_trx_obj.balance_after = balance_after
         bank_trx_obj.mark_pending(
             "8000",
             "Transaction received and validated successfully. Dispatched for being processed by the bank",
         )
         bank_trx_obj.is_manual_batch = True
+        amount_plus_fees_vat = (
+            bank_trx_obj.user_created.root.budget.release_hold_balance(
+                bank_trx_obj.amount, "bank_card"
+            )
+        )
+        bank_trx_obj.balance_before = balance_before
+        bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat
+
         bank_trx_obj.save()
+
         return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
         # end of temp code
@@ -552,7 +555,7 @@ class BankTransactionsChannel:
             else:
                 # return hold balance
                 bank_trx_obj.user_created.root.budget.return_hold_balance(
-                    bank_trx_obj.amount, 'bank_card'
+                    bank_trx_obj.amount, "bank_card"
                 )
             bank_trx_obj.mark_failed(
                 status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG

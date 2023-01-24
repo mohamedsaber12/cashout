@@ -144,10 +144,11 @@ class BulkDisbursementThroughOneStepCashin(Task):
                         balance_before + amount_plus_fees_vat
                     )
             else:
-                # return hold balance
-                doc_obj.owner.root.budget.return_hold_balance(
-                    disbursement_data_record.amount, issuer
-                )
+                if doc_obj.owner.root.has_custom_budget:
+                    # return hold balance
+                    doc_obj.owner.root.budget.return_hold_balance(
+                        disbursement_data_record.amount, issuer
+                    )
                 disbursement_data_record.is_disbursed = False
                 disbursement_data_record.balance_after = balance_before
                 if not trx_callback_status in ["501"]:
@@ -278,7 +279,7 @@ class BulkDisbursementThroughOneStepCashin(Task):
             provider=checker.root, raw_pin=vf_pin
         )
         smsc_sender_name = checker.root.client.smsc_sender_name
-
+        balance_before = 0
         for recipient in vf_recipients:
             # check if balance is greater than amount plus fees and vat
             if checker.root.has_custom_budget:
@@ -305,20 +306,20 @@ class BulkDisbursementThroughOneStepCashin(Task):
             if deposit:
                 vf_payload["TYPE"] = "DPSTREQ"
                 vf_log_payload["TYPE"] = "DPSTREQ"
-
-            (
-                balance_before,
-                has_enough_balance,
-            ) = checker.root.budget.within_threshold_and_hold_balance(
-                recipient['amount'], 'vodafone'
-            )
-            # check for balance greater than trx amount with fees and vat then hold balance
-            if not has_enough_balance:
-                current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
-                current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
-                current_trx.disbursed_date = datetime.datetime.now()
-                current_trx.save()
-                continue
+            if checker.root.has_custom_budget:
+                (
+                    balance_before,
+                    has_enough_balance,
+                ) = checker.root.budget.within_threshold_and_hold_balance(
+                    recipient['amount'], 'vodafone'
+                )
+                # check for balance greater than trx amount with fees and vat then hold balance
+                if not has_enough_balance:
+                    current_trx = DisbursementData.objects.get(id=recipient["txn_id"])
+                    current_trx.reason = 'Sorry, the amount to be disbursed exceeds you budget limit, please contact your support team'
+                    current_trx.disbursed_date = datetime.datetime.now()
+                    current_trx.save()
+                    continue
             vf_callback = DisburseAPIView.disburse_for_recipients(
                 wallets_env_url,
                 vf_payload,

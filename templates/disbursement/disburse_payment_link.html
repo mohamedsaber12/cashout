@@ -6,14 +6,7 @@
 {% load custom_tags %}
 {% load banks_tags i18n %}
 {%block body_content%}
-<style>
 
-p.amount {border-style: outset;
-  border-top: solid;
-}
-
-
-</style>
   <body >
     <div class="container body">
       <div class="main_container">
@@ -45,9 +38,6 @@ p.amount {border-style: outset;
                           <p style="border-style: inset; height: 33px;">{{amount}}{% trans '  EGP' %}</p>
                         </div>
                         <span class="respond-span"></span>
-                        <div class="help-block">
-                          {{form.amount.errors}}
-                        </div>
                       </div>
                       <div class="form-group col-md-6 col-sm-6 col-xs-12">
                         <label>

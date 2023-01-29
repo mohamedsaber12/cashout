@@ -581,8 +581,6 @@ class PaymentCreationForm(forms.Form):
     def __init__(self, *args, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
         super().__init__(*args, **kwargs)
-        self.fields['pin'].widget.attrs.setdefault('required', True)
-
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)
 
@@ -600,9 +598,8 @@ class PaymentCreationForm(forms.Form):
             raise forms.ValidationError(_('Invalid amount'))
         if self.current_user.is_checker and Decimal(self.current_user.level.max_amount_can_be_disbursed) < amount:
             raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))
-        if not self.current_user.from_accept or self.current_user.allowed_to_be_bulk:
-            if not self.current_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
-                raise forms.ValidationError(_("Entered amount exceeds your current balance"))
+        if not self.current_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
+            raise forms.ValidationError(_("Entered amount exceeds your current balance"))
 
         return round(Decimal(amount), 2)
 
@@ -800,7 +797,7 @@ class DisbursePaymentLinkForm(forms.Form):
         if not email :
             return _('This field is required')
         return True
-        
+
     def clean_issuer(self):
         issuer = self.cleaned_data.get('issuer', None)
         if issuer and issuer \

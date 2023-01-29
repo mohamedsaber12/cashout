@@ -1,0 +1,367 @@
+{% extends 'head_base.html' %}
+
+{% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+{% load banks_tags i18n %}
+{%block body_content%}
+<style>
+
+p.amount {border-style: outset;
+  border-top: solid;
+}
+
+
+</style>
+  <body >
+    <div class="container body">
+      <div class="main_container">
+        <div class="right_col" role="main">
+          <div class="loading" hidden> 
+          </div>
+          <div class="row ">
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+            </div>
+          </div>
+          <div class="" id="paymentlinkmodal" role="dialog">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h4><img alt="Brand" src="{% static 'img/paymob_login_logo.png' %}" width="100"></h4>
+                </div>
+                <div class="modal-body">
+                  <div class="waiting-form-respond">
+                  </div>
+                  <form action="."
+                        method="post" id="addTransactionForm" class="autoValidateForm" role="form">
+                    {% csrf_token %}
+                    <div class="row">
+                      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                        <label>
+                          <span class="glyphicon glyphicon-tag"></span> {% trans 'Amount' %}:- *
+                        </label>
+                        <div class="amount">
+                          <p style="border-style: inset; height: 33px;">{{amount}}{% trans '  EGP' %}</p>
+                        </div>
+                        <span class="respond-span"></span>
+                        <div class="help-block">
+                          {{form.amount.errors}}
+                        </div>
+                      </div>
+                      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                        <label>
+                          <span class="glyphicon glyphicon-filter"></span> {% trans 'Issuer Type' %}
+                        </label>
+                        {{ form.issuer }}
+                        <span class="respond-span"></span>
+                        <div class="help-block">
+                          {{ form.issuer.errors }}
+                        </div>
+                      </div>
+                    </div>
+                   
+                    <div id="bank_card_fields">
+                        <div class="row">
+                          <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                            <label>
+                              <span class="glyphicon glyphicon-user"></span> {% trans 'Account Number' %} *
+                            </label>
+                            {{form.creditor_account_number}}
+                            <span class="respond-span"></span>
+                            <div class="help-block">
+                              {{form.creditor_account_number.errors}}
+                            </div>
+                          </div>
+                          <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                            <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Full Name' %} *</label>
+                            {{ form.creditor_name }}
+                            <span class="respond-span"></span>
+                            <div class="help-block">
+                              {{ form.creditor_name.errors }}
+                            </div>
+                          </div>
+                        </div>
+                    </div>
+                     <!-- vodafone/etisalat form -->
+            <div id="vodafone_etisalat_fields">
+                <div class="row">
+                  <div class="form-group col-md-12 col-sm-12 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
+                    </label>
+                    {{form.msisdn}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.msisdn.errors}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- orange/bank_wallet form -->
+              <div id="orange_bank_wallet_fields">
+                <div class="row">
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
+                    </label>
+                    {{form.msisdn}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.msisdn.errors}}
+                    </div>
+                  </div>
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-user"></span> {% trans 'Full Name' %} *
+                    </label>
+                    {{form.full_name}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.full_name.errors}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <!-- aman form-->
+              <div id="aman_fields">
+                <div class="row">
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
+                    </label>
+                    {{form.msisdn}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.msisdn.errors}}
+                    </div>
+                  </div>
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-pencil"></span> {% trans 'First Name' %} *
+                    </label>
+                    {{form.first_name}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.first_name.errors}}
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-pencil"></span> {% trans 'Last Name' %} *
+                    </label>
+                    {{form.last_name}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.last_name.errors}}
+                    </div>
+                  </div>
+                  <div class="form-group col-md-6 col-sm-6 col-xs-12">
+                    <label>
+                      <span class="glyphicon glyphicon-envelope"></span> {% trans 'Email' %} *
+                    </label>
+                    {{form.email}}
+                    <span class="respond-span"></span>
+                    <div class="help-block">
+                      {{form.email.errors}}
+                    </div>
+                  </div>
+                </div>
+              </div>
+               <!-- pin row -->
+               <div class="row" id="pin_row">
+              </div>
+        
+                    <button id="submitModal" class="btn btn-primary pull-{{'right'|invert_dir:LANGUAGE_CODE}}" type="submit">{% trans 'Submit' %}</button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            <div class="footerNew"><img alt="Brand" src="{% static 'img/paymob_login_logo.png' %}" width="180"><p>All rights reserved. Paymob 2020</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+{% include 'base_js.html' %}
+
+<script>
+  let bankCardForm = `<div id="bank_card_fields">
+    <div class="row">
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label>
+          <span class="glyphicon glyphicon-user"></span> {% trans 'Account Number' %} *
+        </label>
+        {{ form.creditor_account_number }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.creditor_account_number.errors }}
+        </div>
+      </div>
+      <div class="form-group col-md-6 col-sm-6 col-xs-12">
+        <label><span class="glyphicon glyphicon-briefcase"></span> {% trans 'Full Name' %} *</label>
+        {{ form.creditor_name }}
+        <span class="respond-span"></span>
+        <div class="help-block">
+          {{ form.creditor_name.errors }}
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+        <div class="form-group col-md-6 col-sm-6 col-xs-12">
+          <label>
+            <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
+          </label>
+          {{ form.transaction_type }}
+          <span class="respond-span"></span>
+          <div class="help-block">
+            {{ form.transaction_type.errors }}
+          </div>
+        </div>
+      {% endif %}
+      {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+        <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      {% else %}
+        <div class="form-group col-md-12 col-sm-12 col-xs-12">
+      {% endif %}
+      <label>
+        <span class="glyphicon glyphicon-briefcase"></span> {% trans 'Bank Name' %} *
+      </label>
+      {{form.creditor_bank}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.creditor_bank.errors}}
+      </div>
+    </div>
+  </div>
+  </div>`;
+  
+  let vodafoneEtisalatForm = `<div id="vodafone_etisalat_fields">
+  <div class="row">
+    <div class="form-group col-md-12 col-sm-12 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
+      </label>
+      {{form.msisdn}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.msisdn.errors}}
+      </div>
+    </div>
+  </div>
+  </div>`;
+  
+  let orangeBankWalletForm = `<div id="orange_bank_wallet_fields">
+  <div class="row">
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
+      </label>
+      {{form.msisdn}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.msisdn.errors}}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-user"></span> {% trans 'Full Name' %} *
+      </label>
+      {{form.full_name}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.full_name.errors}}
+      </div>
+    </div>
+  </div>
+  </div>`;
+  
+  let amanForm = `<div id="aman_fields">
+  <div class="row">
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-user"></span> {% trans 'Msisdn' %} *
+      </label>
+      {{form.msisdn}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.msisdn.errors}}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-pencil"></span> {% trans 'First Name' %} *
+      </label>
+      {{form.first_name}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.first_name.errors}}
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-pencil"></span> {% trans 'Last Name' %} *
+      </label>
+      {{form.last_name}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.last_name.errors}}
+      </div>
+    </div>
+    <div class="form-group col-md-6 col-sm-6 col-xs-12">
+      <label>
+        <span class="glyphicon glyphicon-envelope"></span> {% trans 'Email' %} *
+      </label>
+      {{form.email}}
+      <span class="respond-span"></span>
+      <div class="help-block">
+        {{form.email.errors}}
+      </div>
+    </div>
+  </div>
+  </div>`;
+  
+let pinRow = $('#pin_row');
+let issuerType = document.getElementById('id_issuer');
+
+$('#bank_card_fields').remove();
+$('#vodafone_etisalat_fields').remove();
+$('#orange_bank_wallet_fields').remove();
+$('#aman_fields').remove();
+
+if (issuerType.value == 'bank_card') {
+  $(bankCardForm).insertBefore(pinRow);
+} else if (issuerType.value == 'vodafone' || issuerType.value == 'etisalat')  {
+  $(vodafoneEtisalatForm).insertBefore(pinRow);
+} else if (issuerType.value == 'orange' || issuerType.value == 'bank_wallet') {
+  $(orangeBankWalletForm).insertBefore(pinRow);
+} else {
+  $(amanForm).insertBefore(pinRow);
+}
+
+function toggleForm() {
+  $('#bank_card_fields').remove();
+  $('#vodafone_etisalat_fields').remove();
+  $('#orange_bank_wallet_fields').remove();
+  $('#aman_fields').remove();
+
+  if (issuerType.value == 'bank_card') {
+    $(bankCardForm).insertBefore(pinRow);
+  } else if (issuerType.value == 'vodafone' || issuerType.value == 'etisalat')  {
+    $(vodafoneEtisalatForm).insertBefore(pinRow);
+  } else if (issuerType.value == 'orange' || issuerType.value == 'bank_wallet') {
+    $(orangeBankWalletForm).insertBefore(pinRow);
+  } else {
+    $(amanForm).insertBefore(pinRow);
+  }
+}
+
+issuerType.addEventListener('change', toggleForm);
+</script>  
+{%endblock%}

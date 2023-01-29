@@ -452,3 +452,18 @@ class RemainingAmounts(AbstractTimeStamp):
     class Meta:
         verbose_name = _("Remaining amount")
         verbose_name_plural = _("Remaining amounts")
+
+
+class PaymentLink(AbstractTimeStamp):
+
+    created_by=models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name=_("payment_link"),
+        verbose_name=_("Payment_link"),
+    )
+    link=models.CharField(max_length=100)
+    issuer=models.CharField(max_length=100, null=True)
+    amount=models.CharField(max_length=100,null=True)
+    token=models.CharField(max_length=100,null=True)
+    paid=models.BooleanField(default=False)

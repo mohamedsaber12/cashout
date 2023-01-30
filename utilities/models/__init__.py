@@ -5,5 +5,5 @@ from .abstract_models import (AbstractBaseDocStatus, AbstractBaseDocType,
 from .generic_models import (BalanceManagementOperations, Budget,
                              CallWalletsModerator, ClientIpAddress, ExcelFile,
                              FeeSetup, TopupAction, TopupRequest,
-                             VodafoneBalance, VodafoneDailyBalance)
+                             VodafoneBalance, VodafoneDailyBalance, Limit)
 from .soft_delete_models import SoftDeletionModel

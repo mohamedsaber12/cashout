@@ -27,7 +27,7 @@ TYPES = (
     (8, 'Support'),
     (9, 'OnboardUser'),
     (12, 'SuperVisor'),
-    (14, 'SystemAdmin')
+    (14, 'SystemAdmin'),
 )
 
 
@@ -87,6 +87,7 @@ class User(AbstractUser, SoftDeletionModel):
     from_accept = models.BooleanField(default=False)
     allowed_to_be_bulk = models.BooleanField(default=False)
     mid = models.CharField(max_length=50, null=True, blank=True)
+    is_international = models.BooleanField(default=False)
 
     objects = UserManager()
 
@@ -284,10 +285,6 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_vodafone_monthly_report(self):
         return self.user_type == 13
-
-    @cached_property
-    def is_system_admin(self):
-        return self.user_type == 14
 
     @cached_property
     def is_instant_member(self):

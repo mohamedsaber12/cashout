@@ -543,9 +543,6 @@ class InstantDisbursementAPIView(views.APIView):
                 transaction.mark_unknown(
                     status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG
                 )
-                transaction.mark_unknown(
-                    status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG
-                )
                 transaction.balance_before = balance_before
                 transaction.balance_after = balance_before
                 transaction.save()

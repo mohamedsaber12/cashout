@@ -2291,8 +2291,8 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(
                 ws.write(row_num, 4, str(row.vat))
                 ws.write(row_num, 5, str(row.status_choice_verbose))
                 ws.write(row_num, 6, str(row.transaction_status_description))
-                ws.write(row_num, 8, str(row.disbursed_date))
-                ws.write(row_num, 7, str(row.updated_at))
+                ws.write(row_num, 7, str(row.disbursed_date))
+                ws.write(row_num, 8, str(row.updated_at))
                 ws.write(row_num, 9, str(row.balance_before))
                 ws.write(row_num, 10, str(row.balance_after))
                 row_num = row_num + 1

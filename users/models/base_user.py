@@ -171,13 +171,13 @@ class User(AbstractUser, SoftDeletionModel):
 
         raise ValidationError('This user has no children')
 
-    def set_password(self, password):
-        from users.sso import SSOIntegration
+    # def set_password(self, password):
+    #     from users.sso import SSOIntegration
 
-        super(User, self).set_password(password)
-        sso = SSOIntegration()
-        sso.change_user_password(self, password)
-        self._set_password = True
+    #     super(User, self).set_password(password)
+    #     sso = SSOIntegration()
+    #     sso.change_user_password(self, password)
+    #     self._set_password = True
 
     @property
     def can_view_docs(self):

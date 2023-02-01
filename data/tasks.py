@@ -2266,6 +2266,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(
                 "Vat",
                 "Status",
                 "Status Description",
+                "Created At",
                 "Updated At",
                 "balance_before",
                 "balance_after",
@@ -2288,11 +2289,12 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(
                 ws.write(row_num, 2, str(row.amount))
                 ws.write(row_num, 3, str(row.fees))
                 ws.write(row_num, 4, str(row.vat))
-                ws.write(row_num, 6, str(row.status_choice_verbose))
-                ws.write(row_num, 7, str(row.transaction_status_description))
+                ws.write(row_num, 5, str(row.status_choice_verbose))
+                ws.write(row_num, 6, str(row.transaction_status_description))
+                ws.write(row_num, 8, str(row.disbursed_date))
                 ws.write(row_num, 7, str(row.updated_at))
-                ws.write(row_num, 8, str(row.balance_before))
-                ws.write(row_num, 9, str(row.balance_after))
+                ws.write(row_num, 9, str(row.balance_before))
+                ws.write(row_num, 10, str(row.balance_after))
                 row_num = row_num + 1
 
         wb.save(file_path)

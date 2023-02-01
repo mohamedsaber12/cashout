@@ -4,8 +4,6 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-from utilities.models.generic_models import Budget
-
 INSTANT_TRX_RECEIVED = _("Transaction received and validated successfully. Dispatched for being processed by the carrier")
 INSTANT_TRX_BEING_PROCESSED = _("Transaction received by the carrier and being processed now")
 INSTANT_TRX_IS_ACCEPTED = _("Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now")

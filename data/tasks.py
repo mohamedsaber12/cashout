@@ -42,8 +42,8 @@ from disbursement.utils import (
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
 from instant_cashin.utils import get_digits, get_from_env
 from payouts.settings.celery import app
-from users.models import (CheckerUser, Levels, SuperAdminUser, UploaderUser,
-                          User)
+from users.models import (CheckerUser, Levels, RootUser, SuperAdminUser,
+                          UploaderUser, User)
 from utilities.functions import get_value_from_env
 from utilities.messages import (MSG_EMPTY_FILE, MSG_TRY_OR_CONTACT,
                                 MSG_WRONG_FILE_FORMAT)
@@ -1834,24 +1834,30 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         if self.instant_or_accept_perm or self.default_vf__or_bank_perm:
             col_nums = {
-                'total': 2,
-                'vodafone': 3,
-                'etisalat': 4,
-                'aman': 5,
-                'orange': 6,
-                'B': 7,
-                'C': 8,
+                'total': 3,
+                'vodafone': 4,
+                'etisalat': 5,
+                'aman': 6,
+                'orange': 7,
+                'B': 8,
+                'C': 9,
             }
             if self.default_vf__or_bank_perm:
-                col_nums['default'] = 9
+                col_nums['default'] = 10
 
-            for key in final_data.keys():
+            roots_usernames = list(final_data.keys())
+            roots = RootUser.objects.filter(username__in=roots_usernames).values(
+                'username', 'is_international'
+            )
+            roots_dict = {r['username']: str(r['is_international']) for r in roots}
+            for key in roots_usernames:
                 ws.write(row_num, 0, key, font_style)
-                ws.write(row_num, 1, 'Volume', font_style)
-                ws.write(row_num + 1, 1, 'Count', font_style)
+                ws.write(row_num, 1, roots_dict[key], font_style)
+                ws.write(row_num, 2, 'Volume', font_style)
+                ws.write(row_num + 1, 2, 'Count', font_style)
                 if self.instant_or_accept_perm:
-                    ws.write(row_num + 2, 1, 'Fees', font_style)
-                    ws.write(row_num + 3, 1, 'Vat', font_style)
+                    ws.write(row_num + 2, 2, 'Fees', font_style)
+                    ws.write(row_num + 3, 2, 'Vat', font_style)
 
                 for el in final_data[key]:
                     ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
@@ -2056,6 +2062,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         else:
             column_names_list = [
                 'Clients',
+                'Is International',
                 '',
                 'Total',
                 'Vodafone',
@@ -2259,6 +2266,7 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(
                 "Vat",
                 "Status",
                 "Status Description",
+                "Created At",
                 "Updated At",
                 "balance_before",
                 "balance_after",
@@ -2281,11 +2289,12 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(
                 ws.write(row_num, 2, str(row.amount))
                 ws.write(row_num, 3, str(row.fees))
                 ws.write(row_num, 4, str(row.vat))
-                ws.write(row_num, 6, str(row.status_choice_verbose))
-                ws.write(row_num, 7, str(row.transaction_status_description))
-                ws.write(row_num, 7, str(row.updated_at))
-                ws.write(row_num, 8, str(row.balance_before))
-                ws.write(row_num, 9, str(row.balance_after))
+                ws.write(row_num, 5, str(row.status_choice_verbose))
+                ws.write(row_num, 6, str(row.transaction_status_description))
+                ws.write(row_num, 7, str(row.disbursed_date))
+                ws.write(row_num, 8, str(row.updated_at))
+                ws.write(row_num, 9, str(row.balance_before))
+                ws.write(row_num, 10, str(row.balance_after))
                 row_num = row_num + 1
 
         wb.save(file_path)

@@ -20,7 +20,7 @@ from .functions import custom_budget_logger
 from .mixins import CustomInlineAdmin
 from .models import (BalanceManagementOperations, Budget, CallWalletsModerator,
                      ClientIpAddress, FeeSetup, TopupAction, TopupRequest,
-                     VodafoneBalance, VodafoneDailyBalance)
+                     VodafoneBalance, VodafoneDailyBalance, Limit)
 
 if django.VERSION < (2,):
     from django.utils.encoding import force_text as force_str
@@ -525,3 +525,16 @@ class ClientIpAddressAdmin(admin.ModelAdmin, ExportCsvMixin):
         "created_at",
     ]
     list_filter = [("created_at", DateRangeFilter), "client"]
+
+
+@admin.register(Limit)
+class LimitAdmin(admin.ModelAdmin, ExportCsvMixin):
+
+    list_display = [
+        "client",
+        "amount",
+        "start_date",
+        "end_date",
+    ]
+    list_filter = ["client"]
+

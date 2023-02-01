@@ -2,46 +2,26 @@
 from __future__ import unicode_literals
 
 import logging
-import os
 
 from django import forms
-from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import password_validation
 from django.contrib.auth.admin import UserAdmin
 from django.core.exceptions import PermissionDenied
+from django.http import HttpResponseRedirect
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.utils.translation import ugettext_lazy
 
-from .forms import (
-    CheckerCreationAdminForm,
-    MakerCreationAdminForm,
-    RootCreationForm,
-    UserChangeForm,
-)
-from .models import (
-    CheckerUser,
-    Client,
-    EntitySetup,
-    InstantAPICheckerUser,
-    InstantAPIViewerUser,
-    MakerUser,
-    RootUser,
-    Setup,
-    SupportUser,
-    SupportSetup,
-    SuperAdminUser,
-    User,
-    OnboardUser,
-    OnboardUserSetup,
-    SupervisorUser,
-    SupervisorSetup,
-)
-
-from django.shortcuts import render
-from django.http import HttpResponseRedirect, HttpResponse
 from data.tasks import ExportClientsTransactionsMonthlyReportTask
-from disbursement.views import ExportClientsTransactionsMonthlyReport
+
+from .forms import (CheckerCreationAdminForm, MakerCreationAdminForm,
+                    RootCreationForm, UserChangeForm)
+from .models import (CheckerUser, Client, EntitySetup, InstantAPICheckerUser,
+                     InstantAPIViewerUser, MakerUser, OnboardUser,
+                     OnboardUserSetup, RootUser, Setup, SuperAdminUser,
+                     SupervisorSetup, SupervisorUser, SupportSetup,
+                     SupportUser, User)
 
 CREATED_USERS_LOGGER = logging.getLogger("created_users")
 MODIFIED_USERS_LOGGER = logging.getLogger("modified_users")
@@ -283,13 +263,24 @@ class RootCreationAdminForm(RootCreationForm):
 @admin.register(RootUser)
 class RootAdmin(UserAccountAdmin):
     add_form = RootCreationAdminForm
+    list_filter = ['is_international', 'is_active']
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
         # pop parent field from fieldsets
-        fieldsets[2][1]["fields"] = ("is_active", "is_staff", "is_superuser")
+        fieldsets[2][1]["fields"] = (
+            "is_active",
+            "is_staff",
+            "is_superuser",
+            "is_international",
+        )
         self.fieldsets = fieldsets
         return self.fieldsets
+
+    def get_list_display(self, request):
+        list_display = super(UserAccountAdmin, self).get_list_display(request)
+        list_display = (*list_display, "is_international")
+        return list_display
 
     def save_model(self, request, obj, form, change):
         if obj.pk is not None:

@@ -11,8 +11,12 @@ from django.db import models, transaction
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
+from django.db.models import Sum, Q, Case, When, F
+from instant_cashin.models import InstantTransaction
 
 from core.models import AbstractTimeStamp
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -252,7 +256,16 @@ class Budget(AbstractTimeStamp):
             )
 
             if amount_plus_fees_vat <= round(self.current_balance, 2):
-                return True
+                if hasattr(self.disburser, "limits"):
+                    within_limit, l_msg = self.disburser.limits.within_limit(
+                        amount_plus_fees_vat
+                    )
+                    if within_limit:
+                        return True
+                    else:
+                        return False
+                else:
+                    return True
             return False
         except (ValueError, Exception) as e:
             raise ValueError(
@@ -307,6 +320,12 @@ class Budget(AbstractTimeStamp):
             with transaction.atomic():
                 budget_obj = Budget.objects.select_for_update().get(id=self.id)
                 if hold_amount <= round(budget_obj.current_balance, 2):
+                    if hasattr(self.disburser, "limits"):
+                        within_limit, l_msg = self.disburser.limits.within_limit(
+                            hold_amount
+                        )
+                        if not within_limit:
+                            return budget_obj.hold_balance, False
                     current_balance_before = budget_obj.current_balance
                     hold_balance_before = budget_obj.hold_balance
                     budget_obj.current_balance -= hold_amount
@@ -318,6 +337,7 @@ class Budget(AbstractTimeStamp):
                         f" current balance after: {budget_obj.current_balance}"
                     )
                     return hold_balance_before, True
+
                 return budget_obj.hold_balance, False
         except (ValueError, Exception) as e:
             raise ValueError(
@@ -340,6 +360,12 @@ class Budget(AbstractTimeStamp):
                     amount, issuer_type.lower(), num_of_trns
                 )
                 if amount_plus_fees_vat <= round(budget_obj.current_balance, 2):
+                    if hasattr(self.disburser, "limits"):
+                        within_limit, l_msg = self.disburser.limits.within_limit(
+                            amount_plus_fees_vat
+                        )
+                        if not within_limit:
+                            return budget_obj.current_balance, False
                     current_balance_before = budget_obj.current_balance
                     applied_fees_and_vat = amount_plus_fees_vat - Decimal(amount)
                     budget_obj.current_balance -= amount_plus_fees_vat
@@ -632,8 +658,8 @@ class TopupRequest(AbstractTimeStamp):
     currency = models.CharField(
         max_length=20,
         choices=[
-            ('egyptian_pound', _('Egyptian Pound (L.E)')),
-            ('american_dollar', _('American Dollar ($)')),
+            ("egyptian_pound", _("Egyptian Pound (L.E)")),
+            ("american_dollar", _("American Dollar ($)")),
         ],
         default="egyptian_pound",
     )
@@ -787,3 +813,122 @@ class BalanceManagementOperations(AbstractTimeStamp):
     hold_balance_after = models.DecimalField(
         max_digits=10, decimal_places=2, default=0, null=True, blank=True
     )
+
+
+class Limit(AbstractTimeStamp):
+    amount = models.DecimalField(
+        _("Amount"),
+        max_digits=12,
+        decimal_places=2,
+    )
+    client = models.OneToOneField(
+        "users.RootUser",
+        on_delete=models.CASCADE,
+        related_name="limits",
+    )
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
+
+    def within_limit(self, total_amount):
+        from disbursement.models import DisbursementData
+
+        BUDGET_LOGGER.debug(
+            f"[message] [within limit check] [{self.client.username}] -- : {total_amount}, "
+        )
+        try:
+            total_wallets = 0
+            total_banks = 0
+
+            if self.client.is_instant_model_onboarding:
+
+                # calculate total wallets instant
+
+                total_wallets = (
+                    InstantTransaction.objects.filter(
+                        from_user__root=self.client, transaction_status_code=200
+                    )
+                    .annotate(i_sum=F("amount") + F("fees") + F("vat"))
+                    .aggregate(Sum("i_sum"))["i_sum__sum"]
+                ) or 0
+
+                total_banks = calculate_total_banks_disbursed(self.client)
+                # calculate total banks
+                BUDGET_LOGGER.debug(
+                    f"[message] [within limit check] [Type instant] [{self.client.username}]--"
+                    f"total wallets: {total_wallets}, "
+                    f"total banks {total_banks}"
+                )
+            else:
+                # calculate total wallets portal
+                total_wallets = (
+                    DisbursementData.objects.filter(
+                        doc__disbursed_by__root=self.client, is_disbursed=True
+                    )
+                    .annotate(i_sum=F("amount") + F("fees") + F("vat"))
+                    .aggregate(Sum("i_sum"))["i_sum__sum"]
+                ) or 0
+
+                total_banks = calculate_total_banks_disbursed(self.client)
+                # calculate total banks
+                BUDGET_LOGGER.debug(
+                    f"[message] [within limit check] [Type portal] [{self.client.username}]--"
+                    f"total wallets: {total_wallets}, "
+                    f"total banks {total_banks}"
+                )
+            if Decimal(total_banks) + Decimal(total_wallets) + Decimal(
+                total_amount
+            ) > Decimal(self.amount):
+                return (
+                    False,
+                    f"limit is {self.amount} and total disbursed is {Decimal(total_banks) + Decimal(total_wallets)}",
+                )
+            else:
+                return True, ""
+        except (ValueError, Exception) as e:
+            BUDGET_LOGGER.debug(f"Error while check within limit - {e.args}")
+            return False, f"Error while check within limit - {e.args}"
+
+
+def calculate_total_banks_disbursed(root):
+    from disbursement.models import BankTransaction
+
+    qs_ids = (
+        BankTransaction.objects.filter(
+            Q(end_to_end=""),
+            Q(user_created__root=root),
+            Q(
+                status__in=[
+                    AbstractBaseACHTransactionStatus.PENDING,
+                    AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                    AbstractBaseACHTransactionStatus.RETURNED,
+                    AbstractBaseACHTransactionStatus.REJECTED,
+                ]
+            ),
+        )
+        .order_by("parent_transaction__transaction_id", "-id")
+        .distinct("parent_transaction__transaction_id")
+        .values("id")
+    )
+    qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
+        total_amount=Sum(
+            Case(
+                When(
+                    status__in=[
+                        AbstractBaseACHTransactionStatus.PENDING,
+                        AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                    ],
+                    then=F("amount"),
+                ),
+                default=Decimal(0),
+            )
+        ),
+        total_fees=Sum("fees"),
+        total_vat=Sum("vat"),
+    )
+    total_banks = (
+        Decimal(qs.aggregate(Sum("total_amount"))["total_amount__sum"])
+        + Decimal(qs.aggregate(Sum("total_fees"))["total_fees__sum"])
+        + Decimal(qs.aggregate(Sum("total_vat"))["total_vat__sum"])
+    ) or 0
+
+    return total_banks

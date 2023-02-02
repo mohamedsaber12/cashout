@@ -87,7 +87,8 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
             for page_number in paginator.page_range:
                 queryset = paginator.page(page_number)
                 for bank_trx in queryset:
-                    BankTransactionsChannel.get_transaction_status(bank_trx)
+                    if not bank_trx.parent_transaction.is_manual_batch:
+                        BankTransactionsChannel.get_transaction_status(bank_trx)
         return True
     except (BankTransaction.DoesNotExist, ValueError, Exception) as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(f"check for EBC status Error {e}")
@@ -152,7 +153,8 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
             for page_number in paginator.page_range:
                 queryset = paginator.page(page_number)
                 for bank_trx in queryset:
-                    BankTransactionsChannel.get_transaction_status(bank_trx)
+                    if not bank_trx.parent_transaction.is_manual_batch:
+                        BankTransactionsChannel.get_transaction_status(bank_trx)
         return True
     except (BankTransaction.DoesNotExist, ValueError, Exception) as e:
         ACH_GET_TRX_STATUS_LOGGER.debug(

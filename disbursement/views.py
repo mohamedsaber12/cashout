@@ -556,7 +556,7 @@ class SuperAdminAgentsSetup(
     SuperOrOnboardUserRequiredMixin, SuperFinishedSetupMixin, View
 ):
     """
-    View for super user to create Agents for the entity.
+    View for superuser to create Agents for the entity.
     """
 
     template_name = "entity/add_agent.html"

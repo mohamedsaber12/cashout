@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from .base import *
 
-
 DEBUG = False
 
 # Database
@@ -30,6 +29,7 @@ EMAIL_HOST_PASSWORD = env.str('EMAIL_HOST_PASSWORD')
 ADMINS = [
     ('Mohamed Saber', 'mohamedsaber@paymob.com'),
     ('Mohamed Awad', 'mohamedawad@paymob.com'),
+    ('Fathy Yehia', 'fathyyehia@paymob.com'),
 ]
 
 # SSL
@@ -66,4 +66,4 @@ GENERATE_REQUEST_ID_IF_NOT_IN_HEADER = True
 SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_PRELOAD = True
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_CONTENT_TYPE_NOSNIFF=True
+SECURE_CONTENT_TYPE_NOSNIFF = True

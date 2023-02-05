@@ -30,7 +30,7 @@ from disbursement.utils import (
 )
 from utilities.ssl_certificate import SSLCertificate
 
-from ...api.serializers import (
+from instant_cashin.api.serializers import (
     BankTransactionResponseModelSerializer,
     InstantTransactionResponseModelSerializer,
 )
@@ -477,22 +477,22 @@ class BankTransactionsChannel:
         has_valid_response = True
 
         # Temp code to be removed
-        bank_trx_obj.mark_pending(
-            "8000",
-            "Transaction received and validated successfully. Dispatched for being processed by the bank",
-        )
-        bank_trx_obj.is_manual_batch = True
-        amount_plus_fees_vat = (
-            bank_trx_obj.user_created.root.budget.release_hold_balance(
-                bank_trx_obj.amount, "bank_card"
-            )
-        )
-        bank_trx_obj.balance_before = balance_before
-        bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat
+        # bank_trx_obj.mark_pending(
+        #     "8000",
+        #     "Transaction received and validated successfully. Dispatched for being processed by the bank",
+        # )
+        # bank_trx_obj.is_manual_batch = True
+        # amount_plus_fees_vat = (
+        #     bank_trx_obj.user_created.root.budget.release_hold_balance(
+        #         bank_trx_obj.amount, "bank_card"
+        #     )
+        # )
+        # bank_trx_obj.balance_before = balance_before
+        # bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat
 
-        bank_trx_obj.save()
+        # bank_trx_obj.save()
 
-        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+        # return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
         # end of temp code
 

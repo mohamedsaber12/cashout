@@ -2674,9 +2674,6 @@ class DisbursePaymentLink(View):
                     "status_description": response.json().get("status_description"),
                 }
                 access_token = AccessToken.objects.filter(token=self.token, used=False)
-                print("========================")
-                print(response.json())
-                print("========================")
                 if response.json().get("disbursement_status") in [
                         "failed",
                         "Failed",

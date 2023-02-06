@@ -2674,18 +2674,29 @@ class DisbursePaymentLink(View):
                     "status_description": response.json().get("status_description"),
                 }
                 access_token = AccessToken.objects.filter(token=self.token, used=False)
-                if access_token:
-                    access_token = access_token[0]
-                    access_token.used = True
-                    access_token.save()
-                payment_link=PaymentLink.objects.get(token= self.token)
-                payment_link.paid=True
-                payment_link.issuer= data["issuer"]
-                payment_link.save()
-                DISBURSE_PAYMENT_LINK_LOGGER.debug(
-                    f" [message]--[disburse payment link] which created by--[{created_by.username}] -- [{payment_link.link}]"
-                )
-                return render(request, template_name='disbursement/payment_link_status.html', context=context)
+                print("========================")
+                print(response.json())
+                print("========================")
+                if response.json().get("disbursement_status") in [
+                        "failed",
+                        "Failed",
+                    ]:
+                    return render(request, template_name='disbursement/payment_link_status.html', context=context)
+
+                else:
+                    if access_token:
+                        access_token = access_token[0]
+                        access_token.used = True
+                        access_token.save()
+                    payment_link=PaymentLink.objects.get(token= self.token)
+                    payment_link.paid=True
+                    payment_link.issuer= data["issuer"]
+                    payment_link.save()
+                    DISBURSE_PAYMENT_LINK_LOGGER.debug(
+                        f" [message]--[disburse payment link] which created by--[{created_by.username}] -- [{payment_link.link}]"
+                    )
+                    return render(request, template_name='disbursement/payment_link_status.html', context=context)
+
 
 
             except Exception as err:

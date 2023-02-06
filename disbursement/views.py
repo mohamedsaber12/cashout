@@ -66,17 +66,21 @@ from utilities import messages
 from utilities.models import Budget, ExcelFile, TopupAction, TopupRequest
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 from utilities.tasks import send_transfer_request_email
+from users.models.access_token import AccessToken
 
 from .forms import (
     AgentForm,
     AgentFormSet,
     BalanceInquiryPinForm,
+    DisbursePaymentLinkForm,
     ExistingAgentForm,
     ExistingAgentFormSet,
+    PaymentCreationForm,
     SingleStepTransactionForm,
 )
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
-from .models import Agent, BankTransaction, DisbursementData
+from .models import Agent, BankTransaction, DisbursementData, PaymentLink
+import datetime
 from .utils import (
     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
@@ -89,6 +93,8 @@ from .utils import (
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 DATA_LOGGER = logging.getLogger("disburse")
 SINGLE_STEP_TRANSACTIONS_LOGGER = logging.getLogger("single_step_transactions")
+PAYMENT_LINK_LOGGER = logging.getLogger("payment_link")
+DISBURSE_PAYMENT_LINK_LOGGER = logging.getLogger("disburse_payment_link")
 AGENT_CREATE_LOGGER = logging.getLogger("agent_create")
 FAILED_DISBURSEMENT_DOWNLOAD = logging.getLogger("failed_disbursement_download")
 FAILED_VALIDATION_DOWNLOAD = logging.getLogger("failed_validation_download")
@@ -2514,3 +2520,183 @@ class BanksListView(UserWithAcceptVFOnboardingPermissionRequired, ListView):
         context["bank_transactions"] = True
 
         return context
+
+class CreatePaymentLink(AdminOrCheckerOrSupportRequiredMixin, View):
+    """
+    List/Create view for payment links
+    """
+
+    model = PaymentLink
+    context_object_name = "payment_link_list"
+    template_name = "disbursement/payment_link_list.html"
+
+    def get_queryset(self):
+        
+        payment_links=PaymentLink.objects.filter(created_by=self.request.user)
+        return payment_links
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests for payment links list view"""
+        paginator = Paginator(self.get_queryset(), 10)
+        page = self.request.GET.get("page", 1)
+        queryset = paginator.get_page(page)
+
+        context = {
+            "form": PaymentCreationForm(current_user=request.user),
+            "payment_link_list": queryset,
+        }
+
+        return render(request, template_name=self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to payment link"""
+        context = {
+            "form": PaymentCreationForm(request.POST, current_user=request.user),
+            "payment_link_list": self.get_queryset(),
+            "show_add_form": True,
+        }
+        if context["form"].is_valid():
+            form = context["form"]
+            context = {
+                "form": PaymentCreationForm(current_user=request.user),
+                "payment_link_list": self.get_queryset(),
+                "show_pop_up": True,
+
+            }
+            try:
+                data = form.cleaned_data
+                amount=data["amount"]
+                access_token = AccessToken()
+                access_token.save()
+                http_or_https = (
+                    "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
+                )
+                URL=http_or_https+ request.get_host()+ str(reverse_lazy("disbursement:disburse_payment_link", kwargs={"payment_token": access_token.token}))
+                payment_link=PaymentLink.objects.create(link=URL, amount=amount, token= access_token.token, created_by=request.user)
+                data = {
+                    "status": 200,
+                    "message":f"The Payment Link Is :--> {URL}"
+                }
+                PAYMENT_LINK_LOGGER.debug(
+                    f" [message]--[create payment link] [{request.user}] -- [{URL}]"
+                )
+                return redirect(
+                    request.get_full_path() + "?page=1&" + urllib.parse.urlencode(data)
+                )
+
+            except Exception as err:
+                error_msg = "Process stopped during an internal error, please can you try again."
+                data = {
+                    "status": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "message": error_msg,
+                }
+                PAYMENT_LINK_LOGGER.debug(
+                    f"[Error] [message] [{request.user}] -- [{err.args}]"
+                )
+                return redirect(
+                    request.get_full_path() + "?page=1&" + urllib.parse.urlencode(data)
+                )
+
+        return render(request, template_name=self.template_name, context=context)
+
+class DisbursePaymentLink(View):
+
+    template_name = "disbursement/disburse_payment_link.html"
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests for payment links list view"""
+        self.token = self.kwargs['payment_token']
+        access_token = AccessToken.objects.filter(token=self.token, used=False)
+        if not access_token.exists():
+            context = {
+                    "status_code": 400,
+                    "status_description":f"the payment link is invalid"
+                }
+            return render(request, template_name='disbursement/payment_link_status.html', context=context)
+
+        payment_link=PaymentLink.objects.get( token= self.token)
+
+        context = {
+
+            "form": DisbursePaymentLinkForm(),
+            'amount':payment_link.amount
+        }
+        return render(request, template_name=self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests to  disbursement payment link"""
+        self.token = self.kwargs['payment_token']
+        context = {
+            "form": DisbursePaymentLinkForm(request.POST),
+            "show_add_form": True,
+            "show_pop_up": True,
+
+        }
+        if context["form"].is_valid():
+            form = context["form"]
+            payment_link=PaymentLink.objects.get(token= self.token)
+            amount=payment_link.amount
+            created_by=payment_link.created_by
+            
+            try:
+
+                data = form.cleaned_data
+                issuer= data["issuer"]
+                payload = {
+                    "user": created_by.username,
+                    "amount": str(amount),
+                    "issuer": issuer,
+                    "msisdn": data["msisdn"],
+                }
+                if issuer in ["orange", "bank_wallet"]:
+                    payload["full_name"] = data["full_name"]
+                if issuer == "bank_card":
+                    payload["full_name"] = data["creditor_name"]
+                    payload["bank_card_number"] = data["creditor_account_number"]
+                    payload["bank_code"] = data["creditor_bank"]
+                    payload["bank_transaction_type"] = data["transaction_type"]
+                    del payload["msisdn"]
+                if issuer == "aman":
+                    payload["first_name"] = data["first_name"]
+                    payload["last_name"] = data["last_name"]
+                    payload["email"] = data["email"]
+                http_or_https = (
+                    "http://" if get_from_env("ENVIRONMENT") == "local" else "https://"
+                )
+                response = requests.post(
+                    http_or_https
+                    + request.get_host()
+                    + str(reverse_lazy("instant_api:disburse_single_step")),
+                    json=payload,
+                )
+                context = {
+                    "status_code": response.json().get("status_code"),
+                    "status_description": response.json().get("status_description"),
+                }
+                access_token = AccessToken.objects.filter(token=self.token, used=False)
+                if access_token:
+                    access_token = access_token[0]
+                    access_token.used = True
+                    access_token.save()
+                payment_link=PaymentLink.objects.get(token= self.token)
+                payment_link.paid=True
+                payment_link.issuer= data["issuer"]
+                payment_link.save()
+                DISBURSE_PAYMENT_LINK_LOGGER.debug(
+                    f" [message]--[disburse payment link] which created by--[{created_by.username}] -- [{payment_link.link}]"
+                )
+                return render(request, template_name='disbursement/payment_link_status.html', context=context)
+
+
+            except Exception as err:
+                error_msg = "Process stopped during an internal error, please can you try again."
+                context = {
+                    "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    "status_description": error_msg,
+                }
+                DISBURSE_PAYMENT_LINK_LOGGER.debug(
+                    f"[Error] [message] [{created_by.username}] -- [{err.args}] in this link--[{payment_link.link}]"
+                )
+                return render(request, template_name='disbursement/payment_link_status.html', context=context)
+
+

@@ -22,18 +22,18 @@
 
 <p>{% trans 'Please follow the steps to setup your payouts settings.' %}</p>
 <div id="disb_widget" class="form_wizard wizard_horizontal">
-    <ul class="wizard_steps">
-        <li>
-            <a href="#step-1">
-                <span class="step_no">{{1|localize}}</span>
-                <span class="step_descr">
-                    {% trans 'Add Pin' %}<br />
-                    <small>{% trans 'Add Pin' %}</small>
-                </span>
-            </a>
-        </li>
+    {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+        <ul class="wizard_steps">
+            <li>
+                <a href="#step-1">
+                    <span class="step_no">{{1|localize}}</span>
+                    <span class="step_descr">
+                        {% trans 'Add Pin' %}<br />
+                        <small>{% trans 'Add Pin' %}</small>
+                    </span>
+                </a>
+            </li>
 
-        {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
             <li>
                 <a href="#step-2">
                     <span class="step_no">{{2|localize}}</span>
@@ -78,12 +78,9 @@
                     </span>
                 </a>
             </li>
-        {% endif %}
-    </ul>
-
+        </ul>
+    {% endif %}
     {% include "users/setting-up-disbursement/pin_form.html" with form=form %}
-
-
 </div>
 
 {% endblock %}

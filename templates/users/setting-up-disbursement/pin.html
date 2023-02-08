@@ -19,8 +19,9 @@
 {% block title %}{% trans 'Settings' %}{% endblock %}
 {% block body %}
 
-
-<p>{% trans 'Please follow the steps to setup your payouts settings.' %}</p>
+{% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+    <p>{% trans 'Please follow the steps to setup your payouts settings.' %}</p>
+{% endif %}
 <div id="disb_widget" class="form_wizard wizard_horizontal">
     {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
         <ul class="wizard_steps">

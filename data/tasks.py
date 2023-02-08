@@ -619,7 +619,7 @@ class BankWalletsAndCardsSheetProcessor(Task):
 
             # 5. Check if the sheet's total amount doesn't exceed the current available budget of the entity
             elif not Budget.objects.get(disburser=doc_obj.owner.root).within_threshold(
-                total_amount, budget_fees_key
+                total_amount, budget_fees_key, doc_obj.total_count
             ):
                 self.end_with_failure(doc_obj, MSG_NOT_WITHIN_THRESHOLD)
                 return False

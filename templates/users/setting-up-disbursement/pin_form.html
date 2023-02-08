@@ -23,7 +23,9 @@
             </div>
         {% endfor %}
         {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
-            <button type="submit">Submit</button>
+            <div>
+                <button class="btn btn-success" type="submit">Submit</button>
+            </div>
         {% endif %}
     </form>
     {%else%}

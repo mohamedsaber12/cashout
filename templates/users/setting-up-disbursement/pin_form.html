@@ -22,6 +22,9 @@
                 </div>
             </div>
         {% endfor %}
+        {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
+            <button type="submit">Submit</button>
+        {% endif %}
     </form>
     {%else%}
         {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}

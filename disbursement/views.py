@@ -15,12 +15,8 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.db.models import Case, Count, F, Q, Sum, When
-from django.http import (
-    Http404,
-    HttpResponse,
-    HttpResponseForbidden,
-    HttpResponseRedirect,
-)
+from django.http import (Http404, HttpResponse, HttpResponseForbidden,
+                         HttpResponseRedirect)
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.utils import translation
@@ -36,55 +32,43 @@ from rest_framework_expiring_authtoken.models import ExpiringToken
 from core.models import AbstractBaseStatus
 from data.decorators import otp_required
 from data.models import Doc
-from data.tasks import (
-    ExportPortalRootOrDashboardUserTransactionsBanks,
-    ExportPortalRootOrDashboardUserTransactionsEwallets,
-    ExportPortalRootTransactionsEwallet,
-    generate_all_disbursed_data,
-    generate_failed_disbursed_data,
-    generate_success_disbursed_data,
-)
+from data.tasks import (ExportPortalRootOrDashboardUserTransactionsBanks,
+                        ExportPortalRootOrDashboardUserTransactionsEwallets,
+                        ExportPortalRootTransactionsEwallet,
+                        generate_all_disbursed_data,
+                        generate_failed_disbursed_data,
+                        generate_success_disbursed_data)
 from data.utils import randomword, redirect_params
 from instant_cashin.models import AbstractBaseIssuer, InstantTransaction
-from instant_cashin.specific_issuers_integrations import BankTransactionsChannel
+from instant_cashin.specific_issuers_integrations import \
+    BankTransactionsChannel
 from instant_cashin.utils import get_from_env
 from payouts.utils import get_dot_env
 from users.decorators import setup_required
-from users.mixins import (
-    AgentsListPermissionRequired,
-    RootRequiredMixin,
-    RootUserORDashboardUserOrMakerORCheckerRequiredMixin,
-    SuperFinishedSetupMixin,
-    SuperOrOnboardUserRequiredMixin,
-    SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
-    SuperRequiredMixin,
-    UserWithAcceptVFOnboardingPermissionRequired,
-    UserWithDisbursementPermissionRequired,
-)
+from users.mixins import (AgentsListPermissionRequired, RootRequiredMixin,
+                          RootUserORDashboardUserOrMakerORCheckerRequiredMixin,
+                          SuperFinishedSetupMixin,
+                          SuperOrOnboardUserRequiredMixin,
+                          SuperOrRootOwnsCustomizedBudgetClientRequiredMixin,
+                          SuperRequiredMixin,
+                          UserWithAcceptVFOnboardingPermissionRequired,
+                          UserWithDisbursementPermissionRequired)
 from users.models import Client, EntitySetup, User
 from utilities import messages
 from utilities.models import Budget, ExcelFile, TopupAction, TopupRequest
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 from utilities.tasks import send_transfer_request_email
 
-from .forms import (
-    AgentForm,
-    AgentFormSet,
-    BalanceInquiryPinForm,
-    ExistingAgentForm,
-    ExistingAgentFormSet,
-    SingleStepTransactionForm,
-)
+from .forms import (AgentForm, AgentFormSet, BalanceInquiryPinForm,
+                    ExistingAgentForm, ExistingAgentFormSet,
+                    SingleStepTransactionForm)
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData
-from .utils import (
-    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
-    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
-    VALID_BANK_CODES_LIST,
-    VALID_BANK_TRANSACTION_TYPES_LIST,
-    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
-    determine_trx_category_and_purpose,
-)
+from .utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
+                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
+                    determine_trx_category_and_purpose)
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 DATA_LOGGER = logging.getLogger("disburse")
@@ -1301,6 +1285,7 @@ class AgentsListView(AgentsListPermissionRequired, ListView):
         return Agent.objects.filter(wallet_provider=self.request.user)
 
 
+@method_decorator([setup_required], name="dispatch")
 class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
     """
     List/Create view for single step bank transactions over the manual patch

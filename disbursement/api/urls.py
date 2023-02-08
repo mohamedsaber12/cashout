@@ -2,7 +2,7 @@ from django.urls import path
 
 from .views import (AllowDocDisburse, CancelAmanTransactionView,
                     ChangeProfileCallBack, DisburseAPIView, DisburseCallBack,
-                    RetrieveDocData, SendMailForCreationAdmin, OnboardMerchant)
+                    OnboardMerchant, RetrieveDocData, SendMailForCreationAdmin)
 
 app_name = 'disb_api'
 
@@ -33,6 +33,6 @@ urlpatterns = [
     path(
         'onboard-merchant/',
         OnboardMerchant.as_view(),
-        name='send_mail_creation',
+        name='merchant_creation',
     ),
 ]

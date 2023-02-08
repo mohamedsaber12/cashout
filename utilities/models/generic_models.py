@@ -157,17 +157,17 @@ class Budget(AbstractTimeStamp):
                     ((actual_amount * percentage_value) / 100), 4
                 )
             elif fees_obj.fee_type == FeeSetup.MIXED_FEE:
-                fixed_value = fees_obj.fixed_value
+                fixed_value = fees_obj.fixed_value * num_of_trns
                 percentage_value = fees_obj.percentage_value
                 fees_aggregated_value = (
                     round(((actual_amount * percentage_value) / 100), 4) + fixed_value
                 )
 
             # 3.1 Check the total fees_aggregated_value if it complies against the min and max values
-            if 0 < fees_obj.min_value > fees_aggregated_value:
+            if 0 < fees_obj.min_value * num_of_trns > fees_aggregated_value:
                 fees_aggregated_value = fees_obj.min_value
 
-            if 0 < fees_obj.max_value < fees_aggregated_value:
+            if 0 < fees_obj.max_value * num_of_trns < fees_aggregated_value:
                 fees_aggregated_value = fees_obj.max_value
 
             vat_value = round(((fees_aggregated_value * Decimal(14.00)) / 100), 4)
@@ -243,7 +243,7 @@ class Budget(AbstractTimeStamp):
                 )
             )
 
-    def within_threshold(self, amount_to_be_disbursed, issuer_type):
+    def within_threshold(self, amount_to_be_disbursed, issuer_type, num_of_trxs=1):
         """
         Check if the amount to be disbursed won't exceed the current balance
         :param amount_to_be_disbursed: Amount to be disbursed at the currently running transaction
@@ -252,7 +252,7 @@ class Budget(AbstractTimeStamp):
         """
         try:
             amount_plus_fees_vat = self.accumulate_amount_with_fees_and_vat(
-                amount_to_be_disbursed, issuer_type.lower()
+                amount_to_be_disbursed, issuer_type.lower(), num_of_trxs
             )
 
             if amount_plus_fees_vat <= round(self.current_balance, 2):

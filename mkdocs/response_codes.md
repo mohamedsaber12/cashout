@@ -96,3 +96,22 @@
 [//]: # (   | 90093      | Service temporarily suspended)
 
 [//]: # (   | 90040      | عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778 )
+
+
+###  Bank Card Codes
+
+   | Status Code | Status     | Status Description|
+   |----------   |----------  |------------------|
+   | 8000        | Pending    | Transaction received and validated successfully. Dispatched for being processed by the bank
+   | 8111        | Pending    | Transaction received and validated successfully. Dispatched for being processed by the bank
+   | 8222        | Successful | Successful with warning, A transfer will take place once authorized by the receiver bank
+   | 8333        | Successful | Successful, transaction is settled by the receiver bank
+   | 501         | Failed| Duplicate Transaction ID
+   | 000005      | Rejected   | Invalid Account Details
+   | 002248      | Rejected   |Creditor Agent for this transaction is not an active agent
+   | 000100      | Returned   | Invalid Account Details
+   | 000102      | Returned   | Frozen or Blocked Account
+   | 000105      | Returned   | Insufficient Payment Details
+   | 000108      | Returned   | Invalid Account Details
+   
+   

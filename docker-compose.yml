@@ -87,7 +87,7 @@ services:
     restart: always
     volumes:
       - ./nginx/conf/:/etc/nginx/conf.d/:ro
-      - ./nginx_logs:/var/log/nginx/:ro
+      - ./nginx_logs:/var/log/nginx/:rw
       - ./certbot/www:/var/www/certbot/:ro
       - ./certbot/conf/:/etc/nginx/ssl/:ro
       - uwsgi_data:/tmp/uwsgi/

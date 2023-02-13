@@ -152,7 +152,7 @@ class PinFormView(DisbursementRootRequiredMixin, FormView):
         if to_step == '5':
             return reverse('users:setting-disbursement-formats')
         if self.request.user.from_accept and not self.request.user.allowed_to_be_bulk:
-            return reverse('disbursement:home_root')
+            return reverse('disbursement:single_step_list_create')
         return reverse('users:setting-disbursement-makers')
 
 

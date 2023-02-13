@@ -48,11 +48,13 @@
                 <i class="fa fa-flash"></i>{% trans 'Single Step Transactions' %}
               </a>
             </li>
-            <li>
-              <a href="{% url 'disbursement:create_payment_link' %}?page=1">
-                <i class="nav-icon fa fa-link"></i>{% trans 'Payment Links' %}
-              </a>
-            </li>
+            {% if not request.user.from_accept %}
+              <li>
+                <a href="{% url 'disbursement:create_payment_link' %}?page=1">
+                  <i class="nav-icon fa fa-link"></i>{% trans 'Payment Links' %}
+                </a>
+              </li>
+            {% elif %}
           {% endif %}
         {% endif %}
 

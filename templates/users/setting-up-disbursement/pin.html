@@ -19,68 +19,69 @@
 {% block title %}{% trans 'Settings' %}{% endblock %}
 {% block body %}
 
-
-<p>{% trans 'Please follow the steps to setup your payouts settings.' %}</p>
+{% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+    <p>{% trans 'Please follow the steps to setup your payouts settings.' %}</p>
+{% endif %}
 <div id="disb_widget" class="form_wizard wizard_horizontal">
-    <ul class="wizard_steps">
-        <li>
-            <a href="#step-1">
-                <span class="step_no">{{1|localize}}</span>
-                <span class="step_descr">
-                    {% trans 'Add Pin' %}<br />
-                    <small>{% trans 'Add Pin' %}</small>
-                </span>
-            </a>
-        </li>
+    {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
+        <ul class="wizard_steps">
+            <li>
+                <a href="#step-1">
+                    <span class="step_no">{{1|localize}}</span>
+                    <span class="step_descr">
+                        {% trans 'Add Pin' %}<br />
+                        <small>{% trans 'Add Pin' %}</small>
+                    </span>
+                </a>
+            </li>
 
-        <li>
-            <a href="#step-2">
-                <span class="step_no">{{2|localize}}</span>
-                <span class="step_descr">
-                    {% trans 'Makers' %}<br />
-                    <small>{% trans 'Add Maker users' %}</small>
-                </span>
-            </a>
-        </li>
+            <li>
+                <a href="#step-2">
+                    <span class="step_no">{{2|localize}}</span>
+                    <span class="step_descr">
+                        {% trans 'Makers' %}<br />
+                        <small>{% trans 'Add Maker users' %}</small>
+                    </span>
+                </a>
+            </li>
 
-        <li>
-            <a href="#step-3">
-                <span class="step_no">{{3|localize}}</span>
-                <span class="step_descr">
-                    {% trans 'Levels' %}<br />
-                    <small>{% trans 'Add levels for checkers' %}</small>
-                </span>
-            </a>
-        </li>
+            <li>
+                <a href="#step-3">
+                    <span class="step_no">{{3|localize}}</span>
+                    <span class="step_descr">
+                        {% trans 'Levels' %}<br />
+                        <small>{% trans 'Add levels for checkers' %}</small>
+                    </span>
+                </a>
+            </li>
 
-        <li>
-            <a href="#step-4">
-                <span class="step_no">{{4|localize}}</span>
-                <span class="step_descr">
-                    {% trans 'Checkers' %}<br />
-                    <small>{% trans 'Add Checker users' %}</small>
-                </span>
-            </a>
-        </li>
+            <li>
+                <a href="#step-4">
+                    <span class="step_no">{{4|localize}}</span>
+                    <span class="step_descr">
+                        {% trans 'Checkers' %}<br />
+                        <small>{% trans 'Add Checker users' %}</small>
+                    </span>
+                </a>
+            </li>
 
-        <li>
-            <a href="#step-5">
-                <span class="step_no">{{5|localize}}</span>
-                <span class="step_descr">
-                    {% if request.user.is_accept_vodafone_onboarding %}
-                      {% trans 'VF/ET/Aman Format' %}<br />
-                      <small>{% trans 'Add File Formats' %}</small>
-                    {% else %}
-                      {% trans 'Format' %}<br />
-                      <small>{% trans 'Add File Formats' %}</small>
-                    {% endif %}
-                </span>
-            </a>
-        </li>
-    </ul>
-
+            <li>
+                <a href="#step-5">
+                    <span class="step_no">{{5|localize}}</span>
+                    <span class="step_descr">
+                        {% if request.user.is_accept_vodafone_onboarding %}
+                          {% trans 'VF/ET/Aman Format' %}<br />
+                          <small>{% trans 'Add File Formats' %}</small>
+                        {% else %}
+                          {% trans 'Format' %}<br />
+                          <small>{% trans 'Add File Formats' %}</small>
+                        {% endif %}
+                    </span>
+                </a>
+            </li>
+        </ul>
+    {% endif %}
     {% include "users/setting-up-disbursement/pin_form.html" with form=form %}
-
 </div>
 
 {% endblock %}
@@ -91,31 +92,33 @@
 <script type="text/javascript">
 
     $(document).ready(function () {
-       
-        var wizard = $('#disb_widget').smartWizard({
-            selected: 0,//0 indexed
-            labelNext: ' {% trans "Next" %} ',
-            labelPrevious: ' {% trans "Previous" %} ',
-            labelFinish: ' {% trans "Finish" %} ',
-            keyNavigation: false,
-            onLeaveStep: leaveAStepCallback
 
-        });
-        
-        let enabled_steps = "{{enabled_steps}}";
+       {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
 
-        enabled_steps = enabled_steps.split('-');
-        
-        enabled_steps.forEach(element => {
-            //1 indexed
-            $('#disb_widget').smartWizard('enableStep', parseInt(element));
+            var wizard = $('#disb_widget').smartWizard({
+                selected: 0,//0 indexed
+                labelNext: ' {% trans "Next" %} ',
+                labelPrevious: ' {% trans "Previous" %} ',
+                labelFinish: ' {% trans "Finish" %} ',
+                keyNavigation: false,
+                onLeaveStep: leaveAStepCallback
+            });
 
-        });
+            let enabled_steps = "{{enabled_steps}}";
+
+            enabled_steps = enabled_steps.split('-');
+
+            enabled_steps.forEach(element => {
+                //1 indexed
+                $('#disb_widget').smartWizard('enableStep', parseInt(element));
+            });
+
+       {% endif %}
 
 
         function leaveAStepCallback(obj, context) {
             if("{{form_exist}}" == "False"){
-                let url = "{% url 'users:setting-disbursement-pin' %}";                
+                let url = "{% url 'users:setting-disbursement-pin' %}";
                 window.location.href = url + '?q=next&to_step=' + context.toStep;
             }
             else{
@@ -123,7 +126,7 @@
                 $("form").attr('action', action)
                 $("form").submit();
             }
-            
+
         }
         {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}
             // change color of buttons in on boarding process

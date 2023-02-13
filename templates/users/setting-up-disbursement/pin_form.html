@@ -1,6 +1,10 @@
 {% load custom_tags %}
 {% load i18n %}
-
+{% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
+    <div>
+        <h3 style="margin: auto;display: table;margin-bottom: 20px;">{% trans 'Add Pin' %}</h3>
+    </div>
+{% endif %}
 <div id="step-1">
     {%if form%}
     <form action="{% url 'users:setting-disbursement-pin' %}" method="post" class="form-horizontal form-label-left">
@@ -22,6 +26,11 @@
                 </div>
             </div>
         {% endfor %}
+        {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
+            <div>
+                <button style="margin: auto;display: block;" class="btn btn-success" type="submit">Submit</button>
+            </div>
+        {% endif %}
     </form>
     {%else%}
         {% if request.user.is_vodafone_default_onboarding or request.user.is_vodafone_facilitator_onboarding %}

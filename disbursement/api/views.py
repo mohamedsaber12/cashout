@@ -641,7 +641,7 @@ class DisbursementDataViewSet(viewsets.ModelViewSet):
 class InstantTransactionViewSet(viewsets.ModelViewSet):
     serializer_class = InstantTransactionSerializer
     permission_classes = (IsAuthenticated,)
-    pagination_classes = PageNumberPagination.page_size = 2
+    pagination_classes = PageNumberPagination.page_size = 50
 
     def get_queryset(
         self,

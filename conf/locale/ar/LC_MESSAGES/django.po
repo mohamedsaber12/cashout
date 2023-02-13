@@ -1150,10 +1150,6 @@ msgstr "للحسابات البنكية وبطاقات الخصم المباشر
 msgid "Ahli United Bank"
 msgstr "البنك الأهلي المتحد"
 
-#: disbursement/utils.py:92
-msgid "Citi Bank N.A. Egypt"
-msgstr "سيتي بنك"
-
 #: disbursement/utils.py:93
 msgid "MIDBANK"
 msgstr "ميد-بنك"

@@ -18,7 +18,6 @@ EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try ag
 
 VALID_BANK_CODES_LIST = [
     "AUB",
-    "CITI",
     "MIDB",
     "BDC",
     "HSBC",
@@ -86,7 +85,6 @@ BANK_TRANSACTION_TYPES_DESCRIPTION_LIST = [
 
 BANK_CODES = [
     {'name': _('Ahli United Bank')                              , 'code':  'AUB' },
-    {'name': _('Citi Bank N.A. Egypt')                          , 'code':  'CITI'},
     {'name': _('MIDBANK')                                       , 'code':  'MIDB'},
     {'name': _('Banque Du Caire')                               , 'code':  'BDC' },
     {'name': _('HSBC Bank Egypt S.A.E')                         , 'code':  'HSBC'},

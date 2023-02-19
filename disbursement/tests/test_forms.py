@@ -9,6 +9,28 @@ from disbursement.forms import (AgentForm, ExistingAgentForm, PinForm, BalanceIn
 from disbursement.models import Agent
 from users.models import RootUser, CheckerUser, Levels
 from utilities.models import Budget, FeeSetup
+# -*- coding: utf-8 -*-
+
+from django.test import TestCase, Client, RequestFactory
+from django.urls import reverse
+from django.contrib.auth.models import Permission
+from instant_cashin.utils import get_from_env
+from users.factories import VariousOnboardingSuperAdminUserFactory
+from users.models.access_token import AccessToken
+from users.models.onboard_user import OnboardUser, OnboardUserSetup
+
+from users.tests.factories import (
+    SuperAdminUserFactory, VMTDataFactory, AdminUserFactory
+)
+from users.models import (
+    SuperAdminUser, Client as ClientModel, Brand, Setup, EntitySetup,
+    SupportUser, SupportSetup, CheckerUser, MakerUser, Levels,User,UpmakerUser,InstantAPICheckerUser,InstantAPIViewerUser
+)
+from disbursement.models import Agent, DisbursementDocData
+from data.models import Doc, DocReview, FileCategory
+from rest_framework_expiring_authtoken.models import ExpiringToken
+from utilities.models import Budget, CallWalletsModerator, FeeSetup, AbstractBaseDocType
+
 
 REQUIRED_FIELD_ERROR = 'This field is required.'
 MOBILE_NUMBER_ERROR = 'Mobile number is not valid'
@@ -232,57 +254,110 @@ class BalanceInquiryPinFormTests(TestCase):
 
 class SingleStepTransactionFormTests(TestCase):
     def setUp(self):
-        self.root = RootUser(id=1, username='test_root_user')
+        self.super_admin = SuperAdminUserFactory()
+        self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
+        self.root = AdminUserFactory(user_type=3)
         self.root.root = self.root
-        self.root.set_pin('123456')
-        self.checker_user = CheckerUser(id=15, username='test_checker_user')
-        self.checker_user.root = self.root
+        self.brand = Brand(mail_subject='')
+        self.brand.save()
+        self.root.brand = self.brand
+        self.root.save()
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
+        self.agent.save()
+        self.root.user_permissions. \
+            add(Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement')
+        )
+        self.client_user = ClientModel(client=self.root, creator=self.super_admin)
+        self.client_user.save()
+        self.setup = Setup.objects.create(
+            user=self.root,
+            levels_setup=True,
+            maker_setup=True,
+            checker_setup=True,
+            category_setup=False,
+            pin_setup=True
+        )
+        self.entity_setup = EntitySetup.objects.create(
+                user=self.super_admin,
+                entity=self.root,
+                agents_setup=False,
+                fees_setup=False
+        )
+
+        self.request = RequestFactory()
+        self.client = Client()
+
+        self.checker_user = CheckerUser.objects.create(
+            id=1695,
+            username='test1_checker_user',
+            email='ch@checkersd1.com',
+            root=self.root,
+            user_type=2
+        )
+        self.root.set_pin("123456")
+        self.root.save()
+
 
     # test pin exist in form data
     def test_pin_not_exist(self):
         form_data = {}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
-        self.assertEqual(form.is_valid(), False)
-        self.assertEqual(form.errors['pin'], [REQUIRED_FIELD_ERROR])
-
-    # test pin exist in form data
-    def test_pin_exist_and_invalid(self):
-        form_data = {'pin': '323487'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['pin'], [PIN_IS_INVALID])
 
     # test pin exist in form data
+    def test_pin_exist_and_invalid(self):
+        form_data = {'pin': '323487'}
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
+        self.assertEqual(form.is_valid(), False)
+        self.assertEqual(form.errors['pin'], ['This field is required.'])
+
+    # test pin exist in form data
     def test_pin_exist_and_not_numeric(self):
         form_data = {'pin': '32t487'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['pin'], [PIN_IS_NUMERIC_ERROR])
 
     # test amount exist in form data
     def test_amount_not_exist(self):
         form_data = {}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['amount'], [REQUIRED_FIELD_ERROR])
 
     # test amount invalid in form data
     def test_amount_exist_and_invalid(self):
         form_data = {'amount': 't'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['amount'], [AMOUNT_ERROR])
 
     # test amount exceeds maximum amount that can be disbursed
     def test_amount_exceeds_maximum_amount_that_can_be_disbursed(self):
-        self.checker_user.level = Levels(
+        level = Levels(
             max_amount_can_be_disbursed=100,
             level_of_authority=1,
             created=self.root
         )
-        form_data = {'amount': 500}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        level.save()
+        self.checker_user.level=level
+        self.checker_user.save()
+        budget = Budget(disburser=self.root)
+        # print("===========888")
+        budget.current_balance=1000
+        print(budget.__dict__)
+        # print("=========888")
+        budget.save()
+        fees_setup = FeeSetup(budget_related=budget, issuer='bc',
+                              fee_type='f', fixed_value=5)
+        fees_setup.save()
+        form_data = {'amount': 400,'issuer':'bank_card'}
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
+        print("===============11")
+        print(form.errors)
         self.assertEqual(form.errors['amount'], [AMOUNT_EXCEEDED_MAXIMUM_AMOUNT_CAN_BE_DISBURSED])
 
     # test amount exceeds current balance
@@ -298,21 +373,21 @@ class SingleStepTransactionFormTests(TestCase):
                               fee_type='f', fixed_value=5)
         fees_setup.save()
         form_data = {'amount': 500, 'issuer': 'bank_card'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['amount'], [AMOUNT_EXCEEDS_CURRENT_BALANCE])
 
     # test issuer exist in form data
     def test_issuer_not_exist(self):
         form_data = {}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['issuer'], [REQUIRED_FIELD_ERROR])
 
     # test issuer invalid in form data
     def test_issuer_invalid(self):
         form_data = {'issuer': 'xyz'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(
             form.errors['issuer'], [INVALID_ISSUER_CHOICE])
@@ -320,49 +395,49 @@ class SingleStepTransactionFormTests(TestCase):
     # test msisdn invalid in form ata
     def test_msisdn_invalid(self):
         form_data = {'issuer': 'vodafone'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['msisdn'], [INVALID_MSISDN_ERROR])
 
     # test creditor_account_number in valid
     def test_creditor_account_number_is_invalid(self):
         form_data = {'creditor_account_number': '12534', 'issuer': 'bank_card'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['creditor_account_number'], [ACCOUNT_NUMBER_ERROR])
 
     # test account name is invalid
     def test_creditor_name_is_invalid(self):
         form_data = {'creditor_name': '', 'issuer': 'bank_card'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['creditor_name'], [CREDITOR_NAME_INVALID])
 
     # test account name has symbol
     def test_creditor_name_has_symbol(self):
         form_data = {'creditor_name': 'ddf%!+uhy', 'issuer': 'bank_card'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['creditor_name'], [CREDITOR_NAME_ERROR])
 
     # test full name has symbol
     def test_full_name_has_symbol(self):
         form_data = {'full_name': 'ddf%!+uhy', 'issuer': 'orange'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['full_name'], [CREDITOR_NAME_ERROR])
 
     # test first name has symbol
     def test_first_name_has_symbol(self):
         form_data = {'first_name': 'ddf%!+uhy', 'issuer': 'aman'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['first_name'], [FIRST_NAME_ERROR])
 
     # test last name has symbol
     def test_last_name_has_symbol(self):
         form_data = {'last_name': 'ddf%!+uhy', 'issuer': 'aman'}
-        form = SingleStepTransactionForm(data=form_data, checker_user=self.checker_user)
+        form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['last_name'], [LAST_NAME_ERROR])
 

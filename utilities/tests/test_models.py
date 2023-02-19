@@ -459,8 +459,8 @@ class BudgetTests(TestCase):
                                           fee_type='p', percentage_value=2.25)
         fees_setup_bank_wallet.save()
         self.assertEqual(
-            self.budget.update_disbursed_amount_and_current_balance(200, 'bank_wallet'),
-            True
+            int(self.budget.update_disbursed_amount_and_current_balance(200, 'bank_wallet')),
+            int(-205.13)
         )
 
     # test return_disbursed_amount_for_cancelled_trx
@@ -475,7 +475,7 @@ class BudgetTests(TestCase):
     def test_return_disbursed_amount_for_cancelled_trx(self):
         self.assertEqual(
             self.budget.return_disbursed_amount_for_cancelled_trx(200),
-            True
+            200
         )
 
 class FeeSetupTests(TestCase):

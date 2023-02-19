@@ -345,7 +345,7 @@ class InstantDisbursementAPIViewTests(APITestCase):
         self.super_admin = SuperAdminUserFactory()
         self.vmt_data_obj = VMTDataFactory(vmt=self.super_admin)
 
-    # test instant Cashin
+    #test instant Cashin
     def test_instant_cashin_UNAUTHORIZED(self):
         url = api_reverse("instant_api:instant_disburse")
         response = self.client.post(url, {}, format='json')
@@ -410,23 +410,22 @@ class InstantDisbursementAPIViewTests(APITestCase):
         # set super_admin pin
         self.env = patch.dict(
             'os.environ', {
-                f"{self.super_admin.username}_ETISALAT_PIN":'123456'
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
             }
         )
         self.client_user = Client(client=self.root, creator=self.super_admin)
         self.client_user.save()
-        self.agent = Agent(msisdn='01111451253', wallet_provider=self.super_admin)
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
         self.agent.save()
-        with self.env:
-            url = api_reverse("instant_api:instant_disburse")
-            self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
-            data = {
-                "amount": "20.50",
-                "issuer": "etisalat",
-                "msisdn": "01003764686"
-            }
-            response = self.client.post(url, data, format='json')
-            self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        url = api_reverse("instant_api:instant_disburse")
+        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+        data = {
+            "amount": "20.50",
+            "issuer": "etisalat",
+            "msisdn": "01003764686"
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     # test instant Cashin on etisalat
     def test_instant_cashin_on_etisalat(self):
@@ -437,13 +436,14 @@ class InstantDisbursementAPIViewTests(APITestCase):
         # set super_admin pin
         self.env = patch.dict(
             'os.environ', {
-                f"{self.super_admin.username}_ETISALAT_PIN":'123456'
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
             }
         )
         self.client_user = Client(client=self.root, creator=self.super_admin)
         self.client_user.save()
-        self.agent = Agent(msisdn='01111451253', wallet_provider=self.super_admin, type='E')
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
         self.agent.save()
+
         with self.env:
             url = api_reverse("instant_api:instant_disburse")
             self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
@@ -463,18 +463,26 @@ class InstantDisbursementAPIViewTests(APITestCase):
         fees_setup_aman.save()
         self.client_user = Client(client=self.root, creator=self.super_admin)
         self.client_user.save()
-        url = api_reverse("instant_api:instant_disburse")
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
-        data = {
-            "amount": "90.56",
-            "issuer": "aman",
-            "msisdn": "01112131415",
-            "first_name": "awad",
-            "last_name": "mohamed",
-            "email": "mfake@paymob.com"
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
+        self.agent.save()
+        self.env = patch.dict(
+            'os.environ', {
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
+            }
+        )
+        with self.env:
+            url = api_reverse("instant_api:instant_disburse")
+            self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+            data = {
+                "amount": "90.56",
+                "issuer": "aman",
+                "msisdn": "01112131415",
+                "first_name": "awad",
+                "last_name": "mohamed",
+                "email": "mfake@paymob.com"
+            }
+            response = self.client.post(url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # test instant Cashin on orange
     def test_instant_cashin_on_orange(self):
@@ -484,16 +492,24 @@ class InstantDisbursementAPIViewTests(APITestCase):
         fees_setup_orange.save()
         self.client_user = Client(client=self.root, creator=self.super_admin)
         self.client_user.save()
-        url = api_reverse("instant_api:instant_disburse")
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
-        data = {
-            "issuer": "orange",
-            "amount": 90.0,
-            "msisdn": "01092737975",
-            "full_name": "Tom Bernard Ceisar"
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
+        self.agent.save()
+        self.env = patch.dict(
+            'os.environ', {
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
+            }
+        )
+        with self.env:
+            url = api_reverse("instant_api:instant_disburse")
+            self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+            data = {
+                "issuer": "orange",
+                "amount": 90.0,
+                "msisdn": "01092737975",
+                "full_name": "Tom Bernard Ceisar"
+            }
+            response = self.client.post(url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     # test instant Cashin on bank_wallet
     def test_instant_cashin_on_bank_wallet(self):
@@ -503,18 +519,26 @@ class InstantDisbursementAPIViewTests(APITestCase):
         fees_setup_bank_wallet.save()
         self.client_user = Client(client=self.root, creator=self.super_admin)
         self.client_user.save()
-        url = api_reverse("instant_api:instant_disburse")
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
-        data = {
-            "issuer": "bank_wallet",
-            "amount": 90.0,
-            "msisdn": "01092737975",
-            "full_name": "Tom Bernard Ceisar"
-        }
-        response = self.client.post(url, data, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin)
+        self.agent.save()
+        self.env = patch.dict(
+            'os.environ', {
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
+            }
+        )
+        with self.env:
+            url = api_reverse("instant_api:instant_disburse")
+            self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.access_token)
+            data = {
+                "issuer": "bank_wallet",
+                "amount": 90.0,
+                "msisdn": "01092737975",
+                "full_name": "Tom Bernard Ceisar"
+            }
+            response = self.client.post(url, data, format='json')
+            self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-    # test instant Cashin on bank card
+    # # test instant Cashin on bank card
     def test_instant_cashin_on_bank_card(self):
         fees_setup_bank_card = FeeSetup(
             budget_related=self.budget, issuer='bc', fee_type='f',

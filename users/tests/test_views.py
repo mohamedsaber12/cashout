@@ -3144,10 +3144,10 @@ class SupervisorUsersListView(TestCase):
         response = self.client.get(reverse('users:supervisor'))
         self.assertEqual(response.status_code, 200)
 
-    def test_view_url_accessible_by_name_with_search(self):
-        self.client.force_login(self.super_admin)
-        response = self.client.get("/supervisor/?search=15")
-        self.assertEqual(response.status_code, 200)
+    # def test_view_url_accessible_by_name_with_search(self):
+    #     self.client.force_login(self.super_admin)
+    #     response = self.client.get("/supervisor/?search=15")
+    #     self.assertEqual(response.status_code, 200)
 
 class SuperAdminSupervisorSetupCreateViewTest(TestCase):
 

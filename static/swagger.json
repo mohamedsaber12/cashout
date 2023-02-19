@@ -60,7 +60,6 @@
             "type": "string",
             "enum": [
               "AUB",
-              "CITI",
               "MIDB",
               "BDC",
               "HSBC",

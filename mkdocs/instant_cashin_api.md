@@ -60,7 +60,6 @@
             |  Bank Name                                    |   Bank Code   |
             |-------	                                    |------         |
             |  Ahli United Bank                             |   AUB         |
-            |  Citi Bank N.A. Egypt                         |   CITI        |
             |  MIDBANK                                      |   MIDB        |
             |  Banque Du Caire                              |   BDC         |
             |  HSBC Bank Egypt S.A.E                        |   HSBC        |

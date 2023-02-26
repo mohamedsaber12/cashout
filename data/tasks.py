@@ -1040,14 +1040,17 @@ class EWalletsSheetProcessor(Task):
                 CHANGE_PROFILE_LOGGER.debug(
                     f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}"
                 )
+                msisdns.append(user_msisdn)
                 if response.ok:
                     response_dict = response.json()
-                    msisdns.append(user_msisdn)
                     if response_dict['TXNSTATUS'] not in ["200", "629", "560", "562"]:
                         has_error = True
                         errors.append(response_dict['MESSAGE'])
                     else:
                         errors.append("Passed validations successfully")
+                else:
+                    has_error = True
+                    errors.append("System Error Please Try Again")
 
             self.doc_obj.has_change_profile_callback = True
             if not has_error:

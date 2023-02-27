@@ -420,7 +420,7 @@ def disburse_accept_pending_transactions():
     trns = InstantTransaction.objects.filter(from_accept="single", status="P")
     for trn in trns:
         trn.disbursed_date = datetime.now()
-        if make_aware(datetime.now()) - trn.created_at > timedelta(minutes=1):
+        if make_aware(datetime.now()) - trn.created_at > timedelta(hours=1):
             instant_user = trn.from_user
             current_amount_plus_fess_and_vat = (
                 instant_user.root.budget.accumulate_amount_with_fees_and_vat(

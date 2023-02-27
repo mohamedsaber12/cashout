@@ -66,11 +66,14 @@ from .forms import (AgentForm, AgentFormSet, BalanceInquiryPinForm,
                     SingleStepTransactionForm)
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData, PaymentLink
-from .utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
-                    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
-                    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
-                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
-                    determine_trx_category_and_purpose)
+from .utils import (
+    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+    VALID_BANK_CODES_LIST,
+    VALID_BANK_TRANSACTION_TYPES_LIST,
+    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
+    determine_trx_category_and_purpose,
+)
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 DATA_LOGGER = logging.getLogger("disburse")

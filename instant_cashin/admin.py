@@ -150,7 +150,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         IssuerTypeListFilter,
         'anon_sender', 'from_user',
         CustomRootFilter,
-        'is_single_step', 'transaction_status_code'
+        'is_single_step', 'transaction_status_code',
+        'from_accept'
     ]
     actions = ["export_as_csv","export_bank_transactions_ids"]
     fieldsets = (

@@ -712,7 +712,7 @@ class PaymentCreationForm(forms.Form):
 
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_('Pin must be numeric'))
-        if not pin or self.current_user.root.pin and not self.current_user.root.check_pin(pin):
+        if not pin or not self.current_user.root.check_pin(pin):
             raise forms.ValidationError(_('Invalid pin'))
 
         return pin

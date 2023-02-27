@@ -78,7 +78,6 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
         )
 
         if latest_bank_transactions.count() > 0:
-
             ACH_GET_TRX_STATUS_LOGGER.debug(
                 f"[message] [check for trx update task] [celery_task] -- "
                 f"transactions count: {latest_bank_transactions.count()}"
@@ -144,7 +143,6 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
         )
 
         if latest_bank_transactions.count() > 0:
-
             ACH_GET_TRX_STATUS_LOGGER.debug(
                 f"[message] [check for trx update task] [celery_task] -- "
                 f"transactions count: {latest_bank_transactions.count()}"
@@ -230,6 +228,18 @@ def update_instant_timeouts_from_vodafone_report(
                     )
                     trn.save()
                     total_failed = total_failed + 1
+                    if trn.from_accept == 'single':
+                        current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(trn.amount, issuer_mapper[trn.issuer_type])
+                        revert_balance_payload = {
+                            "transaction_id": trn.accept_balance_transfer_id,
+                            "fees_amount_cents": "0",
+                        }
+                        revert_balance_to_accept_account(
+                            revert_balance_payload,
+                            trn.from_user,
+                            current_amount_plus_fess_and_vat,
+                        )
+
             else:
                 TIMEOUTS_UPDATE_LOGGER.debug(
                     f"[Timeouts updates] [not found on report ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
@@ -240,6 +250,17 @@ def update_instant_timeouts_from_vodafone_report(
                 )
                 trn.save()
                 total_failed = total_failed + 1
+                if trn.from_accept == 'single':
+                    current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(trn.amount, issuer_mapper[trn.issuer_type])
+                    revert_balance_payload = {
+                        "transaction_id": trn.accept_balance_transfer_id,
+                        "fees_amount_cents": "0",
+                    }
+                    revert_balance_to_accept_account(
+                        revert_balance_payload,
+                        trn.from_user,
+                        current_amount_plus_fess_and_vat,
+                    )
         else:
             TIMEOUTS_UPDATE_LOGGER.debug(
                 f"[Timeouts updates] [has no ref number ] update transaction {trn.uid} and ref {trn.reference_id} with failed status"
@@ -250,6 +271,17 @@ def update_instant_timeouts_from_vodafone_report(
             )
             trn.save()
             total_failed = total_failed + 1
+            if trn.from_accept == 'single':
+                current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(trn.amount, issuer_mapper[trn.issuer_type])
+                revert_balance_payload = {
+                    "transaction_id": trn.accept_balance_transfer_id,
+                    "fees_amount_cents": "0",
+                }
+                revert_balance_to_accept_account(
+                    revert_balance_payload,
+                    trn.from_user,
+                    current_amount_plus_fess_and_vat,
+                )
 
     if email_notify:
         subject = f"Timeouts update from {start_date} To {end_date}"
@@ -352,3 +384,199 @@ def get_random_status(last_status_code):
                 },
             ]
         )
+
+
+@app.task()
+def disburse_accept_pending_transactions():
+    from django.utils.timezone import datetime, make_aware, timedelta
+    from disbursement.models import VMTData
+    import copy
+    from utilities.logging import logging_message
+
+    INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
+    INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
+    INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
+
+    from payouts.settings import TIMEOUT_CONSTANTS
+    from rest_framework.exceptions import ValidationError
+    from rest_framework import status
+    from django.core.exceptions import ImproperlyConfigured
+    from django.utils.translation import gettext as _
+
+    INTERNAL_ERROR_MSG = _(
+        "Process stopped during an internal error, can you try again or contact your support team"
+    )
+    EXTERNAL_ERROR_MSG = _(
+        "Process stopped during an external error, can you try again or contact your support team"
+    )
+    TIMEOUT_ERROR_MSG = _("Request timeout error")
+    issuer_mapper = {
+        "V": "vodafone",
+        "E": "etisalat",
+        "O": "orange",
+        "B": "bank_wallet",
+    }
+
+    trns = InstantTransaction.objects.filter(from_accept="single", status="P")
+    for trn in trns:
+        if make_aware(datetime.now()) - trn.created_at > timedelta(minutes=1):
+            instant_user = trn.from_user
+            current_amount_plus_fess_and_vat = (
+                instant_user.root.budget.accumulate_amount_with_fees_and_vat(
+                    trn.amount, issuer_mapper[trn.issuer_type]
+                )
+            )
+            revert_balance_payload = {
+                "transaction_id": trn.accept_balance_transfer_id,
+                "fees_amount_cents": "0",
+            }
+            vmt_data = VMTData.objects.get(vmt=instant_user.root.client.creator)
+            data_dict = vmt_data.return_vmt_data(VMTData.INSTANT_DISBURSEMENT)
+            data_dict["MSISDN2"] = trn.anon_recipient
+            data_dict["AMOUNT"] = str(trn.amount)
+            data_dict["WALLETISSUER"] = "VODAFONE"
+            data_dict["MSISDN"] = trn.anon_sender
+            data_dict["PIN"] = get_from_env(
+                f"{instant_user.root.super_admin.username}_VODAFONE_PIN"
+            )
+            data_dict["EXTREFNUM"] = str(trn.uid)
+            if issuer_mapper[trn.issuer_type] in ["orange", "etisalat", "bank_wallet"]:
+                data_dict["TYPE"] = "DPSTREQ"
+            request_data_dictionary_without_pins = copy.deepcopy(data_dict)
+            request_data_dictionary_without_pins["PIN"] = "xxxxxx"
+            INSTANT_CASHIN_REQUEST_LOGGER.debug(
+                f"[request] [DATA DICT TO CENTRAL]"
+                f"CELERY TASK"
+                f"{request_data_dictionary_without_pins}"
+            )
+            if data_dict["MSISDN2"] == get_from_env(
+                f"test_number_for_{issuer_mapper[trn.issuer_type]}"
+            ) and get_from_env("ENVIRONMENT") in ["staging", "local"]:
+                trn.mark_successful(
+                    200,
+                    f"amount {str(trn.amount)} is disbursed successfully",
+                )
+                # release hold balance
+                instant_user.root.budget.release_hold_balance(
+                    trn.amount, issuer_mapper[trn.issuer_type]
+                )
+                trn.save()
+            else:
+                try:
+                    trx_response = requests.post(
+                        get_from_env(vmt_data.vmt_environment),
+                        json=data_dict,
+                        verify=False,
+                        timeout=TIMEOUT_CONSTANTS["CENTRAL_UIG"],
+                    )
+                    if trx_response.ok:
+                        json_trx_response = trx_response.json()
+                        trn.reference_id = json_trx_response["TXNID"]
+                    else:
+                        raise ImproperlyConfigured(trx_response.text)
+                    if json_trx_response["TXNSTATUS"] == "200":
+                        INSTANT_CASHIN_SUCCESS_LOGGER.debug(
+                            f"[response] [SUCCESSFUL TRX]",
+                            f"CELERY TASK",
+                            f"{json_trx_response}",
+                        )
+                        trn.mark_successful(
+                            json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
+                        )
+                        # release hold balance
+                        instant_user.root.budget.release_hold_balance(
+                            trn.amount, issuer_mapper[trn.issuer_type]
+                        )
+                        trn.save()
+
+                    elif (
+                        json_trx_response["TXNSTATUS"] == "501"
+                        or json_trx_response["TXNSTATUS"] == "6005"
+                    ):
+                        INSTANT_CASHIN_FAILURE_LOGGER.debug(
+                            f"[response] [FAILED TRX]",
+                            f"CELERY TASK",
+                            f"timeout, {json_trx_response}",
+                        )
+                        trn.mark_unknown(
+                            json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
+                        )
+                        trn.save()
+                    else:
+                        INSTANT_CASHIN_FAILURE_LOGGER.debug(
+                            f"[response] [FAILED TRX]",
+                            f"CELERY TASK",
+                            f"{json_trx_response}",
+                        )
+                        trn.mark_failed(
+                            json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
+                        )
+                        # return hold balance
+                        instant_user.root.budget.return_hold_balance(
+                            trn.amount, issuer_mapper[trn.issuer_type]
+                        )
+                        revert_balance_to_accept_account(
+                            revert_balance_payload,
+                            trn.from_user,
+                            current_amount_plus_fess_and_vat,
+                        )
+                        trn.save()
+
+                except ValidationError as e:
+                    INSTANT_CASHIN_FAILURE_LOGGER.debug(
+                        f"[message] [DISBURSEMENT VALIDATION ERROR]",
+                        f"CELERY TASK",
+                        f"{e.args}",
+                    )
+
+                    trn.mark_failed(
+                        status.HTTP_500_INTERNAL_SERVER_ERROR, INTERNAL_ERROR_MSG
+                    )
+                    # return hold balance
+                    instant_user.root.budget.return_hold_balance(
+                        trn.amount, issuer_mapper[trn.issuer_type]
+                    )
+                    revert_balance_to_accept_account(
+                        revert_balance_payload,
+                        trn.from_user,
+                        current_amount_plus_fess_and_vat,
+                    )
+                    trn.save()
+
+                except (requests.Timeout, TimeoutError) as e:
+                    INSTANT_CASHIN_FAILURE_LOGGER.debug(
+                        f"[response] [ERROR FROM CENTRAL]",
+                        f"CELERY TASK",
+                        f"timeout, {e.args}",
+                    )
+                    trn.mark_unknown(status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG)
+                    trn.save()
+
+                except (ImproperlyConfigured, Exception) as e:
+                    INSTANT_CASHIN_FAILURE_LOGGER.debug(
+                        f"[response] [ERROR FROM CENTRAL]",
+                        f"CELERY TASK",
+                        f"{e.args}",
+                    )
+                    trn.mark_failed(
+                        status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG
+                    )
+                    # return hold balance
+                    instant_user.root.budget.return_hold_balance(
+                        trn.amount, issuer_mapper[trn.issuer_type]
+                    )
+
+
+def revert_balance_to_accept_account(payload, user, current_fees_and_vat):
+    ACCEPT_BALANCE_TRANSFER_LOGGER = logging.getLogger("accept_balance_transfer")
+    url = get_from_env("DECLINE_SINGLE_STEP_URL")
+    headers = {"Authorization": get_from_env("SINGLE_STEP_TOKEN")}
+    ACCEPT_BALANCE_TRANSFER_LOGGER.debug(f"[request] [revert balance] -- {payload} ")
+    revert_response = requests.post(url, json=payload, headers=headers)
+    json_response = revert_response.json()
+    ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
+        f"[response] [revert balance] -- {json_response} "
+    )
+    if json_response.get("success"):
+        user.root.budget.current_balance -= current_fees_and_vat
+        user.root.budget.save()

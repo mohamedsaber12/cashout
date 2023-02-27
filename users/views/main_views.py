@@ -1,6 +1,6 @@
 import logging
 
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import AnonymousUser
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
@@ -162,7 +162,6 @@ def login_view(request):
         else "data/login.html"
     )
     user = None
-    print(request.GET)
     if request.GET.get("refresh"):
         return redirect("/")
 
@@ -173,12 +172,19 @@ def login_view(request):
         if request.user.username == 'Careem_Admin':
             return redirect('data:main_view')
 
-        if request.user.is_vodafone_default_onboarding or \
-                request.user.is_banks_standard_model_onboaring or\
-                request.user.is_accept_vodafone_onboarding and request.user.is_checker or \
-                request.user.is_vodafone_facilitator_onboarding and request.user.is_checker:
-            if not request.user.is_superuser and \
-                    (request.user.is_checker or request.user.is_root or request.user.is_superadmin):
+        if (
+            request.user.is_vodafone_default_onboarding
+            or request.user.is_banks_standard_model_onboaring
+            or request.user.is_accept_vodafone_onboarding
+            and request.user.is_checker
+            or request.user.is_vodafone_facilitator_onboarding
+            and request.user.is_checker
+        ):
+            if not request.user.is_superuser and (
+                request.user.is_checker
+                or request.user.is_root
+                or request.user.is_superadmin
+            ):
                 return HttpResponseRedirect(reverse('two_factor:profile'))
         return redirect('data:main_view')
     if request.method == 'POST':
@@ -278,7 +284,7 @@ class CallbackURLEdit(UpdateView):
 
     def get_object(self, queryset=None):
         user = get_object_or_404(User, username=self.kwargs["username"])
-        return user.root.root
+        return user.root
 
     def form_valid(self, form):
         self.object = form.save(commit=False)

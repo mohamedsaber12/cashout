@@ -419,6 +419,7 @@ def disburse_accept_pending_transactions():
 
     trns = InstantTransaction.objects.filter(from_accept="single", status="P")
     for trn in trns:
+        trn.disbursed_date = datetime.now()
         if make_aware(datetime.now()) - trn.created_at > timedelta(minutes=1):
             instant_user = trn.from_user
             current_amount_plus_fess_and_vat = (
@@ -476,9 +477,9 @@ def disburse_accept_pending_transactions():
                         raise ImproperlyConfigured(trx_response.text)
                     if json_trx_response["TXNSTATUS"] == "200":
                         INSTANT_CASHIN_SUCCESS_LOGGER.debug(
-                            f"[response] [SUCCESSFUL TRX]",
-                            f"CELERY TASK",
-                            f"{json_trx_response}",
+                            f"[response] [SUCCESSFUL TRX]"
+                            f"CELERY TASK"
+                            f"{json_trx_response}"
                         )
                         trn.mark_successful(
                             json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
@@ -494,9 +495,9 @@ def disburse_accept_pending_transactions():
                         or json_trx_response["TXNSTATUS"] == "6005"
                     ):
                         INSTANT_CASHIN_FAILURE_LOGGER.debug(
-                            f"[response] [FAILED TRX]",
-                            f"CELERY TASK",
-                            f"timeout, {json_trx_response}",
+                            f"[response] [FAILED TRX]"
+                            f"CELERY TASK"
+                            f"timeout, {json_trx_response}"
                         )
                         trn.mark_unknown(
                             json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
@@ -504,9 +505,9 @@ def disburse_accept_pending_transactions():
                         trn.save()
                     else:
                         INSTANT_CASHIN_FAILURE_LOGGER.debug(
-                            f"[response] [FAILED TRX]",
-                            f"CELERY TASK",
-                            f"{json_trx_response}",
+                            f"[response] [FAILED TRX]"
+                            f"CELERY TASK"
+                            f"{json_trx_response}"
                         )
                         trn.mark_failed(
                             json_trx_response["TXNSTATUS"], json_trx_response["MESSAGE"]
@@ -524,9 +525,9 @@ def disburse_accept_pending_transactions():
 
                 except ValidationError as e:
                     INSTANT_CASHIN_FAILURE_LOGGER.debug(
-                        f"[message] [DISBURSEMENT VALIDATION ERROR]",
-                        f"CELERY TASK",
-                        f"{e.args}",
+                        f"[message] [DISBURSEMENT VALIDATION ERROR]"
+                        f"CELERY TASK"
+                        f"{e.args}"
                     )
 
                     trn.mark_failed(
@@ -545,18 +546,18 @@ def disburse_accept_pending_transactions():
 
                 except (requests.Timeout, TimeoutError) as e:
                     INSTANT_CASHIN_FAILURE_LOGGER.debug(
-                        f"[response] [ERROR FROM CENTRAL]",
-                        f"CELERY TASK",
-                        f"timeout, {e.args}",
+                        f"[response] [ERROR FROM CENTRAL]"
+                        f"CELERY TASK"
+                        f"timeout, {e.args}"
                     )
                     trn.mark_unknown(status.HTTP_408_REQUEST_TIMEOUT, TIMEOUT_ERROR_MSG)
                     trn.save()
 
                 except (ImproperlyConfigured, Exception) as e:
                     INSTANT_CASHIN_FAILURE_LOGGER.debug(
-                        f"[response] [ERROR FROM CENTRAL]",
-                        f"CELERY TASK",
-                        f"{e.args}",
+                        f"[response] [ERROR FROM CENTRAL]"
+                        f"CELERY TASK"
+                        f"{e.args}"
                     )
                     trn.mark_failed(
                         status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG

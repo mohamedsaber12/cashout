@@ -398,7 +398,7 @@ class InstantDisbursementAPIView(views.APIView):
                         "transaction_type"
                     )
                     transaction.save()
-                    transaction.mark_pending("200", "Transaction recieved successfully")
+                    transaction.mark_pending("200", "Request submitted")
                     return Response(
                         InstantTransactionResponseModelSerializer(transaction).data,
                         status=status.HTTP_200_OK,

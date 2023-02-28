@@ -245,13 +245,13 @@ class BankTransactionAdminModel(
     def has_module_permission(self, request):
         if request.user.is_superuser or request.user.has_perm(
             "users.has_instant_transaction_view"
-        ):
+        ) or request.user.is_single_step_support :
             return True
 
     def has_view_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.has_perm(
             "users.has_instant_transaction_view"
-        ):
+        ) or request.user.is_single_step_support :
             return True
 
     def has_add_permission(self, request):
@@ -405,6 +405,13 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
         ),
         (_("Important Dates"), {"fields": ("created_at", "updated_at")}),
     )
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_single_step_support :
+            return True
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_single_step_support :
+            return True
 
 
 @admin.register(VMTData)

@@ -2,7 +2,9 @@
 from __future__ import unicode_literals
 
 import csv
-from django_admin_multiple_choice_list_filter.list_filters import MultipleChoiceListFilter
+from django_admin_multiple_choice_list_filter.list_filters import (
+    MultipleChoiceListFilter,
+)
 
 from django.contrib import admin
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
@@ -28,32 +30,34 @@ from openpyxl import load_workbook
 from instant_cashin.tasks import update_instant_timeouts_from_vodafone_report
 
 
-
-
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
     title = "Transaction Type"
     parameter_name = "transaction_type"
 
     def lookups(self, request, model_admin):
-        return(
+        return (
             ("manual_transaction", "Disbursement Data Record"),
-            ("instant_transaction", "Instant Transaction")
+            ("instant_transaction", "Instant Transaction"),
         )
 
     def queryset(self, request, queryset):
         if self.value() == "manual_transaction":
-            return queryset.filter(transaction_type=ContentType.objects.get_for_model(DisbursementData))
-        if self.value() == 'instant_transaction':
-            return queryset.filter(transaction_type=ContentType.objects.get_for_model(InstantTransaction))
+            return queryset.filter(
+                transaction_type=ContentType.objects.get_for_model(DisbursementData)
+            )
+        if self.value() == "instant_transaction":
+            return queryset.filter(
+                transaction_type=ContentType.objects.get_for_model(InstantTransaction)
+            )
 
 
 class CustomStatusFilter(admin.SimpleListFilter):
-    title = 'Status'
-    parameter_name = 'status_choice_verbose'
+    title = "Status"
+    parameter_name = "status_choice_verbose"
 
     def lookups(self, request, model_admin):
         return AbstractBaseStatus.STATUS_CHOICES + [
-            ('U', _("Unknown")),
+            ("U", _("Unknown")),
         ]
 
     def queryset(self, request, queryset):
@@ -64,24 +68,24 @@ class CustomStatusFilter(admin.SimpleListFilter):
 
 
 class CustomRootFilter(admin.SimpleListFilter):
-    title = 'Root'
-    parameter_name = 'root__id'
+    title = "Root"
+    parameter_name = "root__id"
 
     def lookups(self, request, model_admin):
-
-        return RootUser.objects.all().values_list('id', 'username')
+        return RootUser.objects.all().values_list("id", "username")
 
     def queryset(self, request, queryset):
         value = self.value()
         if value:
-            return queryset.filter((Q(document__owner__root__id=value) | Q(from_user__root__id=value)))
+            return queryset.filter(
+                (Q(document__owner__root__id=value) | Q(from_user__root__id=value))
+            )
         return queryset
 
 
-
 class IssuerTypeListFilter(MultipleChoiceListFilter):
-    title = 'Issuer Type'
-    parameter_name = 'issuer_type__in'
+    title = "Issuer Type"
+    parameter_name = "issuer_type__in"
 
     def lookups(self, request, model_admin):
         return InstantTransaction.ISSUER_TYPE_CHOICES
@@ -93,10 +97,16 @@ class AmanTransactionAdmin(admin.ModelAdmin):
     Admin model for Aman Instant Transaction model
     """
 
-    list_display = ['transaction_id', 'transaction_type', 'disburser', 'bill_reference', 'is_paid']
-    readonly_fields = list_display + ['original_transaction_url']
-    search_fields = ['transaction_id']
-    list_filter = ['is_paid', AmanTransactionTypeFilter]
+    list_display = [
+        "transaction_id",
+        "transaction_type",
+        "disburser",
+        "bill_reference",
+        "is_paid",
+    ]
+    readonly_fields = list_display + ["original_transaction_url"]
+    search_fields = ["transaction_id"]
+    list_filter = ["is_paid", AmanTransactionTypeFilter]
 
     def disburser(self, instance):
         """Show the user who made the original transaction"""
@@ -110,15 +120,23 @@ class AmanTransactionAdmin(admin.ModelAdmin):
         """Create link to the original transaction"""
         if instance.transaction_type:
             if instance.transaction_type.name == "Disbursement Data Record":
-                url = resolve_url(admin_urlname(DisbursementData._meta, 'change'), instance.transaction.id)
+                url = resolve_url(
+                    admin_urlname(DisbursementData._meta, "change"),
+                    instance.transaction.id,
+                )
                 return format_html(f"<a href='{url}'>{instance.transaction.id}</a>")
             else:
-                url = resolve_url(admin_urlname(InstantTransaction._meta, 'change'), instance.transaction.uid)
+                url = resolve_url(
+                    admin_urlname(InstantTransaction._meta, "change"),
+                    instance.transaction.uid,
+                )
                 return format_html(f"<a href='{url}'>{instance.transaction.uid}</a>")
 
     original_transaction_url.short_description = "Go To Transaction Details"
 
-    def has_add_permission(self, request):      # ToDo: Refactor add/delete/change to permission mixin
+    def has_add_permission(
+        self, request
+    ):  # ToDo: Refactor add/delete/change to permission mixin
         return False
 
     def has_delete_permission(self, request, obj=None):
@@ -137,45 +155,78 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
     """
 
     default_fields = [
-        'uid', 'from_user', 'anon_recipient', 'status_choice_verbose', 'transaction_status_code', 'amount', 'issuer_type'
+        "uid",
+        "from_user",
+        "anon_recipient",
+        "status_choice_verbose",
+        "transaction_status_code",
+        "amount",
+        "issuer_type",
     ]
-    list_display = default_fields + ['created_at', 'updated_at', 'disbursed_date', 'balance_before', 'balance_after']
-    readonly_fields = default_fields + ['uid', 'created_at']
-    search_fields = ['uid', 'anon_recipient']
-    ordering = ['-created_at']
+    list_display = default_fields + [
+        "created_at",
+        "updated_at",
+        "disbursed_date",
+        "balance_before",
+        "balance_after",
+    ]
+    readonly_fields = default_fields + ["uid", "created_at"]
+    search_fields = ["uid", "anon_recipient"]
+    ordering = ["-created_at"]
     list_filter = [
-        ('disbursed_date', CustomDateRangeFilter),
-        ('created_at', CustomDateRangeFilter),
+        ("disbursed_date", CustomDateRangeFilter),
+        ("created_at", CustomDateRangeFilter),
         CustomStatusFilter,
         IssuerTypeListFilter,
-        'anon_sender', 'from_user',
+        "anon_sender",
+        "from_user",
         CustomRootFilter,
         'is_single_step', 'transaction_status_code',
         'from_accept'
     ]
-    actions = ["export_as_csv","export_bank_transactions_ids"]
+    actions = ["export_as_csv", "export_bank_transactions_ids"]
     fieldsets = (
-        (None, {'fields': ('from_user', )}),
-        (_('Transaction Details'), {
-            'fields': (
-                'uid', 'reference_id', 'status_choice_verbose', 'amount', 'issuer_type', 'anon_sender', 'anon_recipient',
-                'recipient_name', 'transaction_status_code', 'transaction_status_description', 'document', 'accept_balance_transfer_id'
-            )
-        }),
-        (_('Important Dates'), {
-            'fields': ('created_at', 'updated_at', 'disbursed_date')
-        }),
-        (_('Balance updates'), {
-            'fields': ('balance_before', 'balance_after')
-        }),
+        (None, {"fields": ("from_user",)}),
+        (
+            _("Transaction Details"),
+            {
+                "fields": (
+                    "uid",
+                    "reference_id",
+                    "status_choice_verbose",
+                    "amount",
+                    "issuer_type",
+                    "anon_sender",
+                    "anon_recipient",
+                    "recipient_name",
+                    "transaction_status_code",
+                    "transaction_status_description",
+                    "document",
+                    "accept_balance_transfer_id",
+                )
+            },
+        ),
+        (
+            _("Important Dates"),
+            {"fields": ("created_at", "updated_at", "disbursed_date")},
+        ),
+        (_("Balance updates"), {"fields": ("balance_before", "balance_after")}),
     )
 
     def has_module_permission(self, request):
-        if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):
+        if (
+            request.user.is_superuser
+            or request.user.has_perm("users.has_instant_transaction_view")
+            or request.user.is_single_step_support
+        ):
             return True
 
     def has_view_permission(self, request, obj=None):
-        if request.user.is_superuser or request.user.has_perm("users.has_instant_transaction_view"):
+        if (
+            request.user.is_superuser
+            or request.user.has_perm("users.has_instant_transaction_view")
+            or request.user.is_single_step_support
+        ):
             return True
 
     def has_add_permission(self, request):
@@ -188,8 +239,8 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         return False
 
     def export_bank_transactions_ids(self, request, queryset):
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = 'bank_transactions_ids.csv'
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = "bank_transactions_ids.csv"
         writer = csv.writer(response)
         writer.writerow(["TranstactionId"])
         for instant_trx in queryset:
@@ -204,29 +255,31 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
 
     def get_urls(self):
         urls = super().get_urls()
-        new_urls = [path('upload-timeouts/', self.upload_csv),]
+        new_urls = [
+            path("upload-timeouts/", self.upload_csv),
+        ]
         return new_urls + urls
 
     def upload_csv(self, request):
-
         if request.method == "POST":
             xlsx_file = request.FILES["timeouts_upload"]
-            file_name=xlsx_file.name
-            date=file_name.split(".")[0]
+            file_name = xlsx_file.name
+            date = file_name.split(".")[0]
 
             """
                 check if the format of date is valid
             """
 
             try:
-                datetime.datetime.strptime(date, '%Y-%m-%d')
+                datetime.datetime.strptime(date, "%Y-%m-%d")
             except ValueError:
-                messages.warning(request,"Incorrect file name format, should be YYYY-MM-DD.xlsx")
+                messages.warning(
+                    request, "Incorrect file name format, should be YYYY-MM-DD.xlsx"
+                )
                 return HttpResponseRedirect(request.path_info)
 
-            
-            if not xlsx_file.name.endswith('.xlsx'):
-                messages.warning(request, 'The wrong file type was uploaded')
+            if not xlsx_file.name.endswith(".xlsx"):
+                messages.warning(request, "The wrong file type was uploaded")
                 return HttpResponseRedirect(request.path_info)
 
             wb = load_workbook(xlsx_file)
@@ -240,9 +293,10 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
                         "success": not bool(ws["V" + str(row)].value),
                         "amount": ws["J" + str(row)].value,
                     }
-            
-            update_instant_timeouts_from_vodafone_report.run(my_dict, date,date, request.user.email)
 
+            update_instant_timeouts_from_vodafone_report.run(
+                my_dict, date, date, request.user.email
+            )
 
             # url = reverse('admin:index')
             # return HttpResponseRedirect(url)

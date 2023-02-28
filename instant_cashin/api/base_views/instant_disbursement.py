@@ -397,6 +397,13 @@ class InstantDisbursementAPIView(views.APIView):
                     transaction.transaction_type = serializer.validated_data.get(
                         "transaction_type"
                     )
+                    transaction.save()
+                    transaction.mark_pending("200", "Request submitted")
+                    return Response(
+                        InstantTransactionResponseModelSerializer(transaction).data,
+                        status=status.HTTP_200_OK,
+                    )
+
 
                 elif user.from_accept and user.allowed_to_be_bulk:
                     transaction.from_accept = "bulk"

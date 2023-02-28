@@ -536,5 +536,6 @@ class LimitAdmin(admin.ModelAdmin, ExportCsvMixin):
         "start_date",
         "end_date",
     ]
-    list_filter = ["client"]
+    list_filter = ["client", "is_accept_single_limit"]
+    
 

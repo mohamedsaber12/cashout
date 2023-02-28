@@ -1040,14 +1040,17 @@ class EWalletsSheetProcessor(Task):
                 CHANGE_PROFILE_LOGGER.debug(
                     f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}"
                 )
+                msisdns.append(user_msisdn)
                 if response.ok:
                     response_dict = response.json()
-                    msisdns.append(user_msisdn)
                     if response_dict['TXNSTATUS'] not in ["200", "629", "560", "562"]:
                         has_error = True
                         errors.append(response_dict['MESSAGE'])
                     else:
                         errors.append("Passed validations successfully")
+                else:
+                    has_error = True
+                    errors.append("System Error Please Try Again")
 
             self.doc_obj.has_change_profile_callback = True
             if not has_error:
@@ -1834,30 +1837,39 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         if self.instant_or_accept_perm or self.default_vf__or_bank_perm:
             col_nums = {
-                'total': 3,
-                'vodafone': 4,
-                'etisalat': 5,
-                'aman': 6,
-                'orange': 7,
-                'B': 8,
-                'C': 9,
+                'total': 4,
+                'vodafone': 5,
+                'etisalat': 6,
+                'aman': 7,
+                'orange': 8,
+                'B': 9,
+                'C': 10,
             }
             if self.default_vf__or_bank_perm:
                 col_nums['default'] = 10
 
             roots_usernames = list(final_data.keys())
             roots = RootUser.objects.filter(username__in=roots_usernames).values(
-                'username', 'is_international'
+                'username', 'is_international', 'from_accept', 'allowed_to_be_bulk'
             )
-            roots_dict = {r['username']: str(r['is_international']) for r in roots}
+            roots_dict = {}
+            for r in roots:
+                roots_dict[r['username']] = {
+                    'is_international': str(r['is_international']),
+                    'from_accept': 'True'
+                    if r['from_accept'] == True and r['allowed_to_be_bulk'] == False
+                    else 'False',
+                }
+
             for key in roots_usernames:
                 ws.write(row_num, 0, key, font_style)
-                ws.write(row_num, 1, roots_dict[key], font_style)
-                ws.write(row_num, 2, 'Volume', font_style)
-                ws.write(row_num + 1, 2, 'Count', font_style)
+                ws.write(row_num, 1, roots_dict[key]['is_international'], font_style)
+                ws.write(row_num, 2, roots_dict[key]['from_accept'], font_style)
+                ws.write(row_num, 3, 'Volume', font_style)
+                ws.write(row_num + 1, 3, 'Count', font_style)
                 if self.instant_or_accept_perm:
-                    ws.write(row_num + 2, 2, 'Fees', font_style)
-                    ws.write(row_num + 3, 2, 'Vat', font_style)
+                    ws.write(row_num + 2, 3, 'Fees', font_style)
+                    ws.write(row_num + 3, 3, 'Vat', font_style)
 
                 for el in final_data[key]:
                     ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
@@ -2063,6 +2075,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             column_names_list = [
                 'Clients',
                 'Is International',
+                'From Accept',
                 '',
                 'Total',
                 'Vodafone',

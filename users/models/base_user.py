@@ -285,6 +285,10 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_vodafone_monthly_report(self):
         return self.user_type == 13
+    
+    @cached_property
+    def is_single_step_support(self):
+        return self.user_type == 15
 
     @cached_property
     def is_instant_member(self):

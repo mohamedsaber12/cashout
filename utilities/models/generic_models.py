@@ -16,6 +16,7 @@ from instant_cashin.models import InstantTransaction
 
 from core.models import AbstractTimeStamp
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+from django.core.exceptions import ValidationError
 
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
@@ -264,6 +265,17 @@ class Budget(AbstractTimeStamp):
                         return True
                     else:
                         return False
+                elif (
+                    self.disburser.from_accept
+                    and not self.disburser.allowed_to_be_bulk
+                    and Limit.objects.filter(is_accept_single_limit=True).exists()
+                ):
+                    limit = Limit.objects.filter(is_accept_single_limit=True).first()
+                    within_limit, l_msg = limit.within_limit(amount_plus_fees_vat)
+                    if within_limit:
+                        return True
+                    else:
+                        return False
                 else:
                     return True
             return False
@@ -326,6 +338,17 @@ class Budget(AbstractTimeStamp):
                         )
                         if not within_limit:
                             return budget_obj.hold_balance, False
+                    elif (
+                        self.disburser.from_accept
+                        and not self.disburser.allowed_to_be_bulk
+                        and Limit.objects.filter(is_accept_single_limit=True).exists()
+                    ):
+                        limit = Limit.objects.filter(
+                            is_accept_single_limit=True
+                        ).first()
+                        within_limit, l_msg = limit.within_limit(hold_amount)
+                        if not within_limit:
+                            return budget_obj.hold_balance, False
                     current_balance_before = budget_obj.current_balance
                     hold_balance_before = budget_obj.hold_balance
                     budget_obj.current_balance -= hold_amount
@@ -364,6 +387,17 @@ class Budget(AbstractTimeStamp):
                         within_limit, l_msg = self.disburser.limits.within_limit(
                             amount_plus_fees_vat
                         )
+                        if not within_limit:
+                            return budget_obj.current_balance, False
+                    elif (
+                        self.disburser.from_accept
+                        and not self.disburser.allowed_to_be_bulk
+                        and Limit.objects.filter(is_accept_single_limit=True).exists()
+                    ):
+                        limit = Limit.objects.filter(
+                            is_accept_single_limit=True
+                        ).first()
+                        within_limit, l_msg = limit.within_limit(amount_plus_fees_vat)
                         if not within_limit:
                             return budget_obj.current_balance, False
                     current_balance_before = budget_obj.current_balance
@@ -411,7 +445,6 @@ class Budget(AbstractTimeStamp):
             )
 
     def has_enough_hold_balance_and_return_balance(self, amount):
-
         try:
             with transaction.atomic():
                 budget_obj = Budget.objects.select_for_update().get(id=self.id)
@@ -648,7 +681,6 @@ class FeeSetup(models.Model):
 
 
 class TopupRequest(AbstractTimeStamp):
-
     client = models.ForeignKey(
         "users.RootUser",
         on_delete=models.CASCADE,
@@ -684,7 +716,6 @@ class TopupRequest(AbstractTimeStamp):
 
 
 class TopupAction(AbstractTimeStamp):
-
     client = models.ForeignKey(
         "users.RootUser",
         on_delete=models.CASCADE,
@@ -728,7 +759,6 @@ class ExcelFile(AbstractTimeStamp):
 
 
 class VodafoneBalance(AbstractTimeStamp):
-
     balance = models.CharField(max_length=100, null=False, blank=False)
     super_agent = models.CharField(max_length=100, null=False, blank=False)
 
@@ -760,7 +790,6 @@ class ClientIpAddress(AbstractTimeStamp):
 
 
 class BalanceManagementOperations(AbstractTimeStamp):
-
     # operation type choices
     HOLD = "hold"
     RETURN = "return"
@@ -825,22 +854,54 @@ class Limit(AbstractTimeStamp):
         "users.RootUser",
         on_delete=models.CASCADE,
         related_name="limits",
+        blank=True,
+        null=True,
     )
     start_date = models.DateField(blank=True, null=True)
     end_date = models.DateField(blank=True, null=True)
+    is_accept_single_limit = models.BooleanField(default=False)
+
+    def clean(self):
+        if (
+            not self.client
+            and not self.is_accept_single_limit
+            or (self.client and self.is_accept_single_limit)
+        ):
+            raise ValidationError("please chose client or check is_accept_single_limit")
+        if (
+            self.is_accept_single_limit
+            and Limit.objects.filter(is_accept_single_limit=True).exists()
+        ):
+            raise ValidationError("There's already limit for accept single step")
+        return super().clean()
 
     def within_limit(self, total_amount):
         from disbursement.models import DisbursementData
 
         BUDGET_LOGGER.debug(
-            f"[message] [within limit check] [{self.client.username}] -- : {total_amount}, "
+            f"[message] [within limit check] [{self.client.username if self.client else 'Accept single step user'}] -- : {total_amount}, "
         )
         try:
             total_wallets = 0
             total_banks = 0
 
-            if self.client.is_instant_model_onboarding:
+            if self.is_accept_single_limit:
+                total_wallets = (
+                    InstantTransaction.objects.filter(
+                        from_accept="single", transaction_status_code=200
+                    )
+                    .annotate(i_sum=F("amount") + F("fees") + F("vat"))
+                    .aggregate(Sum("i_sum"))["i_sum__sum"]
+                ) or 0
+                total_banks = calculate_total_banks_disbursed(None, True)
 
+                BUDGET_LOGGER.debug(
+                    f"[message] [within limit check] [Type instant] [Accept single step user]--"
+                    f"total wallets: {total_wallets}, "
+                    f"total banks {total_banks}"
+                )
+
+            elif self.client.is_instant_model_onboarding:
                 # calculate total wallets instant
 
                 total_wallets = (
@@ -851,7 +912,7 @@ class Limit(AbstractTimeStamp):
                     .aggregate(Sum("i_sum"))["i_sum__sum"]
                 ) or 0
 
-                total_banks = calculate_total_banks_disbursed(self.client)
+                total_banks = calculate_total_banks_disbursed(self.client, False)
                 # calculate total banks
                 BUDGET_LOGGER.debug(
                     f"[message] [within limit check] [Type instant] [{self.client.username}]--"
@@ -868,7 +929,7 @@ class Limit(AbstractTimeStamp):
                     .aggregate(Sum("i_sum"))["i_sum__sum"]
                 ) or 0
 
-                total_banks = calculate_total_banks_disbursed(self.client)
+                total_banks = calculate_total_banks_disbursed(self.client, False)
                 # calculate total banks
                 BUDGET_LOGGER.debug(
                     f"[message] [within limit check] [Type portal] [{self.client.username}]--"
@@ -885,30 +946,54 @@ class Limit(AbstractTimeStamp):
             else:
                 return True, ""
         except (ValueError, Exception) as e:
+            import sys, os
             BUDGET_LOGGER.debug(f"Error while check within limit - {e.args}")
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
             return False, f"Error while check within limit - {e.args}"
 
 
-def calculate_total_banks_disbursed(root):
+def calculate_total_banks_disbursed(root, is_accept_single_step_user):
     from disbursement.models import BankTransaction
 
-    qs_ids = (
-        BankTransaction.objects.filter(
-            Q(end_to_end=""),
-            Q(user_created__root=root),
-            Q(
-                status__in=[
-                    AbstractBaseACHTransactionStatus.PENDING,
-                    AbstractBaseACHTransactionStatus.SUCCESSFUL,
-                    AbstractBaseACHTransactionStatus.RETURNED,
-                    AbstractBaseACHTransactionStatus.REJECTED,
-                ]
-            ),
+    if is_accept_single_step_user:
+        qs_ids = (
+            BankTransaction.objects.filter(
+                Q(end_to_end=""),
+                Q(user_created__root__from_accept=True),
+                Q(user_created__root__allowed_to_be_bulk=False),
+                Q(
+                    status__in=[
+                        AbstractBaseACHTransactionStatus.PENDING,
+                        AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                        AbstractBaseACHTransactionStatus.RETURNED,
+                        AbstractBaseACHTransactionStatus.REJECTED,
+                    ]
+                ),
+            )
+            .order_by("parent_transaction__transaction_id", "-id")
+            .distinct("parent_transaction__transaction_id")
+            .values("id")
         )
-        .order_by("parent_transaction__transaction_id", "-id")
-        .distinct("parent_transaction__transaction_id")
-        .values("id")
-    )
+    else:
+        qs_ids = (
+            BankTransaction.objects.filter(
+                Q(end_to_end=""),
+                Q(user_created__root=root),
+                Q(
+                    status__in=[
+                        AbstractBaseACHTransactionStatus.PENDING,
+                        AbstractBaseACHTransactionStatus.SUCCESSFUL,
+                        AbstractBaseACHTransactionStatus.RETURNED,
+                        AbstractBaseACHTransactionStatus.REJECTED,
+                    ]
+                ),
+            )
+            .order_by("parent_transaction__transaction_id", "-id")
+            .distinct("parent_transaction__transaction_id")
+            .values("id")
+        )
     qs = BankTransaction.objects.filter(id__in=qs_ids).annotate(
         total_amount=Sum(
             Case(
@@ -926,9 +1011,9 @@ def calculate_total_banks_disbursed(root):
         total_vat=Sum("vat"),
     )
     total_banks = (
-        Decimal(qs.aggregate(Sum("total_amount"))["total_amount__sum"])
-        + Decimal(qs.aggregate(Sum("total_fees"))["total_fees__sum"])
-        + Decimal(qs.aggregate(Sum("total_vat"))["total_vat__sum"])
+        Decimal(qs.aggregate(Sum("total_amount"))["total_amount__sum"] or 0)
+        + Decimal(qs.aggregate(Sum("total_fees"))["total_fees__sum"] or 0)
+        + Decimal(qs.aggregate(Sum("total_vat"))["total_vat__sum"] or 0)
     ) or 0
 
     return total_banks

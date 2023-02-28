@@ -3,10 +3,12 @@ from __future__ import unicode_literals
 
 import logging
 from datetime import timedelta
+from decimal import Decimal
 
 from django.conf import settings
 from django.core.files.storage import default_storage
 from django.core.mail import EmailMessage, EmailMultiAlternatives
+from django.db.models import F, Q
 from django.http import HttpResponse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -19,7 +21,7 @@ from payouts.settings.celery import app
 from users.models import EntitySetup, User
 
 from .functions import render_to_pdf
-from .models import AbstractBaseDocStatus
+from .models import AbstractBaseDocStatus, Budget
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -110,7 +112,9 @@ def generate_onboarded_entities_report(recipients_list, superadmin_username, **k
 
 @app.task()
 @respects_language
-def send_transfer_request_email(admin_username, message, attachment_file_name=None, automatic=False, **kwargs):
+def send_transfer_request_email(
+    admin_username, message, attachment_file_name=None, automatic=False, **kwargs
+):
     """"""
     # 1. Prepare recipients list
     business_team = [
@@ -126,11 +130,18 @@ def send_transfer_request_email(admin_username, message, attachment_file_name=No
     if attachment_file_name:
         file = default_storage.open(attachment_file_name)
         deliver_mail_to_multiple_recipients_with_attachment(
-            admin_user, _(f" {subject}Transfer Request By User {admin_username}"), message, business_team, file
+            admin_user,
+            _(f" {subject}Transfer Request By User {admin_username}"),
+            message,
+            business_team,
+            file,
         )
     else:
         deliver_mail_to_multiple_recipients_with_attachment(
-            admin_user, _(f" {subject}Transfer Request By User {admin_username}"), message, business_team
+            admin_user,
+            _(f" {subject}Transfer Request By User {admin_username}"),
+            message,
+            business_team,
         )
 
     BUDGET_LOGGER.debug(
@@ -261,3 +272,30 @@ def check_disk_space_and_send_warning_email():
         mail_to_be_sent.attach_alternative(message_body, "text/html")
 
         return mail_to_be_sent.send()
+
+
+@app.task()
+@respects_language
+def notify_clients_with_email_that_balance_under_limit():
+    """
+    celery task to run every day to check if merchant balance under
+    his limit and if yes notify him by email
+    """
+
+    budgets_with_balance_under_limit = Budget.objects.filter(
+        ~Q(merchant_limit=None),
+        ~Q(merchant_limit=Decimal('0.0')),
+        Q(merchant_limit__lte=F('current_balance')),
+    )
+
+    subject = "[Payouts] Unplanned Outage Notification"
+    from_email = settings.SERVER_EMAIL
+
+    body = """"""
+
+    for current_budget in budgets_with_balance_under_limit:
+        mail_to_be_sent = EmailMultiAlternatives(
+            subject, body, from_email, [current_budget.disburser.email]
+        )
+        mail_to_be_sent.attach_alternative(body, "text/html")
+        mail_to_be_sent.send()

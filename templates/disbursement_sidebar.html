@@ -40,8 +40,6 @@
             <li><a href="{% url 'data:bank_cards_home' %}"><i class="fa fa-credit-card"></i>{% trans 'Bank Accounts/Cards' %}</a></li>
           {% endif %}
 
-
-
           {% if request.user.is_root or request.user.is_checker %}
             <li>
               <a href="{% url 'disbursement:single_step_list_create' %}?issuer=wallets&page=1">
@@ -64,9 +62,15 @@
               <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
             </ul>
             </li>
-            <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
-              <i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}
-            </a>
+            <li>
+              <a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}">
+                <i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}
+              </a>
+            </li>
+            <li>
+              <a href="{% url 'utilities:merchant_limit_edit' request.user.username %}">
+                <i class="fa fa-gear"></i>{% trans 'Merchant Limit'%}
+              </a>
             </li>
           {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
             <li><a><i class="fa fa-users"></i>{% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>

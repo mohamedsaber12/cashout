@@ -585,8 +585,22 @@ class ProfileEditForm(forms.ModelForm):
             "mobile_no",
             "email",
             "title",
+            "is_notified_user",
             "avatar_thumbnail",
         ]
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop("request", None)
+        super(ProfileEditForm, self).__init__(*args, **kwargs)
+        if not self.request.user.is_root:
+            self.fields.pop('is_notified_user')
+        elif self.request.user.is_root:
+            classes = self.fields['is_notified_user'].widget.attrs.get("class")
+            if classes is not None:
+                classes += " checkbox-class"
+            else:
+                classes = "checkbox-class"
+            self.fields['is_notified_user'].widget.attrs.update({"class": classes})
 
 
 class LevelEditForm(forms.ModelForm):

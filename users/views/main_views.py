@@ -48,6 +48,14 @@ class ProfileUpdateView(ProfileOwnerOrMemberRequiredMixin, UpdateView):
     template_name = "users/profile_update.html"
     form_class = ProfileEditForm
 
+    def get_form_kwargs(self):
+        """
+        pass request to form kwargs
+        """
+        kwargs = super().get_form_kwargs()
+        kwargs.update({"request": self.request})
+        return kwargs
+
     def get_object(self, queryset=None):
         return get_object_or_404(User, username=self.kwargs["username"])
 

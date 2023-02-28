@@ -5,66 +5,53 @@
 {% load custom_tags %}
 
 {% block title %} {% trans 'Levels' %} {% endblock %}
-
+{% block customcss %}
+<style>
+    .checkbox-class {
+        margin-top: 12px !important;
+    }
+</style>
+{% endblock %}
 {% block body %}
-
-
-        <div class="page-title">
-            <div class="title_left">
-                <h3>{% trans 'Add' %} {{ who }}</h3>
-            </div>
-
-
-        <div class="clearfix">
-
+    <div class="page-title">
+        <div class="title_left">
+            <h3>{% trans 'Add' %} {{ who }}</h3>
         </div>
+    </div>
+    <div class="clearfix"></div>
 
     <div class="row">
         <div class="col-lg-12">
             <div class="panel panel-default">
                 <div class="panel-body">
                     <form action="." method="post" class="form-horizontal" enctype="multipart/form-data">
-
-                              {% csrf_token %}
-                            {% for field in form.visible_fields %}
-                                    {% if forloop.first %}
-                                        {% for hidden in form.hidden_fields %}
-                                            {{ hidden }}
-                                        {% endfor %}
-                                    {% endif %}
-                                    <div class="form-group">
-                                        <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
-                                        <div class="col-md-6 col-sm-9 col-xs-12">
-                                            {% ifequal field.name "has_header" %}
-                                                <div class="">
-                                                <label>
-                                                    {{ field }}
-                                                </label>
-                                                </div>
-                                            {% else %}
-                                                {{ field.errors.as_ul }}
-                                                {{ field }}
-                                            {% endifequal %}
+                        {% csrf_token %}
+                        {% for field in form.visible_fields %}
+                            {% if forloop.first %}
+                                {% for hidden in form.hidden_fields %}
+                                    {{ hidden }}
+                                {% endfor %}
+                            {% endif %}
+                            <div class="form-group">
+                                <label class="control-label col-md-3 col-sm-3 col-xs-12">{{ field.label|capfirst }}</label>
+                                <div class="col-md-6 col-sm-9 col-xs-12">
+                                    {% ifequal field.name "has_header" %}
+                                        <div class="">
+                                        <label>
+                                            {{ field }}
+                                        </label>
                                         </div>
-                                    </div>
-
-
-                            {% endfor %}
-                            <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
-                        </form>
-
-
-                        <!-- /.table-responsive -->
-                    </div>
-                    <!-- /.panel-body -->
+                                    {% else %}
+                                        {{ field.errors.as_ul }}
+                                        {{ field }}
+                                    {% endifequal %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <input type="submit" value="{% trans 'submit' %}" class="btn btn-upload btn-success pull-{{'right'|invert_dir:LANGUAGE_CODE}}">
+                    </form>
                 </div>
-                <!-- /.panel -->
             </div>
-            <!-- /.col-lg-12 -->
         </div>
-    <!-- /.row -->
-    </div>
-    <!-- /#page-wrapper -->
-
     </div>
 {% endblock %}

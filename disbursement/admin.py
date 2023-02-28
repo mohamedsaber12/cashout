@@ -412,6 +412,9 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     def has_view_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.is_single_step_support :
             return True
+        
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(VMTData)

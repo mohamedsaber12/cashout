@@ -436,6 +436,15 @@
           <div class="alert alert-success" role="alert" id="status_description_success">
             {{ status_description }}
           </div>
+
+          {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
+          <div class="alert alert-info" role="alert" id="status_description_failed">
+            <b> Please note that:</b>
+            <ul>
+              <li> SLA for wallet transactions is T+1 </li>
+              <li> SLA for Bank transactions is T+1 + bank settlement period </li>
+          </div>
+          {% endif %}
           <div style="text-align: center;">
             <img src="{% static 'img/success.png' %}" style='margin:auto;' width = '30%'/>
           </div>

@@ -803,6 +803,11 @@ class EWalletsSheetProcessor(Task):
                 msisdn = str(record[msisdn_header])
                 valid_msisdn = False
                 try:
+                    if msisdn.endswith(".0"):
+                        msisdn = msisdn[:-2]
+                    if msisdn.endswith(".00"):
+                        msisdn = msisdn[:-3]
+
                     if msisdn.startswith("1") and len(msisdn) == 10:
                         phonenumber_form_validate(f"+20{msisdn}")
                         msisdn = f"0020{msisdn}"

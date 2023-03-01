@@ -592,15 +592,15 @@ class ProfileEditForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.request = kwargs.pop("request", None)
         super(ProfileEditForm, self).__init__(*args, **kwargs)
-        if not self.request.user.is_root:
-            self.fields.pop('is_notified_user')
-        elif self.request.user.is_root:
+        if self.request.user.is_root or self.request.user.is_instantapiviewer:
             classes = self.fields['is_notified_user'].widget.attrs.get("class")
             if classes is not None:
                 classes += " checkbox-class"
             else:
                 classes = "checkbox-class"
             self.fields['is_notified_user'].widget.attrs.update({"class": classes})
+        else:
+            self.fields.pop('is_notified_user')
 
 
 class LevelEditForm(forms.ModelForm):

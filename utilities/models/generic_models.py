@@ -8,16 +8,15 @@ from decimal import Decimal
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models, transaction
+from django.db.models import Case, F, Q, Sum, When
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from simple_history.models import HistoricalRecords
-from django.db.models import Sum, Q, Case, When, F
-from instant_cashin.models import InstantTransaction
 
 from core.models import AbstractTimeStamp
+from instant_cashin.models import InstantTransaction
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 from django.core.exceptions import ValidationError
-
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 
@@ -103,6 +102,17 @@ class Budget(AbstractTimeStamp):
         null=False,
         blank=False,
         help_text=_("Updated automatically after any disbursement callback"),
+    )
+    merchant_limit = models.DecimalField(
+        _("Merchant Limit"),
+        max_digits=10,
+        decimal_places=2,
+        default=0,
+        null=True,
+        blank=False,
+        help_text=_(
+            "Merchant will be notified by email when his current balance arrive to his merchant limit"
+        ),
     )
 
     history = HistoricalRecords()

@@ -50,6 +50,8 @@ def redirect_home(request):
         request.user.is_checker or request.user.is_maker
     ):
         return redirect(reverse("disbursement:home_root"))
+    if request.user.is_root and request.user.from_accept and not request.user.allowed_to_be_bulk:
+        return redirect(reverse(f"disbursement:single_step_list_create"))
     if request.user.is_root and (
         request.user.is_accept_vodafone_onboarding
         or request.user.is_instant_model_onboarding
@@ -65,6 +67,8 @@ def redirect_home(request):
         return redirect(reverse("admin:index"))
     if request.user.is_finance_with_instant_transaction_view:
         return redirect(reverse("admin:index"))
+    if request.user.is_single_step_support:
+        return redirect(reverse("admin:index"))
     elif request.user.is_support:
         return redirect(reverse("users:support_home"))
     elif request.user.is_onboard_user:
@@ -73,6 +77,7 @@ def redirect_home(request):
         return redirect(reverse("users:supervisor_home"))
     elif request.user.is_instant_model_onboarding:
         return redirect(reverse("instant_cashin:wallets_trx_list"))
+
     else:
         return redirect(f"data:e_wallets_home")
 

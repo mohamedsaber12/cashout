@@ -49,8 +49,9 @@ class InstantDisbursementRequestSerializerTests(APITestCase):
         self.assertFalse(serializer.is_valid())
         self.assertEqual(
             serializer.errors['non_field_errors'],
-            ["You must pass valid values for fields [msisdn, full_name]"]
+            ["You must pass valid value for field msisdn"]
         )
+      
 
     def test_serializer_full_name_have_special_character(self):
         data = {

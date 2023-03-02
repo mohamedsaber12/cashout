@@ -1,0 +1,121 @@
+{% extends 'new_base.html' %}
+{% load i18n %}
+{% load static %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+
+{% block title %} {% trans 'Merchant Limit' %} {% endblock %}
+{% block customcss %}
+<style>
+    .con {
+        padding: 1.5rem;
+        margin-right: 0;
+        margin-top: 6rem;
+        margin-left: 0;
+        border-width: 0.2rem;
+        position: relative;
+    }
+    .card {
+        position: relative;
+        display: -webkit-box;
+        display: -ms-flexbox;
+        display: flex;
+        -webkit-box-orient: vertical;
+        -webkit-box-direction: normal;
+        -ms-flex-direction: column;
+        flex-direction: column;
+        min-width: 0;
+        word-wrap: break-word;
+        background-color: #fff;
+        background-clip: border-box;
+        border: 1px solid rgba(0,0,0,.125);
+        border-radius: 0.5rem;
+    }
+    .card-header:first-child {
+        border-radius: calc(0.25rem - 1px) calc(0.25rem - 1px) 0 0;
+    }
+    .card-header {
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 0;
+        margin-top: 0;
+        background-color: rgba(0,0,0,.03);
+        border-bottom: 1px solid rgba(0,0,0,.125);
+    }
+    .h5, h5 {
+        font-size: 2rem;
+    }
+    .limit-form {
+        margin: 2rem;
+    }
+    .ll {
+        font-size: 2rem;
+        font-weight: 500;
+    }
+    .form-control {
+        display: block;
+        width: 100%;
+        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        line-height: 1.5;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 0.25rem;
+        transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out;
+    }
+    .form-group {
+        padding: 1rem;
+    }
+    .m_limit {
+        font-size: 1.5rem;
+    }
+    .submit {
+        margin-bottom: 0px !important;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<div class="con">
+    <div class="card">
+        <h5 class="card-header">Update Your Limit</h5>
+        <div class="card-body">
+            <form action="." method="post" class="form-inline limit-form" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form.visible_fields %}
+                    {% if forloop.first %}
+                        {% for hidden in form.hidden_fields %}
+                            {{ hidden }}
+                        {% endfor %}
+                    {% endif %}
+                    <div class="form-group">
+                        <label class="ll control-label col-md-12 col-sm-12 col-xs-12">
+                            {{ field.label|capfirst }}
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-12 col-sm-12 col-xs-12">
+                            {% ifequal field.name "has_header" %}
+                                <div class="">
+                                <label>
+                                    {{ field }}
+                                </label>
+                                </div>
+                            {% else %}
+                                {{ field.errors.as_ul }}
+                                {{ field }}
+                            {% endifequal %}
+                        </div>
+                    </div>
+                {% endfor %}
+                <div class="form-group">
+                    <div class="col-md-12 col-sm-12 col-xs-12">
+                        <input type="submit" value="{% trans 'submit' %}" class="submit btn btn-primary">
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

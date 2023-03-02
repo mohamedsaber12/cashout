@@ -6,7 +6,7 @@ from .views import (
     download_failed_validation_file, ExportClientsTransactionsReportPerSuperAdmin,
     failed_disbursed_for_download, SingleStepTransactionsView,
     DownloadSampleSheetView, download_exported_transactions, HomeView,
-    DisbursementDataListView, OrangeBankWalletListView, BanksListView
+    DisbursementDataListView, OrangeBankWalletListView, BanksListView,CreatePaymentLink, DisbursePaymentLink
 )
 
 
@@ -36,6 +36,8 @@ urlpatterns = [
     ),
     path('disburse/export_failed_validation_download/<doc_id>/',
          download_failed_validation_file, name='download_validation_failed'),
+    path('create/payment-link/', CreatePaymentLink.as_view(), name='create_payment_link'),
+    path('disburse/payment/link/<payment_token>/', DisbursePaymentLink.as_view(), name='disburse_payment_link')
 ]
 
 urlpatterns += client_urls

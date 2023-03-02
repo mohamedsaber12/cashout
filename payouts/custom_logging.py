@@ -386,6 +386,20 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/timeouts_updates.log',
         },
+        'payment_link': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/payment_links.log',
+        },
+        'disburse_payment_link': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/disburse_payment_links.log',
+        },
     },
     'loggers': {
         "": {"level": "DEBUG", "handlers": ["console"]},
@@ -641,6 +655,16 @@ CUSTOM_LOGGING = {
         },
         'timeouts_updates': {
             'handlers': ['timeouts_updates'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'payment_link': {
+            'handlers': ['payment_link'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'disburse_payment_link': {
+            'handlers': ['disburse_payment_link'],
             'level': 'DEBUG',
             'propagate': True,
         },

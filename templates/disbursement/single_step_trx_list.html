@@ -394,16 +394,15 @@
             <!-- pin row -->
             <div class="row" id="pin_row">
               <div class="form-group col-md-12 col-sm-12 col-xs-12">
-                {% if not request.user.from_accept or request.user.allowed_to_be_bulk %}
-                  <label>
-                    <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
-                  </label>
-                  {{form.pin}}
-                  <span class="respond-span"></span>
-                  <div class="help-block">
-                    {{form.pin.errors}}
-                  </div>
-                {% else %}
+                <label>
+                  <span class="glyphicon glyphicon-pushpin"></span> {% trans 'Pin' %} *
+                </label>
+                {{form.pin}}
+                <span class="respond-span"></span>
+                <div class="help-block">
+                  {{form.pin.errors}}
+                </div>
+                {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
                   <label>
                     <span class="glyphicon glyphicon-sort"></span> {% trans 'Transaction Reason' %}
                   </label>
@@ -437,6 +436,15 @@
           <div class="alert alert-success" role="alert" id="status_description_success">
             {{ status_description }}
           </div>
+
+          {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
+          <div class="alert alert-info" role="alert" id="status_description_failed">
+            <b> Please note that:</b>
+            <ul>
+              <li> SLA for wallet transactions is T+1 </li>
+              <li> SLA for Bank transactions is T+1 + bank settlement period </li>
+          </div>
+          {% endif %}
           <div style="text-align: center;">
             <img src="{% static 'img/success.png' %}" style='margin:auto;' width = '30%'/>
           </div>

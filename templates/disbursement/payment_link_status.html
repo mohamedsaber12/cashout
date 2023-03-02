@@ -1,0 +1,66 @@
+{% extends 'head_base.html' %}
+{% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
+{% load custom_tags %}
+{% load banks_tags i18n %}
+{%block body_content%}
+<body >
+    <div class="container body">
+      <div class="main_container">
+        <div class="right_col" role="main">
+          <div class="loading" hidden> 
+          </div>
+          <div class="row ">
+            <div class="form-group col-md-6 col-sm-6 col-xs-12">
+            </div>
+          </div>
+    {% if status_code != "8000" and status_code != "200" and status_code != "8333" %}
+        {# Add new payment link failed modal #}
+        <div class="" id="failedModal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">{% trans 'Failed' %}</h4>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-danger" role="alert" id="status_description_failed">
+                            {{ status_description }}
+                        </div>
+                        <div style="text-align: center;">
+                            <img src="{% static 'img/failed.png' %}"  width='30%'/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# End of add new payment link failed modal #}
+      
+    {%else%}
+        {# Add new new payment link success modal #}
+        <div class="" id="successModal" role="dialog">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-success" role="alert" id="status_description_success">
+                            {{ status_description }}
+                        </div>
+                        <div style="text-align: center;">
+                            <img src="{% static 'img/success.png' %}" style='margin:auto;' width = '30%'/>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# End of add new payment link success modal #}
+    {%endif%}
+        </div>
+      </div>
+    </div>
+</body>
+{% include 'base_js.html' %} 
+{%endblock%}

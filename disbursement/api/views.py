@@ -38,7 +38,6 @@ from utilities.logging import logging_message
 from utilities.messages import (MSG_DISBURSEMENT_ERROR,
                                 MSG_DISBURSEMENT_IS_RUNNING, MSG_PIN_INVALID)
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
-from utilities.tasks import send_transfer_request_email
 
 from ..models import Agent, DisbursementData, DisbursementDocData
 from ..tasks import BulkDisbursementThroughOneStepCashin
@@ -150,7 +149,9 @@ class DisburseAPIView(APIView):
         :param doc_id: Id of the document being disbursed
         set disbursed date for all records related to doc ID
         """
-        DisbursementData.objects.filter(doc_id=doc_id).update(disbursed_date=datetime.now())
+        DisbursementData.objects.filter(doc_id=doc_id).update(
+            disbursed_date=datetime.now()
+        )
 
     @staticmethod
     def disburse_for_recipients(
@@ -1050,7 +1051,7 @@ class OnboardMerchant(APIView):
 
                 Setup.objects.create(
                     user=root,
-                    pin_setup=True,
+                    pin_setup=False,
                     levels_setup=True,
                     maker_setup=True,
                     checker_setup=True,
@@ -1196,15 +1197,17 @@ class SendMailForCreationAdmin(APIView):
             SEND_EMAIL_LOGGER.debug(f"[{subject}] [{recipient_list[0]}] -- {message}")
             data = {"status": status.HTTP_201_CREATED, "message": "Created"}
             return Response(data, status=status.HTTP_201_CREATED)
-        except (Exception, ValueError)as error:
+        except (Exception, ValueError) as error:
             error_msg = (
                 "Process stopped during an internal error, please can you try again."
             )
             if len(serializer.errors) > 0:
                 failure_message = serializer.errors
             else:
-                failure_message = error_msg 
-            SEND_EMAIL_LOGGER.debug(f"[ERROR SENDING EMAIL TO OPERATIONS ] -- {error.args}")
+                failure_message = error_msg
+            SEND_EMAIL_LOGGER.debug(
+                f"[ERROR SENDING EMAIL TO OPERATIONS ] -- {error.args}"
+            )
 
             data = {"status": status.HTTP_400_BAD_REQUEST, "message": failure_message}
             return Response(data, status=status.HTTP_400_BAD_REQUEST)

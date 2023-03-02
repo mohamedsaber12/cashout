@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 
 from django.test import TestCase
 from django.contrib.auth.models import Permission
+from disbursement.models import Agent, DisbursementDocData
 
 from users.tests.factories import (
     SuperAdminUserFactory, AdminUserFactory, VMTDataFactory
@@ -20,6 +21,7 @@ from disbursement.tasks import (
     BulkDisbursementThroughOneStepCashin, check_for_late_disbursement_callback,
     check_for_late_change_profile_callback
 )
+from unittest.mock import patch
 
 
 class BulkDisbursementThroughOneStepCashinTests(TestCase):
@@ -32,6 +34,8 @@ class BulkDisbursementThroughOneStepCashinTests(TestCase):
         self.brand = Brand(mail_subject='')
         self.brand.save()
         self.root.brand = self.brand
+        self.agent = Agent(msisdn='01021469732', wallet_provider=self.super_admin,)
+        self.agent.save()
         self.root.set_pin('123456')
         self.root.save()
         self.root.user_permissions. \
@@ -76,12 +80,24 @@ class BulkDisbursementThroughOneStepCashinTests(TestCase):
         self.maker_user.save()
         self.budget = Budget(disburser=self.root, current_balance=150)
         self.budget.save()
-        fees_setup_bank_wallet = FeeSetup(budget_related=self.budget, issuer='bc',
+        fees_setup_bank_card = FeeSetup(budget_related=self.budget, issuer='bc',
                                           fee_type='f', fixed_value=20)
+        fees_setup_bank_card.save()
+        fees_setup_bank_wallet = FeeSetup(budget_related=self.budget, issuer='bw',
+                                          fee_type='p', fixed_value=2.0)
         fees_setup_bank_wallet.save()
         fees_setup_vodafone = FeeSetup(budget_related=self.budget, issuer='vf',
                                        fee_type='p', percentage_value=2.25)
         fees_setup_vodafone.save()
+        fees_setup_orange = FeeSetup(budget_related=self.budget, issuer='og',
+                                       fee_type='p', percentage_value=2.25)
+        fees_setup_orange.save()
+        fees_setup_etisalat = FeeSetup(budget_related=self.budget, issuer='es',
+                                       fee_type='p', percentage_value=2.25)
+        fees_setup_etisalat.save()
+        fees_setup_aman = FeeSetup(budget_related=self.budget, issuer='am',
+                                       fee_type='p', percentage_value=2.25)
+        fees_setup_aman.save()
 
         # create doc, doc_review, DisbursementDocData, file category
         file_category = FileCategory.objects.create(
@@ -105,52 +121,61 @@ class BulkDisbursementThroughOneStepCashinTests(TestCase):
             has_callback = True,
             doc_status = "5"
         )
-
-    def test_bulk_disbursement_through_one_step_cashin(self):
-        self.assertTrue(
-            BulkDisbursementThroughOneStepCashin.run(
-                self.doc.id, self.checker_user.username
-            )
+        self.env = patch.dict(
+            'os.environ', {
+                f"{self.super_admin.username}_VODAFONE_PIN":'997744'
+            }
         )
+    def test_bulk_disbursement_through_one_step_cashin(self):
+        with self.env:
+            self.assertTrue(
+                BulkDisbursementThroughOneStepCashin.run(
+                    self.doc.id, self.checker_user.username, pin=123456
+                )
+            )
 
-    # def test_bulk_disbursement_through_one_step_cashin_with_vf_data(self):
-    #     DisbursementData.objects.create(
-    #         doc=self.doc, amount=50, msisdn='01021467656', issuer='vodafone'
-    #     )
-    #     self.assertTrue(
-    #         BulkDisbursementThroughOneStepCashin.run(
-    #             self.doc.id, self.checker_user.username
-    #         )
-    #     )
+    def test_bulk_disbursement_through_one_step_cashin_with_vf_data(self):
+        DisbursementData.objects.create(
+            doc=self.doc, amount=50, msisdn='01092737975', issuer='vodafone'
+        )
+        with self.env:
+            self.assertTrue(
+                BulkDisbursementThroughOneStepCashin.run(
+                    self.doc.id, self.checker_user.username, pin=123456
+                )
+            )
 
     def test_bulk_disbursement_through_one_step_cashin_with_et_data(self):
         DisbursementData.objects.create(
             doc=self.doc, amount=50, msisdn='01154350973', issuer='etisalat'
         )
-        self.assertFalse(
-            BulkDisbursementThroughOneStepCashin.run(
-                self.doc.id, self.checker_user.username
+        with self.env:
+            self.assertTrue(
+                BulkDisbursementThroughOneStepCashin.run(
+                    self.doc.id, self.checker_user.username, pin=123456
+                )
             )
-        )
 
     def test_bulk_disbursement_through_one_step_cashin_with_aman_data(self):
         DisbursementData.objects.create(
             doc=self.doc, amount=50, msisdn='01021467656', issuer='aman'
         )
-        self.assertTrue(
-            BulkDisbursementThroughOneStepCashin.run(
-                self.doc.id, self.checker_user.username
+        with self.env:
+            self.assertTrue(
+                BulkDisbursementThroughOneStepCashin.run(
+                    self.doc.id, self.checker_user.username, pin=123456
+                )
             )
-        )
 
     def test_bulk_disbursement_through_one_step_cashin_with_bank_sheet(self):
         self.doc.type_of = AbstractBaseDocType.BANK_CARDS
         self.doc.save()
-        self.assertTrue(
-            BulkDisbursementThroughOneStepCashin.run(
-               self.doc.id, self.checker_user.username
+        with self.env:
+            self.assertTrue(
+                BulkDisbursementThroughOneStepCashin.run(
+                self.doc.id, self.checker_user.username, pin=123456
+                )
             )
-        )
 
     def test_bulk_disbursement_through_one_step_cashin_with_bank_wallet(self):
         self.doc.type_of = AbstractBaseDocType.BANK_WALLETS
@@ -162,11 +187,13 @@ class BulkDisbursementThroughOneStepCashinTests(TestCase):
             recipient_name='test',
             anon_recipient='01214214356'
         )
-        self.assertTrue(
-            BulkDisbursementThroughOneStepCashin.run(
-                self.doc.id, self.checker_user.username
+        with self.env:
+
+            self.assertTrue(
+                BulkDisbursementThroughOneStepCashin.run(
+                    self.doc.id, self.checker_user.username, pin=123456
+                )
             )
-        )
 
 
 class LateChangeProfileCallBack(TestCase):

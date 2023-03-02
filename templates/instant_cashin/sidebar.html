@@ -25,27 +25,24 @@
               <li><a href="{% url 'users:members' %}">{% trans 'All members' %}</a></li>
             </ul>
           </li>
-          <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.username %}"><i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}</a></li>
         {% endif %}
         {% if request.user.has_access_to_topUp_balance %}
-        <li><a>
-          <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Topup balance' %}
-          <span class="fa fa-chevron-down"></span>
-        </a>
-          <ul class="nav child_menu">
-            <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add topup balance Request' %}</a></li>
-            <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All topup balance Requests' %}</a></li>
-          </ul>
-        </li>
+          <li>
+            <a>
+              <img style="width: 19px;margin-right: 6px;" src="{% static 'img/money_plus.png' %}">{% trans 'Topup balance' %}
+              <span class="fa fa-chevron-down"></span>
+            </a>
+            <ul class="nav child_menu">
+              <li><a href="{% url 'utilities:transfer_request' %}">{% trans 'Add topup balance Request' %}</a></li>
+              <li><a href="{% url 'utilities:list_transfer_request' %}">{% trans 'All topup balance Requests' %}</a></li>
+            </ul>
+          </li>
         {% endif %}
         <li><a href="{% url 'docs:instant_docs' path='' %}" rel="noopener" target="_blank"><i class="fa fa-book"></i>{% trans 'API Documentation'%}</a></li>
-        {% if request.user.user_type == 7 %}
-          <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.root.username %}"><i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}</a></li>
-        {% endif %}
+        <li><a href="{% url 'disbursement:balance_inquiry' username=request.user.root.username %}"><i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}</a></li>
+        <li><a href="{% url 'utilities:merchant_limit_edit' request.user.username %}"><i class="fa fa-gear"></i>{% trans 'Merchant Limit'%}</a></li>
         <li><a href="{% url 'users:profile' request.user.username %}"><i class="fa fa-user"></i>{% trans 'Profile' %}</a></li>
-        {% if request.user.user_type == 7 %}
-          <li><a href="{% url 'users:api_viewer_callback' request.user.username %}"><i class="fa fa-sliders"></i>{% trans 'Callback URL'%}</a></li>
-        {% endif %}
+        <li><a href="{% url 'users:api_viewer_callback' request.user.username %}"><i class="fa fa-sliders"></i>{% trans 'Callback URL'%}</a></li>
         <li><a href="{% url 'users:session_list' %}"><i class="fa fa-clock-o"></i>{% trans 'Active Sessions' %}</a></li>
       </ul>
     </div>

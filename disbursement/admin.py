@@ -191,6 +191,8 @@ class BankTransactionAdminModel(
                     "transaction_status_description",
                     "is_single_step",
                     "document",
+                    'fees',
+                    'vat'
                 )
             },
         ),
@@ -376,6 +378,17 @@ class DisbursementDataAdmin(
 
     _disbursement_document.short_description = "Go to the disbursement document"
 
+    def has_module_permission(self, request):
+        if request.user.is_superuser or request.user.is_single_step_support :
+            return True
+
+    def has_view_permission(self, request, obj=None):
+        if request.user.is_superuser or request.user.is_single_step_support :
+            return True
+        
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 
 @admin.register(DisbursementDocData)
 class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdmin):
@@ -412,6 +425,9 @@ class DisbursementDocDataAdmin(AdminSiteOwnerOnlyPermissionMixin, admin.ModelAdm
     def has_view_permission(self, request, obj=None):
         if request.user.is_superuser or request.user.is_single_step_support :
             return True
+        
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(VMTData)

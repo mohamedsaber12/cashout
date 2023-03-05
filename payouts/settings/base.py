@@ -53,7 +53,7 @@ THIRD_PARTY_APPS = [
     "rangefilter",
     "django_admin_multiple_choice_list_filter",
     'django.contrib.sites',
-    "microsoft_auth",
+    # "microsoft_auth",
 ]
 
 SECURITY_THIRD_PARTY_APPS = [

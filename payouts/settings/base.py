@@ -286,6 +286,8 @@ LOGIN_EXEMPT_URLS = (
     r"^api*",
     r"^docs/*",
     r"^disburse/payment/link/*",
+    r"^microsoft/*",
+
 
 )
 EXPIRING_TOKEN_LIFESPAN = datetime.timedelta(minutes=60)

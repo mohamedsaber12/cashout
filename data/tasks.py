@@ -1851,7 +1851,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 'C': 10,
             }
             if self.default_vf__or_bank_perm:
-                col_nums['default'] = 10
+                col_nums['default'] = 11
 
             roots_usernames = list(final_data.keys())
             roots = RootUser.objects.filter(username__in=roots_usernames).values(

@@ -167,3 +167,7 @@ watchdog==2.1.6
 django-admin-multiple-choice-list-filter==0.1.1
 sentry-sdk
 django-csp==3.7
+
+PyJWT
+django_microsoft_auth
+requests_oauthlib

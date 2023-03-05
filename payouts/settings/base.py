@@ -52,6 +52,8 @@ THIRD_PARTY_APPS = [
     "simple_history",
     "rangefilter",
     "django_admin_multiple_choice_list_filter",
+    'django.contrib.sites',
+    "microsoft_auth",
 ]
 
 SECURITY_THIRD_PARTY_APPS = [
@@ -127,6 +129,7 @@ AUTHENTICATION_BACKENDS = [
     "axes.backends.AxesBackend",
     # Django ModelBackend is the default authentication backend.
     "django.contrib.auth.backends.ModelBackend",
+    "microsoft_auth.backends.MicrosoftAuthenticationBackend",
 ]
 
 ROOT_URLCONF = "payouts.urls"
@@ -144,6 +147,7 @@ TEMPLATES = [
                 "django.contrib.messages.context_processors.messages",
                 "users.context_processors.brand_context",
                 "users.context_processors.current_status",
+                "microsoft_auth.context_processors.microsoft"
             ],
         },
     },
@@ -422,3 +426,15 @@ IDMS_SSO_UID = env.str('IDMS_SSO_UID')
 
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
+
+MICROSOFT_AUTH_CLIENT_ID = env.str('MICROSOFT_AUTH_CLIENT_ID')
+MICROSOFT_AUTH_TENANT_ID = env.str('MICROSOFT_AUTH_TENANT_ID')
+MICROSOFT_AUTH_CLIENT_SECRET = env.str('MICROSOFT_AUTH_CLIENT_SECRET')
+MICROSOFT_AUTH_LOGIN_TYPE = "ma"
+REDIRECT_PATH = "/microsoft/auth-callback/"
+MICROSOFT_AUTH_EXTRA_SCOPES="User.Read"
+
+
+SITE_ID  = env.int('SITE_ID')
+

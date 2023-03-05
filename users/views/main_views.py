@@ -172,6 +172,8 @@ def login_view(request):
     user = None
     if request.GET.get("refresh"):
         return redirect("/")
+    if request.GET.get("admin"):
+        login_template = "data/django_admin_login.html"
 
     if request.user.is_authenticated:
 

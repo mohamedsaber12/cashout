@@ -7,6 +7,8 @@ from django.contrib import admin
 from django.urls import include, path
 
 from two_factor.urls import urlpatterns as tf_urls
+from django.views.generic import TemplateView
+
 
 from data.views import protected_serve
 
@@ -19,12 +21,16 @@ if settings.DEBUG:
         path('admin/doc/', include('django.contrib.admindocs.urls')),
         path('admin/', admin.site.urls),
         path('__debug__/', include(debug_toolbar.urls)),
+        path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
     ]
 else:
     urlpatterns = [
         path('secure-portal/doc/', include('django.contrib.admindocs.urls')),
         path('secure-portal/', admin.site.urls),
+        path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
     ]
+
+
 
     handler404 = 'payouts.views.page_not_found_view'
 
@@ -52,6 +58,7 @@ urlpatterns += [
     path('api/secure/', include('payment.api.urls', namespace='payment_api')),
     path('api/secure/', include('instant_cashin.api.urls', namespace='instant_api')),
     path('admin/log_viewer/', include('log_viewer.urls')),
+
 ]
 
 # urlpatterns += static(settings.MEDIA_URL + 'documents/', document_root=settings.MEDIA_ROOT, view=protected_serve)

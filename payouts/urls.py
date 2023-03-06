@@ -21,14 +21,14 @@ if settings.DEBUG:
         path('admin/doc/', include('django.contrib.admindocs.urls')),
         path('admin/', admin.site.urls),
         path('__debug__/', include(debug_toolbar.urls)),
-        path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
+        # path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
     ]
 else:
     urlpatterns = [
         path('secure-portal/doc/', include('django.contrib.admindocs.urls')),
         path('secure-portal/', admin.site.urls),
         path('admin/', admin.site.urls),
-        path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
+        # path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
     ]
 
 

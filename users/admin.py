@@ -463,20 +463,20 @@ class SupportSetupModelAdmin(admin.ModelAdmin):
     list_filter = ["user_created"]
 
 
-@admin.register(User)
-class UserAdmin(UserAdmin):
+# @admin.register(User)
+# class UserAdmin(UserAdmin):
 
-    form = UserChangeForm
+#     form = UserChangeForm
 
-    list_display = ("email",)
-    fieldsets = (
-        (None, {"fields": ("email", "password")}),
-        ("Important dates", {"fields": ("last_login",)}),
-        ("IDMS", {"fields": ("idms_user_id", "has_password_set_on_idms")}),
-    )
-    add_fieldsets = (
-        (None, {"classes": ("wide",), "fields": ("email", "password1", "password2")}),
-    )
+#     list_display = ("email",)
+#     fieldsets = (
+#         (None, {"fields": ("email", "password")}),
+#         ("Important dates", {"fields": ("last_login",)}),
+#         ("IDMS", {"fields": ("idms_user_id", "has_password_set_on_idms")}),
+#     )
+#     add_fieldsets = (
+#         (None, {"classes": ("wide",), "fields": ("email", "password1", "password2")}),
+#     )
 
 
 @admin.register(OnboardUser)

@@ -221,7 +221,7 @@ system_urls = [
 
 urlpatterns = [
     path('user/login/', views.login_view, name='user_login_view'),
-    path('user/logout/', views.ourlogout, name='logout'),
+    path('user/logout/', views.ourlogout, name='logout'),    
     path('user/no-agent/', no_agent_error_view, name='no_agent_error'),
     path('account/token/', views.OTPLoginView.as_view(), name='otp_login'),
     path('redirect/', views.RedirectPageView.as_view(), name='redirect'),

@@ -27,6 +27,7 @@ else:
     urlpatterns = [
         path('secure-portal/doc/', include('django.contrib.admindocs.urls')),
         path('secure-portal/', admin.site.urls),
+        path('admin/', admin.site.urls),
         path('microsoft/', include('microsoft_auth.urls', namespace='microsoft')),
     ]
 

@@ -168,6 +168,6 @@ django-admin-multiple-choice-list-filter==0.1.1
 sentry-sdk
 django-csp==3.7
 
-PyJWT
+pyjwt==1.7.1
 django_microsoft_auth
 requests_oauthlib

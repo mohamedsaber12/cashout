@@ -50,7 +50,11 @@ def redirect_home(request):
         request.user.is_checker or request.user.is_maker
     ):
         return redirect(reverse("disbursement:home_root"))
-    if request.user.is_root and request.user.from_accept and not request.user.allowed_to_be_bulk:
+    if (
+        request.user.is_root
+        and request.user.from_accept
+        and not request.user.allowed_to_be_bulk
+    ):
         return redirect(reverse(f"disbursement:single_step_list_create"))
     if request.user.is_root and (
         request.user.is_accept_vodafone_onboarding
@@ -680,3 +684,7 @@ class RetrieveCollectionData(DetailView):
 
         context["excel_data"] = excl_data
         return context
+
+
+class ReportProblemView(View):
+    pass

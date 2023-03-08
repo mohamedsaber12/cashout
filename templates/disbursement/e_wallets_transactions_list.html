@@ -80,6 +80,7 @@
                     data-comment2="{{ transaction.comment2 }}"
                     {% if not is_normal_flow %}
                       data-trx_id="{{ transaction.reference_id }}"
+                      data-uid="{{ transaction.uid }}"
                       data-is_canceled="{{ transaction.aman_transaction_is_canceled }}"
                       data-issuer="{{ transaction.issuer|title }}"
                       data-aman_is_paid="{{ transaction.aman_transaction_is_paid }}"
@@ -152,7 +153,7 @@
       <div class="x_panel">
         <div class="x_title">
           <h2 class="font-13 m-b-30" style="font-weight: bolder;">{% trans 'Transaction Details' %}</h2>
-          <div class="clearfix"></div>
+          <div id="clear-fix-div" class="clearfix"></div>
         </div>
 
         <div class="x_content">
@@ -345,10 +346,21 @@
       if ($(this).hasClass('selected')) {
         $(this).removeClass('selected');
         $("#trxDetails").slideUp().fadeOut();
-      }
-      else {
+      } else {
         $('tr.selected').removeClass('selected');
         $(this).addClass('selected');
+        {% if not is_normal_flow %}
+          $("#report-problem-btn").remove()
+          let clearFixDiv = $('#clear-fix-div');
+          let trx_uid = $(this).data('uid')
+          let hrefStr = "{% url 'data:report_problem' 66 %}".replace(66, trx_uid);
+          let reportTag = `<a id="report-problem-btn" href=${hrefStr} class="btn btn-default export-dropdown
+                      pull-{{'right'|invert_dir:LANGUAGE_CODE}}"
+                      style="width:16rem !important">
+              <i class="fa fa-file-text"></i> {% trans 'Report A Problem' %}
+          </a>`
+          $(reportTag).insertBefore(clearFixDiv);
+        {% endif %}
         let ul = $('#trxDetailsData');
         let ulRight = $('#trxDetailsDataRight');
         let ulLast = $('#trxDetailsDataLast');

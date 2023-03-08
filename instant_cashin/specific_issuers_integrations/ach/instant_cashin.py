@@ -488,7 +488,7 @@ class BankTransactionsChannel:
             )
         )
         bank_trx_obj.balance_before = balance_before
-        bank_trx_obj.balance_after = balance_before + amount_plus_fees_vat
+        bank_trx_obj.balance_after = balance_before - amount_plus_fees_vat
 
         bank_trx_obj.save()
 

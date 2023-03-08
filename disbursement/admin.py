@@ -145,7 +145,6 @@ class RootUserListFilter(MultipleChoiceListFilter):
         arr = []
         for obj in RootUser.objects.all():
             arr.append((obj.id, obj.username))
-        print(arr)
         return arr
     
 

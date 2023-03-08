@@ -263,10 +263,18 @@ class RootCreationAdminForm(RootCreationForm):
 @admin.register(RootUser)
 class RootAdmin(UserAccountAdmin):
     add_form = RootCreationAdminForm
-    list_filter = ['is_international', 'is_active']
+    list_filter = ['is_international', 'is_active', 'account_manager']
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
+
+        # add account manager field to personal information
+        fieldsets[1][1]["fields"] = (
+            "first_name",
+            "last_name",
+            "mobile_no",
+            "account_manager",
+        )
         # pop parent field from fieldsets
         fieldsets[2][1]["fields"] = (
             "is_active",
@@ -279,7 +287,7 @@ class RootAdmin(UserAccountAdmin):
 
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
-        list_display = (*list_display, "is_international")
+        list_display = (*list_display, "is_international", "account_manager")
         return list_display
 
     def save_model(self, request, obj, form, change):

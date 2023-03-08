@@ -89,6 +89,9 @@ class User(AbstractUser, SoftDeletionModel):
     mid = models.CharField(max_length=50, null=True, blank=True)
     is_international = models.BooleanField(default=False)
     is_notified_user = models.BooleanField(default=False)
+    account_manager = models.CharField(
+        max_length=128, default='', null=True, blank=True
+    )
 
     objects = UserManager()
 
@@ -286,7 +289,7 @@ class User(AbstractUser, SoftDeletionModel):
     @cached_property
     def is_vodafone_monthly_report(self):
         return self.user_type == 13
-    
+
     @cached_property
     def is_single_step_support(self):
         return self.user_type == 15

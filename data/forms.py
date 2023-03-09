@@ -8,7 +8,8 @@ import tempfile
 import pandas as pd
 import xlrd
 from django import forms
-from django.core.validators import FileExtensionValidator
+from django.core.validators import (EmailValidator, FileExtensionValidator,
+                                    RegexValidator)
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 
@@ -36,6 +37,9 @@ TASK_UPLOAD_FILE_TYPES = [
 MIME_UPLOAD_FILE_TYPES = ['plain', 'octet-stream']
 TASK_UPLOAD_FILE_MAX_SIZE = 5242880
 UNICODE = set(';:></*%$.\\')
+numeric = RegexValidator(
+    r'(010|011|015|012)\d{8}$', 'Only valid phone number accepted.'
+)
 
 
 class FileDocumentForm(forms.ModelForm):
@@ -665,6 +669,53 @@ class CollectionDataForm(forms.ModelForm):
         if commit:
             instance.save()
         return instance
+
+
+class ReportProblemOnTransactionForm(forms.Form):
+    """
+    form For Report A Problem on transaction Request
+    """
+
+    problem_severity = forms.ChoiceField(
+        label=_('Problem Severity'),
+        required=True,
+        choices=[
+            ('low', _('Low')),
+            ('med', _('Medium')),
+            ('high', _('High')),
+        ],
+        widget=forms.Select(
+            attrs={
+                'class': 'form-control',
+            }
+        ),
+    )
+    contact_number = forms.CharField(
+        label=_('Contact Number'),
+        required=True,
+        max_length=11,
+        min_length=11,
+        widget=forms.TextInput(
+            attrs={'placeholder': _('Contact Number'), 'class': 'form-control'}
+        ),
+        validators=[numeric],
+    )
+    contact_email = forms.EmailField(
+        label=_('Contact Email'),
+        required=True,
+        max_length=34,
+        widget=forms.TextInput(
+            attrs={'placeholder': _('Contact Email'), 'class': 'form-control'}
+        ),
+        validators=[EmailValidator],
+    )
+    comment = forms.CharField(
+        label=_('Comment'),
+        required=True,
+        widget=forms.Textarea(
+            attrs={'placeholder': _('Comment'), 'class': 'form-control'}
+        ),
+    )
 
 
 FormatFormSet = forms.modelformset_factory(

@@ -350,9 +350,9 @@
         $('tr.selected').removeClass('selected');
         $(this).addClass('selected');
         {% if not is_normal_flow %}
-          $("#report-problem-btn").remove()
+          $("#report-problem-btn").remove();
           let clearFixDiv = $('#clear-fix-div');
-          let trx_uid = $(this).data('uid')
+          let trx_uid = $(this).data('uid');
           let hrefStr = "{% url 'data:report_problem' 66 %}".replace(66, trx_uid);
           let reportTag = `<a id="report-problem-btn" href=${hrefStr} class="btn btn-default export-dropdown
                       pull-{{'right'|invert_dir:LANGUAGE_CODE}}"

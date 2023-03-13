@@ -173,7 +173,7 @@ class SSLCertificate:
                 private_key_rsa = RSA.importKey(private_key_file)
             
             json_payload_obj = json.loads(payload_without_signature)
-            json_payload_obj["TransactionAmount"] = round(json_payload_obj["TransactionAmount"],4)
+            json_payload_obj["TransactionAmount"] = format(json_payload_obj["TransactionAmount"],'.4f')
             updated_payload = json.dumps(json_payload_obj, separators=(",", ":"))
             print(updated_payload)
             hashed_data = SHA256.new(updated_payload.encode('utf-16le'))

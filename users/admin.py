@@ -263,7 +263,7 @@ class RootCreationAdminForm(RootCreationForm):
 @admin.register(RootUser)
 class RootAdmin(UserAccountAdmin):
     add_form = RootCreationAdminForm
-    list_filter = ['is_international', 'is_active']
+    list_filter = ['is_international', 'is_internal', 'is_active', 'account_manager']
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
@@ -273,13 +273,19 @@ class RootAdmin(UserAccountAdmin):
             "is_staff",
             "is_superuser",
             "is_international",
+            "is_internal",
         )
         self.fieldsets = fieldsets
         return self.fieldsets
 
     def get_list_display(self, request):
         list_display = super(UserAccountAdmin, self).get_list_display(request)
-        list_display = (*list_display, "is_international")
+        list_display = (
+            *list_display,
+            "is_internal",
+            "is_international",
+            "account_manager",
+        )
         return list_display
 
     def save_model(self, request, obj, form, change):

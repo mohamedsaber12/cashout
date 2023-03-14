@@ -1842,25 +1842,30 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         if self.instant_or_accept_perm or self.default_vf__or_bank_perm:
             col_nums = {
-                'total': 4,
-                'vodafone': 5,
-                'etisalat': 6,
-                'aman': 7,
-                'orange': 8,
-                'B': 9,
-                'C': 10,
+                'total': 5,
+                'vodafone': 6,
+                'etisalat': 7,
+                'aman': 8,
+                'orange': 9,
+                'B': 10,
+                'C': 11,
             }
             if self.default_vf__or_bank_perm:
-                col_nums['default'] = 11
+                col_nums['default'] = 12
 
             roots_usernames = list(final_data.keys())
             roots = RootUser.objects.filter(username__in=roots_usernames).values(
-                'username', 'is_international', 'from_accept', 'allowed_to_be_bulk'
+                'username',
+                'is_international',
+                'from_accept',
+                'allowed_to_be_bulk',
+                'is_internal',
             )
             roots_dict = {}
             for r in roots:
                 roots_dict[r['username']] = {
                     'is_international': str(r['is_international']),
+                    'is_internal': str(r['is_internal']),
                     'from_accept': 'True'
                     if r['from_accept'] == True and r['allowed_to_be_bulk'] == False
                     else 'False',
@@ -1870,11 +1875,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 ws.write(row_num, 0, key, font_style)
                 ws.write(row_num, 1, roots_dict[key]['is_international'], font_style)
                 ws.write(row_num, 2, roots_dict[key]['from_accept'], font_style)
-                ws.write(row_num, 3, 'Volume', font_style)
-                ws.write(row_num + 1, 3, 'Count', font_style)
+                ws.write(row_num, 3, roots_dict[key]['is_internal'], font_style)
+                ws.write(row_num, 4, 'Volume', font_style)
+                ws.write(row_num + 1, 4, 'Count', font_style)
                 if self.instant_or_accept_perm:
-                    ws.write(row_num + 2, 3, 'Fees', font_style)
-                    ws.write(row_num + 3, 3, 'Vat', font_style)
+                    ws.write(row_num + 2, 4, 'Fees', font_style)
+                    ws.write(row_num + 3, 4, 'Vat', font_style)
 
                 for el in final_data[key]:
                     ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
@@ -2081,6 +2087,7 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 'Clients',
                 'Is International',
                 'From Accept',
+                'Is Internal',
                 '',
                 'Total',
                 'Vodafone',

@@ -172,11 +172,11 @@ class SSLCertificate:
                 private_key_file = f.read()
                 private_key_rsa = RSA.importKey(private_key_file)
             
-            json_payload_obj = json.loads(payload_without_signature)
-            json_payload_obj["TransactionAmount"] = format(json_payload_obj["TransactionAmount"],'.4f')
-            updated_payload = json.dumps(json_payload_obj, separators=(",", ":"))
-            print(updated_payload)
-            hashed_data = SHA256.new(updated_payload.encode('utf-16le'))
+            # json_payload_obj = json.loads(payload_without_signature)
+            # json_payload_obj["TransactionAmount"] = format(json_payload_obj["TransactionAmount"],'.4f')
+            # updated_payload = json.dumps(json_payload_obj, separators=(",", ":"))
+            # print(updated_payload)
+            hashed_data = SHA256.new(payload_without_signature.encode('utf-16le'))
             signer = PKCS1_v1_5.new(private_key_rsa).sign(hashed_data)
             return base64.b64encode(signer).decode('utf-8')
 

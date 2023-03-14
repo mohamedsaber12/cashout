@@ -14,39 +14,51 @@ from django.utils.timezone import datetime, make_aware
 from django.utils.translation import gettext as _
 from requests.exceptions import HTTPError
 from rest_framework import status, viewsets
-from rest_framework.authentication import (SessionAuthentication,
-                                           TokenAuthentication)
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.generics import UpdateAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework_expiring_authtoken.authentication import \
-    ExpiringTokenAuthentication
+from rest_framework_expiring_authtoken.authentication import ExpiringTokenAuthentication
 
 from data.models import Doc
 from data.tasks import handle_change_profile_callback, notify_checkers
 from instant_cashin.models import InstantTransaction
 from instant_cashin.utils import get_from_env
-from users.models import (CheckerUser, Client, EntitySetup, RootUser, Setup,
-                          SuperAdminUser, User)
+from users.models import (
+    CheckerUser,
+    Client,
+    EntitySetup,
+    RootUser,
+    Setup,
+    SuperAdminUser,
+    User,
+)
 from users.models.access_token import AccessToken
 from utilities.custom_requests import CustomRequests
 from utilities.functions import custom_budget_logger, get_value_from_env
 from utilities.logging import logging_message
-from utilities.messages import (MSG_DISBURSEMENT_ERROR,
-                                MSG_DISBURSEMENT_IS_RUNNING, MSG_PIN_INVALID)
+from utilities.messages import (
+    MSG_DISBURSEMENT_ERROR,
+    MSG_DISBURSEMENT_IS_RUNNING,
+    MSG_PIN_INVALID,
+)
 from utilities.models import Budget, CallWalletsModerator, FeeSetup
 
 from ..models import Agent, DisbursementData, DisbursementDocData
 from ..tasks import BulkDisbursementThroughOneStepCashin
 from .permission_classes import BlacklistPermission
-from .serializers import (CreateMerchantserializer,
-                          DisbursementCallBackSerializer,
-                          DisbursementDataSerializer, DisbursementSerializer,
-                          InstantTransactionSerializer, Merchantserializer,
-                          SingleStepserializer)
+from .serializers import (
+    CreateMerchantserializer,
+    DisbursementCallBackSerializer,
+    DisbursementDataSerializer,
+    DisbursementSerializer,
+    InstantTransactionSerializer,
+    Merchantserializer,
+    SingleStepserializer,
+)
 
 SEND_EMAIL_LOGGER = logging.getLogger("send_emails")
 ROOT_CREATE_LOGGER = logging.getLogger("root_create")
@@ -245,7 +257,6 @@ class DisburseAPIView(APIView):
         :return: True/False
         """
         for response in [vf_response, temp_response]:
-
             if type(response) == dict and response["TXNSTATUS"] == "200":
                 try:
                     txn_status = response["TXNSTATUS"]
@@ -563,7 +574,6 @@ class AllowDocDisburse(APIView):
 
 
 class CancelAmanTransactionView(APIView):
-
     http_method_names = ["post"]
 
     def __init__(self):
@@ -576,7 +586,6 @@ class CancelAmanTransactionView(APIView):
         )
 
     def post(self, request, *args, **kwargs):
-
         if not request.is_ajax():
             return JsonResponse(data={}, status=status.HTTP_403_FORBIDDEN)
 
@@ -797,11 +806,9 @@ class CreateSingleStepTransacton(APIView):
         return new_user
 
     def onbordnewadmin(self, user_name, root_email, idms_user_id):
-
         root = User.objects.filter(username=user_name).first()
 
         if root:
-
             return root
 
         else:
@@ -941,12 +948,16 @@ class OnboardMerchant(APIView):
 
     def post(self, request, *args, **kwargs):
         """Handles POST requests to onboard new client"""
+        ROOT_CREATE_LOGGER.debug(f"SINGLE STEP ADMIN CREATION {request.data}")
 
         if not request.user.is_system_admin:
             data = {
                 "status": status.HTTP_403_FORBIDDEN,
                 "message": "You do not have permission",
             }
+            ROOT_CREATE_LOGGER.debug(
+                f"SINGLE STEP ADMIN CREATION ERROR FORRBIDDEN {request.data}"
+            )
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
         try:
             serializer = Merchantserializer(data=request.data)
@@ -965,15 +976,14 @@ class OnboardMerchant(APIView):
                 data = {"status": status.HTTP_201_CREATED, "message": "Created"}
             return Response(data, status=status.HTTP_201_CREATED)
 
-        except (Exception, ValueError):
+        except Exception as err:
             error_msg = (
                 "Process stopped during an internal error, please can you try again."
             )
-            if len(serializer.errors) > 0:
-                failure_message = serializer.errors
-            else:
-                failure_message = error_msg
-            data = {"status": status.HTTP_400_BAD_REQUEST, "message": failure_message}
+            ROOT_CREATE_LOGGER.debug(
+                f"SINGLE STEP ADMIN CREATION ERROR {err}"
+            )
+            data = {"status": status.HTTP_400_BAD_REQUEST, "message": error_msg}
             return Response(data, status=status.HTTP_400_BAD_REQUEST)
 
     def define_new_admin_hierarchy(self, new_user):
@@ -1187,7 +1197,7 @@ class SendMailForCreationAdmin(APIView):
             )
             from_email = settings.SERVER_EMAIL
             subject = "{} {}".format(_("Onboarding New Client"), _(user_name))
-            recipient_list = get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
+            recipient_list = get_from_env("BUSINESS_TEAM_EMAILS_LIST").split(",")
 
             mail_to_be_sent = EmailMultiAlternatives(
                 subject, message, from_email, recipient_list

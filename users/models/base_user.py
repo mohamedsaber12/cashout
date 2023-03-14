@@ -87,8 +87,9 @@ class User(AbstractUser, SoftDeletionModel):
     from_accept = models.BooleanField(default=False)
     allowed_to_be_bulk = models.BooleanField(default=False)
     mid = models.CharField(max_length=50, null=True, blank=True)
-    is_international = models.BooleanField(default=False)
-    is_notified_user = models.BooleanField(default=False)
+    is_international = models.BooleanField(default=False, null=False)
+    is_notified_user = models.BooleanField(default=False, null=False)
+    is_internal = models.BooleanField(default=False, null=False)
     account_manager = models.CharField(
         max_length=128, default='', null=True, blank=True
     )

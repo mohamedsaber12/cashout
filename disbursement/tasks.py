@@ -1035,18 +1035,20 @@ class ExportFromDjangoAdmin(Task):
         self.model = ct.model_class()
 
         # get data
-        self.data = self.model.objects.filter(id__in=ids_list)
+        pk_name = self.model._meta.pk.name
+        pk_name_in = pk_name + '__in'
+        self.data = self.model.objects.filter(**{pk_name_in: ids_list})
 
         self.column_names_list = [field.name for field in self.data.model._meta.fields]
 
         download_url = self.create_data_report()
         mail_content = _(
             f"Dear <strong>{self.receiver.get_full_name}</strong><br><br>You can download "
-            f"your exported transactions report "
+            f"your exported data report "
             f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
         )
 
-        mail_subject = f"Exported {self.model_name} Report"
+        mail_subject = f" Exported {self.model_name} Report"
         deliver_mail(self.receiver, _(mail_subject), mail_content)
 
 

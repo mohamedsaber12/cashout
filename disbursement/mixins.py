@@ -85,7 +85,7 @@ class ExportCsvMixin:
 
     def export_as_csv(self, request, queryset):
 
-        ids_list = list(queryset.values_list('id', flat=True))
+        ids_list = list(queryset.values_list(queryset.model._meta.pk.name, flat=True))
 
         # fire celery task to export data
         ExportFromDjangoAdmin.delay(request.user.id, ids_list, self.model.__name__)

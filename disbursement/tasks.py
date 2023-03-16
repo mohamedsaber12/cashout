@@ -8,15 +8,21 @@ from decimal import Decimal
 
 import environ
 import requests
+import xlwt
 from celery import Task
 from django.conf import settings
+from django.contrib.contenttypes.models import ContentType
+from django.core.paginator import Paginator
 from django.db.models import Q
+from django.urls import reverse
 from django.utils import timezone
+from django.utils.translation import gettext as _
 from rest_framework import status
 
 from data.decorators import respects_language
 from data.models import Doc
 from data.tasks import handle_change_profile_callback
+from data.utils import deliver_mail, randomword
 from instant_cashin.models import AmanTransaction
 from instant_cashin.models.instant_transactions import InstantTransaction
 from instant_cashin.specific_issuers_integrations import (
@@ -26,7 +32,8 @@ from payouts.settings.celery import app
 from smpp.smpp_interface import send_sms
 from users.models import User
 from utilities.functions import custom_budget_logger, get_value_from_env
-from utilities.models import VodafoneBalance, VodafoneDailyBalance
+from utilities.models import ExcelFile, VodafoneBalance, VodafoneDailyBalance
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from .models import BankTransaction, DisbursementData, DisbursementDocData
 
@@ -951,3 +958,78 @@ def end_of_month(dt):
     todays_month = dt.month
     tomorrows_month = (dt + datetime.timedelta(days=1)).month
     return True if tomorrows_month != todays_month else False
+
+
+class ExportFromDjangoAdmin(Task):
+    """
+    task to export transactions from django admin in background
+    """
+
+    def create_transactions_report(self):
+        filename = (
+            f"{self.model_name}_report_to_{self.receiver.username}_{randomword(8)}.xls"
+        )
+        file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
+        wb = xlwt.Workbook(encoding='utf-8')
+
+        paginator = Paginator(self.data, 65535)
+        for page_number in paginator.page_range:
+            current_queryset = paginator.page(page_number)
+
+            ws = wb.add_sheet(f'page{page_number}', cell_overwrite_ok=True)
+
+            # 1. Write sheet header/column names - first row
+            row_num = 0
+            font_style = xlwt.XFStyle()
+            font_style.font.bold = True
+
+            for col_nums in range(len(self.column_names_list)):
+                ws.write(
+                    row_num, col_nums, self.column_names_list[col_nums], font_style
+                )
+
+            row_num = row_num + 1
+            # 2. write data
+            for obj in current_queryset:
+                if self.data.model is BankTransaction:
+                    obj.status = [
+                        st
+                        for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
+                        if st[0] == obj.status
+                    ][0][1]
+                for col_num, field in enumerate(self.column_names_list):
+                    ws.write(row_num, col_num, str(getattr(obj, field)))
+                row_num = row_num + 1
+        wb.save(file_path)
+
+        # add new file for this user in ExcelFile model
+        ExcelFile.objects.create(file_name=filename, owner=self.receiver)
+
+        report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={filename}"
+        return report_download_url
+
+    def run(self, user_id, ids_list, model_name):
+        self.receiver = User.objects.get(id=user_id)
+        self.model_name = model_name
+
+        # get model
+        ct = ContentType.objects.get(model=self.model_name.lower())
+        self.model = ct.model_class()
+
+        # get data
+        self.data = self.model.objects.filter(id__in=ids_list)
+
+        self.column_names_list = [field.name for field in self.data.model._meta.fields]
+
+        download_url = self.create_transactions_report()
+        mail_content = _(
+            f"Dear <strong>{self.receiver.get_full_name}</strong><br><br>You can download "
+            f"your exported transactions report "
+            f"from here <a href='{download_url}' >Download</a>.<br><br>Best Regards,"
+        )
+
+        mail_subject = f"Exported {self.model_name} Report"
+        deliver_mail(self.receiver, _(mail_subject), mail_content)
+
+
+ExportFromDjangoAdmin = app.register_task(ExportFromDjangoAdmin())

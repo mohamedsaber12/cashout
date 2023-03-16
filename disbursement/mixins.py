@@ -1,13 +1,15 @@
 # -*- coding: UTF-8 -*-
 from __future__ import unicode_literals
+
 import csv
 
-from django.http import HttpResponse
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpResponseRedirect
 from django.utils.translation import gettext as _
 
-from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 from disbursement.models import BankTransaction
+from disbursement.tasks import ExportFromDjangoAdmin
+from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 
 class AdminSiteOwnerOnlyPermissionMixin:
@@ -83,24 +85,15 @@ class ExportCsvMixin:
 
     def export_as_csv(self, request, queryset):
 
-        meta = self.model._meta
-        field_names = [field.name for field in meta.fields]
+        ids_list = list(queryset.values_list('id', flat=True))
 
-        response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = "attachment; filename={}.csv".format(meta)
-        writer = csv.writer(response)
+        # fire celery task to export data
+        ExportFromDjangoAdmin.delay(request.user.id, ids_list, self.model.__name__)
 
-        writer.writerow(field_names)
-        for obj in queryset:
-            if queryset.model is BankTransaction:
-                obj.status = [
-                    st
-                    for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
-                    if st[0] == obj.status
-                ][0][1]
-            row = writer.writerow([getattr(obj, field) for field in field_names])
-
-        return response
+        self.message_user(
+            request, f"Exported transactions will send to your email in a few minutes"
+        )
+        return HttpResponseRedirect(request.get_full_path())
 
     export_as_csv.short_description = "Export Selected"
 
@@ -158,8 +151,9 @@ class BankExportCsvMixin:
 
 
 from datetime import datetime
-from openpyxl import Workbook
+
 from django.http import HttpResponse
+from openpyxl import Workbook
 
 
 class BankExportExcelMixin:

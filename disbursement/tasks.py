@@ -19,12 +19,14 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 from rest_framework import status
 
+from core.models import AbstractBaseStatus
 from data.decorators import respects_language
 from data.models import Doc
 from data.tasks import handle_change_profile_callback
 from data.utils import deliver_mail, randomword
 from instant_cashin.models import AmanTransaction
-from instant_cashin.models.instant_transactions import InstantTransaction
+from instant_cashin.models.instant_transactions import (AbstractBaseIssuer,
+                                                        InstantTransaction)
 from instant_cashin.specific_issuers_integrations import (
     AmanChannel, BankTransactionsChannel)
 from instant_cashin.utils import get_from_env
@@ -965,7 +967,7 @@ class ExportFromDjangoAdmin(Task):
     task to export transactions from django admin in background
     """
 
-    def create_transactions_report(self):
+    def create_data_report(self):
         filename = (
             f"{self.model_name}_report_to_{self.receiver.username}_{randomword(8)}.xls"
         )
@@ -991,12 +993,28 @@ class ExportFromDjangoAdmin(Task):
             row_num = row_num + 1
             # 2. write data
             for obj in current_queryset:
+                if self.data.model is InstantTransaction:
+                    obj.status = [
+                        st
+                        for st in [
+                            *AbstractBaseStatus.STATUS_CHOICES,
+                            (InstantTransaction.UNKNOWN, "Unknown"),
+                        ]
+                        if st[0] == obj.status
+                    ][0][1]
+                    obj.issuer_type = [
+                        iss
+                        for iss in AbstractBaseIssuer.ISSUER_TYPE_CHOICES
+                        if iss[0] == obj.issuer_type
+                    ][0][1]
+
                 if self.data.model is BankTransaction:
                     obj.status = [
                         st
                         for st in AbstractBaseACHTransactionStatus.STATUS_CHOICES
                         if st[0] == obj.status
                     ][0][1]
+
                 for col_num, field in enumerate(self.column_names_list):
                     ws.write(row_num, col_num, str(getattr(obj, field)))
                 row_num = row_num + 1
@@ -1021,7 +1039,7 @@ class ExportFromDjangoAdmin(Task):
 
         self.column_names_list = [field.name for field in self.data.model._meta.fields]
 
-        download_url = self.create_transactions_report()
+        download_url = self.create_data_report()
         mail_content = _(
             f"Dear <strong>{self.receiver.get_full_name}</strong><br><br>You can download "
             f"your exported transactions report "

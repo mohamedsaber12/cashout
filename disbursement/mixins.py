@@ -91,7 +91,7 @@ class ExportCsvMixin:
         ExportFromDjangoAdmin.delay(request.user.id, ids_list, self.model.__name__)
 
         self.message_user(
-            request, f"Exported transactions will send to your email in a few minutes"
+            request, f"Exported data will send to your email in a few minutes"
         )
         return HttpResponseRedirect(request.get_full_path())
 

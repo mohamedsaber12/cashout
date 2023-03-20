@@ -191,6 +191,8 @@ class BankTransactionAdminModel(
                     "transaction_status_description",
                     "is_single_step",
                     "document",
+                    'fees',
+                    'vat'
                 )
             },
         ),

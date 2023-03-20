@@ -5,6 +5,7 @@ import logging
 
 import xlrd
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.core.paginator import Paginator
 from django.http import (Http404, HttpResponse, HttpResponseRedirect,
@@ -29,7 +30,8 @@ from users.models import CheckerUser, Levels
 from utilities.models import AbstractBaseDocType
 
 from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm,
-                    FormatFormSet, RecuringForm)
+                    FormatFormSet, RecuringForm,
+                    ReportProblemOnTransactionForm)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
 from .tasks import (BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor,
                     doc_review_maker_mail, handle_uploaded_file,
@@ -50,7 +52,11 @@ def redirect_home(request):
         request.user.is_checker or request.user.is_maker
     ):
         return redirect(reverse("disbursement:home_root"))
-    if request.user.is_root and request.user.from_accept and not request.user.allowed_to_be_bulk:
+    if (
+        request.user.is_root
+        and request.user.from_accept
+        and not request.user.allowed_to_be_bulk
+    ):
         return redirect(reverse(f"disbursement:single_step_list_create"))
     if request.user.is_root and (
         request.user.is_accept_vodafone_onboarding
@@ -680,3 +686,33 @@ class RetrieveCollectionData(DetailView):
 
         context["excel_data"] = excl_data
         return context
+
+
+class ReportProblemView(LoginRequiredMixin, View):
+    """
+    view for report a problem on specific transaction
+    """
+
+    template_name = 'data/report_problem.html'
+
+    def get(self, request, *args, **kwargs):
+        """Handles GET requests for report a problem on transaction Request"""
+        context = {
+            'form': ReportProblemOnTransactionForm(),
+        }
+        return render(request, template_name=self.template_name, context=context)
+
+    def post(self, request, *args, **kwargs):
+        """Handles POST requests increase balance request"""
+        context = {
+            'form': ReportProblemOnTransactionForm(request.POST),
+        }
+
+        if context['form'].is_valid():
+            # TODO integrate with fresh Desk
+
+            context = {
+                'request_received': True,
+                'form': ReportProblemOnTransactionForm(),
+            }
+        return render(request, template_name=self.template_name, context=context)

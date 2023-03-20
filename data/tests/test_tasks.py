@@ -2932,6 +2932,7 @@ class Testgenerate_vf_daily_report(TestCase):
             root=self.root,
             user_type=2,
         )
+        self.root.save()
         self.checker_user.save()
         self.level = Levels(
             max_amount_can_be_disbursed=1200, created=self.root, level_of_authority=1200

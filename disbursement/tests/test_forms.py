@@ -1,44 +1,40 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from django.test import TestCase
 from django.contrib.auth.models import Permission
+from django.test import Client, RequestFactory, TestCase
 
-from disbursement.forms import (AgentForm, ExistingAgentForm, PinForm, BalanceInquiryPinForm,
+from disbursement.forms import (AgentForm, BalanceInquiryPinForm,
+                                ExistingAgentForm, PinForm,
                                 SingleStepTransactionForm, VMTDataForm)
 from disbursement.models import Agent
-from users.models import RootUser, CheckerUser, Levels
-from utilities.models import Budget, FeeSetup
+from users.models import Brand, CheckerUser
+from users.models import Client as ClientModel
+from users.models import (EntitySetup, InstantAPICheckerUser,
+                          InstantAPIViewerUser, Levels, MakerUser, RootUser,
+                          Setup, SuperAdminUser, SupportSetup, SupportUser,
+                          UpmakerUser, User)
+from users.tests.factories import (AdminUserFactory, SuperAdminUserFactory,
+                                   VMTDataFactory)
+from utilities.models import (AbstractBaseDocType, Budget,
+                              CallWalletsModerator, FeeSetup)
+
 # -*- coding: utf-8 -*-
 
-from django.test import TestCase, Client, RequestFactory
-from django.urls import reverse
-from django.contrib.auth.models import Permission
-from instant_cashin.utils import get_from_env
-from users.factories import VariousOnboardingSuperAdminUserFactory
-from users.models.access_token import AccessToken
-from users.models.onboard_user import OnboardUser, OnboardUserSetup
 
-from users.tests.factories import (
-    SuperAdminUserFactory, VMTDataFactory, AdminUserFactory
-)
-from users.models import (
-    SuperAdminUser, Client as ClientModel, Brand, Setup, EntitySetup,
-    SupportUser, SupportSetup, CheckerUser, MakerUser, Levels,User,UpmakerUser,InstantAPICheckerUser,InstantAPIViewerUser
-)
-from disbursement.models import Agent, DisbursementDocData
-from data.models import Doc, DocReview, FileCategory
-from rest_framework_expiring_authtoken.models import ExpiringToken
-from utilities.models import Budget, CallWalletsModerator, FeeSetup, AbstractBaseDocType
 
 
 REQUIRED_FIELD_ERROR = 'This field is required.'
 MOBILE_NUMBER_ERROR = 'Mobile number is not valid'
-MOBILE_INVALID_CHOICE_ERROR = 'Select a valid choice. 01021y79732 is not one of the available choices.'
+MOBILE_INVALID_CHOICE_ERROR = (
+    'Select a valid choice. 01021y79732 is not one of the available choices.'
+)
 PIN_IS_NUMERIC_ERROR = 'Pin must be numeric'
 PIN_IS_INVALID = 'Invalid pin'
 AMOUNT_ERROR = 'Enter a whole number.'
-AMOUNT_EXCEEDED_MAXIMUM_AMOUNT_CAN_BE_DISBURSED = 'Entered amount exceeds your maximum amount that can be disbursed'
+AMOUNT_EXCEEDED_MAXIMUM_AMOUNT_CAN_BE_DISBURSED = (
+    'Entered amount exceeds your maximum amount that can be disbursed'
+)
 AMOUNT_EXCEEDS_CURRENT_BALANCE = 'Entered amount exceeds your current balance'
 INVALID_ISSUER_ERROR = 'issuer must be one of these \
 bank_card / Bank Card / vodafone / etisalat / orange / bank_wallet / aman'
@@ -48,7 +44,9 @@ FIRST_NAME_ERROR = 'Symbols like !%*+&,<=> not allowed in first name'
 LAST_NAME_ERROR = 'Symbols like !%*+&,<=> not allowed in last name'
 CREDITOR_NAME_INVALID = 'Invalid name'
 VMT_ENVIRONMENT = 'PRODUCTION'
-INVALID_ISSUER_CHOICE = 'Select a valid choice. xyz is not one of the available choices.'
+INVALID_ISSUER_CHOICE = (
+    'Select a valid choice. xyz is not one of the available choices.'
+)
 INVALID_MSISDN_ERROR = 'The string supplied did not seem to be a phone number.'
 
 
@@ -96,11 +94,11 @@ class VMTDataFormTests(TestCase):
     # test form save method
     def test_form_saves_values_to_instance_vmt_on_save(self):
         form_data = {
-            'login_username' : 'test',
-            'login_password' : 'test',
-            'request_gateway_code' : 'test',
-            'request_gateway_type' : 'test',
-            'wallet_issuer' : 'test'
+            'login_username': 'test',
+            'login_password': 'test',
+            'request_gateway_code': 'test',
+            'request_gateway_type': 'test',
+            'wallet_issuer': 'test',
         }
         vmtForm = VMTDataForm(root=self.root, data=form_data)
         self.assertEqual(vmtForm.is_valid(), True)
@@ -113,7 +111,6 @@ class AddAgentFormTests(TestCase):
     def setUp(self):
         self.root = RootUser(id=1, username='test_root_user')
         self.root.root = self.root
-
 
     # test msisdn exist in form data
     def test_msisdn_not_exist(self):
@@ -142,12 +139,12 @@ class AddExistingAgentFormTests(TestCase):
         self.root.root = self.root
         self.agent_choices = [('01021469732', '01021469732')]
 
-
     # test msisdn exist in form data
     def test_msisdn_not_exist(self):
         form_data = {}
         form = ExistingAgentForm(
-            data=form_data, root=self.root, agents_choices=self.agent_choices)
+            data=form_data, root=self.root, agents_choices=self.agent_choices
+        )
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['msisdn'], [REQUIRED_FIELD_ERROR])
 
@@ -155,25 +152,29 @@ class AddExistingAgentFormTests(TestCase):
     def test_msisdn_is_mobile_number(self):
         form_data = {'msisdn': '01021469732'}
         form = ExistingAgentForm(
-            data=form_data, root=self.root, agents_choices=self.agent_choices)
+            data=form_data, root=self.root, agents_choices=self.agent_choices
+        )
         self.assertEqual(form.is_valid(), True)
 
     # test msisdn not exist in choices
     def test_msisdn_not_exist_in_agents(self):
         form_data = {'msisdn': '01021579732'}
         form = ExistingAgentForm(
-            data=form_data, root=self.root, agents_choices=self.agent_choices)
+            data=form_data, root=self.root, agents_choices=self.agent_choices
+        )
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(
             form.errors['msisdn'],
-            ['Select a valid choice. 01021579732 is not one of the available choices.'])
+            ['Select a valid choice. 01021579732 is not one of the available choices.'],
+        )
 
     # test msisdn exist and not match agent mobile number
     def test_msisdn_not_valid_mobile_number(self):
         self.agent_choices = [('0102y469732', '0102y469732')]
         form_data = {'msisdn': '0102y469732'}
         form = ExistingAgentForm(
-                data=form_data, root=self.root, agents_choices=self.agent_choices)
+            data=form_data, root=self.root, agents_choices=self.agent_choices
+        )
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['msisdn'], [MOBILE_NUMBER_ERROR])
 
@@ -187,17 +188,25 @@ class PinFormTests(TestCase):
     # test __init__ method
     def test_init_form(self):
         # make self.root has default vodafone onboarding permission
-        self.root.user_permissions. \
-            add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))
+        self.root.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label='users', codename='vodafone_default_onboarding'
+            )
+        )
         form_data = {'pin': '323487'}
         form = PinForm(data=form_data, root=self.root)
         self.assertEqual(form.is_valid(), True)
 
     #  test get form is None when root has default vodafone onboarding permission
     def test_get_form_is_None(self):
-        self.root.user_permissions. \
-            add(Permission.objects.get(content_type__app_label='users', codename='vodafone_default_onboarding'))
-        agent = Agent(msisdn='01021469732', type='V', wallet_provider=self.root, pin=True)
+        self.root.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label='users', codename='vodafone_default_onboarding'
+            )
+        )
+        agent = Agent(
+            msisdn='01021469732', type='V', wallet_provider=self.root, pin=True
+        )
         agent.save()
         form_data = {}
         form = PinForm(data=form_data, root=self.root).get_form()
@@ -252,6 +261,7 @@ class BalanceInquiryPinFormTests(TestCase):
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['pin'], [PIN_IS_NUMERIC_ERROR])
 
+
 class SingleStepTransactionFormTests(TestCase):
     def setUp(self):
         self.super_admin = SuperAdminUserFactory()
@@ -264,9 +274,10 @@ class SingleStepTransactionFormTests(TestCase):
         self.root.save()
         self.agent = Agent(msisdn='01021469732', wallet_provider=self.root, super=True)
         self.agent.save()
-        self.root.user_permissions. \
-            add(Permission.objects.get(
-                content_type__app_label='users', codename='has_disbursement')
+        self.root.user_permissions.add(
+            Permission.objects.get(
+                content_type__app_label='users', codename='has_disbursement'
+            )
         )
         self.client_user = ClientModel(client=self.root, creator=self.super_admin)
         self.client_user.save()
@@ -276,13 +287,13 @@ class SingleStepTransactionFormTests(TestCase):
             maker_setup=True,
             checker_setup=True,
             category_setup=False,
-            pin_setup=True
+            pin_setup=True,
         )
         self.entity_setup = EntitySetup.objects.create(
-                user=self.super_admin,
-                entity=self.root,
-                agents_setup=False,
-                fees_setup=False
+            user=self.super_admin,
+            entity=self.root,
+            agents_setup=False,
+            fees_setup=False,
         )
 
         self.request = RequestFactory()
@@ -293,25 +304,24 @@ class SingleStepTransactionFormTests(TestCase):
             username='test1_checker_user',
             email='ch@checkersd1.com',
             root=self.root,
-            user_type=2
+            user_type=2,
         )
         self.root.set_pin("123456")
         self.root.save()
-
 
     # test pin exist in form data
     def test_pin_not_exist(self):
         form_data = {}
         form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
-        self.assertEqual(form.errors['pin'], [PIN_IS_INVALID])
+        self.assertEqual(form.errors['pin'], ['This field is required.'])
 
     # test pin exist in form data
     def test_pin_exist_and_invalid(self):
         form_data = {'pin': '323487'}
         form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
-        self.assertEqual(form.errors['pin'], ['This field is required.'])
+        self.assertEqual(form.errors['pin'], ['Invalid pin'])
 
     # test pin exist in form data
     def test_pin_exist_and_not_numeric(self):
@@ -337,40 +347,40 @@ class SingleStepTransactionFormTests(TestCase):
     # test amount exceeds maximum amount that can be disbursed
     def test_amount_exceeds_maximum_amount_that_can_be_disbursed(self):
         level = Levels(
-            max_amount_can_be_disbursed=100,
-            level_of_authority=1,
-            created=self.root
+            max_amount_can_be_disbursed=100, level_of_authority=1, created=self.root
         )
         level.save()
-        self.checker_user.level=level
+        self.checker_user.level = level
         self.checker_user.save()
         budget = Budget(disburser=self.root)
         # print("===========888")
-        budget.current_balance=1000
+        budget.current_balance = 1000
         print(budget.__dict__)
         # print("=========888")
         budget.save()
-        fees_setup = FeeSetup(budget_related=budget, issuer='bc',
-                              fee_type='f', fixed_value=5)
+        fees_setup = FeeSetup(
+            budget_related=budget, issuer='bc', fee_type='f', fixed_value=5
+        )
         fees_setup.save()
-        form_data = {'amount': 400,'issuer':'bank_card'}
+        form_data = {'amount': 400, 'issuer': 'bank_card'}
         form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         print("===============11")
         print(form.errors)
-        self.assertEqual(form.errors['amount'], [AMOUNT_EXCEEDED_MAXIMUM_AMOUNT_CAN_BE_DISBURSED])
+        self.assertEqual(
+            form.errors['amount'], [AMOUNT_EXCEEDED_MAXIMUM_AMOUNT_CAN_BE_DISBURSED]
+        )
 
     # test amount exceeds current balance
     def test_amount_exceeds_current_balance(self):
         self.checker_user.level = Levels(
-                max_amount_can_be_disbursed=600,
-                level_of_authority=1,
-                created=self.root
+            max_amount_can_be_disbursed=600, level_of_authority=1, created=self.root
         )
         budget = Budget(disburser=self.root)
         budget.save()
-        fees_setup = FeeSetup(budget_related=budget, issuer='bc',
-                              fee_type='f', fixed_value=5)
+        fees_setup = FeeSetup(
+            budget_related=budget, issuer='bc', fee_type='f', fixed_value=5
+        )
         fees_setup.save()
         form_data = {'amount': 500, 'issuer': 'bank_card'}
         form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
@@ -389,8 +399,7 @@ class SingleStepTransactionFormTests(TestCase):
         form_data = {'issuer': 'xyz'}
         form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
-        self.assertEqual(
-            form.errors['issuer'], [INVALID_ISSUER_CHOICE])
+        self.assertEqual(form.errors['issuer'], [INVALID_ISSUER_CHOICE])
 
     # test msisdn invalid in form ata
     def test_msisdn_invalid(self):
@@ -440,4 +449,3 @@ class SingleStepTransactionFormTests(TestCase):
         form = SingleStepTransactionForm(data=form_data, current_user=self.checker_user)
         self.assertEqual(form.is_valid(), False)
         self.assertEqual(form.errors['last_name'], [LAST_NAME_ERROR])
-

@@ -1,8 +1,9 @@
 from django.urls import path
 
 from .views import (AllowDocDisburse, CancelAmanTransactionView,
-                    ChangeProfileCallBack, DisburseAPIView, DisburseCallBack,
-                    OnboardMerchant, RetrieveDocData, SendMailForCreationAdmin)
+                    ChangeProfileCallBack, CreateSingleStepTransacton,
+                    DisburseAPIView, DisburseCallBack, OnboardMerchant,
+                    RetrieveDocData, SendMailForCreationAdmin)
 
 app_name = 'disb_api'
 
@@ -34,5 +35,10 @@ urlpatterns = [
         'onboard-merchant/',
         OnboardMerchant.as_view(),
         name='merchant_creation',
+    ),
+    path(
+        'create-single-step-transaction',
+        CreateSingleStepTransacton.as_view(),
+        name='create_single_step_transaction',
     ),
 ]

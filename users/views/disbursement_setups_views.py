@@ -8,7 +8,7 @@ from django.contrib.auth.models import Permission
 from django.http import HttpResponseRedirect
 from django.shortcuts import redirect, render
 from django.urls import reverse, reverse_lazy
-from django.utils.translation import gettext as _
+from django.utils.translation import ugettext_lazy as _
 from django.views import View
 from django.views.generic import CreateView, FormView, TemplateView
 
@@ -386,8 +386,10 @@ class ChangePinForm(forms.Form):
         self.user = user
         super(ChangePinForm, self).__init__(*args, **kwargs)
 
-    new_pin = forms.CharField(min_length=6, max_length=6)
-    password = forms.CharField(widget=forms.PasswordInput(), max_length=254)
+    new_pin = forms.CharField(label=_("new pin"), min_length=6, max_length=6)
+    password = forms.CharField(
+        label=_("password"), widget=forms.PasswordInput(), max_length=254
+    )
 
     def clean(self):
         cleaned_data = super(ChangePinForm, self).clean()

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-30 14:24+0200\n"
+"POT-Creation-Date: 2023-03-30 15:09+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -805,7 +805,7 @@ msgstr ""
 
 #: disbursement/forms.py:303 disbursement/forms.py:707
 msgid "Enter Transaction Amount"
-msgstr ""
+msgstr "ادخل قيمه المعامله"
 
 #: disbursement/forms.py:313 templates/data/banks_document_viewer.html:378
 #: templates/data/e_wallets_document_viewer.html:300
@@ -992,11 +992,11 @@ msgstr "الإسم الأخير"
 #: templates/users/profile.html:63
 #: templates/utilities/new_entities_report.html:83 users/forms.py:1007
 msgid "Email"
-msgstr ""
+msgstr "الايميل"
 
 #: disbursement/forms.py:452
 msgid "Enter Your Email"
-msgstr ""
+msgstr "ادخل الايميل الخاص بك"
 
 #: disbursement/forms.py:471 disbursement/forms.py:731
 msgid "Invalid pin"
@@ -3379,31 +3379,31 @@ msgstr ""
 
 #: templates/disbursement/home_root.html:335
 msgid "Budget "
-msgstr ""
+msgstr "رصيدك الحالى"
 
 #: templates/disbursement/home_root.html:369
 msgid "VODAFONE"
-msgstr ""
+msgstr "فودافون كاش"
 
 #: templates/disbursement/home_root.html:383
 msgid "ETISALAT"
-msgstr ""
+msgstr "اتصالات كاش"
 
 #: templates/disbursement/home_root.html:396
 msgid "ORANGE"
-msgstr ""
+msgstr "اورانج كاش"
 
 #: templates/disbursement/home_root.html:409
 msgid "AMAN"
-msgstr ""
+msgstr "امان"
 
 #: templates/disbursement/home_root.html:423
 msgid "BANK WALLET"
-msgstr ""
+msgstr "محافظ بنكيه"
 
 #: templates/disbursement/home_root.html:436
 msgid " BANKS"
-msgstr "ميد-بنك"
+msgstr "بنوك"
 
 #: templates/disbursement/home_root.html:505
 msgid "Recent Transactions"
@@ -3421,7 +3421,7 @@ msgstr "ملف معاملات Bank wallets/Orange"
 #: templates/disbursement/payment_link_list.html:88
 #: templates/disbursement_sidebar.html:52
 msgid "Payment Links"
-msgstr ""
+msgstr "روابط الدفع"
 
 #: templates/disbursement/payment_link_list.html:96
 msgid "Payment Links Summary"
@@ -3430,7 +3430,7 @@ msgstr " ملخص المعاملات"
 #: templates/disbursement/payment_link_list.html:100
 #: templates/disbursement/payment_link_list.html:208
 msgid "Make New Payment Link"
-msgstr ""
+msgstr "انشئ رابط دفع جديد"
 
 #: templates/disbursement/payment_link_list.html:119
 #: templates/support/document_details.html:232
@@ -3440,12 +3440,12 @@ msgstr ""
 #: templates/disbursement/payment_link_list.html:122
 #: templates/disbursement/payment_link_list.html:466
 msgid "Payment Link"
-msgstr ""
+msgstr "رابط دفع"
 
 #: templates/disbursement/payment_link_list.html:123
 #: templates/disbursement/payment_link_list.html:462
 msgid "Paid"
-msgstr ""
+msgstr "مدفوع"
 
 #: templates/disbursement/payment_link_list.html:306
 msgid "Payment Link Details"
@@ -3453,7 +3453,7 @@ msgstr " تفاصيل الملف "
 
 #: templates/disbursement/payment_link_list.html:457
 msgid "Payment Link ID"
-msgstr ""
+msgstr "معرف رابط الدفع"
 
 #: templates/disbursement/single_step_trx_list.html:64
 #: templates/disbursement_sidebar.html:46 templates/support/clients.html:255
@@ -3493,7 +3493,7 @@ msgstr "ملف معاملات Vodafone/Etisalat/Aman"
 
 #: templates/disbursement_sidebar.html:19
 msgid "Dashboard"
-msgstr ""
+msgstr "لوحه الاستخدام"
 
 #: templates/disbursement_sidebar.html:21
 #: templates/disbursement_sidebar.html:25
@@ -4639,7 +4639,7 @@ msgstr ""
 
 #: templates/users/session_list.html:33
 msgid "Current Sessions Details"
-msgstr ""
+msgstr "تفاصيل الجلسات الحاليه"
 
 #: templates/users/session_list.html:40
 msgid "Location"
@@ -5396,6 +5396,14 @@ msgstr ""
 msgid "checker"
 msgstr ""
 
+#: users/views/disbursement_setups_views.py:389
+msgid "new pin"
+msgstr "ادخل رقم سري جديدا"
+
+#: users/views/disbursement_setups_views.py:390
+msgid "password"
+msgstr "كلمة المرور"
+
 #: users/views/support_views.py:196
 msgid "Validation process is running"
 msgstr "عمليه التعريف قيد التنفيذ"
@@ -5827,7 +5835,7 @@ msgstr ""
 #: utilities/models/generic_models.py:604
 #: utilities/models/generic_models.py:846
 msgid "Budget"
-msgstr ""
+msgstr "رصيدك الحالى"
 
 #: utilities/models/generic_models.py:607
 msgid "Issuer type"

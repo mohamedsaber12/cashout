@@ -439,10 +439,11 @@
 
           {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
           <div class="alert alert-info" role="alert" id="SLAs">
-            <b> Please note that:</b>
+            <b> { trans 'Please note that:'}</b>
             <ul>
-              <li> SLA for wallet transactions is 24 Hours </li>
-              <li> SLA for Bank transactions is 24 Hours + bank settlement period </li>
+              <li>{ trans 'SLA for wallet transactions is 24 Hours'} </li>
+              <li> { trans 'SLA for Bank transactions is 24 Hours + bank settlement period'} </li>
+            </ul>
           </div>
           {% endif %}
           <div style="text-align: center;">

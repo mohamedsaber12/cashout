@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-30 12:04+0200\n"
+"POT-Creation-Date: 2023-03-30 12:34+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3561,6 +3561,18 @@ msgstr " ملخص المعاملات"
 #: templates/disbursement/single_step_trx_list.html:77
 #: templates/disbursement/single_step_trx_list.html:226
 msgid "Make New Transaction"
+msgstr ""
+
+#: templates/disbursement/single_step_trx_list.html:442
+msgid "Please note that:"
+msgstr ""
+
+#: templates/disbursement/single_step_trx_list.html:444
+msgid "SLA for wallet transactions is 24 Hours"
+msgstr ""
+
+#: templates/disbursement/single_step_trx_list.html:445
+msgid "SLA for Bank transactions is 24 Hours + bank settlement period"
 msgstr ""
 
 #: templates/disbursement/single_step_trx_list.html:920

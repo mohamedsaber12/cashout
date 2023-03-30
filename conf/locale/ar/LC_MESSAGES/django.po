@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-30 15:09+0200\n"
+"POT-Creation-Date: 2023-03-30 16:00+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -138,7 +138,7 @@ msgstr ""
 msgid "Anonymous Recipient"
 msgstr ""
 
-#: core/models.py:118 disbursement/forms.py:298 disbursement/forms.py:703
+#: core/models.py:118 disbursement/forms.py:293 disbursement/forms.py:699
 #: disbursement/models.py:288 templates/data/banks_document_viewer.html:238
 #: templates/data/banks_document_viewer.html:262
 #: templates/data/banks_document_viewer.html:541
@@ -768,56 +768,56 @@ msgstr ""
 msgid "Onboarding New Client"
 msgstr "عميل جديد"
 
-#: disbursement/forms.py:28 users/views/disbursement_setups_views.py:33
+#: disbursement/forms.py:27 users/views/disbursement_setups_views.py:33
 #, python-brace-format
 msgid "Set pin process stopped during an internal error, {MSG_TRY_OR_CONTACT}"
 msgstr ""
 
-#: disbursement/forms.py:55 disbursement/forms.py:89 disbursement/models.py:62
+#: disbursement/forms.py:53 disbursement/forms.py:87 disbursement/models.py:62
 #: users/forms.py:318
 msgid "Mobile number"
 msgstr "رقم الموبايل"
 
-#: disbursement/forms.py:76 disbursement/forms.py:111
+#: disbursement/forms.py:74 disbursement/forms.py:109
 msgid "Mobile number is not valid"
 msgstr ""
 
-#: disbursement/forms.py:79
+#: disbursement/forms.py:77
 msgid "Please Provide new agent because this agent already exist."
 msgstr ""
 
-#: disbursement/forms.py:125
+#: disbursement/forms.py:123
 msgid "Add new pin"
 msgstr " ادخل رقم سري جديدا"
 
-#: disbursement/forms.py:162 disbursement/forms.py:287
-#: disbursement/forms.py:465 disbursement/forms.py:729
+#: disbursement/forms.py:159 disbursement/forms.py:282
+#: disbursement/forms.py:457 disbursement/forms.py:735
 msgid "Pin must be numeric"
 msgstr ""
 
-#: disbursement/forms.py:233 users/views/disbursement_setups_views.py:474
+#: disbursement/forms.py:229 users/views/disbursement_setups_views.py:476
 msgid "Failed to set pin"
 msgstr ""
 
-#: disbursement/forms.py:276
+#: disbursement/forms.py:271
 msgid "Enter pin"
 msgstr ""
 
-#: disbursement/forms.py:303 disbursement/forms.py:707
+#: disbursement/forms.py:298 disbursement/forms.py:704
 msgid "Enter Transaction Amount"
 msgstr "ادخل قيمه المعامله"
 
-#: disbursement/forms.py:313 templates/data/banks_document_viewer.html:378
+#: disbursement/forms.py:308 templates/data/banks_document_viewer.html:378
 #: templates/data/e_wallets_document_viewer.html:300
 #: users/models/base_user.py:63
 msgid "pin"
 msgstr " رقم /رمز التعريف الشخصي"
 
-#: disbursement/forms.py:323
+#: disbursement/forms.py:317
 msgid "Enter your pin"
 msgstr "أدخل رمز/ رقم التعريف الشخصي"
 
-#: disbursement/forms.py:328 disbursement/forms.py:752
+#: disbursement/forms.py:322 disbursement/forms.py:767
 #: templates/data/banks_document_viewer.html:239
 #: templates/data/banks_document_viewer.html:569
 #: templates/data/e_wallets_document_viewer.html:228
@@ -841,55 +841,55 @@ msgstr "أدخل رمز/ رقم التعريف الشخصي"
 msgid "Issuer"
 msgstr "جهة الصرف"
 
-#: disbursement/forms.py:331 templates/disbursement/home_root.html:551
+#: disbursement/forms.py:325 templates/disbursement/home_root.html:551
 #: templates/disbursement/single_step_trx_list.html:921
 #: templates/disbursement/single_step_trx_list.html:927
 #: utilities/models/generic_models.py:589
 msgid "Bank Card"
 msgstr "كروت بنكيه"
 
-#: disbursement/forms.py:332 utilities/models/generic_models.py:585
+#: disbursement/forms.py:326 utilities/models/generic_models.py:585
 msgid "Vodafone"
 msgstr "فودافون كاش"
 
-#: disbursement/forms.py:333 utilities/models/generic_models.py:586
+#: disbursement/forms.py:327 utilities/models/generic_models.py:586
 msgid "Etisalat"
 msgstr "اتصالات كاش"
 
-#: disbursement/forms.py:334 utilities/models/generic_models.py:587
+#: disbursement/forms.py:328 utilities/models/generic_models.py:587
 msgid "Orange"
 msgstr "اورانج كاش"
 
-#: disbursement/forms.py:335 utilities/models/generic_models.py:590
+#: disbursement/forms.py:329 utilities/models/generic_models.py:590
 msgid "Bank Wallet"
 msgstr " المحافظ المصرفيه"
 
-#: disbursement/forms.py:336 utilities/models/generic_models.py:588
+#: disbursement/forms.py:330 utilities/models/generic_models.py:588
 msgid "Aman"
 msgstr " امان"
 
-#: disbursement/forms.py:346
+#: disbursement/forms.py:340
 msgid "transaction type"
 msgstr "نوع المعاملة"
 
-#: disbursement/forms.py:358 disbursement/forms.py:779 utilities/forms.py:200
+#: disbursement/forms.py:351 disbursement/forms.py:796 utilities/forms.py:200
 #: utilities/forms.py:208
 msgid "acc. number"
 msgstr ""
 
-#: disbursement/forms.py:366
+#: disbursement/forms.py:359
 msgid "Enter account number"
 msgstr "رقم الحساب"
 
-#: disbursement/forms.py:371 disbursement/forms.py:788 utilities/forms.py:216
+#: disbursement/forms.py:364 disbursement/forms.py:809 utilities/forms.py:216
 msgid "account name"
 msgstr "اسم الحساب"
 
-#: disbursement/forms.py:378
+#: disbursement/forms.py:371
 msgid "Enter full name"
 msgstr "ادخل الاسم بالكامل"
 
-#: disbursement/forms.py:383 disbursement/forms.py:796
+#: disbursement/forms.py:376 disbursement/forms.py:821
 #: templates/data/banks_document_viewer.html:558
 #: templates/disbursement/bank_transactions_list.html:440
 #: templates/disbursement/banks_trx_list.html:275
@@ -907,7 +907,7 @@ msgstr "ادخل الاسم بالكامل"
 msgid "Bank Name"
 msgstr "اسم البنك"
 
-#: disbursement/forms.py:393 disbursement/forms.py:805
+#: disbursement/forms.py:385 disbursement/forms.py:830
 #: templates/disbursement/disburse_payment_link.html:79
 #: templates/disbursement/disburse_payment_link.html:94
 #: templates/disbursement/disburse_payment_link.html:119
@@ -923,11 +923,11 @@ msgstr "اسم البنك"
 msgid "Msisdn"
 msgstr "رقم الموبايل"
 
-#: disbursement/forms.py:401
+#: disbursement/forms.py:393
 msgid "Enter Msisdn"
 msgstr "رقم الموبايل"
 
-#: disbursement/forms.py:407 disbursement/forms.py:815
+#: disbursement/forms.py:399 disbursement/forms.py:844
 #: templates/data/banks_document_viewer.html:543
 #: templates/data/banks_document_viewer.html:554
 #: templates/disbursement/bank_transactions_list.html:416
@@ -954,11 +954,11 @@ msgstr "رقم الموبايل"
 msgid "Full Name"
 msgstr "الإسم بالكامل"
 
-#: disbursement/forms.py:414
+#: disbursement/forms.py:406
 msgid "Enter Full Name"
 msgstr "الإسم بالكامل"
 
-#: disbursement/forms.py:420 disbursement/forms.py:824
+#: disbursement/forms.py:412 disbursement/forms.py:857
 #: templates/disbursement/disburse_payment_link.html:129
 #: templates/disbursement/disburse_payment_link.html:290
 #: templates/disbursement/single_step_trx_list.html:362
@@ -966,11 +966,11 @@ msgstr "الإسم بالكامل"
 msgid "First Name"
 msgstr "الإسم الأول"
 
-#: disbursement/forms.py:427
+#: disbursement/forms.py:419
 msgid "Enter First Name"
 msgstr "الإسم الأول"
 
-#: disbursement/forms.py:432 disbursement/forms.py:832
+#: disbursement/forms.py:424 disbursement/forms.py:869
 #: templates/disbursement/disburse_payment_link.html:141
 #: templates/disbursement/disburse_payment_link.html:302
 #: templates/disbursement/single_step_trx_list.html:374
@@ -978,11 +978,11 @@ msgstr "الإسم الأول"
 msgid "Last Name"
 msgstr "الإسم الأخير"
 
-#: disbursement/forms.py:439
+#: disbursement/forms.py:431
 msgid "Enter Last Name"
 msgstr "الإسم الأخير"
 
-#: disbursement/forms.py:444 disbursement/forms.py:840
+#: disbursement/forms.py:436 disbursement/forms.py:881
 #: templates/disbursement/disburse_payment_link.html:151
 #: templates/disbursement/disburse_payment_link.html:312
 #: templates/disbursement/single_step_trx_list.html:384
@@ -994,70 +994,70 @@ msgstr "الإسم الأخير"
 msgid "Email"
 msgstr "الايميل"
 
-#: disbursement/forms.py:452
+#: disbursement/forms.py:444
 msgid "Enter Your Email"
 msgstr "ادخل الايميل الخاص بك"
 
-#: disbursement/forms.py:471 disbursement/forms.py:731
+#: disbursement/forms.py:463 disbursement/forms.py:737
 msgid "Invalid pin"
 msgstr ""
 
-#: disbursement/forms.py:481 disbursement/forms.py:739
+#: disbursement/forms.py:473 disbursement/forms.py:747
 msgid "Invalid amount"
 msgstr ""
 
-#: disbursement/forms.py:487 disbursement/forms.py:742
+#: disbursement/forms.py:479 disbursement/forms.py:753
 msgid "Entered amount exceeds your maximum amount that can be disbursed"
 msgstr ""
 
-#: disbursement/forms.py:494 disbursement/forms.py:745
+#: disbursement/forms.py:486 disbursement/forms.py:759
 msgid "Entered amount exceeds your current balance"
 msgstr ""
 
-#: disbursement/forms.py:512 disbursement/forms.py:943
+#: disbursement/forms.py:504 disbursement/forms.py:1003
 msgid ""
 "issuer must be one of these                 bank_card / Bank Card / "
 "vodafone / etisalat / orange / bank_wallet / aman"
 msgstr ""
 
-#: disbursement/forms.py:524 disbursement/forms.py:854
+#: disbursement/forms.py:516 disbursement/forms.py:903
 msgid "Invalid transaction purpose"
 msgstr ""
 
-#: disbursement/forms.py:537 disbursement/forms.py:864
+#: disbursement/forms.py:528 disbursement/forms.py:915
 msgid "Invalid Account number"
 msgstr ""
 
-#: disbursement/forms.py:545 disbursement/forms.py:872
+#: disbursement/forms.py:536 disbursement/forms.py:923
 msgid "Invalid name"
 msgstr ""
 
-#: disbursement/forms.py:547 disbursement/forms.py:587
-#: disbursement/forms.py:874 disbursement/forms.py:914
+#: disbursement/forms.py:538 disbursement/forms.py:578
+#: disbursement/forms.py:925 disbursement/forms.py:965
 msgid "Symbols like !%*+&,<=> not allowed in full name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاخير"
 
-#: disbursement/forms.py:555 disbursement/forms.py:882
+#: disbursement/forms.py:546 disbursement/forms.py:933
 #: instant_cashin/specific_issuers_integrations/ach/instant_cashin.py:282
 msgid "Invalid bank swift code"
 msgstr ""
 
-#: disbursement/forms.py:575 disbursement/forms.py:902
+#: disbursement/forms.py:566 disbursement/forms.py:953
 msgid "Phone numbers entered are incorrect"
 msgstr "ارقام الهاتف المدخله غير صحيحه"
 
-#: disbursement/forms.py:585 disbursement/forms.py:593
-#: disbursement/forms.py:601 disbursement/forms.py:609
-#: disbursement/forms.py:912 disbursement/forms.py:920
-#: disbursement/forms.py:928 disbursement/forms.py:936
+#: disbursement/forms.py:576 disbursement/forms.py:584
+#: disbursement/forms.py:592 disbursement/forms.py:600
+#: disbursement/forms.py:963 disbursement/forms.py:971
+#: disbursement/forms.py:979 disbursement/forms.py:987
 msgid "This field is required"
 msgstr ""
 
-#: disbursement/forms.py:595 disbursement/forms.py:922
+#: disbursement/forms.py:586 disbursement/forms.py:973
 msgid "Symbols like !%*+&,<=> not allowed in first name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاول"
 
-#: disbursement/forms.py:603 disbursement/forms.py:930
+#: disbursement/forms.py:594 disbursement/forms.py:981
 msgid "Symbols like !%*+&,<=> not allowed in last name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاخير"
 
@@ -1352,19 +1352,19 @@ msgstr ""
 msgid "Payment_link"
 msgstr ""
 
-#: disbursement/templatetags/banks_tags.py:29 disbursement/utils.py:81
+#: disbursement/templatetags/banks_tags.py:29 disbursement/utils.py:87
 msgid "Salary"
 msgstr "المرتب"
 
-#: disbursement/templatetags/banks_tags.py:31 disbursement/utils.py:83
+#: disbursement/templatetags/banks_tags.py:31 disbursement/utils.py:89
 msgid "Credit card"
 msgstr "البطاقة الائتمانية"
 
-#: disbursement/templatetags/banks_tags.py:33 disbursement/utils.py:82
+#: disbursement/templatetags/banks_tags.py:33 disbursement/utils.py:88
 msgid "Prepaid card"
 msgstr "كروت مسبقة الدفع"
 
-#: disbursement/templatetags/banks_tags.py:35 disbursement/utils.py:80
+#: disbursement/templatetags/banks_tags.py:35 disbursement/utils.py:86
 msgid "Cash transfer"
 msgstr "تحويل نقدي"
 
@@ -1399,43 +1399,43 @@ msgid ""
 "processed by the carrier"
 msgstr ""
 
-#: disbursement/utils.py:10
+#: disbursement/utils.py:11
 msgid "Transaction received by the carrier and being processed now"
 msgstr ""
 
-#: disbursement/utils.py:12
+#: disbursement/utils.py:14
 msgid ""
 "Transaction processed and accepted by the carrier. Your transfer is ready "
 "for exchanging now"
 msgstr ""
 
-#: disbursement/utils.py:14
+#: disbursement/utils.py:17
 msgid ""
 "Transaction rejected by the carrier. Please try again or contact your "
 "support team"
 msgstr "تم رفض المعاملة. الرجاء المحاولة مرة أخرى أو الاتصال بخدمة العملاء"
 
-#: disbursement/utils.py:16
+#: disbursement/utils.py:20
 msgid ""
 "Transaction received and validated successfully. Dispatched for being "
 "processed by the bank"
-msgstr ""
+msgstr "تم استلام ومراجعه العمليه بنجاح وتم ارسالها للصرف من جهه البنك"
 
-#: disbursement/utils.py:18
+#: disbursement/utils.py:22
 msgid "Transaction received by the bank and being processed now"
 msgstr ""
 
-#: disbursement/utils.py:20
+#: disbursement/utils.py:24
 msgid ""
 "Successful with warning, A transfer will take place once authorized by the "
 "receiver bank"
 msgstr ""
 
-#: disbursement/utils.py:22
+#: disbursement/utils.py:26
 msgid "Successful, transaction is settled by the receiver bank"
 msgstr ""
 
-#: disbursement/utils.py:24
+#: disbursement/utils.py:28
 #: instant_cashin/api/base_views/balance_management.py:23
 #: instant_cashin/api/base_views/instant_disbursement.py:39
 #: instant_cashin/tasks.py:407
@@ -1444,7 +1444,7 @@ msgid ""
 "support team"
 msgstr ""
 
-#: disbursement/utils.py:26
+#: disbursement/utils.py:31
 #: instant_cashin/api/base_views/instant_disbursement.py:42
 #: instant_cashin/tasks.py:410
 msgid ""
@@ -1452,485 +1452,485 @@ msgid ""
 "support team"
 msgstr ""
 
-#: disbursement/utils.py:97
+#: disbursement/utils.py:128
 msgid "salary"
 msgstr "المرتب"
 
-#: disbursement/utils.py:98
+#: disbursement/utils.py:128
 msgid "For concurrent or repeated payments"
 msgstr "للمدفوعات المتزامنة أو المتكررة"
 
-#: disbursement/utils.py:99
+#: disbursement/utils.py:129
 msgid "credit_card"
 msgstr "البطاقة الائتمانية"
 
-#: disbursement/utils.py:99
+#: disbursement/utils.py:129
 msgid "For credit cards payments"
 msgstr "لمدفوعات بطاقات الائتمان"
 
-#: disbursement/utils.py:100
+#: disbursement/utils.py:131
 msgid "prepaid_card"
 msgstr "كروت مسبقة الدفع"
 
-#: disbursement/utils.py:101
+#: disbursement/utils.py:132
 msgid "For prepaid cards and Meeza cards payments"
 msgstr "للكروت مسبقة الدفع و بطاقات ميزة"
 
-#: disbursement/utils.py:102
+#: disbursement/utils.py:135
 msgid "cash_transfer"
 msgstr "تحويل نقدي"
 
-#: disbursement/utils.py:103
+#: disbursement/utils.py:136
 msgid "For bank accounts, debit cards etc.."
 msgstr "للحسابات البنكية وبطاقات الخصم المباشر و ما إلى ذلك"
 
-#: disbursement/utils.py:107
+#: disbursement/utils.py:141
 msgid "Ahli United Bank"
 msgstr "البنك الأهلي المتحد"
 
-#: disbursement/utils.py:108
+#: disbursement/utils.py:142
 msgid "MIDBANK"
 msgstr "ميد-بنك"
 
-#: disbursement/utils.py:109
+#: disbursement/utils.py:143
 msgid "Banque Du Caire"
 msgstr "بنك القاهرة"
 
-#: disbursement/utils.py:110
+#: disbursement/utils.py:144
 msgid "HSBC Bank Egypt S.A.E"
 msgstr "HSBC بنك"
 
-#: disbursement/utils.py:111
+#: disbursement/utils.py:145
 msgid "Credit Agricole Egypt S.A.E"
 msgstr "كريدي أجريكول"
 
-#: disbursement/utils.py:112
+#: disbursement/utils.py:146
 msgid "Egyptian Gulf Bank (EG-Bank)"
 msgstr "EG بنك"
 
-#: disbursement/utils.py:113
+#: disbursement/utils.py:147
 msgid "The United Bank"
 msgstr "المصرف المتحد "
 
-#: disbursement/utils.py:114
+#: disbursement/utils.py:148
 msgid "Qatar National Bank Alahli"
 msgstr "بنك قطر الوطني"
 
-#: disbursement/utils.py:115
+#: disbursement/utils.py:149
 msgid "Arab Bank PLC"
 msgstr "البنك العربي"
 
-#: disbursement/utils.py:116
+#: disbursement/utils.py:150
 msgid "Emirates National Bank of Dubai"
 msgstr "بنك الإمارات دبي الوطني"
 
-#: disbursement/utils.py:117
+#: disbursement/utils.py:151
 msgid "Al Ahli Bank of Kuwait – Egypt"
 msgstr "البنك الاهلى الكويتى_مصر"
 
-#: disbursement/utils.py:118
+#: disbursement/utils.py:152
 msgid "National Bank of Kuwait – Egypt"
 msgstr "بنك الكويت الوطني_مصر"
 
-#: disbursement/utils.py:119
+#: disbursement/utils.py:153
 msgid "Arab Banking Corporation - Egypt S.A.E (ABC)"
 msgstr "ABC بنك"
 
-#: disbursement/utils.py:120
+#: disbursement/utils.py:154
 msgid "First Abu Dhabi Bank"
 msgstr "بنك أبوظبي الأول"
 
-#: disbursement/utils.py:121
+#: disbursement/utils.py:155
 msgid "Abu Dhabi Islamic Bank – Egypt"
 msgstr "مصرف أبو ظبي الإسلامي"
 
-#: disbursement/utils.py:122
+#: disbursement/utils.py:156
 msgid "Commercial International Bank - Egypt S.A.E"
 msgstr "البنك التجاري الدولي"
 
-#: disbursement/utils.py:123
+#: disbursement/utils.py:157
 msgid "Housing And Development Bank"
 msgstr "بنك التعمير والاسكان"
 
-#: disbursement/utils.py:124
+#: disbursement/utils.py:158
 msgid "Banque Misr"
 msgstr "بنك مصر"
 
-#: disbursement/utils.py:125
+#: disbursement/utils.py:159
 msgid "Arab African International Bank"
 msgstr "البنك العربي الإفريقي الدولي"
 
-#: disbursement/utils.py:126
+#: disbursement/utils.py:160
 msgid "Egyptian Arab Land Bank"
 msgstr "البنك العقاري المصري"
 
-#: disbursement/utils.py:127
+#: disbursement/utils.py:161
 msgid "Export Development Bank of Egypt"
 msgstr "البنك المصري لتنمية الصادرات "
 
-#: disbursement/utils.py:128
+#: disbursement/utils.py:162
 msgid "Faisal Islamic Bank of Egypt"
 msgstr "بنك فيصل الإسلامي المصري"
 
-#: disbursement/utils.py:129
+#: disbursement/utils.py:163
 msgid "Blom Bank"
 msgstr "بنك بلوم "
 
-#: disbursement/utils.py:130
+#: disbursement/utils.py:164
 msgid "Abu Dhabi Commercial Bank – Egypt"
 msgstr "بنك أبوظبي التجاري"
 
-#: disbursement/utils.py:131
+#: disbursement/utils.py:165
 msgid "Alex Bank Egypt"
 msgstr "بنك الإسكندرية"
 
-#: disbursement/utils.py:132
+#: disbursement/utils.py:166
 msgid "Societe Arabe Internationale De Banque (SAIB)"
 msgstr "SAIB بنك"
 
-#: disbursement/utils.py:134
+#: disbursement/utils.py:167
 msgid "National Bank of Egypt"
 msgstr "البنك الأهلي المصري"
 
-#: disbursement/utils.py:135
+#: disbursement/utils.py:168
 msgid "Al Baraka Bank Egypt B.S.C"
 msgstr "بنك البركة مصر"
 
-#: disbursement/utils.py:136
+#: disbursement/utils.py:169
 msgid "Egypt Post"
 msgstr "البريد المصري "
 
-#: disbursement/utils.py:137
+#: disbursement/utils.py:170
 msgid "Nasser Social Bank"
 msgstr "بنك ناصر الاجتماعى"
 
-#: disbursement/utils.py:138
+#: disbursement/utils.py:171
 msgid "Industrial Development Bank"
 msgstr "بنك التنمية الصناعية"
 
-#: disbursement/utils.py:139
+#: disbursement/utils.py:172
 msgid "Suez Canal Bank"
 msgstr "بنك قناة السويس"
 
-#: disbursement/utils.py:140
+#: disbursement/utils.py:173
 msgid "Mashreq Bank"
 msgstr "بنك المشرق"
 
-#: disbursement/utils.py:141
+#: disbursement/utils.py:174
 msgid "Arab Investment Bank"
 msgstr "بنك الإستثمار العربي"
 
-#: disbursement/utils.py:142
+#: disbursement/utils.py:175
 msgid "General Authority For Supply Commodities"
 msgstr "الهيئة العامة للسلع التموينية"
 
-#: disbursement/utils.py:143
+#: disbursement/utils.py:176
 msgid "Arab International Bank"
 msgstr "المصرف العربي الدولي"
 
-#: disbursement/utils.py:144
+#: disbursement/utils.py:177
 msgid "Agricultural Bank of Egypt"
 msgstr "البنك الزراعي المصري"
 
-#: disbursement/utils.py:145
+#: disbursement/utils.py:178
 msgid "National Bank of Greece"
 msgstr "البنك الأهلي اليوناني"
 
-#: disbursement/utils.py:146
+#: disbursement/utils.py:179
 msgid "Central Bank Of Egypt"
 msgstr "البنك المركزي المصري"
 
-#: disbursement/utils.py:147
+#: disbursement/utils.py:180
 msgid "Attijariwafa Bank"
 msgstr ""
 
-#: disbursement/utils.py:152
+#: disbursement/utils.py:185
 msgid "Channel Authentication Failed"
 msgstr "فشل التعريف"
 
-#: disbursement/utils.py:153
+#: disbursement/utils.py:186
 msgid "Undefined request type"
 msgstr ""
 
-#: disbursement/utils.py:154
+#: disbursement/utils.py:187
 msgid "Incorrect input given to request"
 msgstr ""
 
-#: disbursement/utils.py:155 templates/data/document_disbursement_list.html:143
+#: disbursement/utils.py:188 templates/data/document_disbursement_list.html:143
 msgid "Internal Error"
 msgstr ""
 
-#: disbursement/utils.py:156
+#: disbursement/utils.py:189
 msgid "Exceeded Maximum Limit Per Single Transaction"
 msgstr ""
 
-#: disbursement/utils.py:157
+#: disbursement/utils.py:190
 msgid "Below Minimum Transaction Limit Per Single Transaction"
 msgstr ""
 
-#: disbursement/utils.py:158
+#: disbursement/utils.py:191
 msgid "User Not Eligible To Perform Transaction"
 msgstr ""
 
-#: disbursement/utils.py:159 disbursement/utils.py:164
+#: disbursement/utils.py:192 disbursement/utils.py:197
 msgid "Sender and Recipient Accounts are the Same"
 msgstr ""
 
-#: disbursement/utils.py:160
+#: disbursement/utils.py:193
 msgid "Recipient Is Unregistered"
 msgstr ""
 
-#: disbursement/utils.py:161
+#: disbursement/utils.py:194
 msgid "MSISDN Does Not Exist"
 msgstr ""
 
-#: disbursement/utils.py:162
+#: disbursement/utils.py:195
 msgid "Invalid Consumer PIN"
 msgstr ""
 
-#: disbursement/utils.py:163
+#: disbursement/utils.py:196
 msgid "Initial MPIN has not been changed"
 msgstr ""
 
-#: disbursement/utils.py:165
+#: disbursement/utils.py:198
 msgid "M-PIN is Empty"
 msgstr ""
 
-#: disbursement/utils.py:166
+#: disbursement/utils.py:199
 msgid "MSISDN is Locked"
 msgstr ""
 
-#: disbursement/utils.py:167
+#: disbursement/utils.py:200
 msgid "Invalid Client ID"
 msgstr ""
 
-#: disbursement/utils.py:168
+#: disbursement/utils.py:201
 msgid "Catch All SE Errors"
 msgstr ""
 
-#: disbursement/utils.py:169
+#: disbursement/utils.py:202
 msgid "Inactive Service"
 msgstr ""
 
-#: disbursement/utils.py:170
+#: disbursement/utils.py:203
 msgid "Initial MPIN has not been changed."
 msgstr ""
 
-#: disbursement/utils.py:171
+#: disbursement/utils.py:204
 msgid "Consumer MSISDN Does Not Exist"
 msgstr ""
 
-#: disbursement/utils.py:172
+#: disbursement/utils.py:205
 msgid "Agent MSISDN Does Not Exist"
 msgstr ""
 
-#: disbursement/utils.py:173
+#: disbursement/utils.py:206
 msgid "Consumer Account Status is Not Active"
 msgstr ""
 
-#: disbursement/utils.py:174
+#: disbursement/utils.py:207
 msgid "Invalid Agent M-PIN"
 msgstr ""
 
-#: disbursement/utils.py:175
+#: disbursement/utils.py:208
 msgid "Agent Type is Invalid"
 msgstr ""
 
-#: disbursement/utils.py:176
+#: disbursement/utils.py:209
 msgid "Consumer has No Default Funding Account"
 msgstr ""
 
-#: disbursement/utils.py:177
+#: disbursement/utils.py:210
 msgid "Agent MSISDN does not exist"
 msgstr ""
 
-#: disbursement/utils.py:178
+#: disbursement/utils.py:211
 msgid "Agent ID Does Not Exist"
 msgstr ""
 
-#: disbursement/utils.py:179
+#: disbursement/utils.py:212
 msgid "Recipient Consumer's MPIN has not been changed"
 msgstr ""
 
-#: disbursement/utils.py:180
+#: disbursement/utils.py:213
 msgid "Recipient Consumer's has exceeded transaction count limit"
 msgstr ""
 
-#: disbursement/utils.py:181
+#: disbursement/utils.py:214
 msgid "Service Call Failed"
 msgstr ""
 
-#: disbursement/utils.py:182
+#: disbursement/utils.py:215
 msgid "Funding Account Status is Referral"
 msgstr ""
 
-#: disbursement/utils.py:183
+#: disbursement/utils.py:216
 msgid "Invalid Agent"
 msgstr ""
 
-#: disbursement/utils.py:184
+#: disbursement/utils.py:217
 msgid "Funding Account Status is Pick-up CR Problem or Fraud/Capture Card"
 msgstr ""
 
-#: disbursement/utils.py:185
+#: disbursement/utils.py:218
 msgid "Funding Account was not Honored/General Decline"
 msgstr ""
 
-#: disbursement/utils.py:186
+#: disbursement/utils.py:219
 msgid "Invalid Transaction"
 msgstr "المعاملات"
 
-#: disbursement/utils.py:187
+#: disbursement/utils.py:220
 msgid "Invalid Amount"
 msgstr "المبلغ"
 
-#: disbursement/utils.py:188
+#: disbursement/utils.py:221
 msgid "Invalid Funding Account Card Number"
 msgstr ""
 
-#: disbursement/utils.py:189
+#: disbursement/utils.py:222
 msgid "Invalid Issuer"
 msgstr "جهة الصرف"
 
-#: disbursement/utils.py:190
+#: disbursement/utils.py:223
 msgid "Format Error"
 msgstr ""
 
-#: disbursement/utils.py:191
+#: disbursement/utils.py:224
 msgid "Funding Account Status is Lost"
 msgstr ""
 
-#: disbursement/utils.py:192
+#: disbursement/utils.py:225
 msgid "Funding Account Status is Stolen"
 msgstr ""
 
-#: disbursement/utils.py:193 disbursement/utils.py:227
+#: disbursement/utils.py:226 disbursement/utils.py:259
 msgid "Service temporarily suspended"
 msgstr ""
 
-#: disbursement/utils.py:194
+#: disbursement/utils.py:227
 msgid "Funding Account is Expired"
 msgstr ""
 
-#: disbursement/utils.py:195
+#: disbursement/utils.py:228
 msgid "Invalid C-PIN"
 msgstr ""
 
-#: disbursement/utils.py:196
+#: disbursement/utils.py:229
 msgid "Transaction Not Permitted to Issuer/Card Holder"
 msgstr ""
 
-#: disbursement/utils.py:197
+#: disbursement/utils.py:230
 msgid "Transaction Not Permitted to Acquirer/Terminal"
 msgstr ""
 
-#: disbursement/utils.py:198
+#: disbursement/utils.py:231
 msgid "Exceeded Transaction Amount Limit"
 msgstr ""
 
-#: disbursement/utils.py:199
+#: disbursement/utils.py:232
 msgid "Restricted Card"
 msgstr ""
 
-#: disbursement/utils.py:200
+#: disbursement/utils.py:233
 msgid "Security Violation"
 msgstr ""
 
-#: disbursement/utils.py:201
+#: disbursement/utils.py:234
 msgid "Exceeded Transaction Count Limit"
 msgstr ""
 
-#: disbursement/utils.py:202
+#: disbursement/utils.py:235
 msgid "Contact Card Issuer"
 msgstr ""
 
-#: disbursement/utils.py:203
+#: disbursement/utils.py:236
 msgid "C-PIN Not Changed"
 msgstr ""
 
-#: disbursement/utils.py:204
+#: disbursement/utils.py:237
 msgid "Allowable Number of C-PIN Tries Exceeded"
 msgstr ""
 
-#: disbursement/utils.py:205
+#: disbursement/utils.py:238
 msgid "Invalid/Non-Existent \"To Account\""
 msgstr ""
 
-#: disbursement/utils.py:206
+#: disbursement/utils.py:239
 msgid "Invalid/Non-Existent \"From Account\""
 msgstr ""
 
-#: disbursement/utils.py:207
+#: disbursement/utils.py:240
 msgid "Invalid/Non-Existent Account"
 msgstr ""
 
-#: disbursement/utils.py:208
+#: disbursement/utils.py:241
 msgid "Invalid Authorization Life Cycle"
 msgstr ""
 
-#: disbursement/utils.py:209
+#: disbursement/utils.py:242
 msgid "C-PIN Validation Not Possible"
 msgstr "فشل التعريف"
 
-#: disbursement/utils.py:210
+#: disbursement/utils.py:243
 msgid "Cryptographic Failure"
 msgstr ""
 
-#: disbursement/utils.py:211
+#: disbursement/utils.py:244
 msgid "Unacceptable C-PIN"
 msgstr ""
 
-#: disbursement/utils.py:212
+#: disbursement/utils.py:245
 msgid "Authorization System/Issuer System Inoperative"
 msgstr ""
 
-#: disbursement/utils.py:213
+#: disbursement/utils.py:246
 msgid "Unable to Route Transaction"
 msgstr "إنشاء معاملة واحدة"
 
-#: disbursement/utils.py:214
+#: disbursement/utils.py:247
 msgid "Duplicate Authorization Request"
 msgstr ""
 
-#: disbursement/utils.py:215
+#: disbursement/utils.py:248
 msgid "General System Error"
 msgstr ""
 
-#: disbursement/utils.py:216
+#: disbursement/utils.py:249
 msgid "MIP is Down/Not Connected"
 msgstr ""
 
-#: disbursement/utils.py:217
+#: disbursement/utils.py:250
 msgid "No Response from MIP"
 msgstr ""
 
-#: disbursement/utils.py:218
+#: disbursement/utils.py:251
 msgid "Catch All Acquirer SE Error"
 msgstr ""
 
-#: disbursement/utils.py:221
+#: disbursement/utils.py:253
 msgid "Successful transaction"
 msgstr "الناجحة"
 
-#: disbursement/utils.py:222
+#: disbursement/utils.py:254
 msgid "Invalid disbursement request"
 msgstr "ملفات الصرف"
 
-#: disbursement/utils.py:223 disbursement/utils.py:224
+#: disbursement/utils.py:255 disbursement/utils.py:256
 msgid "Invalid or missing parameters"
 msgstr ""
 
-#: disbursement/utils.py:225 disbursement/utils.py:226
+#: disbursement/utils.py:257 disbursement/utils.py:258
 msgid "Service is down"
 msgstr ""
 
-#: disbursement/utils.py:228
+#: disbursement/utils.py:261
 msgid ""
 "عزيزي العميل أنت غير مشترك في خدمة اتصالات كاش، للاشتراك برجاء زيارة أقرب "
 "فرع من فروع اتصالات بالخط والرقم القومي للمزيد من المعلومات اتصل ب-778"
 msgstr ""
 
-#: disbursement/utils.py:396
+#: disbursement/utils.py:343
 msgid "External error, please contact your support team for further details"
 msgstr ""
 
@@ -3472,15 +3472,17 @@ msgstr "قم باجراء معامله جديده"
 
 #: templates/disbursement/single_step_trx_list.html:442
 msgid "Please note that:"
-msgstr ""
+msgstr "برجاء العلم:"
 
 #: templates/disbursement/single_step_trx_list.html:444
-msgid "SLA for wallet transactions is 24 Hours"
-msgstr ""
+msgid ""
+"Request submitted, expect arrival in recipient's wallet within 24 hours."
+msgstr "تم تقديم الطلب ومن المتوقع ان يصل الى محفظه المستلم خلال 24 ساعه"
 
 #: templates/disbursement/single_step_trx_list.html:445
-msgid "SLA for Bank transactions is 24 Hours + bank settlement period"
-msgstr ""
+msgid ""
+"Request submitted, expect arrival in recipient's bank in 3 working days."
+msgstr "تم تقديم الطلب ومن المتوقع ان يصل الى المستلم خلال 3 ايام عمل"
 
 #: templates/disbursement/single_step_trx_list.html:923
 #: templates/disbursement/single_step_trx_list.html:925
@@ -5400,7 +5402,7 @@ msgstr ""
 msgid "new pin"
 msgstr "ادخل رقم سري جديدا"
 
-#: users/views/disbursement_setups_views.py:390
+#: users/views/disbursement_setups_views.py:391
 msgid "password"
 msgstr "كلمة المرور"
 
@@ -6006,6 +6008,12 @@ msgid ""
 "cleaned_data['to_account_name']} <br/><br/>\n"
 "                Best Regards,"
 msgstr ""
+
+#~ msgid "SLA for wallet transactions is 24 Hours"
+#~ msgstr "من المتوقع وصول المبلغ الى محفظه المستلم خلال 24 ساعه"
+
+#~ msgid "SLA for Bank transactions is 24 Hours + bank settlement period"
+#~ msgstr "من المتوقع وصول المبلغ الى حساب المستلم خلال 3 ايام عمل"
 
 #~ msgid "CASH_TRANSFER"
 #~ msgstr " تحويل كاش"

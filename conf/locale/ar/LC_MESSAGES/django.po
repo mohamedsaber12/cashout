@@ -1054,14 +1054,10 @@ msgid "This field is required"
 msgstr ""
 
 #: disbursement/forms.py:595 disbursement/forms.py:922
-#, fuzzy
-#| msgid "Symbols like !%*+& not allowed in first name"
 msgid "Symbols like !%*+&,<=> not allowed in first name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاول"
 
 #: disbursement/forms.py:603 disbursement/forms.py:930
-#, fuzzy
-#| msgid "Symbols like !%*+& not allowed in last name"
 msgid "Symbols like !%*+&,<=> not allowed in last name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاخير"
 
@@ -1181,8 +1177,6 @@ msgid "Vat"
 msgstr "ضريبة القيمة المضافة"
 
 #: disbursement/models.py:182
-#, fuzzy
-#| msgid "Transaction ID"
 msgid "Transaction UID"
 msgstr "كود المعاملة"
 
@@ -1335,14 +1329,10 @@ msgid "Is manual patch single step transaction?"
 msgstr ""
 
 #: disbursement/models.py:343 instant_cashin/models/instant_transactions.py:124
-#, fuzzy
-#| msgid "Wallets Transactions"
 msgid "Client Transaction Reference"
 msgstr "معاملات المحافظ"
 
 #: disbursement/models.py:348
-#, fuzzy
-#| msgid "Transactions"
 msgid "Optional Transaction Comment"
 msgstr "المعاملات"
 
@@ -1463,8 +1453,6 @@ msgid ""
 msgstr ""
 
 #: disbursement/utils.py:97
-#, fuzzy
-#| msgid "Salary"
 msgid "salary"
 msgstr "المرتب"
 
@@ -1473,8 +1461,6 @@ msgid "For concurrent or repeated payments"
 msgstr "للمدفوعات المتزامنة أو المتكررة"
 
 #: disbursement/utils.py:99
-#, fuzzy
-#| msgid "Credit card"
 msgid "credit_card"
 msgstr "البطاقة الائتمانية"
 
@@ -1483,8 +1469,6 @@ msgid "For credit cards payments"
 msgstr "لمدفوعات بطاقات الائتمان"
 
 #: disbursement/utils.py:100
-#, fuzzy
-#| msgid "Prepaid card"
 msgid "prepaid_card"
 msgstr "كروت مسبقة الدفع"
 
@@ -1493,8 +1477,6 @@ msgid "For prepaid cards and Meeza cards payments"
 msgstr "للكروت مسبقة الدفع و بطاقات ميزة"
 
 #: disbursement/utils.py:102
-#, fuzzy
-#| msgid "Cash transfer"
 msgid "cash_transfer"
 msgstr "تحويل نقدي"
 
@@ -1663,8 +1645,6 @@ msgid "Attijariwafa Bank"
 msgstr ""
 
 #: disbursement/utils.py:152
-#, fuzzy
-#| msgid "Validation Failed"
 msgid "Channel Authentication Failed"
 msgstr "فشل التعريف"
 
@@ -1797,14 +1777,10 @@ msgid "Funding Account was not Honored/General Decline"
 msgstr ""
 
 #: disbursement/utils.py:186
-#, fuzzy
-#| msgid "Transactions"
 msgid "Invalid Transaction"
 msgstr "المعاملات"
 
 #: disbursement/utils.py:187
-#, fuzzy
-#| msgid "Amount"
 msgid "Invalid Amount"
 msgstr "المبلغ"
 
@@ -1813,8 +1789,6 @@ msgid "Invalid Funding Account Card Number"
 msgstr ""
 
 #: disbursement/utils.py:189
-#, fuzzy
-#| msgid "Issuer"
 msgid "Invalid Issuer"
 msgstr "جهة الصرف"
 
@@ -1895,8 +1869,6 @@ msgid "Invalid Authorization Life Cycle"
 msgstr ""
 
 #: disbursement/utils.py:209
-#, fuzzy
-#| msgid "Validation Failed"
 msgid "C-PIN Validation Not Possible"
 msgstr "فشل التعريف"
 
@@ -1913,8 +1885,6 @@ msgid "Authorization System/Issuer System Inoperative"
 msgstr ""
 
 #: disbursement/utils.py:213
-#, fuzzy
-#| msgid "Single Step Transactions"
 msgid "Unable to Route Transaction"
 msgstr "إنشاء معاملة واحدة"
 
@@ -1939,14 +1909,10 @@ msgid "Catch All Acquirer SE Error"
 msgstr ""
 
 #: disbursement/utils.py:221
-#, fuzzy
-#| msgid "Successful"
 msgid "Successful transaction"
 msgstr "الناجحة"
 
 #: disbursement/utils.py:222
-#, fuzzy
-#| msgid " Disbursement Files"
 msgid "Invalid disbursement request"
 msgstr "ملفات الصرف"
 
@@ -2107,8 +2073,6 @@ msgid ""
 msgstr ""
 
 #: instant_cashin/api/serializers.py:114 instant_cashin/api/serializers.py:123
-#, fuzzy
-#| msgid "Symbols like !%*+& not allowed in last name"
 msgid "Symbols like !%*+&,<=> not allowed in full_name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاخير"
 
@@ -2268,8 +2232,6 @@ msgid "The customer/recipient name"
 msgstr ""
 
 #: instant_cashin/models/instant_transactions.py:134
-#, fuzzy
-#| msgid "Top Up Balance"
 msgid "From Accept"
 msgstr "من رصيد اكسبت"
 
@@ -2851,8 +2813,6 @@ msgid "Log in with"
 msgstr ""
 
 #: templates/data/django_admin_login.html:71
-#, fuzzy
-#| msgid "Forgot your password?"
 msgid "Forgotten your password or username?"
 msgstr "نسيت كلمة السر"
 
@@ -2938,8 +2898,6 @@ msgid "Download Default Sample File"
 msgstr "تحميل الملف المستخدم"
 
 #: templates/data/document_disbursement_list.html:69
-#, fuzzy
-#| msgid "Amount"
 msgid "Count"
 msgstr "المبلغ"
 
@@ -3341,8 +3299,6 @@ msgstr "تفاصيل حالة المعاملة"
 #: templates/disbursement/e_wallets_transactions_list.html:425
 #: templates/disbursement/orange_bank_wallet_trx_list.html:309
 #: templates/disbursement/vf_et_aman_trx_list.html:320
-#, fuzzy
-#| msgid "Document ID"
 msgid "Comment 1"
 msgstr "كود الملف"
 
@@ -3351,8 +3307,6 @@ msgstr "كود الملف"
 #: templates/disbursement/e_wallets_transactions_list.html:427
 #: templates/disbursement/orange_bank_wallet_trx_list.html:311
 #: templates/disbursement/vf_et_aman_trx_list.html:322
-#, fuzzy
-#| msgid "Document ID"
 msgid "Comment 2"
 msgstr "كود الملف"
 
@@ -3448,14 +3402,10 @@ msgid "BANK WALLET"
 msgstr ""
 
 #: templates/disbursement/home_root.html:436
-#, fuzzy
-#| msgid "MIDBANK"
 msgid " BANKS"
 msgstr "ميد-بنك"
 
 #: templates/disbursement/home_root.html:505
-#, fuzzy
-#| msgid "Document Transactions"
 msgid "Recent Transactions"
 msgstr "توثيق المعاملات"
 
@@ -3464,8 +3414,6 @@ msgid " Identifier"
 msgstr ""
 
 #: templates/disbursement/orange_bank_wallet_trx_list.html:44
-#, fuzzy
-#| msgid "Bank wallets/Orange Document Transactions"
 msgid "Bank wallets/Orange cash Transactions"
 msgstr "ملف معاملات Bank wallets/Orange"
 
@@ -3476,8 +3424,6 @@ msgid "Payment Links"
 msgstr ""
 
 #: templates/disbursement/payment_link_list.html:96
-#, fuzzy
-#| msgid "Transactions Summary"
 msgid "Payment Links Summary"
 msgstr " ملخص المعاملات"
 
@@ -3502,8 +3448,6 @@ msgid "Paid"
 msgstr ""
 
 #: templates/disbursement/payment_link_list.html:306
-#, fuzzy
-#| msgid "Document Details"
 msgid "Payment Link Details"
 msgstr " تفاصيل الملف "
 
@@ -3544,8 +3488,6 @@ msgid "Wallets"
 msgstr "محافظ"
 
 #: templates/disbursement/vf_et_aman_trx_list.html:45
-#, fuzzy
-#| msgid "Vodafone/Etisalat/Aman Document Transactions"
 msgid "Vodafone/Etisalat/Aman Transactions"
 msgstr "ملف معاملات Vodafone/Etisalat/Aman"
 
@@ -3602,8 +3544,6 @@ msgstr ""
 #: templates/disbursement_sidebar.html:106
 #: templates/disbursement_sidebar.html:117
 #: templates/instant_cashin/sidebar.html:32
-#, fuzzy
-#| msgid "Top Up Balance"
 msgid "Topup balance"
 msgstr "إضافة رصيد"
 
@@ -3654,8 +3594,6 @@ msgstr ""
 #: templates/users/change_pin.html:14
 #: templates/users/vodafone_change_pin.html:7
 #: templates/users/vodafone_change_pin.html:14
-#, fuzzy
-#| msgid "Change Password"
 msgid "Change Pin"
 msgstr "تغير كلمه المرور"
 
@@ -4010,26 +3948,18 @@ msgid "All Support Members"
 msgstr "كل أعضاء الدعم"
 
 #: templates/superadmin_sidebar.html:20
-#, fuzzy
-#| msgid "New Support Member"
 msgid "New Onboard Member"
 msgstr "عضو دعم جديد"
 
 #: templates/superadmin_sidebar.html:21
-#, fuzzy
-#| msgid "All Support Members"
 msgid "All Onboard Members"
 msgstr "كل أعضاء الدعم"
 
 #: templates/superadmin_sidebar.html:22
-#, fuzzy
-#| msgid "New Support Member"
 msgid "New Supervisor Member"
 msgstr "عضو دعم جديد"
 
 #: templates/superadmin_sidebar.html:23
-#, fuzzy
-#| msgid "All Support Members"
 msgid "All Supervisor Members"
 msgstr "كل أعضاء الدعم"
 
@@ -4039,8 +3969,6 @@ msgstr "العلامه التجارية"
 
 #: templates/supervisor/add_supervisor_user.html:6
 #: users/models/supervisor.py:45 users/models/support.py:57
-#, fuzzy
-#| msgid "Specs Used"
 msgid "Supervisor User"
 msgstr "المواصفات المستخدمة"
 
@@ -4049,8 +3977,6 @@ msgid "Add Supervisor User"
 msgstr ""
 
 #: templates/supervisor/list.html:6 templates/supervisor/list.html:20
-#, fuzzy
-#| msgid "Specs Used"
 msgid "Supervisor Users"
 msgstr "المواصفات المستخدمة"
 
@@ -4059,8 +3985,6 @@ msgid "No Supervisor users are set here ..."
 msgstr ""
 
 #: templates/supervisor/sidebar.html:13
-#, fuzzy
-#| msgid "All Support Members"
 msgid "Support Members"
 msgstr "كل أعضاء الدعم"
 
@@ -4113,8 +4037,6 @@ msgid "Transactions List"
 msgstr ""
 
 #: templates/support/clients.html:252
-#, fuzzy
-#| msgid "Disbursement Progress"
 msgid "Disbursement Documents List"
 msgstr "نجاح الصرف"
 
@@ -4123,8 +4045,6 @@ msgid "Documents"
 msgstr "ملفات"
 
 #: templates/support/clients.html:270
-#, fuzzy
-#| msgid "About:"
 msgid "About"
 msgstr "عن:"
 
@@ -4239,8 +4159,6 @@ msgid "Clients Credentials"
 msgstr ""
 
 #: templates/support/integration_client_credentials.html:66
-#, fuzzy
-#| msgid "New Client"
 msgid "Onboard New Client"
 msgstr "عميل جديد"
 
@@ -4249,15 +4167,11 @@ msgid "View Credentials"
 msgstr ""
 
 #: templates/support/integration_client_credentials.html:124
-#, fuzzy
-#| msgid "New Client"
 msgid "Add New Client"
 msgstr "عميل جديد"
 
 #: templates/support/integration_client_credentials.html:135
 #: users/forms.py:1100
-#, fuzzy
-#| msgid "First Name"
 msgid "Client Name"
 msgstr "الإسم الأول"
 
@@ -4461,8 +4375,6 @@ msgid "Add"
 msgstr ""
 
 #: templates/users/callback_url.html:12 templates/users/level_update.html:11
-#, fuzzy
-#| msgid "Edit Data"
 msgid "Edit"
 msgstr "تعديل الملف الشخصي"
 
@@ -4512,14 +4424,10 @@ msgid "Vodafone PSP Disbursement Model"
 msgstr ""
 
 #: templates/users/clients.html:159
-#, fuzzy
-#| msgid "InActive"
 msgid "Inactive"
 msgstr "غير مفعل"
 
 #: templates/users/clients.html:164
-#, fuzzy
-#| msgid " Fees Profile"
 msgid "Edit Fees Profile"
 msgstr "ملف الرسوم"
 
@@ -4641,8 +4549,6 @@ msgid "Uploader"
 msgstr ""
 
 #: templates/users/members.html:96
-#, fuzzy
-#| msgid "Level"
 msgid "Edit Level"
 msgstr "حد الصرف"
 
@@ -4872,32 +4778,22 @@ msgid " Entity Budget"
 msgstr ""
 
 #: templates/utilities/list_transfer_request.html:6
-#, fuzzy
-#| msgid "Transfer Request"
 msgid "Transfer Requests"
 msgstr "طلب تحويل رصيد"
 
 #: templates/utilities/list_transfer_request.html:25
-#, fuzzy
-#| msgid "Transfer Request"
 msgid "Topup Requests"
 msgstr "طلب تحويل رصيد"
 
 #: templates/utilities/list_transfer_request.html:39
-#, fuzzy
-#| msgid "Amount"
 msgid "FX Fees Amount"
 msgstr "المبلغ"
 
 #: templates/utilities/list_transfer_request.html:40
-#, fuzzy
-#| msgid "Balance Inquiry"
 msgid "Balance Before"
 msgstr "إستعلام عن الرصيد"
 
 #: templates/utilities/list_transfer_request.html:41
-#, fuzzy
-#| msgid "Balance Inquiry"
 msgid "Balance After"
 msgstr "إستعلام عن الرصيد"
 
@@ -4919,8 +4815,6 @@ msgstr ""
 
 #: templates/utilities/new_entities_report.html:82
 #: templates/utilities/new_entities_report.html:107
-#, fuzzy
-#| msgid "Username"
 msgid "Admin Username"
 msgstr "إسم المستخدم"
 
@@ -5128,8 +5022,6 @@ msgid "Invalid company name"
 msgstr ""
 
 #: users/forms.py:1121
-#, fuzzy
-#| msgid "Symbols like !%*+& not allowed in last name"
 msgid "Symbols like !%*+@& not allowed in client name"
 msgstr "الرموز مثل !%*+& غير مسموح بيها فى الاسم الاخير"
 
@@ -5505,26 +5397,18 @@ msgid "checker"
 msgstr ""
 
 #: users/views/support_views.py:196
-#, fuzzy
-#| msgid "Validation Process Running"
 msgid "Validation process is running"
 msgstr "عمليه التعريف قيد التنفيذ"
 
 #: users/views/support_views.py:198
-#, fuzzy
-#| msgid "Validated Successfully"
 msgid "Validated successfully"
 msgstr "نجاح التعريف"
 
 #: users/views/support_views.py:200
-#, fuzzy
-#| msgid "Validation Failed"
 msgid "Validation failure"
 msgstr "فشل التعريف"
 
 #: users/views/support_views.py:204
-#, fuzzy
-#| msgid "Ready for Disbursement"
 msgid "Ready for disbursement"
 msgstr "جاهز للصرف"
 
@@ -5594,20 +5478,14 @@ msgid "Amount To Be Added "
 msgstr "المبلغ المراد اضافته"
 
 #: utilities/forms.py:156
-#, fuzzy
-#| msgid "Cash transfer"
 msgid "Bank Transfer"
 msgstr "تحويل بنكي"
 
 #: utilities/forms.py:157
-#, fuzzy
-#| msgid "Top Up Balance"
 msgid "From Accept Balance"
 msgstr "من رصيد اكسبت"
 
 #: utilities/forms.py:169 utilities/models/generic_models.py:703
-#, fuzzy
-#| msgid "Egyptian Gulf Bank (EG-Bank)"
 msgid "Egyptian Pound (L.E)"
 msgstr "EG بنك"
 
@@ -5616,8 +5494,6 @@ msgid "American Dollar ($)"
 msgstr ""
 
 #: utilities/forms.py:179
-#, fuzzy
-#| msgid "Username"
 msgid "username"
 msgstr "إسم المستخدم"
 
@@ -5698,14 +5574,10 @@ msgid "Bank cards"
 msgstr ""
 
 #: utilities/models/abstract_models.py:82
-#, fuzzy
-#| msgid "Username"
 msgid "UIG Login Username"
 msgstr "إسم المستخدم"
 
 #: utilities/models/abstract_models.py:83
-#, fuzzy
-#| msgid "Password"
 msgid "UIG Login Password"
 msgstr "كلمة المرور"
 
@@ -5857,8 +5729,6 @@ msgid ""
 msgstr ""
 
 #: utilities/models/generic_models.py:87
-#, fuzzy
-#| msgid "Top Up Balance"
 msgid "Hold Balance"
 msgstr "إضافة رصيد"
 

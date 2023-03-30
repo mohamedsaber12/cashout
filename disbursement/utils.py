@@ -4,16 +4,26 @@ from __future__ import unicode_literals
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
 
-INSTANT_TRX_RECEIVED = _("Transaction received and validated successfully. Dispatched for being processed by the carrier")
-INSTANT_TRX_BEING_PROCESSED = _("Transaction received by the carrier and being processed now")
-INSTANT_TRX_IS_ACCEPTED = _("Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now")
-INSTANT_TRX_IS_REJECTED = _("Transaction rejected by the carrier. Please try again or contact your support team")
-BANK_TRX_RECEIVED = _("Transaction received and validated successfully. Dispatched for being processed by the bank")
-BANK_TRX_BEING_PROCESSED = _("Transaction received by the bank and being processed now")
-BANK_TRX_IS_SUCCESSFUL_1 = _("Successful with warning, A transfer will take place once authorized by the receiver bank")
-BANK_TRX_IS_SUCCESSFUL_2 = _("Successful, transaction is settled by the receiver bank")
-INTERNAL_ERROR_MSG = _("Process stopped during an internal error, can you try again or contact your support team")
-EXTERNAL_ERROR_MSG = _("Process stopped during an external error, can you try again or contact your support team")
+INSTANT_TRX_RECEIVED = _(
+    "Transaction received and validated successfully. Dispatched for being processed by the carrier")
+INSTANT_TRX_BEING_PROCESSED = _(
+    "Transaction received by the carrier and being processed now")
+INSTANT_TRX_IS_ACCEPTED = _(
+    "Transaction processed and accepted by the carrier. Your transfer is ready for exchanging now")
+INSTANT_TRX_IS_REJECTED = _(
+    "Transaction rejected by the carrier. Please try again or contact your support team")
+BANK_TRX_RECEIVED = _(
+    "Transaction received and validated successfully. Dispatched for being processed by the bank")
+BANK_TRX_BEING_PROCESSED = _(
+    "Transaction received by the bank and being processed now")
+BANK_TRX_IS_SUCCESSFUL_1 = _(
+    "Successful with warning, A transfer will take place once authorized by the receiver bank")
+BANK_TRX_IS_SUCCESSFUL_2 = _(
+    "Successful, transaction is settled by the receiver bank")
+INTERNAL_ERROR_MSG = _(
+    "Process stopped during an internal error, can you try again or contact your support team")
+EXTERNAL_ERROR_MSG = _(
+    "Process stopped during an external error, can you try again or contact your support team")
 
 
 VALID_BANK_CODES_LIST = [
@@ -60,10 +70,10 @@ VALID_BANK_CODES_LIST = [
 ]
 
 VALID_BANK_TRANSACTION_TYPES_LIST = [
-    "CASH_TRANSFER",
-    "SALARY",
-    "PREPAID_CARD",
-    "CREDIT_CARD"
+    _("CASH_TRANSFER"),
+    _("SALARY"),
+    _("PREPAID_CARD"),
+    _("CREDIT_CARD")
 ]
 
 TRX_RETURNED_BY_BANK_CODES = [
@@ -77,66 +87,70 @@ TRX_REJECTED_BY_BANK_CODES = [
 ]
 
 BANK_TRANSACTION_TYPES_DESCRIPTION_LIST = [
-    {'type': _('salary')       , 'description': _('For concurrent or repeated payments')},
-    {'type': _('credit_card')  , 'description': _('For credit cards payments')},
-    {'type': _('prepaid_card') , 'description': _('For prepaid cards and Meeza cards payments')},
-    {'type': _('cash_transfer'), 'description': _('For bank accounts, debit cards etc..')},
+    {'type': _('salary'), 'description': _(
+        'For concurrent or repeated payments')},
+    {'type': _('credit_card'), 'description': _('For credit cards payments')},
+    {'type': _('prepaid_card'), 'description': _(
+        'For prepaid cards and Meeza cards payments')},
+    {'type': _('cash_transfer'), 'description': _(
+        'For bank accounts, debit cards etc..')},
 ]
 
 BANK_CODES = [
-    {'name': _('Ahli United Bank')                              , 'code':  'AUB' },
-    {'name': _('MIDBANK')                                       , 'code':  'MIDB'},
-    {'name': _('Banque Du Caire')                               , 'code':  'BDC' },
-    {'name': _('HSBC Bank Egypt S.A.E')                         , 'code':  'HSBC'},
-    {'name': _('Credit Agricole Egypt S.A.E')                   , 'code':  'CAE' },
-    {'name': _('Egyptian Gulf Bank (EG-Bank)')                  , 'code':  'EGB' },
-    {'name': _('The United Bank')                               , 'code':  'UB'  },
-    {'name': _('Qatar National Bank Alahli')                    , 'code':  'QNB' },
-    {'name': _('Arab Bank PLC')                                 , 'code':  'ARAB'},
-    {'name': _('Emirates National Bank of Dubai')               , 'code':  'ENBD'},
-    {'name': _('Al Ahli Bank of Kuwait – Egypt')                , 'code':  'ABK' },
-    {'name': _('National Bank of Kuwait – Egypt')               , 'code':  'NBK' },
-    {'name': _('Arab Banking Corporation - Egypt S.A.E (ABC)')  , 'code':  'ABC' },
-    {'name': _('First Abu Dhabi Bank')                          , 'code':  'FAB' },
-    {'name': _('Abu Dhabi Islamic Bank – Egypt')                , 'code':  'ADIB'},
-    {'name': _('Commercial International Bank - Egypt S.A.E')   , 'code':  'CIB' },
-    {'name': _('Housing And Development Bank')                  , 'code':  'HDB' },
-    {'name': _('Banque Misr')                                   , 'code':  'MISR'},
-    {'name': _('Arab African International Bank')               , 'code':  'AAIB'},
-    {'name': _('Egyptian Arab Land Bank')                       , 'code':  'EALB'},
-    {'name': _('Export Development Bank of Egypt')              , 'code':  'EDBE'},
-    {'name': _('Faisal Islamic Bank of Egypt')                  , 'code':  'FAIB'},
-    {'name': _('Blom Bank')                                     , 'code':  'BLOM'},
-    {'name': _('Abu Dhabi Commercial Bank – Egypt')             , 'code':  'ADCB'},
-    {'name': _('Alex Bank Egypt')                               , 'code':  'BOA' },
-    {'name': _('Societe Arabe Internationale De Banque (SAIB)') , 'code':  'SAIB'},
-    {'name': _('National Bank of Egypt')                        , 'code':  'NBE' },
-    {'name': _('Al Baraka Bank Egypt B.S.C')                    , 'code':  'ABRK'},
-    {'name': _('Egypt Post')                                    , 'code':  'POST'},
-    {'name': _('Nasser Social Bank')                            , 'code':  'NSB' },
-    {'name': _('Industrial Development Bank')                   , 'code':  'IDB' },
-    {'name': _('Suez Canal Bank')                               , 'code':  'SCB' },
-    {'name': _('Mashreq Bank')                                  , 'code':  'MASH'},
-    {'name': _('Arab Investment Bank')                          , 'code':  'AIB' },
-    {'name': _('General Authority For Supply Commodities')      , 'code':  'GASC'},
-    {'name': _('Arab International Bank')                       , 'code':  'ARIB'},
-    {'name': _('Agricultural Bank of Egypt')                    , 'code':  'PDAC'},
-    {'name': _('National Bank of Greece')                       , 'code':  'NBG' },
-    {'name': _('Central Bank Of Egypt')                         , 'code':  'CBE' },
-    {'name': _('Attijariwafa Bank')                             , 'code':  'BBE' }
-  ]
+    {'name': _('Ahli United Bank'), 'code':  'AUB'},
+    {'name': _('MIDBANK'), 'code':  'MIDB'},
+    {'name': _('Banque Du Caire'), 'code':  'BDC'},
+    {'name': _('HSBC Bank Egypt S.A.E'), 'code':  'HSBC'},
+    {'name': _('Credit Agricole Egypt S.A.E'), 'code':  'CAE'},
+    {'name': _('Egyptian Gulf Bank (EG-Bank)'), 'code':  'EGB'},
+    {'name': _('The United Bank'), 'code':  'UB'},
+    {'name': _('Qatar National Bank Alahli'), 'code':  'QNB'},
+    {'name': _('Arab Bank PLC'), 'code':  'ARAB'},
+    {'name': _('Emirates National Bank of Dubai'), 'code':  'ENBD'},
+    {'name': _('Al Ahli Bank of Kuwait – Egypt'), 'code':  'ABK'},
+    {'name': _('National Bank of Kuwait – Egypt'), 'code':  'NBK'},
+    {'name': _('Arab Banking Corporation - Egypt S.A.E (ABC)'), 'code':  'ABC'},
+    {'name': _('First Abu Dhabi Bank'), 'code':  'FAB'},
+    {'name': _('Abu Dhabi Islamic Bank – Egypt'), 'code':  'ADIB'},
+    {'name': _('Commercial International Bank - Egypt S.A.E'), 'code':  'CIB'},
+    {'name': _('Housing And Development Bank'), 'code':  'HDB'},
+    {'name': _('Banque Misr'), 'code':  'MISR'},
+    {'name': _('Arab African International Bank'), 'code':  'AAIB'},
+    {'name': _('Egyptian Arab Land Bank'), 'code':  'EALB'},
+    {'name': _('Export Development Bank of Egypt'), 'code':  'EDBE'},
+    {'name': _('Faisal Islamic Bank of Egypt'), 'code':  'FAIB'},
+    {'name': _('Blom Bank'), 'code':  'BLOM'},
+    {'name': _('Abu Dhabi Commercial Bank – Egypt'), 'code':  'ADCB'},
+    {'name': _('Alex Bank Egypt'), 'code':  'BOA'},
+    {'name': _('Societe Arabe Internationale De Banque (SAIB)'),
+     'code':  'SAIB'},
+    {'name': _('National Bank of Egypt'), 'code':  'NBE'},
+    {'name': _('Al Baraka Bank Egypt B.S.C'), 'code':  'ABRK'},
+    {'name': _('Egypt Post'), 'code':  'POST'},
+    {'name': _('Nasser Social Bank'), 'code':  'NSB'},
+    {'name': _('Industrial Development Bank'), 'code':  'IDB'},
+    {'name': _('Suez Canal Bank'), 'code':  'SCB'},
+    {'name': _('Mashreq Bank'), 'code':  'MASH'},
+    {'name': _('Arab Investment Bank'), 'code':  'AIB'},
+    {'name': _('General Authority For Supply Commodities'), 'code':  'GASC'},
+    {'name': _('Arab International Bank'), 'code':  'ARIB'},
+    {'name': _('Agricultural Bank of Egypt'), 'code':  'PDAC'},
+    {'name': _('National Bank of Greece'), 'code':  'NBG'},
+    {'name': _('Central Bank Of Egypt'), 'code':  'CBE'},
+    {'name': _('Attijariwafa Bank'), 'code':  'BBE'}
+]
 
 ERROR_CODES_MESSAGES = {
     # Vodafone Cash Codes
-    '403' : _('Channel Authentication Failed'),
-    '404' : _('Undefined request type'),
-    '406' : _('Incorrect input given to request'),
-    '501' : _('Internal Error'),
-    '583' : _('Exceeded Maximum Limit Per Single Transaction'),
-    '604' : _('Below Minimum Transaction Limit Per Single Transaction'),
-    '610' : _('User Not Eligible To Perform Transaction'),
-    '615' : _('Sender and Recipient Accounts are the Same'),
-    '618' : _('Recipient Is Unregistered'),
+    '403': _('Channel Authentication Failed'),
+    '404': _('Undefined request type'),
+    '406': _('Incorrect input given to request'),
+    '501': _('Internal Error'),
+    '583': _('Exceeded Maximum Limit Per Single Transaction'),
+    '604': _('Below Minimum Transaction Limit Per Single Transaction'),
+    '610': _('User Not Eligible To Perform Transaction'),
+    '615': _('Sender and Recipient Accounts are the Same'),
+    '618': _('Recipient Is Unregistered'),
     '1051':	_('MSISDN Does Not Exist'),
     '1056':	_('Invalid Consumer PIN'),
     '1033':	_('Initial MPIN has not been changed'),
@@ -197,7 +211,7 @@ ERROR_CODES_MESSAGES = {
     '6099':	_('Catch All Acquirer SE Error'),
 
     # Etisalat Cash Codes
-    '0'    : _('Successful transaction'),
+    '0': _('Successful transaction'),
     '90002': _('Invalid disbursement request'),
     '90003': _('Invalid or missing parameters'),
     '90007': _('Invalid or missing parameters'),

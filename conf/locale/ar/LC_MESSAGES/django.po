@@ -792,7 +792,7 @@ msgstr ""
 
 #: disbursement/forms.py:123
 msgid "Add new pin"
-msgstr ""
+msgstr " ادخل رقم سري جديدا"
 
 #: disbursement/forms.py:160 disbursement/forms.py:285
 #: disbursement/forms.py:463 disbursement/forms.py:727
@@ -856,23 +856,23 @@ msgstr "كروت بنكيه"
 
 #: disbursement/forms.py:330 utilities/models/generic_models.py:585
 msgid "Vodafone"
-msgstr ""
+msgstr "فودافون كاش"
 
 #: disbursement/forms.py:331 utilities/models/generic_models.py:586
 msgid "Etisalat"
-msgstr ""
+msgstr "اتصالات كاش"
 
 #: disbursement/forms.py:332 utilities/models/generic_models.py:587
 msgid "Orange"
-msgstr "اورانج"
+msgstr "اورانج كاش"
 
 #: disbursement/forms.py:333 utilities/models/generic_models.py:590
 msgid "Bank Wallet"
-msgstr ""
+msgstr " المحافظ المصرفيه"
 
 #: disbursement/forms.py:334 utilities/models/generic_models.py:588
 msgid "Aman"
-msgstr ""
+msgstr " امان"
 
 #: disbursement/forms.py:344
 #, fuzzy
@@ -1484,19 +1484,19 @@ msgstr ""
 
 #: disbursement/utils.py:73
 msgid "CASH_TRANSFER"
-msgstr ""
+msgstr " تحويل كاش"
 
 #: disbursement/utils.py:74
 msgid "SALARY"
-msgstr ""
+msgstr "مرتب"
 
 #: disbursement/utils.py:75
 msgid "PREPAID_CARD"
-msgstr ""
+msgstr "بطاقه مسبقه الدفع"
 
 #: disbursement/utils.py:76
 msgid "CREDIT_CARD"
-msgstr ""
+msgstr " بطاقه ائتمان"
 
 #: disbursement/utils.py:90
 #, fuzzy
@@ -3562,7 +3562,7 @@ msgstr " ملخص المعاملات"
 #: templates/disbursement/single_step_trx_list.html:77
 #: templates/disbursement/single_step_trx_list.html:226
 msgid "Make New Transaction"
-msgstr ""
+msgstr " قم باجراء معامله جديده"
 
 #: templates/disbursement/single_step_trx_list.html:442
 msgid "Please note that:"

@@ -387,18 +387,20 @@ class BudgetAdmin(SimpleHistoryAdmin):
 
 
 @admin.register(TopupRequest)
-class TopupRequestAdmin(admin.ModelAdmin):
+class TopupRequestAdmin(admin.ModelAdmin, ExportCsvMixin):
     """
     Customize the list view of the call topup requests model
     """
 
-    list_display = ["client", "amount", "currency", "created_at", "updated_at"]
+    list_display = ["client", "amount","username", "currency", "created_at", "updated_at"]
     list_filter = [
         ("created_at", DateRangeFilter),
         "automatic",
         "currency",
         "client",
     ]
+
+    actions = ["export_as_csv"]
 
 
 @admin.register(BalanceManagementOperations)
@@ -425,7 +427,7 @@ class BalanceManagementOperationsAdmin(admin.ModelAdmin):
 
 
 @admin.register(TopupAction)
-class TopupActionAdmin(admin.ModelAdmin):
+class TopupActionAdmin(admin.ModelAdmin, ExportCsvMixin):
     """
     Customize the list view of the call topup requests model
     """
@@ -449,6 +451,8 @@ class TopupActionAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return False
+    
+    actions = ["export_as_csv"]
 
 
 @admin.register(VodafoneBalance)

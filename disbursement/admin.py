@@ -31,6 +31,11 @@ from django.http import HttpResponseRedirect
 from django import forms
 from django.shortcuts import resolve_url, render
 from instant_cashin.tasks import update_manual_batch_transactions_task
+from users.models import RootUser
+from django_admin_multiple_choice_list_filter.list_filters import (
+    MultipleChoiceListFilter,
+)
+
 
 
 class DistinctFilter(admin.SimpleListFilter):
@@ -132,6 +137,17 @@ class TimeoutFilter(admin.SimpleListFilter):
             )
 
 
+class RootUserListFilter(MultipleChoiceListFilter):
+    title = "Root User"
+    parameter_name = "user_created__root__in"
+
+    def lookups(self, request, model_admin):
+        arr = []
+        for obj in RootUser.objects.all():
+            arr.append((obj.id, obj.username))
+        return arr
+    
+
 @admin.register(BankTransaction)
 class BankTransactionAdminModel(
     admin.ModelAdmin, BankExportCsvMixin, ExportCsvMixin, BankExportExcelMixin
@@ -170,7 +186,7 @@ class BankTransactionAdminModel(
         "category_code",
         "transaction_status_code",
         "is_single_step",
-        "user_created__root",
+        RootUserListFilter
     ]
     ordering = ["-id"]
     fieldsets = (

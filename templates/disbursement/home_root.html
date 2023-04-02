@@ -552,12 +552,12 @@
               {% endif %}
               {% if trx.status_choice_verbose %}
                 <td>
-                  <div class="row {% trx.status_choice_verbose == 'Successful' %}
+                  <div class="row {% if trx.status_choice_verbose == 'Successful' %}
                                      successful
                                   {% elif trx.status_choice_verbose == 'Pending' %}
                                      pending
                                   {% else %}
-                                     failed
+                                    failed
                                   {% endif %}"
                        style="text-align: center;"
                   >

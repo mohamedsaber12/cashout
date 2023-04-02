@@ -434,16 +434,17 @@
         </div>
         <div class="modal-body">
           <div class="alert alert-success" role="alert" id="status_description_success">
-            {{ status_description }}
+            {% trans status_description %}
           </div>
 
           {% if request.user.from_accept and not request.user.allowed_to_be_bulk %}
-          <div class="alert alert-info" role="alert" id="SLAs">
-            <b> Please note that:</b>
-            <ul>
-              <li> SLA for wallet transactions is 24 Hours </li>
-              <li> SLA for Bank transactions is 24 Hours + bank settlement period </li>
-          </div>
+            <div class="alert alert-info" role="alert" id="SLAs">
+              <b> {% trans 'Please note that:' %}</b>
+              <ul>
+                <li>{% trans "Request submitted, expect arrival in recipient's wallet within 24 hours." %}</li>
+                <li>{% trans "Request submitted, expect arrival in recipient's bank in 3 working days." %}</li>
+              </ul>
+            </div>
           {% endif %}
           <div style="text-align: center;">
             <img src="{% static 'img/success.png' %}" style='margin:auto;' width = '30%'/>
@@ -541,7 +542,10 @@
     "bLengthChange" : false,
     "bPaginate": false,
     "bInfo" : false,
-    "ordering": false
+    "ordering": false,
+    "oLanguage": {
+      "sSearch": "{% trans 'Search' %}:"
+    }
   });
 
   var buttons = new $.fn.dataTable.Buttons( table, {

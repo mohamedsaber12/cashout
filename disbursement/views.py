@@ -1481,6 +1481,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     + request.get_host()
                     + str(reverse_lazy("instant_api:disburse_single_step")),
                     json=payload,
+                    verify=False
                 )
 
                 if request.user.from_accept and not request.user.allowed_to_be_bulk:

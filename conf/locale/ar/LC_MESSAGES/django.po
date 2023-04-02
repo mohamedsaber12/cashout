@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-03-30 16:00+0200\n"
+"POT-Creation-Date: 2023-04-02 14:10+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -23,8 +23,8 @@ msgstr ""
 #: templates/disbursement/orange_bank_wallet_trx_list.html:293
 #: templates/disbursement/payment_link_list.html:120
 #: templates/disbursement/payment_link_list.html:459
-#: templates/disbursement/single_step_trx_list.html:670
-#: templates/disbursement/single_step_trx_list.html:697
+#: templates/disbursement/single_step_trx_list.html:680
+#: templates/disbursement/single_step_trx_list.html:707
 #: templates/disbursement/vf_et_aman_trx_list.html:325
 #: templates/instant_cashin/instant_viewer.html:238
 #: templates/support/document_details.html:246
@@ -37,9 +37,9 @@ msgstr "تم الانشاء في"
 #: templates/disbursement/e_wallets_transactions_list.html:433
 #: templates/disbursement/orange_bank_wallet_trx_list.html:295
 #: templates/disbursement/single_step_trx_list.html:103
-#: templates/disbursement/single_step_trx_list.html:140
-#: templates/disbursement/single_step_trx_list.html:672
-#: templates/disbursement/single_step_trx_list.html:699
+#: templates/disbursement/single_step_trx_list.html:150
+#: templates/disbursement/single_step_trx_list.html:682
+#: templates/disbursement/single_step_trx_list.html:709
 #: templates/disbursement/vf_et_aman_trx_list.html:328
 #: templates/instant_cashin/banks_transactions.html:14
 #: templates/instant_cashin/instant_viewer.html:240
@@ -77,14 +77,14 @@ msgstr "الناجحة"
 #: templates/disbursement/home_root.html:582
 #: templates/disbursement/payment_link_list.html:283
 #: templates/disbursement/payment_link_status.html:24
-#: templates/disbursement/single_step_trx_list.html:467
+#: templates/disbursement/single_step_trx_list.html:477
 #: templates/disbursement/vf_et_aman_trx_list.html:100
 #: templates/disbursement/vf_et_aman_trx_list.html:277
 #: templates/support/document_details.html:519
 #: templates/support/integration_client_credentials.html:160
 #: templates/users/clients.html:88 utilities/models/abstract_models.py:480
 msgid "Failed"
-msgstr "الغير ناجحة"
+msgstr "غير ناجحة"
 
 #: core/models.py:75 templates/data/banks_document_viewer.html:111
 #: templates/data/document_disbursement_list.html:172
@@ -160,10 +160,10 @@ msgstr ""
 #: templates/disbursement/payment_link_list.html:219
 #: templates/disbursement/payment_link_list.html:464
 #: templates/disbursement/single_step_trx_list.html:99
-#: templates/disbursement/single_step_trx_list.html:136
-#: templates/disbursement/single_step_trx_list.html:237
-#: templates/disbursement/single_step_trx_list.html:651
-#: templates/disbursement/single_step_trx_list.html:684
+#: templates/disbursement/single_step_trx_list.html:146
+#: templates/disbursement/single_step_trx_list.html:247
+#: templates/disbursement/single_step_trx_list.html:661
+#: templates/disbursement/single_step_trx_list.html:694
 #: templates/disbursement/vf_et_aman_trx_list.html:63
 #: templates/disbursement/vf_et_aman_trx_list.html:263
 #: templates/instant_cashin/banks_transactions.html:10
@@ -181,7 +181,7 @@ msgstr "المبلغ"
 #: templates/disbursement/bank_transactions_list.html:441
 #: templates/disbursement/banks_trx_list.html:277
 #: templates/disbursement/orange_bank_wallet_trx_list.html:278
-#: templates/disbursement/single_step_trx_list.html:693
+#: templates/disbursement/single_step_trx_list.html:703
 #: templates/instant_cashin/instant_viewer.html:223
 #: templates/support/document_details.html:484
 msgid "Transaction Type"
@@ -826,10 +826,11 @@ msgstr "أدخل رمز/ رقم التعريف الشخصي"
 #: templates/disbursement/banks_trx_list.html:279
 #: templates/disbursement/e_wallets_transactions_list.html:65
 #: templates/disbursement/e_wallets_transactions_list.html:385
+#: templates/disbursement/home_root.html:475
 #: templates/disbursement/home_root.html:523
 #: templates/disbursement/orange_bank_wallet_trx_list.html:66
 #: templates/disbursement/orange_bank_wallet_trx_list.html:280
-#: templates/disbursement/single_step_trx_list.html:658
+#: templates/disbursement/single_step_trx_list.html:668
 #: templates/disbursement/vf_et_aman_trx_list.html:66
 #: templates/disbursement/vf_et_aman_trx_list.html:281
 #: templates/instant_cashin/instant_viewer.html:225
@@ -842,21 +843,27 @@ msgid "Issuer"
 msgstr "جهة الصرف"
 
 #: disbursement/forms.py:325 templates/disbursement/home_root.html:551
-#: templates/disbursement/single_step_trx_list.html:921
-#: templates/disbursement/single_step_trx_list.html:927
+#: templates/disbursement/single_step_trx_list.html:931
+#: templates/disbursement/single_step_trx_list.html:937
 #: utilities/models/generic_models.py:589
 msgid "Bank Card"
 msgstr "كروت بنكيه"
 
-#: disbursement/forms.py:326 utilities/models/generic_models.py:585
+#: disbursement/forms.py:326
+#: templates/disbursement/single_step_trx_list.html:123
+#: utilities/models/generic_models.py:585
 msgid "Vodafone"
 msgstr "فودافون كاش"
 
-#: disbursement/forms.py:327 utilities/models/generic_models.py:586
+#: disbursement/forms.py:327
+#: templates/disbursement/single_step_trx_list.html:125
+#: utilities/models/generic_models.py:586
 msgid "Etisalat"
 msgstr "اتصالات كاش"
 
-#: disbursement/forms.py:328 utilities/models/generic_models.py:587
+#: disbursement/forms.py:328
+#: templates/disbursement/single_step_trx_list.html:127
+#: utilities/models/generic_models.py:587
 msgid "Orange"
 msgstr "اورانج كاش"
 
@@ -864,7 +871,9 @@ msgstr "اورانج كاش"
 msgid "Bank Wallet"
 msgstr " المحافظ المصرفيه"
 
-#: disbursement/forms.py:330 utilities/models/generic_models.py:588
+#: disbursement/forms.py:330
+#: templates/disbursement/single_step_trx_list.html:129
+#: utilities/models/generic_models.py:588
 msgid "Aman"
 msgstr " امان"
 
@@ -895,9 +904,9 @@ msgstr "ادخل الاسم بالكامل"
 #: templates/disbursement/banks_trx_list.html:275
 #: templates/disbursement/disburse_payment_link.html:225
 #: templates/disbursement/orange_bank_wallet_trx_list.html:276
-#: templates/disbursement/single_step_trx_list.html:297
-#: templates/disbursement/single_step_trx_list.html:691
-#: templates/disbursement/single_step_trx_list.html:767
+#: templates/disbursement/single_step_trx_list.html:307
+#: templates/disbursement/single_step_trx_list.html:701
+#: templates/disbursement/single_step_trx_list.html:777
 #: templates/instant_cashin/instant_viewer.html:221
 #: templates/support/document_details.html:482
 #: templates/utilities/transfer_request.html:161
@@ -914,12 +923,12 @@ msgstr "اسم البنك"
 #: templates/disbursement/disburse_payment_link.html:240
 #: templates/disbursement/disburse_payment_link.html:255
 #: templates/disbursement/disburse_payment_link.html:280
-#: templates/disbursement/single_step_trx_list.html:312
-#: templates/disbursement/single_step_trx_list.html:327
-#: templates/disbursement/single_step_trx_list.html:352
-#: templates/disbursement/single_step_trx_list.html:782
-#: templates/disbursement/single_step_trx_list.html:797
-#: templates/disbursement/single_step_trx_list.html:822
+#: templates/disbursement/single_step_trx_list.html:322
+#: templates/disbursement/single_step_trx_list.html:337
+#: templates/disbursement/single_step_trx_list.html:362
+#: templates/disbursement/single_step_trx_list.html:792
+#: templates/disbursement/single_step_trx_list.html:807
+#: templates/disbursement/single_step_trx_list.html:832
 msgid "Msisdn"
 msgstr "رقم الموبايل"
 
@@ -940,12 +949,12 @@ msgstr "رقم الموبايل"
 #: templates/disbursement/disburse_payment_link.html:265
 #: templates/disbursement/orange_bank_wallet_trx_list.html:252
 #: templates/disbursement/orange_bank_wallet_trx_list.html:260
-#: templates/disbursement/single_step_trx_list.html:270
-#: templates/disbursement/single_step_trx_list.html:337
-#: templates/disbursement/single_step_trx_list.html:653
-#: templates/disbursement/single_step_trx_list.html:682
-#: templates/disbursement/single_step_trx_list.html:740
-#: templates/disbursement/single_step_trx_list.html:807
+#: templates/disbursement/single_step_trx_list.html:280
+#: templates/disbursement/single_step_trx_list.html:347
+#: templates/disbursement/single_step_trx_list.html:663
+#: templates/disbursement/single_step_trx_list.html:692
+#: templates/disbursement/single_step_trx_list.html:750
+#: templates/disbursement/single_step_trx_list.html:817
 #: templates/instant_cashin/instant_viewer.html:197
 #: templates/instant_cashin/instant_viewer.html:205
 #: templates/support/clients.html:220
@@ -961,8 +970,8 @@ msgstr "الإسم بالكامل"
 #: disbursement/forms.py:412 disbursement/forms.py:857
 #: templates/disbursement/disburse_payment_link.html:129
 #: templates/disbursement/disburse_payment_link.html:290
-#: templates/disbursement/single_step_trx_list.html:362
-#: templates/disbursement/single_step_trx_list.html:832
+#: templates/disbursement/single_step_trx_list.html:372
+#: templates/disbursement/single_step_trx_list.html:842
 msgid "First Name"
 msgstr "الإسم الأول"
 
@@ -973,8 +982,8 @@ msgstr "الإسم الأول"
 #: disbursement/forms.py:424 disbursement/forms.py:869
 #: templates/disbursement/disburse_payment_link.html:141
 #: templates/disbursement/disburse_payment_link.html:302
-#: templates/disbursement/single_step_trx_list.html:374
-#: templates/disbursement/single_step_trx_list.html:844
+#: templates/disbursement/single_step_trx_list.html:384
+#: templates/disbursement/single_step_trx_list.html:854
 msgid "Last Name"
 msgstr "الإسم الأخير"
 
@@ -985,8 +994,8 @@ msgstr "الإسم الأخير"
 #: disbursement/forms.py:436 disbursement/forms.py:881
 #: templates/disbursement/disburse_payment_link.html:151
 #: templates/disbursement/disburse_payment_link.html:312
-#: templates/disbursement/single_step_trx_list.html:384
-#: templates/disbursement/single_step_trx_list.html:854
+#: templates/disbursement/single_step_trx_list.html:394
+#: templates/disbursement/single_step_trx_list.html:864
 #: templates/support/clients.html:58 templates/support/clients.html:226
 #: templates/support/integration_client_credentials.html:80
 #: templates/users/profile.html:63
@@ -1140,7 +1149,7 @@ msgstr ""
 #: templates/disbursement/vf_et_aman_trx_list.html:68
 #: templates/disbursement/vf_et_aman_trx_list.html:331
 msgid "Disbursed At"
-msgstr ""
+msgstr "تاريخ الصرف"
 
 #: disbursement/models.py:179 disbursement/models.py:345
 #: instant_cashin/models/instant_transactions.py:127
@@ -1151,7 +1160,7 @@ msgstr ""
 #: templates/disbursement/home_root.html:521
 #: templates/disbursement/orange_bank_wallet_trx_list.html:64
 #: templates/disbursement/single_step_trx_list.html:100
-#: templates/disbursement/single_step_trx_list.html:137
+#: templates/disbursement/single_step_trx_list.html:147
 #: templates/disbursement/vf_et_aman_trx_list.html:64
 #: templates/instant_cashin/banks_transactions.html:11
 #: templates/instant_cashin/wallets_transactions.html:10
@@ -1168,7 +1177,7 @@ msgstr "الرسوم"
 #: templates/disbursement/home_root.html:522
 #: templates/disbursement/orange_bank_wallet_trx_list.html:65
 #: templates/disbursement/single_step_trx_list.html:101
-#: templates/disbursement/single_step_trx_list.html:138
+#: templates/disbursement/single_step_trx_list.html:148
 #: templates/disbursement/vf_et_aman_trx_list.html:65
 #: templates/instant_cashin/banks_transactions.html:12
 #: templates/instant_cashin/wallets_transactions.html:11
@@ -1213,8 +1222,8 @@ msgstr ""
 #: templates/disbursement/banks_trx_list.html:245
 #: templates/disbursement/orange_bank_wallet_trx_list.html:61
 #: templates/disbursement/orange_bank_wallet_trx_list.html:246
-#: templates/disbursement/single_step_trx_list.html:647
-#: templates/disbursement/single_step_trx_list.html:678
+#: templates/disbursement/single_step_trx_list.html:657
+#: templates/disbursement/single_step_trx_list.html:688
 #: templates/instant_cashin/instant_viewer.html:191
 #: templates/instant_cashin/wallets_transactions.html:7
 #: templates/support/document_details.html:68
@@ -1952,6 +1961,26 @@ msgstr ""
 msgid "Agents creation failed"
 msgstr ""
 
+#: disbursement/views.py:1259
+msgid "wallets"
+msgstr "محافظ"
+
+#: disbursement/views.py:1259
+msgid "banks"
+msgstr ""
+
+#: disbursement/views.py:1262
+msgid "vodafone/etisalat/aman"
+msgstr "فودافون/اتصالات/أمان"
+
+#: disbursement/views.py:1263
+msgid "bank wallets/orange"
+msgstr "محافظ بنكيه/اورانج كاش"
+
+#: disbursement/views.py:1264
+msgid "bank accounts/cards"
+msgstr "حسابات/كروت بنكيه"
+
 #: disbursement/views.py:1386
 msgid ""
 "Dear All,<br><br>\n"
@@ -1986,7 +2015,7 @@ msgstr ""
 #: templates/disbursement/banks_trx_list.html:147
 #: templates/disbursement/e_wallets_transactions_list.html:154
 #: templates/disbursement/orange_bank_wallet_trx_list.html:148
-#: templates/disbursement/single_step_trx_list.html:490
+#: templates/disbursement/single_step_trx_list.html:500
 #: templates/disbursement/vf_et_aman_trx_list.html:155
 #: templates/instant_cashin/instant_viewer.html:94
 #: templates/support/document_details.html:278
@@ -2019,7 +2048,7 @@ msgstr ""
 #: instant_cashin/api/base_views/balance_management.py:235
 #: templates/disbursement/disbursement_transactions_dashboard.html:50
 #: templates/disbursement/payment_link_list.html:259
-#: templates/disbursement/single_step_trx_list.html:433
+#: templates/disbursement/single_step_trx_list.html:443
 #: templates/support/integration_client_credentials.html:185
 #: templates/users/clients.html:87
 msgid "Success"
@@ -2180,8 +2209,8 @@ msgstr ""
 #: instant_cashin/models/instant_transactions.py:34
 #: templates/disbursement/disburse_payment_link.html:42
 #: templates/disbursement/single_step_trx_list.html:98
-#: templates/disbursement/single_step_trx_list.html:135
-#: templates/disbursement/single_step_trx_list.html:247
+#: templates/disbursement/single_step_trx_list.html:145
+#: templates/disbursement/single_step_trx_list.html:257
 msgid "Issuer Type"
 msgstr "نوع المُصدر"
 
@@ -2214,12 +2243,12 @@ msgid "Agent used from Root's agents list"
 msgstr ""
 
 #: instant_cashin/models/instant_transactions.py:91
-#: templates/disbursement/single_step_trx_list.html:702
+#: templates/disbursement/single_step_trx_list.html:712
 msgid "Status Code"
 msgstr ""
 
 #: instant_cashin/models/instant_transactions.py:94
-#: templates/disbursement/single_step_trx_list.html:704
+#: templates/disbursement/single_step_trx_list.html:714
 msgid "Status Description"
 msgstr "شرح الحالة"
 
@@ -2237,9 +2266,9 @@ msgstr "من رصيد اكسبت"
 
 #: instant_cashin/models/instant_transactions.py:142
 #: templates/disbursement/disburse_payment_link.html:210
-#: templates/disbursement/single_step_trx_list.html:282
-#: templates/disbursement/single_step_trx_list.html:407
-#: templates/disbursement/single_step_trx_list.html:752
+#: templates/disbursement/single_step_trx_list.html:292
+#: templates/disbursement/single_step_trx_list.html:417
+#: templates/disbursement/single_step_trx_list.html:762
 msgid "Transaction Reason"
 msgstr "سبب المعاملة"
 
@@ -2474,7 +2503,7 @@ msgstr ""
 #: templates/data/formats.html:43 templates/data/formats.html:45
 #: templates/disbursement/disburse_payment_link.html:165
 #: templates/disbursement/payment_link_list.html:244
-#: templates/disbursement/single_step_trx_list.html:418
+#: templates/disbursement/single_step_trx_list.html:428
 #: templates/support/integration_client_credentials.html:145
 #: templates/users/add_levels.html:26 templates/users/forget-password.html:17
 #: templates/users/password_reset_confirm.html:23
@@ -2552,8 +2581,8 @@ msgstr ""
 #: templates/disbursement/e_wallets_transactions_list.html:231
 #: templates/disbursement/payment_link_list.html:270
 #: templates/disbursement/payment_link_list.html:294
-#: templates/disbursement/single_step_trx_list.html:454
-#: templates/disbursement/single_step_trx_list.html:478
+#: templates/disbursement/single_step_trx_list.html:464
+#: templates/disbursement/single_step_trx_list.html:488
 #: templates/onboard/list.html:105 templates/onboard/list.html:125
 #: templates/supervisor/list.html:105 templates/supervisor/list.html:125
 #: templates/support/document_details.html:317
@@ -2577,7 +2606,7 @@ msgstr "أدخل رمز/ رقم التعريف الشخصي"
 #: templates/data/banks_document_viewer.html:377
 #: templates/data/e_wallets_document_viewer.html:299
 #: templates/disbursement/payment_link_list.html:233
-#: templates/disbursement/single_step_trx_list.html:398
+#: templates/disbursement/single_step_trx_list.html:408
 msgid "Pin"
 msgstr " رقم /رمز التعريف الشخصي"
 
@@ -2588,13 +2617,13 @@ msgstr " رقم /رمز التعريف الشخصي"
 #: templates/disbursement/e_wallets_transactions_list.html:266
 #: templates/disbursement/orange_bank_wallet_trx_list.html:203
 #: templates/disbursement/payment_link_list.html:366
-#: templates/disbursement/single_step_trx_list.html:555
+#: templates/disbursement/single_step_trx_list.html:565
 #: templates/disbursement/vf_et_aman_trx_list.html:210
 #: templates/instant_cashin/instant_viewer.html:148
 #: templates/support/clients.html:171
 #: templates/support/document_details.html:394
 #: templates/support/integration_client_credentials.html:257
-#: templates/users/session_list.html:108
+#: templates/users/session_list.html:111
 #: templates/utilities/list_transfer_request.html:91
 msgid "Copy"
 msgstr "نسخ"
@@ -2608,14 +2637,14 @@ msgstr "نسخ"
 #: templates/disbursement/home_root.html:489
 #: templates/disbursement/orange_bank_wallet_trx_list.html:214
 #: templates/disbursement/payment_link_list.html:377
-#: templates/disbursement/single_step_trx_list.html:566
+#: templates/disbursement/single_step_trx_list.html:576
 #: templates/disbursement/vf_et_aman_trx_list.html:221
 #: templates/export_bar.html:18
 #: templates/instant_cashin/instant_viewer.html:159
 #: templates/support/clients.html:182
 #: templates/support/document_details.html:405
 #: templates/support/integration_client_credentials.html:268
-#: templates/users/session_list.html:119
+#: templates/users/session_list.html:122
 #: templates/utilities/list_transfer_request.html:102
 msgid "Export"
 msgstr "تحميل الملف"
@@ -2688,7 +2717,7 @@ msgstr ""
 #: templates/disbursement/e_wallets_transactions_list.html:59
 #: templates/disbursement/e_wallets_transactions_list.html:364
 #: templates/disbursement/single_step_trx_list.html:97
-#: templates/disbursement/single_step_trx_list.html:649
+#: templates/disbursement/single_step_trx_list.html:659
 #: templates/disbursement/vf_et_aman_trx_list.html:62
 #: templates/disbursement/vf_et_aman_trx_list.html:260
 #: templates/support/document_details.html:69
@@ -2702,7 +2731,7 @@ msgstr "رقم المحفظة"
 #: templates/disbursement/bank_transactions_list.html:439
 #: templates/disbursement/banks_trx_list.html:273
 #: templates/disbursement/orange_bank_wallet_trx_list.html:274
-#: templates/disbursement/single_step_trx_list.html:689
+#: templates/disbursement/single_step_trx_list.html:699
 #: templates/instant_cashin/instant_viewer.html:219
 #: templates/support/document_details.html:480
 msgid "Bank Swift Code"
@@ -2931,9 +2960,9 @@ msgstr "نجاح الصرف"
 #: templates/disbursement/orange_bank_wallet_trx_list.html:67
 #: templates/disbursement/orange_bank_wallet_trx_list.html:266
 #: templates/disbursement/single_step_trx_list.html:102
-#: templates/disbursement/single_step_trx_list.html:139
-#: templates/disbursement/single_step_trx_list.html:655
-#: templates/disbursement/single_step_trx_list.html:686
+#: templates/disbursement/single_step_trx_list.html:149
+#: templates/disbursement/single_step_trx_list.html:665
+#: templates/disbursement/single_step_trx_list.html:696
 #: templates/disbursement/vf_et_aman_trx_list.html:67
 #: templates/disbursement/vf_et_aman_trx_list.html:271
 #: templates/disbursement/vf_et_aman_trx_list.html:274
@@ -3089,7 +3118,7 @@ msgstr ""
 
 #: templates/data/formats.html:105
 #: templates/disbursement/payment_link_list.html:245
-#: templates/disbursement/single_step_trx_list.html:419
+#: templates/disbursement/single_step_trx_list.html:429
 #: templates/support/integration_client_credentials.html:146
 #: templates/two_factor/_wizard_actions.html:7
 msgid "Cancel"
@@ -3137,9 +3166,10 @@ msgid "Upload Failed"
 msgstr ""
 
 #: templates/date_filter.html:136
-#: templates/disbursement/single_step_trx_list.html:547
+#: templates/disbursement/single_step_trx_list.html:557
+#: templates/users/session_list.html:103
 msgid "Search"
-msgstr ""
+msgstr "بحث"
 
 #: templates/date_filter.html:137
 msgid "Reset"
@@ -3217,14 +3247,14 @@ msgstr "المعاملات"
 
 #: templates/disbursement/bank_transactions_list.html:101
 #: templates/disbursement/bank_transactions_list.html:423
-#: templates/disbursement/single_step_trx_list.html:134
-#: templates/disbursement/single_step_trx_list.html:680
+#: templates/disbursement/single_step_trx_list.html:144
+#: templates/disbursement/single_step_trx_list.html:690
 msgid "Account Number / IBAN"
 msgstr "رقم الحساب / IBAN"
 
 #: templates/disbursement/bank_transactions_list.html:191
 #: templates/disbursement/payment_link_list.html:309
-#: templates/disbursement/single_step_trx_list.html:494
+#: templates/disbursement/single_step_trx_list.html:504
 msgid "Export PDF Report"
 msgstr ""
 
@@ -3260,7 +3290,7 @@ msgid "You will receive an email shortly with the failed data file to download"
 msgstr ""
 
 #: templates/disbursement/bank_transactions_list.html:449
-#: templates/disbursement/single_step_trx_list.html:695
+#: templates/disbursement/single_step_trx_list.html:705
 #: templates/disbursement_sidebar.html:66
 #: templates/disbursement_sidebar.html:88 templates/users/members.html:53
 #: templates/users/profile.html:50
@@ -3327,7 +3357,7 @@ msgstr ""
 #: templates/instant_cashin/instant_viewer.html:200
 #: templates/instant_cashin/wallets_transactions.html:8
 msgid "Recipient"
-msgstr ""
+msgstr "المستلم"
 
 #: templates/disbursement/banks_trx_list.html:285
 #: templates/disbursement/banks_trx_list.html:287
@@ -3335,8 +3365,8 @@ msgstr ""
 #: templates/disbursement/e_wallets_transactions_list.html:393
 #: templates/disbursement/orange_bank_wallet_trx_list.html:286
 #: templates/disbursement/orange_bank_wallet_trx_list.html:288
-#: templates/disbursement/single_step_trx_list.html:663
-#: templates/disbursement/single_step_trx_list.html:665
+#: templates/disbursement/single_step_trx_list.html:673
+#: templates/disbursement/single_step_trx_list.html:675
 #: templates/disbursement/vf_et_aman_trx_list.html:287
 #: templates/disbursement/vf_et_aman_trx_list.html:289
 #: templates/instant_cashin/instant_viewer.html:231
@@ -3352,8 +3382,8 @@ msgstr ""
 
 #: templates/disbursement/disburse_payment_link.html:56
 #: templates/disbursement/disburse_payment_link.html:189
-#: templates/disbursement/single_step_trx_list.html:261
-#: templates/disbursement/single_step_trx_list.html:731
+#: templates/disbursement/single_step_trx_list.html:271
+#: templates/disbursement/single_step_trx_list.html:741
 #: templates/support/document_details.html:72
 #: templates/support/document_details.html:475
 #: templates/utilities/transfer_request.html:181
@@ -3376,6 +3406,10 @@ msgstr ""
 #: templates/users/password_reset_confirm.html:41
 msgid "Home"
 msgstr ""
+
+#: templates/disbursement/home_root.html:314
+msgid "Welcome"
+msgstr "مرحبا"
 
 #: templates/disbursement/home_root.html:335
 msgid "Budget "
@@ -3405,13 +3439,25 @@ msgstr "محافظ بنكيه"
 msgid " BANKS"
 msgstr "بنوك"
 
+#: templates/disbursement/home_root.html:453
+msgid "Export transactions"
+msgstr "استخراج المعاملات"
+
+#: templates/disbursement/home_root.html:461 templates/users/clients.html:76
+msgid "Start Date"
+msgstr "من"
+
+#: templates/disbursement/home_root.html:468 templates/users/clients.html:80
+msgid "End Date"
+msgstr "الى"
+
 #: templates/disbursement/home_root.html:505
 msgid "Recent Transactions"
 msgstr "توثيق المعاملات"
 
 #: templates/disbursement/home_root.html:518
-msgid " Identifier"
-msgstr ""
+msgid "Identifier"
+msgstr "المعرف"
 
 #: templates/disbursement/orange_bank_wallet_trx_list.html:44
 msgid "Bank wallets/Orange cash Transactions"
@@ -3466,26 +3512,34 @@ msgid "Transactions Summary"
 msgstr " ملخص المعاملات"
 
 #: templates/disbursement/single_step_trx_list.html:77
-#: templates/disbursement/single_step_trx_list.html:226
+#: templates/disbursement/single_step_trx_list.html:236
 msgid "Make New Transaction"
 msgstr "قم باجراء معامله جديده"
 
-#: templates/disbursement/single_step_trx_list.html:442
+#: templates/disbursement/single_step_trx_list.html:131
+msgid "Bank_Wallet"
+msgstr "محفظة بنكية"
+
+#: templates/disbursement/single_step_trx_list.html:173
+msgid "Bank_Card"
+msgstr "كروت بنكيه"
+
+#: templates/disbursement/single_step_trx_list.html:452
 msgid "Please note that:"
 msgstr "برجاء العلم:"
 
-#: templates/disbursement/single_step_trx_list.html:444
+#: templates/disbursement/single_step_trx_list.html:454
 msgid ""
 "Request submitted, expect arrival in recipient's wallet within 24 hours."
 msgstr "تم تقديم الطلب ومن المتوقع ان يصل الى محفظه المستلم خلال 24 ساعه"
 
-#: templates/disbursement/single_step_trx_list.html:445
+#: templates/disbursement/single_step_trx_list.html:455
 msgid ""
 "Request submitted, expect arrival in recipient's bank in 3 working days."
 msgstr "تم تقديم الطلب ومن المتوقع ان يصل الى المستلم خلال 3 ايام عمل"
 
-#: templates/disbursement/single_step_trx_list.html:923
-#: templates/disbursement/single_step_trx_list.html:925
+#: templates/disbursement/single_step_trx_list.html:933
+#: templates/disbursement/single_step_trx_list.html:935
 msgid "Wallets"
 msgstr "محافظ"
 
@@ -4393,14 +4447,6 @@ msgstr "المستخدمين"
 msgid "Export Clients Transactions Report"
 msgstr ""
 
-#: templates/users/clients.html:76
-msgid "Start Date"
-msgstr ""
-
-#: templates/users/clients.html:80
-msgid "End Date"
-msgstr ""
-
 #: templates/users/clients.html:95
 msgid "Export Report"
 msgstr ""
@@ -4617,7 +4663,7 @@ msgstr "رقم الهاتف"
 
 #: templates/users/profile.html:71
 msgid "IS Notified User"
-msgstr ""
+msgstr "تم اخطار المستخدم"
 
 #: templates/users/profile.html:93
 msgid "Edit Data"
@@ -4657,7 +4703,7 @@ msgstr ""
 
 #: templates/users/session_list.html:43
 msgid "End Sessions"
-msgstr ""
+msgstr "انهاء الجلسات"
 
 #: templates/users/session_list.html:53
 #, python-format
@@ -6027,17 +6073,11 @@ msgstr ""
 #~ msgid "CREDIT_CARD"
 #~ msgstr " بطاقه ائتمان"
 
-#~ msgid "Bank wallets/Orange cash"
-#~ msgstr "محافظ بنكيه/اورانج كاش"
-
 #~ msgid "Audi Bank"
 #~ msgstr "بنك عودة"
 
 #~ msgid "Bank Deposit"
 #~ msgstr "إيداع بنكي"
-
-#~ msgid "Bank_Wallet"
-#~ msgstr "محفظة بنكية"
 
 #~ msgid "Current Balance:"
 #~ msgstr "الرصيد الحالي"

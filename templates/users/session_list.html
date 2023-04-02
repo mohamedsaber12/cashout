@@ -11,7 +11,7 @@
     <link href="{% static 'gentella/vendors/datatables.net-fixedheader-bs/css/fixedHeader.bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'gentella/vendors/datatables.net-responsive-bs/css/responsive.bootstrap.min.css' %}" rel="stylesheet">
     <link href="{% static 'gentella/vendors/datatables.net-scroller-bs/css/scroller.bootstrap.min.css' %}" rel="stylesheet">
-    
+
     <style>
       .session-delete {
         height: 30%;
@@ -99,8 +99,11 @@
 <script>
     var table = $('#doc-datatable').DataTable({
     "bLengthChange" : false,
+    "oLanguage": {
+      "sSearch": "{% trans 'Search' %}:"
+    }
   });
-  
+
   var buttons = new $.fn.dataTable.Buttons( table, {
         buttons: [
           {
@@ -117,7 +120,7 @@
             {
                 extend: 'excelHtml5',
                 text : "{% trans 'Export' %}",
-                
+
                 customize: function( xlsx ) {
 
                   var sheet = xlsx.xl.worksheets['sheet1.xml'];
@@ -126,7 +129,7 @@
             }
         ]
     });
-  
+
   table.buttons( 0, null ).container().prependTo(
         table.table().container()
     );

@@ -66,14 +66,11 @@ from .forms import (AgentForm, AgentFormSet, BalanceInquiryPinForm,
                     SingleStepTransactionForm)
 from .mixins import AdminOrCheckerOrSupportRequiredMixin
 from .models import Agent, BankTransaction, DisbursementData, PaymentLink
-from .utils import (
-    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
-    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
-    VALID_BANK_CODES_LIST,
-    VALID_BANK_TRANSACTION_TYPES_LIST,
-    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
-    determine_trx_category_and_purpose,
-)
+from .utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
+                    DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
+                    VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
+                    DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
+                    determine_trx_category_and_purpose)
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 DATA_LOGGER = logging.getLogger("disburse")
@@ -1256,12 +1253,15 @@ class HomeView(RootUserORDashboardUserOrMakerORCheckerRequiredMixin, View):
         }
         # render issuer options based on user type
         if request.user.is_instant_model_onboarding:
-            context["issuer_options"] = ["wallets", "banks"]
+            context["issuer_options"] = [
+                ("wallets", _("wallets")),
+                ("banks", _("banks")),
+            ]
         elif request.user.is_accept_vodafone_onboarding:
             context["issuer_options"] = [
-                "vodafone/etisalat/aman",
-                "bank wallets/orange",
-                "bank accounts/cards",
+                ("vodafone/etisalat/aman", _("vodafone/etisalat/aman")),
+                ("bank wallets/orange", _("bank wallets/orange")),
+                ("bank accounts/cards", _("bank accounts/cards")),
             ]
 
         return render(request, template_name=self.template_name, context=context)
@@ -1481,7 +1481,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     + request.get_host()
                     + str(reverse_lazy("instant_api:disburse_single_step")),
                     json=payload,
-                    verify=False
+                    verify=False,
                 )
 
                 if request.user.from_accept and not request.user.allowed_to_be_bulk:

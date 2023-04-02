@@ -119,7 +119,17 @@
                           data-aman_is_paid="{{ transaction.aman_transaction.is_paid }}"
                         class="row-hover">
                         <td>{{ transaction.anon_recipient }}</td>
-                        <td>{{ transaction.issuer_choice_verbose }}</td>
+                        {% if transaction.issuer_choice_verbose == 'Vodafone' %}
+                          <td>{% trans 'Vodafone' %}</td>
+                        {% elif transaction.issuer_choice_verbose == 'Etisalat' %}
+                          <td>{% trans 'Etisalat' %}</td>
+                        {% elif transaction.issuer_choice_verbose == 'Orange' %}
+                          <td>{% trans 'Orange' %}</td>
+                        {% elif transaction.issuer_choice_verbose == 'Aman' %}
+                          <td>{% trans 'Aman' %}</td>
+                        {% elif transaction.issuer_choice_verbose == 'Bank_Wallet' %}
+                          <td>{% trans 'Bank_Wallet' %}</td>
+                        {% endif %}
                         <td>{{ transaction.amount }}</td>
                         <td>{{ transaction.fees }}</td>
                         <td>{{ transaction.vat }}</td>
@@ -160,7 +170,7 @@
                           data-debtor_account="{{ transaction.debtor_account }}"
                           class="row-hover">
                         <td>{{ transaction.creditor_account_number }}</td>
-                        <td>{{ 'Bank_Card' }}</td>
+                        <td>{% trans 'Bank_Card' %}</td>
                         <td>{{ transaction.amount }}</td>
                         <td>{{ transaction.fees }}</td>
                         <td>{{ transaction.vat }}</td>

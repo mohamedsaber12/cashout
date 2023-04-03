@@ -49,7 +49,8 @@ class AgentForm(forms.ModelForm):
     Agent form for adding new agents for newly created Admins
     """
 
-    msisdn = forms.CharField(max_length=11, min_length=11, label=_("Mobile number"))
+    msisdn = forms.CharField(
+        max_length=11, min_length=11, label=_("Mobile number"))
 
     class Meta:
         model = Agent
@@ -132,8 +133,19 @@ class PinForm(forms.Form):
         ):
             self.agents = Agent.objects.filter(wallet_provider=root)
         else:
-            self.agents = Agent.objects.filter(wallet_provider=root.super_admin)
+            self.agents = Agent.objects.filter(
+                wallet_provider=root.super_admin)
         self.env = get_dot_env()
+        if self.root.is_vodafone_default_onboarding:
+            self.fields['confirm_pin'] = forms.CharField(
+                required=True,
+                max_length=6,
+                min_length=6,
+                widget=forms.PasswordInput(
+                    attrs={'size': 6, 'maxlength': 6,
+                           'placeholder': _('confirm pin')}
+                ),
+            )
 
     def get_form(self):
         agent = self.agents.first()
@@ -148,15 +160,35 @@ class PinForm(forms.Form):
             return None
         return self
 
-    def clean_pin(self):
+    def clean(self):
         """
-        :return: Validate that pin is a valid number
+        :return: Validate that pin 
         """
+
         pin = self.cleaned_data.get('pin')
 
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
-        return pin
+
+        if self.root.is_vodafone_default_onboarding:
+            confirm_pin = self.cleaned_data.get('confirm_pin')
+            print("-------------------------------")
+            print(self.cleaned_data)
+            print("--------------------------------")
+            if confirm_pin != pin:
+                raise forms.ValidationError(
+                    _("Pin must be equal confirm pin."))
+            sorted_pin = ''.join(sorted(pin))
+            for i in pin:
+                if pin.count(i) > 1:
+                    raise forms.ValidationError(
+                        _("pin must be not consecutive and not identical."))
+
+                elif sorted_pin in "0123456789":
+                    raise forms.ValidationError(
+                        _("pin must be not consecutive and not identical."))
+
+        return self.cleaned_data
 
     def set_pin(self):
         raw_pin = self.cleaned_data.get('pin')
@@ -177,7 +209,8 @@ class PinForm(forms.Form):
                 == Client.EXISTING_SUPERAGENT_NEW_AGENTS
             ):
                 msisdns = list(
-                    self.agents.filter(super=False).values_list('msisdn', flat=True)
+                    self.agents.filter(super=False).values_list(
+                        'msisdn', flat=True)
                 )
             else:
                 msisdns = False
@@ -232,7 +265,8 @@ class PinForm(forms.Form):
         return None, MSG_PIN_SETTING_ERROR
 
     def get_transactions_error(self, transactions):
-        failed_trx = list(filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
+        failed_trx = list(
+            filter(lambda trx: trx['TXNSTATUS'] != "200", transactions))
 
         if failed_trx:
             error_message = MSG_PIN_SETTING_ERROR
@@ -341,7 +375,8 @@ class SingleStepTransactionForm(forms.Form):
                 (tx_type, tx_type.replace('_', ' ').capitalize())
                 for tx_type in VALID_BANK_TRANSACTION_TYPES_LIST
             ),
-            attrs={'class': 'form-control', 'id': 'tx_type', 'name': 'trx_type'},
+            attrs={'class': 'form-control',
+                   'id': 'tx_type', 'name': 'trx_type'},
         ),
     )
     creditor_account_number = forms.CharField(
@@ -374,7 +409,8 @@ class SingleStepTransactionForm(forms.Form):
         required=False,
         choices=[(dic['code'], dic['name']) for dic in BANK_CODES],
         widget=forms.Select(
-            attrs={'class': 'form-control', 'id': 'bank_name', 'name': 'bank_name'}
+            attrs={'class': 'form-control',
+                   'id': 'bank_name', 'name': 'bank_name'}
         ),
     )
     # 3. shared filed between vodafone, etisalat, aman, orange, bank wallet
@@ -514,7 +550,8 @@ class SingleStepTransactionForm(forms.Form):
         return True
 
     def validate_creditor_account_number(self):
-        creditor_account_number = self.cleaned_data.get('creditor_account_number', None)
+        creditor_account_number = self.cleaned_data.get(
+            'creditor_account_number', None)
         account = (
             get_digits(str(creditor_account_number))
             if creditor_account_number
@@ -666,8 +703,10 @@ class SingleStepTransactionForm(forms.Form):
             'purpose', 'CASH'
         )
         single_step_bank_transaction.is_single_step = True
-        single_step_bank_transaction.corporate_code = get_from_env('ACH_CORPORATE_CODE')
-        single_step_bank_transaction.debtor_account = get_from_env('ACH_DEBTOR_ACCOUNT')
+        single_step_bank_transaction.corporate_code = get_from_env(
+            'ACH_CORPORATE_CODE')
+        single_step_bank_transaction.debtor_account = get_from_env(
+            'ACH_DEBTOR_ACCOUNT')
         single_step_bank_transaction.currency = 'EGP'
         single_step_bank_transaction.debtor_address_1 = 'EG'
         single_step_bank_transaction.creditor_address_1 = 'EG'
@@ -676,14 +715,15 @@ class SingleStepTransactionForm(forms.Form):
         return single_step_bank_transaction
 
 
-AgentFormSet = modelformset_factory(model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)
+AgentFormSet = modelformset_factory(
+    model=Agent, form=AgentForm, min_num=1, validate_min=True, can_delete=True, extra=0)
 ExistingAgentFormSet = modelformset_factory(model=Agent, form=ExistingAgentForm, min_num=1, validate_min=True,
                                             can_delete=True, extra=0)
 
 
 class PaymentCreationForm(forms.Form):
 
-     # 1. shared fields between all issuers
+    # 1. shared fields between all issuers
     amount = forms.IntegerField(
         label=_('Amount'),
         required=True,
@@ -702,11 +742,11 @@ class PaymentCreationForm(forms.Form):
             'name': 'pin', 'placeholder': 'Enter your pin'
         })
     )
-    
 
     def __init__(self, *args, **kwargs):
         self.current_user = kwargs.pop('current_user', None)
         super().__init__(*args, **kwargs)
+
     def clean_pin(self):
         pin = self.cleaned_data.get('pin', None)
 
@@ -723,17 +763,13 @@ class PaymentCreationForm(forms.Form):
         if not amount or not (str(amount).replace('.', '', 1).isdigit() and Decimal(amount) >= 1):
             raise forms.ValidationError(_('Invalid amount'))
         if self.current_user.is_checker and Decimal(self.current_user.level.max_amount_can_be_disbursed) < amount:
-            raise forms.ValidationError(_('Entered amount exceeds your maximum amount that can be disbursed'))
+            raise forms.ValidationError(
+                _('Entered amount exceeds your maximum amount that can be disbursed'))
         if not self.current_user.root.budget.within_threshold(Decimal(amount), "bank_card"):
-            raise forms.ValidationError(_("Entered amount exceeds your current balance"))
+            raise forms.ValidationError(
+                _("Entered amount exceeds your current balance"))
 
         return round(Decimal(amount), 2)
-
-    
-
-    
-
-    
 
 
 class DisbursePaymentLinkForm(forms.Form):
@@ -752,16 +788,16 @@ class DisbursePaymentLinkForm(forms.Form):
             'class': 'form-control',
         })
     )
-    
-   
+
     # 1. bank card fields
     transaction_type = forms.CharField(
         required=False,
         widget=forms.Select(
             choices=(
                 (tx_type, tx_type.replace('_', ' ').capitalize()) for tx_type in VALID_BANK_TRANSACTION_TYPES_LIST
-            ) ,
-            attrs={'class': 'form-control', 'id': 'tx_type', 'name': 'trx_type'}
+            ),
+            attrs={'class': 'form-control',
+                   'id': 'tx_type', 'name': 'trx_type'}
         )
     )
     creditor_account_number = forms.CharField(
@@ -829,14 +865,13 @@ class DisbursePaymentLinkForm(forms.Form):
         label=_('Email'),
         required=False,
         widget=forms.TextInput(attrs={
-            'class': 'form-control', 'id': 'email','type': 'email',
+            'class': 'form-control', 'id': 'email', 'type': 'email',
             'name': 'email', 'placeholder': 'Enter Your Email'
         })
     )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
 
     def validate_transaction_type(self):
         transaction_type = self.cleaned_data.get('transaction_type', None)
@@ -845,10 +880,12 @@ class DisbursePaymentLinkForm(forms.Form):
         return True
 
     def validate_creditor_account_number(self):
-        creditor_account_number = self.cleaned_data.get('creditor_account_number', None)
-        account = get_digits(str(creditor_account_number)) if creditor_account_number else None
+        creditor_account_number = self.cleaned_data.get(
+            'creditor_account_number', None)
+        account = get_digits(str(creditor_account_number)
+                             ) if creditor_account_number else None
 
-        if not (account and  6 <= len(account) <= 20):
+        if not (account and 6 <= len(account) <= 20):
             return _('Invalid Account number')
 
         return True
@@ -884,7 +921,7 @@ class DisbursePaymentLinkForm(forms.Form):
                 not number.is_valid()
                 or phonenumbers.phonenumberutil.region_code_for_country_code(
                 phonenumbers.parse(number.as_international).country_code
-        )
+                )
                 != "EG"
         ):
             return _("Phone numbers entered are incorrect")
@@ -896,7 +933,7 @@ class DisbursePaymentLinkForm(forms.Form):
 
     def validate_full_name(self):
         full_name = self.cleaned_data.get('full_name', None)
-        if not full_name :
+        if not full_name:
             return _('This field is required')
         elif any(e in str(full_name) for e in '!%*+&,<=>'):
             return _("Symbols like !%*+&,<=> not allowed in full name")
@@ -904,7 +941,7 @@ class DisbursePaymentLinkForm(forms.Form):
 
     def validate_first_name(self):
         first_name = self.cleaned_data.get('first_name', None)
-        if not first_name :
+        if not first_name:
             return _('This field is required')
         elif any(e in str(first_name) for e in '!%*+&,<=>'):
             return _("Symbols like !%*+&,<=> not allowed in first name")
@@ -912,7 +949,7 @@ class DisbursePaymentLinkForm(forms.Form):
 
     def validate_last_name(self):
         last_name = self.cleaned_data.get('last_name', None)
-        if not last_name :
+        if not last_name:
             return _('This field is required')
         elif any(e in str(last_name) for e in '!%*+&,<=>'):
             return _("Symbols like !%*+&,<=> not allowed in last name")
@@ -920,14 +957,14 @@ class DisbursePaymentLinkForm(forms.Form):
 
     def validate_email(self):
         email = self.cleaned_data.get('email', None)
-        if not email :
+        if not email:
             return _('This field is required')
         return True
 
     def clean_issuer(self):
         issuer = self.cleaned_data.get('issuer', None)
         if issuer and issuer \
-            not in ['bank_card', 'Bank Card', 'vodafone', 'etisalat', 'orange', 'bank_wallet', 'aman']:
+                not in ['bank_card', 'Bank Card', 'vodafone', 'etisalat', 'orange', 'bank_wallet', 'aman']:
             raise forms.ValidationError(_('issuer must be one of these \
                 bank_card / Bank Card / vodafone / etisalat / orange / bank_wallet / aman'))
         return issuer

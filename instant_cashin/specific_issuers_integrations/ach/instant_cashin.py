@@ -14,33 +14,29 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from disbursement.models import BankTransaction, RemainingAmounts
-from disbursement.utils import (
-    BANK_TRX_BEING_PROCESSED,
-    BANK_TRX_IS_SUCCESSFUL_1,
-    BANK_TRX_IS_SUCCESSFUL_2,
-    BANK_TRX_RECEIVED,
-    EXTERNAL_ERROR_MSG,
-    INSTANT_TRX_BEING_PROCESSED,
-    INSTANT_TRX_IS_ACCEPTED,
-    INSTANT_TRX_IS_REJECTED,
-    INSTANT_TRX_RECEIVED,
-    INTERNAL_ERROR_MSG,
-    TRX_REJECTED_BY_BANK_CODES,
-    TRX_RETURNED_BY_BANK_CODES,
-)
-from utilities.ssl_certificate import SSLCertificate
-
+from disbursement.utils import (BANK_TRX_BEING_PROCESSED,
+                                BANK_TRX_IS_SUCCESSFUL_1,
+                                BANK_TRX_IS_SUCCESSFUL_2, BANK_TRX_RECEIVED,
+                                EXTERNAL_ERROR_MSG,
+                                INSTANT_TRX_BEING_PROCESSED,
+                                INSTANT_TRX_IS_ACCEPTED,
+                                INSTANT_TRX_IS_REJECTED, INSTANT_TRX_RECEIVED,
+                                INTERNAL_ERROR_MSG, TRX_REJECTED_BY_BANK_CODES,
+                                TRX_RETURNED_BY_BANK_CODES,
+                                revert_balance_to_accept_account)
 from instant_cashin.api.serializers import (
     BankTransactionResponseModelSerializer,
-    InstantTransactionResponseModelSerializer,
-)
+    InstantTransactionResponseModelSerializer)
+from utilities.ssl_certificate import SSLCertificate
+
 from ...models import AbstractBaseIssuer, InstantTransaction
 from ...utils import get_from_env
 
 ACH_SEND_TRX_LOGGER = logging.getLogger("ach_send_transaction.log")
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
-from instant_cashin.specific_issuers_integrations.aman.instant_cashin import UUIDEncoder
+from instant_cashin.specific_issuers_integrations.aman.instant_cashin import \
+    UUIDEncoder
 
 
 class BankTransactionsChannel:
@@ -82,6 +78,7 @@ class BankTransactionsChannel:
             "vat": bank_trx_obj.vat,
             "balance_before": bank_trx_obj.balance_before,
             "balance_after": bank_trx_obj.balance_after,
+            "accept_balance_transfer_id": bank_trx_obj.accept_balance_transfer_id,
         }
         return BankTransaction.objects.create(**new_transaction_dict)
 
@@ -354,7 +351,7 @@ class BankTransactionsChannel:
         ):
             return bank_trx_obj
 
-        # 3. Otherwise start creating new bank transaction with the new status code
+        # 3. Otherwise, start creating new bank transaction with the new status code
         else:
             new_trx_obj = BankTransactionsChannel.create_new_trx_out_of_passed_one(
                 bank_trx_obj
@@ -422,6 +419,26 @@ class BankTransactionsChannel:
                     instant_trx.balance_before = balance_before
                     instant_trx.balance_after = balance_after
                     instant_trx.save()
+                # revert balance to accept in case of accept user
+                if (
+                    new_trx_obj.user_created.from_accept
+                    and not new_trx_obj.user_created.allowed_to_be_bulk
+                ):
+                    current_amount_plus_fess_and_vat = new_trx_obj.user_created.root.budget.accumulate_amount_with_fees_and_vat(
+                        new_trx_obj.amount, "bank_card"
+                    )
+                    current_fees_and_vat = decimal.Decimal(
+                        current_amount_plus_fess_and_vat
+                    ) - decimal.Decimal(new_trx_obj.amount)
+                    revert_balance_payload = {
+                        "transaction_id": new_trx_obj.accept_balance_transfer_id,
+                        "fees_amount_cents": str(current_fees_and_vat * 100),
+                    }
+                    revert_balance_to_accept_account(
+                        revert_balance_payload,
+                        new_trx_obj.user_created,
+                        current_amount_plus_fess_and_vat,
+                    )
 
             # send bank transaction callback notifications
             if (
@@ -661,6 +678,26 @@ class BankTransactionsChannel:
                         )
                         new_trn_obj.balance_before = balance_before
                         new_trn_obj.balance_after = balance_after
+                        # revert balance to accept in case of accept user
+                        if (
+                            new_trn_obj.user_created.from_accept
+                            and not new_trn_obj.user_created.allowed_to_be_bulk
+                        ):
+                            current_amount_plus_fess_and_vat = new_trn_obj.user_created.root.budget.accumulate_amount_with_fees_and_vat(
+                                new_trn_obj.amount, "bank_card"
+                            )
+                            current_fees_and_vat = decimal.Decimal(
+                                current_amount_plus_fess_and_vat
+                            ) - decimal.Decimal(new_trn_obj.amount)
+                            revert_balance_payload = {
+                                "transaction_id": new_trn_obj.accept_balance_transfer_id,
+                                "fees_amount_cents": str(current_fees_and_vat * 100),
+                            }
+                            revert_balance_to_accept_account(
+                                revert_balance_payload,
+                                new_trn_obj.user_created,
+                                current_amount_plus_fess_and_vat,
+                            )
                     new_trn_obj.save()
                     # update all trns with bank data
                     for single_trn in BankTransaction.objects.filter(

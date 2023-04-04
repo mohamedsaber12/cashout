@@ -1,8 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
+import logging
+
+import requests
 from django.contrib import admin
 from django.utils.translation import ugettext_lazy as _
+
+from instant_cashin.utils import get_from_env
+
+ACCEPT_BALANCE_TRANSFER_LOGGER = logging.getLogger("accept_balance_transfer")
 
 INSTANT_TRX_RECEIVED = _(
     "Transaction received and validated successfully. Dispatched for being processed by the carrier"
@@ -341,3 +348,17 @@ def get_error_description_from_error_code(code):
         return str(code).capitalize()
 
     return _('External error, please contact your support team for further details')
+
+
+def revert_balance_to_accept_account(payload, user, current_amount_plus_fees_and_vat):
+    url = get_from_env("DECLINE_SINGLE_STEP_URL")
+    headers = {"Authorization": get_from_env("SINGLE_STEP_TOKEN")}
+    ACCEPT_BALANCE_TRANSFER_LOGGER.debug(f"[request] [revert balance] -- {payload} ")
+    revert_response = requests.post(url, json=payload, headers=headers)
+    json_response = revert_response.json()
+    ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
+        f"[response] [revert balance] -- {json_response} "
+    )
+    if json_response.get("success"):
+        user.root.budget.current_balance -= current_amount_plus_fees_and_vat
+        user.root.budget.save()

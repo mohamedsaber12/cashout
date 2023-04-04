@@ -51,7 +51,7 @@ def respects_language(func):
     def wrapper(*args, **kwargs):
         language = kwargs.pop('language', None)
         prev_language = translation.get_language()
-        language and translation.activate(language)
+        language and translation.activate("ar")
         try:
             return func(*args, **kwargs)
         finally:

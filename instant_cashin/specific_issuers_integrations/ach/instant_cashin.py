@@ -124,8 +124,9 @@ class BankTransactionsChannel:
         payload["AdditionalInfo"] = trx_obj.comment
 
         json_payload = json.dumps(payload, separators=(",", ":"))
+        private_key_name = get_from_env("PRIVATE_KEY_NAME") if not trx_obj.user_created.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(",") else get_from_env("BM_PRIVATE_KEY_NAME")
         payload["Signature"] = SSLCertificate.generate_signature(
-            get_from_env("PRIVATE_KEY_NAME"), json_payload
+            private_key_name, json_payload
         )
 
         return payload
@@ -143,8 +144,9 @@ class BankTransactionsChannel:
         payload["CorporateCode"] = trx_obj.corporate_code
 
         json_payload = json.dumps(payload, separators=(",", ":"))
+        private_key_name = get_from_env("PRIVATE_KEY_NAME") if not trx_obj.user_created.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(",") else get_from_env("BM_PRIVATE_KEY_NAME")
         payload["Signature"] = SSLCertificate.generate_signature(
-            get_from_env("PRIVATE_KEY_NAME"), json_payload
+            private_key_name, json_payload
         )
 
         return payload
@@ -532,8 +534,9 @@ class BankTransactionsChannel:
             payload = BankTransactionsChannel.accumulate_send_transaction_payload(
                 bank_trx_obj, amount_to_be_deducted
             )
+            url = get_from_env("EBC_API_URL") if not bank_trx_obj.user_created.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(",") else get_from_env("BM_EBC_API_URL")
             response = BankTransactionsChannel.post(
-                get_from_env("EBC_API_URL"), payload, bank_trx_obj
+                url, payload, bank_trx_obj
             )
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
@@ -589,8 +592,9 @@ class BankTransactionsChannel:
             payload = BankTransactionsChannel.accumulate_get_transaction_status_payload(
                 bank_trx_obj
             )
+            url = get_from_env("EBC_API_URL") if not bank_trx_obj.user_created.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(",") else get_from_env("BM_EBC_API_URL")
             response = BankTransactionsChannel.get(
-                get_from_env("EBC_API_URL"), payload, bank_trx_obj
+                url, payload, bank_trx_obj
             )
             new_bank_trx_obj = BankTransactionsChannel.update_bank_trx_status(
                 bank_trx_obj, json.loads(response.json())

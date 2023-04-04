@@ -70,7 +70,8 @@ from .utils import (DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT,
                     DEFAULT_PER_ADMIN_FOR_VF_FACILITATOR_TRANSACTIONS_REPORT,
                     VALID_BANK_CODES_LIST, VALID_BANK_TRANSACTION_TYPES_LIST,
                     DEFAULT_LIST_PER_ADMIN_FOR_TRANSACTIONS_REPORT_raseedy_vf,
-                    determine_trx_category_and_purpose)
+                    determine_trx_category_and_purpose,
+                    revert_balance_to_accept_account)
 
 BUDGET_LOGGER = logging.getLogger("custom_budgets")
 DATA_LOGGER = logging.getLogger("disburse")
@@ -1354,21 +1355,6 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
 
         return render(request, template_name=self.template_name, context=context)
 
-    def revert_balance_to_accept_account(self, payload, user, current_fees_and_vat):
-        url = get_from_env("DECLINE_SINGLE_STEP_URL")
-        headers = {"Authorization": get_from_env("SINGLE_STEP_TOKEN")}
-        ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
-            f"[request] [revert balance] -- {payload} "
-        )
-        revert_response = requests.post(url, json=payload, headers=headers)
-        json_response = revert_response.json()
-        ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
-            f"[response] [revert balance] -- {json_response} "
-        )
-        if json_response.get("success"):
-            user.root.budget.current_balance -= current_fees_and_vat
-            user.root.budget.save()
-
     def create_automatic_topup_request(self, disburser, transfer_id, amount):
         # send top up request email
         # create top up request object in database
@@ -1485,7 +1471,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                 )
 
                 if request.user.from_accept and not request.user.allowed_to_be_bulk:
-                    current_amount_plus_fess_and_vat = (
+                    current_amount_plus_fees_and_vat = (
                         request.user.root.budget.accumulate_amount_with_fees_and_vat(
                             data["amount"], data["issuer"]
                         )
@@ -1497,7 +1483,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                         current_fees_and_vat = 0
                         if data["issuer"] == "bank_card":
                             current_fees_and_vat = Decimal(
-                                current_amount_plus_fess_and_vat
+                                current_amount_plus_fees_and_vat
                             ) - Decimal(data["amount"])
                         revert_balance_payload = {
                             "transaction_id": response.json().get(
@@ -1505,10 +1491,10 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                             ),
                             "fees_amount_cents": str(current_fees_and_vat * 100),
                         }
-                        self.revert_balance_to_accept_account(
+                        revert_balance_to_accept_account(
                             revert_balance_payload,
                             request.user,
-                            current_amount_plus_fess_and_vat,
+                            current_amount_plus_fees_and_vat,
                         )
                     elif response.json().get("disbursement_status") in [
                         "Successful",
@@ -1525,7 +1511,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                         self.create_automatic_topup_action(
                             request.user,
                             response.json().get("accept_balance_transfer_id"),
-                            current_amount_plus_fess_and_vat,
+                            current_amount_plus_fees_and_vat,
                         )
 
                 # response = BankTransactionsChannel.send_transaction(single_step_bank_transaction, False)

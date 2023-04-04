@@ -4,23 +4,23 @@ from __future__ import unicode_literals
 import datetime
 import logging
 
+import requests
+from celery.task import control
+from django.conf import settings
+from django.core.mail import EmailMultiAlternatives
+from django.core.paginator import Paginator
 from django.db.models import Q
 from django.utils import timezone
-from django.core.paginator import Paginator
 
 from core.models import AbstractBaseStatus
 from data.decorators import respects_language
 from disbursement.models import BankTransaction
+from disbursement.utils import revert_balance_to_accept_account
 from instant_cashin.models.instant_transactions import InstantTransaction
+from instant_cashin.utils import get_from_env
 from payouts.settings.celery import app
 
 from .specific_issuers_integrations import BankTransactionsChannel
-import requests
-from celery.task import control
-from instant_cashin.utils import get_from_env
-from django.core.mail import EmailMultiAlternatives
-from django.conf import settings
-
 
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 TIMEOUTS_UPDATE_LOGGER = logging.getLogger("timeouts_updates")
@@ -229,7 +229,9 @@ def update_instant_timeouts_from_vodafone_report(
                     trn.save()
                     total_failed = total_failed + 1
                     if trn.from_accept == 'single':
-                        current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(trn.amount, issuer_mapper[trn.issuer_type])
+                        current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(
+                            trn.amount, issuer_mapper[trn.issuer_type]
+                        )
                         revert_balance_payload = {
                             "transaction_id": trn.accept_balance_transfer_id,
                             "fees_amount_cents": "0",
@@ -251,7 +253,11 @@ def update_instant_timeouts_from_vodafone_report(
                 trn.save()
                 total_failed = total_failed + 1
                 if trn.from_accept == 'single':
-                    current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(trn.amount, issuer_mapper[trn.issuer_type])
+                    current_amount_plus_fess_and_vat = (
+                        trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(
+                            trn.amount, issuer_mapper[trn.issuer_type]
+                        )
+                    )
                     revert_balance_payload = {
                         "transaction_id": trn.accept_balance_transfer_id,
                         "fees_amount_cents": "0",
@@ -272,7 +278,11 @@ def update_instant_timeouts_from_vodafone_report(
             trn.save()
             total_failed = total_failed + 1
             if trn.from_accept == 'single':
-                current_amount_plus_fess_and_vat = trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(trn.amount, issuer_mapper[trn.issuer_type])
+                current_amount_plus_fess_and_vat = (
+                    trn.from_user.root.budget.accumulate_amount_with_fees_and_vat(
+                        trn.amount, issuer_mapper[trn.issuer_type]
+                    )
+                )
                 revert_balance_payload = {
                     "transaction_id": trn.accept_balance_transfer_id,
                     "fees_amount_cents": "0",
@@ -388,20 +398,22 @@ def get_random_status(last_status_code):
 
 @app.task()
 def disburse_accept_pending_transactions():
-    from django.utils.timezone import datetime, make_aware, timedelta
-    from disbursement.models import VMTData
     import copy
-    from utilities.logging import logging_message
+
+    from django.utils.timezone import datetime, make_aware, timedelta
+
+    from disbursement.models import VMTData
 
     INSTANT_CASHIN_SUCCESS_LOGGER = logging.getLogger("instant_cashin_success")
     INSTANT_CASHIN_FAILURE_LOGGER = logging.getLogger("instant_cashin_failure")
     INSTANT_CASHIN_REQUEST_LOGGER = logging.getLogger("instant_cashin_requests")
 
-    from payouts.settings import TIMEOUT_CONSTANTS
-    from rest_framework.exceptions import ValidationError
-    from rest_framework import status
     from django.core.exceptions import ImproperlyConfigured
     from django.utils.translation import gettext as _
+    from rest_framework import status
+    from rest_framework.exceptions import ValidationError
+
+    from payouts.settings import TIMEOUT_CONSTANTS
 
     INTERNAL_ERROR_MSG = _(
         "Process stopped during an internal error, can you try again or contact your support team"
@@ -555,9 +567,7 @@ def disburse_accept_pending_transactions():
 
                 except (ImproperlyConfigured, Exception) as e:
                     INSTANT_CASHIN_FAILURE_LOGGER.debug(
-                        f"[response] [ERROR FROM CENTRAL]"
-                        f"CELERY TASK"
-                        f"{e.args}"
+                        f"[response] [ERROR FROM CENTRAL]" f"CELERY TASK" f"{e.args}"
                     )
                     trn.mark_failed(
                         status.HTTP_424_FAILED_DEPENDENCY, EXTERNAL_ERROR_MSG
@@ -566,18 +576,3 @@ def disburse_accept_pending_transactions():
                     instant_user.root.budget.return_hold_balance(
                         trn.amount, issuer_mapper[trn.issuer_type]
                     )
-
-
-def revert_balance_to_accept_account(payload, user, current_fees_and_vat):
-    ACCEPT_BALANCE_TRANSFER_LOGGER = logging.getLogger("accept_balance_transfer")
-    url = get_from_env("DECLINE_SINGLE_STEP_URL")
-    headers = {"Authorization": get_from_env("SINGLE_STEP_TOKEN")}
-    ACCEPT_BALANCE_TRANSFER_LOGGER.debug(f"[request] [revert balance] -- {payload} ")
-    revert_response = requests.post(url, json=payload, headers=headers)
-    json_response = revert_response.json()
-    ACCEPT_BALANCE_TRANSFER_LOGGER.debug(
-        f"[response] [revert balance] -- {json_response} "
-    )
-    if json_response.get("success"):
-        user.root.budget.current_balance -= current_fees_and_vat
-        user.root.budget.save()

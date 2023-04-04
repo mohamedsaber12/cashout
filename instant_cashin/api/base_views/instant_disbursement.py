@@ -404,7 +404,6 @@ class InstantDisbursementAPIView(views.APIView):
                         status=status.HTTP_200_OK,
                     )
 
-
                 elif user.from_accept and user.allowed_to_be_bulk:
                     transaction.from_accept = "bulk"
                 transaction.save()

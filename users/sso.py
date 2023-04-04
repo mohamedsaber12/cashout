@@ -22,9 +22,9 @@ class SSOIntegration:
             payload["last_name"] = user.last_name
         if user.mobile_no:
             payload["phone_number"] = user.mobile_no
-
+        
         url = f"{settings.IDMS_BASE_URL}accounts/signup/"
-        resp = requests.post(url, json=payload)
+        resp = requests.post(url, json=payload, headers = {'Authorization': settings.IDMS_CLIENT_SECRET})
         SSO_INTEGRATION_LOGGER.debug(
             f"SSO INTEGRATION SEND SIGNUP REQUEST [URL - request - STATUS_CODE - DELTA]"
             f"[{resp.url}] - [{payload}] - [{resp.status_code}] "
@@ -46,7 +46,7 @@ class SSOIntegration:
                 "is_active": user.is_active,
             }
             url = f"{settings.IDMS_BASE_URL}v1/analytics/users/{user.idms_user_id}"
-            resp = requests.put(url, json=payload)
+            resp = requests.put(url, json=payload, headers = {'Authorization': settings.IDMS_CLIENT_SECRET})
             SSO_INTEGRATION_LOGGER.debug(
                 f"SSO INTEGRATION EDIT USER ON IDMS REQUEST [URL - PAYLOAD - CONTENT - STATUS_CODE - DELTA]"
                 f"[{resp.url}] - [{payload}] - [{resp.content}] - [{resp.status_code}] "
@@ -61,7 +61,7 @@ class SSOIntegration:
         SSO_INTEGRATION_LOGGER.debug(f"SSO INTEGRATION CHANGE USER PASSWORD {user}")
         payload = {"username": user.username, "password": password}
         url = f"{settings.IDMS_BASE_URL}accounts/password/reset/"
-        resp = requests.post(url, json=payload)
+        resp = requests.post(url, json=payload, headers = {'Authorization': settings.IDMS_CLIENT_SECRET})
         SSO_INTEGRATION_LOGGER.debug(
             f"SSO INTEGRATION RESET PASSWORD REQUEST [URL - CONTENT - STATUS_CODE - DELTA]"
             f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
@@ -100,8 +100,7 @@ class SSOIntegration:
             "code": code,
             "sso_uid": idms_user_id,
         }
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        resp = requests.post(url, data=payload, headers=headers)
+        resp = requests.post(url, json=payload)
         SSO_INTEGRATION_LOGGER.debug(
             f"SSO INTEGRATION CREATE ACCESS TOKEN [URL - PAYLOAD - STATUS_CODE - DELTA]"
             f"[{resp.url}] - [{payload}] - [{resp.status_code}] "
@@ -121,7 +120,7 @@ class SSOIntegration:
             "login": username,
             "password": password,
         }
-        resp = requests.post(url, json=payload)
+        resp = requests.post(url, json=payload, headers = {'Authorization': settings.IDMS_CLIENT_SECRET})
         SSO_INTEGRATION_LOGGER.debug(
             f"SSO INTEGRATION LOGIN REQUEST [URL - CONTENT - STATUS_CODE - DELTA]"
             f"[{resp.url}] - [{resp.content}] - [{resp.status_code}] "
@@ -165,8 +164,7 @@ class SSOIntegration:
         payload = {
             "access_token": access_token.replace("SSO_", ""),
         }
-        headers = {"Content-Type": "application/x-www-form-urlencoded"}
-        resp = requests.post(url, data=payload, headers=headers)
+        resp = requests.post(url, json=payload)
         SSO_INTEGRATION_LOGGER.debug(
             f"SSO INTEGRATION SEND ACCESS TOKEN [URL - PAYLOAD - STATUS_CODE - DELTA]"
             f"[{resp.url}] - [{payload}] - [{resp.status_code}] "

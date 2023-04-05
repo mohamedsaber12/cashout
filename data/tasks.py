@@ -809,9 +809,6 @@ class EWalletsSheetProcessor(Task):
 
                 # 1. Validate msisdns
                 msisdn = str(record[msisdn_header])
-                print("11111111111111111")
-                print(msisdn)
-                print("11111111111111111111111")
                 valid_msisdn = False
                 try:
                     if msisdn.endswith(".0"):
@@ -821,7 +818,6 @@ class EWalletsSheetProcessor(Task):
 
                     if msisdn.startswith("1") and len(msisdn) == 10:
                         phonenumber_form_validate(f"+20{msisdn}")
-                        print("11111")
                         msisdn = f"0020{msisdn}"
                         msisdns_list.append(msisdn)
                         valid_msisdn = True

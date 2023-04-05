@@ -13,15 +13,10 @@ from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
 
 from ..models import AbstractBaseIssuer, InstantTransaction
 from .fields import CardNumberField, CustomChoicesField, UUIDListField
-from .validators import (
-    bank_code_validator,
-    bank_transaction_type_validator,
-    cashin_issuer_validator,
-    fees_validator,
-    issuer_validator,
-    msisdn_validator,
-    source_product_validator,
-)
+from .validators import (bank_code_validator, bank_transaction_type_validator,
+                         cashin_issuer_validator, fees_validator,
+                         issuer_validator, msisdn_validator,
+                         source_product_validator)
 
 
 class InstantDisbursementRequestSerializer(serializers.Serializer):
@@ -122,9 +117,14 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                 raise serializers.ValidationError(
                     _("Symbols like !%*+&,<=> not allowed in full_name")
                 )
-        if issuer in ["vodafone", "etisalat", "aman"] and attrs.get(
-            "client_reference_id"
-        ):
+
+        if issuer in [
+            "vodafone",
+            "etisalat",
+            "aman",
+            "bank_wallet",
+            "orange",
+        ] and attrs.get("client_reference_id"):
             if InstantTransaction.objects.filter(
                 client_transaction_reference=attrs.get("client_reference_id")
             ).exists():
@@ -132,9 +132,7 @@ class InstantDisbursementRequestSerializer(serializers.Serializer):
                     _("client_reference_id is used before.")
                 )
 
-        if issuer in ["bank_wallet", "bank_card", "orange"] and attrs.get(
-            "client_reference_id"
-        ):
+        if issuer in ["bank_card"] and attrs.get("client_reference_id"):
             if BankTransaction.objects.filter(
                 client_transaction_reference=attrs.get("client_reference_id")
             ).exists():

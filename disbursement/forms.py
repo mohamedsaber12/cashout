@@ -181,9 +181,9 @@ class PinForm(forms.Form):
                     raise forms.ValidationError(
                         _("pin must be not consecutive and not identical."))
 
-                elif sorted_pin in "0123456789":
-                    raise forms.ValidationError(
-                        _("pin must be not consecutive and not identical."))
+            if sorted_pin in "0123456789":
+                raise forms.ValidationError(
+                    _("pin must be not consecutive and not identical."))
 
         return self.cleaned_data
 

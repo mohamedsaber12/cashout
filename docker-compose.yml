@@ -22,43 +22,26 @@ services:
       options:
         max-size: "100m"
     command: >
-      sh -c "
-        python manage.py makemigrations users &&
-        python manage.py migrate users &&
-        python manage.py makemigrations data &&
-        python manage.py migrate data &&
-        python manage.py makemigrations disbursement &&
-        python manage.py migrate disbursement &&
-        python manage.py makemigrations instant_cashin &&
-        python manage.py migrate instant_cashin &&
-        python manage.py makemigrations payment &&
-        python manage.py migrate payment &&
-        python manage.py makemigrations utilities &&
-        python manage.py migrate utilities &&
-        python manage.py makemigrations &&
-        python manage.py migrate &&
-        mkdocs build &&
-        python manage.py runserver_plus 0.0.0.0:8000"
-
+      sh -c "uwsgi -i uwsgi.ini"
     networks:
       - payouts_network
     depends_on:
-      - postgres
+#      - postgres
       - rabbitmq
 
-  postgres:
-    container_name: PostgreSQL
-    image: postgres:11
-    restart: always
-    environment:
-      POSTGRES_USER: payouts_user
-      POSTGRES_DB: payouts_database
-      POSTGRES_PASSWORD: PayoutsPortalPassword
-    volumes:
-      - .:/var/lib/postgresql
-      - postgresql_volume:/var/lib/postgresql/data
-    networks:
-      - payouts_network
+#  postgres:
+#    container_name: PostgreSQL
+#    image: postgres:11
+#    restart: always
+#    environment:
+#      POSTGRES_USER: payouts_user
+#      POSTGRES_DB: payouts_database
+#      POSTGRES_PASSWORD: PayoutsPortalPassword
+#    volumes:
+#      - .:/var/lib/postgresql
+#      - postgresql_volume:/var/lib/postgresql/data
+#    networks:
+#      - payouts_network
 #    ports:
 #      - "5432:5432"
 
@@ -92,39 +75,39 @@ services:
       options:
         max-size: "100m"
 
-#  webserver:
-#    image: nginx:latest
-#    ports:
-#      - 80:80
-#      - 443:443
-#    logging:
-#      driver: "json-file"
-#      options:
-#        max-size: "100m"
-#    restart: always
-#    volumes:
-#      - ./nginx/conf/:/etc/nginx/conf.d/:ro
-#      - ./nginx_logs:/var/log/nginx/:rw
-#      - ./certbot/www:/var/www/certbot/:ro
-#      - ./certbot/conf/:/etc/nginx/ssl/:ro
-#      - uwsgi_data:/tmp/uwsgi/
-#      - static_volume:/app/staticfiles/static:rw
-#      - media_volume:/app/mediafiles/media:rw
-#    networks:
-#      - payouts_network
-#    depends_on:
-#      - payouts
-#
-#  certbot:
-#    image: certbot/certbot:latest
-#    volumes:
-#      - ./certbot/www/:/var/www/certbot/:rw
-#      - ./certbot/conf/:/etc/letsencrypt/:rw
+  webserver:
+    image: nginx:latest
+    ports:
+      - 80:80
+      - 443:443
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+    restart: always
+    volumes:
+      - ./nginx/conf/:/etc/nginx/conf.d/:ro
+      - ./nginx_logs:/var/log/nginx/:rw
+      - ./certbot/www:/var/www/certbot/:ro
+      - ./certbot/conf/:/etc/nginx/ssl/:ro
+      - uwsgi_data:/tmp/uwsgi/
+      - static_volume:/app/staticfiles/static:rw
+      - media_volume:/app/mediafiles/media:rw
+    networks:
+      - payouts_network
+    depends_on:
+      - payouts
+
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/www/:/var/www/certbot/:rw
+      - ./certbot/conf/:/etc/letsencrypt/:rw
 
 volumes:
   static_volume:
   media_volume:
-  postgresql_volume:
+#  postgresql_volume:
   rabbit_volume:
   uwsgi_data:
 

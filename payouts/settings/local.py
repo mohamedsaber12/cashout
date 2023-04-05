@@ -1,10 +1,10 @@
+
 from .base import *
-import socket
 
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env.str('DB_NAME'),
+        'NAME': env.str('DB_NAME_EGYPT'),
         'USER': env.str('DB_USER'),
         'PASSWORD': env.str('DB_PASSWORD'),
         'HOST': env.str('DB_HOST', 'localhost'),
@@ -26,4 +26,3 @@ if DEBUG:
     # SERVER_EMAIL = 'django.core.mail.backends.smtp.EmailBackend'
     # EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
     EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-

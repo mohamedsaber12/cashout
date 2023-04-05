@@ -172,9 +172,6 @@ class PinForm(forms.Form):
 
         if self.root.is_vodafone_default_onboarding:
             confirm_pin = self.cleaned_data.get('confirm_pin')
-            print("-------------------------------")
-            print(self.cleaned_data)
-            print("--------------------------------")
             if confirm_pin != pin:
                 raise forms.ValidationError(
                     _("Pin must be equal confirm pin."))

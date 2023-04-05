@@ -1479,7 +1479,7 @@ class SingleStepTransactionsView(AdminOrCheckerOrSupportRequiredMixin, View):
                     if response.json().get("disbursement_status") in [
                         "failed",
                         "Failed",
-                    ]:
+                    ] and response.json().get("status_code") != "400":
                         current_fees_and_vat = 0
                         if data["issuer"] == "bank_card":
                             current_fees_and_vat = Decimal(

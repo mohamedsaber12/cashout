@@ -135,6 +135,15 @@ class PinForm(forms.Form):
         else:
             self.agents = Agent.objects.filter(wallet_provider=root.super_admin)
         self.env = get_dot_env()
+        if self.root.is_vodafone_default_onboarding:
+            self.fields['confirm_pin'] = forms.CharField(
+                required=True,
+                max_length=6,
+                min_length=6,
+                widget=forms.PasswordInput(
+                    attrs={'size': 6, 'maxlength': 6, 'placeholder': _('confirm pin')}
+                ),
+            )
 
     def get_form(self):
         agent = self.agents.first()
@@ -149,15 +158,33 @@ class PinForm(forms.Form):
             return None
         return self
 
-    def clean_pin(self):
+    def clean(self):
         """
-        :return: Validate that pin is a valid number
+        :return: Validate that pin
         """
+
         pin = self.cleaned_data.get('pin')
 
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
-        return pin
+
+        if self.root.is_vodafone_default_onboarding:
+            confirm_pin = self.cleaned_data.get('confirm_pin')
+            if confirm_pin != pin:
+                raise forms.ValidationError(_("Pin must be equal confirm pin."))
+            sorted_pin = ''.join(sorted(pin))
+            for i in pin:
+                if pin.count(i) > 1:
+                    raise forms.ValidationError(
+                        _("pin must be not consecutive and not identical.")
+                    )
+
+            if sorted_pin in "0123456789":
+                raise forms.ValidationError(
+                    _("pin must be not consecutive and not identical.")
+                )
+
+        return self.cleaned_data
 
     def set_pin(self):
         raw_pin = self.cleaned_data.get('pin')

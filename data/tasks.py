@@ -56,7 +56,8 @@ from .utils import deliver_mail, export_excel, randomword
 
 CHANGE_PROFILE_LOGGER = logging.getLogger("change_fees_profile")
 CHECKERS_NOTIFICATION_LOGGER = logging.getLogger("checkers_notification")
-VF_FACILITATOR_REPORT_LOGGER = logging.getLogger("vodafone_facilitator_daily_report")
+VF_FACILITATOR_REPORT_LOGGER = logging.getLogger(
+    "vodafone_facilitator_daily_report")
 
 MSG_NOT_WITHIN_THRESHOLD = _(
     f"File's total amount exceeds your current balance, please contact your support team"
@@ -152,9 +153,11 @@ class BankWalletsAndCardsSheetProcessor(Task):
     ):
         if doc_obj.is_bank_wallet:
             sheet_data = list(
-                zip(numbers_list, amount_list, names_list, issuers_list, errors_list)
+                zip(numbers_list, amount_list,
+                    names_list, issuers_list, errors_list)
             )
-            headers = ["mobile number", "amount", "full name", "issuer", "errors"]
+            headers = ["mobile number", "amount",
+                       "full name", "issuer", "errors"]
         else:
             sheet_data = list(
                 zip(
@@ -484,7 +487,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                 fees, vat = budget.calculate_fees_and_vat_for_amount(
                     record[0], "bank_card"
                 )
-                category_purpose_dict = determine_trx_category_and_purpose(record[4])
+                category_purpose_dict = determine_trx_category_and_purpose(
+                    record[4])
                 BankTransaction.objects.create(
                     currency="EGP",
                     debtor_address_1="EG",
@@ -497,7 +501,8 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     creditor_name=record[1],
                     creditor_account_number=record[2],
                     creditor_bank=record[3],
-                    category_code=category_purpose_dict.get("category_code", "CASH"),
+                    category_code=category_purpose_dict.get(
+                        "category_code", "CASH"),
                     purpose=category_purpose_dict.get("purpose", "CASH"),
                     fees=fees,
                     vat=vat,
@@ -712,7 +717,8 @@ class EWalletsSheetProcessor(Task):
 
     def accumulate_df(self):
         """:return: data frame using pandas package"""
-        doc_type = "csv" if self.doc_obj.file.name.endswith(".csv") else "excel"
+        doc_type = "csv" if self.doc_obj.file.name.endswith(
+            ".csv") else "excel"
 
         if doc_type == "excel":
             df = pd.read_excel(self.doc_obj.file)
@@ -760,12 +766,14 @@ class EWalletsSheetProcessor(Task):
             sheet_data = list(zip(numbers_list, amount_list, errors_list))
             headers = ["mobile number", "amount", "errors"]
         else:
-            sheet_data = list(zip(numbers_list, amount_list, issuers_list, errors_list))
+            sheet_data = list(zip(numbers_list, amount_list,
+                              issuers_list, errors_list))
             headers = ["mobile number", "amount", "issuer", "errors"]
 
         filename = f"failed_validations_{randomword(8)}.xlsx"
         file_path = f"{settings.MEDIA_ROOT}/documents/disbursement/{filename}"
-        error_message = _("Validation error, file with errors sent to the maker user.")
+        error_message = _(
+            "Validation error, file with errors sent to the maker user.")
         sheet_data.insert(0, headers)
         export_excel(file_path, sheet_data)
         download_url = (
@@ -846,8 +854,10 @@ class EWalletsSheetProcessor(Task):
                     self.amount_is_valid_digit(str(record[amount_header]))
                     and float(str(record[amount_header])) >= 1.0
                 ):
-                    amounts_list.append(round(Decimal(str(record[amount_header])), 2))
-                    total_amount += round(Decimal(str(record[amount_header])), 2)
+                    amounts_list.append(
+                        round(Decimal(str(record[amount_header])), 2))
+                    total_amount += round(
+                        Decimal(str(record[amount_header])), 2)
                 else:
                     if errors_list[index]:
                         errors_list[index] = "Invalid amount"
@@ -925,8 +935,10 @@ class EWalletsSheetProcessor(Task):
                     self.amount_is_valid_digit(str(record[amount_header]))
                     and float(str(record[amount_header])) >= 1.0
                 ):
-                    amounts_list.append(round(Decimal(str(record[amount_header])), 2))
-                    total_amount += round(Decimal(str(record[amount_header])), 2)
+                    amounts_list.append(
+                        round(Decimal(str(record[amount_header])), 2))
+                    total_amount += round(
+                        Decimal(str(record[amount_header])), 2)
                 else:
                     if errors_list[index]:
                         errors_list[index] = "Invalid amount"
@@ -1041,7 +1053,8 @@ class EWalletsSheetProcessor(Task):
                 CHANGE_PROFILE_LOGGER.debug(
                     f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}"
                 )
-                response = requests.post(wallets_env_url, json=payload, verify=False)
+                response = requests.post(
+                    wallets_env_url, json=payload, verify=False)
                 CHANGE_PROFILE_LOGGER.debug(
                     f"[response] [change fees profile] [{self.doc_obj.owner}] -- {str(response.text)}"
                 )
@@ -1084,7 +1097,8 @@ class EWalletsSheetProcessor(Task):
             self.doc_obj.processing_failure("Mobile numbers validation error")
 
             # add new file for this user in ExcelFile model
-            ExcelFile.objects.create(file_name=filename, owner=self.doc_obj.owner)
+            ExcelFile.objects.create(
+                file_name=filename, owner=self.doc_obj.owner)
 
             notify_maker(self.doc_obj, download_url)
             return False
@@ -1118,7 +1132,8 @@ class EWalletsSheetProcessor(Task):
             CHANGE_PROFILE_LOGGER.debug(
                 f"[request] [change fees profile] [{self.doc_obj.owner}] -- {payload}"
             )
-            response = requests.post(wallets_env_url, json=payload, verify=False)
+            response = requests.post(
+                wallets_env_url, json=payload, verify=False)
         except Exception as e:
             CHANGE_PROFILE_LOGGER.debug(
                 f"[message] [change fees profile error] [{self.doc_obj.owner}] -- {e.args}"
@@ -1231,7 +1246,8 @@ class EWalletsSheetProcessor(Task):
 
             # 4. Check if the sheet's total amount doesn't exceed maximum amount that can be disbursed for this checker
             elif total_amount > max_amount_can_be_disbursed:
-                self.end_with_failure(MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
+                self.end_with_failure(
+                    MSG_MAXIMUM_ALLOWED_AMOUNT_TO_BE_DISBURSED)
                 return False
 
             # 5. Validate doc total amount against custom budget for paymob send model and vodafone facilitator model
@@ -1372,7 +1388,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             if q.get('issuer', None) == None or len(str(q['issuer'])) > 20:
                 q['issuer'] = 'C'
             elif (
-                q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(q['issuer']) == 1
+                q['issuer'] != AbstractBaseIssuer.BANK_WALLET and len(
+                    q['issuer']) == 1
             ):
                 q['issuer'] = str(
                     dict(AbstractBaseIssuer.ISSUER_TYPE_CHOICES)[q['issuer']]
@@ -1410,7 +1427,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     issuers_exist[el['issuer']] = True
             for issuer in issuers_exist.keys():
                 if not issuers_exist[issuer]:
-                    default_issuer_dict = {'issuer': issuer, 'count': 0, 'total': 0}
+                    default_issuer_dict = {
+                        'issuer': issuer, 'count': 0, 'total': 0}
                     if self.instant_or_accept_perm:
                         default_issuer_dict['fees'] = 0
                         default_issuer_dict['vat'] = 0
@@ -1559,7 +1577,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
         if self.instant_or_accept_perm:
             # calculate fees and vat for failed qs
-            failed_qs = self._calculate_and_add_fees_to_qs_values(failed_qs, True)
+            failed_qs = self._calculate_and_add_fees_to_qs_values(
+                failed_qs, True)
             # calculate fees and vat for success qs
             success_qs = self._calculate_and_add_fees_to_qs_values(success_qs)
         return [*failed_qs, *success_qs]
@@ -1611,7 +1630,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             )
         if self.status in ['success', 'failed']:
             qs = self._annotate_instant_trxs_qs(qs)
-            qs = self._calculate_and_add_fees_to_qs_values(qs, self.status == 'failed')
+            qs = self._calculate_and_add_fees_to_qs_values(
+                qs, self.status == 'failed')
             return qs
 
         # handle if status is all
@@ -1632,7 +1652,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         failed_qs = self._annotate_instant_trxs_qs(failed_qs)
 
         success_qs = qs.filter(
-            Q(status__in=[AbstractBaseStatus.SUCCESSFUL, AbstractBaseStatus.PENDING])
+            Q(status__in=[AbstractBaseStatus.SUCCESSFUL,
+              AbstractBaseStatus.PENDING])
         )
 
         # remove pending transaction with issuer [vodafone, etisalat, aman]
@@ -1834,7 +1855,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         font_style.font.bold = True
 
         for col_nums in range(len(column_names_list)):
-            ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+            ws.write(row_num, col_nums,
+                     column_names_list[col_nums], font_style)
 
         # 2. Write sheet body/data - remaining rows
         font_style = xlwt.XFStyle()
@@ -1873,9 +1895,12 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
 
             for key in roots_usernames:
                 ws.write(row_num, 0, key, font_style)
-                ws.write(row_num, 1, roots_dict[key]['is_international'], font_style)
-                ws.write(row_num, 2, roots_dict[key]['from_accept'], font_style)
-                ws.write(row_num, 3, roots_dict[key]['is_internal'], font_style)
+                ws.write(row_num, 1, roots_dict[key]
+                         ['is_international'], font_style)
+                ws.write(row_num, 2, roots_dict[key]
+                         ['from_accept'], font_style)
+                ws.write(row_num, 3, roots_dict[key]
+                         ['is_internal'], font_style)
                 ws.write(row_num, 4, 'Volume', font_style)
                 ws.write(row_num + 1, 4, 'Count', font_style)
                 if self.instant_or_accept_perm:
@@ -1883,16 +1908,20 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     ws.write(row_num + 3, 4, 'Vat', font_style)
 
                 for el in final_data[key]:
-                    ws.write(row_num, col_nums[el['issuer']], el['total'], font_style)
                     ws.write(
-                        row_num + 1, col_nums[el['issuer']], el['count'], font_style
+                        row_num, col_nums[el['issuer']], el['total'], font_style)
+                    ws.write(
+                        row_num + 1, col_nums[el['issuer']
+                                              ], el['count'], font_style
                     )
                     if self.instant_or_accept_perm:
                         ws.write(
-                            row_num + 2, col_nums[el['issuer']], el['fees'], font_style
+                            row_num +
+                            2, col_nums[el['issuer']], el['fees'], font_style
                         )
                         ws.write(
-                            row_num + 3, col_nums[el['issuer']], el['vat'], font_style
+                            row_num +
+                            3, col_nums[el['issuer']], el['vat'], font_style
                         )
                 if self.instant_or_accept_perm:
                     row_num += 4
@@ -1905,7 +1934,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                 ws.write(row_num, 1, current_admin_report['count'], font_style)
                 ws.write(row_num, 2, current_admin_report['total'], font_style)
                 ws.write(row_num, 3, len(distinct_msisdn[key]), font_style)
-                ws.write(row_num, 4, current_admin_report['full_date'], font_style)
+                ws.write(
+                    row_num, 4, current_admin_report['full_date'], font_style)
                 ws.write(
                     row_num,
                     5,
@@ -1917,7 +1947,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
         wb.save(self.file_path)
 
         # add new file for this user in ExcelFile model
-        ExcelFile.objects.create(file_name=self.filename, owner=self.superadmin_user)
+        ExcelFile.objects.create(
+            file_name=self.filename, owner=self.superadmin_user)
 
         report_download_url = f"{settings.BASE_URL}{str(reverse('disbursement:download_exported'))}?filename={self.filename}"
         return report_download_url
@@ -1950,7 +1981,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             self.default_vf__or_bank_perm,
         ]
         if not (
-            onboarding_array.count(True) == 1 and onboarding_array.count(False) == 2
+            onboarding_array.count(
+                True) == 1 and onboarding_array.count(False) == 2
         ):
             return False
 
@@ -1993,7 +2025,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
                     total_per_admin['total'] += round(Decimal(el['total']), 2)
                     total_per_admin['count'] += el['count']
                     if self.instant_or_accept_perm:
-                        total_per_admin['fees'] += round(Decimal(el['fees']), 2)
+                        total_per_admin['fees'] += round(
+                            Decimal(el['fees']), 2)
                         total_per_admin['vat'] += round(Decimal(el['vat']), 2)
                 final_data[key].append(total_per_admin)
 
@@ -2114,7 +2147,8 @@ class ExportClientsTransactionsMonthlyReportTask(Task):
             f"transactions report of your clients within the period of {self.start_date} to {self.end_date} "
             f"from here <a href='{report_download_url}' >Download</a>.<br><br>Best Regards,"
         )
-        deliver_mail(self.superadmin_user, _(mail_subject), mail_content_message)
+        deliver_mail(self.superadmin_user, _(
+            mail_subject), mail_content_message)
 
     def prepare_and_send_error_mail(self, message):
         """Prepare error mail to be sent"""
@@ -2204,7 +2238,8 @@ class ExportPortalRootOrDashboardUserTransactionsEwallets(
             font_style.font.bold = True
 
             for col_nums in range(len(column_names_list)):
-                ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+                ws.write(row_num, col_nums,
+                         column_names_list[col_nums], font_style)
 
             row_num = row_num + 1
 
@@ -2304,12 +2339,14 @@ class ExportPortalRootOrDashboardUserTransactionsBanks(
             font_style.font.bold = True
 
             for col_nums in range(len(column_names_list)):
-                ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+                ws.write(row_num, col_nums,
+                         column_names_list[col_nums], font_style)
 
             row_num = row_num + 1
 
             for row in queryset:
-                ws.write(row_num, 0, str(row.parent_transaction.transaction_id))
+                ws.write(row_num, 0, str(
+                    row.parent_transaction.transaction_id))
                 ws.write(row_num, 1, str(row.creditor_account_number))
                 ws.write(row_num, 2, str(row.amount))
                 ws.write(row_num, 3, str(row.fees))
@@ -2419,7 +2456,8 @@ class ExportPortalRootTransactionsEwallet(ExportTransactionsBaseView, Task):
             font_style.font.bold = True
 
             for col_nums in range(len(column_names_list)):
-                ws.write(row_num, col_nums, column_names_list[col_nums], font_style)
+                ws.write(row_num, col_nums,
+                         column_names_list[col_nums], font_style)
 
             row_num = row_num + 1
 
@@ -2558,19 +2596,33 @@ def handle_change_profile_callback(doc_id, transactions):
     return
 
 
-def prepare_disbursed_data_report(doc_id, report_type):
+def prepare_disbursed_data_report(doc_id, report_type, user_id):
     """Prepare report for all, failed or success document transactions"""
     doc_obj = Doc.objects.get(id=doc_id)
-
-    if report_type == 'all':
-        filename = _('disbursed_data_%s_%s.xlsx') % (str(doc_id), randomword(8))
-        resource_query_dict = {'doc': doc_obj, 'is_disbursed': None}
-    elif report_type == 'success':
-        filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
-        resource_query_dict = {'doc': doc_obj, 'is_disbursed': True}
+    user = User.objects.get(id=user_id)
+    if user.is_vodafone_default_onboarding:
+        if report_type == 'all':
+            filename = _(doc_obj.original_file_name)
+            resource_query_dict = {'doc': doc_obj, 'is_disbursed': None}
+        elif report_type == 'success':
+            filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
+            resource_query_dict = {'doc': doc_obj, 'is_disbursed': True}
+        else:
+            filename = _(
+                f"failed_disbursed_{str(doc_id)}_{randomword(8)}.xlsx")
+            resource_query_dict = {'doc': doc_obj, 'is_disbursed': False}
     else:
-        filename = _(f"failed_disbursed_{str(doc_id)}_{randomword(8)}.xlsx")
-        resource_query_dict = {'doc': doc_obj, 'is_disbursed': False}
+        if report_type == 'all':
+            filename = _('disbursed_data_%s_%s.xlsx') % (
+                str(doc_id), randomword(8))
+            resource_query_dict = {'doc': doc_obj, 'is_disbursed': None}
+        elif report_type == 'success':
+            filename = _(f"success_disbursed_{str(doc_id)}_{str(doc_id)}.xlsx")
+            resource_query_dict = {'doc': doc_obj, 'is_disbursed': True}
+        else:
+            filename = _(
+                f"failed_disbursed_{str(doc_id)}_{randomword(8)}.xlsx")
+            resource_query_dict = {'doc': doc_obj, 'is_disbursed': False}
 
     if doc_obj.is_e_wallet:
         dataset = DisbursementDataResourceForEWallets(**resource_query_dict)
@@ -2590,7 +2642,8 @@ def prepare_disbursed_data_report(doc_id, report_type):
     )
     report_download_url = (
         settings.BASE_URL
-        + str(reverse('disbursement:download_failed', kwargs={'doc_id': doc_id}))
+        + str(reverse('disbursement:download_failed',
+              kwargs={'doc_id': doc_id}))
         + f"?filename={filename}"
     )
 
@@ -2608,7 +2661,7 @@ def generate_failed_disbursed_data(doc_id, user_id, **kwargs):
     :return:
     """
     doc_obj, report_view_url, report_download_url = prepare_disbursed_data_report(
-        doc_id, 'failed'
+        doc_id, 'failed', user_id
     )
     user = User.objects.get(id=user_id)
     message = _(
@@ -2632,7 +2685,7 @@ def generate_success_disbursed_data(doc_id, user_id, **kwargs):
     :return:
     """
     doc_obj, report_view_url, report_download_url = prepare_disbursed_data_report(
-        doc_id, 'success'
+        doc_id, 'success', user_id
     )
     user = User.objects.get(id=user_id)
     message = _(
@@ -2653,7 +2706,7 @@ def generate_all_disbursed_data(doc_id, user_id, **kwargs):
     Generate success and failed excel sheet from already disbursed data
     """
     doc_obj, report_view_url, report_download_url = prepare_disbursed_data_report(
-        doc_id, 'all'
+        doc_id, 'all', user_id
     )
     user = User.objects.get(id=user_id)
     message = _(
@@ -2746,7 +2799,8 @@ def handle_uploaded_file(doc_obj_id, **kwargs):
         if not file_data:
             file_data = FileData.objects.create(**creation_dict)
         else:
-            records_to_be_updated = file_data.filter(has_full_payment=False).first()
+            records_to_be_updated = file_data.filter(
+                has_full_payment=False).first()
             try:
                 records_to_be_updated.data = processed_data
                 file_data = records_to_be_updated
@@ -2857,7 +2911,8 @@ def doc_review_maker_mail(doc_id, review_id, **kwargs):
         reviews_required = doc.file_category.no_of_reviews_required
     else:
         all_categories = doc.owner.root.file_category.all()
-        reviews_required = min([cat.no_of_reviews_required for cat in all_categories])
+        reviews_required = min(
+            [cat.no_of_reviews_required for cat in all_categories])
 
     if review.is_ok:
         message = _(
@@ -2918,7 +2973,8 @@ def notify_makers_collection(doc):
         The file named <a href="{doc_view_url}" >{doc.filename()}</a> was validated successfully<br><br>
         Thanks, BR"""
     )
-    deliver_mail(None, _(' Collection File Upload Notification'), message, makers)
+    deliver_mail(None, _(' Collection File Upload Notification'),
+                 message, makers)
 
 
 @app.task()
@@ -2944,7 +3000,8 @@ def generate_vf_daily_report():
     ).values_list('pk', flat=True)
 
     vf_facilitator_report_path = ExportClientsTransactionsMonthlyReportTask.run(
-        2, start_date, end_date, 'all', list(vf_facilitator_super_admins_ids), True
+        2, start_date, end_date, 'all', list(
+            vf_facilitator_super_admins_ids), True
     )
     VF_FACILITATOR_REPORT_LOGGER.debug(
         f"[message] [report generated successfully] -- " f"{vf_facilitator_report_path}"

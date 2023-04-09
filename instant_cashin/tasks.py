@@ -63,6 +63,7 @@ def check_for_status_updates_for_latest_bank_transactions(days_delta=6, **kwargs
         five_days_ago = timezone.now() - datetime.timedelta(int(days_delta))
         latest_bank_trx_ids = (
             BankTransaction.objects.filter(Q(created_at__gte=five_days_ago))
+            .filter(Q(is_manual_batch=False))
             .order_by("parent_transaction__transaction_id", "-id")
             .distinct("parent_transaction__transaction_id")
             .values_list("id", flat=True)
@@ -128,6 +129,7 @@ def check_for_status_updates_for_latest_bank_transactions_more_than_6_days():
         latest_bank_trx_ids = (
             BankTransaction.objects.filter(Q(created_at__gte=end_date))
             .filter(Q(created_at__lte=start_date))
+            .filter(Q(is_manual_batch=False))
             .order_by("parent_transaction__transaction_id", "-id")
             .distinct("parent_transaction__transaction_id")
             .values_list("id", flat=True)

@@ -22,28 +22,28 @@ services:
       options:
         max-size: "100m"
     command: >
-      sh -c "uwsgi -i uwsgi.ini"
+      sh -c "python manage.py runserver 0.0.0.0:8000"
     networks:
       - payouts_network
     depends_on:
-#      - postgres
+      - postgres
       - rabbitmq
 
-#  postgres:
-#    container_name: PostgreSQL
-#    image: postgres:11
-#    restart: always
-#    environment:
-#      POSTGRES_USER: payouts_user
-#      POSTGRES_DB: payouts_database
-#      POSTGRES_PASSWORD: PayoutsPortalPassword
-#    volumes:
-#      - .:/var/lib/postgresql
-#      - postgresql_volume:/var/lib/postgresql/data
-#    networks:
-#      - payouts_network
-#    ports:
-#      - "5432:5432"
+  postgres:
+    container_name: PostgreSQL
+    image: postgres:11
+    restart: always
+    environment:
+      POSTGRES_USER: payouts_user
+      POSTGRES_DB: payouts_database
+      POSTGRES_PASSWORD: PayoutsPortalPassword
+    volumes:
+      - .:/var/lib/postgresql
+      - postgresql_volume:/var/lib/postgresql/data
+    networks:
+      - payouts_network
+    ports:
+      - "5432:5432"
 
   rabbitmq:
     container_name: RabbitMQ
@@ -107,7 +107,7 @@ services:
 volumes:
   static_volume:
   media_volume:
-#  postgresql_volume:
+  postgresql_volume:
   rabbit_volume:
   uwsgi_data:
 

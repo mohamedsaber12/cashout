@@ -747,7 +747,6 @@ class ReportProblemView(LoginRequiredMixin, View):
                 'group_id': int(group_id),
                 'cc_emails': business_team
             }
-            print(group_id)
             r = requests.post("https://" + domain + ".freshdesk.com/api/v2/tickets",
                               auth=(api_key, password), headers=headers, data=json.dumps(ticket))
             if r.status_code == 201:

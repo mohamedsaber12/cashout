@@ -704,6 +704,7 @@ class ReportProblemView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for report a problem on transaction Request"""
+        print(request.GET)
         context = {
             'form': ReportProblemOnTransactionForm(),
         }
@@ -714,6 +715,14 @@ class ReportProblemView(LoginRequiredMixin, View):
         context = {
             'form': ReportProblemOnTransactionForm(request.POST),
         }
+        
+        if kwargs['trx_type'] =='portal':
+            model='Disbursement Data Records'
+        elif kwargs['trx_type'] =='instant':
+            model='Instant Transactions'
+        else:
+            model='Bank Transaction'
+
 
         if context['form'].is_valid():
             # integrate with fresh Desk
@@ -721,7 +730,12 @@ class ReportProblemView(LoginRequiredMixin, View):
             problem_severity = cleaned_data.get('problem_severity')
             contact_number = cleaned_data.get('contact_number')
             contact_email = cleaned_data.get('contact_email')
-            comment = cleaned_data.get('comment')
+            comment_before_insert = cleaned_data.get('comment')
+            comment = f"""{comment_before_insert}<br/>
+            model:{model}<br/>
+            transaction id:{kwargs['trx_id']}<br/>
+            """
+
             if problem_severity == 'low':
                 priority = 1
             elif problem_severity == 'med':

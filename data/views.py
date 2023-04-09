@@ -18,6 +18,7 @@ from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_safe
 from django.views.generic import DetailView, TemplateView, View
 from django.views.static import serve
+from instant_cashin.utils import get_from_env
 
 from disbursement.utils import (BANK_CODES,
                                 BANK_TRANSACTION_TYPES_DESCRIPTION_LIST)
@@ -36,7 +37,8 @@ from .models import CollectionData, Doc, DocReview, FileCategory, Format
 from .tasks import (BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor,
                     doc_review_maker_mail, handle_uploaded_file,
                     notify_checkers, notify_disbursers)
-
+import requests
+import json
 UPLOAD_LOGGER = logging.getLogger("upload")
 DELETED_FILES_LOGGER = logging.getLogger("deleted_files")
 UNAUTHORIZED_FILE_DELETE_LOGGER = logging.getLogger("unauthorized_file_delete")
@@ -289,7 +291,8 @@ def collection_home(request):
             UPLOAD_LOGGER.debug(
                 f"[message] [COLLECTION FILE UPLOAD] [{request.user}] -- {msg}"
             )
-            handle_uploaded_file.delay(file_doc.id, language=translation.get_language())
+            handle_uploaded_file.delay(
+                file_doc.id, language=translation.get_language())
             return HttpResponseRedirect(
                 request.path
             )  # Redirect to the document list after POST
@@ -489,8 +492,10 @@ def document_view(request, doc_id):
             doc.recuring_period = cleaned_data.get("recuring_period")
             doc.is_recuring = cleaned_data.get("is_recuring")
             if doc.recuring_starting_date != cleaned_data.get("recuring_starting_date"):
-                doc.recuring_latest_date = cleaned_data.get("recuring_starting_date")
-            doc.recuring_starting_date = cleaned_data.get("recuring_starting_date")
+                doc.recuring_latest_date = cleaned_data.get(
+                    "recuring_starting_date")
+            doc.recuring_starting_date = cleaned_data.get(
+                "recuring_starting_date")
             doc.save()
 
     # 3. Retrieve the document related transactions to be viewed
@@ -568,7 +573,8 @@ def doc_download(request, doc_id):
 
     if doc.owner.hierarchy == request.user.hierarchy:
         try:
-            response = HttpResponse(doc.file, content_type="application/vnd.ms-excel")
+            response = HttpResponse(
+                doc.file, content_type="application/vnd.ms-excel")
             response["Content-Disposition"] = "attachment; filename=%s" % doc.filename()
             response["X-Accel-Redirect"] = "/media/" + doc.file.name
             DOWNLOAD_LOGGER.debug(
@@ -596,7 +602,8 @@ class FormatListView(SupportOrRootOrMakerUserPassesTestMixin, TemplateView):
     def dispatch(self, request, *args, **kwargs):
         """Common attributes between GET and POST methods"""
         self.is_disbursement_model = (
-            True if request.user.get_status(self.request) == "disbursement" else False
+            True if request.user.get_status(
+                self.request) == "disbursement" else False
         )
         self.is_support_model = True if self.request.user.is_support else False
         self.flow_type = (
@@ -709,10 +716,47 @@ class ReportProblemView(LoginRequiredMixin, View):
         }
 
         if context['form'].is_valid():
-            # TODO integrate with fresh Desk
-
-            context = {
-                'request_received': True,
-                'form': ReportProblemOnTransactionForm(),
+            # integrate with fresh Desk
+            cleaned_data = context['form'].cleaned_data
+            problem_severity = cleaned_data.get('problem_severity')
+            contact_number = cleaned_data.get('contact_number')
+            contact_email = cleaned_data.get('contact_email')
+            comment = cleaned_data.get('comment')
+            if problem_severity == 'low':
+                priority = 1
+            elif problem_severity == 'med':
+                priority = 2
+            else:
+                priority = 3
+            api_key = get_from_env("API_KEY")
+            domain = get_from_env("DOMAIN")
+            password = get_from_env("FRESHDESK_PASSWORD")
+            group_id = get_from_env("GROUP_ID")
+            business_team = [
+                email
+                for email in get_from_env('BUSINESS_TEAM_EMAILS_LIST').split(',')
+            ]
+            headers = {'Content-Type': 'application/json'}
+            ticket = {
+                'subject': ' Report A Problem ',
+                'description': comment,
+                'email': contact_email,
+                'phone': contact_number,
+                'priority': priority,
+                'status': 2,
+                'group_id': int(group_id),
+                'cc_emails': business_team
             }
+            r = requests.post("https://" + domain + ".freshdesk.com/api/v2/tickets",
+                              auth=(api_key, password), headers=headers, data=json.dumps(ticket))
+            if r.status_code == 201:
+                context = {
+                    'request_received': True,
+                    'form': ReportProblemOnTransactionForm(),
+                }
+            else:
+                context = {
+                    'request_received': False,
+                    'form': ReportProblemOnTransactionForm(),
+                }
         return render(request, template_name=self.template_name, context=context)

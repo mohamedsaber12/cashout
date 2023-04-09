@@ -704,7 +704,6 @@ class ReportProblemView(LoginRequiredMixin, View):
 
     def get(self, request, *args, **kwargs):
         """Handles GET requests for report a problem on transaction Request"""
-        print(request.GET)
         context = {
             'form': ReportProblemOnTransactionForm(),
         }

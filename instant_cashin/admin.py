@@ -2,32 +2,30 @@
 from __future__ import unicode_literals
 
 import csv
-from django_admin_multiple_choice_list_filter.list_filters import (
-    MultipleChoiceListFilter,
-)
+import datetime
 
-from django.contrib import admin
+from django import forms
+from django.contrib import admin, messages
 from django.contrib.admin.templatetags.admin_urls import admin_urlname
 from django.contrib.contenttypes.models import ContentType
-from django.shortcuts import resolve_url, render
+from django.db.models import Q
+from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import render, resolve_url
+from django.urls import path
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _
-from django.http import HttpResponse
-from django.db.models import Q
-
-from disbursement.models import DisbursementData, BankTransaction
-from users.models import RootUser
-from .models import AmanTransaction, InstantTransaction
-from .mixins import ExportCsvMixin
-from core.models import AbstractBaseStatus
-from utilities.date_range_filter import CustomDateRangeFilter
-from django.urls import path, reverse
-from django import forms
-from django.contrib import messages
-from django.http import HttpResponseRedirect
-import datetime
+from django_admin_multiple_choice_list_filter.list_filters import \
+    MultipleChoiceListFilter
 from openpyxl import load_workbook
+
+from core.models import AbstractBaseStatus
+from disbursement.mixins import ExportCsvMixin
+from disbursement.models import BankTransaction, DisbursementData
 from instant_cashin.tasks import update_instant_timeouts_from_vodafone_report
+from users.models import RootUser
+from utilities.date_range_filter import CustomDateRangeFilter
+
+from .models import AmanTransaction, InstantTransaction
 
 
 class AmanTransactionTypeFilter(admin.SimpleListFilter):
@@ -181,8 +179,9 @@ class InstantTransactionAdmin(admin.ModelAdmin, ExportCsvMixin):
         "anon_sender",
         "from_user",
         CustomRootFilter,
-        'is_single_step', 'transaction_status_code',
-        'from_accept'
+        'is_single_step',
+        'transaction_status_code',
+        'from_accept',
     ]
     actions = ["export_as_csv", "export_bank_transactions_ids"]
     fieldsets = (

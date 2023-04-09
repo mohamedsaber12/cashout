@@ -267,6 +267,14 @@ class RootAdmin(UserAccountAdmin):
 
     def get_fieldsets(self, request, obj=None):
         fieldsets = super(RootAdmin, self).get_fieldsets(request, obj)
+
+        # add account manager field to personal information
+        fieldsets[1][1]["fields"] = (
+            "first_name",
+            "last_name",
+            "mobile_no",
+            "account_manager",
+        )
         # pop parent field from fieldsets
         fieldsets[2][1]["fields"] = (
             "is_active",

@@ -2,8 +2,8 @@
 from __future__ import unicode_literals
 
 from datetime import datetime
+from unittest.mock import patch
 
-import __builtin__
 from django.contrib.auth.models import Permission
 from django.test import Client, RequestFactory, TestCase
 from django.urls import reverse
@@ -13,11 +13,11 @@ from data.models.filecategory import FileCategory
 from disbursement.models import (Agent, BankTransaction, DisbursementData,
                                  DisbursementDocData, RemainingAmounts,
                                  VMTData)
+from instant_cashin.models import InstantTransaction
 from instant_cashin.specific_issuers_integrations.ach.instant_cashin import \
     BankTransactionsChannel
 from instant_cashin.utils import get_from_env
 from users.models import Brand, CheckerUser
-from users.models import Client
 from users.models import Client as ClientModel
 from users.models import Levels, MakerUser
 from users.tests.factories import (AdminUserFactory, InstantAPICheckerFactory,
@@ -257,97 +257,348 @@ class BankTransactionsChannelTests(TestCase):
     # TODO error
 
     # @patch("SSLCertificate", return_value="test")
-    def test_accumulate_send_transaction_payload(self, mocked):
-        with mocked.patch.object(__builtin__, 'SSLCertificate') as mock:
-            mock.return_value = 'unittest_output'
-            self.assertFalse(
-                BankTransactionsChannel.accumulate_send_transaction_payload(
-                    self.bank_trx_obj
-                ),
-                '',
-            )
+    # def test_accumulate_send_transaction_payload(self, mocked):
+    #     with mocked.patch.object(__builtin__, 'SSLCertificate') as mock:
+    #         mock.return_value = 'unittest_output'
+    #         self.assertFalse(
+    #             BankTransactionsChannel.accumulate_send_transaction_payload(
+    #                 self.bank_trx_obj
+    #             ),
+    #             '',
+    #         )
 
     # @patch("SSLCertificate", return_value="test")
     # def test_accumulate_get_transaction_status_payload(self, mocked):
     #     self.assertFalse(BankTransactionsChannel.accumulate_get_transaction_status_payload(self.bank_trx_obj), '')
-    # @patch("requests.post", return_value=MockResponse())
-    # def test_post(self, mocked):
-    #     self.assertNotEqual(BankTransactionsChannel.post(get_from_env("EBC_API_URL"), {},self.bank_trx_obj), '')
-    # @patch("requests.get", return_value=MockResponse())
-    # def test_get(self, mocked):
-    #     self.assertNotEqual(BankTransactionsChannel.get(get_from_env("EBC_API_URL"), {},self.bank_trx_obj), '')
-    # def test_map_response_code_and_message(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'ResponseCode':'8000'}
-    #     self.assertNotEqual(BankTransactionsChannel.map_response_code_and_message(self.bank_trx_obj, self.instanttransaction, json_response, 1000), '')
-    # def test_map_response_code_and_message_with_ResponseCode_8001(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'ResponseCode':'8001'}
-    #     self.assertNotEqual(BankTransactionsChannel.map_response_code_and_message(self.bank_trx_obj, self.instanttransaction, json_response, 1000), '')
-    # def test_map_response_code_and_message_with_ResponseCode_8002(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'ResponseCode':'8002'}
-    #     self.assertNotEqual(BankTransactionsChannel.map_response_code_and_message(self.bank_trx_obj, self.instanttransaction, json_response, 1000), '')
-    # def test_map_response_code_and_message_with_ResponseCode_8003(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'ResponseCode':'8003'}
-    #     self.assertNotEqual(BankTransactionsChannel.map_response_code_and_message(self.bank_trx_obj, self.instanttransaction, json_response, 1000), '')
-    # def test_map_response_code_and_message_with_ResponseCode_other(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'ResponseCode':'800'}
-    #     self.assertNotEqual(BankTransactionsChannel.map_response_code_and_message(self.bank_trx_obj, self.instanttransaction, json_response, 1000), '')
-    # def test_map_response_code_and_message_with_ResponseCode_8111(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'ResponseCode':'8111'}
-    #     self.assertNotEqual(BankTransactionsChannel.map_response_code_and_message(self.bank_trx_obj, self.instanttransaction, json_response, 1000), '')
-    # def test_update_bank_trx_status(self):
-    #     json_response={'TransactionStatusCode':'8111','TransactionStatusDescription':'test'}
-    #     self.assertNotEqual(BankTransactionsChannel.update_bank_trx_status(self.bank_trx_obj, json_response), '')
-    # def test_update_bank_trx_status_TransactionStatusCode_8222(self):
-    #     json_response={'TransactionStatusCode':'8222','TransactionStatusDescription':'test'}
-    #     self.assertNotEqual(BankTransactionsChannel.update_bank_trx_status(self.bank_trx_obj, json_response), '')
-    # def test_update_bank_trx_status_TransactionStatusCode_rejected(self):
-    #     json_response={'TransactionStatusCode':'000001','TransactionStatusDescription':'test'}
-    #     self.assertNotEqual(BankTransactionsChannel.update_bank_trx_status(self.bank_trx_obj, json_response), '')
-    # def test_update_bank_trx_status_TransactionStatusCode_returned(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(uid=12345, document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     json_response={'TransactionStatusCode':'000100','TransactionStatusDescription':'test'}
-    #     self.assertNotEqual(BankTransactionsChannel.update_bank_trx_status(self.bank_trx_obj, json_response), '')
-    # def test_send_transaction(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(uid=12345, document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     self.assertNotEqual(BankTransactionsChannel.send_transaction(self.bank_trx_obj, self.instanttransaction, 1000), '')
-    # def test_send_transaction_issuer_bank_card(self):
-    #     self.instanttransaction= InstantTransaction.objects.create(uid=12345, document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     self.assertNotEqual(BankTransactionsChannel.send_transaction(self.bank_trx_obj,None, 1000), '')
-    # def test_send_transaction_for_root_UVAAdmin(self):
-    #     self.root.username='UVA-Admin'
-    #     self.root.save()
-    #     remaining_amounts = RemainingAmounts.objects.create(mobile='01211409281', full_name='fathi yehia', base_amount=10000, remaining_amount=10000)
-    #     self.instanttransaction= InstantTransaction.objects.create(uid=12345, document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     self.assertNotEqual(BankTransactionsChannel.send_transaction(self.bank_trx_obj,None, 1000), '')
-    # def test_send_transaction_for_root_UVAAdmin_but_amount_greater_than_remaining_amount(self):
-    #     self.root.username='UVA-Admin'
-    #     self.root.save()
-    #     self.bank_trx_obj.amount=15000
-    #     self.bank_trx_obj.save()
-    #     remaining_amounts = RemainingAmounts.objects.create(mobile='01211409281', full_name='fathi yehia', base_amount=10000, remaining_amount=10000)
-    #     self.instanttransaction= InstantTransaction.objects.create(uid=12345, document=self.doc, from_user=self.checker_user, issuer_type=InstantTransaction.ORANGE, disbursed_date=datetime.now(), status='P')
-    #     self.assertNotEqual(BankTransactionsChannel.send_transaction(self.bank_trx_obj,None, 1000), '')
+    @patch("requests.post", return_value=MockResponse())
+    def test_post(self, mocked):
+        self.assertNotEqual(
+            BankTransactionsChannel.post(
+                get_from_env("EBC_API_URL"), {}, self.bank_trx_obj
+            ),
+            '',
+        )
 
-    # def test_get_transaction_status(self):
-    #     self.assertNotEqual(BankTransactionsChannel.get_transaction_status(self.bank_trx_obj), '')
+    @patch("requests.get", return_value=MockResponse())
+    def test_get(self, mocked):
+        self.assertNotEqual(
+            BankTransactionsChannel.get(
+                get_from_env("EBC_API_URL"), {}, self.bank_trx_obj
+            ),
+            '',
+        )
 
-    # def test_update_manual_batch_transactions(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":self.bank_trx_obj.transaction_id ,'status':'Settled Final'}]), '')
-    # def test_update_manual_batch_transactions_with_status_Settled_Opened_For_Return(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":self.bank_trx_obj.transaction_id ,'status':'Settled ,Opened For Return'}]), '')
-    # def test_update_manual_batch_transactions_with_status_Returned_Finaln(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":self.bank_trx_obj.transaction_id ,'status':'Returned Final'}]), '')
-    # def test_update_manual_batch_transactions_with_status_Rejected_Final(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":self.bank_trx_obj.transaction_id ,'status':'Rejected Final'}]), '')
-    # def test_update_manual_batch_transactions_with_status_Accepted(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":self.bank_trx_obj.transaction_id ,'status':'Accepted'}]), '')
-    # def test_update_manual_batch_transactions_with_status_else(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":self.bank_trx_obj.transaction_id ,'status':'else'}]), '')
-    # def test_update_manual_batch_transactions_with_status_exception(self):
-    #     self.assertNotEqual(BankTransactionsChannel.update_manual_batch_transactions([{"transaction_id":15 ,'status':'else'}]), '')
+    def test_map_response_code_and_message(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {'ResponseCode': '8000'}
+        self.assertNotEqual(
+            BankTransactionsChannel.map_response_code_and_message(
+                self.bank_trx_obj, self.instanttransaction, json_response, 1000
+            ),
+            '',
+        )
+
+    def test_map_response_code_and_message_with_ResponseCode_8001(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {'ResponseCode': '8001'}
+        self.assertNotEqual(
+            BankTransactionsChannel.map_response_code_and_message(
+                self.bank_trx_obj, self.instanttransaction, json_response, 1000
+            ),
+            '',
+        )
+
+    def test_map_response_code_and_message_with_ResponseCode_8002(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {'ResponseCode': '8002'}
+        self.assertNotEqual(
+            BankTransactionsChannel.map_response_code_and_message(
+                self.bank_trx_obj, self.instanttransaction, json_response, 1000
+            ),
+            '',
+        )
+
+    def test_map_response_code_and_message_with_ResponseCode_8003(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {'ResponseCode': '8003'}
+        self.assertNotEqual(
+            BankTransactionsChannel.map_response_code_and_message(
+                self.bank_trx_obj, self.instanttransaction, json_response, 1000
+            ),
+            '',
+        )
+
+    def test_map_response_code_and_message_with_ResponseCode_other(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {'ResponseCode': '800'}
+        self.assertNotEqual(
+            BankTransactionsChannel.map_response_code_and_message(
+                self.bank_trx_obj, self.instanttransaction, json_response, 1000
+            ),
+            '',
+        )
+
+    def test_map_response_code_and_message_with_ResponseCode_8111(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {'ResponseCode': '8111'}
+        self.assertNotEqual(
+            BankTransactionsChannel.map_response_code_and_message(
+                self.bank_trx_obj, self.instanttransaction, json_response, 1000
+            ),
+            '',
+        )
+
+    def test_update_bank_trx_status(self):
+        json_response = {
+            'TransactionStatusCode': '8111',
+            'TransactionStatusDescription': 'test',
+        }
+        self.assertNotEqual(
+            BankTransactionsChannel.update_bank_trx_status(
+                self.bank_trx_obj, json_response
+            ),
+            '',
+        )
+
+    def test_update_bank_trx_status_TransactionStatusCode_8222(self):
+        json_response = {
+            'TransactionStatusCode': '8222',
+            'TransactionStatusDescription': 'test',
+        }
+        self.assertNotEqual(
+            BankTransactionsChannel.update_bank_trx_status(
+                self.bank_trx_obj, json_response
+            ),
+            '',
+        )
+
+    def test_update_bank_trx_status_TransactionStatusCode_rejected(self):
+        json_response = {
+            'TransactionStatusCode': '000001',
+            'TransactionStatusDescription': 'test',
+        }
+        self.assertNotEqual(
+            BankTransactionsChannel.update_bank_trx_status(
+                self.bank_trx_obj, json_response
+            ),
+            '',
+        )
+
+    def test_update_bank_trx_status_TransactionStatusCode_returned(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            uid=12345,
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        json_response = {
+            'TransactionStatusCode': '000100',
+            'TransactionStatusDescription': 'test',
+        }
+        self.assertNotEqual(
+            BankTransactionsChannel.update_bank_trx_status(
+                self.bank_trx_obj, json_response
+            ),
+            '',
+        )
+
+    def test_send_transaction(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            uid=12345,
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        self.assertNotEqual(
+            BankTransactionsChannel.send_transaction(
+                self.bank_trx_obj, self.instanttransaction, 1000
+            ),
+            '',
+        )
+
+    def test_send_transaction_issuer_bank_card(self):
+        self.instanttransaction = InstantTransaction.objects.create(
+            uid=12345,
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        self.assertNotEqual(
+            BankTransactionsChannel.send_transaction(self.bank_trx_obj, None, 1000), ''
+        )
+
+    def test_send_transaction_for_root_UVAAdmin(self):
+        self.root.username = 'UVA-Admin'
+        self.root.save()
+        remaining_amounts = RemainingAmounts.objects.create(
+            mobile='01211409281',
+            full_name='fathi yehia',
+            base_amount=10000,
+            remaining_amount=10000,
+        )
+        self.instanttransaction = InstantTransaction.objects.create(
+            uid=12345,
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        self.assertNotEqual(
+            BankTransactionsChannel.send_transaction(self.bank_trx_obj, None, 1000), ''
+        )
+
+    def test_send_transaction_for_root_UVAAdmin_but_amount_greater_than_remaining_amount(
+        self,
+    ):
+        self.root.username = 'UVA-Admin'
+        self.root.save()
+        self.bank_trx_obj.amount = 15000
+        self.bank_trx_obj.save()
+        remaining_amounts = RemainingAmounts.objects.create(
+            mobile='01211409281',
+            full_name='fathi yehia',
+            base_amount=10000,
+            remaining_amount=10000,
+        )
+        self.instanttransaction = InstantTransaction.objects.create(
+            uid=12345,
+            document=self.doc,
+            from_user=self.checker_user,
+            issuer_type=InstantTransaction.ORANGE,
+            disbursed_date=datetime.now(),
+            status='P',
+        )
+        self.assertNotEqual(
+            BankTransactionsChannel.send_transaction(self.bank_trx_obj, None, 1000), ''
+        )
+
+    def test_get_transaction_status(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.get_transaction_status(self.bank_trx_obj), ''
+        )
+
+    def test_update_manual_batch_transactions(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [
+                    {
+                        "transaction_id": self.bank_trx_obj.transaction_id,
+                        'status': 'Settled Final',
+                    }
+                ]
+            ),
+            '',
+        )
+
+    def test_update_manual_batch_transactions_with_status_Settled_Opened_For_Return(
+        self,
+    ):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [
+                    {
+                        "transaction_id": self.bank_trx_obj.transaction_id,
+                        'status': 'Settled ,Opened For Return',
+                    }
+                ]
+            ),
+            '',
+        )
+
+    def test_update_manual_batch_transactions_with_status_Returned_Finaln(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [
+                    {
+                        "transaction_id": self.bank_trx_obj.transaction_id,
+                        'status': 'Returned Final',
+                    }
+                ]
+            ),
+            '',
+        )
+
+    def test_update_manual_batch_transactions_with_status_Rejected_Final(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [
+                    {
+                        "transaction_id": self.bank_trx_obj.transaction_id,
+                        'status': 'Rejected Final',
+                    }
+                ]
+            ),
+            '',
+        )
+
+    def test_update_manual_batch_transactions_with_status_Accepted(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [
+                    {
+                        "transaction_id": self.bank_trx_obj.transaction_id,
+                        'status': 'Accepted',
+                    }
+                ]
+            ),
+            '',
+        )
+
+    def test_update_manual_batch_transactions_with_status_else(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [{"transaction_id": self.bank_trx_obj.transaction_id, 'status': 'else'}]
+            ),
+            '',
+        )
+
+    def test_update_manual_batch_transactions_with_status_exception(self):
+        self.assertNotEqual(
+            BankTransactionsChannel.update_manual_batch_transactions(
+                [{"transaction_id": 15, 'status': 'else'}]
+            ),
+            '',
+        )

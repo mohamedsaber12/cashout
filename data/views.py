@@ -31,7 +31,7 @@ from utilities.models import AbstractBaseDocType
 from .forms import (DocReviewForm, FileCategoryFormSet, FileDocumentForm,
                     FormatFormSet, RecuringForm)
 from .models import CollectionData, Doc, DocReview, FileCategory, Format
-from .tasks import (BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor,
+from .tasks import (BankWalletsAndCardsSheetProcessor, EWalletsSheetProcessor, ExportPortalRootTransactionsEwallet,
                     doc_review_maker_mail, handle_uploaded_file,
                     notify_checkers, notify_disbursers)
 
@@ -116,7 +116,18 @@ class DisbursementHomeView(UserWithDisbursementPermissionRequired, View):
         paginator = Paginator(doc_list_disbursement, 7)
         page = request.GET.get("page")
         docs = paginator.get_page(page)
+        export_start_date = request.GET.get("export_start_date")
+        export_end_date = request.GET.get("export_end_date")
 
+        
+        if export_start_date and export_end_date :
+            EXPORT_MESSAGE = f"Please check your mail for report {request.user.email} after a few minutes"
+            ExportPortalRootTransactionsEwallet.delay(
+                    self.request.user.id, export_start_date, export_end_date
+                )
+            return HttpResponseRedirect(
+                f"{self.request.path}?export_message={EXPORT_MESSAGE}"
+            )
         context = {
             "has_vmt_setup": has_vmt_setup,
             "admin_is_active": self.admin_is_active,

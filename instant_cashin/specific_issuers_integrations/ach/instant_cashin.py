@@ -14,19 +14,25 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from disbursement.models import BankTransaction, RemainingAmounts
-from disbursement.utils import (BANK_TRX_BEING_PROCESSED,
-                                BANK_TRX_IS_SUCCESSFUL_1,
-                                BANK_TRX_IS_SUCCESSFUL_2, BANK_TRX_RECEIVED,
-                                EXTERNAL_ERROR_MSG,
-                                INSTANT_TRX_BEING_PROCESSED,
-                                INSTANT_TRX_IS_ACCEPTED,
-                                INSTANT_TRX_IS_REJECTED, INSTANT_TRX_RECEIVED,
-                                INTERNAL_ERROR_MSG, TRX_REJECTED_BY_BANK_CODES,
-                                TRX_RETURNED_BY_BANK_CODES,
-                                revert_balance_to_accept_account)
+from disbursement.utils import (
+    BANK_TRX_BEING_PROCESSED,
+    BANK_TRX_IS_SUCCESSFUL_1,
+    BANK_TRX_IS_SUCCESSFUL_2,
+    BANK_TRX_RECEIVED,
+    EXTERNAL_ERROR_MSG,
+    INSTANT_TRX_BEING_PROCESSED,
+    INSTANT_TRX_IS_ACCEPTED,
+    INSTANT_TRX_IS_REJECTED,
+    INSTANT_TRX_RECEIVED,
+    INTERNAL_ERROR_MSG,
+    TRX_REJECTED_BY_BANK_CODES,
+    TRX_RETURNED_BY_BANK_CODES,
+    revert_balance_to_accept_account,
+)
 from instant_cashin.api.serializers import (
     BankTransactionResponseModelSerializer,
-    InstantTransactionResponseModelSerializer)
+    InstantTransactionResponseModelSerializer,
+)
 from utilities.ssl_certificate import SSLCertificate
 
 from ...models import AbstractBaseIssuer, InstantTransaction
@@ -35,8 +41,7 @@ from ...utils import get_from_env
 ACH_SEND_TRX_LOGGER = logging.getLogger("ach_send_transaction.log")
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
-from instant_cashin.specific_issuers_integrations.aman.instant_cashin import \
-    UUIDEncoder
+from instant_cashin.specific_issuers_integrations.aman.instant_cashin import UUIDEncoder
 
 
 class BankTransactionsChannel:
@@ -760,21 +765,21 @@ class BankTransactionsChannel:
 
     @staticmethod
     def map_manual_batch_status_code_desc(status):
-        if "Settled ,Opened For Return" in status:
-            return (
+        status_mappings = {
+            "Settled ,Opened For Return": (
                 "8222",
                 "Successful with warning, A transfer will take place once authorized by the receiver bank",
-            )
-        elif "Returned Final" in status:
-            return "000100", "Incorrect Account Number"
-        elif "Settled Final" in status:
-            return "8333", "Successful, transaction is settled by the receiver bank"
-        elif "Rejected Final" in status:
-            return "000005", "Incorrect Account Number"
-        elif "Accepted" in status:
-            return (
+            ),
+            "Returned Final": ("000100", "Incorrect Account Number"),
+            "Settled Final": (
+                "8333",
+                "Successful, transaction is settled by the receiver bank",
+            ),
+            "Rejected Final": ("000005", "Incorrect Account Number"),
+            "Accepted": (
                 "8111",
                 "Transaction received and validated successfully. Dispatched for being processed by the bank",
-            )
-        else:
-            return "", ""
+            ),
+        }
+
+        return status_mappings.get(status, ("", ""))

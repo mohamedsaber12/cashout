@@ -32,7 +32,7 @@ urlpatterns = [
         name='doc_collection_detail',
     ),
     path(
-        'transaction/report-problem/<trx_id>/',
+        'transaction/report-problem/<trx_type>/<trx_id>/',
         views.ReportProblemView.as_view(),
         name='report_problem',
     ),

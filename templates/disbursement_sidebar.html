@@ -74,11 +74,13 @@
                 <i class="fa fa-suitcase"></i>{% trans 'Balance Inquiry' %}
               </a>
             </li>
-            <li>
-              <a href="{% url 'utilities:merchant_limit_edit' request.user.username %}">
-                <i class="fa fa-gear"></i>{% trans 'Merchant Limit'%}
-              </a>
-            </li>
+            {% if request.user.is_accept_vodafone_onboarding %}
+              <li>
+                <a href="{% url 'utilities:merchant_limit_edit' request.user.username %}">
+                  <i class="fa fa-gear"></i>{% trans 'Merchant Limit'%}
+                </a>
+              </li>
+            {% endif %}
           {% elif request.user.from_accept and request.user.allowed_to_be_bulk %}
             <li><a><i class="fa fa-users"></i>{% trans 'Members' %} <span class="fa fa-chevron-down"></span></a>
             <ul class="nav child_menu">

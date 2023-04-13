@@ -2,6 +2,7 @@
 from __future__ import unicode_literals
 
 import csv
+import logging
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
@@ -10,6 +11,8 @@ from django.utils.translation import gettext as _
 from disbursement.models import BankTransaction
 from disbursement.tasks import ExportFromDjangoAdmin
 from utilities.models.abstract_models import AbstractBaseACHTransactionStatus
+
+USERS_REPORTS_LOGGER = logging.getLogger("users_reports")
 
 
 class AdminSiteOwnerOnlyPermissionMixin:
@@ -86,6 +89,12 @@ class ExportCsvMixin:
     def export_as_csv(self, request, queryset):
 
         ids_list = list(queryset.values_list(queryset.model._meta.pk.name, flat=True))
+
+        # add logging for export reports
+        USERS_REPORTS_LOGGER.debug(
+            f"[Export Report From Django Admin] [{request.user.username}] -- export report"
+            f" from model {self.model.__name__} with length {len(ids_list)}"
+        )
 
         # fire celery task to export data
         ExportFromDjangoAdmin.delay(request.user.id, ids_list, self.model.__name__)

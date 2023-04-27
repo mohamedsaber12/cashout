@@ -142,13 +142,22 @@ class InstantDisbursementAPIView(views.APIView):
             creditor_account_number = serializer.validated_data["bank_card_number"]
             creditor_bank = serializer.validated_data["bank_code"]
             transaction_type = serializer.validated_data["bank_transaction_type"]
+        
+        # Check if the owner's username is in the list of allowed usernames for BM ACH
+        if disburser.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(","):
+            # Use a different corporate code and debtor account environment variable
+            corporate_code_env = "BM_ACH_CORPORATE_CODE"
+            debtor_account_env = "BM_ACH_DEBTOR_ACCOUNT"
+        else:
+            corporate_code_env = "ACH_CORPORATE_CODE"
+            debtor_account_env = "ACH_DEBTOR_ACCOUNT"
 
         transaction_dict = {
             "currency": "EGP",
             "debtor_address_1": "EG",
             "creditor_address_1": "EG",
-            "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
-            "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
+            "corporate_code": get_from_env(corporate_code_env),
+            "debtor_account": get_from_env(debtor_account_env),
             "user_created": disburser,
             "amount": amount,
             "creditor_name": full_name,

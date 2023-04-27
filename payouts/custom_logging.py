@@ -1,3 +1,21 @@
+from django.utils import timezone
+import logging
+import datetime
+
+class CairoFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        tz = timezone.get_fixed_timezone(180)  # UTC+3 for Cairo
+        ct = datetime.datetime.utcfromtimestamp(record.created)
+        dt = timezone.make_aware(ct, timezone.utc).astimezone(tz)
+        if datefmt:
+            s = dt.strftime(datefmt)
+        else:
+            t = dt.strftime("%Y-%m-%d %H:%M:%S")
+            s = "%s,%03d" % (t, record.msecs)
+        return s
+
+
+
 CUSTOM_LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
@@ -8,10 +26,12 @@ CUSTOM_LOGGING = {
             'datefmt': "[%d-%m-%Y %H:%M:%S]",
         },
         'console_detail': {
+            '()': CairoFormatter,
             'format': "%(asctime)s - %(levelname)-5s [%(name)s] [request_id=%(request_id)s] %(message)s",
             'datefmt': "[%d-%m-%Y %H:%M:%S]",
         },
         'detail': {
+            '()': CairoFormatter,
             'format': "%(asctime)s - [%(levelname)s] [%(name)s] [%(request_id)s] %(message)s"
         },
     },

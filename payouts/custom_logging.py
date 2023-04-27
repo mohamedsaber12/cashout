@@ -246,6 +246,13 @@ CUSTOM_LOGGING = {
             'class': 'logging.FileHandler',
             'filename': 'logs/accept_balance_transfer.log',
         },
+        'users_reports': {
+            'level': 'DEBUG',
+            'filters': ['request_id'],
+            'formatter': 'detail',
+            'class': 'logging.FileHandler',
+            'filename': 'logs/users_reports.log',
+        },
         'send_emails': {
             'level': 'DEBUG',
             'filters': ['request_id'],
@@ -545,6 +552,11 @@ CUSTOM_LOGGING = {
         },
         'instant_cashin_success': {
             'handlers': ['instant_cashin_success'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'users_reports': {
+            'handlers': ['users_reports'],
             'level': 'DEBUG',
             'propagate': True,
         },

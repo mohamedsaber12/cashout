@@ -165,11 +165,17 @@ class PinForm(forms.Form):
 
         pin = self.cleaned_data.get('pin')
 
+        if not pin:
+            raise forms.ValidationError(_("Invalid Pin"))
+
         if pin and not pin.isnumeric():
             raise forms.ValidationError(_("Pin must be numeric"))
 
         if self.root.is_vodafone_default_onboarding:
             confirm_pin = self.cleaned_data.get('confirm_pin')
+            if not confirm_pin:
+                raise forms.ValidationError(_("Invalid Confirm Pin"))
+
             if confirm_pin != pin:
                 raise forms.ValidationError(_("Pin must be equal confirm pin."))
             sorted_pin = ''.join(sorted(pin))

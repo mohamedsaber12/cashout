@@ -14,19 +14,25 @@ from rest_framework import status
 from rest_framework.response import Response
 
 from disbursement.models import BankTransaction, RemainingAmounts
-from disbursement.utils import (BANK_TRX_BEING_PROCESSED,
-                                BANK_TRX_IS_SUCCESSFUL_1,
-                                BANK_TRX_IS_SUCCESSFUL_2, BANK_TRX_RECEIVED,
-                                EXTERNAL_ERROR_MSG,
-                                INSTANT_TRX_BEING_PROCESSED,
-                                INSTANT_TRX_IS_ACCEPTED,
-                                INSTANT_TRX_IS_REJECTED, INSTANT_TRX_RECEIVED,
-                                INTERNAL_ERROR_MSG, TRX_REJECTED_BY_BANK_CODES,
-                                TRX_RETURNED_BY_BANK_CODES,
-                                revert_balance_to_accept_account)
+from disbursement.utils import (
+    BANK_TRX_BEING_PROCESSED,
+    BANK_TRX_IS_SUCCESSFUL_1,
+    BANK_TRX_IS_SUCCESSFUL_2,
+    BANK_TRX_RECEIVED,
+    EXTERNAL_ERROR_MSG,
+    INSTANT_TRX_BEING_PROCESSED,
+    INSTANT_TRX_IS_ACCEPTED,
+    INSTANT_TRX_IS_REJECTED,
+    INSTANT_TRX_RECEIVED,
+    INTERNAL_ERROR_MSG,
+    TRX_REJECTED_BY_BANK_CODES,
+    TRX_RETURNED_BY_BANK_CODES,
+    revert_balance_to_accept_account,
+)
 from instant_cashin.api.serializers import (
     BankTransactionResponseModelSerializer,
-    InstantTransactionResponseModelSerializer)
+    InstantTransactionResponseModelSerializer,
+)
 from utilities.ssl_certificate import SSLCertificate
 
 from ...models import AbstractBaseIssuer, InstantTransaction
@@ -35,8 +41,7 @@ from ...utils import get_from_env
 ACH_SEND_TRX_LOGGER = logging.getLogger("ach_send_transaction.log")
 ACH_GET_TRX_STATUS_LOGGER = logging.getLogger("ach_get_transaction_status")
 CALLBACK_REQUESTS_LOGGER = logging.getLogger("callback_requests")
-from instant_cashin.specific_issuers_integrations.aman.instant_cashin import \
-    UUIDEncoder
+from instant_cashin.specific_issuers_integrations.aman.instant_cashin import UUIDEncoder
 
 
 class BankTransactionsChannel:
@@ -121,9 +126,18 @@ class BankTransactionsChannel:
         payload["AdditionalInfo"] = trx_obj.comment
 
         json_payload = json.dumps(payload, separators=(",", ":"))
-        payload["Signature"] = SSLCertificate.generate_signature(
-            get_from_env("PRIVATE_KEY_NAME"), json_payload
-        )
+        # Check if the root user who created the bank transaction is in the list of BM ACH users
+        if trx_obj.user_created.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(","):
+            # If the user is a BM ACH user, generate a signature using the BM private key
+            payload["Signature"] = SSLCertificate.generate_signature(
+                get_from_env("BM_PRIVATE_KEY_NAME"), json_payload
+            )
+        else:
+            # If the user is not a BM ACH user, generate a signature using the regular private key
+            payload["Signature"] = SSLCertificate.generate_signature(
+                get_from_env("PRIVATE_KEY_NAME"), json_payload
+            )
+
 
         return payload
 
@@ -494,22 +508,25 @@ class BankTransactionsChannel:
         has_valid_response = True
 
         # Temp code to be removed
-        bank_trx_obj.mark_pending(
-            "8000",
-            "Transaction received and validated successfully. Dispatched for being processed by the bank",
-        )
-        bank_trx_obj.is_manual_batch = True
-        amount_plus_fees_vat = (
-            bank_trx_obj.user_created.root.budget.release_hold_balance(
-                bank_trx_obj.amount, "bank_card"
+        trn_owner_username = bank_trx_obj.user_created.root.username
+        manual_batch_users = get_from_env("MANUAL_BATCH_USERS").split(",")
+        if trn_owner_username in manual_batch_users or "all" in manual_batch_users:
+            bank_trx_obj.mark_pending(
+                "8000",
+                "Transaction received and validated successfully. Dispatched for being processed by the bank",
             )
-        )
-        bank_trx_obj.balance_before = balance_before
-        bank_trx_obj.balance_after = balance_before - amount_plus_fees_vat
+            bank_trx_obj.is_manual_batch = True
+            amount_plus_fees_vat = (
+                bank_trx_obj.user_created.root.budget.release_hold_balance(
+                    bank_trx_obj.amount, "bank_card"
+                )
+            )
+            bank_trx_obj.balance_before = balance_before
+            bank_trx_obj.balance_after = balance_before - amount_plus_fees_vat
 
-        bank_trx_obj.save()
+            bank_trx_obj.save()
 
-        return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
+            return Response(BankTransactionResponseModelSerializer(bank_trx_obj).data)
 
         # end of temp code
 
@@ -549,9 +566,24 @@ class BankTransactionsChannel:
             payload = BankTransactionsChannel.accumulate_send_transaction_payload(
                 bank_trx_obj, amount_to_be_deducted
             )
-            response = BankTransactionsChannel.post(
-                get_from_env("EBC_API_URL"), payload, bank_trx_obj
-            )
+            # Get the username of the root user who created the bank transaction
+            creator_username = bank_trx_obj.user_created.root.username
+
+            # Get the list of usernames for BM ACH processing from an environment variable
+            bm_ach_usernames = get_from_env("USERNAMRS_FOR_BM_ACH").split(",")
+
+            # Check if the creator's username is in the BM ACH user list
+            if creator_username in bm_ach_usernames:
+                # If the creator is a BM ACH user, send the transaction to the BM ACH API URL
+                api_url = get_from_env("BM_EBC_API_URL")
+            else:
+                # Otherwise, send the transaction to the regular EBC API URL
+                api_url = get_from_env("EBC_API_URL")
+
+            # Send the bank transaction to the appropriate API URL using the BankTransactionsChannel
+            response = BankTransactionsChannel.post(api_url, payload, bank_trx_obj)
+
+
         except (HTTPError, ConnectionError, Exception) as e:
             has_valid_response = False
             ACH_SEND_TRX_LOGGER.debug(
@@ -760,21 +792,21 @@ class BankTransactionsChannel:
 
     @staticmethod
     def map_manual_batch_status_code_desc(status):
-        if "Settled ,Opened For Return" in status:
-            return (
+        status_mappings = {
+            "Settled ,Opened For Return": (
                 "8222",
                 "Successful with warning, A transfer will take place once authorized by the receiver bank",
-            )
-        elif "Returned Final" in status:
-            return "000100", "Incorrect Account Number"
-        elif "Settled Final" in status:
-            return "8333", "Successful, transaction is settled by the receiver bank"
-        elif "Rejected Final" in status:
-            return "000005", "Incorrect Account Number"
-        elif "Accepted" in status:
-            return (
+            ),
+            "Returned Final": ("000100", "Incorrect Account Number"),
+            "Settled Final": (
+                "8333",
+                "Successful, transaction is settled by the receiver bank",
+            ),
+            "Rejected Final": ("000005", "Incorrect Account Number"),
+            "Accepted": (
                 "8111",
                 "Transaction received and validated successfully. Dispatched for being processed by the bank",
-            )
-        else:
-            return "", ""
+            ),
+        }
+
+        return status_mappings.get(status, ("", ""))

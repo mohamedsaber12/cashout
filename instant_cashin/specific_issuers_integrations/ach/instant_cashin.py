@@ -765,21 +765,21 @@ class BankTransactionsChannel:
 
     @staticmethod
     def map_manual_batch_status_code_desc(status):
-        status_mappings = {
-            "Settled ,Opened For Return": (
+        if "Settled ,Opened For Return" in status:
+            return (
                 "8222",
                 "Successful with warning, A transfer will take place once authorized by the receiver bank",
-            ),
-            "Returned Final": ("000100", "Incorrect Account Number"),
-            "Settled Final": (
-                "8333",
-                "Successful, transaction is settled by the receiver bank",
-            ),
-            "Rejected Final": ("000005", "Incorrect Account Number"),
-            "Accepted": (
+            )
+        elif "Returned Final" in status:
+            return "000100", "Incorrect Account Number"
+        elif "Settled Final" in status:
+            return "8333", "Successful, transaction is settled by the receiver bank"
+        elif "Rejected Final" in status:
+            return "000005", "Incorrect Account Number"
+        elif "Accepted" in status:
+            return (
                 "8111",
                 "Transaction received and validated successfully. Dispatched for being processed by the bank",
-            ),
-        }
-
-        return status_mappings.get(status, ("", ""))
+            )
+        else:
+            return "", ""

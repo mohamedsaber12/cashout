@@ -1,7 +1,6 @@
+from django.db.models import Q
 from import_export import resources
 from import_export.fields import Field
-
-from django.db.models import Q
 
 from core.models import AbstractBaseStatus
 from instant_cashin.models.instant_transactions import InstantTransaction
@@ -19,24 +18,58 @@ class DisbursementDataResourceForEWallets(resources.ModelResource):
 
     class Meta:
         model = DisbursementData
-        fields = ['amount', 'msisdn', 'disbursed', 'reason', 'fees', 'vat', 'created_at']
-        export_order = ['msisdn', 'amount', 'disbursed', 'reason', 'fees', 'vat', 'created_at']
+        fields = [
+            'amount',
+            'msisdn',
+            'disbursed',
+            'reason',
+            'fees',
+            'vat',
+            'created_at',
+            'comment1',
+            'comment2',
+        ]
+        export_order = [
+            'msisdn',
+            'amount',
+            'disbursed',
+            'reason',
+            'fees',
+            'vat',
+            'created_at',
+            'comment1',
+            'comment2',
+        ]
 
     def __init__(self, doc, is_disbursed):
         self.doc = doc
         self.is_disbursed = is_disbursed
 
     def get_export_headers(self):
-        return ['Mobile Number', 'Amount', 'Disbursement Status', 'Failure Reason', 'Fees', 'Vat', 'Date']
+        return [
+            'Mobile Number',
+            'Amount',
+            'Disbursement Status',
+            'Failure Reason',
+            'Fees',
+            'Vat',
+            'Date',
+            'Comment1',
+            'Comment2',
+        ]
 
     def get_queryset(self):
         qs = super().get_queryset()
 
         if self.is_disbursed is None:
             return qs.filter(doc_id=self.doc.id)
-        elif self.is_disbursed: # get all success records
+        elif self.is_disbursed:  # get all success records
             return qs.filter(is_disbursed=self.is_disbursed, doc_id=self.doc.id)
-        return qs.filter(Q(is_disbursed=self.is_disbursed), Q(doc_id=self.doc.id), ~Q(reason__exact=''))
+        return qs.filter(
+            Q(is_disbursed=self.is_disbursed),
+            Q(doc_id=self.doc.id),
+            ~Q(reason__exact=''),
+        )
 
     def export_resource(self, obj):
         obj_resources = super().export_resource(obj)
@@ -56,12 +89,30 @@ class DisbursementDataResourceForBankWallet(resources.ModelResource):
     class Meta:
         model = InstantTransaction
         fields = [
-            'anon_recipient', 'amount', 'recipient_name', 'transaction_status', 'transaction_status_code',
-            'transaction_status_description', 'fees', 'vat', 'created_at'
+            'anon_recipient',
+            'amount',
+            'recipient_name',
+            'transaction_status',
+            'transaction_status_code',
+            'transaction_status_description',
+            'fees',
+            'vat',
+            'created_at',
+            'comment1',
+            'comment2',
         ]
         export_order = [
-            'anon_recipient', 'amount', 'recipient_name', 'transaction_status', 'transaction_status_code',
-            'transaction_status_description', 'fees', 'vat', 'created_at'
+            'anon_recipient',
+            'amount',
+            'recipient_name',
+            'transaction_status',
+            'transaction_status_code',
+            'transaction_status_description',
+            'fees',
+            'vat',
+            'created_at',
+            'comment1',
+            'comment2',
         ]
 
     def __init__(self, doc, is_disbursed):
@@ -70,8 +121,17 @@ class DisbursementDataResourceForBankWallet(resources.ModelResource):
 
     def get_export_headers(self):
         return [
-            'Mobile Number', 'Amount', 'Full Name', 'Disbursement Status', 'Disbursement Status Code',
-            'Disbursement Status Description', 'Fees', 'Vat', 'Date'
+            'Mobile Number',
+            'Amount',
+            'Full Name',
+            'Disbursement Status',
+            'Disbursement Status Code',
+            'Disbursement Status Description',
+            'Fees',
+            'Vat',
+            'Date',
+            'Comment1',
+            'Comment2',
         ]
 
     def get_queryset(self):
@@ -82,7 +142,9 @@ class DisbursementDataResourceForBankWallet(resources.ModelResource):
         elif self.is_disbursed == False:
             return qs.filter(status=AbstractBaseStatus.FAILED, document_id=self.doc.id)
         else:
-            return qs.filter(status=AbstractBaseStatus.SUCCESSFUL, document_id=self.doc.id)
+            return qs.filter(
+                status=AbstractBaseStatus.SUCCESSFUL, document_id=self.doc.id
+            )
 
 
 class DisbursementDataResourceForBankCards(resources.ModelResource):
@@ -96,14 +158,34 @@ class DisbursementDataResourceForBankCards(resources.ModelResource):
     class Meta:
         model = BankTransaction
         fields = [
-            'creditor_account_number', 'amount', 'creditor_name', 'creditor_bank', 'transaction_type',
-            'transaction_status', 'transaction_status_code', 'transaction_status_description',
-            'fees', 'vat', 'created_at'
+            'creditor_account_number',
+            'amount',
+            'creditor_name',
+            'creditor_bank',
+            'transaction_type',
+            'transaction_status',
+            'transaction_status_code',
+            'transaction_status_description',
+            'fees',
+            'vat',
+            'created_at',
+            'comment1',
+            'comment2',
         ]
         export_order = [
-            'creditor_account_number', 'amount', 'creditor_name', 'creditor_bank', 'transaction_type',
-            'transaction_status', 'transaction_status_code', 'transaction_status_description',
-            'fees', 'vat', 'created_at'
+            'creditor_account_number',
+            'amount',
+            'creditor_name',
+            'creditor_bank',
+            'transaction_type',
+            'transaction_status',
+            'transaction_status_code',
+            'transaction_status_description',
+            'fees',
+            'vat',
+            'created_at',
+            'comment1',
+            'comment2',
         ]
 
     def __init__(self, doc, is_disbursed):
@@ -112,9 +194,19 @@ class DisbursementDataResourceForBankCards(resources.ModelResource):
 
     def get_export_headers(self):
         return [
-            'Account Number', 'Amount', 'Full Name', 'Bank Swift Code', 'Transaction Type',
-            'Disbursement Status', 'Disbursement Status Code', 'Disbursement Status Description',
-            'Fees', 'Vat', "Date"
+            'Account Number',
+            'Amount',
+            'Full Name',
+            'Bank Swift Code',
+            'Transaction Type',
+            'Disbursement Status',
+            'Disbursement Status Code',
+            'Disbursement Status Description',
+            'Fees',
+            'Vat',
+            "Date",
+            'Comment1',
+            'Comment2',
         ]
 
     def get_queryset(self):
@@ -125,4 +217,6 @@ class DisbursementDataResourceForBankCards(resources.ModelResource):
         elif self.is_disbursed == False:
             return qs.filter(status=AbstractBaseStatus.FAILED, document_id=self.doc.id)
         else:
-            return qs.filter(status=AbstractBaseStatus.SUCCESSFUL, document_id=self.doc.id)
+            return qs.filter(
+                status=AbstractBaseStatus.SUCCESSFUL, document_id=self.doc.id
+            )

@@ -486,12 +486,22 @@ class BankWalletsAndCardsSheetProcessor(Task):
                     record[0], "bank_card"
                 )
                 category_purpose_dict = determine_trx_category_and_purpose(record[4])
+                # Check if the owner's username is in the list of allowed usernames for BM ACH
+                if doc_obj.owner.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(","):
+                    # Use a different corporate code and debtor account environment variable
+                    corporate_code_env = "BM_ACH_CORPORATE_CODE"
+                    debtor_account_env = "BM_ACH_DEBTOR_ACCOUNT"
+                else:
+                    corporate_code_env = "ACH_CORPORATE_CODE"
+                    debtor_account_env = "ACH_DEBTOR_ACCOUNT"
+
+                # Create a bank transaction object with the appropriate parameters
                 BankTransaction.objects.create(
                     currency="EGP",
                     debtor_address_1="EG",
                     creditor_address_1="EG",
-                    corporate_code=get_from_env("ACH_CORPORATE_CODE"),
-                    debtor_account=get_from_env("ACH_DEBTOR_ACCOUNT"),
+                    corporate_code=get_from_env(corporate_code_env),
+                    debtor_account=get_from_env(debtor_account_env),
                     document=doc_obj,
                     user_created=doc_obj.owner,
                     amount=record[0],

@@ -419,6 +419,14 @@ class BulkDisbursementThroughOneStepCashin(Task):
 
     def create_bank_transaction_from_instant_transaction(self, checker, record):
         """Create a bank transaction out of the passed record data/instant transaction"""
+        # Check if the owner's username is in the list of allowed usernames for BM ACH
+        if checker.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(","):
+            # Use a different corporate code and debtor account environment variable
+            corporate_code_env = "BM_ACH_CORPORATE_CODE"
+            debtor_account_env = "BM_ACH_DEBTOR_ACCOUNT"
+        else:
+            corporate_code_env = "ACH_CORPORATE_CODE"
+            debtor_account_env = "ACH_DEBTOR_ACCOUNT"
 
         transaction_dict = {
             "currency": "EGP",
@@ -427,8 +435,8 @@ class BulkDisbursementThroughOneStepCashin(Task):
             "creditor_bank": "MIDG",
             "category_code": "MOBI",
             "purpose": "CASH",
-            "corporate_code": get_from_env("ACH_CORPORATE_CODE"),
-            "debtor_account": get_from_env("ACH_DEBTOR_ACCOUNT"),
+            "corporate_code": get_from_env(corporate_code_env),
+            "debtor_account": get_from_env(debtor_account_env),
             "user_created": checker,
             "creditor_account_number": record.anon_recipient,
             "amount": record.amount,

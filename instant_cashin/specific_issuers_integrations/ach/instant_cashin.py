@@ -154,10 +154,17 @@ class BankTransactionsChannel:
         payload["CorporateCode"] = trx_obj.corporate_code
 
         json_payload = json.dumps(payload, separators=(",", ":"))
-        payload["Signature"] = SSLCertificate.generate_signature(
-            get_from_env("PRIVATE_KEY_NAME"), json_payload
-        )
-
+        # Check if the root user who created the bank transaction is in the list of BM ACH users
+        if trx_obj.user_created.root.username in get_from_env("USERNAMRS_FOR_BM_ACH").split(","):
+            # If the user is a BM ACH user, generate a signature using the BM private key
+            payload["Signature"] = SSLCertificate.generate_signature(
+                get_from_env("BM_PRIVATE_KEY_NAME"), json_payload
+            )
+        else:
+            # If the user is not a BM ACH user, generate a signature using the regular private key
+            payload["Signature"] = SSLCertificate.generate_signature(
+                get_from_env("PRIVATE_KEY_NAME"), json_payload
+            )
         return payload
 
     @staticmethod
@@ -638,8 +645,22 @@ class BankTransactionsChannel:
             payload = BankTransactionsChannel.accumulate_get_transaction_status_payload(
                 bank_trx_obj
             )
+            # Get the username of the root user who created the bank transaction
+            creator_username = bank_trx_obj.user_created.root.username
+
+            # Get the list of usernames for BM ACH processing from an environment variable
+            bm_ach_usernames = get_from_env("USERNAMRS_FOR_BM_ACH").split(",")
+
+            # Check if the creator's username is in the BM ACH user list
+            if creator_username in bm_ach_usernames:
+                # If the creator is a BM ACH user, send the transaction to the BM ACH API URL
+                api_url = get_from_env("BM_EBC_API_URL")
+            else:
+                # Otherwise, send the transaction to the regular EBC API URL
+                api_url = get_from_env("EBC_API_URL")
+
             response = BankTransactionsChannel.get(
-                get_from_env("EBC_API_URL"), payload, bank_trx_obj
+                api_url, payload, bank_trx_obj
             )
             new_bank_trx_obj = BankTransactionsChannel.update_bank_trx_status(
                 bank_trx_obj, json.loads(response.json())
